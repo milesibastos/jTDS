@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.*;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.2 2004-07-15 22:02:15 bheineman Exp $
+ * @version $Id: JtdsDataSource.java,v 1.3 2004-07-26 19:10:02 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 
@@ -72,6 +72,8 @@ public class JtdsDataSource extends AbstractDataSource {
                           String.valueOf(isLastUpdateCount()));
         props.setProperty(Support.getMessage("prop.useunicode"),
                           String.valueOf(sendStringParametersAsUnicode));
+        props.setProperty(Support.getMessage("prop.namedpipe"),
+                          String.valueOf(namedPipe));
         props.setProperty(Support.getMessage("prop.macaddress"), macAddress);
         props.setProperty(Support.getMessage("prop.preparesql"), String.valueOf(prepareSql));
         props.setProperty(Support.getMessage("prop.packetsize"), String.valueOf(packetSize));

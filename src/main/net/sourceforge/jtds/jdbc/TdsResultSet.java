@@ -79,7 +79,7 @@ import java.sql.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.3 2002-11-11 15:22:42 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.4 2003-12-11 07:33:28 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -103,7 +103,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.3 2002-11-11 15:22:42 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.4 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
@@ -131,9 +131,12 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
                 PacketResult tmp = tds.processSubPacket();
 
                 if( tmp instanceof PacketColumnNamesResult )
-                    names = ((PacketColumnNamesResult)tmp).getColumnNames();
+                    context = tds.getContext(); // new Context(names, tds.getEncoder());
                 else if( tmp instanceof PacketColumnInfoResult )
-                    info = ((PacketColumnInfoResult)tmp).getColumnInfo();
+                {
+                    // SAfe Do nothing, column info is merged with column names
+                    //      inside Tds.
+                }
                 else if( tmp instanceof PacketMsgResult )
                     stmtWarningChain.addOrReturn((PacketMsgResult)tmp);
                 else if( tmp instanceof PacketColumnOrderResult )
@@ -161,12 +164,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             }
 
             stmtWarningChain.checkForExceptions();
-
-            // TDS 7.0 includes everything in one subpacket.
-            if( info != null )
-                names.merge(info);
-
-            context = new Context(names, tds.getEncoder());
         }
         catch( net.sourceforge.jtds.jdbc.TdsException e )
         {
@@ -405,7 +402,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         {
             try
             {
-                tds.discardResultSetOld(context);
+                tds.discardResultSetOld();
                 hitEndOfData = true;
                 if( allowTdsRelease )
                     stmt.releaseTds();
@@ -504,10 +501,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             warningChain.checkForExceptions();
 
             if( tds.isResultRow() )
-                row = (PacketRowResult)tds.processSubPacket(context);
+                row = (PacketRowResult)tds.processSubPacket();
             else if( tds.isEndOfResults() )
             {
-                if( ((PacketEndTokenResult)tds.processSubPacket(context)).wasCanceled() )
+                if( ((PacketEndTokenResult)tds.processSubPacket()).wasCanceled() )
                     warningChain.addException(
                         new SQLException("Query was canceled or timed out."));
 

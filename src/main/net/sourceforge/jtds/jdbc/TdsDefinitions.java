@@ -36,15 +36,15 @@ package net.sourceforge.jtds.jdbc;
 
 
 /**
- * constants from the 4.2 TDS protocol
+ * Constants from the TDS protocol.
  *
- * @version  $Id: TdsDefinitions.java,v 1.3 2003-11-12 17:18:43 matt_brinkley Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.4 2003-12-11 07:33:28 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   String cvsVersion = "$Id: TdsDefinitions.java,v 1.3 2003-11-12 17:18:43 matt_brinkley Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.4 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.

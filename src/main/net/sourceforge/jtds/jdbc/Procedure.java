@@ -35,12 +35,11 @@ package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 
 public class Procedure
 {
-   public static final String cvsVersion = "$Id: Procedure.java,v 1.2 2002-11-07 11:07:01 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: Procedure.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
 
    ParameterListItem  parameterList[]    = null;

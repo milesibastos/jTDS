@@ -64,12 +64,12 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.4 2003-11-28 06:45:04 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.5 2003-12-11 07:33:28 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
     implements java.sql.CallableStatement
 {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.4 2003-11-28 06:45:04 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.5 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -487,76 +487,6 @@ public class CallableStatement_base extends PreparedStatement_base
     {
         NotImplemented();
         return null;
-    }
-
-    public void setClob(int i, java.sql.Clob x) throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void addBatch() throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setBlob(int i, java.sql.Blob x) throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setArray(int i, java.sql.Array x) throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setRef(int i, java.sql.Ref x) throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length)
-        throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public java.sql.ResultSetMetaData getMetaData() throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-        return null;
-    }
-
-    public void setNull(int paramIndex, int sqlType, String typeName) throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setTimestamp( int parameterIndex, java.sql.Timestamp x, java.util.Calendar cal )
-        throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setDate(int parameterIndex, java.sql.Date x, java.util.Calendar cal)
-        throws java.sql.SQLException
-    {
-        //  XXX should be inherited PreparedStatement_2_0
-        NotImplemented();
-    }
-
-    public void setTime( int parameterIndex, java.sql.Time x, java.util.Calendar cal )
-        throws java.sql.SQLException
-    {
-        NotImplemented();
     }
 
     public void registerOutParameter(String str, int param, String str2) throws java.sql.SQLException

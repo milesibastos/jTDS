@@ -4,9 +4,7 @@ import java.sql.*;
 import java.math.BigDecimal;
 import net.sourceforge.jtds.jdbc.Tds;
 import net.sourceforge.jtds.util.Logger;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import junit.framework.AssertionFailedError;
 
 /**
  * test getting timestamps from the database.
@@ -126,9 +124,9 @@ public class TimestampTest extends DatabaseTestCase
             + "   mytime3 datetime null     )");
 
         PreparedStatement pStmt = cx.prepareStatement(
-            "insert into #t0004 values ('1998-09-09 15:35:05', ?, ?)");
+            "insert into #t0004 values ('1964-02-14 10:00:00.0', ?, ?)");
 
-        Timestamp   t0 = Timestamp.valueOf("1998-09-09 15:35:05");
+        Timestamp   t0 = Timestamp.valueOf("1964-02-14 10:00:00.0");
         pStmt.setTimestamp(1, t0);
         pStmt.setTimestamp(2, t0);
         int count = pStmt.executeUpdate();
@@ -147,17 +145,17 @@ public class TimestampTest extends DatabaseTestCase
         t1 = rs.getTimestamp(1);
         t2 = rs.getTimestamp(2);
         t3 = rs.getTimestamp(3);
-        assertEquals(t1, t2);
-        assertEquals(t1, t3);
-        assertEquals(t2, t3);
+        assertEquals(t0, t1);
+        assertEquals(t0, t2);
+        assertEquals(t0, t3);
 
         assertTrue("Expected a result set", rs.next());
         t1 = rs.getTimestamp(1);
         t2 = rs.getTimestamp(2);
         t3 = rs.getTimestamp(3);
-        assertEquals(t1, t2);
-        assertTrue(t1 != t3);
-        assertTrue(t2 != t3);
+        assertEquals(t0, t1);
+        assertEquals(t0, t2);
+        assertEquals(null, t3);
     }
 
     public void testEscape(String sql, String expected) throws Exception

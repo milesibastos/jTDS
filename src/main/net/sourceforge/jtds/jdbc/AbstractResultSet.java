@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.text.*;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 /**
  * This class implements all of the get and update methods, which are delegated to the row object.
@@ -15,11 +16,11 @@ import java.util.Calendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet
 {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
 
@@ -42,6 +43,11 @@ public abstract class AbstractResultSet implements ResultSet
      * Used to format numeric values when scale is specified.
      */
     private static NumberFormat f = NumberFormat.getInstance();
+
+    /**
+     * Used to normalize date and time values.
+     */
+    private static Calendar staticCalendar = new GregorianCalendar();
 
     /**
      * Returns the <code>Context</code> of the <code>ResultSet</code> instance. A
@@ -255,7 +261,15 @@ public abstract class AbstractResultSet implements ResultSet
         java.sql.Timestamp tmp = getTimestamp(index);
 
         if( tmp != null )
-            result = new java.sql.Date(tmp.getTime());
+            synchronized( staticCalendar )
+            {
+                staticCalendar.setTime(tmp);
+                staticCalendar.set(Calendar.HOUR_OF_DAY, 0);
+                staticCalendar.set(Calendar.MINUTE, 0);
+                staticCalendar.set(Calendar.SECOND, 0);
+                staticCalendar.set(Calendar.MILLISECOND, 0);
+                result = new java.sql.Date(staticCalendar.getTimeInMillis());
+            }
         return result;
     }
 
@@ -307,7 +321,15 @@ public abstract class AbstractResultSet implements ResultSet
         java.sql.Timestamp tmp = getTimestamp(index);
 
         if( tmp != null )
-            result = new java.sql.Time(tmp.getTime());
+            synchronized( staticCalendar )
+            {
+                staticCalendar.setTime(tmp);
+                staticCalendar.set(Calendar.ERA, GregorianCalendar.AD);
+                staticCalendar.set(Calendar.YEAR, 1970);
+                staticCalendar.set(Calendar.MONTH, 0);
+                staticCalendar.set(Calendar.DAY_OF_MONTH, 1);
+                result = new java.sql.Time(staticCalendar.getTimeInMillis());
+            }
         return result;
     }
 

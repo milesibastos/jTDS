@@ -7,11 +7,11 @@ import java.util.Hashtable;
  * Helper class to handle server character set conversion.
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
- * @version  $Id: EncodingHelper.java,v 1.2 2003-02-15 14:19:20 alin_sinpalean Exp $
+ * @version  $Id: EncodingHelper.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $
  */
 public class EncodingHelper
 {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.2 2003-02-15 14:19:20 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
     /**
      * Array containig the bytes 0x00 - 0xFF.
@@ -131,15 +131,25 @@ public class EncodingHelper
         EncodingHelper res = (EncodingHelper)knownEncodings.get(encodingName);
 
         if( res == null )
-            try
-            {
-                res = new EncodingHelper(encodingName);
-                knownEncodings.put(encodingName, res);
-            }
-            catch( UnsupportedEncodingException ex )
-            {
-                res = null;
-            }
+        {
+            try { res = new EncodingHelper(encodingName); }
+            catch( UnsupportedEncodingException ex ) { }
+        }
+        // SAfe Try prepending Cp or MS to the character set. This should
+        //      cover all the character sets known by SQL Server.
+        if( res == null )
+        {
+            try { res = new EncodingHelper("Cp"+encodingName); }
+            catch( UnsupportedEncodingException ex ) { }
+        }
+        if( res == null )
+        {
+            try { res = new EncodingHelper("MS"+encodingName); }
+            catch( UnsupportedEncodingException ex ) { }
+        }
+
+        if( res != null )
+            knownEncodings.put(encodingName, res);
 
         return res;
     }

@@ -1,3 +1,20 @@
+
+Changes from jTDS 0.5.2
+=======================
+
+12/11/2003 - Alin Sinpalean
+ o Fixed bug #694541 (ResultSet getDate & getTimestamp). Dates and Times are
+   now normalized (by resetting the hour/minute/second/ms, respectively the
+   day/month/year part).
+ o Also fixed a bug with dates prior to January 1, 1970 (they would get all
+   messed up because of negative values in the calculation).
+ o Added some more flexibility to recognizing character sets (simply by
+   prepending "Cp" respectively "MS", in case the returned character set is
+   only a number).
+ o Started refactoring, by moving the current Context from the ResultSet to the
+   Tds. This way the Tds can skip to the end of the stream without any outside
+   help. This will hopefully also help further refactoring.
+
 ===============================================================================
 11/29/2003 - jTDS 0.5.2 released
 ===============================================================================
@@ -5,7 +22,7 @@
 Changes from jTDS 0.5.1
 =======================
 
-11/27/2003
+11/27/2003 - Alin Sinpalean
  o Fixed bug #808452 (DatabaseMetaData.getTypeInfo() not JDBC compliant). Also
    added the @ODBCVer parameter to the other calls that support it.
  o Moved the "moreResults2 = true" statement to the end of Tds.executeProcedure

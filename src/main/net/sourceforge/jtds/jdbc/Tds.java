@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $
+ * @version    $Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $
+ *@version    $Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -164,7 +164,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -184,6 +184,11 @@ public class Tds implements TdsDefinitions {
      * The last auto commit mode set on this <code>Tds</code>.
      */
     boolean autoCommit = true;
+
+    /**
+     * The context of the result set currently being parsed.
+     */
+    private Context currentContext;
 
     public Tds(
             TdsConnection connection_,
@@ -221,7 +226,6 @@ public class Tds implements TdsDefinitions {
             if( port == -1 )
                 throw new SQLException( "Server " + serverName + " has no instance named " + instanceName);
         }
-
 
         // XXX This driver doesn't properly support TDS 5.0, AFAIK.
         // Added 2000-06-07.
@@ -282,9 +286,9 @@ public class Tds implements TdsDefinitions {
      */
 
     /**
-     *  Return the type of server that we attempted to connect to.
+     * Return the type of server that we attempted to connect to.
      *
-     *@return    TdsDefinitions.SYBASE or TdsDefinitions.SQLSERVER
+     * @return    TdsDefinitions.SYBASE or TdsDefinitions.SQLSERVER
      */
     public int getServerType()
     {
@@ -293,24 +297,23 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Create a new and unique name for a store procedure. This routine will
-     *  return a unique name for a stored procedure that will be associated with
-     *  a PreparedStatement(). <p>
+     * Create a new and unique name for a store procedure. This routine will
+     * return a unique name for a stored procedure that will be associated with
+     * a PreparedStatement().
+     * <p>
+     * Since SQLServer supports temporary procedure names we can just use
+     * UniqueId.getUniqueId() to generate a unique (for the connection) name.
+     * <p>
+     * Sybase does not support temporary procedure names so we will have to
+     * have a per user table devoted to storing user specific stored
+     * procedures. The table name will be of the form
+     * database.user.jdbc_temp_stored_proc_names. The table will be defined as
+     * <code>CREATE TABLE database.user.jdbc_temp_stored_proc_names ( id
+     * NUMERIC(10, 0) IDENTITY; session int not null; name char(29) )</code>
+     * This routine will use that table to track names that are being used.
      *
-     *  Since SQLServer supports temporary procedure names we can just use
-     *  UniqueId.getUniqueId() to generate a unique (for the connection) name.
-     *  <p>
-     *
-     *  Sybase does not support temporary procedure names so we will have to
-     *  have a per user table devoted to storing user specific stored
-     *  procedures. The table name will be of the form
-     *  database.user.jdbc_temp_stored_proc_names. The table will be defined as
-     *  <code>CREATE TABLE database.user.jdbc_temp_stored_proc_names ( id
-     *  NUMERIC(10, 0) IDENTITY; session int not null; name char(29) )</code>
-     *  This routine will use that table to track names that are being used.
-     *
-     *@return                            The UniqueProcedureName value
-     *@exception  java.sql.SQLException  Description of Exception
+     * @return                            The UniqueProcedureName value
+     * @exception  java.sql.SQLException  Description of Exception
      */
     public String getUniqueProcedureName()
              throws java.sql.SQLException
@@ -339,24 +342,21 @@ public class Tds implements TdsDefinitions {
         }
         return result;
     }
-    // peek()
 
     synchronized public byte getByte()
-      throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException
+        throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException
     {
-      return comm.getByte();
-    } // peek()
-
+        return comm.getByte();
+    }
 
     /**
-     *  Determine if the next subpacket is a result set. <p>
+     * Determine if the next subpacket is a result set.
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is a result set.
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is a result set.
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isResultSet()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -372,14 +372,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is a ret stat <p>
+     * Determine if the next subpacket is a ret stat
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is a result row.
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is a return status.
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isRetStat()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -391,13 +390,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is a result row or a computed result row.
-     *  <p>
-     *  This does not eat any input.
+     * Determine if the next subpacket is a result row or a computed result row.
+     * <p>
+     * This does not eat any input.
      *
-     *@return true if the next piece of data to read is a result row.
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is a result row.
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isResultRow()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -409,14 +408,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is an end of result set marker. <p>
+     * Determine if the next subpacket is an end of result set marker.
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is end of result set marker.
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is end of result set marker.
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isEndOfResults()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -428,13 +426,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is a DONEINPROC marker <p>
+     * Determine if the next subpacket is a DONEINPROC marker
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return    <code>true</code> if the next packet is a DONEINPROC packet
-     *@exception net.sourceforge.jtds.jdbc.TdsException
-     *@exception java.io.IOException
+     * @return    <code>true</code> if the next packet is a DONEINPROC packet
+     * @exception net.sourceforge.jtds.jdbc.TdsException
+     * @exception java.io.IOException
      */
     public synchronized boolean isDoneInProc()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -446,14 +444,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is a message packet <p>
+     * Determine if the next subpacket is a message packet
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is message
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is message
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isMessagePacket()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -481,14 +478,13 @@ public class Tds implements TdsDefinitions {
      }
 
     /**
-     *  Determine if the next subpacket is a text update packet <p>
+     * Determine if the next subpacket is a text update packet
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is text update
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is text update
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
      /* strange replaced by paramToken
     public synchronized boolean isTextUpdate()
@@ -501,14 +497,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is an error packet <p>
+     * Determine if the next subpacket is an error packet
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is an error
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is an error
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isErrorPacket()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -519,14 +514,13 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is an procid subpacket <p>
+     * Determine if the next subpacket is an procid subpacket
+     * <p>
+     * This does not eat any input.
      *
-     *  This does not eat any input.
-     *
-     *@return                                            true if the next piece
-     *      of data to read is end of result set marker.
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is a procedure id.
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isProcId()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -541,10 +535,10 @@ public class Tds implements TdsDefinitions {
      *
      * This does not eat any input.
      *
-     *@return     true if the next piece of data to read is end of result set
-     *            marker.
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @return     true if the next piece of data to read is an environment
+     *             change token.
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public synchronized boolean isEnvChange()
         throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -575,7 +569,7 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     * Change the connection level database.
+     * Change the connection transaction isolation level and the database.
      *
      * @param   _database  the database name to change to
      * @return             <code>true</code> if the database accepted the changes, false if rejected.
@@ -621,7 +615,6 @@ public class Tds implements TdsDefinitions {
     {
         return moreResults2;
     }
-    // getUniqueProcedureName()
 
 
     /**
@@ -663,20 +656,13 @@ public class Tds implements TdsDefinitions {
     /**
      *  Execute a stored procedure on the SQLServer <p>
      *
-     *
-     *
-     *@param  procedureName                              Description of
-     *      Parameter
-     *@param  formalParameterList                        Description of
-     *      Parameter
-     *@param  actualParameterList                        Description of
-     *      Parameter
-     *@param  stmt                                       Description of
-     *      Parameter
-     *@param  timeout                                    Description of
-     *      Parameter
-     *@exception  java.sql.SQLException
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
+     * @param  procedureName
+     * @param  formalParameterList
+     * @param  actualParameterList
+     * @param  stmt
+     * @param  timeout
+     * @exception  java.sql.SQLException
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
      */
     public synchronized void executeProcedure(
             String procedureName,
@@ -743,13 +729,16 @@ public class Tds implements TdsDefinitions {
                         nameBytes.length,
                         (byte) 0);
             }
-            // SAfe I think if this is set to 2 it means "more requests"
-            //      More requests can be separated with 0x80
-            comm.appendByte((byte) 0);
-            comm.appendByte((byte) 0);
+            // SAfe I think if this is set to 2 it means "don't return column
+            //      information" (useful for scrollable statements, to reduce
+            //      the amount of data passed around).
+            comm.appendShort((byte) 0);
 
             // Now handle the parameters
             for( i=0; i<formalParameterList.length; i++ ) {
+                // SAfe We could try using actualParameterList here, instead
+                //      of formalParameterList. If it works (although it
+                //      shouldn't) it will solve a lot of problems.
                 byte nativeType = cvtJdbcTypeToNativeType(formalParameterList[i].type);
 
                 comm.appendByte((byte) 0);
@@ -928,8 +917,9 @@ public class Tds implements TdsDefinitions {
                     {
                       if (actualParameterList[i].value == null)
                       {
+                         // SAfe This seems to be completely wrong.
                          comm.appendByte(SYBBITN);  //
-                         comm.appendByte((byte)1);
+                         // comm.appendByte((byte)1);
                          comm.appendByte((byte)0);
                       }
                       else
@@ -1119,10 +1109,10 @@ public class Tds implements TdsDefinitions {
         goToNextResult(new SQLWarningChain());
     }
 
-    public synchronized void discardResultSetOld( Context context )
+    public synchronized void discardResultSetOld()
              throws SQLException, java.io.IOException, TdsException
     {
-        discardResultSet( new PacketRowResult( context ) );
+        discardResultSet( new PacketRowResult( currentContext ) );
     }
 
     public synchronized byte peek()
@@ -1418,7 +1408,7 @@ public class Tds implements TdsDefinitions {
             net.sourceforge.jtds.jdbc.TdsException,
             SQLException
     {
-        return processSubPacket(null);
+        return processSubPacket(currentContext);
     }
 
 
@@ -1582,7 +1572,7 @@ public class Tds implements TdsDefinitions {
         if (charset == null || charset.length() > 30)
             charset = "iso_1";
 
-        if( charset.startsWith("cp") )
+        if( charset.toLowerCase.startsWith("cp") )
             charset = "Cp" + charset.substring(2);
 
         if( !charset.equals(this.charset) )
@@ -2552,15 +2542,12 @@ public class Tds implements TdsDefinitions {
         byte[] empty = new byte[0];
         String appName = this.appName;
 
-        String clientName = getClientName();
-
         //mdb
         boolean ntlmAuth = (domain.length() > 0);
 
         //mdb:begin-change
         short packSize = (short)( 86 + 2 *
-               (clientName.length() +
-                appName.length() +
+               (appName.length() +
                 serverName.length() +
                 libName.length() +
                 _database.length()) );
@@ -2600,8 +2587,7 @@ public class Tds implements TdsDefinitions {
 
         // Hostname
         comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) clientName.length());
-        curPos += clientName.length() * 2;
+        comm.appendTdsShort((short) 0);
 
         // Username
         //mdb: ntlm doesn't send username...
@@ -2671,7 +2657,6 @@ public class Tds implements TdsDefinitions {
         comm.appendTdsInt(packSize);
 
         // Pack up the login values.
-        comm.appendChars(clientName);
         //mdb: for ntlm auth, uname and pwd aren't sent up...
         if( ! ntlmAuth )
         {
@@ -2976,6 +2961,8 @@ public class Tds implements TdsDefinitions {
             columns.setLabel(i, colName);
         }
 
+        currentContext = new Context(columns, encoder);
+
         return new PacketColumnNamesResult(columns);
     }
     // processColumnNames()
@@ -3072,6 +3059,8 @@ public class Tds implements TdsDefinitions {
                     "skipping " + skipLen + " bytes");
         }
 
+        currentContext.getColumnInfo().merge(columns);
+
         return new PacketColumnInfoResult(columns);
     }
     // processColumnInfo
@@ -3137,12 +3126,6 @@ public class Tds implements TdsDefinitions {
         if (op == (byte)0xC1)
           rowCount = 0;
 
-        /*
-        if (packetType == TdsDefinitions.TDS_DONEINPROC) {
-            throw new TdsException("Internal error.  TDS_DONEINPROC "
-                     + " is no longer considered an end token");
-        }
-         */
         if (packetType == TdsDefinitions.TDS_DONEPROC)
           rowCount = -1;
 
@@ -3362,6 +3345,13 @@ public class Tds implements TdsDefinitions {
 
          long msIntoCurrentDay  = ms % msPerDay;
          long daysIntoUnixEpoch = ms / msPerDay;
+
+         // SAfe This happens with dates prior to 1970 (UNIX epoch)
+         if( msIntoCurrentDay < 0 )
+         {
+            msIntoCurrentDay  += msPerDay;
+            daysIntoUnixEpoch -= 1;
+         }
 
          if( value_in instanceof java.sql.Date )
             msIntoCurrentDay = 0;
@@ -3908,6 +3898,8 @@ public class Tds implements TdsDefinitions {
                 dispSize, bufLength, nullable, autoIncrement, writable,
                 caseSensitive, tableName, precision, scale);
         }
+
+        currentContext = new Context(columns, encoder);
 
         return new PacketColumnNamesResult(columns);
     }
@@ -4749,4 +4741,8 @@ public class Tds implements TdsDefinitions {
         }
     }
 
+    public Context getContext()
+    {
+        return currentContext;
+    }
 }

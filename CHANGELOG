@@ -1,6 +1,11 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+05/02/2004 - Brian Heineman
+ o Updated SQLException handling to set the initCause() method with the
+   initiating exception if the JVM supports it (1.4+).  Otherwise, the
+   inital cause of the exception is ignored (JVM's prior to 1.4). 
+
 05/01/2004 - Brian Heineman
  o Consolidated logic for returning data from result sets and callable
    statements.

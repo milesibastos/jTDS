@@ -49,7 +49,7 @@ import java.sql.SQLException;
  * An in-memory representation of character data.
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.7 2004-04-16 21:14:11 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.8 2004-05-02 22:45:20 bheineman Exp $";
 
     private String _clob;
 
@@ -72,8 +72,7 @@ public class ClobImpl implements Clob {
             return new ByteArrayInputStream(_clob.getBytes("ASCII"));
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw new SQLException("Unexpected encoding exception: "
-                                   + TdsUtil.getException(e));
+            throw TdsUtil.getSQLException("Unexpected encoding exception", null, e);
         }
     }
 
@@ -94,7 +93,7 @@ public class ClobImpl implements Clob {
         try {
             return _clob.substring((int) --pos, length);
         } catch (Exception e) {
-            throw new SQLException(TdsUtil.getException(e));
+            throw TdsUtil.getSQLException(null, null, e);
         }
     }
 
@@ -149,7 +148,7 @@ public class ClobImpl implements Clob {
             clob = _clob.getBytes("ASCII");
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw new SQLException("Unexpected encoding exception: " + TdsUtil.getException(e));
+            throw TdsUtil.getSQLException("Unexpected encoding exception", null, e);
         }
 
         return new ByteArrayOutputStream() {
@@ -221,7 +220,7 @@ public class ClobImpl implements Clob {
             writer.write(str, offset, len);
             writer.close();
         } catch (IOException e) {
-            throw new SQLException("Unable to write value: " + TdsUtil.getException(e));
+            throw TdsUtil.getSQLException("Unable to write value", null, e);
         }
 
         return len;

@@ -32,8 +32,11 @@
 
 package net.sourceforge.jtds.jdbc;
 
+import java.lang.reflect.Method;
+import java.sql.*;
+
 public class TdsUtil {
-    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.5 2004-04-17 03:46:09 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.6 2004-05-02 22:45:21 bheineman Exp $";
 
     private static char hex[] =
             {
@@ -148,19 +151,56 @@ public class TdsUtil {
     }
 
     /**
-     * Returns an exception as a string so that it may be nested in another exception.
-     *
-     * @param the exception to return as a string
-     * @return the string form of an exception
+     * Returns a SQLException and sets the initCause if running with a 1.4+ JVM.
      */
-    public static String getException(Exception exception) {
-        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-        java.io.PrintStream ps = new java.io.PrintStream(baos);
+    public static SQLException getSQLException(String message,
+                                               String sqlState,
+                                               Exception exception) {
+        return getSQLException(message, sqlState, Integer.MIN_VALUE, exception);
+    }
 
-        ps.print("\n");
-        exception.printStackTrace(ps);
+    /**
+     * Returns a SQLException and sets the initCause if running with a 1.4+ JVM.
+     */
+    public static SQLException getSQLException(String message,
+                                               String sqlState,
+                                               int vendorCode,
+                                               Exception exception) {
+        SQLException sqlException;
 
-        return baos.toString();
+        if (exception != null) {
+            if (message == null) {
+                message = exception.getMessage();
+            } else {
+                message += ": " + exception.getMessage();
+            }
+        }
+         
+        if (vendorCode == Integer.MIN_VALUE) {
+            sqlException = new SQLException(message, sqlState);
+        } else {
+            sqlException = new SQLException(message, sqlState, vendorCode);
+        }
+
+        if (exception != null) {
+            Class sqlExceptionClass = sqlException.getClass();
+            Class[] parameterTypes = new Class[] {Throwable.class};
+            Object[] arguments = new Object[] {exception};
+
+            try {
+                Method initCauseMethod = sqlExceptionClass.getMethod("initCause",
+                                                                     parameterTypes);
+
+                initCauseMethod.invoke(sqlException, arguments);
+            } catch (NoSuchMethodException e) {
+                // Ignore; this method does not exist in older JVM's.
+            } catch (Exception e) {
+                // Ignore all other exceptions, do not prevent the main exception
+                // from being returned if reflection fails for any reason...
+            }
+        }
+
+        return sqlException;
     }
 }
 

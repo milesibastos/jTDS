@@ -30,11 +30,11 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.14 2004-04-16 21:14:11 bheineman Exp $
+ * @version    $Id: Driver.java,v 1.15 2004-05-02 22:45:20 bheineman Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.14 2004-04-16 21:14:11 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.15 2004-05-02 22:45:20 bheineman Exp $";
 
     static final int MAJOR_VERSION = 0;
     static final int MINOR_VERSION = 8;
@@ -106,7 +106,7 @@ public class Driver implements java.sql.Driver {
         } catch (NumberFormatException e) {
             throw new SQLException("NumberFormatException converting port number.");
         } catch (TdsException e) {
-            throw new SQLException(TdsUtil.getException(e));
+            throw TdsUtil.getSQLException(null, null, e);
         }
     }
 

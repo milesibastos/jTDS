@@ -43,7 +43,7 @@ import java.sql.*;
  */
 public class Columns
 {
-    public final static String cvsVersion = "$Id: Columns.java,v 1.2 2004-04-16 21:14:11 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.3 2004-05-02 22:45:20 bheineman Exp $";
 
     private Vector columns = null;
     /**
@@ -144,15 +144,11 @@ public class Columns
         ((Column)columns.elementAt(columnNumber-1)).setCaseSensitive(value);
     }
 
-    public void setJdbcType(int columnNumber, int jdbcType) throws SQLException
-    {
-        try
-        {
+    public void setJdbcType(int columnNumber, int jdbcType) throws SQLException {
+        try {
             setNativeType(columnNumber, Tds.cvtJdbcTypeToNativeType(jdbcType));
-        }
-        catch( TdsException e )
-        {
-            throw new SQLException("TDS error- " + TdsUtil.getException(e));
+        } catch (TdsException e) {
+            throw TdsUtil.getSQLException("TDS error", null, e);
         }
     }
 
@@ -228,14 +224,11 @@ public class Columns
 
 
 
-    public int getJdbcType(int index)
-             throws SQLException
-    {
+    public int getJdbcType(int index) throws SQLException {
         try {
             return Tds.cvtNativeTypeToJdbcType(getNativeType(index), getBufferSize(index));
-        }
-        catch (TdsException e) {
-            throw new SQLException("TDS error- " + TdsUtil.getException(e));
+        } catch (TdsException e) {
+            throw TdsUtil.getSQLException("TDS error", null, e);
         }
     }
 

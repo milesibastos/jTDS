@@ -38,7 +38,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.15 2004-05-02 04:08:08 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.16 2004-05-02 22:45:20 bheineman Exp $";
 
     /**
      * Used to normalize date and time values.
@@ -316,8 +316,8 @@ public class ParameterUtils {
                 try {
                     return new Byte(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to Byte: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to Byte", null, e);
                 }
 
             case Types.SMALLINT:
@@ -332,8 +332,8 @@ public class ParameterUtils {
                 try {
                     return new Short(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to Short: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to Short", null, e);
                 }
             case Types.INTEGER:
                 if (value instanceof Integer) {
@@ -347,8 +347,8 @@ public class ParameterUtils {
                 try {
                     return new Integer(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to Integer: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to Integer", null, e);
                 }
             case Types.BIGINT:
                 if (value instanceof Long) {
@@ -362,8 +362,8 @@ public class ParameterUtils {
                 try {
                     return new Long(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to Long: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to Long", null, e);
                 }
             case Types.REAL:
                 if (value instanceof Float) {
@@ -378,8 +378,8 @@ public class ParameterUtils {
                 try {
                     return new Float(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to Float: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to Float", null, e);
                 }
             case Types.FLOAT:
             case Types.DOUBLE:
@@ -394,8 +394,8 @@ public class ParameterUtils {
                 try {
                     return new Double(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to Double: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to Double", null, e);
                 }
             case Types.DATE:
                 synchronized (staticCalendar) {
@@ -468,8 +468,8 @@ public class ParameterUtils {
                 try {
                     return new BigDecimal(value.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw new SQLException("Cannot convert " + value.getClass().getName()
-                                           + " to BigDecimal: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to BigDecimal", null, e);
                 }
             case Types.BLOB:
                 if (value instanceof Blob) {

@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.34 2004-04-22 03:16:39 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.35 2004-05-02 22:45:21 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.34 2004-04-22 03:16:39 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.35 2004-05-02 22:45:21 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -229,8 +229,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                     try {
                         conn.freeTds(tds);
                     } catch (TdsException e) {
-                        warningChain.addException(
-                                new SQLException(TdsUtil.getException(e)));
+                        warningChain.addException(TdsUtil.getSQLException(null, null, e));
                     }
                 }
             }
@@ -347,8 +346,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                     length);
             } catch (java.io.UnsupportedEncodingException e) {
                 // This should never happen...
-                throw new SQLException("Unexpected encoding exception: "
-                    + TdsUtil.getException(e));
+                throw TdsUtil.getSQLException("Unexpected encoding exception", null, e);
             }
         }
     }
@@ -820,8 +818,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                     length);
             } catch (java.io.UnsupportedEncodingException e) {
                 // This should never happen...
-                throw new SQLException("Unexpected encoding exception: "
-                    + TdsUtil.getException(e));
+                throw TdsUtil.getSQLException("Unexpected encoding exception", null, e);
             }
         }
     }

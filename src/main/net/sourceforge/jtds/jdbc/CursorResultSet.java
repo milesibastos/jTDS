@@ -589,8 +589,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 try {
                     conn.freeTds(tds);
                 } catch (TdsException e) {
-                    warningChain.addException(
-                            new SQLException(TdsUtil.getException(e)));
+                    warningChain.addException(TdsUtil.getSQLException(null, null, e));
                 }
 
                 warningChain.checkForExceptions();
@@ -719,8 +718,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 try {
                     conn.freeTds(tds);
                 } catch (TdsException e) {
-                    warningChain.addException(
-                            new SQLException(TdsUtil.getException(e)));
+                    warningChain.addException(TdsUtil.getSQLException(null, null, e));
                 }
 
                 warningChain.checkForExceptions();
@@ -773,8 +771,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 try {
                     conn.freeTds(tds);
                 } catch (TdsException e) {
-                    warningChain.addException(
-                            new SQLException(TdsUtil.getException(e)));
+                    warningChain.addException(TdsUtil.getSQLException(null, null, e));
                 }
 
                 warningChain.checkForExceptions();
@@ -936,8 +933,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 try {
                     conn.freeTds(tds);
                 } catch (TdsException e) {
-                    warningChain.addException(
-                            new SQLException(TdsUtil.getException(e)));
+                    warningChain.addException(TdsUtil.getSQLException(null, null, e));
                 }
 
                 warningChain.checkForExceptions();

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.32 2004-05-01 05:36:40 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.33 2004-05-02 22:45:21 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,7 +66,7 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.32 2004-05-01 05:36:40 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.33 2004-05-02 22:45:21 bheineman Exp $";
 
     protected TdsConnection connection; // The connection that created us
 
@@ -569,9 +569,9 @@ public class TdsStatement implements java.sql.Statement
                 actTds.cancel();
             }
         } catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            throw new SQLException(TdsUtil.getException(e));
+            throw TdsUtil.getSQLException(null, null, e);
         } catch (java.io.IOException e) {
-            throw new SQLException(TdsUtil.getException(e));
+            throw TdsUtil.getSQLException(null, null, e);
         }
     }
 
@@ -749,7 +749,7 @@ public class TdsStatement implements java.sql.Statement
                 if (e instanceof SQLException) {
                     throw (SQLException) e;
                 } else {
-                    throw new SQLException("Network error: " + TdsUtil.getException(e));
+                    throw TdsUtil.getSQLException("Network error", null, e);
                 }
             }
         }
@@ -930,7 +930,7 @@ public class TdsStatement implements java.sql.Statement
             System.arraycopy(updateCounts, 0, tmpUpdateCounts, 0, i + 1);
 
             tmpUpdateCounts[i] = EXECUTE_FAILED;
-            throw new BatchUpdateException(TdsUtil.getException(e), tmpUpdateCounts);
+            throw new BatchUpdateException(e.getMessage(), tmpUpdateCounts);
         } finally {
             clearBatch();
         }
@@ -1129,13 +1129,12 @@ public class TdsStatement implements java.sql.Statement
                     this.results.close();
                     this.results = null;
                 } else {
-                    throw new SQLException(
-                            "Expected generated keys ResultSet.");
+                    throw new SQLException("Expected generated keys ResultSet.");
                 }
             } catch (SQLException e) {
                 throw e;
             } catch (Exception e) {
-                throw new SQLException(TdsUtil.getException(e));
+                throw TdsUtil.getSQLException(null, null, e);
             } finally {
                 this.results = null; // Tidy up.
                 this.updateCount = saveCount; // Restore original count.

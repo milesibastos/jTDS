@@ -93,10 +93,10 @@ public class LOBTest extends TestBase {
         InputStream is = rs.getBinaryStream(1);
         byte[] isTmpData = new byte[data.length];
 
-        assertEquals(is.read(isTmpData), data.length);
-        assertEquals(is.read(), -1);
+        assertEquals(data.length, is.read(isTmpData));
+        assertEquals(-1, is.read());
         assertTrue(Arrays.equals(data, isTmpData));
-
+        
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
 
@@ -114,7 +114,7 @@ public class LOBTest extends TestBase {
         InputStream is2 = blob.getBinaryStream();
         compareInputStreams(new ByteArrayInputStream(data), is2);
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -151,7 +151,7 @@ public class LOBTest extends TestBase {
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -179,7 +179,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs.getBytes(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -209,17 +209,17 @@ public class LOBTest extends TestBase {
         data = getNewBlobTestData();
 
         // Test Blob.setBytes()
-        blob.setBytes((long) 1, data);
+        blob.setBytes(1, data);
 
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         PreparedStatement pstmt2 = con.prepareStatement("UPDATE #blobset2 SET data = ?");
 
         // Test PreparedStatement.setBlob()
         pstmt2.setBlob(1, blob);
-        assertEquals(pstmt2.executeUpdate(), 1);
+        assertEquals(1, pstmt2.executeUpdate());
 
         pstmt2.close();
 
@@ -234,7 +234,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs2.getBytes(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt3.close();
         rs2.close();
     }
@@ -262,7 +262,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs.getBytes(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -292,17 +292,17 @@ public class LOBTest extends TestBase {
         data = getNewBlobTestData();
 
         // Test Blob.setBytes()
-        blob.setBytes((long) 1, data);
+        blob.setBytes(1, data);
 
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         PreparedStatement pstmt2 = con.prepareStatement("UPDATE #blobset4 SET data = ?");
 
         // Test PreparedStatement.setObject(int,Blob)
         pstmt2.setObject(1, blob);
-        assertEquals(pstmt2.executeUpdate(), 1);
+        assertEquals(1, pstmt2.executeUpdate());
 
         pstmt2.close();
 
@@ -317,7 +317,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs2.getBytes(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt3.close();
         rs2.close();
     }
@@ -345,7 +345,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs.getBytes(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -373,7 +373,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs.getBytes(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -403,17 +403,17 @@ public class LOBTest extends TestBase {
         data = getNewBlobTestData();
 
         // Test Blob.setBytes()
-        blob.setBytes((long) 1, data);
+        blob.setBytes(1, data);
 
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         PreparedStatement pstmt2 = con.prepareStatement("UPDATE #blobset7 SET data = ?");
 
         // Test PreparedStatement.setObject(int,Blob,int)
         pstmt2.setObject(1, blob, Types.BLOB);
-        assertEquals(pstmt2.executeUpdate(), 1);
+        assertEquals(1, pstmt2.executeUpdate());
 
         pstmt2.close();
 
@@ -428,7 +428,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs2.getBytes(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt3.close();
         rs2.close();
     }
@@ -462,7 +462,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs2.getBytes(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -497,7 +497,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs2.getBytes(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -528,11 +528,11 @@ public class LOBTest extends TestBase {
         data = getNewBlobTestData();
 
         // Test Blob.setBytes()
-        blob.setBytes((long) 1, data);
+        blob.setBytes(1, data);
 
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #blobupdate3");
@@ -544,7 +544,7 @@ public class LOBTest extends TestBase {
 
         rs2.updateRow();
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
 
         stmt2.close();
         rs.close();
@@ -560,7 +560,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs3.getBytes(1)));
 
-        assertTrue(!rs3.next());
+        assertFalse(rs3.next());
         stmt4.close();
         rs3.close();
     }
@@ -591,11 +591,11 @@ public class LOBTest extends TestBase {
         data = getNewBlobTestData();
 
         // Test Blob.setBytes()
-        blob.setBytes((long) 1, data);
+        blob.setBytes(1, data);
 
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #blobupdate4");
@@ -607,7 +607,7 @@ public class LOBTest extends TestBase {
 
         rs2.updateRow();
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
 
         stmt2.close();
         rs.close();
@@ -623,7 +623,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBytes()
         assertTrue(Arrays.equals(data, rs3.getBytes(1)));
 
-        assertTrue(!rs3.next());
+        assertFalse(rs3.next());
         stmt4.close();
         rs3.close();
     }
@@ -662,7 +662,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -701,7 +701,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -740,7 +740,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -782,7 +782,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -821,7 +821,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -860,7 +860,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -905,7 +905,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -950,7 +950,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -995,7 +995,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -1040,7 +1040,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -1085,7 +1085,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -1121,7 +1121,7 @@ public class LOBTest extends TestBase {
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1158,7 +1158,7 @@ public class LOBTest extends TestBase {
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, tmpData.length)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1196,7 +1196,7 @@ public class LOBTest extends TestBase {
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(2L, tmpData.length)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1229,7 +1229,7 @@ public class LOBTest extends TestBase {
         // Test Blob.length()
         assertEquals(data.length, blob.length());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1270,7 +1270,7 @@ public class LOBTest extends TestBase {
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, (int) blob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1334,7 +1334,7 @@ public class LOBTest extends TestBase {
         Reader rdr2 = rs.getCharacterStream(1);
         compareReaders(new StringReader(data), rdr2);
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1371,7 +1371,7 @@ public class LOBTest extends TestBase {
         // Test Clob.getSubString()
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1399,7 +1399,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs.getString(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1427,7 +1427,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs.getString(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1457,17 +1457,17 @@ public class LOBTest extends TestBase {
         data = getNewClobTestData();
 
         // Test Clob.setBytes()
-        clob.setString((long) 1, data);
+        clob.setString(1, data);
 
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         PreparedStatement pstmt2 = con.prepareStatement("UPDATE #clobset3 SET data = ?");
 
         // Test PreparedStatement.setClob()
         pstmt2.setClob(1, clob);
-        assertEquals(pstmt2.executeUpdate(), 1);
+        assertEquals(1, pstmt2.executeUpdate());
 
         pstmt2.close();
 
@@ -1482,7 +1482,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs2.getString(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt3.close();
         rs2.close();
     }
@@ -1510,7 +1510,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs.getString(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1538,7 +1538,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs.getString(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1568,17 +1568,17 @@ public class LOBTest extends TestBase {
         data = getNewClobTestData();
 
         // Test Clob.setBytes()
-        clob.setString((long) 1, data);
+        clob.setString(1, data);
 
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         PreparedStatement pstmt2 = con.prepareStatement("UPDATE #clobset6 SET data = ?");
 
         // Test PreparedStatement.setObject(int,Clob)
         pstmt2.setObject(1, clob);
-        assertEquals(pstmt2.executeUpdate(), 1);
+        assertEquals(1, pstmt2.executeUpdate());
 
         pstmt2.close();
 
@@ -1593,7 +1593,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs2.getString(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt3.close();
         rs2.close();
     }
@@ -1621,7 +1621,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs.getString(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1637,7 +1637,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -1651,17 +1651,17 @@ public class LOBTest extends TestBase {
         data = getNewClobTestData();
 
         // Test Clob.setBytes()
-        clob.setString((long) 1, data);
+        clob.setString(1, data);
 
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         PreparedStatement pstmt2 = con.prepareStatement("UPDATE #clobset8 SET data = ?");
 
         // Test PreparedStatement.setObject(int,Clob,int)
         pstmt2.setObject(1, clob, Types.CLOB);
-        assertEquals(pstmt2.executeUpdate(), 1);
+        assertEquals(1, pstmt2.executeUpdate());
 
         pstmt2.close();
 
@@ -1676,7 +1676,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs2.getString(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt3.close();
         rs2.close();
     }
@@ -1710,7 +1710,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs2.getString(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -1744,7 +1744,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs2.getString(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -1778,7 +1778,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs2.getString(1)));
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -1795,7 +1795,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -1809,11 +1809,11 @@ public class LOBTest extends TestBase {
         data = getNewClobTestData();
 
         // Test Clob.setBytes()
-        clob.setString((long) 1, data);
+        clob.setString(1, data);
 
         assertTrue(data.equals(clob.getSubString(1, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #clobupdate4");
@@ -1825,7 +1825,7 @@ public class LOBTest extends TestBase {
 
         rs2.updateRow();
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
 
         stmt2.close();
         rs.close();
@@ -1841,7 +1841,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs3.getString(1)));
 
-        assertTrue(!rs3.next());
+        assertFalse(rs3.next());
         stmt4.close();
         rs3.close();
     }
@@ -1858,7 +1858,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -1872,11 +1872,11 @@ public class LOBTest extends TestBase {
         data = getNewClobTestData();
 
         // Test Clob.setBytes()
-        clob.setString((long) 1, data);
+        clob.setString(1, data);
 
         assertTrue(data.equals(clob.getSubString(1, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #clobupdate5");
@@ -1888,7 +1888,7 @@ public class LOBTest extends TestBase {
 
         rs2.updateRow();
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
 
         stmt2.close();
         rs.close();
@@ -1904,7 +1904,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getString()
         assertTrue(data.equals(rs3.getString(1)));
 
-        assertTrue(!rs3.next());
+        assertFalse(rs3.next());
         stmt4.close();
         rs3.close();
     }
@@ -1918,7 +1918,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setAsciiStream()
         pstmt.setAsciiStream(1, null, 0);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -1951,7 +1951,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -1965,7 +1965,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setCharacterStream()
         pstmt.setCharacterStream(1, null, 0);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -1998,7 +1998,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2012,7 +2012,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setClob()
         pstmt.setClob(1, null);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2045,7 +2045,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2059,7 +2059,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Object)
         pstmt.setObject(1, null);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2092,7 +2092,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2106,7 +2106,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Object,int)
         pstmt.setObject(1, null, Types.CLOB);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2139,7 +2139,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2153,7 +2153,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, null);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2186,7 +2186,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2200,7 +2200,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setUnicodeStream()
         pstmt.setUnicodeStream(1, null, 0);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2233,7 +2233,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2247,7 +2247,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setNull()
         pstmt.setNull(1, Types.CLOB);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2280,7 +2280,7 @@ public class LOBTest extends TestBase {
         assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2333,7 +2333,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -2386,7 +2386,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -2439,7 +2439,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -2492,7 +2492,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -2545,7 +2545,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -2598,7 +2598,7 @@ public class LOBTest extends TestBase {
         assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
-        assertTrue(!rs2.next());
+        assertFalse(rs2.next());
         stmt2.close();
         rs2.close();
     }
@@ -2613,7 +2613,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2630,7 +2630,7 @@ public class LOBTest extends TestBase {
         // Test Clob.getSubString()
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2645,7 +2645,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring2 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2664,7 +2664,7 @@ public class LOBTest extends TestBase {
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(1L, tmpData.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2679,7 +2679,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring3 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2699,7 +2699,7 @@ public class LOBTest extends TestBase {
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(2L, tmpData.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2714,7 +2714,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #cloblength1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2731,7 +2731,7 @@ public class LOBTest extends TestBase {
         // Test Clob.length()
         assertEquals(data.length(), clob.length());
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -2746,7 +2746,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobtruncate1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -2769,7 +2769,7 @@ public class LOBTest extends TestBase {
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(1L, (int) clob.length())));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }

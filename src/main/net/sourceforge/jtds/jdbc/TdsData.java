@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.21 2004-08-24 17:45:01 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.22 2004-08-24 21:47:38 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -269,7 +269,6 @@ public class TdsData {
         ci.displaySize = -1;
         ci.tableName = "";
         ci.bufferSize = types[type].size;
-        ci.nullable = java.sql.ResultSetMetaData.columnNoNulls;
 
         // Now get the buffersize if required
         if (ci.bufferSize == -5) {
@@ -317,7 +316,6 @@ public class TdsData {
 
         // Now fine tune sizes for specific types
         if (type == SYBDATETIMN) {
-            ci.nullable = java.sql.ResultSetMetaData.columnNullable;
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBDATETIME].displaySize;
@@ -328,7 +326,6 @@ public class TdsData {
                 ci.sqlType = types[SYBDATETIME4].sqlType;
             }
         } else if (type == SYBFLTN) {
-            ci.nullable = java.sql.ResultSetMetaData.columnNullable;
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBFLT8].displaySize;
@@ -340,7 +337,6 @@ public class TdsData {
                 ci.sqlType = types[SYBREAL].sqlType;
             }
         } else if (type == SYBINTN) {
-            ci.nullable = java.sql.ResultSetMetaData.columnNullable;
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBINT8].displaySize;
@@ -362,7 +358,6 @@ public class TdsData {
                 ci.sqlType = types[SYBINT1].sqlType;
             }
         } else if (type == SYBMONEYN) {
-            ci.nullable = java.sql.ResultSetMetaData.columnNullable;
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBMONEY].displaySize;
@@ -373,7 +368,7 @@ public class TdsData {
                 ci.sqlType = types[SYBMONEY4].sqlType;
             }
         }
-
+        
         // Set sizes for character types
         if (ci.precision == -1) {
             ci.precision = ci.bufferSize;
@@ -393,15 +388,12 @@ public class TdsData {
             ci.scale = in.read();
             ci.displaySize = ((ci.scale > 0) ? 2 : 1) + ci.precision;
             bytesRead += 2;
-            StringBuffer tmp = new StringBuffer(16);
-            tmp.append(types[type].sqlType).append('(').append(ci.precision);
+            ci.sqlType = types[type].sqlType;
+        }
 
-            if (ci.scale > 0) {
-                tmp.append(',').append(ci.scale);
-            }
-
-            tmp.append(')');
-            ci.sqlType = tmp.toString();
+        // For numeric types add 'identity' for auto inc data type
+        if (ci.isIdentity) {
+            ci.sqlType += " identity";
         }
 
         return bytesRead;
@@ -663,7 +655,9 @@ public class TdsData {
             throw new IllegalArgumentException("TDS data type " + type
                     + " invalid");
         }
-
+        if (type == TdsData.SYBINTN && ci.bufferSize == 1) {
+            type = TdsData.SYBINT1; // Tiny int is not signed!
+        }
         return types[type].isSigned;
     }
 
@@ -1040,7 +1034,6 @@ public class TdsData {
                                boolean isWideChar,
                                ParamInfo pi)
     throws IOException, SQLException {
-        int len;
 
         switch (pi.tdsType) {
 
@@ -1729,9 +1722,6 @@ public class TdsData {
      * @return The julian date adjusted for Sybase epoch of 1900.
      */
     private static int calendarToSybase(int year, int month, int day) {
-        int i = year;
-        int j = month;
-        int k = day;
 
         return day - 32075 + 1461 * (year + 4800 + (month - 14) / 12) /
         4 + 367 * (month - 2 - (month - 14) / 12 * 12) /

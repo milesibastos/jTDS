@@ -59,12 +59,12 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).byteValue() == 1);
-        assertEquals(rs.getString(1), "1");
+        assertEquals("1", rs.getString(1));
 
         Object tmpData = rs.getObject(1);
 
         assertTrue(tmpData instanceof Boolean);
-        assertEquals(((Boolean) tmpData).booleanValue(), true);
+        assertEquals(true, ((Boolean) tmpData).booleanValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
@@ -111,12 +111,12 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).byteValue() == 1);
-        assertEquals(rs.getString(1), "1");
+        assertEquals("1", rs.getString(1));
 
         Object tmpData = rs.getObject(1);
 
         assertTrue(tmpData instanceof Integer);
-        assertTrue(data == ((Integer) tmpData).byteValue());
+        assertEquals(data, ((Integer) tmpData).byteValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
@@ -163,12 +163,12 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).shortValue() == 1);
-        assertEquals(rs.getString(1), "1");
+        assertEquals("1", rs.getString(1));
 
         Object tmpData = rs.getObject(1);
 
         assertTrue(tmpData instanceof Integer);
-        assertTrue(data == ((Integer) tmpData).shortValue());
+        assertEquals(data, ((Integer) tmpData).shortValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
@@ -215,12 +215,12 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).intValue() == 1);
-        assertEquals(rs.getString(1), "1");
+        assertEquals("1", rs.getString(1));
 
         Object tmpData = rs.getObject(1);
 
         assertTrue(tmpData instanceof Integer);
-        assertTrue(data == ((Integer) tmpData).intValue());
+        assertEquals(data, ((Integer) tmpData).intValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
@@ -267,12 +267,12 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).longValue() == 1);
-        assertEquals(rs.getString(1), "1");
+        assertEquals("1", rs.getString(1));
 
         Object tmpData = rs.getObject(1);
 
         //assertTrue(tmpData instanceof Long);
-        //assertTrue(data == ((Long) tmpData).longValue());
+        //assertEquals(data, ((Long) tmpData).longValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
@@ -340,7 +340,7 @@ public class ResultSetTest extends TestBase {
 
         assertNotNull(rs);
         assertTrue(rs.next());
-        assertEquals(rs.getInt(1), 1);
+        assertEquals(1, rs.getInt(1));
         assertFalse(rs.next());
 
         stmt2.close();
@@ -405,6 +405,76 @@ public class ResultSetTest extends TestBase {
         
         stmt.close();
         rs.close();
+    }
+
+    /**
+     * Test for bug [1009233] ResultSet getColumnName, getColumnLabel return wrong values
+     */
+    public void testResultSetColumnName1() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #resultSetCN1 (data INT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetCN1 (data) VALUES (?)");
+
+        pstmt.setInt(1, 1);
+        assertEquals(1, pstmt.executeUpdate());
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        stmt2.executeQuery("SELECT data as test FROM #resultSetCN1");
+
+        ResultSet rs = stmt2.getResultSet();
+
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt("test"));
+        assertFalse(rs.next());
+
+        stmt2.close();
+        rs.close();
+    }
+    
+    /** 
+     * Test for fixed bugs in ResultSetMetaData:
+     * <ol>
+     * <li>isNullable() always returns columnNoNulls.
+     * <li>isSigned returns true in error for TINYINT columns.
+     * <li>Type names for numeric / decimal have (prec,scale) appended in error.
+     * <li>Type names for auto increment columns do not have "identity" appended.
+     * </ol>
+     * NB: This test assumes getColumnName has been fixed to work as per the suggestion
+     * in bug report [1009233].
+     * 
+     * @throws Exception
+     */
+    public void testResultSetMetaData() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        stmt.execute("CREATE TABLE #TRSMD (id INT IDENTITY NOT NULL, byte TINYINT NOT NULL, num DECIMAL(28,10) NULL)");
+        ResultSetMetaData rsmd = stmt.executeQuery("SELECT id as idx, byte, num FROM #TRSMD").getMetaData();
+        assertNotNull(rsmd);
+        // Check id
+        assertEquals("idx", rsmd.getColumnName(1)); // no longer returns base name
+        assertEquals("idx", rsmd.getColumnLabel(1));
+        assertTrue(rsmd.isAutoIncrement(1));
+        assertTrue(rsmd.isSigned(1));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(1));
+        assertEquals("int identity", rsmd.getColumnTypeName(1));
+        assertEquals(Types.INTEGER, rsmd.getColumnType(1));
+        // Check byte
+        assertFalse(rsmd.isAutoIncrement(2));
+        assertFalse(rsmd.isSigned(2));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(2));
+        assertEquals("tinyint", rsmd.getColumnTypeName(2));
+        assertEquals(Types.TINYINT, rsmd.getColumnType(2));
+        // Check num
+        assertFalse(rsmd.isAutoIncrement(3));
+        assertTrue(rsmd.isSigned(3));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(3));
+        assertEquals("decimal", rsmd.getColumnTypeName(3));
+        assertEquals(Types.DECIMAL, rsmd.getColumnType(3));
+        stmt.close();
     }
     
     public static void main(String[] args) {

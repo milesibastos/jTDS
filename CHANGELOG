@@ -4,6 +4,13 @@ Changes from jTDS 0.9-rc1
 08/24/2004 - Brian Heineman
  o Corrected JDBC compliance test files per Mike Hutchinson's recommendations:
    http://sourceforge.net/forum/message.php?msg_id=2724244
+ o Corrected bug [1009233] ResultSet getColumnName, getColumnLabel return wrong
+   values; (thanks to Mike Hutchinson for the fix).
+ o Added test for bug [1009233] ResultSet getColumnName, getColumnLabel return
+   wrong values.
+ o Corrected bug [1015543] ResultSetMetaData.isNullable always returns
+   columnNoNulls; (thanks to Mike Hutchinson for the bug report and patch).
+ o Miscellaneous test clean up.
 
 08/22/2004 - Brian Heineman
  o Corrected bug [1013749] Driver does not support params inside escapes;

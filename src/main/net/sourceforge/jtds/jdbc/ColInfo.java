@@ -27,17 +27,17 @@ package net.sourceforge.jtds.jdbc;
  *      As the class is package private this seems reasonable.
  *
  * @author Mike Hutchinson
- * @version $Id: ColInfo.java,v 1.2 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: ColInfo.java,v 1.3 2004-08-24 21:47:38 bheineman Exp $
  */
 public class ColInfo {
     /** Internal TDS data type */
     int tdsType;
     /** JDBC type constant from java.sql.Types */
     int jdbcType;
-    /** Column name */
+    /** Column actual table name */
+    String realName;
+    /** Column label / name */
     String name;
-    /** Column label */
-    String label;
     /** Table name owning this column */
     String tableName;
     /** Database owning this column */

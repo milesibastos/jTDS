@@ -2,7 +2,7 @@
 # A simple sh script to run ant
 #
 
-export JAVA_HOME=/usr/java/jdk1.3.1_01
+#export JAVA_HOME=/usr/java/jdk1.3.1_01
 
 LCP=$JAVA_HOME/lib/tools.jar
 for i in `ls lib/*.jar`

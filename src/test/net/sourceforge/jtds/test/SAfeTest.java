@@ -900,7 +900,7 @@ public class SAfeTest extends DatabaseTestCase {
         }
 
         pstmt.setBigDecimal(2, maxval);
-        pstmt.setBigDecimal(3, new BigDecimal((double)(1.0 / 3.0))); // Scale > 38
+        pstmt.setBigDecimal(3, new BigDecimal(1.0 / 3.0)); // Scale > 38
         pstmt.setBigDecimal(4, new BigDecimal("12345.56789"));
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.7 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: RequestStream.java,v 1.8 2004-08-24 21:47:39 bheineman Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -468,10 +468,10 @@ public class RequestStream {
             }
 
             if (serverType == Driver.SYBASE) {
-                write((byte)len);
+                write((byte) len);
                 // Sybase TDS5 stores MSB first opposite sign!
                 // length, prec, scale already sent in parameter descriptor.
-                write((byte) ((signum == 0)? 1: 0));
+                write((byte) ((signum == 0) ? 1 : 0));
 
                 for (int i = 0; i < mantisse.length; i++) {
                     write((byte) mantisse[i]);

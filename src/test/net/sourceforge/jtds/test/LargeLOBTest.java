@@ -79,7 +79,7 @@ public class LargeLOBTest extends TestBase {
         compareInputStreams(bis, rs.getBinaryStream(1));
         bis.close();
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
         

@@ -19,9 +19,6 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import net.sourceforge.jtds.jdbc.DefaultProperties;
-import net.sourceforge.jtds.jdbc.Messages;
-import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

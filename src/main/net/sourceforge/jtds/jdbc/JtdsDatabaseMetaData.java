@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.10 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.11 2004-08-24 21:47:39 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1769,10 +1769,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
-        JtdsResultSet rs = (JtdsResultSet)
-                           new DummyResultSet(dummyStmt,
-                                              columns,
-                                              null);
+        JtdsResultSet rs = new DummyResultSet(dummyStmt, columns, null);
         for (int i = 0; i < 6; i++) {
             int column = i + 1;
 

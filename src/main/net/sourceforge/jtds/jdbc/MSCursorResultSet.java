@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.14 2004-08-24 17:45:01 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.15 2004-08-24 21:47:38 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -749,7 +749,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                     pi.jdbcType = col.jdbcType;
                     pi.value = row[i].getValue();
                     pi.length = row[i].getLength();
-                    pi.name = '@' + col.name;
+                    pi.name = '@' + col.realName;
                     pi.bufferSize = col.bufferSize;
                     pi.scale = col.scale;
                     pi.tdsType = col.tdsType;
@@ -759,7 +759,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                     if (opType == CURSOR_OP_INSERT && row[i].getValue() != null)
                         throw new SQLException(Messages.get("error.resultset.insert",
                                                                   Integer.toString(i + 1),
-                                                                  columns[i].name), "24000");
+                                                                  columns[i].realName), "24000");
                 }
             }
 

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.29 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.30 2004-08-24 21:47:39 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -394,7 +394,7 @@ public class TdsCore {
                 pi.tdsType = ci.tdsType;
                 pi.scale = ci.scale;
                 pi.precision = ci.precision;
-                pi.name = ci.name;
+                pi.name = ci.realName;
                 pi.isOutput = false;
                 pi.jdbcType = ci.jdbcType;
                 pi.sqlType = ci.sqlType;
@@ -1776,8 +1776,8 @@ public class TdsCore {
 
             int clen = in.read();
 
-            col.name = in.readString(clen);
-            col.label = col.name;
+            col.realName = in.readString(clen);
+            col.name = col.realName;
 
             this.columns[i] = col;
         }
@@ -1805,8 +1805,8 @@ public class TdsCore {
 
             bytesRead = bytesRead + 1 + nameLen;
             i++;
-            col.name  = name;
-            col.label = name;
+            col.realName  = name;
+            col.name = name;
 
             colList.add(col);
         }
@@ -1975,7 +1975,7 @@ public class TdsCore {
                     bytesRead += 1;
                     final String colName = in.readString(nameLen);
                     bytesRead += (tdsVersion >= Driver.TDS70)? nameLen * 2: nameLen;
-                    col.name = colName;
+                    col.realName = colName;
                 }
             }
         }
@@ -2386,7 +2386,7 @@ public class TdsCore {
             //
             ColInfo col = new ColInfo();
             int colNameLen = in.read();
-            col.name = in.readString(colNameLen);
+            col.realName = in.readString(colNameLen);
             int column_flags = in.read();   /*  Flags */
             col.isCaseSensitive = false;
             col.nullable    = ((column_flags & 0x20) != 0)?
@@ -2467,8 +2467,8 @@ public class TdsCore {
             //
             ColInfo col = new ColInfo();
             int colNameLen = in.read();
-            col.name  = in.readString(colNameLen);
-            col.label = col.name;
+            col.realName  = in.readString(colNameLen);
+            col.name = col.realName;
             int column_flags = in.read();   /*  Flags */
             col.isCaseSensitive = false;
             col.nullable    = ((column_flags & 0x20) != 0)?

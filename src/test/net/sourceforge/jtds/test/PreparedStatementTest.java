@@ -141,7 +141,7 @@ public class PreparedStatementTest extends TestBase {
 
         assertTrue(data.equals(rs.getString(1)));
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         rs.close();
     }
 
@@ -159,7 +159,7 @@ public class PreparedStatementTest extends TestBase {
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psr1 (data) VALUES (?)");
 
             pstmt.setBoolean(1, true);
-            assertEquals(pstmt.executeUpdate(), 1);
+            assertEquals(1, pstmt.executeUpdate());
             pstmt.close();
 
             con.rollback();
@@ -167,7 +167,7 @@ public class PreparedStatementTest extends TestBase {
             stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT data FROM ##psr1");
 
-            assertTrue(!rs.next());
+            assertFalse(rs.next());
 
             rs.close();
             con.close();
@@ -203,7 +203,7 @@ public class PreparedStatementTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso1 (data) VALUES (?)");
 
         pstmt.setObject(1, data);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         stmt = con.createStatement();
@@ -212,7 +212,7 @@ public class PreparedStatementTest extends TestBase {
 
         assertTrue(rs.next());
         assertEquals(data.doubleValue(), rs.getDouble(1), 0);
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         rs.close();
     }
 
@@ -229,7 +229,7 @@ public class PreparedStatementTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso2 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.NUMERIC);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         stmt = con.createStatement();
@@ -238,7 +238,7 @@ public class PreparedStatementTest extends TestBase {
 
         assertTrue(rs.next());
         assertEquals(data.doubleValue(), rs.getDouble(1), 0);
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         rs.close();
     }
 
@@ -255,7 +255,7 @@ public class PreparedStatementTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso3 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.DECIMAL);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         stmt = con.createStatement();
@@ -264,7 +264,7 @@ public class PreparedStatementTest extends TestBase {
 
         assertTrue(rs.next());
         assertEquals(data.doubleValue(), rs.getDouble(1), 0);
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         rs.close();
     }
 
@@ -281,7 +281,7 @@ public class PreparedStatementTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso4 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.NUMERIC, 4);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         stmt = con.createStatement();
@@ -290,7 +290,7 @@ public class PreparedStatementTest extends TestBase {
 
         assertTrue(rs.next());
         assertEquals(data.doubleValue(), rs.getDouble(1), 0);
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         rs.close();
     }
 
@@ -307,7 +307,7 @@ public class PreparedStatementTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso5 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.DECIMAL, 4);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         stmt = con.createStatement();
@@ -316,7 +316,7 @@ public class PreparedStatementTest extends TestBase {
 
         assertTrue(rs.next());
         assertEquals(data.doubleValue(), rs.getDouble(1), 0);
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         rs.close();
     }
 
@@ -334,7 +334,7 @@ public class PreparedStatementTest extends TestBase {
 
         for (int i = 1; i <= count; i++) {
             pstmt.setInt(1, i);
-            assertEquals(pstmt.executeUpdate(), 1);
+            assertEquals(1, pstmt.executeUpdate());
         }
 
         pstmt.close();
@@ -343,14 +343,14 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM ##updateCount1");
 
         assertTrue(rs.next());
-        assertEquals(rs.getInt(1), count);
-        assertTrue(!rs.next());
+        assertEquals(count, rs.getInt(1));
+        assertFalse(rs.next());
 
         stmt.close();
         rs.close();
 
         pstmt = con.prepareStatement("DELETE FROM ##updateCount1");
-        assertEquals(pstmt.executeUpdate(), count);
+        assertEquals(count, pstmt.executeUpdate());
         pstmt.close();
 
     }

@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.13 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.14 2004-08-24 21:47:38 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -177,7 +177,7 @@ public class JtdsResultSet implements ResultSet {
                     + colIndex + " invalid");
         }
 
-        columns[colIndex - 1].name = name;
+        columns[colIndex - 1].realName = name;
     }
 
     /**
@@ -192,7 +192,7 @@ public class JtdsResultSet implements ResultSet {
                     + colIndex + " invalid");
         }
 
-        columns[colIndex - 1].label = name;
+        columns[colIndex - 1].name = name;
     }
 
     /**

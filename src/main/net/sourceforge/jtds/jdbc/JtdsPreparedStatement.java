@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.13 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.14 2004-08-24 21:47:39 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -579,8 +579,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         //
         // NB. This is usable only with the JDBC3 version of the interface.
         //
-        if (connection.getServerType() == Driver.SYBASE
-            && this instanceof JtdsPreparedStatement) {
+        if (connection.getServerType() == Driver.SYBASE) {
             // Sybase does return the parameter types for prepared sql.
             connection.prepareSQL(this, sql, new ParamInfo[0], false);
         }

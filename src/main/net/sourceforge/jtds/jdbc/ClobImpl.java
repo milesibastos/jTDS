@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.19 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.20 2004-08-24 21:47:39 bheineman Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -70,7 +70,7 @@ public class ClobImpl implements Clob {
             throw new IllegalArgumentException("clob cannot be null.");
         }
 
-        _clob = (String) clob;
+        _clob = clob;
         _connection = getConnection(callerReference);
     }
 

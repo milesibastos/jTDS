@@ -1,34 +1,34 @@
-//                                                                            
-// Copyright 1998 CDS Networks, Inc., Medford Oregon                          
-//                                                                            
-// All rights reserved.                                                       
-//                                                                            
-// Redistribution and use in source and binary forms, with or without         
+//
+// Copyright 1998 CDS Networks, Inc., Medford Oregon
+//
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright          
-//    notice, this list of conditions and the following disclaimer.           
-// 2. Redistributions in binary form must reproduce the above copyright       
-//    notice, this list of conditions and the following disclaimer in the     
-//    documentation and/or other materials provided with the distribution.    
-// 3. All advertising materials mentioning features or use of this software   
-//    must display the following acknowledgement:                             
-//      This product includes software developed by CDS Networks, Inc.        
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote   
-//    products derived from this software without specific prior              
-//    written permission.                                                     
-//                                                                            
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND              
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE      
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE            
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS    
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)      
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY  
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     
-// SUCH DAMAGE.                                                               
-//                                                                            
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. All advertising materials mentioning features or use of this software
+//    must display the following acknowledgement:
+//      This product includes software developed by CDS Networks, Inc.
+// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
+//    products derived from this software without specific prior
+//    written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
 
 
 package com.internetcds.jdbc.tds;
@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.4 2001-09-17 09:32:35 skizz Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.4 2001-09-17 09:32:35 skizz Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -63,15 +63,15 @@ interface TdsDefinitions
    //
    // Sub packet types
    //
-   static final byte TDS_RET_STAT_TOKEN  = (byte)0x79; // 121 
+   static final byte TDS_RET_STAT_TOKEN  = (byte)0x79; // 121
    static final byte TDS_PROCID          = (byte)0x7C; // 124 TDS_PROCID
    static final byte TDS7_RESULT_TOKEN   = (byte)129;   // 0x81 TDS 7.0 only
    static final byte TDS_COL_NAME_TOKEN  = (byte)0xA0;  // 160 TDS 4.2 only
-   static final byte TDS_COL_INFO_TOKEN  = (byte)161;  // 0xA1 TDS 4.2 only 
-   static final byte TDS_TABNAME         = (byte)164;  // 0xA4 
+   static final byte TDS_COL_INFO_TOKEN  = (byte)161;  // 0xA1 TDS 4.2 only
+   static final byte TDS_TABNAME         = (byte)164;  // 0xA4
    static final byte TDS_UNKNOWN_0xA5    = (byte)0xA5;  // 0xA5
-   static final byte TDS_UNKNOWN_0xA7    = (byte)0xA7; // 
-   static final byte TDS_UNKNOWN_0xA8    = (byte)0xA8; // 
+   static final byte TDS_UNKNOWN_0xA7    = (byte)0xA7; //
+   static final byte TDS_UNKNOWN_0xA8    = (byte)0xA8; //
    static final byte TDS_ORDER           = (byte)169;  // 0xA9 TDS_ORDER
    static final byte TDS_ERR_TOKEN       = (byte)170;  // 0xAA
    static final byte TDS_MSG_TOKEN       = (byte)171;  // 0xAB
@@ -79,7 +79,9 @@ interface TdsDefinitions
    static final byte TDS_LOGIN_ACK_TOKEN = (byte)173;   // 0xAD
    static final byte TDS_CONTROL         = (byte)174;   // 0xAE TDS_CONTROL
    static final byte TDS_ROW_TOKEN       = (byte)209;   // 0xD1
-   static final byte TDS_UNKNOWN_0xE2    = (byte)226;   // 0xE2
+   static final byte TDS_CMP_ROW_TOKEN   = (byte)0xD3;  // Compute Result Row
+
+   static final byte TDS_CAP_TOKEN    = (byte)226;   // 0xE2
    static final byte TDS_ENV_CHG_TOKEN   = (byte)227;   // 0xE3
    static final byte TDS_MSG50_TOKEN     = (byte)229;   // 0xE5
    static final byte TDS_RESULT_TOKEN    = (byte)238;   // 0xEE
@@ -100,7 +102,7 @@ interface TdsDefinitions
    static final byte SYBIMAGE       =  34;   // 0x22
    static final byte SYBTEXT        =  35;   // 0x23
    static final byte SYBVARBINARY   =  37;   // 0x25
-   static final byte SYBINTN        =  38;   // 0x26 
+   static final byte SYBINTN        =  38;   // 0x26
    static final byte SYBVARCHAR     =  39;   // 0x27
    static final byte SYBBINARY      =  45;   // 0x2D
    static final byte SYBCHAR        =  47;   // 0x2F
@@ -124,6 +126,6 @@ interface TdsDefinitions
    static final byte SYBMONEY4      = 112;   // 0x70
    static final byte SYBNCHAR       = -17;   // 0xEF
    // XXX should SYBMONEY4 be 122 instead of 112?
-   static final byte SYBSMALLMONEY  = 122;   // 0x7A 
+   static final byte SYBSMALLMONEY  = 122;   // 0x7A
    // end of column types
 }

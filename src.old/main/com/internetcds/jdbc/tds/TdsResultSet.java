@@ -84,7 +84,7 @@ import java.io.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.4 2001-09-17 06:46:47 aschoerk Exp $
+ *@version    $Id: TdsResultSet.java,v 1.5 2001-09-17 09:32:35 skizz Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -109,7 +109,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.4 2001-09-17 06:46:47 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.5 2001-09-17 09:32:35 skizz Exp $";
 
     public Context getContext()
     {
@@ -331,7 +331,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         isClosed = true;
         try {
             if (!hitEndOfData) {
-                tds.discardResultSetOld(context );    // from discardResultSet(null)
+                tds.discardResultSetOld( context );    // from discardResultSet(null)
                 hitEndOfData = true;
                 stmt.eofResults();
             }
@@ -380,7 +380,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
             row++;
             return true;
         }
-        else 
+        else
           rowIndex = -1;   // invalidate current row
 
         return false;
@@ -429,7 +429,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
             }
 
             if (exception != null) {
-              stmt.eofResults();  
+              stmt.eofResults();
               throw exception;
             }
 
@@ -774,7 +774,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
 
     public PacketRowResult currentRow() throws SQLException
     {
-      if (rowIndex < 0) 
+      if (rowIndex < 0)
         throw new SQLException("No current row in the result set");
       else
         if (rowIndex >= rowCount)
@@ -804,6 +804,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         }
 
         if (hitEndOfData) {
+            rowCount = 0;
+            rowIndex = -1;
             return false;
         }
 
@@ -823,7 +825,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         rowCount = 0;
 
-        //Need to set this so that next() wil set it to 0
+        //Need to set this so that next() will set it to 0
         rowIndex = -1;
         do {
 
@@ -839,7 +841,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
 
         return rowCount;
     }
-    
+
     private void reallocCache()
     {
       PacketRowResult[] newCache = new PacketRowResult[fetchSize * 2];
@@ -847,9 +849,9 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
       rowCache = newCache;
       fetchSize *= 2;
     }
-    
+
     void fetchIntoCache() throws SQLException
-    {     
+    {
       if (rowCount == 0) {
         internalFetchRows();
         if (hitEndOfData) return;
@@ -859,7 +861,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         rowCount -= rowIndex;
         rowIndex = 0;
       }
-      else 
+      else
         reallocCache();
       while (!hitEndOfData) {
         do {
@@ -871,8 +873,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
             rowCache[rowCount] = row;
             rowCount++;
 
-        } while (rowCount < fetchSize);        
-        if (!hitEndOfData)         
+        } while (rowCount < fetchSize);
+        if (!hitEndOfData)
           reallocCache();
       }
       return ;

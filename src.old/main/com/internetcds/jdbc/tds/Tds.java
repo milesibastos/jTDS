@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -162,12 +162,12 @@ public class Tds implements TdsDefinitions {
 
     // RMK 2000-06-12.  Time zone offset on client (disregarding DST).
     private int zoneOffset = Calendar.getInstance().get(Calendar.ZONE_OFFSET);
-    
+
     int maxRows = 0;
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -348,12 +348,11 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Determine if the next subpacket is a result row. <p>
-     *
+     *  Determine if the next subpacket is a result row or a computed result row.
+     *  <p>
      *  This does not eat any input.
      *
-     *@return                                            true if the next piece
-     *      of data to read is a result row.
+     *@return true if the next piece of data to read is a result row.
      *@exception  com.internetcds.jdbc.tds.TdsException
      *@exception  java.io.IOException
      */
@@ -362,7 +361,7 @@ public class Tds implements TdsDefinitions {
     {
         byte type = comm.peek();
 
-        return type == TDS_ROW_TOKEN;
+        return type == TDS_ROW_TOKEN /*|| type == TDS_CMP_ROW_TOKEN*/;
     }
 
 
@@ -383,7 +382,7 @@ public class Tds implements TdsDefinitions {
 
         return type == TDS_END_TOKEN || type == TDS_DONEPROC || type == TDS_DONEINPROC;
     }
-    
+
 
     /**
      *  Determine if the next subpacket is a DONEINPROC marker <p>
@@ -737,7 +736,7 @@ public class Tds implements TdsDefinitions {
                           val = (String)actualParameterList[i].value;
                         }
                         catch (ClassCastException e) {
-                          val = actualParameterList[i].value.toString();                     
+                          val = actualParameterList[i].value.toString();
                         }
                         int len = val != null ? val.length() : 0;
                         int max = formalParameterList[i].maxLength;
@@ -897,7 +896,7 @@ public class Tds implements TdsDefinitions {
                     }
                     case SYBDECIMAL:
                     case SYBNUMERIC:
-                    {       
+                    {
                       Object o = actualParameterList[i].value;
                       comm.appendByte((byte)SYBDECIMAL);
                       if (o == null) {
@@ -942,7 +941,7 @@ public class Tds implements TdsDefinitions {
                           comm.appendByte(signum);
                           for (int mantidx = mantisse.length - 1; mantidx >= 0 ; mantidx--) {
                             comm.appendByte(mantisse[mantidx]);
-                          }                                
+                          }
                         }
                       }
                       break;
@@ -978,14 +977,14 @@ public class Tds implements TdsDefinitions {
     }
 
 
-    void checkMaxRows(java.sql.Statement stmt) 
+    void checkMaxRows(java.sql.Statement stmt)
              throws java.sql.SQLException, TdsException
     {
       if (stmt == null) // internal usage
         return;
       int maxRows = stmt.getMaxRows();
       if ( maxRows != this.maxRows) {
-        submitProcedure("set rowcount " + maxRows, new SQLWarningChain());       
+        submitProcedure("set rowcount " + maxRows, new SQLWarningChain());
         this.maxRows = maxRows;
       }
     }
@@ -1041,23 +1040,30 @@ public class Tds implements TdsDefinitions {
     public synchronized void discardResultSet( PacketRowResult row )
              throws SQLException, java.io.IOException, TdsException
     {
-        while ( isResultRow() ) {
+
+        while ( isResultRow()) {
             comm.skip(1);
             if ( row != null ) {
                 loadRow( row );
-//                throw new com.internetcds.jdbc.tds.TdsConfused();
+            }
+            if ( Logger.isActive() ) {
+                Logger.println( "Discarded row." );
             }
         }
 
         if (comm.peek() == TDS_DONEINPROC) {
             PacketResult tmp = processSubPacket();
+            if ( Logger.isActive() ) {
+                Logger.println( "Discarded TDS_DONE_IN_PROC" );
+            }
         }
+
 
         // XXX Is there ever going to be a situation where the
         // TDS_DONEINPROC is the real end of data?  If so then the
         // next section of code will hang forever waiting for more data
         // from the socket.
-        if (isEndOfResults() || this.isRetStat()) {
+        if (isEndOfResults() || isRetStat()) {
             processSubPacket();
         }
 
@@ -2753,7 +2759,7 @@ public class Tds implements TdsDefinitions {
         comm.getByte();
         // comm.skip(3);
         int rowCount = comm.getTdsInt();
-        if (op == (byte)0xC1) 
+        if (op == (byte)0xC1)
           rowCount = 0;
 
         /*
@@ -2763,7 +2769,7 @@ public class Tds implements TdsDefinitions {
         }
          */
         if (packetType == TdsDefinitions.TDS_DONEPROC)
-          rowCount = -1;  
+          rowCount = -1;
 
         PacketEndTokenResult result = new PacketEndTokenResult(packetType,
                 status, rowCount);
@@ -3049,7 +3055,7 @@ public class Tds implements TdsDefinitions {
         }
 
         if (converted.length > 255 && tdsVer != TDS70) {
-            throw new java.io.IOException("String too long");
+            throw new java.io.IOException("String too long for TDS version " + tdsVer);
         }
 
         // set the type of the column
@@ -3579,11 +3585,11 @@ public class Tds implements TdsDefinitions {
         while (it.hasNext()) {
           Procedure p = (Procedure)it.next();
           String sql  = p.getPreparedSqlString();
-          submitProcedure(sql, new SQLWarningChain());       
+          submitProcedure(sql, new SQLWarningChain());
           oncemore = true;
         }
         if (oncemore)
-          submitProcedure("IF @@TRANCOUNT > 0 COMMIT TRAN ", new SQLWarningChain());       
+          submitProcedure("IF @@TRANCOUNT > 0 COMMIT TRAN ", new SQLWarningChain());
         proceduresOfTra.clear();
       }
       catch (Exception e) {
@@ -3593,13 +3599,13 @@ public class Tds implements TdsDefinitions {
           String sql  = p.getPreparedSqlString();
           procedureCache.remove(p.rawQueryString);
         }
-        oncemore = false;       
+        oncemore = false;
         proceduresOfTra.clear();
       }
       return oncemore;
     }
 
-    void skipToEnd() 
+    void skipToEnd()
       throws java.sql.SQLException, java.io.IOException,
         com.internetcds.jdbc.tds.TdsUnknownPacketSubType,
         com.internetcds.jdbc.tds.TdsException

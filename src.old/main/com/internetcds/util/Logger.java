@@ -39,12 +39,12 @@ import java.io.*;
 /**
  * This class will log messages into a file.
  *
- * @version $Id: Logger.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version $Id: Logger.java,v 1.3 2001-09-17 09:32:35 skizz Exp $
  * @author Craig Spannring
- */ 
+ */
 public class Logger
 {
-   public static final String cvsVersion = "$Id: Logger.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: Logger.java,v 1.3 2001-09-17 09:32:35 skizz Exp $";
 
    private static String       filename = "log.out";
    private static boolean      active   = false;
@@ -53,7 +53,7 @@ public class Logger
    /**
     * Initialize the logger facility.
     * <p>
-    * If the log facility hasn't been initialized yet this routine will 
+    * If the log facility hasn't been initialized yet this routine will
     * open the log file.
     * <p>
     * The routine must be called before any logging takes place.
@@ -67,8 +67,12 @@ public class Logger
       // check to see if the file is already open
       if (out==null)
       {
-         // open the log file
-         out = new  PrintStream(new FileOutputStream(filename));
+         if ( filename != null ) {
+             out = new  PrintStream( new FileOutputStream(filename), true );
+         }
+         else {
+            out = System.out;
+         }
       }
    }
 
@@ -77,7 +81,7 @@ public class Logger
     * <p>
     * The first time logging is turned on it will create the log file.
     *
-    * @param value   when value is true it will turn the logging on, 
+    * @param value   when value is true it will turn the logging on,
     *                if it is false it will turn the logging off.
     */
    synchronized public static void setActive(boolean value)
@@ -99,7 +103,7 @@ public class Logger
     * set the name of the log file.
     * <p>
     * This method allows you to set the name of the log file.
-    * <B>Note-</B> Once the log file is open you can not change the 
+    * <B>Note-</B> Once the log file is open you can not change the
     * name.
     *
     * @param value  name of the log file.
@@ -127,6 +131,7 @@ public class Logger
       {
          init();
          out.print(msg);
+
       }
    }
 

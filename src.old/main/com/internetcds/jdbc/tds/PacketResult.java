@@ -36,8 +36,7 @@ package com.internetcds.jdbc.tds;
 
 public class PacketResult
 {
-   public static final String cvsVersion = "$Id: PacketResult.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
-
+   public static final String cvsVersion = "$Id: PacketResult.java,v 1.3 2001-09-17 09:32:35 skizz Exp $";
 
    private byte    packetType = 0;
 

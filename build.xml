@@ -59,7 +59,7 @@
 
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" />
 
-    <junit printsummary="yes" fork="yes" haltonfailure="yes">
+    <junit printsummary="yes" fork="yes" haltonfailure="no">
 
         <classpath>
             <pathelement path="build/classes" />

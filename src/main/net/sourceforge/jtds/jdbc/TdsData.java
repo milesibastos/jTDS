@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.34 2004-11-29 06:43:08 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.35 2004-11-29 16:33:56 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -76,12 +76,7 @@ public class TdsData {
         public int precision;
         /**
          * The display size of the type.
-         * <p>Special values are used if the precision field is -1.
-         * <ol>
-         * <li>Value = -2 - The display size is half the buffersize.
-         * <li>Value = +2 - The display size is twice the buffersize.
-         * <li>Value =  1 - The display size is equal to the buffersize.
-         * </ol>
+         * <p>-1 If the display size must be calculated from the buffer size.
          */
         public int displaySize;
         /** true if type is a signed numeric. */
@@ -175,6 +170,11 @@ public class TdsData {
     private static final int UDT_NVARCHAR          = 19; // 0x03
     private static final int UDT_UNICHAR           = 34; // 0x22
     private static final int UDT_UNIVARCHAR        = 35; // 0x23
+    // Common to Sybase and SQL Server
+    private static final int UDT_TIMESTAMP         = 80; // 0x50
+    private static final int UDT_SYSNAME           = 18; // 0x12
+    // SQL Server 7+
+    private static final int UDT_NEWSYSNAME        =256; // 0x100
 
     /**
      * Array of TDS data type descriptors.
@@ -188,24 +188,24 @@ public class TdsData {
         types[SYBCHAR]      = new TypeInfo("char",          -1, -1,  1, false, false, java.sql.Types.CHAR);
         types[SYBVARCHAR]   = new TypeInfo("varchar",       -1, -1,  1, false, false, java.sql.Types.VARCHAR);
         types[SYBINTN]      = new TypeInfo("int",           -1, 10, 11, true,  false, java.sql.Types.INTEGER);
-        types[SYBINT1]      = new TypeInfo("tinyint",        1,  2,  3, false, false, java.sql.Types.TINYINT);
+        types[SYBINT1]      = new TypeInfo("tinyint",        1,  3,  4, false, false, java.sql.Types.TINYINT);
         types[SYBINT2]      = new TypeInfo("smallint",       2,  5,  6, true,  false, java.sql.Types.SMALLINT);
         types[SYBINT4]      = new TypeInfo("int",            4, 10, 11, true,  false, java.sql.Types.INTEGER);
-        types[SYBINT8]      = new TypeInfo("bigint",         8, 20, 20, true,  false, java.sql.Types.BIGINT);
+        types[SYBINT8]      = new TypeInfo("bigint",         8, 19, 20, true,  false, java.sql.Types.BIGINT);
         types[SYBFLT8]      = new TypeInfo("float",          8, 15, 24, true,  false, java.sql.Types.DOUBLE);
         types[SYBDATETIME]  = new TypeInfo("datetime",       8, 23, 23, false, false, java.sql.Types.TIMESTAMP);
         types[SYBBIT]       = new TypeInfo("bit",            1,  1,  1, false, false, java.sql.Types.BIT);
-        types[SYBTEXT]      = new TypeInfo("text",          -4, -1,  1, false, true,  java.sql.Types.CLOB);
-        types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -2, false, true,  java.sql.Types.CLOB);
-        types[SYBIMAGE]     = new TypeInfo("image",         -4, -1,  2, false, false, java.sql.Types.BLOB);
+        types[SYBTEXT]      = new TypeInfo("text",          -4, -1, -1, false, true,  java.sql.Types.CLOB);
+        types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -1, false, true,  java.sql.Types.CLOB);
+        types[SYBIMAGE]     = new TypeInfo("image",         -4, -1, -1, false, false, java.sql.Types.BLOB);
         types[SYBMONEY4]    = new TypeInfo("smallmoney",     4, 10, 12, true,  false, java.sql.Types.DECIMAL);
         types[SYBMONEY]     = new TypeInfo("money",          8, 19, 21, true,  false, java.sql.Types.DECIMAL);
         types[SYBDATETIME4] = new TypeInfo("smalldatetime",  4, 16, 19, false, false, java.sql.Types.TIMESTAMP);
         types[SYBREAL]      = new TypeInfo("real",           4,  7, 14, true,  false, java.sql.Types.REAL);
-        types[SYBBINARY]    = new TypeInfo("binary",        -1,  1,  2, false, false, java.sql.Types.BINARY);
+        types[SYBBINARY]    = new TypeInfo("binary",        -1, -1,  2, false, false, java.sql.Types.BINARY);
         types[SYBVOID]      = new TypeInfo("void",          -1,  1,  1, false, false, 0);
-        types[SYBVARBINARY] = new TypeInfo("varbinary",     -1, -1,  2, false, false, java.sql.Types.VARBINARY);
-        types[SYBNVARCHAR]  = new TypeInfo("nvarchar",      -1, -1, -2, false, false, java.sql.Types.VARCHAR);
+        types[SYBVARBINARY] = new TypeInfo("varbinary",     -1, -1, -1, false, false, java.sql.Types.VARBINARY);
+        types[SYBNVARCHAR]  = new TypeInfo("nvarchar",      -1, -1, -1, false, false, java.sql.Types.VARCHAR);
         types[SYBBITN]      = new TypeInfo("bit",           -1,  1,  1, false, false, java.sql.Types.BIT);
         types[SYBNUMERIC]   = new TypeInfo("numeric",       -1, -1, -1, true,  false, java.sql.Types.NUMERIC);
         types[SYBDECIMAL]   = new TypeInfo("decimal",       -1, -1, -1, true,  false, java.sql.Types.DECIMAL);
@@ -216,19 +216,19 @@ public class TdsData {
         types[SYBTIME]      = new TypeInfo("time",           4,  8,  8, false, false, java.sql.Types.TIME);
         types[SYBDATEN]     = new TypeInfo("date",          -1, 10, 10, false, false, java.sql.Types.DATE);
         types[SYBTIMEN]     = new TypeInfo("time",          -1,  8,  8, false, false, java.sql.Types.TIME);
-        types[XSYBCHAR]     = new TypeInfo("char",          -2, -1,  1, false, true,  java.sql.Types.CHAR);
-        types[XSYBVARCHAR]  = new TypeInfo("varchar",       -2, -1,  1, false, true,  java.sql.Types.VARCHAR);
-        types[XSYBNVARCHAR] = new TypeInfo("nvarchar",      -2, -1, -2, false, true,  java.sql.Types.VARCHAR);
-        types[XSYBNCHAR]    = new TypeInfo("nchar",         -2, -1, -2, false, true,  java.sql.Types.CHAR);
-        types[XSYBVARBINARY]= new TypeInfo("varbinary",     -2, -1,  2, false, false, java.sql.Types.VARBINARY);
-        types[XSYBBINARY]   = new TypeInfo("binary",        -2, -1,  2, false, false, java.sql.Types.BINARY);
+        types[XSYBCHAR]     = new TypeInfo("char",          -2, -1, -1, false, true,  java.sql.Types.CHAR);
+        types[XSYBVARCHAR]  = new TypeInfo("varchar",       -2, -1, -1, false, true,  java.sql.Types.VARCHAR);
+        types[XSYBNVARCHAR] = new TypeInfo("nvarchar",      -2, -1, -1, false, true,  java.sql.Types.VARCHAR);
+        types[XSYBNCHAR]    = new TypeInfo("nchar",         -2, -1, -1, false, true,  java.sql.Types.CHAR);
+        types[XSYBVARBINARY]= new TypeInfo("varbinary",     -2, -1, -1, false, false, java.sql.Types.VARBINARY);
+        types[XSYBBINARY]   = new TypeInfo("binary",        -2, -1, -1, false, false, java.sql.Types.BINARY);
         types[SYBLONGBINARY]= new TypeInfo("varbinary",     -5, -1,  2, false, false, java.sql.Types.BINARY);
         types[SYBSINT1]     = new TypeInfo("tinyint",        1,  2,  3, false, false, java.sql.Types.TINYINT);
         types[SYBUINT2]     = new TypeInfo("smallint",       2,  5,  6, false, false, java.sql.Types.SMALLINT);
         types[SYBUINT4]     = new TypeInfo("int",            4, 10, 11, false, false, java.sql.Types.INTEGER);
         types[SYBUINT8]     = new TypeInfo("bigint",         8, 20, 20, false, false, java.sql.Types.BIGINT);
-        types[SYBUNIQUE]    = new TypeInfo("uniqueidentifier",-1,36, 36, false, false, java.sql.Types.VARCHAR);
-        types[SYBVARIANT]   = new TypeInfo("sql_variant",   -5,  1,  1, false, false, java.sql.Types.OTHER);
+        types[SYBUNIQUE]    = new TypeInfo("uniqueidentifier",-1,36,36, false, false, java.sql.Types.CHAR);
+        types[SYBVARIANT]   = new TypeInfo("sql_variant",   -5,  0, 8000, false, false, java.sql.Types.VARCHAR);
     }
 
     /** Default Decimal Scale. */
@@ -365,93 +365,145 @@ public class TdsData {
             ci.bufferSize = in.read();
         }
 
-        // Set scale for money and date types
-        if (isCurrency(ci)) {
-            ci.scale = 4;
-        } else if (type == SYBDATETIME ||(type == SYBDATETIMN && ci.bufferSize == 8)) {
-            ci.scale = 3;
-        }
-
         // Set default displaySize and precision
         ci.displaySize = types[type].displaySize;
         ci.precision   = types[type].precision;
         ci.sqlType     = types[type].sqlType;
 
         // Now fine tune sizes for specific types
-        if (type == SYBDATETIMN) {
+        switch (type) {
+            //
+            // long datetime has scale of 3 smalldatetime has scale of 0
+            //
+            case  SYBDATETIME:
+                ci.scale = 3;
+                break;
+            // Establish actual size of nullable datetime
+            case SYBDATETIMN:
+                if (ci.bufferSize == 8) {
+                    ci.displaySize = types[SYBDATETIME].displaySize;
+                    ci.precision   = types[SYBDATETIME].precision;
+                    ci.scale       = 3;
+                } else {
+                    ci.displaySize = types[SYBDATETIME4].displaySize;
+                    ci.precision   = types[SYBDATETIME4].precision;
+                    ci.sqlType     = types[SYBDATETIME4].sqlType;
+                    ci.scale       = 0;
+                }
+                break;
+            // Establish actual size of nullable float
+            case SYBFLTN:
+                if (ci.bufferSize == 8) {
+                    ci.displaySize = types[SYBFLT8].displaySize;
+                    ci.precision   = types[SYBFLT8].precision;
+                } else {
+                    ci.displaySize = types[SYBREAL].displaySize;
+                    ci.precision   = types[SYBREAL].precision;
+                    ci.jdbcType    = java.sql.Types.REAL;
+                    ci.sqlType     = types[SYBREAL].sqlType;
+                }
+                break;
+            // Establish actual size of nullable int
+            case SYBINTN:
+                if (ci.bufferSize == 8) {
+                    ci.displaySize = types[SYBINT8].displaySize;
+                    ci.precision   = types[SYBINT8].precision;
+                    ci.jdbcType    = java.sql.Types.BIGINT;
+                    ci.sqlType     = types[SYBINT8].sqlType;
+                } else if (ci.bufferSize == 4) {
+                    ci.displaySize = types[SYBINT4].displaySize;
+                    ci.precision   = types[SYBINT4].precision;
+                } else if (ci.bufferSize == 2) {
+                    ci.displaySize = types[SYBINT2].displaySize;
+                    ci.precision   = types[SYBINT2].precision;
+                    ci.jdbcType    = java.sql.Types.SMALLINT;
+                    ci.sqlType     = types[SYBINT2].sqlType;
+                } else {
+                    ci.displaySize = types[SYBINT1].displaySize;
+                    ci.precision   = types[SYBINT1].precision;
+                    ci.jdbcType    = java.sql.Types.TINYINT;
+                    ci.sqlType     = types[SYBINT1].sqlType;
+                }
+                break;
+            //
+            // Money types have a scale of 4
+            //
+            case  SYBMONEY:
+            case  SYBMONEY4:
+                ci.scale = 4;
+                break;
+            // Establish actual size of nullable money
+            case SYBMONEYN:
+                if (ci.bufferSize == 8) {
+                    ci.displaySize = types[SYBMONEY].displaySize;
+                    ci.precision   = types[SYBMONEY].precision;
+                } else {
+                    ci.displaySize = types[SYBMONEY4].displaySize;
+                    ci.precision   = types[SYBMONEY4].precision;
+                    ci.sqlType     = types[SYBMONEY4].sqlType;
+                }
+                ci.scale = 4;
+                break;
 
-            if (ci.bufferSize == 8) {
-                ci.displaySize = types[SYBDATETIME].displaySize;
-                ci.precision   = types[SYBDATETIME].precision;
-            } else {
-                ci.displaySize = types[SYBDATETIME4].displaySize;
-                ci.precision   = types[SYBDATETIME4].precision;
-                ci.sqlType     = types[SYBDATETIME4].sqlType;
-            }
-        } else if (type == SYBFLTN) {
+            // Read in scale and precision for decimal types
+            case SYBDECIMAL:
+            case SYBNUMERIC:
+                ci.precision   = in.read();
+                ci.scale       = in.read();
+                ci.displaySize = ((ci.scale > 0) ? 2 : 1) + ci.precision;
+                bytesRead     += 2;
+                ci.sqlType     = types[type].sqlType;
+                break;
 
-            if (ci.bufferSize == 8) {
-                ci.displaySize = types[SYBFLT8].displaySize;
-                ci.precision   = types[SYBFLT8].precision;
-            } else {
-                ci.displaySize = types[SYBREAL].displaySize;
-                ci.precision   = types[SYBREAL].precision;
-                ci.jdbcType    = java.sql.Types.REAL;
-                ci.sqlType     = types[SYBREAL].sqlType;
-            }
-        } else if (type == SYBINTN) {
-
-            if (ci.bufferSize == 8) {
-                ci.displaySize = types[SYBINT8].displaySize;
-                ci.precision   = types[SYBINT8].precision;
-                ci.jdbcType    = java.sql.Types.BIGINT;
-                ci.sqlType     = types[SYBINT8].sqlType;
-            } else if (ci.bufferSize == 4) {
-                ci.displaySize = types[SYBINT4].displaySize;
-                ci.precision   = types[SYBINT4].precision;
-            } else if (ci.bufferSize == 2) {
-                ci.displaySize = types[SYBINT2].displaySize;
-                ci.precision   = types[SYBINT2].precision;
-                ci.jdbcType    = java.sql.Types.SMALLINT;
-                ci.sqlType     = types[SYBINT2].sqlType;
-            } else {
-                ci.displaySize = types[SYBINT1].displaySize;
-                ci.precision   = types[SYBINT1].precision;
-                ci.jdbcType    = java.sql.Types.TINYINT;
-                ci.sqlType     = types[SYBINT1].sqlType;
-            }
-        } else if (type == SYBMONEYN) {
-
-            if (ci.bufferSize == 8) {
-                ci.displaySize = types[SYBMONEY].displaySize;
-                ci.precision   = types[SYBMONEY].precision;
-            } else {
-                ci.displaySize = types[SYBMONEY4].displaySize;
-                ci.precision   = types[SYBMONEY4].precision;
-                ci.sqlType     = types[SYBMONEY4].sqlType;
-            }
-        }
-
-        // Set sizes for character types
-        if (ci.precision == -1) {
-            ci.precision = ci.bufferSize;
-
-            if (ci.displaySize == -2) {
-                ci.displaySize = ci.bufferSize / 2;
-            } else if (ci.displaySize == 2) {
+            // Although a binary type force displaysize to MAXINT
+            case SYBIMAGE:
+                ci.precision   = Integer.MAX_VALUE;
+                ci.displaySize = Integer.MAX_VALUE;
+                break;
+            // Normal binaries have a display size of 2 * precision 0x0A0B etc
+            case SYBLONGBINARY:
+            case SYBVARBINARY:
+            case SYBBINARY:
+            case XSYBBINARY:
+            case XSYBVARBINARY:
+                ci.precision   = ci.bufferSize;
                 ci.displaySize = ci.precision * 2;
-            } else {
-                ci.displaySize = ci.precision;
-            }
-        }
+                if (ci.userType == UDT_TIMESTAMP) {
+                    // Look for system defined timestamp type
+                    ci.sqlType = "timestamp";
+                }
+                break;
 
-        // Read in scale and precision for decimal types
-        if (type == SYBDECIMAL || type == SYBNUMERIC) {
-            ci.precision   = in.read();
-            ci.scale       = in.read();
-            ci.displaySize = ((ci.scale > 0) ? 2 : 1) + ci.precision;
-            bytesRead     += 2;
-            ci.sqlType     = types[type].sqlType;
+            // SQL Server unicode text can only display half as many chars
+            case SYBNTEXT:
+                ci.precision   = Integer.MAX_VALUE / 2;
+                ci.displaySize = Integer.MAX_VALUE / 2;
+                break;
+
+            // SQL Server unicode chars can only display half as many chars
+            case XSYBNCHAR:
+            case XSYBNVARCHAR:
+                ci.displaySize = ci.bufferSize / 2;
+                ci.precision   = ci.displaySize;
+                if (ci.userType == UDT_NEWSYSNAME) {
+                    // Look for SQL Server 7+ version of sysname
+                    ci.sqlType = "sysname";
+                }
+                break;
+            // Normal characters display size = precision = buffer size.
+            case SYBTEXT:
+            case SYBCHAR:
+            case XSYBCHAR:
+            case XSYBVARCHAR:
+            case SYBVARCHAR:
+            case SYBNVARCHAR:
+                ci.precision = ci.bufferSize;
+                ci.displaySize = ci.precision;
+                if (ci.userType == UDT_SYSNAME) {
+                    // Look for SQL 6.5 or Sybase version of sysname
+                    ci.sqlType = "sysname";
+                }
+                break;
         }
 
         // For numeric types add 'identity' for auto inc data type
@@ -476,11 +528,13 @@ public class TdsData {
                     case UDT_UNICHAR:
                         ci.sqlType     = "unichar";
                         ci.displaySize = ci.bufferSize / 2;
+                        ci.precision   = ci.displaySize;
                         ci.jdbcType    = java.sql.Types.CHAR;
                         break;
                     case UDT_UNIVARCHAR:
                         ci.sqlType     = "univarchar";
                         ci.displaySize = ci.bufferSize / 2;
+                        ci.precision   = ci.displaySize;
                         ci.jdbcType    = java.sql.Types.VARCHAR;
                         break;
                 }
@@ -864,6 +918,7 @@ public class TdsData {
 
         return types[type].isCollation;
     }
+
     /**
      * Retrieve the currency status of the column.
      *
@@ -1285,14 +1340,12 @@ public class TdsData {
      *
      * @param out The server RequestStream.
      * @param charset The encoding character set.
-     * @param isWideChar True if multi byte encoding.
      * @param pi The parameter to output.
      * @throws IOException
      * @throws SQLException
      */
     static void writeTds5Param(RequestStream out,
                                String charset,
-                               boolean isWideChar,
                                ParamInfo pi)
     throws IOException, SQLException {
 
@@ -2365,6 +2418,9 @@ public class TdsData {
             // These will accept euro symbol
             for (int i = value.length() - 1; i >= 0; i--) {
                 // FIXME This is not correct! Cp1252 also contains other characters.
+                // No: I think it is OK the point is to ensure that all characters are either
+                // < 256 in which case the sets are the same of the euro which is convertable.
+                // Any other combination will cause the string to be sent as unicode.
                 char c = value.charAt(i);
                 if (c > 255 && c != 0x20AC) {
                     return false; // Outside range

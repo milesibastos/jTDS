@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.32 2004-11-24 06:42:01 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.33 2004-11-29 16:33:55 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -922,7 +922,9 @@ public class Support {
             if (value instanceof java.io.InputStream
                     || value instanceof java.io.Reader) {
                 try {
-                    if (list[i].jdbcType == java.sql.Types.LONGVARCHAR) {
+                    if (list[i].jdbcType == java.sql.Types.LONGVARCHAR ||
+                        list[i].jdbcType == java.sql.Types.CLOB) {
+                        // TODO: Should improve the character set handling here
                         value = list[i].getString("US-ASCII");
                     } else {
                         value = list[i].getBytes("US-ASCII");

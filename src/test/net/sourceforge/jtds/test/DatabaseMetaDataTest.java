@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.sql.Types;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSetMetaData;
@@ -547,6 +548,78 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
             }
         }
         stmt.close();
+    }
+    /**
+     * Test to check DatabaseMetaData.getColumns and ResultSetMetaData is equivalent.
+     * This test also checks for bug [ 1074096 ] Incorrect data type determine on dataset meta data.
+     * This is because getColumns will return a typename of timestamp which should now also be
+     * returned by the result set meta data as well.
+     * @throws Exception if an error condition occurs
+     */
+    public void testColumnMetaData() throws Exception {
+        String sql = "CREATE TABLE jTDSTYPETEST (ti tinyint not null, si smallint, i int, bi bigint, " +
+        " f float, r real, d decimal(28,10), n numeric(28,10), sm smallmoney, m money, " +
+        "c char(10) not null, vc varchar(255), nc nchar(10) not null, nvc nvarchar(255), " +
+        " txt text, ntxt ntext, b binary(8) not null, vb varbinary(8), img image, " +
+        " dt datetime, sdt smalldatetime, bt bit not null, ts timestamp, sn sysname, "+
+        " ui uniqueidentifier, sv sql_variant)";
+
+        String sql7 = "CREATE TABLE jTDSTYPETEST (ti tinyint not null, si smallint, i int, " +
+        " f float, r real, d decimal(28,10), n numeric(28,10), sm smallmoney, m money, " +
+        "c char(10) not null, vc varchar(255), nc nchar(10) not null, nvc nvarchar(255), " +
+        " txt text, ntxt ntext, b binary(8) not null, vb varbinary(8), img image, " +
+        " dt datetime, sdt smalldatetime, bt bit not null, ts timestamp, sn sysname, "+
+        " ui uniqueidentifier)";
+
+        String sql65 = "CREATE TABLE jTDSTYPETEST (ti tinyint not null, si smallint, i int, " +
+        " f float, r real, d decimal(28,10), n numeric(28,10), sm smallmoney, m money, " +
+        "c char(10) not null, vc varchar(255), " +
+        " txt text, b binary(8) not null, vb varbinary(8), img image, " +
+        " dt datetime, sdt smalldatetime, bt bit not null, ts timestamp, sn sysname)";
+
+        String sql125 = "CREATE TABLE jTDSTYPETEST (ti tinyint not null, si smallint, i int, " +
+        " f float, r real, d decimal(28,10), n numeric(28,10), sm smallmoney, m money, " +
+        "c char(10) not null, vc varchar(255), nc nchar(10) not null, nvc nvarchar(255), " +
+        " txt text, b binary(8) not null, vb varbinary(8), img image, " +
+        " dt datetime, sdt smalldatetime, bt bit not null, ts timestamp, sn sysname, "+
+        " uc unichar(10), vuc univarchar(255), sydt date, syt time)";
+
+        try {
+            dropTable("jTDSTYPETEST");
+            Statement stmt = con.createStatement();
+            DatabaseMetaData dbmd = con.getMetaData();
+            if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
+                if (dbmd.getDatabaseProductVersion().startsWith("6.5"))
+                    stmt.execute(sql65);
+                else if (dbmd.getDatabaseProductVersion().startsWith("7"))
+                    stmt.execute(sql7);
+                else
+                    stmt.execute(sql);
+            } else {
+                if (dbmd.getDatabaseProductVersion().startsWith("12"))
+                    stmt.execute(sql125);
+                else
+                    stmt.execute(sql65);
+            }
+            ResultSetMetaData rsmd = stmt.executeQuery("SELECT * FROM jTDSTYPETEST").getMetaData();
+            ResultSet rs = dbmd.getColumns(null, null, "jTDSTYPETEST", "%");
+//            ResultSetMetaData rsmd2 = rs.getMetaData();
+//            System.out.println();
+            while (rs.next()) {
+                String cn = rs.getString("COLUMN_NAME");
+                int ord = rs.getInt("ORDINAL_POSITION");
+                assertEquals(cn+" typename", rs.getString("TYPE_NAME"), rsmd.getColumnTypeName(ord));
+                assertEquals(cn+" datatype", rs.getInt("DATA_TYPE"), rsmd.getColumnType(ord));
+                if (rs.getInt("DATA_TYPE") != Types.REAL && rs.getInt("DATA_TYPE") != Types.DOUBLE) {
+                    // Seems to be genuine disagreement between getColumns and metadata on float data!
+                    assertEquals(cn+" precision", rs.getInt("COLUMN_SIZE"), rsmd.getPrecision(ord));
+                }
+                assertEquals(cn+" scale", rs.getInt("DECIMAL_DIGITS"), rsmd.getScale(ord));
+                assertEquals(cn+" nullable", rs.getInt("NULLABLE"), rsmd.isNullable(ord));
+            }
+        } finally {
+            dropTable("jTDSTYPETEST");
+        }
     }
 
     public static void main(String[] args) {

@@ -38,13 +38,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.17 2004-11-17 09:40:46 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.18 2004-11-29 16:33:55 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
 
     // internal data needed by this implemention.
     int tdsVersion;
+    int serverType;
     ConnectionJDBC2 connection;
 
     /**
@@ -63,7 +64,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public JtdsDatabaseMetaData(ConnectionJDBC2 connection) {
         this.connection = connection;
         tdsVersion = connection.getTdsVersion();
-
+        serverType = connection.getServerType();
         if (tdsVersion >= Driver.TDS70) {
             sysnameLength = 128;
         }
@@ -415,13 +416,52 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
         rsTmp.moveToInsertRow();
         int colCnt = rs.getMetaData().getColumnCount();
+        //
+        // Neither type of server returns exactly the data required by the JDBC3 standard.
+        // The result data is copied to a cached result set and modified on the fly.
+        //
         while (rs.next()) {
-            for (int i = 1; i <= colCnt; i++) {
-                if (i == 5) {
-                    int type = normalizeDataType(rs.getInt(i));
-                    rsTmp.updateInt(i, type);
-                } else {
+            if (serverType == Driver.SYBASE) {
+                // Sybase servers (older versions only return 14 columns)
+                for (int i = 1; i <= 4; i++) {
                     rsTmp.updateObject(i, rs.getObject(i));
+                }
+                rsTmp.updateInt(5, normalizeDataType(rs.getInt(5)));
+                String typeName = rs.getString(6);
+                rsTmp.updateString(6, typeName);
+                for (int i = 8; i <= 12; i++) {
+                    rsTmp.updateObject(i, rs.getObject(i));
+                }
+                if (colCnt >= 20) {
+                    // SYBASE 12.5
+                    rsTmp.updateObject(13, rs.getObject(15));
+                    rsTmp.updateObject(16, rs.getObject(18));
+                    rsTmp.updateObject(17, rs.getObject(17));
+                    rsTmp.updateObject(18, rs.getObject(20));
+                } else {
+                    // SYBASE 11.92
+                    rsTmp.updateObject(17, rs.getObject(14));
+                    rsTmp.updateObject(16, rs.getObject(8));
+                }
+                if (typeName.equals("image") || typeName.equals("text")) {
+                    rsTmp.updateInt(7, Integer.MAX_VALUE);
+                    rsTmp.updateInt(16, Integer.MAX_VALUE);
+                } else
+                if (typeName.equals("univarchar") || typeName.equals("unichar")) {
+                    rsTmp.updateInt(7, rs.getInt(7) / 2);
+                    rsTmp.updateObject(16, rs.getObject(7));
+                } else {
+                    rsTmp.updateInt(7, rs.getInt(7));
+                }
+            } else {
+                // MS SQL Server - Mainly OK but we need to fix some data types.
+                for (int i = 1; i <= colCnt; i++) {
+                    if (i == 5) {
+                        int type = normalizeDataType(rs.getInt(i));
+                        rsTmp.updateInt(i, type);
+                    } else {
+                        rsTmp.updateObject(i, rs.getObject(i));
+                    }
                 }
             }
             rsTmp.insertRow();
@@ -3270,12 +3310,26 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     private int normalizeDataType(int serverDataType) {
         switch (serverDataType) {
+            case   35: // Sybase UNIVARCHAR
+                return Types.VARCHAR;
+            case   11: // Sybase DATETIME
+                return Types.TIMESTAMP;
+            case   10: // Sybase TIME
+                return Types.TIME;
+            case    9: // Sybase DATE
+                return Types.DATE;
+            case    6: // FLOAT
+                return Types.DOUBLE;
+            case   -1: // LONGVARCHAR
+                return Types.CLOB;
+            case   -4: // LONVARBINARY
+                return Types.BLOB;
             case   -8: // NCHAR
                 return Types.CHAR;
             case   -9: // NVARCHAR
                 return Types.VARCHAR;
             case  -10: // NTEXT
-                return Types.LONGVARCHAR;
+                return Types.CLOB;
             case  -11: // UNIQUEIDENTIFIER
                 return Types.CHAR;
             case -150: // SQL_VARIANT

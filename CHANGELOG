@@ -2,6 +2,8 @@ Changes from jTDS 0.9
 =========================
 
 11/29/2004 - Alin Sinpalean
+ o Applied Mike's bugfix for [1074096] Incorrect data type determine on dataset
+   meta data.
  o Implemented support for reading character data using per column collations
    for SQL Server 2000.
 

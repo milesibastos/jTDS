@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.50 2004-11-29 06:43:08 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.51 2004-11-29 16:33:56 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -3012,9 +3012,9 @@ public class TdsCore {
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 len += TdsData.getTds5ParamSize(connection.getCharset(),
-                                                connection.isWideChar(),
-                                                parameters[i],
-                                                useParamNames);
+                        connection.isWideChar(),
+                        parameters[i],
+                        useParamNames);
             }
 
             out.write((short) len);
@@ -3022,10 +3022,10 @@ public class TdsCore {
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5ParamFmt(out,
-                                          connection.getCharset(),
-                                          connection.isWideChar(),
-                                          parameters[i],
-                                          useParamNames);
+                        connection.getCharset(),
+                        connection.isWideChar(),
+                        parameters[i],
+                        useParamNames);
             }
 
             // Now write the actual data
@@ -3033,9 +3033,8 @@ public class TdsCore {
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5Param(out,
-                                       connection.getCharset(),
-                                       connection.isWideChar(),
-                                       parameters[i]);
+                        connection.getCharset(),
+                        parameters[i]);
             }
         }
 
@@ -3208,10 +3207,9 @@ public class TdsCore {
                     out.write((byte) (parameters[i].isOutput ? 1 : 0));
 
                     TdsData.writeParam(out,
-                                       connection.getCharset(),
-                                       connection.isWideChar(),
-                                       connection.getCollation(),
-                                       parameters[i]);
+                            connection.getCharsetInfo(),
+                            connection.getCollation(),
+                            parameters[i]);
                 }
             }
         } else if (sql.length() > 0) {

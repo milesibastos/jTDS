@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2004-02-20 00:09:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.17 2004-02-25 01:24:47 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -85,7 +85,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.16 2004-02-20 00:09:10 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.17 2004-02-25 01:24:47 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -98,6 +98,7 @@ public class TdsConnection implements Connection
     // Port numbers are _unsigned_ 16 bit, short is too small
     private int port = -1;
     private int tdsVer = -1;
+    private int serverVer = -1;
     private String database = null;
     private Properties initialProps = null;
     private byte maxPrecision = -1;
@@ -123,7 +124,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2004-02-20 00:09:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.17 2004-02-25 01:24:47 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -164,6 +165,7 @@ public class TdsConnection implements Connection
 
         Tds tmpTds = this.allocateTds(false);
         tdsVer = tmpTds.getTdsVer();
+        serverVer = tmpTds.getDatabaseMajorVersion();
         database = tmpTds.getDatabase();
         lastUpdateCount = tmpTds.lastUpdateCount();
         freeTds(tmpTds);
@@ -191,6 +193,15 @@ public class TdsConnection implements Connection
      * constants).
      */
     protected int getTdsVer() throws SQLException {
+        checkClosed();
+        return tdsVer;
+    }
+
+    /**
+     * Returns the major version of the server software (e.g. 7 for SQL Server
+     * 7.0).
+     */
+    protected int getServerVer() throws SQLException {
         checkClosed();
         return tdsVer;
     }
@@ -845,7 +856,7 @@ public class TdsConnection implements Connection
                 && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             StringBuffer tmpSQL = new StringBuffer(sql);
 
-            if (tdsVer == Tds.TDS70) {
+            if (serverType == Tds.SQLSERVER && serverVer >= 8) {
                 tmpSQL.append("\r\nSELECT SCOPE_IDENTITY() AS ID");
             } else {
                 tmpSQL.append("\r\nSELECT @@IDENTITY AS ID");

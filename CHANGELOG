@@ -1,6 +1,18 @@
 Changes from jTDS 0.6
 ========================
 
+02/24/2004 - Alin Sinpalean
+ o Applied Mike's changes as a result of testing the cursor-based ResultSets
+   with SQL Server 6.5.
+ o Introduced a serverVer field into TdsConnection to be able to check the DB
+   version when using certain features (in particular SCOPE_IDENTITY as opposed
+   to @@IDENTITY - the first is only available in SQL Server 2000).
+ o Modified PerformanceTest to create (and drop) its own test table.
+ o Added handling for BINARY data in ParameterUtils (for some reason, it wasn't
+   treated the same way as VARBINARY and an exception was thrown).
+ o Fixed PreparedStatement_base.setByte (it was setting the parameter type to
+   SMALLINT instead of TINYINT, which lead to problems with negative values).
+
 02/22/2004 - Brian Heineman
  o Removed usage of NEWID() for Sybase which does not exist in the 11.x
    versions; logic was replaced with VM generated unique id.  This

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.22 2004-02-20 00:09:10 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.23 2004-02-25 01:24:48 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,7 +66,7 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.22 2004-02-20 00:09:10 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.23 2004-02-25 01:24:48 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -1110,7 +1110,8 @@ public class TdsStatement implements java.sql.Statement
                     //
                     String sql;
 
-                    if (tds.getTdsVer() == Tds.TDS70) {
+                    if (tds.getServerType() == Tds.SQLSERVER
+                            && tds.getDatabaseMajorVersion() >= 8) {
                         sql = "SELECT SCOPE_IDENTITY() AS ID";
                     } else {
                         sql = "SELECT @@IDENTITY AS ID";

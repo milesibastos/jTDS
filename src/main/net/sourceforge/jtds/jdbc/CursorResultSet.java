@@ -462,7 +462,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         param[1].isSet = true;
         param[1].type = Types.LONGVARCHAR;
         param[1].maxLength = Integer.MAX_VALUE;
-        param[1].formalType = "ntext";
+        param[1].formalType =
+                (conn.getTdsVer() >= TdsDefinitions.TDS70) ? "ntext" : "text";
         param[1].value = sql;
 
         // Setup scroll options
@@ -661,10 +662,13 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                             "No results expected."));
                 }
 
-                if ((retVal == null) || (retVal.intValue() != 0)) {
-                    warningChain.addException(
-                            new SQLException("Cursor fetch failed."));
-                }
+                // SAfe Removed on Mike's suggestion. Indeed it seems like
+                //      error messages are also returned when something goes
+                //      wrong, so there's no need for this.
+                // if ((retVal == null) || (retVal.intValue() != 0)) {
+                //     warningChain.addException(
+                //             new SQLException("Cursor fetch failed."));
+                // }
             } finally {
                 try {
                     conn.freeTds(tds);
@@ -781,8 +785,13 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
             param[3].isSet = true;
             param[3].type = Types.VARCHAR;
             param[3].value = "";
-            param[3].formalType = "nvarchar(4000)";
-            param[3].maxLength = 4000;
+            if (conn.getTdsVer() >= TdsDefinitions.TDS70) {
+                param[3].formalType = "nvarchar(4000)";
+                param[3].maxLength = 4000;
+            } else {
+                param[3].formalType = "varchar(255)";
+                param[3].maxLength = 255;
+            }
 
             Columns cols = row.context.getColumnInfo();
             int colCnt = cols.fakeColumnCount();

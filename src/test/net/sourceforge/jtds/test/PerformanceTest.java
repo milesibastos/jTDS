@@ -1,80 +1,141 @@
 package net.sourceforge.jtds.test;
 
 import junit.framework.AssertionFailedError;
+
 import java.sql.*;
+import java.math.BigDecimal;
 
 /**
  * @version 1.0
  */
-public class PerformanceTest extends TestBase
-{
-    public PerformanceTest(String name)
-    {
-        super( name );
+public class PerformanceTest extends DatabaseTestCase {
+    public PerformanceTest(String name) {
+        super(name);
     }
 
-    public void testCursorScrollODBC() throws Exception
-    {
-        try
-        {
+    public void testPreparedStatementODBC() throws Exception {
+        dropTable("jTDSPerformanceTest");
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE jTDSPerformanceTest "
+                     + "(id int identity(1,1) not null,"
+                     + "v_bit bit,"
+                     + "v_smallint smallint,"
+                     + "v_tinyint tinyint,"
+                     + "v_decimal decimal(28,11),"
+                     + "v_money money,"
+                     + "v_smallmoney smallmoney,"
+                     + "v_float float,"
+                     + "v_real real,"
+                     + "v_datetime datetime,"
+                     + "v_smalldatetime smalldatetime,"
+                     + "v_char char(255),"
+                     + "v_varchar varchar(255),"
+                     + "v_binary binary(255),"
+                     + "v_varbinary varbinary(255),"
+                     + "primary key (id))");
+        stmt.close();
+
+        try {
             connectODBC();
-        }
-        catch( AssertionFailedError e )
-        {
-            if( "Connection properties not found (conf/odbc-connection.properties).".equals(e.getMessage()) )
-            {
+            populate("ODBC");
+        } catch (AssertionFailedError e) {
+            if ("Connection properties not found (conf/odbc-connection.properties).".equals(e.getMessage())) {
                 System.err.println("Skipping ODBC tests.");
                 return;
-            }
-            else
+            } else
                 throw e;
+        } finally {
+            connect();
         }
-        runCursorScroll( "ODBC", con );
     }
 
-    public void testCursorScroll() throws Exception
-    {
-        runCursorScroll( "jTDS", con );
+    public void testPreparedStatement() throws Exception {
+        populate("jTDS");
     }
 
-    public void testDiscard() throws Exception
-    {
-        Statement stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-        ResultSet rs = stmt.executeQuery( "Select top 10000 * from CustomGoods" );
+    private void populate(String name) throws SQLException {
+        start("Populate " + name);
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into jTDSPerformanceTest "
+                + "(v_bit, v_smallint, v_tinyint, v_decimal, v_money,"
+                + " v_smallmoney, v_float, v_real, v_datetime, v_smalldatetime,"
+                + " v_char, v_varchar, v_binary, v_varbinary)"
+                + " values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
-        start( "Discard" );
+        Boolean[] vBit = {Boolean.TRUE, Boolean.FALSE, null};
+        BigDecimal dec = new BigDecimal("12374335.34232211212");
+        BigDecimal money = new BigDecimal("1234567890.1234");
+        BigDecimal smoney = new BigDecimal("123456.1234");
+        Timestamp ts = new Timestamp(System.currentTimeMillis());
+        byte[] smallBinary = "This is a test.".getBytes();
 
-        while( rs.next() )
-        {
-            rs.getObject( 1 );
+        for (int i = 0; i < 1000; i++) {
+            for (int j = 1; j < 15; j++) {
+                if (j == 5 || j == 6) {
+                    pstmt.setNull(j, Types.DECIMAL);
+                } else if (j == 13 || j == 14) {
+                    pstmt.setNull(j, Types.BINARY);
+                } else {
+                    pstmt.setNull(j, Types.VARCHAR);
+                }
+            }
+//            pstmt.setObject(1, vBit[i % vBit.length], Types.BIT);
+//            pstmt.setShort(2, (short) i);
+//            pstmt.setByte(3, (byte) i);
+//            pstmt.setBigDecimal(4, dec);
+//            pstmt.setBigDecimal(5, money);
+//            pstmt.setBigDecimal(6, smoney);
+//            pstmt.setDouble(7, i*13.131313);
+//            pstmt.setFloat(8, (float) (i*13.131313));
+//            pstmt.setTimestamp(9, ts);
+//            pstmt.setTimestamp(10, ts);
+//            pstmt.setString(11, "This is a test.");
+//            pstmt.setString(12, "This is a test, too.");
+//            pstmt.setBytes(13, smallBinary);
+//            pstmt.setBytes(14, smallBinary);
+            assertEquals(1, pstmt.executeUpdate());
             progress();
         }
 
+        pstmt.close();
         end();
-
-        rs.close();
-        stmt.close();
-
     }
 
-    void runCursorScroll( String name, Connection con ) throws Exception
-    {
-        Statement stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
-        ResultSet rs = stmt.executeQuery( "Select top 10000 * from CustomGoods" );
+    public void testCursorScrollODBC() throws Exception {
+        try {
+            connectODBC();
+            runCursorScroll("ODBC", con);
+        } catch (AssertionFailedError e) {
+            if ("Connection properties not found (conf/odbc-connection.properties).".equals(e.getMessage())) {
+                System.err.println("Skipping ODBC tests.");
+                return;
+            } else
+                throw e;
+        } finally {
+            connect();
+        }
+    }
 
-        start( name );
+    public void testCursorScroll() throws Exception {
+        runCursorScroll("jTDS", con);
+    }
+
+    void runCursorScroll(String name, Connection con) throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        ResultSet rs = stmt.executeQuery("Select * from jTDSPerformanceTest");
+
+        start("Cursor scroll " + name);
         int cnt = rs.getMetaData().getColumnCount();
 
-        while( rs.next() )
-        {
-            for( int i=1; i<=cnt; i++ )
+        while (rs.next()) {
+            for (int i = 1; i <= cnt; i++)
                 rs.getObject(i);
             progress();
         }
 
-        while( rs.previous() )
-        {
-            for( int i=1; i<=cnt; i++ )
+        while (rs.previous()) {
+            for (int i = 1; i <= cnt; i++)
                 rs.getObject(i);
             progress();
         }
@@ -83,39 +144,75 @@ public class PerformanceTest extends TestBase
 
         rs.close();
         stmt.close();
+    }
+
+    public void testDiscardODBC() throws Exception {
+        try {
+            connectODBC();
+            runDiscard("ODBC");
+        } catch (AssertionFailedError e) {
+            if ("Connection properties not found (conf/odbc-connection.properties).".equals(e.getMessage())) {
+                System.err.println("Skipping ODBC tests.");
+                return;
+            } else
+                throw e;
+        } finally {
+            connect();
+        }
+    }
+
+    public void testDiscard() throws Exception {
+        try {
+            runDiscard("jTDS");
+        } finally {
+            dropTable("jTDSPerformanceTest");
+        }
+    }
+
+    public void runDiscard(String name) throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        ResultSet rs = stmt.executeQuery("Select * from jTDSPerformanceTest");
+
+        start("Discard " + name);
+
+        while (rs.next()) {
+            rs.getObject(1);
+            progress();
+        }
+
+        end();
+
+        rs.close();
+        stmt.close();
+
     }
 
     long count;
     long start;
     long duration;
 
-    void start( String name )
-    {
-        System.out.print( "Starting " + name );
+    void start(String name) {
+        System.out.print("Starting " + name);
         System.out.flush();
         count = 0;
         start = System.currentTimeMillis();
     }
 
-    void progress()
-    {
+    void progress() {
         count++;
-        if( ( count % 100 ) == 0 )
-        {
-            System.out.print( "." );
+        if (count % 100 == 0) {
+            System.out.print(".");
             System.out.flush();
         }
     }
 
-    void end()
-    {
+    void end() {
         duration = System.currentTimeMillis() - start;
-        System.out.println( "OK" );
-        System.out.println( "Time " + duration + "ms.");
+        System.out.println("OK");
+        System.out.println("Time " + duration + "ms.");
     }
 
-    public static void main(String[] args)
-    {
-        junit.textui.TestRunner.run( PerformanceTest.class );
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(PerformanceTest.class);
     }
 }

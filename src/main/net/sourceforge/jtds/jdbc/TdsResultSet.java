@@ -77,7 +77,7 @@ import java.sql.*;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    17 March 2001
- * @version    $Id: TdsResultSet.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $
+ * @version    $Id: TdsResultSet.java,v 1.8 2004-02-25 01:24:48 alin_sinpalean Exp $
  * @see        Statement#executeQuery
  * @see        Statement#getResultSet
  * @see        ResultSetMetaData @
@@ -98,7 +98,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     int rowCount = 0;
     PacketRowResult[] rowCache = null;
 
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.8 2004-02-25 01:24:48 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
@@ -120,7 +120,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     private void startResultSet(Tds tds, SQLWarningChain stmtWarningChain) throws SQLException
     {
-        tds.startResultSet(stmtWarningChain);
+        tds.startResultSet(stmtWarningChain, stmt);
         context = tds.getContext();
         stmtWarningChain.checkForExceptions();
     }

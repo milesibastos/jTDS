@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.23 2004-02-20 23:57:18 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.24 2004-02-25 01:24:47 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.23 2004-02-20 23:57:18 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.24 2004-02-25 01:24:47 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -429,7 +429,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setByte( int index, byte x ) throws SQLException
     {
-        setParam( index, new Integer( x ), java.sql.Types.SMALLINT, -1 );
+        setParam( index, new Integer( x ), java.sql.Types.TINYINT, -1 );
     }
 
     /**

@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.33 2004-02-20 00:09:09 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.34 2004-02-25 01:24:47 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.33 2004-02-20 00:09:09 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.34 2004-02-25 01:24:47 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -2564,7 +2564,7 @@ public class Tds implements TdsDefinitions {
                     final String colName = comm.getString(nameLen, encoder);
                     columns.getColumn(columnIndex).setName(colName);
                     bytesRead += (tdsVer == TDS70)
-                            ? 2*colName.length() : colName.length(); 
+                            ? 2*colName.length() : colName.length();
                 }
             }
         }
@@ -3861,12 +3861,22 @@ public class Tds implements TdsDefinitions {
         return lastUpdateCount;
     }
 
-    synchronized void startResultSet(final SQLWarningChain wChain) {
+    synchronized void startResultSet(final SQLWarningChain wChain,
+                                     final TdsStatement stmt) {
         try {
             while (!isResultRow() && !isEndOfResults()) {
                 final PacketResult res = processSubPacket();
                 if (res instanceof PacketMsgResult) {
                     wChain.addOrReturn((PacketMsgResult) res);
+                } else if (res instanceof PacketOutputParamResult) {
+                    stmt.handleParamResult((PacketOutputParamResult) res);
+                } else if (res instanceof PacketRetStatResult) {
+                    stmt.handleRetStat((PacketRetStatResult) res);
+                } else if (res instanceof PacketEndTokenResult) {
+                    if (((PacketEndTokenResult) res).wasCanceled()) {
+                        wChain.addException(
+                                new SQLException("Query was cancelled or timed out."));
+                    }
                 }
             }
         } catch (java.io.IOException e) {

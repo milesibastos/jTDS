@@ -1,6 +1,15 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/08/2004 - Alin Sinpalean
+ o Split up table name from TDS_TABNAME packet into catalog, schema and table,
+   if fully qualified.
+ o Hidden columns (those for which the hidden flag is set in the TDS_COLINFO
+   packet) modify the fake column count; they are (hopefully always) the last
+   ones in the ResultSet.
+ o Updated the details of the TDS_TABNAME and TDS_COLINFO packets in the TDS
+   documentation.
+
 03/07/2004 - Alin Sinpalean
  o The main Tds instance is now always created even if no cursor ResultSets are
    used, as it simplifies the internals of TdsConnection and doesn't create an

@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.38 2004-03-07 23:03:32 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.39 2004-03-10 18:01:03 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.38 2004-03-07 23:03:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.39 2004-03-10 18:01:03 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -2372,14 +2372,40 @@ public class Tds implements TdsDefinitions {
             comm.skip(totalLen);
         } else {
             while (bytesRead < totalLen) {
-                int columnIndex = (comm.getByte() & 0xff);
+                int columnIndex = comm.getByte() & 0xff;
+                Column col = columns.getColumn(columnIndex);
                 int tableIndex = (comm.getByte() & 0xff) - 1;
                 byte flags = comm.getByte(); // flags
                 bytesRead += 3;
 
                 if (tableIndex != -1) {
-                    columns.getColumn(columnIndex).setTableName(
-                            tables.get(tableIndex).toString());
+                    String tabName = tables.get(tableIndex).toString();
+
+                    // tabName can be a fully qualified name
+                    int dotPos = tabName.lastIndexOf('.');
+                    if (dotPos > 0) {
+                        col.setTableName(tabName.substring(dotPos + 1));
+
+                        int nextPos = tabName.lastIndexOf('.', dotPos-1);
+                        if (nextPos + 1 < dotPos) {
+                            col.setSchema(tabName.substring(nextPos + 1, dotPos));
+                        }
+
+                        dotPos = nextPos;
+                        nextPos = tabName.lastIndexOf('.', dotPos-1);
+                        if (nextPos + 1 < dotPos) {
+                            col.setCatalog(tabName.substring(nextPos + 1, dotPos));
+                        }
+                    } else {
+                        col.setTableName(tabName);
+                    }
+                }
+
+                // Hidden columns are (usually) at the end; make them invisible
+                if ((flags & 0x10) != 0) {
+                    if (columns.fakeColumnCount() >= columnIndex) {
+                        columns.setFakeColumnCount(columnIndex - 1);
+                    }
                 }
 
                 // If bit 5 is set, we have a column name
@@ -2387,9 +2413,10 @@ public class Tds implements TdsDefinitions {
                     final int nameLen = comm.getByte() & 0xff;
                     bytesRead += 1;
                     final String colName = comm.getString(nameLen, conn.getEncoder());
-                    columns.getColumn(columnIndex).setName(colName);
                     bytesRead += (tdsVer == TDS70)
                             ? 2*colName.length() : colName.length();
+
+                    col.setName(colName);
                 }
             }
         }

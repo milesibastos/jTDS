@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2004-02-09 23:52:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.12 2004-02-10 00:07:18 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -85,7 +85,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.11 2004-02-09 23:52:13 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.12 2004-02-10 00:07:18 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2004-02-09 23:52:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.12 2004-02-10 00:07:18 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -892,10 +892,9 @@ public class TdsConnection implements Connection
             if (tdsVer == Tds.TDS70) {
                 tmpSQL.append("\r\nSELECT SCOPE_IDENTITY() AS ID");
             } else {
-                tmpSQL.append("\r\nSELECT SCOPE_IDENTITY() AS ID");
+                tmpSQL.append("\r\nSELECT @@IDENTITY AS ID");
             }
 
-            tmpSQL.append("\r\nSELECT @@IDENTITY AS ID");
             sql = tmpSQL.toString();
             returnKeys = true;
         }

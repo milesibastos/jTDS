@@ -41,12 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.8 2002-09-14 01:44:23 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.9 2002-09-19 23:27:38 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.8 2002-09-14 01:44:23 alin_sinpalean Exp $";
-
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.9 2002-09-19 23:27:38 alin_sinpalean Exp $";
 
    /**
     * Does not allow NULL values.
@@ -63,22 +62,13 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public static final int columnNullableUnknown = 2;
 
-
    private Columns  columnsInfo;
 
-
-   private void NotImplemented()
-      throws SQLException
-   {
-
-      throw new SQLException("Not implemented");
-   }
 
    public TdsResultSetMetaData(Columns columns_)
    {
       columnsInfo = columns_;
    }
-
 
    /**
     * What's a column's table's catalog name?
@@ -93,7 +83,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return res==null ? "" : res;
    }
 
-
    /**
     * What's the number of columns in the ResultSet?
     *
@@ -104,7 +93,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return columnsInfo.fakeColumnCount();
    }
-
 
    /**
     * What's the column's normal max width in chars?
@@ -117,7 +105,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return columnsInfo.getDisplaySize(column);
    }
-
 
    /**
     * What's the suggested column title for use in printouts and
@@ -132,7 +119,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return columnsInfo.getLabel(column);
    }
 
-
    /**
     * What's a column's name?
     *
@@ -144,7 +130,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return columnsInfo.getName(column);
    }
-
 
    /**
     * What's a column's SQL type?
@@ -167,7 +152,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       }
    }
 
-
    /**
     * What's a column's data source specific type name?
     *
@@ -181,7 +165,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
          return getCleanTypeName(column)+" identity";
       return getCleanTypeName(column);
    }
-
 
    /**
     * Get the native data type name (i.e. without 'identity').
@@ -257,7 +240,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
          +columnsInfo.getNativeType(column));
    }
 
-
    /**
     * What's a column's number of decimal digits?
     *
@@ -269,7 +251,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return columnsInfo.getPrecision(column);
    }
-
 
    /**
     * What's a column's number of digits to right of the decimal point?
@@ -284,7 +265,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return res<0 ? 0 : res;
    }
 
-
    /**
     * What's a column's table's schema?
     *
@@ -298,7 +278,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return res==null ? "" : res;
    }
 
-
    /**
     * What's a column's table name?
     *
@@ -310,7 +289,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       String res = columnsInfo.getTableName(column);
       return res==null ? "" : res;
    }
-
 
    /**
     * Is the column automatically numbered, thus read-only?
@@ -324,7 +302,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return columnsInfo.isAutoIncrement(column).booleanValue();
    }
 
-
    /**
     * Does a column's case matter?
     *
@@ -336,7 +313,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return columnsInfo.isCaseSensitive(column).booleanValue();
    }
-
 
    /**
     * Is the column a cash value?
@@ -363,7 +339,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       }
    }
 
-
    /**
     * Will a write on the column definitely succeed?
     *
@@ -375,7 +350,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return false;
    }
-
 
    /**
     * Can you put a NULL in this column?
@@ -389,7 +363,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return columnsInfo.isNullable(column);
    }
 
-
    /**
     * Is a column definitely not writable?
     *
@@ -402,7 +375,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       return columnsInfo.isReadOnly(column).booleanValue();
    }
 
-
    /**
     * Can the column be used in a where clause?
     *
@@ -414,7 +386,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       return columnsInfo.getNativeType(column) != Tds.SYBIMAGE;
    }
-
 
    /**
     * Is the column a signed number?
@@ -466,7 +437,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
       }
    }
 
-
    /**
     * Is it possible for a write on the column to succeed?
     *
@@ -496,7 +466,53 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getColumnClassName(int column) throws SQLException
    {
-      NotImplemented();
-      return null;
+      switch( columnsInfo.getJdbcType(column) )
+      {
+         case Types.BIT:
+            return "java.lang.Boolean";
+
+         case Types.TINYINT:
+         case Types.SMALLINT:
+         case Types.INTEGER:
+            return "java.lang.Integer";
+
+         case Types.BIGINT:
+         case Types.NUMERIC:
+         case Types.DECIMAL:
+            return "java.math.BigDecimal";
+
+         case Types.FLOAT:
+         case Types.DOUBLE:
+            return "java.lang.Double";
+
+         case Types.REAL:
+            return "java.lang.Float";
+
+         case Types.CHAR:
+         case Types.VARCHAR:
+         case Types.LONGVARCHAR:
+            return "java.lang.String";
+
+         case Types.DATE:
+         case Types.TIME:
+         case Types.TIMESTAMP:
+            return "java.sql.Timestamp";
+
+         case Types.BINARY:
+         case Types.VARBINARY:
+         case Types.LONGVARBINARY:
+            return "byte[]";
+
+         case Types.JAVA_OBJECT:
+         case Types.DISTINCT:
+         case Types.STRUCT:
+         case Types.ARRAY:
+         case Types.BLOB:
+         case Types.CLOB:
+         case Types.REF:
+         default:
+            // SAfe Or should this be null?
+            return "";
+      }
    }
 }

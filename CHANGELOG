@@ -1,6 +1,22 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/20/2002 - Alin Sinpalean
+
+ o Bugfix in Tds: when the autocommit flag was set on a Tds, the transaction
+   was automatically committed by Tds.changeSettings(). I think I was the
+   brilliant mind that did that (because I had no idea about what I was doing
+   at the time), but it was completely wrong. Removed.
+ o TdsComm.startPacket throws an exception if there is still data left in the
+   input buffer. The problem is that the data is never consumed, so that Tds is
+   never closed. Temporary fix: dump the buffer contents. Will have to come up
+   with something better.
+ o TdsConnection.setCatalog() was synchronized on the statement while executing
+   the query. The problem was that the statement might have been null. Fix:
+   synchronization is made on the tds (again) if the Statement is null.
+ o Implemented TdsResultSetMetaData.getColumnClassName(). Also much easier than
+   feared. :o)
+
 09/19/2002 - Alin Sinpalean
 
  o Created a goToNextResult() method in Tds, that eats up all input until the

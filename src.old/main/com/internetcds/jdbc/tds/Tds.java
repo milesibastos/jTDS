@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $";
 
     public TimeoutHandler(TdsStatement stmt_, int timeout_)
     {
@@ -111,7 +111,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -176,7 +176,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -4467,8 +4467,11 @@ public class Tds implements TdsDefinitions {
         if( autoCommit != this.autoCommit )
         {
             this.autoCommit = autoCommit;
-            if( autoCommit )
-                res.append("if @@trancount>0 commit tran ");
+            // SAfe We must *NOT* do this! The user must do this himself or
+            //      otherwise it will be rolled back when the connection is
+            //      closed.
+//            if( autoCommit )
+//                res.append("if @@trancount>0 commit tran ");
             res.append(sqlStatementToSetCommit()).append(' ');
         }
 

@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.9 2002-09-18 16:27:08 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.10 2002-09-19 23:27:38 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.9 2002-09-18 16:27:08 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.10 2002-09-19 23:27:38 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -206,7 +206,20 @@ public class TdsComm implements TdsDefinitions {
     public synchronized void startPacket( int type ) throws TdsException
     {
         if( type!=CANCEL && inBufferIndex!=inBufferLen )
+        {
+            // SAfe It's ok to throw this exception so that we will know there
+            //      is a design flaw somewhere, but we should empty the buffer
+            //      however. Otherwise the connection will never close (e.g. if
+            //      SHOWPLAN_ALL is ON, a resultset will be returned by commit
+            //      or rollback and we will never get rid of it). It's true
+            //      that we should find a way to actually process these packets
+            //      but for now, just dump them (we have thrown an exception).
+            inBufferIndex = inBufferLen;
+            if( Logger.isActive() )
+                Logger.println("Unprocessed data in input buffer. Dumping. ["+
+                    inBufferIndex+"/"+inBufferLen+"]");
             throw new TdsException("Unprocessed data in input buffer.");
+        }
 
         // Only one thread at a time can be building an outboudn packet.
         // This is primarily a concern with building cancel packets.

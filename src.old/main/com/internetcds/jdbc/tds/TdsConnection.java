@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.19 2002-09-18 19:47:54 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.20 2002-09-19 23:27:38 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.19 2002-09-18 19:47:54 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.20 2002-09-19 23:27:38 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.19 2002-09-18 19:47:54 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.20 2002-09-19 23:27:38 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -247,17 +247,25 @@ public class TdsConnection implements ConnectionHelper, Connection
         for( int i=0; i<tdsPool.size(); i++ )
         {
             Tds tds = ((TdsInstance)tdsPool.get(i)).tds;
-            TdsStatement s = tds.statement;
 
             // SAfe We have to synchronize this so that the Statement doesn't
             //      begin sending data while we're changing the database. Not
             //      really safe though, since the Tds could be deallocated just
             //      before entering the monitor. Or not? Not too clear to me...
-            synchronized( s )
+            synchronized( tds )
             {
-                if( s != null )
-                    s.skipToEnd();
-                tds.changeDB(catalog);
+                TdsStatement s = tds.statement;
+
+                // SAfe A bit paranoic thinking here, but better to be sure it
+                //      works. :o) Will synchronize again on the Tds if the
+                //      Statement is null (otherwise it crashes with NPE).
+                Object o = s==null ? (Object)tds : s;
+                synchronized( o )
+                {
+                    if( s != null )
+                        s.skipToEnd();
+                    tds.changeDB(catalog);
+                }
             }
         }
 
@@ -562,7 +570,7 @@ public class TdsConnection implements ConnectionHelper, Connection
 
         // SAfe First close all Statements, to ensure nothing is left behind
         //      This is needed to ensure rollback below doesn't crash.
-        // SAfe Need to do it backwards because when closing Statements remove
+        // SAfe Need to do it backwards because when closing, Statements remove
         //      themselves from the list.
         for( i=allStatements.size()-1; i>=0; i-- )
             try

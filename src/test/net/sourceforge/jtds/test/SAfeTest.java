@@ -397,7 +397,7 @@ public class SAfeTest extends DatabaseTestCase
     }
 
     /**
-     * Test <code>BigDecimal</code>s created from double values (i.e. with very
+     * Test <code>BigDecimal</code>s created from double values (i.e with very
      * large scales).
      */
     public void testBigDecimal0007() throws Exception {
@@ -422,8 +422,10 @@ public class SAfeTest extends DatabaseTestCase
     }
 
     /**
-     * Test <code>BigDecimal</code>s created from double values (i.e. with very
-     * large scales).
+     * Test writing <code>long</code> values to VARCHAR fields. There was a
+     * regression introduced in release 0.6 that caused <code>long</code>
+     * fields to be sent with non-zero scale and appear with decimals when
+     * written into VARCHAR fields.
      */
     public void testLongToVarchar0008() throws Exception {
         long myVal = 13;
@@ -542,15 +544,54 @@ public class SAfeTest extends DatabaseTestCase
         assertEquals(1, insStmt.executeUpdate());
         insStmt.close();
 
-        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+        stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY,
                                    ResultSet.CONCUR_UPDATABLE);
         ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0011 ORDER BY 1");
         assertEquals(null, stmt.getWarnings());
         assertEquals(null, rs.getWarnings());
-        assertTrue(rs.last());
+        assertTrue(rs.next());
+        assertTrue(rs.next());
         rs.updateString(1, "Row X");
         rs.updateRow();
-        rs.refreshRow();
+        rs.next();
+        assertEquals("Row X", rs.getString(1));
+        rs.close();
+    }
+
+    /**
+     * Test <code>ResultSet.insertRow()</code> on updateable result sets.
+     */
+    public void testInsertRow0012() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #SAfe0012(value VARCHAR(255) PRIMARY KEY)");
+        stmt.close();
+
+        PreparedStatement insStmt = con.prepareStatement(
+                "INSERT INTO #SAfe0012(value) values (?)");
+        insStmt.setString(1, "Row 1");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.setString(1, "Row 2");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                                   ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0012 ORDER BY 1");
+        assertEquals(null, stmt.getWarnings());
+        assertEquals(null, rs.getWarnings());
+
+        // Insert the new row
+        rs.moveToInsertRow();
+        rs.updateString(1, "Row X");
+        rs.insertRow();
+
+        // Check the ResultSet contents
+        rs.moveToCurrentRow();
+        rs.next();
+        assertEquals("Row 1", rs.getString(1));
+        rs.next();
+        assertEquals("Row 2", rs.getString(1));
+        rs.next();
         assertEquals("Row X", rs.getString(1));
         rs.close();
     }

@@ -826,7 +826,12 @@ public class TimestampTest extends DatabaseTestCase
                     assertTrue(compareBytes(cstmt.getBytes(1), (byte[]) datatypes[i][2]) == 0);
                 } else if (datatypes[i][2] instanceof Number) {
                     Number n = (Number) cstmt.getObject(1);
-                    assertEquals("Failed on " + datatypes[i][0], ((Number) cstmt.getObject(1)).doubleValue(), ((Number) datatypes[i][2]).doubleValue(), 0.001);
+                    if (n != null) {
+                        assertEquals("Failed on " + datatypes[i][0], n.doubleValue(),
+                                     ((Number) datatypes[i][2]).doubleValue(), 0.001);
+                    } else {
+                        assertEquals("Failed on " + datatypes[i][0], n, datatypes[i][2]);
+                    }
                 } else {
                     assertEquals("Failed on " + datatypes[i][0], cstmt.getObject(1), datatypes[i][2]);
                 }

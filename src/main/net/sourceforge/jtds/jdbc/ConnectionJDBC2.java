@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.22 2004-08-07 03:20:38 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.23 2004-08-07 04:46:53 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -660,56 +660,36 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Transfer the properties to the local instance variables.
      *
      * @param info The connection properties Object.
-     * @throws SQLException
+     * @throws SQLException If an invalid property value is found.
      */
     protected void unpackProperties(Properties info)
-    throws SQLException {
+            throws SQLException {
+
         serverName = info.getProperty(Messages.get("prop.servername"));
-
-        try {
-            portNumber  = Integer.parseInt(
-                                          info.getProperty(Messages.get("prop.portnumber"),
-                                                           String.valueOf(DefaultProperties.PORT_NUMBER_SQLSERVER)));
-        } catch (NumberFormatException e) {
-            throw new SQLException(
-                                  Messages.get("error.connection.badprop",
-                                                     Messages.get("prop.portnumber")), "08001");
-        }
-
-        try {
-            serverType  = Integer.parseInt(
-                                          info.getProperty(Messages.get("prop.servertype")));
-        } catch (NumberFormatException e) {
-            throw new SQLException(
-                                  Messages.get("error.connection.badprop",
-                                                     Messages.get("prop.servertype")), "08001");
-        }
-
-        databaseName = info.getProperty(Messages.get("prop.databasename"),"");
-        instanceName = info.getProperty(Messages.get("prop.instance"),"");
-        domainName = info.getProperty(Messages.get("prop.domain"),"");
+        portNumber = parseIntegerProperty(info, "prop.portnumber");
+        serverType = parseIntegerProperty(info, "prop.servertype");
+        databaseName = info.getProperty(Messages.get("prop.databasename"));
+        instanceName = info.getProperty(Messages.get("prop.instance"), "");
+        domainName = info.getProperty(Messages.get("prop.domain"), "");
         user = info.getProperty(Messages.get("prop.user"));
         password = info.getProperty(Messages.get("prop.password"));
-        macAddress = info.getProperty(Messages.get("prop.macaddress"), "");
-        appName = info.getProperty(Messages.get("prop.appname"), DefaultProperties.APP_NAME);
-        progName = info.getProperty(Messages.get("prop.progname"), DefaultProperties.PROG_NAME);
+        macAddress = info.getProperty(Messages.get("prop.macaddress"));
+        appName = info.getProperty(Messages.get("prop.appname"));
+        progName = info.getProperty(Messages.get("prop.progname"));
         serverCharset = info.getProperty(Messages.get("prop.charset"));
         language = info.getProperty(Messages.get("prop.language"), "us_english");
-        prepareSql = Integer.valueOf(info.getProperty(Messages.get("prop.preparesql"), String.valueOf(DefaultProperties.PREPARE_SQL))).intValue();
-        lastUpdateCount = info.getProperty(Messages.get("prop.lastupdatecount"), "true").equalsIgnoreCase("true");
-        useUnicode = info.getProperty(Messages.get("prop.useunicode"), "true").equalsIgnoreCase("true");
-        namedPipe = info.getProperty(Messages.get("prop.namedpipe"), "false").equalsIgnoreCase("true");
+        prepareSql = parseIntegerProperty(info, "prop.preparesql");
+        lastUpdateCount = info.getProperty(Messages.get("prop.lastupdatecount")).equalsIgnoreCase("true");
+        useUnicode = info.getProperty(Messages.get("prop.useunicode")).equalsIgnoreCase("true");
+        namedPipe = info.getProperty(Messages.get("prop.namedpipe")).equalsIgnoreCase("true");
         charsetSpecified = (serverCharset != null && serverCharset.length() > 0);
 
         if (!charsetSpecified) {
             serverCharset = "iso_1";
         }
 
-        String tmp = info.getProperty(
-                Messages.get("prop.tds"),
-                (serverType == Driver.SQLSERVER ? DefaultProperties.TDS_VERSION_70 : DefaultProperties.TDS_VERSION_50));
-
-        Integer parsedTdsVersion = DefaultProperties.getTdsVersion(tmp);
+        Integer parsedTdsVersion =
+                DefaultProperties.getTdsVersion(info.getProperty(Messages.get("prop.tds")));
         if (parsedTdsVersion == null) {
             throw new SQLException(
                                   Messages.get("error.connection.badprop",
@@ -717,14 +697,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
         tdsVersion = parsedTdsVersion.intValue();
 
-        try {
-            packetSize  = Integer.parseInt(
-                                          info.getProperty(Messages.get("prop.packetsize"), "0"));
-        } catch (NumberFormatException e) {
-            throw new SQLException(
-                                  Messages.get("error.connection.badprop",
-                                                     Messages.get("prop.packetsize")), "08001");
-        }
+        packetSize = parseIntegerProperty(info, "prop.packetsize");
 
         if (packetSize < TdsCore.MIN_PKT_SIZE) {
             if (tdsVersion >= Driver.TDS70) {
@@ -742,25 +715,48 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         packetSize = (packetSize / 512) * 512;
 
+        loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
+        lobBuffer = parseLongProperty(info, "prop.lobbuffer");
+    }
+
+    /**
+     * Parse a string property value into an integer value.
+     *  
+     * @param info The connection properties object.
+     * @param key The message key used to retrieve the property name.
+     * @return The integer value of the string property value.
+     * @throws SQLException If the property value can't be parsed.
+     */
+    private int parseIntegerProperty(final Properties info, final String key)
+            throws SQLException {
+
+        final String propertyName = Messages.get(key);
         try {
-            loginTimeout = Integer.parseInt(
-                                            info.getProperty(Messages.get("prop.logintimeout"), "0"));
+            return Integer.parseInt(info.getProperty(propertyName));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Messages.get("error.connection.badprop",
-                                                     Messages.get("prop.logintimeout")), "08001");
+                    Messages.get("error.connection.badprop", propertyName), "08001");
         }
-        
+    }
+
+    /**
+     * Parse a string property value into a long value.
+     * 
+     * @param info The connection properties object.
+     * @param key The message key used to retrieve the property name.
+     * @return The long value of the string property value.
+     * @throws SQLException If the property value can't be parsed.
+     */
+    private long parseLongProperty(final Properties info, final String key)
+            throws SQLException {
+
+        final String propertyName = Messages.get(key);
         try {
-            lobBuffer = Long.parseLong(
-                                       info.getProperty(Messages.get("prop.lobbuffer"),
-                                                        String.valueOf(DefaultProperties.LOB_BUFFER_SIZE)));
+            return Long.parseLong(info.getProperty(propertyName));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Messages.get("error.connection.badprop",
-                                                     Messages.get("prop.lobbuffer")), "08001");
+                    Messages.get("error.connection.badprop", propertyName), "08001");
         }
-        
     }
 
     /**

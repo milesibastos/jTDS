@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
  * 
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.4 2004-08-06 23:15:50 ddkilzer Exp $
+ * @version $Id: Messages.java,v 1.5 2004-08-07 04:46:54 ddkilzer Exp $
  */
 public final class Messages {
 
@@ -65,7 +65,7 @@ public final class Messages {
      * @param param1 The object to insert into message.
      * @return The selected message as a <code>String</code>.
      */
-    static String get(String key, Object param1) {
+    public static String get(String key, Object param1) {
         Object args[] = {param1};
         return get(key, args);
     }

@@ -29,6 +29,13 @@ Changes from jTDS 0.8.1
    setTds() and private tds field to getTdsVersion(), setTdsVersion() and
    tdsVersion to match private field ConnectionJDBC2.  This also affects
    JtdsDataSource.
+ o ConnectionJDBC2.unpackProperties():  Removed code that set default
+   property values since this is now handled in Driver.parseURL() before
+   the method is called.  Refactored common code into parseIntegerProperty()
+   and parseLongProperty() methods.
+ o New unit test in ConnectionJDBC2UnitTest for testing that
+   unpackProperties() throws an SQLException when parsing an invalid integer
+   or long property.
 
 08/06/2004 - Brian Heineman
  o Update the usage of the prepareSql parameter.  This parameter is now used to

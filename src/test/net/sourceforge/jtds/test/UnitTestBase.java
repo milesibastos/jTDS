@@ -23,14 +23,13 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
-import java.io.IOException;
 
 
 /**
  * Base class for unit tests which do not connect to a database.
  * 
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.6 2004-08-07 03:20:40 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.7 2004-08-07 04:46:59 ddkilzer Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 
@@ -74,7 +73,7 @@ public abstract class UnitTestBase extends TestCase {
             throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getTargetException().getMessage());
         }
     }
 
@@ -137,7 +136,7 @@ public abstract class UnitTestBase extends TestCase {
             throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getTargetException().getMessage());
         }
     }
 
@@ -172,7 +171,7 @@ public abstract class UnitTestBase extends TestCase {
             throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e.getTargetException().getMessage());
         }
     }
 

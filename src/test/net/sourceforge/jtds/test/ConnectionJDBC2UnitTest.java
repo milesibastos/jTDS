@@ -3,11 +3,10 @@ package net.sourceforge.jtds.test;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import java.util.Properties;
-import java.util.HashMap;
-import java.util.Map;
 import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
+import net.sourceforge.jtds.jdbc.Messages;
 
 
 
@@ -43,13 +42,58 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
         super(name);
     }
 
-    
+
     /**
-     * Dummy test.
+     * Test that an {@link java.sql.SQLException} is thrown when
+     * parsing invalid integer (and long) properties.
+     */
+    public void test_unpackProperties_invalidIntegerProperty() {
+        assertSQLExceptionForBadWholeNumberProperty("prop.portnumber");
+        assertSQLExceptionForBadWholeNumberProperty("prop.servertype");
+        assertSQLExceptionForBadWholeNumberProperty("prop.preparesql");
+        assertSQLExceptionForBadWholeNumberProperty("prop.packetsize");
+        assertSQLExceptionForBadWholeNumberProperty("prop.logintimeout");
+        assertSQLExceptionForBadWholeNumberProperty("prop.lobbuffer");
+    }
+
+
+    /**
+     * Assert that an SQLException is thrown when
+     * {@link ConnectionJDBC2#unpackProperties(Properties)} is called
+     * with an invalid integer (or long) string set on a property.
      * <p/>
-     * Needed so that this class has at least one test.
-     */ 
-    public void testDummy() {
+     * Note that because Java 1.3 is still supported, the
+     * {@link RuntimeException} that is caught may not contain the
+     * original {@link Throwable} cause, only the original message.
+     * 
+     * @param key The message key used to retrieve the property name.
+     */
+    private void assertSQLExceptionForBadWholeNumberProperty(final String key) {
+
+        final ConnectionJDBC2 instance = 
+                (ConnectionJDBC2) invokeConstructor(
+                        ConnectionJDBC2.class, new Class[]{}, new Object[]{});
+
+        final Properties properties = 
+                (Properties) invokeStaticMethod(
+                        Driver.class, "parseURL", 
+                        new Class[]{String.class, Properties.class},
+                        new Object[]{"jdbc:jtds:sqlserver://servername", new Properties()});
+
+        properties.setProperty(Messages.get(key), "1.21 Gigawatts");
+
+        try {
+            invokeInstanceMethod(
+                    instance, "unpackProperties",
+                    new Class[]{Properties.class},
+                    new Object[]{properties});
+            fail("RuntimeException expected");
+        }
+        catch (RuntimeException e) {
+            assertEquals("Unexpected exception message",
+                         Messages.get("error.connection.badprop", Messages.get(key)),
+                         e.getMessage());
+        }
     }
 
 

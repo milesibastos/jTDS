@@ -53,36 +53,35 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.14 2004-02-05 23:57:52 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.15 2004-02-07 19:26:10 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.14 2004-02-05 23:57:52 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.15 2004-02-07 19:26:10 bheineman Exp $";
 
-    String rawQueryString = null;
-    ParameterListItem[] parameterList = null;
+    String rawQueryString;
+    ParameterListItem[] parameterList;
     static Map typemap = null;
 
-    public PreparedStatement_base(TdsConnection conn_, String sql) throws SQLException
-    {
-        this( conn_, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
+    public PreparedStatement_base(TdsConnection conn_, String sql) throws SQLException {
+        this(conn_, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
     }
 
-    public PreparedStatement_base(TdsConnection conn_, String sql, int type, int concurrency ) throws SQLException
-    {
-        super( conn_, type, concurrency );
+    public PreparedStatement_base(TdsConnection conn_, String sql, int type, int concurrency)
+    throws SQLException {
+        super(conn_, type, concurrency);
 
         rawQueryString = conn_.nativeSQL(sql);
 
-        int i;
-        int numberOfParameters = ParameterUtils.countParameters( rawQueryString );
+        int numberOfParameters = ParameterUtils.countParameters(rawQueryString);
 
         parameterList = new ParameterListItem[numberOfParameters];
 
-        for ( i = 0; i < numberOfParameters; i++ )
+        for (int i = 0; i < numberOfParameters; i++ ) {
             parameterList[i] = new ParameterListItem();
+        }
     }
 
     /**
@@ -94,18 +93,14 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void clearParameters() throws SQLException
-    {
-        int i;
-        for ( i = 0; i < parameterList.length; i++ ) {
+    public void clearParameters() throws SQLException {
+        for (int i = 0; i < parameterList.length; i++ ) {
             parameterList[i].clear();
         }
     }
 
-    public boolean execute() throws SQLException
-    {
-        Tds tds = getTds();
-        return execute( tds );
+    public boolean execute() throws SQLException {
+        return execute(getTds());
     }
 
     /**
@@ -116,8 +111,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database-access error occurs.
      * @see                      Statement#execute
      */
-    public boolean execute( Tds tds ) throws SQLException
-    {
+    public boolean execute(Tds tds) throws SQLException {
         //
         // TDS can handle prepared statements by creating a temporary
         // procedure.  Since procedure must have the datatype specified
@@ -138,8 +132,8 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                                              tds);
         StringBuffer signature = new StringBuffer();
         signature.append(rawQueryString);
-        for (int i = 0; i < parameterList.length; i++)
-        {
+
+        for (int i = 0; i < parameterList.length; i++) {
             signature.append(parameterList[i].formalType);
         }
 
@@ -148,8 +142,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         procedure = findCompatibleStoredProcedure( tds, signature.toString());
 
         // if we don't have a suitable match then create a new temporary stored procedure
-        if( procedure == null )
-        {
+        if (procedure == null) {
             // Create the stored procedure
             // MJH Pass in the caculated signature to be used as the cache key
             procedure = new Procedure(rawQueryString, signature.toString(),
@@ -168,16 +161,14 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             warningChain);
     }
 
-    private Procedure findCompatibleStoredProcedure( Tds tds, String rawQueryString )
-    {
+    private Procedure findCompatibleStoredProcedure(Tds tds, String rawQueryString) {
         return tds.findCompatibleStoredProcedure(rawQueryString);
     }
 
-    private void submitProcedure( Tds tds, Procedure proc )
-             throws SQLException
-    {
+    private void submitProcedure(Tds tds, Procedure proc)
+             throws SQLException {
         String sql = proc.getPreparedSqlString();
-        tds.submitProcedure( sql, warningChain );
+        tds.submitProcedure(sql, warningChain);
         warningChain.checkForExceptions();
     }
 
@@ -187,15 +178,13 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @return  a ResultSet that contains the data produced by the query; never null
      * @exception  SQLException  if a database-access error occurs.
      */
-    public java.sql.ResultSet executeQuery() throws SQLException
-    {
+    public java.sql.ResultSet executeQuery() throws SQLException {
         Tds tds = getTds();
 
-        if( !execute(tds) )
-        {
+        if (!execute(tds)) {
             tds.skipToEnd();
             releaseTds();
-            throw new SQLException( "Was expecting a result set" );
+            throw new SQLException("Was expecting a result set");
         }
 
         return results;

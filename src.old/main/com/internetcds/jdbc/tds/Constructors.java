@@ -37,7 +37,7 @@ package com.internetcds.jdbc.tds;
 
 public class Constructors
 {
-   public static final String cvsVersion = "$Id: Constructors.java,v 1.2 2001-08-13 00:27:34 skizz Exp $";
+   public static final String cvsVersion = "$Id: Constructors.java,v 1.3 2001-08-13 00:35:57 skizz Exp $";
 
    static boolean   dejavu  = false;
 
@@ -82,18 +82,19 @@ public class Constructors
             java.lang.Class.forName("com.internetcds.jdbc.tds.TdsStatement"),
             java.lang.Class.forName("com.internetcds.jdbc.tds.Columns")
          };
-         Class preparedStatementParamTypes[] =
-         {
-            java.lang.Class.forName("java.sql.Connection"),
-            java.lang.Class.forName("com.internetcds.jdbc.tds.Tds"),
-            java.lang.Class.forName("java.lang.String")
-         };
-         Class callableStatementParamTypes[] =
-         {
-            java.lang.Class.forName("java.sql.Connection"),
-            java.lang.Class.forName("com.internetcds.jdbc.tds.Tds"),
-            java.lang.Class.forName("java.lang.String")
-         };
+// No longer used
+//         Class preparedStatementParamTypes[] =
+//         {
+//            java.lang.Class.forName("java.sql.Connection"),
+//            java.lang.Class.forName("com.internetcds.jdbc.tds.Tds"),
+//            java.lang.Class.forName("java.lang.String")
+//         };
+//         Class callableStatementParamTypes[] =
+//         {
+//            java.lang.Class.forName("java.sql.Connection"),
+//            java.lang.Class.forName("com.internetcds.jdbc.tds.Tds"),
+//            java.lang.Class.forName("java.lang.String")
+//         };
          Class connectionParamTypes[] =
          {
             java.lang.Class.forName("java.util.Properties")
@@ -115,40 +116,41 @@ public class Constructors
             jdbcVersionName = "1_0";
          }
 
-         try
-         {
-            preparedStatementCtor = getCtor("com.internetcds.jdbc.tds.PreparedStatement_base",
-                                            preparedStatementParamTypes);
-            callableStatementCtor = getCtor("com.internetcds.jdbc.tds.CallableStatement_base",
-                                            callableStatementParamTypes);
-         }
-         catch(java.lang.ClassNotFoundException e)
-         {
-            if (jdbcVersion == JDBC2_0)
-            {
-               //
-               // If we couldn't find the 2.0 classes, let's try to fall back
-               // to JDBC 1.0
-               //
-               jdbcVersion     = JDBC1_0;
-               jdbcVersionName = "1_0";
-               preparedStatementCtor = getCtor("com.internetcds.jdbc.tds.PreparedStatement_base",
-                                               preparedStatementParamTypes);
-               callableStatementCtor = getCtor("com.internetcds.jdbc.tds.CallableStatement_base",
-                                               callableStatementParamTypes);
-            }
-         }
+// No longer used
+//         try
+//         {
+//            preparedStatementCtor = getCtor("com.internetcds.jdbc.tds.PreparedStatement_base",
+//                                            preparedStatementParamTypes);
+//            callableStatementCtor = getCtor("com.internetcds.jdbc.tds.CallableStatement_base",
+//                                            callableStatementParamTypes);
+//         }
+//         catch(java.lang.ClassNotFoundException e)
+//         {
+//            if (jdbcVersion == JDBC2_0)
+//            {
+//               //
+//               // If we couldn't find the 2.0 classes, let's try to fall back
+//               // to JDBC 1.0
+//               //
+//               jdbcVersion     = JDBC1_0;
+//               jdbcVersionName = "1_0";
+//               preparedStatementCtor = getCtor("com.internetcds.jdbc.tds.PreparedStatement_base",
+//                                               preparedStatementParamTypes);
+//               callableStatementCtor = getCtor("com.internetcds.jdbc.tds.CallableStatement_base",
+//                                               callableStatementParamTypes);
+//            }
+//         }
       }
       catch(java.lang.ClassNotFoundException e)
       {
          System.err.println("Couldn't find the class"); // XXX remove println
          throw new java.sql.SQLException(e.getMessage());
       }
-      catch(java.lang.NoSuchMethodException e)
-      {
-         System.err.println("Couldn't find a constructor");
-         throw new java.sql.SQLException(e.getMessage());
-      }
+//      catch(java.lang.NoSuchMethodException e)
+//      {
+//         System.err.println("Couldn't find a constructor");
+//         throw new java.sql.SQLException(e.getMessage());
+//      }
 
       dejavu = true;
    } /* init()  */
@@ -194,20 +196,8 @@ public class Constructors
          init();
       }
 
-      try
-      {
-         Object  params[] = {cx_, tds_, sql_};
+      return new CallableStatement_base( (TdsConnection)cx_, tds_, sql_ );
 
-         return (java.sql.CallableStatement)callableStatementCtor.newInstance(params);
-      }
-      catch (java.lang.reflect.InvocationTargetException e)
-      {
-         throw new java.sql.SQLException(e.getTargetException().getMessage());
-      }
-      catch (Throwable e)
-      {
-         throw new java.sql.SQLException(e.getMessage());
-      }
    }
 
 
@@ -216,6 +206,11 @@ public class Constructors
       com.internetcds.jdbc.tds.Tds  tds_,
       java.lang.String              sql_) throws java.sql.SQLException
    {
+      if (!dejavu)
+      {
+         init();
+      }
+
       return new PreparedStatement_base( (TdsConnection)cx_, tds_, sql_ );
    }
 

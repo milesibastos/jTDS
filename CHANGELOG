@@ -1,6 +1,13 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/01/2004 - Alin Sinpalean
+ o Fixed an issue in TdsSocket that was causing queued output not to be flushed
+   when sendNetPacket() was called (i.e. a packet from the middle of the request
+   was sent out first causing SQL Server to close the connection).
+ o Initialized the charset field of TdsDataSource to the empty String (bug
+   #927764).
+
 04/01/2004 - Brian Heineman
  o Updated ResultSet.updateObject() to work properly with Blob and Clob values.
  o Corrected ClasCastException when Blob or Clob values were used with cursor

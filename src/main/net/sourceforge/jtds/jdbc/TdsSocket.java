@@ -39,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: TdsSocket.java,v 1.3 2004-03-14 16:07:03 alin_sinpalean Exp $
+ * @version $Id: TdsSocket.java,v 1.4 2004-04-01 19:48:36 alin_sinpalean Exp $
  */
 public class TdsSocket {
 
@@ -373,6 +373,15 @@ public class TdsSocket {
                 // At this point we know that we are able to send the first
                 // or subsequent packet of a new request.
                 //
+                // First, send out any output that might have been queued
+                //
+                byte[] tmpBuf = dequeueOutput(vsock);
+                while (tmpBuf != null) {
+                    out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
+                    tmpBuf = dequeueOutput(vsock);
+                }
+
+                // Now we can safely send this packet too
                 out.write(buffer, 0, TdsComm.ntohs(buffer, 2));
                 if (buffer[1] != 0) {
                     // This means the TDS Packet is complete

@@ -26,7 +26,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
     private String description;
     private String tds = "7.0";
     private int serverType = Tds.SQLSERVER;
-    private String charset;
+    private String charset = "";
     private String domain = "";
     private String instance = "";
     private boolean lastUpdateCount = false;

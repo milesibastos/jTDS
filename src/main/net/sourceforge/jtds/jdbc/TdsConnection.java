@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.22 2004-03-30 19:54:53 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.23 2004-04-01 19:48:36 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -106,7 +106,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.22 2004-03-30 19:54:53 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.23 2004-04-01 19:48:36 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -1071,7 +1071,11 @@ public class TdsConnection implements Connection
             return;
         }
 
-        // If true at the end of the method, the specified charset was used. Otherwise, iso_1 was.
+        // Empty string is equivalent to null (because of DataSource)
+        charset = (charset != null && charset.length() == 0) ? null : charset;
+
+        // If true at the end of the method, the specified charset was used.
+        // Otherwise, iso_1 was.
         charsetSpecified = charset != null;
 
         if (charset == null || charset.length() > 30) {

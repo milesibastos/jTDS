@@ -19,13 +19,9 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
+
+import java.sql.*;
+import java.math.BigDecimal;
 
 
 
@@ -410,6 +406,103 @@ public class SunTest extends DatabaseTestCase {
         assertEquals("EXECUTE testproc ?,getdate()", con.nativeSQL(sql));
         sql = "SELECT * FROM {oj t1 LEFT OUTER JOIN {oj t2 LEFT OUTER JOIN t2 ON condition1} ON condition2}";
         assertEquals("SELECT * FROM t1 LEFT OUTER JOIN t2 LEFT OUTER JOIN t2 ON condition1 ON condition2", con.nativeSQL(sql));
+    }
+
+    /**
+     * Test conversion of various types to LONGVARCHAR. This functionality was
+     * broken in 0.9 because changes were made to handle LONGVARCHAR internally
+     * as Clob rather than String (but these did not take into consideration
+     * all possible cases.
+     *
+     * @throws SQLException
+     */
+    public void testConversionToLongvarchar() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #testConversionToLongvarchar ("
+                + " id INT,"
+                + " val NTEXT)");
+
+        int id = 0;
+        String decimalValue = "1234.5678";
+        String booleanValue = "true";
+        String integerValue = "1234567";
+        String longValue = "1234567890123";
+        Date dateValue = new Date(System.currentTimeMillis());
+        Time timeValue = new Time(System.currentTimeMillis());
+        Timestamp timestampValue = new Timestamp(System.currentTimeMillis());
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO #testConversionToLongvarchar (id, val) VALUES (?, ?)");
+
+        // Test BigDecimal to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, new BigDecimal(decimalValue), java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Boolean to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, new Boolean(booleanValue), java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Integer to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, new Integer(integerValue), java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Long to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, new Long(longValue), java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Float to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, new Float(integerValue), java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Double to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, new Double(longValue), java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Date to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, dateValue, java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Time to LONGVARCHAR conversion
+        pstmt.setInt(1, ++id);
+        pstmt.setObject(2, timeValue, java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+
+        // Test Timestamp to LONGVARCHAR conversion
+        pstmt.setInt(1, id);
+        pstmt.setObject(2, timestampValue, java.sql.Types.LONGVARCHAR);
+        pstmt.executeUpdate();
+        pstmt.close();
+
+        ResultSet rs = stmt.executeQuery(
+                "SELECT * FROM #testConversionToLongvarchar ORDER BY id");
+        assertTrue(rs.next());
+        assertEquals(decimalValue, rs.getString("val"));
+        assertTrue(rs.next());
+        assertEquals("1", rs.getString("val"));
+        assertTrue(rs.next());
+        assertEquals(integerValue, rs.getString("val"));
+        assertTrue(rs.next());
+        assertEquals(longValue, rs.getString("val"));
+        assertTrue(rs.next());
+        assertEquals(Float.parseFloat(integerValue), Float.parseFloat(rs.getString("val")), 0);
+        assertTrue(rs.next());
+        assertEquals(Double.parseDouble(longValue), Double.parseDouble(rs.getString("val")), 0);
+        assertTrue(rs.next());
+        assertEquals(dateValue.toString(), rs.getString("val"));
+        assertTrue(rs.next());
+        assertEquals(timeValue.toString(), rs.getString("val"));
+        assertTrue(rs.next());
+        assertEquals(timestampValue.toString(), rs.getString("val"));
+
+        rs.close();
+        stmt.close();
     }
 
     public static void main(String[] args) {

@@ -59,7 +59,7 @@ Longvarbinary_Tab_Delete=delete from Longvarbinary_Tab
 
 
 #****************************************************
-# SQL Statements for inserting values into the tables 
+# SQL Statements for inserting values into the tables
 #****************************************************
 
 Numeric_Tab_Insert=insert into Numeric_Tab values(999999999999999,0.000000000000001, null)
@@ -106,7 +106,7 @@ Boolean_Tab_Insert = insert into Boolean_Tab values(true,false,null)
 
 
 #*****************************************************
-# SQL Statements for retrieving values from the tables 
+# SQL Statements for retrieving values from the tables
 #*****************************************************
 
 SelCoffeeAll=SELECT COF_NAME, PRICE FROM ctstable2
@@ -179,7 +179,7 @@ Longvarbinary_Query_Val=Select LONGVARBINARY_VAL from Longvarbinary_Tab
 
 
 #***************************************
-# SQL Statements for updating the tables 
+# SQL Statements for updating the tables
 #***************************************
 
 Numeric_Tab_Max_Update=update Numeric_Tab set MAX_VAL=?
@@ -298,7 +298,7 @@ Error_Query=select * from
 #**********************************************************************************
 Reason_BatUpdExec=Message
 SQLState_BatUpdExec=S100
-VendorCode_BatUpdExec=10 
+VendorCode_BatUpdExec=10
 IntialValue_BatUpdExec={1,1,1}
 Index_DataTrunc=1
 Param_DataTrunc=true
@@ -307,7 +307,7 @@ DataSize_DataTrunc=100
 TranSize_DataTrunc=50
 
 #**********************************************************************************
-# is used to print a message to the current logging writer 
+# is used to print a message to the current logging writer
 #**********************************************************************************
 JDBCLogstream_Message=Hello World
 
@@ -351,7 +351,7 @@ Max_Set_Val=10
 #**********************************************************************************
 #The SQL Statements which are used to test the Scalar functions using escape syntax
 #**********************************************************************************
-Concat_Fn_Query=SELECT {FN CONCAT(STRING1,STRING2)} FROM ctstable3	
+Concat_Fn_Query=SELECT {FN CONCAT(STRING1,STRING2)} FROM ctstable3
 Ascii_Fn_Query=SELECT {FN ASCII(STRING1)} FROM ctstable3
 Insert_Fn_Query=SELECT {FN INSERT(STRING1,2,4,STRING2)} FROM ctstable3
 Lcase_Fn_Query=SELECT {FN LCASE(STRING1)} FROM ctstable3
@@ -440,11 +440,11 @@ Full_Oj_Query=SELECT * FROM {OJ ctstable3 FULL OUTER JOIN ctstable4 ON ctstable3
 
 
 #*****************************************************************************
-#The SQL Statements for creating, inserting and dropping the tables which are 
+#The SQL Statements for creating, inserting and dropping the tables which are
 #used in testing the scalar functions and outer joins using escape syntax
 #*****************************************************************************
 
-Fnschema_Tab1_Insert=INSERT INTO ctstable3 VALUES ('Java',' HotJava ','JAVA',100,0.5,{d '1993-07-13'},{t '10:30:55'},{ts ‘1996-05-12 11:20:10’},{ts '1996-05-10 10:07:05'})
+Fnschema_Tab1_Insert=INSERT INTO ctstable3 VALUES ('Java',' HotJava ','JAVA',100,0.5,{d '1993-07-13'},{t '10:30:55'},{ts '1996-05-12 11:20:10'},{ts '1996-05-10 10:07:05'})
 Fnschema_Tab2_Insert=INSERT INTO ctstable4 VALUES ('STRING3',100)
 
 Fnschema_Tab1_Delete=delete from ctstable3
@@ -479,14 +479,14 @@ TxBean_Tab2_Delete=delete from TxBean_Tab2
 TxEBean_updateString1=insert into TxEBean_Tab values(?, ?, ?)
 TxEBean_updateString2=delete from TxEBean_Tab where KEY_ID = ?
 TxEBean_updateString3=update TxEBean_Tab set BRAND_NAME = ?, PRICE = ? where KEY_ID = ?
-      
+
 TxEBean_selectString1=select KEY_ID from TxEBean_Tab where KEY_ID = ?
 TxEBean_selectString2=select KEY_ID from TxEBean_Tab where BRAND_NAME = ?
 TxEBean_selectString3=select KEY_ID from TxEBean_Tab where PRICE = ?
 TxEBean_selectString4=select KEY_ID, BRAND_NAME, PRICE from TxEBean_Tab  where KEY_ID = ?
 TxEBean_selectString5=select BRAND_NAME from TxEBean_Tab where KEY_ID = ?
 TxEBean_selectString6=select PRICE from TxEBean_Tab where KEY_ID = ?
-        
+
 
 TxEBean_queryStr1=select KEY_ID from TxEBean_Tab  where KEY_ID = ?
 

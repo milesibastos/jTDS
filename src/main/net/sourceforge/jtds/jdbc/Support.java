@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.21 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.22 2004-09-29 17:41:50 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -169,6 +169,34 @@ public class Support {
     }
 
     /**
+     * Convert a <code>BigDecimal</code> value to <code>String</code>,
+     * stripping any trailing zeroes.
+     *
+     * @param x the <code>BigDecimal</code> value to convert
+     * @return  the value converted to <code>String</code>
+     */
+    private static String bigDecimalToString(BigDecimal x) {
+        if (((BigDecimal) x).scale() > 0) {
+            // Eliminate trailing zeros
+            String tmp = x.toString();
+
+            for (int i = tmp.length() - 1; i > 0; i--) {
+                if (tmp.charAt(i) != '0') {
+                    if (tmp.charAt(i) == '.') {
+                        return tmp.substring(0, i);
+                    }
+
+                    return tmp.substring(0, i + 1);
+                }
+            }
+
+            return tmp;
+        }
+
+        return x.toString();
+    }
+
+    /**
      * Convert an existing data object to the specified JDBC type.
      *
      * @param callerReference an object reference to the caller of this method;
@@ -274,24 +302,7 @@ public class Support {
                     } else if (x instanceof String) {
                         return x;
                     } else if (x instanceof BigDecimal) {
-                        if (((BigDecimal) x).scale() > 0) {
-                            // Eliminate trailing zeros
-                            String tmp = x.toString();
-
-                            for (int i = tmp.length() - 1; i > 0; i--) {
-                                if (tmp.charAt(i) != '0') {
-                                    if (tmp.charAt(i) == '.') {
-                                        return tmp.substring(0, i);
-                                    }
-
-                                    return tmp.substring(0, i + 1);
-                                }
-                            }
-
-                            return tmp;
-                        }
-
-                        return x.toString();
+                        return bigDecimalToString((BigDecimal) x);
                     } else if (x instanceof Number) {
                         return x.toString();
                     } else if (x instanceof Boolean) {
@@ -491,13 +502,17 @@ public class Support {
                         return null;
                     } else if (x instanceof Clob) {
                         return x;
-                    } else if (x instanceof String) {
-                        return new ClobImpl(callerReference, (String) x);
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
 
                         x = blob.getBytes(0, (int) blob.length());
                         // FIXME - Use input stream to populate Clob
+                    } else if (x instanceof BigDecimal) {
+                        x = bigDecimalToString((BigDecimal) x);
+                    } else if (x instanceof Boolean) {
+                        x = ((Boolean) x).booleanValue() ? "1" : "0";
+                    } else if (!(x instanceof byte[])) {
+                        x = x.toString();
                     }
 
                     if (x instanceof byte[]) {
@@ -515,6 +530,8 @@ public class Support {
                         }
 
                         return clob;
+                    } else if (x instanceof String) {
+                        return new ClobImpl(callerReference, (String) x);
                     }
 
                     break;
@@ -527,7 +544,6 @@ public class Support {
 
             throw new SQLException(
                     Messages.get("error.convert.badtypes",
-//                            getJdbcTypeName(getJdbcType(x)),
                             x.getClass().getName(),
                             getJdbcTypeName(jdbcType)), "22005");
         } catch (NumberFormatException nfe) {

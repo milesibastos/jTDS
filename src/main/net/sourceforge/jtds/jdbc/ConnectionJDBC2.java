@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.34 2004-09-28 09:15:15 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.35 2004-10-02 00:10:15 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -252,7 +252,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         try {
             if (namedPipe == true) {
-                socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize, instanceName, domainName, user, password);
+                socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize,
+                        instanceName, domainName, user, password);
             } else {
                 socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType);
             }
@@ -350,7 +351,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *
      * @param charset The Server character set.
      */
-    protected void loadCharset(String charset) {
+    private void loadCharset(String charset) {
         synchronized (charsets) {
             if (charsets.size() == 0) {
                 try {
@@ -364,7 +365,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                         classLoader = getClass().getClassLoader();
                     }
 
-                    stream = classLoader.getResourceAsStream("net/sourceforge/jtds/jdbc/Charsets.properties");
+                    stream = classLoader.getResourceAsStream(
+                            "net/sourceforge/jtds/jdbc/Charsets.properties");
 
                     if (stream != null) {
                         charsets.load(stream);
@@ -378,7 +380,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
         }
 
-        String tmp = charsets.getProperty(charset.toUpperCase(), "1|ISO-8859-1");
+        String tmp = charsets.getProperty(charset.toUpperCase(), "1|Cp1252");
 
         wideChars = !tmp.substring(0, 1).equals("1");
         javaCharset = tmp.substring(2);
@@ -386,12 +388,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         try {
             "This is a test".getBytes(charset);
         } catch (UnsupportedEncodingException e) {
-            javaCharset = "ISO-8859-1"; // Fall back iso_1
+            Logger.println("Can't load charset " + charset + "/" + javaCharset
+                    + ". Falling back to iso_1/Cp1252.");
+            javaCharset = "Cp1252"; // Fall back iso_1
             wideChars = false;
+            charsetSpecified = false; // Even if the user specified something, it was wrong
         }
 
         socket.setCharset(javaCharset);
         socket.setWideChars(wideChars);
+
+        serverCharset = charset;
     }
 
     /**
@@ -831,13 +838,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         // Empty string is equivalent to null (because of DataSource)
-        charset = (charset != null && charset.length() == 0) ? null : charset;
-
-        // If true at the end of the method, the specified charset was used.
-        // Otherwise, iso_1 was.
-        charsetSpecified = charset != null;
-
-        if (charset == null || charset.length() > 30) {
+        if (charset == null || charset.length() == 0 || charset.length() > 30) {
             charset = "iso_1";
         }
 

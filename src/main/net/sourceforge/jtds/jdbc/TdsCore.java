@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.44 2004-10-10 20:37:14 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.45 2004-10-15 07:18:58 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2437,7 +2437,7 @@ public class TdsCore {
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
                 new ColData(TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false), tdsVersion);
-            if (parameters != null && currentToken.previousToken == TDS5_PARAMFMT2_TOKEN) {
+            if (parameters != null) {
                 // Sybase 12+ this token used to set output parameter results
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {

@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+10/15/2004 - Alin Sinpalean
+ o Applied Mike's fix for bug [1047094] Problem with the store procedure's
+   return.
+
 10/13/2004 - Alin Sinpalean
  o Fixed a couple of errors in Support.convert(), calls to Blob.getBytes() and
    Clob.getString() with a position of 0.

@@ -6,6 +6,7 @@ Changes from jTDS 0.6
    whitespace between '?=' and support calls of stored procedures when no
    "exec" is specified.
  o Updated DatabaseMetaData.supportsGetGeneratedKeys() to return true.
+ o Implemented DatabaseMetaData.supportsSavepoints().
 
 02/07/2004 - Brian Heineman
  o Moved TdsStatement.releaseTds() calls into try {} finally {} statements
@@ -20,7 +21,7 @@ Changes from jTDS 0.6
 
 02/02/2004 - Brian Heineman
  o Synchronized Blob and Clob methods for thread safety.
- o Changed IllegalArgumentExceptions in that were being thrown in BlobImpl
+ o Changed IllegalArgumentExceptions that were being thrown in BlobImpl
    and ClobImpl to SQLExceptions per JDBC specification recommendations.
  o Removed extranous DriverVersion class which was only being used to hold
    two variables.
@@ -90,7 +91,7 @@ Changes from jTDS 0.6
  o Implemented DatabaseMetaData.locatorsUpdateCopy().
  o Implemented DatabaseMetaData.supportsGetGeneratedKeys().
  o Corrected bug where {escape '''} was causing parameters to be calulcated
-   incorrectly (this specifc escape value is now invalid and an exception is thrown).
+   incorrectly (this specific escape value is now invalid and an exception is thrown).
  o Improved parsing of {? = call} in EscapeProcessor to support whitespace around the
    '=' and to be case-insensitive.
  o Implemented {fn CONCAT()}

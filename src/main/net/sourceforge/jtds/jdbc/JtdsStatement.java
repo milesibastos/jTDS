@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.4 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.5 2004-07-08 00:21:00 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -485,6 +485,7 @@ public class JtdsStatement implements java.sql.Statement {
         if (!closed) {
             try {
                 closeCurrentResultSet();
+                
                 if (tds != null) {
                     tds.clearResponseQueue();
                     tds.close();

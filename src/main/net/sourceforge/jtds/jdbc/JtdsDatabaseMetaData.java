@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.1 2004-06-27 17:00:51 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.2 2004-07-08 00:21:00 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -98,7 +98,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -109,7 +109,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -562,7 +562,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see Connection
      */
     public int getDefaultTransactionIsolation() throws SQLException {
-        // XXX need to check this for Sybase
+        // XXX Need to check this for Sybase
         return Connection.TRANSACTION_READ_COMMITTED;
     }
 
@@ -2118,7 +2118,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2129,7 +2129,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2140,7 +2140,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2151,7 +2151,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2162,7 +2162,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2177,7 +2177,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsColumnAliasing() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2375,7 +2375,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsGroupByUnrelated() throws SQLException {
-        // XXX need to check this for Sybase
+        // XXX Need to check this for Sybase
         return true;
     }
 
@@ -2580,7 +2580,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2591,7 +2591,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2602,7 +2602,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2613,7 +2613,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInProcedureCalls() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2624,7 +2624,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
-        // XXX needs to be checked for Sybase
+        // XXX Need to check for Sybase
         return true;
     }
 

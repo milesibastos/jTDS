@@ -22,13 +22,13 @@ package net.sourceforge.jtds.jdbc;
  * describes the location of text and image column data.
  *
  * @author Mike Hutchinson
- * @version $Id: TextPtr.java,v 1.1 2004-06-27 17:00:55 bheineman Exp $
+ * @version $Id: TextPtr.java,v 1.2 2004-07-08 00:21:00 bheineman Exp $
  */
 public class TextPtr {
     /** The 16 byte Text Pointer. */
-    byte ptr[] = new byte[16];
+    byte[] ptr = new byte[16];
     /** The 8 byte timestamp. */
-    byte ts[] = new byte[8];
+    byte[] ts = new byte[8];
     /** The length of the text or image data. */
     int len;
     /** True if the data has actually been read from the server. */

@@ -26,7 +26,7 @@ import java.sql.SQLException;
  * READTEXT command for image, text and ntext columns.
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsInputStream.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
+ * @version $Id: JtdsInputStream.java,v 1.4 2004-07-08 00:21:00 bheineman Exp $
  */
 public class JtdsInputStream extends InputStream {
     private TdsCore tds;
@@ -45,16 +45,16 @@ public class JtdsInputStream extends InputStream {
     *
     * @param con The parent connection object.
     * @param ci The descriptor for the text or image column.
-    * @param cd The column data (containing the textpointer).
+    * @param textPtr The textpointer.
     * @param charset The character set for converting strings to bytes.
     * @throws SQLException
     */
-    JtdsInputStream(ConnectionJDBC2 con, ColInfo ci, ColData cd, String charset)
+    JtdsInputStream(ConnectionJDBC2 con, ColInfo ci, TextPtr textPtr, String charset)
         throws SQLException {
         this.tds = new TdsCore(con, new SQLDiagnostic(con.getServerType()));
         this.colName = ci.name;
         this.tabName = ci.tableName;
-        this.textPtr = cd.getTextPtr();
+        this.textPtr = textPtr;
         this.charset = charset;
         this.length = tds.dataLength(tabName, colName);
 

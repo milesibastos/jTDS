@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: ResponseStream.java,v 1.3 2004-07-08 00:21:00 bheineman Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -148,7 +148,7 @@ public class ResponseStream {
             }
 
             int available = bufferLen - bufferPtr;
-            int bc = (available > bytesToRead)? bytesToRead: available;
+            int bc = (available > bytesToRead) ? bytesToRead : available;
 
             System.arraycopy(buffer, bufferPtr, b, off, bc);
             off += bc;
@@ -231,7 +231,7 @@ public class ResponseStream {
      */
     String readAsciiString(int len) throws IOException {
         String charsetName = socket.getCharset();
-        byte[] bytes = (len > byteBuffer.length)? new byte[len]: byteBuffer;
+        byte[] bytes = (len > byteBuffer.length) ? new byte[len] : byteBuffer;
 
         read(bytes, 0, len);
 

@@ -49,7 +49,7 @@ public class LOBTest extends TestBase {
      *************************************************************************
      *************************************************************************/
 
-    public void testBlobGet1() throws Exception {
+    public void testBlobGet1() throws Exception {    	
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();

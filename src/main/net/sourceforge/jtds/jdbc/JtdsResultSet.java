@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.4 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.5 2004-07-08 00:21:00 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -806,17 +806,8 @@ public class JtdsResultSet implements ResultSet {
 
     public Object getObject(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        Object result = data.getValue();
-
-        if (data.getTextPtr() != null) {
-            if (result instanceof byte[]) {
-                result = new BlobImpl((byte[]) result);
-            } else if (result instanceof String) {
-                result = new ClobImpl((String) result);
-            }
-        }
-
-        return result;
+        
+        return data.getValue();
     }
 
     public void updateObject(int columnIndex, Object x) throws SQLException {
@@ -826,7 +817,7 @@ public class JtdsResultSet implements ResultSet {
         String charSet = (statement != null) ?
                 ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
                 
-        x = Support.convert(x, columns[columnIndex-1].jdbcType, charSet);
+        x = Support.convert(x, columns[columnIndex - 1].jdbcType, charSet);
         
         if (ci.jdbcType == java.sql.Types.DECIMAL && x instanceof BigDecimal) {
             x = ((BigDecimal) x).setScale(ci.scale, BigDecimal.ROUND_HALF_UP);
@@ -1005,20 +996,6 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public Blob getBlob(int columnIndex) throws SQLException {
-        if (statement != null && statement.getMaxFieldSize() == 1) {
-            // Try to return BLOB built over InputStream
-            ColData data = getColumn(columnIndex);
-            ColInfo ci = columns[columnIndex - 1];
-
-            if (data.getTextPtr() != null && ci.jdbcType == java.sql.Types.LONGVARBINARY) {
-                return new BlobImpl(new JtdsInputStream((ConnectionJDBC2) statement.getConnection(),
-                                            ci,
-                                            data,
-                                            "US-ASCII"));
-            }
-        }
-
-        // Build in memory BLOB
         ColData data = getColumn(columnIndex);
 
         return (Blob) Support.convert(data.getValue(), java.sql.Types.BLOB, null);
@@ -1033,21 +1010,6 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public Clob getClob(int columnIndex) throws SQLException {
-        if (statement != null && statement.getMaxFieldSize() == 1) {
-            // Try to build a CLOB built over a Reader stream.
-            ColData data = getColumn(columnIndex);
-            ColInfo ci = columns[columnIndex - 1];
-
-            if (data.getTextPtr() != null && ci.jdbcType == java.sql.Types.LONGVARCHAR) {
-                return new ClobImpl(new JtdsReader((ConnectionJDBC2) statement.getConnection(),
-                                      ci,
-                                      data,
-                                      ((ConnectionJDBC2) statement.getConnection()).
-                                            getCharSet()));
-            }
-        }
-
-        // Fall back on an in memory CLOB
         ColData data = getColumn(columnIndex);
 
         return (Clob) Support.convert(data.getValue(), java.sql.Types.CLOB, null);

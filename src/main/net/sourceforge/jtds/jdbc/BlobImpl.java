@@ -28,10 +28,12 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.11 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.12 2004-07-08 00:21:00 bheineman Exp $
  */
 public class BlobImpl implements Blob {
-	private static final int MAXIMUM_SIZE = 32768;
+//	private static final int MAXIMUM_SIZE = 32768;
+	private static final int MAXIMUM_SIZE = 32;
+	private static final byte[] EMPTY_BLOB = new byte[0];
 
 	private byte[] _blob;
     private File _blobFile;
@@ -41,7 +43,7 @@ public class BlobImpl implements Blob {
      * Constructs a new Blob instance.
      */
     BlobImpl() {
-        _blob = new byte[0];
+        _blob = EMPTY_BLOB;
     }
 
     /**
@@ -62,12 +64,53 @@ public class BlobImpl implements Blob {
      *
      * @param blob The blob object to encapsulate
      */
-    BlobImpl(JtdsInputStream blob) {
-        if (blob == null) {
-            throw new IllegalArgumentException("blob cannot be null.");
+    BlobImpl(ResponseStream in) throws IOException {
+        if (in == null) {
+            throw new IllegalArgumentException("in cannot be null.");
         }
 
-        _jtdsInputStream = blob;
+        TextPtr tp = new TextPtr();
+
+        in.read(tp.ptr);
+        in.read(tp.ts);
+        tp.len = in.readInt();
+        
+        if (tp.len < MAXIMUM_SIZE) {
+        	_blob = new byte[tp.len];
+        	in.read(_blob);
+        } else {
+			_blob = EMPTY_BLOB;
+			
+        	try {
+	        	OutputStream outputStream = setBinaryStream(1);
+	        	byte[] buffer = new byte[1024];
+	        	int length = tp.len;
+	        	int result;
+	        	
+	        	while ((result = in.read(buffer, 0, Math.min(length, buffer.length))) != -1 && length != 0) {
+	        		outputStream.write(buffer, 0, result);
+	        		length -= result;
+	        	}
+	        	
+	        	outputStream.close();
+        	} catch (SQLException e) {
+        		// Should never happen...
+        	}
+        }
+/*
+        if (statement != null && statement.getMaxFieldSize() == 1) {
+            // Try to return BLOB built over InputStream
+            ColData data = getColumn(columnIndex);
+            ColInfo ci = columns[columnIndex - 1];
+
+            if (data.getTextPtr() != null && ci.jdbcType == java.sql.Types.LONGVARBINARY) {
+                return new BlobImpl(new JtdsInputStream((ConnectionJDBC2) statement.getConnection(),
+                                            ci,
+                                            data,
+                                            "US-ASCII"));
+            }
+        }
+*/        
     }
 
     /**
@@ -90,7 +133,7 @@ public class BlobImpl implements Blob {
         }
     }
 
-    public synchronized byte[] getBytes(long pos, int length) throws SQLException {
+    public byte[] getBytes(long pos, int length) throws SQLException {
         if (pos < 1) {
             throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
         } else if (length < 0) {
@@ -131,11 +174,11 @@ public class BlobImpl implements Blob {
         return _jtdsInputStream.getLength();
     }
 
-    public synchronized long position(byte[] pattern, long start) throws SQLException {
+    public long position(byte[] pattern, long start) throws SQLException {
         return position(new BlobImpl(pattern), start);
     }
 
-    public synchronized long position(Blob pattern, long start) throws SQLException {
+    public long position(Blob pattern, long start) throws SQLException {
         if (pattern == null) {
             throw new SQLException(Support.getMessage("error.blob.badpattern"), "HY024");
         }
@@ -305,7 +348,11 @@ public class BlobImpl implements Blob {
                     os.flush();
 
                     if (os instanceof ByteArrayOutputStream) {
-                        _blobFile = null;
+                    	if (_blobFile != null) {
+                    		_blobFile = null;
+                    		_blobFile.delete();
+                    	}
+                    	
                         _blob = ((ByteArrayOutputStream) os).toByteArray();
                     } else {
                         _blob = null;
@@ -403,7 +450,7 @@ public class BlobImpl implements Blob {
         };
     }
 
-    public synchronized int setBytes(long pos, byte[] bytes) throws SQLException {
+    public int setBytes(long pos, byte[] bytes) throws SQLException {
         if (bytes == null) {
             throw new SQLException(Support.getMessage("error.blob.bytesnull"), "HY024");
         }
@@ -411,7 +458,7 @@ public class BlobImpl implements Blob {
         return setBytes(pos, bytes, 0, bytes.length);
     }
 
-    public synchronized int setBytes(long pos, byte[] bytes, int offset, int len)
+    public int setBytes(long pos, byte[] bytes, int offset, int len)
     throws SQLException {
         OutputStream outputStream = setBinaryStream(pos);
 
@@ -444,7 +491,12 @@ public class BlobImpl implements Blob {
             return;
         } else if (len <= MAXIMUM_SIZE) {
             _blob = getBytes(1, (int) len);
-            _blobFile = null;
+            
+            if (_blobFile != null) {
+            	_blobFile.delete();
+            	_blobFile = null;
+            }
+            
             _jtdsInputStream = null;
         } else {
             try {
@@ -491,6 +543,12 @@ public class BlobImpl implements Blob {
             throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
+    }
+    
+    protected void finalize() {
+    	if (_blobFile != null) {
+    		_blobFile.delete();
+    	}
     }
 }
 

@@ -7,6 +7,13 @@ Changes from jTDS 0.8
  o Corrected bug [985956] Cannot setObject(null) on image; Added test to ensure
    this functionality continues to work in the future.
  o Added test for feature request [956800] setNull(): Not implemented
+ o Corrected bug [919477] Large LOB data causes OutOfMemoryError; Blob/Clob
+   data is now buffered to disk for reads as well as writes if the data
+   exceeds 32KB.
+ o Reduced amount of time Blob/Clob objects are locked due to synchronization.
+ o READTEXT support has been temporarily disabled.  This feature will be
+   enabled again once code is in place to control the in-memory buffering via
+   a connection property and WRITETEXT support is added.
 
 07/01/2004 - Brian Heineman
  o Improved Blob and Clob support.  Writes done through a Blob or Clob are now

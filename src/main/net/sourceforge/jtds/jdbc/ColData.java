@@ -21,15 +21,13 @@ package net.sourceforge.jtds.jdbc;
  * This class encapsulates a column data value.
  *
  * @author Mike Hutchinson
- * @version $Id: ColData.java,v 1.2 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: ColData.java,v 1.3 2004-07-08 00:21:00 bheineman Exp $
  */
 public class ColData {
     /** The column value or null */
     private Object value = null;
     /** True if the column has been updated. */
     private boolean updated = false;
-    /** The text pointer object for text and image data. */
-    private TextPtr txtPtr = null;
     /** The length of stream, String or byte[] values. */
     private int length = 0;
 
@@ -39,12 +37,7 @@ public class ColData {
      * @param valueIn The initial data value for this column.
      */
     ColData(Object valueIn, int tdsVersion) {
-        if (valueIn instanceof TextPtr) {
-            txtPtr = (TextPtr) valueIn;
-            value = txtPtr.value;
-        } else {
-            value  = valueIn;
-        }
+        value  = valueIn;
 
         if (value instanceof String) {
             length = ((String) value).length();
@@ -107,12 +100,7 @@ public class ColData {
      * @param value The new column value.
      */
     void setValue(Object value) {
-        if (value instanceof TextPtr) {
-            this.txtPtr = (TextPtr) value;
-            this.value = txtPtr.value;
-        } else {
-            this.value = value;
-        }
+        this.value = value;
 
         if (this.value instanceof String) {
             length = ((String) this.value).length();
@@ -132,15 +120,6 @@ public class ColData {
      */
     Object getValue() {
         return this.value;
-    }
-
-    /**
-     * Retrieve this column's text pointer.
-     *
-     * @return The text pointer as a <code>TextPtr</code> or null.
-     */
-    TextPtr getTextPtr() {
-        return this.txtPtr;
     }
 
     /**

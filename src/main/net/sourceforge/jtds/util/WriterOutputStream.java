@@ -23,7 +23,7 @@ import java.io.*;
 * Provides the opposite functionality of OutputStreamWriter.
 *
 * @author Brian Heineman
-* @version $Id: WriterOutputStream.java,v 1.1 2004-07-01 21:14:46 bheineman Exp $
+* @version $Id: WriterOutputStream.java,v 1.2 2004-07-08 00:21:00 bheineman Exp $
 */
 public class WriterOutputStream extends OutputStream {
     protected Writer _writer;
@@ -78,7 +78,7 @@ public class WriterOutputStream extends OutputStream {
             data = new String(b, off, len, _encoding);
         }
 
-        // TODO - Optimize with buffer and String.getChars()
+        // TODO Optimize with buffer and String.getChars()
         _writer.write(data.toCharArray());
     }
 

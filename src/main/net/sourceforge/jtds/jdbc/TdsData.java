@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.2 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.3 2004-07-08 00:21:00 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -416,6 +416,7 @@ public class TdsData {
                     case 8:
                         return new Long(in.readLong());
                 }
+                
                 break;
 
             case SYBINT1:
@@ -434,16 +435,7 @@ public class TdsData {
                 len = in.read();
                 
                 if (len > 0) {
-                    TextPtr tp = new TextPtr();
-
-                    in.read(tp.ptr);
-                    in.read(tp.ts);
-                    tp.len = in.readInt();
-                    byte[] bytes = new byte[tp.len];
-                    in.read(bytes);
-                    tp.value = bytes;
-                    
-                    return tp;
+                	return new BlobImpl(in);
                 }
                 
                 break;
@@ -452,21 +444,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    TextPtr tp = new TextPtr();
-
-                    in.read(tp.ptr);
-                    in.read(tp.ts);
-                    tp.len = in.readInt();
-
-                    if (readTextMode) {
-                        byte[] bytes = new byte[tp.len];
-                        in.read(bytes);
-                        tp.value = bytes;
-                    } else {
-                        tp.value = in.readAsciiString(tp.len);
-                    }
-
-                    return tp;
+                	return new ClobImpl(in, false, readTextMode);
                 }
                 
                 break;
@@ -475,29 +453,9 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    TextPtr tp = new TextPtr();
-
-                    in.read(tp.ptr);
-                    in.read(tp.ts);
-                    tp.len = in.readInt();
-
-                    if (readTextMode) {
-                        char[] buf = new char[tp.len / 2];
-
-                        in.read(buf);
-                        tp.value = buf;
-                    } else {
-                        tp.value = in.readString(tp.len / 2);
-                    }
-
-                    if ((tp.len & 0x01) != 0) {
-                        // If text size is set to an odd number e.g. 1
-                        // Then only part of a char is available.
-                        in.read(); // Discard!
-                    }
-
-                    return tp;
+                	return new ClobImpl(in, true, readTextMode);
                 }
+                
                 break;
 
             case SYBCHAR:
@@ -1189,7 +1147,7 @@ public class TdsData {
                         putCollation(out, pi);
                     }
 
-                    out.write((short)0xFFFF);
+                    out.write((short) 0xFFFF);
                 } else {
                     buf = pi.getBytes(charset);
 
@@ -1298,7 +1256,7 @@ public class TdsData {
                 if (len > 0) {
                     if (pi.value instanceof InputStream) {
                         // Write output directly from stream
-                        out.write((int)len);
+                        out.write((int) len);
 
                         if (isTds8) {
                             putCollation(out, pi);
@@ -1952,9 +1910,9 @@ public class TdsData {
                 break;
 
             default:
-                throw new ProtocolException("Unsupported TDS data type 0x" +
-                                            Integer.toHexString(ci.tdsType) +
-                                            " in sql_variant");
+                throw new ProtocolException("Unsupported TDS data type 0x"
+                		                    + Integer.toHexString(ci.tdsType)
+											+ " in sql_variant");
         }
         //
         // For compatibility with the MS driver convert to String.

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.5 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.6 2004-07-08 00:21:00 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -814,12 +814,14 @@ public class TdsCore {
                 default:
                     throw new IllegalStateException("Unknown TDS version " + tdsVersion);
             }
+            
             endOfResponse = false;
             endOfResults  = true;
             wait(timeOut);
         } catch (IOException ioe) {
             isClosed = true;
             connection.setClosed();
+            
             throw Support.linkException(
                 new SQLException(
                        Support.getMessage(
@@ -996,13 +998,16 @@ public class TdsCore {
         
         if (getMoreResults()) {
             if (getNextRow(false)) {
-                results = rowData[0].getTextPtr().value;
+            	// FIXME - this will not be valid since a Blob/Clob is returned
+            	// instead of byte[]/String
+                results = rowData[0].getValue();
             }
         }
         
         clearResponseQueue();
         messages.checkErrors();
         
+System.out.println("results.getClass().getName()" + results.getClass().getName());        
         return results;
     }
 
@@ -2671,6 +2676,7 @@ public class TdsCore {
 
     /**
      * Execute SQL using TDS 7.0 protocol.
+     * 
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -2681,36 +2687,45 @@ public class TdsCore {
                               String procName,
                               ParamInfo[] parameters,
                               boolean noMetaData)
-        throws IOException, SQLException
-    {
+        throws IOException, SQLException {
         if (procName == null && parameters != null && parameters.length > 0) {
+            ParamInfo params[] = new ParamInfo[parameters.length + 2];
+            
             // Use sp_executesql approach
             procName = "sp_executesql";
-            ParamInfo params[] = new ParamInfo[parameters.length+2];
+            
             System.arraycopy(parameters, 0, params, 2, parameters.length);
+            
             params[0] = new ParamInfo();
             params[0].jdbcType = java.sql.Types.VARCHAR;
             params[0].bufferSize = 4000;
             params[0].isSet = true;
             params[0].isUnicode = true;
             params[0].value = Support.substituteParamMarkers(sql, parameters);
-            TdsData.getNativeType(connection, params[0]);
+            
+            TdsData.getNativeType(connection, params[0]);            
             StringBuffer paramDef = new StringBuffer(80);
+            
             for (int i = 0; i < parameters.length; i++) {
                 paramDef.append("@P");
                 paramDef.append(i);
                 paramDef.append(' ');
                 paramDef.append(parameters[i].sqlType);
-                if (i+1 < parameters.length)
+                
+                if (i + 1 < parameters.length) {
                     paramDef.append(',');
+                }
             }
+            
             params[1] = new ParamInfo();
             params[1].jdbcType = java.sql.Types.VARCHAR;
             params[1].bufferSize = 4000;
             params[1].isSet = true;
             params[1].isUnicode = true;
             params[1].value = paramDef.toString();
+            
             TdsData.getNativeType(connection, params[1]);
+            
             parameters = params;
         }
 
@@ -2718,28 +2733,29 @@ public class TdsCore {
             // RPC call
             out.setPacketType(RPC_PKT);
             Integer shortcut;
-            if (tdsVersion == TdsCore.TDS80 &&
-                (shortcut = (Integer)tds8SpNames.get(procName))!= null)
-            {
+            
+            if (tdsVersion == TdsCore.TDS80
+            	&& (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
                 // Use the shortcut form of procedure name for TDS8
-                out.write((short)-1);
-                out.write((short)shortcut.shortValue());
+                out.write((short) -1);
+                out.write((short) shortcut.shortValue());
             } else {
-                out.write((short)procName.length());
+                out.write((short) procName.length());
                 out.write(procName);
             }
 
-            out.write((short)(noMetaData? 512: 0));
+            out.write((short) (noMetaData ? 512 : 0));
 
-            for (int i = nextParam+1; i < parameters.length; i++) {
+            for (int i = nextParam + 1; i < parameters.length; i++) {
                 if (parameters[i].name != null) {
-                   out.write((byte)parameters[i].name.length());
+                   out.write((byte) parameters[i].name.length());
                    out.write(parameters[i].name);
                 } else {
-                   out.write((byte)0);
+                   out.write((byte) 0);
                 }
 
-                out.write((byte)(parameters[i].isOutput? 1: 0));
+                out.write((byte) (parameters[i].isOutput ? 1 : 0));
+                
                 TdsData.writeParam(out,
                                    connection.getCharSet(),
                                    connection.isWideChar(),

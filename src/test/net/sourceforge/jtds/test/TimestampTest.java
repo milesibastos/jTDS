@@ -1515,7 +1515,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         PreparedStatement pStmt = cx.prepareStatement("insert into #t0041 values (?, ?)");
 
-        // TODO: Check values
+        // TODO Check values
         final int rowsToAdd = 400;
         final String theString = getLongString(400);
         int count = 0;

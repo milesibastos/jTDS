@@ -1,8 +1,12 @@
+===============================================================================
+09/29/2004 - jTDS 0.9 released
+===============================================================================
+
 Changes from jTDS 0.9-rc2
 =========================
 
 09/28/2004 - Alin Sinpalean
- o Partially updated the FAQ (still some more changes needed).
+ o Updated the FAQ, feature matrix and some of the other HTML files.
  o Updated driver version as returned by Driver and DatabaseMetaData to "0.9".
  o Minor javadoc cleanup.
  o Corrected bug [1036059] getTimestamp with Calendar applies tzone offset

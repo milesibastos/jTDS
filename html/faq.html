@@ -40,7 +40,6 @@
         | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
         | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
         | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
-        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
       </p>
 
 
@@ -86,20 +85,19 @@
           or <code>&quot;ResultSet is read only&quot;</code> when using a
           scrollable and/or updateable <code>ResultSet</code>.</a></li>
         <li><a href="#sqlStates">Not all <code>SQLException</code>s thrown by
-          jTDS seem to have associated SQL state values.</a></li>
+          jTDS seem to have associated meaningful SQL state values.</a></li>
       </ul>
       <p class="question">Incorrect Behavior</p>
       <ul>
         <li><a href="#callableStatementOutput"><code>CallableStatement</code>
-          returns incorrect output parameter/return values.</a></li>
+          output parameter getter throws <code>java.sql.SQLException:
+          &quot;Parameter <i>X</i> has not been set.&quot;</code>.</a></li>
         <li><a href="#lastUpdateCount">
           <code>PreparedStatement.executeUpdate()</code> returns an incorrect
           update count.</a></li>
       </ul>
       <p class="question">Memory Usage</p>
       <ul>
-        <li><a href="#lobOome">I get an <code>OutOfMemoryError</code>
-          while reading/writing LOBs.</a></li>
         <li><a href="#preparedStatmentMemoryLeak">Memory usage keeps increasing
           when using generated <code>PreparedStatements</code>.</a></li>
       </ul>
@@ -111,6 +109,11 @@
           long, get chopped off at 30 characters?</a></li>
         <li><a href="#imageData4k">jTDS fetches only the first 4Kb of <code>IMAGE</code>
           data.</a></li>
+      </ul>
+      <p class="question">Technical Support</p>
+      <ul>
+        <li><a href="#techSupport">Is there any commercial
+          technical support available for jTDS?</a></li>
       </ul>
       <p class="question">Other</p>
       <ul>
@@ -392,6 +395,14 @@
         recommended that you use <code>execute()</code> anytime you run queries
         returning more than one result even if the particular driver you are
         using allows you to do otherwise.</p>
+      <p>The same thing happens with the ODBC SQL driver and other connectors.
+        A common solution rather than the inelegant execute() and then cycling
+        through multiple result sets, is to supress the update counts for
+        statements you are uninterested in. This is common if say you are
+        querying a stored procedure that creates a temp table, runs updates
+        against it and then returns the table as a result set. You can
+        suppress all the extra "query results" by specifying "<code>SET NOCOUNT
+        ON</code>".</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="forwardOnlyResultSet"></a>I get
         <code>java.sql.SQLException: &quot;ResultSet may only be accessed in a
@@ -418,8 +429,8 @@
         <code>ResultSet</code> being downgraded.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="sqlStates"></a>Not all
-        <code>SQLException</code>s thrown by jTDS seem to have associated SQL
-        state values.</p>
+        <code>SQLException</code>s thrown by jTDS seem to have associated
+        meaningful SQL state values.</p>
       <p>Indeed, from this point of view, at the moment the driver is a bit
         inconsistent, some SQLExceptions are reported with a correct state code
         and some not. As the server itself does not return an SQL state code,
@@ -429,9 +440,9 @@
         a default code of 'S1000', respectively '01000'. This is what happens
         with SQL Server-returned errors and warnings and is consistent with how
         other drivers handle exceptions. However, if you find some case in
-        which other JDBC or ODBC drivers return specific SQL states or that are
-        obviously wrong, please let us know. We will make the necessary
-        changes.</p>
+        which other JDBC or ODBC drivers return specific SQL states or jTDS
+        returned SQL states that are obviously wrong, please let us know. We
+        will make the necessary changes.</p>
       <p>See the
         <a href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">SQL
         92</a> spec for the complete list and description of SQL state
@@ -440,17 +451,27 @@
 
       <p class="title">Incorrect Behavior</p>
       <p class="question"><a name="callableStatementOutput"></a>
-        <code>CallableStatement</code> returns incorrect output parameter/return
-        values.</p>
+        <code>CallableStatement</code> output parameter getter throws
+        <code>java.sql.SQLException: &quot;Parameter <i>X</i> has not been
+        set.&quot;</code>.</p>
       <p>When executing a stored procedure (or any query, for that matter) the
         response from the SQL Server is serialized in the same order it is
         executed in: for stored procedures this means <code>ResultSet</code>s
-        first, output parameters and return value last. So, because jTDS doesn't
-        cache the <code>ResultSet</code>s into memory, you will have to go
-        through all the <code>ResultSet</code>s returned by the procedure (i.e.
-        call <code>getMoreResults()</code> until it returns false AND
-        <code>getUpdateCount()</code> returns -1) before getting the return
-        value and output parameters.</p>
+        and update counts first, output parameters and return value last. jTDS
+        only caches update counts , not <code>ResultSet</code>s because they
+        could easily cause <code>OutOfMemoryError</code>s or add important
+        performance overheads if cached to disk (the response would have to be
+        parsed twice, for example).
+      <p>As a conclusion, when executing stored procedures that only return
+        update counts output parameters will be available immediately, as jTDS
+        will process and cache the whole response. But if the stored procedure
+        returns at least one <code>ResultSet</code> jTDS will only cache the
+        update counts up to the first <code>ResultSet</code> and you will have
+        to call <code>getMoreResults()</code> to process all the results. So
+        for procedures returning <code>ResultSet</code>s you will have to loop,
+        consuming all results before reading the output parameters (i.e. until
+        <code>getMoreResults()</code> returns false AND
+        <code>getUpdateCount()</code> returns -1).</p>
       <p>In case you are wondering if this is right, this is a quote from the
         <code>CallableStatement</code> API documentation: "For maximum
         portability, a call's <code>ResultSet</code> objects and update counts
@@ -458,9 +479,9 @@
         parameters". Although this means that a "good" driver could "fix" this
         behavior, fixing it would imply caching the whole server response,
         equaling a huge performance drop.</p>
-      <p>We will probably change the behavior of jTDS to throw an exception if
-        output values are accessed before being retrieved, in order to make sure
-        this doesn't go unobserved by the user.</p>
+      <p>The exception is thrown because it's better to warn the user that the
+        output parameters are not yet set instead of leaving the impression
+        that all is ok and cause other, harder to detect problems.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="lastUpdateCount"></a>
         <code>PreparedStatement.executeUpdate()</code> returns an incorrect
@@ -484,7 +505,9 @@
         of multiple updates/inserts), because it will also return only the last
         of these update counts. Although queries returning multiple results are
         not very common, it is the reason why this behavior is customizable from
-        the URL.</p>
+        the URL. Please note that this flag only alters the behavior of
+        <code>executeUpdate()</code>; <code>execute()</code> will still return
+        all update counts.</p>
       <p>If you have both queries consisting of multiple
         <code>UPDATE</code>s/<code>INSERT</code>s/<code>DELETE</code>s and
         triggers you won't be able to set <code>lastUpdateCount</code> to
@@ -494,53 +517,9 @@
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Memory Usage</p>
-      <p class="question"><a name="lobOome"></a>I get an
-        <code>OutOfMemoryError</code> while reading/writing LOBs.</p>
-      <p>This is a known issue, caused by an area of the driver that still needs
-        some more work. LOB streams are not written directly into the database,
-        but are cached into a byte array first.</p>
-      <p>As a workaround for this issue, you could reduce the default fetch size
-        of the <code>ResultSet</code>. In jTDS a <code>ResultSet</code> fetches
-        100 rows at once (if I recall correctly). This means that 100 LOBs are
-        cached at once. Reducing the fetch size to 1 does not affect performance
-        very much (because there's no request sent to the DB, just some reading
-        from the socket going on), but it will certainly reduce memory usage.
-        However, if the problem is caused by writing or reading a single LOB,
-        then the only workaround for now would be to increase the maximum VM
-        heap size.</p>
-      <p>Taking a look at possible solutions, passing <code>InputStreams</code>
-        to the database directly when writing a LOB is possible because jTDS can
-        simply "feed" the DB from the stream, rather than cache its content. The
-        problem with reading LOBs, however, is completely different. jTDS allows
-        users to access the columns of a <code>ResultSet</code> in arbitrary
-        order. A lot of applications rely on this behavior. This means that if
-        you do a <code>"SELECT a, b, c FROM x"</code> and <code>b</code> is a
-        LOB then the user must be able to access <code>c</code> before
-        completely reading <code>b</code> (or even accessing it at all). This
-        means that <code>b</code> has to be cached somewhere. Currently it is
-        cached into memory; in order to no longer have problems with
-        <code>OutOfMemoryErrors</code> we must cache it to disk, there is no
-        other choice.</p>
-      <p>Actually, there would be one, restricting random access to columns when
-        there are LOBs in the <code>ResultSet</code>, but this is not as easy as
-        it seems as it would seriously affect the <code>ResultSet</code>
-        implementation which will in turn affect other things. The one thing
-        that might save us would be if we found out how to obtain only the
-        reference to the LOB when doing the <code>SELECT</code>. This would
-        allow us to create a <code>Blob</code>/<code>Clob</code> instance that
-        initially only contained the reference and then access the LOB content
-        only on request. Problem is, we don't know how to do it with TDS (or
-        even if it works, because no other SQL Server driver seems to be doing
-        this). (Actually there seems to be a possible solution, but we are not
-        100% sure it can be implemented so we think we shouldn't yet blow the
-        whistle about it; the idea is that TDS seems to return the text pointer
-        to LOBs so by setting <code>TEXTSIZE</code> to low values when
-        retrieving <code>ResultSets</code> and again to maximum values when
-        getting LOB contents we might just be able to pull it out.)</p>
-      <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="preparedStatmentMemoryLeak"></a>Memory usage
-        keeps increasing when using generated
-        <code>PreparedStatements</code>.</p>
+        keeps increasing when using generated <code>PreparedStatements</code>.
+        </p>
       <p>Normally, with a JDBC driver, <code>PreparedStatement</code>s are
         precompiled on creation, which gives increased performance if they are
         used a sufficient number of times. jTDS takes this one step further:
@@ -550,37 +529,28 @@
         gives jTDS a 2x performance increase over the next fastest driver in
         some (not so uncommon) cases. For example, if you have a method that
         inserts a row into a table by creating a <code>PreparedStatement</code>,
-        using it once and then closing it (which is necessary if you have more
-        than one connection and using transactions), this means that your
-        statement will be compiled only once for each connection, no matter how
-        many times you call that method.</p>
+        using it once and then closing it, your statement will be compiled only
+        once for each <code>Connection</code>, no matter how many times you
+        call that method.</p>
       <p>However, if the <code>PreparedStatement</code>s you use are not
         parameterized (i.e. they look like <code>"SELECT x FROM y WHERE z&gt;" +
         min + " AND z&lt;" + max</code> instead of <code>"SELECT x from y WHERE
         z&gt;? AND z&lt;?"</code>) you will cause jTDS to cache large numbers of
         <code>PreparedStatement</code>s (which will probably never be reused),
         leading to memory leaks.</p>
-      <p>We have decided not to address this issue because it would encourage
-        bad coding on the user side. To be more specific, using parameters in
-        your <code>PreparedStatement</code>s allows precompilation of these
-        statements, bringing big performance benefits when reusing them. For
-        regular queries there is the <code>Statement</code> class. (Don't get me
-        wrong, I'm not saying that queries without parameters should be executed
-        only using <code>Statement</code>; what I mean is that you should not
-        use <code>PreparedStatement</code> with generated queries, as you will
-        probably never reuse them.) Another reason for not changing anything is
-        that although it might help bad code run better, it will certainly cause
-        well-written code to be slower (because of the overhead and of useful
-        statements being potentially dropped and having to be recompiled).</p>
+      <p>We have decided to address this issue and implement a dynamic cache of
+        prepared procedures, dropping those least used. This will be available
+        in a future version of jTDS; for progress and status, check Request for
+        Enhancements (RFE) <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=920825&group_id=33291&atid=407765">#920825</a>.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">TDS Protocol Version</p>
       <p class="question"><a name="getConnectionHangs"></a>I'm trying to connect
         to SQL Server 6.5, but it hangs when calling <code>getConnection()</code>.</p>
-      <p>jTDS uses by default TDS 7.0 (which is SQL Server 7.0's protocol) to
-        communicate with the database server. When jTDS sends the 7.0 login request
+      <p>jTDS uses by default TDS 8.0 (which is SQL Server 2000's protocol) to
+        communicate with the database server. When jTDS sends the 8.0 login request
         SQL Server 6.5 doesn't understand it so it returns a 4.2 error (<code>Login
-        failed</code>). But because jTDS is expecting a TDS 7.0 packet as a response
+        failed</code>). But because jTDS is expecting a TDS 8.0 packet as a response
         (not a TDS 4.2 packet) it doesn't properly understand the response packet
         and it hangs waiting for more data from the server. The solution is to set
         the <code>&quot;TDS&quot;</code> property to <code>&quot;4.2&quot;</code>
@@ -616,6 +586,21 @@
         setting.</p>
       <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
+      <p><a href="#">^ top ^</a></p>
+
+      <p class="title">Technical support</p>
+      <p class="question"><a name="techSupport"></a>Is there any commercial
+        technical support available for jTDS?</p>
+      <p>We're currently looking into offering organized technical support for
+        jTDS and it will definitely be available before the next major release.
+        Until then you can get technical support from individual developers of
+        jTDS. Just send an email request and we'll be happy to provide you with
+        our tech support terms and conditions and fees.</p>
+      <p>As for where the technical support money will go, part of them will be
+        retained by the developer and part of them will go back into jTDS.
+        Currently the aim is to raise US $2000, to pay for JDBC certification.
+        We're 100% sure jTDS will pass the certification test suite, we just
+        need the money for it.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Other</p>

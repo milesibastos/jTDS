@@ -65,7 +65,7 @@ table.inner td.fastest { color: #00ff00; }
     <td>Yes</td>
   </tr>
   <tr>
-    <td>Sybase Compliant</td>
+    <td>Sybase 10, 11, 12 Compliant</td>
     <td>Yes (not all features available for Sybase)</td>
   </tr>
   <tr>
@@ -153,12 +153,14 @@ table.inner td.fastest { color: #00ff00; }
     <td>Yes</td>
   </tr>
   <tr>
-    <td>Connection Pool Implemenation</td>
-    <td>No</td>
+    <td>Connection Pool Implementation</td>
+    <td>No; recommended pool implementations:
+      <a href="http://jakarta.apache.org/commons/dbcp/">DBCP</a> and
+      <a href="http://sourceforge.net/projects/c3p0">c3p0</a></td>
   </tr>
   <tr>
     <td>XA Distributed Transactions</td>
-    <td>No</td>
+    <td>No; in development</td>
   </tr>
 
   <tr>
@@ -166,7 +168,7 @@ table.inner td.fastest { color: #00ff00; }
   </tr>
   <tr>
     <td>Optimized Native Protocol Performance</td>
-    <td>Yes; fastest JDBC driver for SQL Server (benchmarks results:
+    <td>Yes; fastest JDBC driver for SQL Server (benchmark results:
       <a href="benchTest.html">[1]</a>)</td>
   </tr>
   <tr>

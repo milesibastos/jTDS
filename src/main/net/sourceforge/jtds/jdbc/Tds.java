@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.21 2004-01-29 22:36:48 bheineman Exp $
+ *@version    $Id: Tds.java,v 1.22 2004-01-30 04:44:40 bheineman Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.21 2004-01-29 22:36:48 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.22 2004-01-30 04:44:40 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -300,12 +300,41 @@ public class Tds implements TdsDefinitions
      * @return                            The UniqueProcedureName value
      * @exception  java.sql.SQLException  Description of Exception
      */
-    public String getUniqueProcedureName()
-             throws java.sql.SQLException
-    {
-        String result = null;
-
+    public String getUniqueProcedureName() throws SQLException {
         if (serverType == SYBASE) {
+            // Fix for bug 822544 ???
+
+            // Since Sybase does not support temporary stored procedures, construct
+            // permenant stored procedures with a UUID as the name.
+            // Since I do not have access to Sybase I was unable to test this...
+            Statement stmt = connection.createStatement();
+
+            if (!stmt.execute("SELECT NEWID()")) {
+                throw new SQLException("Confused.  Was expecting a result set.");
+            }
+
+            ResultSet rs = stmt.getResultSet();
+
+            if (!rs.next()) {
+                throw new SQLException("Couldn't get stored proc name [NEWID()]");
+            }
+            
+            String result = rs.getString(1);
+
+            stmt.close();
+            rs.close();
+
+            // NEWID() - "86C5075D-6625-411F-B979-9972F68DC5D6"
+            // Prepend "jTDS" and remove the dashes '-' from the UUID.  Since stored
+            // procedure names in Sybase can only be 30 characters long, remove the first
+            // 6 (the machine address which should always be the same for the DB) and
+            // prefix the name with "jTDS" so that the procedures can be deleted easily
+            // by a system administrator.
+            return "jTDS" + result.substring(6, 8) + result.substring(9, 13)
+             + result.substring(14, 18) + result.substring(19, 23) + result.substring(24);
+
+// Commented out as part of fix for bug 822544
+/*
             if (null == procNameTableName) {
                 procNameTableName = database + "." + user
                          + ".jdbc_temp_stored_proc_names";
@@ -320,12 +349,11 @@ public class Tds implements TdsDefinitions
             //
             createStoredProcedureNameTable();
 
-            result = generateUniqueProcName();
+            return generateUniqueProcName();
+*/            
+        } else {
+            return "#jdbc#" + UniqueId.getUniqueId();
         }
-        else {
-            result = "#jdbc#" + UniqueId.getUniqueId();
-        }
-        return result;
     }
 
     /**
@@ -3524,7 +3552,8 @@ public class Tds implements TdsDefinitions
     }
     // getRow()
 
-
+// Commented out as part of fix for bug 822544
+/*
     private boolean createStoredProcedureNameTable()
     {
         boolean result = false;
@@ -3609,7 +3638,7 @@ public class Tds implements TdsDefinitions
         }
         return rs.getString(1);
     }
-
+*/
 
     /*
      * executeProcedure()

@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.2
 =======================
 
+02/23/2005 - David Kilzer
+ o Fix comment in ConnectionJDBC2(String, Properties) constructor.
+
 02/22/2005 - David Kilzer
  o Added .cvsignore to top-level directory to ignore build and dist directories.
 

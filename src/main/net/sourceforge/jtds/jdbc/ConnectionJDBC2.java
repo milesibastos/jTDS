@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.69 2005-02-19 20:11:11 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.70 2005-02-23 17:43:52 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -271,8 +271,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             if (namedPipe == true) {
                 // TODO Use namedPipe parameter to select implementation type
                 if(System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                    // If server name is null, ".", "127.0.0.1" or "localhost"
-                    // and the OS is Windows, use a local named pipe
+                    // If the OS is Windows, use a local named pipe
                     socket = new SharedLocalNamedPipe(serverName, tdsVersion, serverType,
                             instanceName);
                 } else {

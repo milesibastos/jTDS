@@ -222,7 +222,7 @@ public class ResultSetTest extends TestBase {
         ResultSet rs = stmt2.executeQuery("SELECT data FROM #resultSetScroll1");
 
         assertTrue(rs.last());
-        assertEquals(rs.getRow(), count);
+        assertEquals(count, rs.getRow());
         
         stmt2.close();
         rs.close();

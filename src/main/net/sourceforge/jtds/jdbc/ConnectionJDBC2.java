@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.8 2004-07-26 02:51:38 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.9 2004-07-26 03:10:10 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -661,7 +661,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.portservertype")), "08001");
+                                                     Support.getMessage("prop.servertype")), "08001");
         }
 
         databaseName = info.getProperty(Support.getMessage("prop.databasename"),"");

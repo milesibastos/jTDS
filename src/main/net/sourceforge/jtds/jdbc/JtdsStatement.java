@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.28 2005-01-28 21:12:13 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.29 2005-02-08 15:23:35 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -573,7 +573,7 @@ public class JtdsStatement implements java.sql.Statement {
         messages.clearWarnings();
     }
 
-    public void close() throws SQLException {
+    public synchronized void close() throws SQLException {
         if (!closed) {
             try {
                 closeCurrentResultSet();

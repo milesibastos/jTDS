@@ -1,9 +1,13 @@
 Changes from jTDS 1.0
 =======================
 
+02/08/2005 - Alin Sinpalean
+ o Synchronized JtdsStatement.close(); a race condition could occur between a
+   pool implementation closing Statements after a timeout and finalize().
+
 02/07/2005 - Alin Sinpalean
  o Added the explanation for the "Connection refused" error message to the FAQ.
- o Removed tests that were failing because of the fix for bug [1113709] 
+ o Removed tests that were failing because of the fix for bug [1113709]
    Connecting via DataSource (the assumptions of these tests were incorrect, to
    start with).
 

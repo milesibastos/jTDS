@@ -547,9 +547,12 @@
         <code>PreparedStatement</code>s (which will probably never be reused),
         leading to memory leaks.</p>
       <p>We have decided to address this issue and implement a dynamic cache of
-        prepared procedures, dropping those least used. This will be available
-        in a future version of jTDS; for progress and status, check Request for
-        Enhancements (RFE) <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=920825&group_id=33291&atid=407765">#920825</a>.</p>
+        prepared procedures.  The number of statements that are kept open
+        simultaneously can be controlled with the <code>maxStatements</code>
+        parameter; see the <a href="#urlFormat">jTDS URL format</a> for more
+        information.</p>
+      <p>Future versions of jTDS will allow the type of cache (LRU, FIFO, etc)
+        to be selected.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">TDS Protocol Version</p>

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.19 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.20 2004-08-06 19:40:33 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -918,7 +918,7 @@ public class TdsCore {
             ResultSet rs = null;
             
             spSql.append("DECLARE @procid INT\r\n");
-            spSql.append("SET @procid=null\r\n");
+            spSql.append("SET @procid=1\r\n");
             spSql.append("EXEC sp_prepare @procid output,N'");
             
             for (int i = 0; i < params.length; i++) {

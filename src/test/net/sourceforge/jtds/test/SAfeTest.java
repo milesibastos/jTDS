@@ -94,6 +94,7 @@ public class SAfeTest extends DatabaseTestCase {
 
             assertEquals(0, stmt.executeUpdate("DROP TABLE #SAfe0001"));
         }
+        stmt.close();
     }
 
     /**
@@ -633,6 +634,7 @@ public class SAfeTest extends DatabaseTestCase {
         rs.next();
         assertEquals("Row X", rs.getString(1));
         rs.close();
+        stmt.close();
     }
 
     /**
@@ -671,6 +673,7 @@ public class SAfeTest extends DatabaseTestCase {
         rs.next();
         assertEquals("Row X", rs.getString(1));
         rs.close();
+        stmt.close();
     }
 
     /**
@@ -806,6 +809,7 @@ public class SAfeTest extends DatabaseTestCase {
 
         // Execute an empty batch
         res = insStmt.executeBatch();
+        insStmt.close();
         assertEquals(0, res.length);
 
         // Execute plain batch

@@ -56,6 +56,7 @@ public class Tds5Test extends DatabaseTestCase {
         assertEquals("unichar", rsmd.getColumnTypeName(2));
         assertTrue(rsmd.isAutoIncrement(1));
         assertFalse(rsmd.isAutoIncrement(2));
+        stmt.close();
     }
 
     /**

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.27 2004-10-22 04:31:41 bheineman Exp $
+ * @version $Id: Support.java,v 1.28 2004-10-27 14:57:44 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -939,12 +939,12 @@ public class Support {
 
     /**
      * Generates a unique statement key for a given SQL statement.
-     * 
+     *
      * @param sql the sql statment to generate the key for
      * @param params the statement parameters
      * @param serverType the type of server to generate the key for
      * @param catalog the catalog is required for uniqueness on Microsoft SQL Server
-     * @return
+     * @return the unique statement key
      */
     static String getStatementKey(String sql, ParamInfo[] params, int serverType, String catalog) {
         StringBuffer key = new StringBuffer(sql.length() + 64);
@@ -958,10 +958,10 @@ public class Support {
         for (int i = 0; i < params.length && serverType != Driver.SYBASE; i++) {
             key.append(params[i].sqlType);
         }
-        
+
     	return key.toString();
     }
-    
+
     /**
      * Constructs a parameter definition string for use with
      * sp_executesql, sp_prepare, sp_prepexec, sp_cursoropen,
@@ -1154,7 +1154,7 @@ public class Support {
         args[2] = XA_TRACE;
         args[3] = XA_RMID;
         args[4] = XAResource.TMNOFLAGS;
-        byte[] id = null;
+        byte[] id;
         id = ((ConnectionJDBC2) connection).sendXaPacket(args, TM_ID.getBytes());
         if (args[0] != XAResource.XA_OK || id == null || id.length != 4) {
             throw new SQLException(Messages.get("error.support.badxaopen"), "HY000");
@@ -1197,7 +1197,7 @@ public class Support {
         args[2] = xaConId;
         args[3] = XA_RMID;
         args[4] = flags;
-        byte[] cookie = null;
+        byte[] cookie;
         try {
             cookie = ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
             if (args[0] == XAResource.XA_OK && cookie != null) {

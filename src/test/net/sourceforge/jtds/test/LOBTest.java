@@ -2830,7 +2830,7 @@ public class LOBTest extends TestBase {
      * <p>
      * Used for testing <code>Blob</code> insert behavior.
      */
-    class RealInputStream extends InputStream {
+    static class RealInputStream extends InputStream {
         /**
          * Length of the stream.
          */

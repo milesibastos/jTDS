@@ -49,6 +49,7 @@ public class SunTest extends DatabaseTestCase {
         PreparedStatement pstmt = con.prepareStatement("SELECT name, id, type FROM sysobjects WHERE type = 'U'");
         ResultSetMetaData rsmd = pstmt.getMetaData();
         assertEquals("name", rsmd.getColumnName(1));
+        pstmt.close();
     }
 
     /**
@@ -137,6 +138,7 @@ public class SunTest extends DatabaseTestCase {
         cstmt.execute();
         assertEquals(minStr, cstmt.getString(1));
         assertEquals(maxStr, cstmt.getString(2));
+        cstmt.close();
     }
 
     /**
@@ -166,6 +168,7 @@ public class SunTest extends DatabaseTestCase {
         cstmt.execute();
         assertEquals(minStr, cstmt.getString(1));
         assertEquals(maxStr, cstmt.getString(2));
+        cstmt.close();
     }
 
     /**
@@ -237,6 +240,8 @@ public class SunTest extends DatabaseTestCase {
             fail("setFecthDirection does not validate parameter");
         } catch (SQLException sqe) {
         }
+
+        stmt.close();
     }
 
     /**

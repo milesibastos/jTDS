@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.15 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.16 2004-10-27 14:57:44 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -771,13 +771,13 @@ class SharedSocket {
                 vsock.diskQueue.seek(0L);
             }
 
-            vsock.diskQueue.read(hdrBuf, 0, 8);
+            vsock.diskQueue.readFully(hdrBuf, 0, 8);
 
             int len = getPktLen(hdrBuf, 2);
 
             buffer = new byte[len];
             System.arraycopy(hdrBuf, 0, buffer, 0, 8);
-            vsock.diskQueue.read(buffer, 8, len - 8);
+            vsock.diskQueue.readFully(buffer, 8, len - 8);
             vsock.pktsOnDisk--;
 
             if (vsock.pktsOnDisk < 1) {

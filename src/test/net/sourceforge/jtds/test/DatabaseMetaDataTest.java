@@ -17,32 +17,455 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 
-/**
- * @version 1.0
- */
-public class DatabaseMetaDataTest extends TestBase {
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSetMetaData;
+
+public class DatabaseMetaDataTest extends DatabaseTestCase {
+
     public DatabaseMetaDataTest(String name) {
         super(name);
     }
 
     /**
+     * Test meta data functions that return boolean values.
+     * @throws Exception
+     */
+    public void testBooleanOptions() throws Exception {
+        DatabaseMetaData dbmd = con.getMetaData();
+        assertFalse("dataDefinitionCausesTransactionCommit", dbmd.dataDefinitionCausesTransactionCommit());
+        assertFalse("dataDefinitionIgnoredInTransactions", dbmd.dataDefinitionIgnoredInTransactions());
+        assertFalse("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("doesMaxRowSizeIncludeBlobs", dbmd.doesMaxRowSizeIncludeBlobs());
+        assertFalse("insertsAreDetected", dbmd.insertsAreDetected(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("insertsAreDetected", dbmd.insertsAreDetected(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("insertsAreDetected", dbmd.insertsAreDetected(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("isCatalogAtStart", dbmd.isCatalogAtStart());
+        assertFalse("isReadOnly", dbmd.isReadOnly());
+        assertTrue("nullPlusNonNullIsNull", dbmd.nullPlusNonNullIsNull());
+        assertFalse("nullsAreSortedAtEnd", dbmd.nullsAreSortedAtEnd());
+        assertFalse("nullsAreSortedAtStart", dbmd.nullsAreSortedAtStart());
+        assertFalse("nullsAreSortedHigh", dbmd.nullsAreSortedHigh());
+        assertTrue("nullsAreSortedLow", dbmd.nullsAreSortedLow());
+        assertFalse("othersDeletesAreVisible",dbmd.othersDeletesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertFalse("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertFalse("storesLowerCaseIdentifiers", dbmd.storesLowerCaseIdentifiers());
+        assertFalse("storesLowerCaseQuotedIdentifiers", dbmd.storesLowerCaseQuotedIdentifiers());
+        assertFalse("storesUpperCaseIdentifiers", dbmd.storesUpperCaseIdentifiers());
+        assertFalse("storesUpperCaseQuotedIdentifiers", dbmd.storesUpperCaseQuotedIdentifiers());
+        assertTrue("supportsAlterTableWithAddColumn", dbmd.supportsAlterTableWithAddColumn());
+        assertTrue("supportsAlterTableWithDropColumn", dbmd.supportsAlterTableWithDropColumn());
+        assertTrue("supportsANSI92EntryLevelSQL", dbmd.supportsANSI92EntryLevelSQL());
+        assertFalse("supportsANSI92FullSQL", dbmd.supportsANSI92FullSQL());
+        assertFalse("supportsANSI92IntermediateSQL", dbmd.supportsANSI92IntermediateSQL());
+        assertTrue("supportsBatchUpdates", dbmd.supportsBatchUpdates());
+        assertTrue("supportsCatalogsInDataManipulation", dbmd.supportsCatalogsInDataManipulation());
+        assertTrue("supportsCatalogsInIndexDefinitions", dbmd.supportsCatalogsInIndexDefinitions());
+        assertTrue("supportsCatalogsInProcedureCalls", dbmd.supportsCatalogsInProcedureCalls());
+        assertTrue("supportsCatalogsInTableDefinitions", dbmd.supportsCatalogsInTableDefinitions());
+        assertTrue("supportsColumnAliasing", dbmd.supportsColumnAliasing());
+        assertTrue("supportsConvert", dbmd.supportsConvert());
+        assertTrue("supportsCorrelatedSubqueries", dbmd.supportsCorrelatedSubqueries());
+        assertTrue("supportsDataDefinitionAndDataManipulationTransactions", dbmd.supportsDataDefinitionAndDataManipulationTransactions());
+        assertFalse("supportsDataManipulationTransactionsOnly", dbmd.supportsDataManipulationTransactionsOnly());
+        assertFalse("supportsDifferentTableCorrelationNames", dbmd.supportsDifferentTableCorrelationNames());
+        assertTrue("supportsExpressionsInOrderBy", dbmd.supportsExpressionsInOrderBy());
+        assertFalse("supportsExtendedSQLGrammar", dbmd.supportsExtendedSQLGrammar());
+        assertTrue("supportsGroupBy", dbmd.supportsGroupBy());
+        assertTrue("supportsGroupByBeyondSelect", dbmd.supportsGroupByBeyondSelect());
+        assertTrue("supportsGroupByUnrelated", dbmd.supportsGroupByUnrelated());
+        assertTrue("supportsLimitedOuterJoins", dbmd.supportsLimitedOuterJoins());
+        assertTrue("supportsMinimumSQLGrammar", dbmd.supportsMinimumSQLGrammar());
+        assertTrue("supportsMultipleResultSets", dbmd.supportsMultipleResultSets());
+        assertTrue("supportsMultipleTransactions", dbmd.supportsMultipleTransactions());
+        assertTrue("supportsNonNullableColumns", dbmd.supportsNonNullableColumns());
+        assertTrue("supportsOpenStatementsAcrossCommit", dbmd.supportsOpenStatementsAcrossCommit());
+        assertTrue("supportsOpenStatementsAcrossRollback", dbmd.supportsOpenStatementsAcrossRollback());
+        assertTrue("supportsOrderByUnrelated", dbmd.supportsOrderByUnrelated());
+        assertTrue("supportsOuterJoins", dbmd.supportsOuterJoins());
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY));
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE));
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY));
+        assertTrue("supportsResultSetType", dbmd.supportsResultSetType(ResultSet.TYPE_FORWARD_ONLY));
+        assertTrue("supportsResultSetType", dbmd.supportsResultSetType(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertTrue("supportsSchemasInDataManipulation", dbmd.supportsSchemasInDataManipulation());
+        assertTrue("supportsSchemasInIndexDefinitions", dbmd.supportsSchemasInIndexDefinitions());
+        assertTrue("supportsSchemasInProcedureCalls", dbmd.supportsSchemasInProcedureCalls());
+        assertTrue("supportsSchemasInTableDefinitions", dbmd.supportsSchemasInTableDefinitions());
+        assertTrue("supportsStoredProcedures", dbmd.supportsStoredProcedures());
+        assertTrue("supportsSubqueriesInComparisons", dbmd.supportsSubqueriesInComparisons());
+        assertTrue("supportsSubqueriesInExists", dbmd.supportsSubqueriesInExists());
+        assertTrue("supportsSubqueriesInIns", dbmd.supportsSubqueriesInIns());
+        assertTrue("supportsSubqueriesInQuantifieds", dbmd.supportsSubqueriesInQuantifieds());
+        assertTrue("supportsTableCorrelationNames", dbmd.supportsTableCorrelationNames());
+        assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_COMMITTED));
+        assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_READ_UNCOMMITTED));
+        assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_SERIALIZABLE));
+        assertTrue("supportsTransactions", dbmd.supportsTransactions());
+        assertTrue("supportsUnion", dbmd.supportsUnion());
+        assertTrue("supportsUnionAll", dbmd.supportsUnionAll());
+        assertFalse("updatesAreDetected", dbmd.updatesAreDetected(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("updatesAreDetected", dbmd.updatesAreDetected(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertFalse("updatesAreDetected", dbmd.updatesAreDetected(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertFalse("usesLocalFilePerTable", dbmd.usesLocalFilePerTable());
+        assertFalse("usesLocalFiles", dbmd.usesLocalFiles());
+        assertTrue("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("othersDeletesAreVisible",dbmd.othersDeletesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY));
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE));
+        assertTrue("allProceduresAreCallable", dbmd.allProceduresAreCallable());
+        assertFalse("othersDeletesAreVisible",dbmd.othersDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertFalse("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertTrue("storesMixedCaseIdentifiers", dbmd.storesMixedCaseIdentifiers());
+        assertTrue("storesMixedCaseQuotedIdentifiers", dbmd.storesMixedCaseQuotedIdentifiers());
+        assertTrue("supportsCoreSQLGrammar", dbmd.supportsCoreSQLGrammar());
+        assertFalse("supportsIntegrityEnhancementFacility", dbmd.supportsIntegrityEnhancementFacility());
+        assertFalse("supportsMixedCaseIdentifiers", dbmd.supportsMixedCaseIdentifiers());
+        assertFalse("supportsMixedCaseQuotedIdentifiers", dbmd.supportsMixedCaseQuotedIdentifiers());
+        assertFalse("supportsPositionedDelete", dbmd.supportsPositionedDelete());
+        assertFalse("supportsPositionedUpdate", dbmd.supportsPositionedUpdate());
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE));
+        assertTrue("supportsSchemasInPrivilegeDefinitions", dbmd.supportsSchemasInPrivilegeDefinitions());
+        assertFalse("supportsSelectForUpdate", dbmd.supportsSelectForUpdate());
+        assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_REPEATABLE_READ));
+
+        assertTrue("locatorsUpdateCopy",dbmd.locatorsUpdateCopy());
+        assertTrue("ownDeletesAreVisible", dbmd.ownDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertTrue("ownDeletesAreVisible", dbmd.ownDeletesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertTrue("ownDeletesAreVisible", dbmd.ownDeletesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("supportsCatalogsInPrivilegeDefinitions", dbmd.supportsCatalogsInPrivilegeDefinitions());
+        assertTrue("supportsFullOuterJoins", dbmd.supportsFullOuterJoins());
+        assertTrue("supportsLikeEscapeClause", dbmd.supportsLikeEscapeClause());
+        assertTrue("supportsOpenCursorsAcrossCommit", dbmd.supportsOpenCursorsAcrossCommit());
+        assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_NONE));
+        //
+        // Test JDBC 3 items
+        //
+        assertTrue("supportsGetGeneratedKeys", dbmd.supportsGetGeneratedKeys());
+        assertTrue("supportsMultipleOpenResults", dbmd.supportsMultipleOpenResults());
+        assertTrue("supportsNamedParameters", dbmd.supportsNamedParameters());
+        assertFalse("supportsResultSetHoldability", dbmd.supportsResultSetHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT));
+        assertFalse("supportsResultSetHoldability", dbmd.supportsResultSetHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT));
+        assertTrue("supportsSavepoints", dbmd.supportsSavepoints());
+        assertTrue("supportsStatementPooling", dbmd.supportsStatementPooling());
+
+        if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
+            assertTrue("allTablesAreSelectable", dbmd.allTablesAreSelectable());
+            assertFalse("supportsOpenCursorsAcrossRollback", dbmd.supportsOpenCursorsAcrossRollback());
+        } else {
+            assertFalse("allTablesAreSelectable", dbmd.allTablesAreSelectable());
+            assertTrue("supportsOpenCursorsAcrossRollback", dbmd.supportsOpenCursorsAcrossRollback());
+        }
+    }
+
+    /**
+     * Test meta data functions that return strings.
+     * @throws Exception
+     */
+    public void testStringOptions() throws Exception {
+        DatabaseMetaData dbmd = con.getMetaData();
+        assertEquals("getCatalogSeparator", ".", dbmd.getCatalogSeparator());
+        assertEquals("getCatalogTerm","database", dbmd.getCatalogTerm());
+        assertNotNull("getDatabaseProductName", dbmd.getDatabaseProductName());
+        assertNotNull("getDatabaseProductVersion", dbmd.getDatabaseProductVersion());
+        assertNotNull("getDriverName", dbmd.getDriverName());
+        assertNotNull("getDriverVersion", dbmd.getDriverVersion());
+        assertEquals("getExtraNameCharacters","$#@", dbmd.getExtraNameCharacters());
+        assertEquals("getIdentifierQuoteString","\"", dbmd.getIdentifierQuoteString());
+        assertEquals("getNumericFunctions","abs,acos,asin,atan,atan2,ceiling,cos,cot,degrees,exp,floor,log,log10,mod,pi,power,radians,rand,round,sign,sin,sqrt,tan", dbmd.getNumericFunctions());
+        assertEquals("getProcedureTerm","stored procedure", dbmd.getProcedureTerm());
+        assertEquals("getSchemaTerm","owner", dbmd.getSchemaTerm());
+        assertEquals("getSearchStringEscape","\\", dbmd.getSearchStringEscape());
+        assertEquals("getSQLKeywords","ARITH_OVERFLOW,BREAK,BROWSE,BULK,CHAR_CONVERT,CHECKPOINT,CLUSTERED,COMPUTE,CONFIRM,CONTROLROW,DATA_PGS,DATABASE,DBCC,DISK,DUMMY,DUMP,ENDTRAN,ERRLVL,ERRORDATA,ERROREXIT,EXIT,FILLFACTOR,HOLDLOCK,IDENTITY_INSERT,IF,INDEX,KILL,LINENO,LOAD,MAX_ROWS_PER_PAGE,MIRROR,MIRROREXIT,NOHOLDLOCK,NONCLUSTERED,NUMERIC_TRUNCATION,OFF,OFFSETS,ONCE,ONLINE,OVER,PARTITION,PERM,PERMANENT,PLAN,PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,RECONFIGURE,REPLACE,RESERVED_PGS,RETURN,ROLE,ROWCNT,ROWCOUNT,RULE,SAVE,SETUSER,SHARED,SHUTDOWN,SOME,STATISTICS,STRIPE,SYB_IDENTITY,SYB_RESTREE,SYB_TERMINATE,TEMP,TEXTSIZE,TRAN,TRIGGER,TRUNCATE,TSEQUAL,UNPARTITION,USE,USED_PGS,USER_OPTION,WAITFOR,WHILE,WRITETEXT", dbmd.getSQLKeywords());
+        assertEquals("getSystemFunctions","database,ifnull,user,convert", dbmd.getSystemFunctions());
+        assertEquals("getTimeDateFunctions","curdate,curtime,dayname,dayofmonth,dayofweek,dayofyear,hour,minute,month,monthname,now,quarter,timestampadd,timestampdiff,second,week,year", dbmd.getTimeDateFunctions());
+        assertNotNull("getURL", dbmd.getURL());
+        assertNotNull("getUserName", dbmd.getUserName());
+        if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
+            assertEquals("getStringFunctions","ascii,char,concat,difference,insert,lcase,left,length,locate,ltrim,repeat,replace,right,rtrim,soundex,space,substring,ucase", dbmd.getStringFunctions());
+        } else {
+            assertEquals("getStringFunctions","ascii,char,concat,difference,insert,lcase,length,ltrim,repeat,right,rtrim,soundex,space,substring,ucase", dbmd.getStringFunctions());
+        }
+    }
+
+    /**
+     * Test meta data function that return integer values.
+     * @throws Exception
+     */
+    public void testIntOptions() throws Exception {
+        DatabaseMetaData dbmd = con.getMetaData();
+        int sysnamelen = (dbmd.getDatabaseMajorVersion() < 7 || dbmd.getDatabaseMajorVersion() > 9)? 30: 128;
+        assertTrue("getDatabaseMajorVersion", dbmd.getDatabaseMajorVersion() >= 0);
+        assertTrue("getDatabaseMinorVersion", dbmd.getDatabaseMinorVersion() >= 0);
+        assertEquals("getDefaultTransactionIsolation",Connection.TRANSACTION_READ_COMMITTED, dbmd.getDefaultTransactionIsolation());
+        assertTrue("getDriverMajorVersion", dbmd.getDriverMajorVersion() >= 0);
+        assertTrue("getDriverMinorVersion", dbmd.getDriverMinorVersion() >=0);
+        assertEquals("getJDBCMajorVersion", 3, dbmd.getJDBCMajorVersion());
+        assertEquals("getJDBCMinorVersion", 0, dbmd.getJDBCMinorVersion());
+        assertEquals("getMaxBinaryLiteralLength", 131072, dbmd.getMaxBinaryLiteralLength());
+        assertEquals("getMaxCatalogNameLength",sysnamelen, dbmd.getMaxCatalogNameLength());
+        assertEquals("getMaxCharLiteralLength", 131072, dbmd.getMaxCharLiteralLength());
+        assertEquals("getMaxColumnNameLength",sysnamelen, dbmd.getMaxColumnNameLength());
+        assertEquals("getMaxColumnsInIndex",16, dbmd.getMaxColumnsInIndex());
+        assertEquals("getMaxColumnsInSelect",4096, dbmd.getMaxColumnsInSelect());
+        assertEquals("getMaxConnections",32767, dbmd.getMaxConnections());
+        assertEquals("getMaxCursorNameLength",sysnamelen, dbmd.getMaxCursorNameLength());
+        assertEquals("getMaxProcedureNameLength",sysnamelen, dbmd.getMaxProcedureNameLength());
+        assertEquals("getMaxSchemaNameLength",sysnamelen, dbmd.getMaxSchemaNameLength());
+        assertEquals("getMaxStatementLength",0, dbmd.getMaxStatementLength());
+        assertEquals("getMaxStatements", 0, dbmd.getMaxStatements());
+        assertEquals("getMaxTableNameLength",sysnamelen, dbmd.getMaxTableNameLength());
+        assertEquals("getMaxUserNameLength",sysnamelen, dbmd.getMaxUserNameLength());
+        assertEquals("getResultSetHoldability",ResultSet.HOLD_CURSORS_OVER_COMMIT, dbmd.getResultSetHoldability());
+        assertEquals("getSQLStateType",1, dbmd.getSQLStateType());
+        if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
+            assertEquals("getMaxColumnsInGroupBy",0, dbmd.getMaxColumnsInGroupBy());
+            assertEquals("getMaxColumnsInOrderBy",0, dbmd.getMaxColumnsInOrderBy());
+            assertEquals("getMaxColumnsInTable",1024, dbmd.getMaxColumnsInTable());
+            assertEquals("getMaxIndexLength", 900, dbmd.getMaxIndexLength());
+            assertEquals("getMaxRowSize",8060, dbmd.getMaxRowSize());
+            assertEquals("getMaxTablesInSelect",256, dbmd.getMaxTablesInSelect());
+        } else {
+            assertEquals("getMaxColumnsInGroupBy",16, dbmd.getMaxColumnsInGroupBy());
+            assertEquals("getMaxColumnsInOrderBy",16, dbmd.getMaxColumnsInOrderBy());
+            assertEquals("getMaxColumnsInTable", 250, dbmd.getMaxColumnsInTable());
+            assertEquals("getMaxIndexLength", 255, dbmd.getMaxIndexLength());
+            assertEquals("getMaxRowSize",1962, dbmd.getMaxRowSize());
+            assertEquals("getMaxTablesInSelect",16, dbmd.getMaxTablesInSelect());
+        }
+    }
+
+    /**
+     * Test meta data functions that return result sets.
+     * @throws Exception
+     */
+    public void testResultSets() throws Exception
+    {
+        try {
+            DatabaseMetaData dbmd = con.getMetaData();
+            ResultSet rs;
+            Statement stmt = con.createStatement();
+            dropTable("jTDS_META2");
+            dropTable("jTDS_META");
+            dropProcedure("jtds_spmeta");
+            //
+            // Create test data
+            //
+            stmt.execute("CREATE PROC jtds_spmeta @p1 int, @p2 varchar(30) output AS SELECT @p2 = 'test'");
+            stmt.execute("CREATE TABLE jTDS_META (id int NOT NULL primary key , data nvarchar(255) NULL, ts timestamp)");
+            stmt.execute("CREATE TABLE jTDS_META2 (id int NOT NULL, data2 varchar(255) NULL "+
+                            ",  FOREIGN KEY (id) REFERENCES jTDS_META(id)) ");
+            //
+            rs = dbmd.getAttributes(null, null, null, null);
+            assertTrue(checkColumnNames(rs, new String[]{"TYPE_CAT", "TYPE_SCHEM","TYPE_NAME","ATTR_NAME",
+                    "DATA_TYPE","ATTR_TYPE_NAME","ATTR_SIZE","DECIMAL_DIGITS","NUM_PREC_RADIX","NULLABLE",
+                    "REMARKS","ATTR_DEF","SQL_DATA_TYPE","SQL_DATETIME_SUB","CHAR_OCTET_LENGTH",
+                    "ORDINAL_POSITION","IS_NULLABLE","SCOPE_CATALOG","SCOPE_SCHEMA","SCOPE_TABLE","SOURCE_DATA_TYPE"}));
+            assertFalse(rs.next());
+            //
+            rs = dbmd.getBestRowIdentifier(null, null, "jTDS_META", DatabaseMetaData.bestRowUnknown, true);
+            assertTrue(checkColumnNames(rs, new String[]{"SCOPE", "COLUMN_NAME", "DATA_TYPE",
+                                                "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH",
+                                                "DECIMAL_DIGITS","PSEUDO_COLUMN"}));
+            assertTrue(rs.next());
+            assertEquals("id", rs.getString(2));
+            //
+            rs = dbmd.getCatalogs();
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT"}));
+            boolean fail = true;
+            while (rs.next()) {
+                if (rs.getString(1).equalsIgnoreCase("master")) {
+                    fail=false;
+                    break;
+                }
+            }
+            assertTrue(!fail);
+            //
+            rs = dbmd.getColumnPrivileges(null, null, "jTDS_META", "id");
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT","TABLE_SCHEM","TABLE_NAME",
+                                        "COLUMN_NAME","GRANTOR","GRANTEE","PRIVILEGE","IS_GRANTABLE"}));
+            assertTrue(rs.next());
+            assertTrue(rs.getString(7).equals("INSERT") ||
+                       rs.getString(7).equals("UPDATE") ||
+                       rs.getString(7).equals("DELETE") ||
+                       rs.getString(7).equals("SELECT"));
+            //
+            rs = dbmd.getColumns(null, null, "jTDS_META", "%");
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
+                    "COLUMN_NAME", "DATA_TYPE", "TYPE_NAME", "COLUMN_SIZE", "BUFFER_LENGTH",
+                    "DECIMAL_DIGITS","NUM_PREC_RADIX", "NULLABLE","REMARKS","COLUMN_DEF",
+                    "SQL_DATA_TYPE","SQL_DATETIME_SUB","CHAR_OCTET_LENGTH","ORDINAL_POSITION",
+                    "IS_NULLABLE","SCOPE_CATALOG","SCOPE_SCHEMA","SCOPE_TABLE","SOURCE_DATA_TYPE"}));
+            assertTrue(rs.next());
+            assertEquals("id", rs.getString(4));
+            assertEquals(java.sql.Types.INTEGER, rs.getInt(5));
+            assertTrue(rs.next());
+            assertEquals("data", rs.getString(4));
+            assertEquals(java.sql.Types.VARCHAR, rs.getInt(5));
+            //
+            rs = dbmd.getCrossReference(null, null, "jTDS_META", null, null, "jTDS_META2");
+            assertTrue(checkColumnNames(rs, new String[]{"PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME","PKCOLUMN_NAME",
+                    "FKTABLE_CAT", "FKTABLE_SCHEM", "FKTABLE_NAME","FKCOLUMN_NAME",
+                    "KEY_SEQ","UPDATE_RULE","DELETE_RULE","FK_NAME","PK_NAME","DEFERRABILITY"}));
+            assertTrue(rs.next());
+            assertEquals("id", rs.getString(4));
+            //
+            rs = dbmd.getExportedKeys(null, null, "jTDS_META");
+            assertTrue(checkColumnNames(rs, new String[]{"PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME","PKCOLUMN_NAME",
+                    "FKTABLE_CAT", "FKTABLE_SCHEM", "FKTABLE_NAME","FKCOLUMN_NAME",
+                    "KEY_SEQ","UPDATE_RULE","DELETE_RULE","FK_NAME","PK_NAME","DEFERRABILITY"}));
+            assertTrue(rs.next());
+            assertEquals("id", rs.getString(4));
+            //
+            rs = dbmd.getImportedKeys(null, null, "jTDS_META2");
+            assertTrue(checkColumnNames(rs, new String[]{"PKTABLE_CAT", "PKTABLE_SCHEM", "PKTABLE_NAME","PKCOLUMN_NAME",
+                    "FKTABLE_CAT", "FKTABLE_SCHEM", "FKTABLE_NAME","FKCOLUMN_NAME",
+                    "KEY_SEQ","UPDATE_RULE","DELETE_RULE","FK_NAME","PK_NAME","DEFERRABILITY"}));
+            assertTrue(rs.next());
+            assertEquals("id", rs.getString(4));
+            //
+            rs = dbmd.getIndexInfo(null, null, "jTDS_META", false, true);
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT","TABLE_SCHEM","TABLE_NAME","NON_UNIQUE",
+                      "INDEX_QUALIFIER","INDEX_NAME","TYPE","ORDINAL_POSITION", "COLUMN_NAME",
+                      "ASC_OR_DESC","CARDINALITY","PAGES","FILTER_CONDITION"}));
+            assertTrue(rs.next());
+            assertEquals("jTDS_META", rs.getString(3));
+            //
+            rs = dbmd.getPrimaryKeys(null, null, "jTDS_META");
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT","TABLE_SCHEM","TABLE_NAME","COLUMN_NAME","KEY_SEQ", "PK_NAME"}));
+            assertTrue(rs.next());
+            assertEquals("id", rs.getString(4));
+            //
+            rs = dbmd.getProcedureColumns(null, null, "jtds_spmeta", "@p1");
+            assertTrue(checkColumnNames(rs, new String[]{"PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME",
+                    "COLUMN_NAME", "COLUMN_TYPE","DATA_TYPE","TYPE_NAME","PRECISION",
+                    "LENGTH","SCALE","RADIX","NULLABLE","REMARKS"}));
+            assertTrue(rs.next());
+            assertEquals("jtds_spmeta", rs.getString(3));
+            assertEquals("@p1", rs.getString(4));
+            //
+            rs = dbmd.getProcedures(null, null, "jtds_spmeta%");
+            assertTrue(checkColumnNames(rs, new String[]{"PROCEDURE_CAT", "PROCEDURE_SCHEM", "PROCEDURE_NAME",
+                    "","","","REMARKS","PROCEDURE_TYPE"}));
+            assertTrue(rs.next());
+            assertEquals("jtds_spmeta", rs.getString(3));
+            //
+            rs = dbmd.getSchemas();
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
+            assertTrue(rs.next());
+            //
+            rs = dbmd.getSuperTables(null, null, "%");
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME","SUPERTABLE_NAME"}));
+            assertFalse(rs.next());
+            //
+            rs = dbmd.getSuperTypes(null, null, "%");
+            assertTrue(checkColumnNames(rs, new String[]{"TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME",
+                    "SUPERTYPE_CAT", "SUPERTYPE_SCHEM", "SUPERTYPE_NAME"}));
+            assertFalse(rs.next());
+            //
+            rs = dbmd.getTablePrivileges(null, null, "jTDS_META");
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
+                        "GRANTOR", "GRANTEE","PRIVILEGE", "IS_GRANTABLE"}));
+            assertTrue(rs.next());
+            assertTrue(rs.getString(6).equals("INSERT") ||
+                       rs.getString(6).equals("UPDATE") ||
+                       rs.getString(6).equals("DELETE") ||
+                       rs.getString(6).equals("SELECT"));
+            //
+            rs = dbmd.getTables(null, null, "jTDS_META", new String[]{"TABLE"});
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",
+                    "TABLE_TYPE","REMARKS","TYPE_CAT","TYPE_SCHEM","TYPE_NAME",
+                    "SELF_REFERENCING_COL_NAME","REF_GENERATION"}));
+            assertTrue(rs.next());
+            assertEquals("jTDS_META", rs.getString(3));
+            //
+            rs = dbmd.getTableTypes();
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_TYPE"}));
+            assertTrue(rs.next());
+            assertEquals("SYSTEM TABLE", rs.getString(1));
+            //
+            rs = dbmd.getTypeInfo();
+            assertTrue(checkColumnNames(rs, new String[]{"TYPE_NAME","DATA_TYPE","PRECISION","LITERAL_PREFIX",
+                    "LITERAL_SUFFIX", "CREATE_PARAMS","NULLABLE","CASE_SENSITIVE","SEARCHABLE",
+                    "UNSIGNED_ATTRIBUTE","FIXED_PREC_SCALE","AUTO_INCREMENT","LOCAL_TYPE_NAME",
+                    "MINIMUM_SCALE","MAXIMUM_SCALE","SQL_DATA_TYPE","SQL_DATETIME_SUB","NUM_PREC_RADIX"}));
+            while (rs.next()) {
+                if (rs.getString(1).equalsIgnoreCase("nvarchar")) {
+                    assertEquals(java.sql.Types.VARCHAR, rs.getInt(2));
+                }
+            }
+            //
+            rs = dbmd.getUDTs(null, null, "%", null);
+            assertTrue(checkColumnNames(rs, new String[]{"TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "CLASS_NAME",
+                    "DATA_TYPE","REMARKS","BASE_TYPE"}));
+            assertFalse(rs.next());
+            //
+            rs = dbmd.getVersionColumns(null, null, "jTDS_META");
+            assertTrue(checkColumnNames(rs, new String[]{"SCOPE", "COLUMN_NAME","DATA_TYPE","TYPE_NAME",
+                      "COLUMN_SIZE","BUFFER_LENGTH","DECIMAL_DIGITS","PSEUDO_COLUMN"}));
+            assertTrue(rs.next());
+            assertEquals("ts", rs.getString(2));
+        } finally {
+            dropTable("jTDS_META2");
+            dropTable("jTDS_META");
+            dropProcedure("jtds_spmeta");
+        }
+    }
+
+    /**
+     * Utility method to check column names and number.
+     * @param rs The result set to check.
+     * @param names The list of column names to compare to result set.
+     * @return The <code>boolean</code> value true if the columns match.
+     * @throws SQLException
+     */
+    private boolean checkColumnNames(ResultSet rs, String[] names) throws SQLException{
+        ResultSetMetaData rsmd = rs.getMetaData();
+        if (rsmd.getColumnCount() < names.length) {
+            System.out.println("Cols="+rsmd.getColumnCount());
+            return false;
+        }
+        for (int i = 1; i <= names.length; i++) {
+            if (names[i-1].length() > 0 && !rsmd.getColumnLabel(i).equals(names[i-1])) {
+                System.out.println(names[i-1]+" = "+rsmd.getColumnLabel(i));
+                return false;
+            }
+        }
+        return true;
+    }
+    /**
      * Test for bug [974036] Bug in 0.8rc1 DatabaseMetaData method getTableTypes()
      */
     public void testGetTableTypesOrder() throws Exception {
-    	DatabaseMetaData dmd = con.getMetaData();
-    	ResultSet rs = dmd.getTableTypes();
-    	String previousType = "";
+        DatabaseMetaData dmd = con.getMetaData();
+        ResultSet rs = dmd.getTableTypes();
+        String previousType = "";
 
-    	while (rs.next()) {
-    		String type = rs.getString(1);
+        while (rs.next()) {
+            String type = rs.getString(1);
 
-    		assertTrue(type.compareTo(previousType) >= 0);
-			previousType = type;
-    	}
+            assertTrue(type.compareTo(previousType) >= 0);
+            previousType = type;
+        }
 
-    	rs.close();
+        rs.close();
     }
 
     /**
@@ -65,6 +488,8 @@ public class DatabaseMetaDataTest extends TestBase {
      * @throws Exception
      */
     public void testTableMetaData() throws Exception {
+        // This test is supposed to select from a different database, in order to
+        // force the server to return a fully qualified table name. Do not alter.
         Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         ResultSet rs = stmt.executeQuery("SELECT * FROM master.dbo.sysdatabases");
 
@@ -81,7 +506,10 @@ public class DatabaseMetaDataTest extends TestBase {
 
     public void testColumnClassName() throws SQLException {
         byte[] bytes = new byte[] {1, 2, 3};
-
+        String uid = "colGuid char(38)";
+        if (con.getMetaData().getDatabaseProductName().startsWith("Microsoft")) {
+            uid = "colGuid UNIQUEIDENTIFIER";
+        }
         // Create a table w/ pretty much all the possible types
         String tabdef = "CREATE TABLE #testColumnClassName("
                 + "colByte TINYINT,"
@@ -97,7 +525,7 @@ public class DatabaseMetaDataTest extends TestBase {
                 + "colBlob IMAGE,"
                 + "colClob TEXT,"
                 + "colString VARCHAR(255),"
-                + "colGuid UNIQUEIDENTIFIER"
+                + uid
                 + ")";
         Statement stmt = con.createStatement();
         stmt.executeUpdate(tabdef);
@@ -124,6 +552,7 @@ public class DatabaseMetaDataTest extends TestBase {
         pstmt.setString(13, "Test");
         pstmt.setString(14, "ebd558a0-0c68-11d9-9669-0800200c9a66");
         assertEquals("No row inserted", 1, pstmt.executeUpdate());
+        pstmt.close();
 
         // Select the row and check that getColumnClassName matches the actual
         // class
@@ -134,7 +563,7 @@ public class DatabaseMetaDataTest extends TestBase {
             Object obj = rs.getObject(i);
             assertNotNull("Expecting non-null value", obj);
             String metaClass = meta.getColumnClassName(i);
-            Class c = null;
+            Class c;
             try {
                 c = Class.forName(metaClass);
             } catch (ClassNotFoundException ex) {
@@ -147,5 +576,9 @@ public class DatabaseMetaDataTest extends TestBase {
             }
         }
         stmt.close();
+    }
+
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(DatabaseMetaDataTest.class);
     }
 }

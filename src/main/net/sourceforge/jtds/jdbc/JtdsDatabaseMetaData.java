@@ -27,12 +27,18 @@ import java.sql.*;
  * This is basically the code from the original jTDS driver.
  * Main changes relate to the need to support the new ResultSet
  * implementation.
+ * <p>
+ * TODO: Many of the system limits need to be revised to more accurately
+ * reflect the target database constraints. In many cases limits are soft
+ * and determined by bytes per column for example. Probably more of these
+ * functions should be altered to return 0 but for now the original jTDS
+ * values are returned.
  *
  * @author   Craig Spannring
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.14 2004-09-24 09:24:38 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.15 2004-10-27 14:57:43 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -74,7 +80,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean allProceduresAreCallable() throws SQLException {
-        // XXX Need to check for Sybase
+        // Sybase - if accessible_sproc = Y in server info (normal case) return true
         return true; // per "Programming ODBC for SQLServer" Appendix A
     }
 
@@ -86,8 +92,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean allTablesAreSelectable() throws SQLException {
-        // XXX Need to check for Sybase
-        return true;
+        // Sybase sp_tables may return tables that you are not able to access.
+        return connection.getServerType() == Driver.SQLSERVER;
     }
 
     /**
@@ -98,7 +104,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean dataDefinitionCausesTransactionCommit() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -109,7 +114,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean dataDefinitionIgnoredInTransactions() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -169,17 +173,18 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                                    int scope,
                                                    boolean nullable)
     throws SQLException {
-        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+        String colNames[] = {"SCOPE",           "COLUMN_NAME",
+                             "DATA_TYPE",       "TYPE_NAME",
+                             "COLUMN_SIZE",     "BUFFER_LENGTH",
+                             "DECIMAL_DIGITS",  "PSEUDO_COLUMN"};
+        int    colTypes[] = {Types.SMALLINT,    Types.VARCHAR,
+                             Types.INTEGER,     Types.VARCHAR,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.SMALLINT,    Types.SMALLINT};
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
-            }
-        }
+        String query = "sp_special_columns ?, ?, ?, ?, ?, ?, ?";
 
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, table);
         s.setString(2, schema);
@@ -190,15 +195,24 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setInt(7, 3); // ODBC version 3
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
-
-        rs.setColName(5, "COLUMN_SIZE");
-        rs.setColLabel(5, "COLUMN_SIZE");
-        rs.setColName(6, "BUFFER_LENGTH");
-        rs.setColLabel(6, "BUFFER_LENGTH");
-        rs.setColName(7, "DECIMAL_DIGITS");
-        rs.setColLabel(7, "DECIMAL_DIGITS");
-
-        return rs;
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        int colCnt = rs.getMetaData().getColumnCount();
+        while (rs.next()) {
+            for (int i = 1; i < colCnt; i++) {
+                if (i == 3) {
+                    int type = normalizeDataType(rs.getInt(i));
+                    rsTmp.updateInt(i, type);
+                } else {
+                    rsTmp.updateObject(i, rs.getObject(i));
+                }
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        return rsTmp;
     }
 
     /**
@@ -221,8 +235,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery(query);
 
         rs.setColumnCount(1);
-        rs.setColName(1, "TABLE_CAT");
         rs.setColLabel(1, "TABLE_CAT");
+
+        upperCaseColumnNames(rs);
 
         return rs;
     }
@@ -283,17 +298,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                                   String table,
                                                   String columnNamePattern)
     throws SQLException {
-        String query = "exec sp_column_privileges ?, ?, ?, ?";
+        String query = "sp_column_privileges ?, ?, ?, ?";
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_column_privileges ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_column_privileges ?, ?, ?, ?";
-            }
-        }
-
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, table);
         s.setString(2, schema);
@@ -302,10 +309,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
 
-        rs.setColName(1, "TABLE_CAT");
         rs.setColLabel(1, "TABLE_CAT");
-        rs.setColName(2, "TABLE_SCHEM");
         rs.setColLabel(2, "TABLE_SCHEM");
+
+        upperCaseColumnNames(rs);
 
         return rs;
     }
@@ -368,17 +375,32 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                          String tableNamePattern,
                                          String columnNamePattern)
     throws SQLException {
-        String query = "exec sp_columns ?, ?, ?, ?, ?";
+        String colNames[] = {"TABLE_CAT",           "TABLE_SCHEM",
+                             "TABLE_NAME",          "COLUMN_NAME",
+                             "DATA_TYPE",           "TYPE_NAME",
+                             "COLUMN_SIZE",         "BUFFER_LENGTH",
+                             "DECIMAL_DIGITS",      "NUM_PREC_RADIX",
+                             "NULLABLE",            "REMARKS",
+                             "COLUMN_DEF",          "SQL_DATA_TYPE",
+                             "SQL_DATETIME_SUB",    "CHAR_OCTET_LENGTH",
+                             "ORDINAL_POSITION",    "IS_NULLABLE",
+                             "SCOPE_CATALOG",        "SCOPE_SCHEMA",
+                             "SCOPE_TABLE",         "SOURCE_DATA_TYPE"};
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_columns ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_columns ?, ?, ?, ?, ?";
-            }
-        }
+       int colTypes[]     = {Types.VARCHAR,         Types.VARCHAR,
+                             Types.VARCHAR,         Types.VARCHAR,
+                             Types.INTEGER,         Types.VARCHAR,
+                             Types.INTEGER,         Types.INTEGER,
+                             Types.INTEGER,         Types.INTEGER,
+                             Types.INTEGER,         Types.VARCHAR,
+                             Types.VARCHAR,         Types.INTEGER,
+                             Types.INTEGER,         Types.INTEGER,
+                             Types.INTEGER,         Types.VARCHAR,
+                             Types.VARCHAR,         Types.VARCHAR,
+                             Types.VARCHAR,         Types.SMALLINT};
+        String query = "sp_columns ?, ?, ?, ?, ?";
 
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, tableNamePattern);
         s.setString(2, schemaPattern);
@@ -388,21 +410,25 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
 
-        rs.setColName(1, "TABLE_CAT");
-        rs.setColLabel(1, "TABLE_CAT");
-        rs.setColName(2, "TABLE_SCHEM");
-        rs.setColLabel(2, "TABLE_SCHEM");
-        rs.setColName(7, "COLUMN_SIZE");
-        rs.setColLabel(7, "COLUMN_SIZE");
-        rs.setColName(8, "BUFFER_LENGTH");
-        rs.setColLabel(8, "BUFFER_LENGTH");
-        rs.setColName(9, "DECIMAL_DIGITS");
-        rs.setColLabel(9, "DECIMAL_DIGITS");
-        rs.setColName(10, "NUM_PREC_RADIX");
-        rs.setColLabel(10, "NUM_PREC_RADIX");
         rs.setColumnCount(18);
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        while (rs.next()) {
+            for (int i = 1; i <= 18; i++) {
+                if (i == 5) {
+                    int type = normalizeDataType(rs.getInt(i));
+                    rsTmp.updateInt(i, type);
+                } else {
+                    rsTmp.updateObject(i, rs.getObject(i));
+                }
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
 
-        return rs;
+        return rsTmp;
     }
 
     /**
@@ -491,20 +517,27 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                                 String foreignSchema,
                                                 String foreignTable)
     throws SQLException {
-        String query = "exec sp_fkeys ?, ?, ?, ?, ?, ?";
+        String colNames[] = {"PKTABLE_CAT",  "PKTABLE_SCHEM",
+                             "PKTABLE_NAME", "PKCOLUMN_NAME",
+                             "FKTABLE_CAT",  "FKTABLE_SCHEM",
+                             "FKTABLE_NAME", "FKCOLUMN_NAME",
+                             "KEY_SEQ",      "UPDATE_RULE",
+                             "DELETE_RULE",  "FK_NAME",
+                             "PK_NAME",      "DEFERRABILITY"};
+        int colTypes[]    = {Types.VARCHAR,  Types.VARCHAR,
+                             Types.VARCHAR,  Types.VARCHAR,
+                             Types.VARCHAR,  Types.VARCHAR,
+                             Types.VARCHAR,  Types.VARCHAR,
+                             Types.SMALLINT, Types.SMALLINT,
+                             Types.SMALLINT, Types.VARCHAR,
+                             Types.VARCHAR,  Types.SMALLINT};
+
+        String query = "sp_fkeys ?, ?, ?, ?, ?, ?";
 
         if (primaryCatalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + primaryCatalog + "]..sp_fkeys ?, ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + primaryCatalog + "..sp_fkeys ?, ?, ?, ?, ?, ?";
-            }
+            query = syscall(primaryCatalog, query);
         } else if (foreignCatalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + foreignCatalog + "]..sp_fkeys ?, ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + foreignCatalog + "..sp_fkeys ?, ?, ?, ?, ?, ?";
-            }
+            query = syscall(foreignCatalog, query);
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -517,17 +550,23 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setString(6, foreignCatalog);
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
+        int colCnt = rs.getMetaData().getColumnCount();
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        while (rs.next()) {
+            for (int i = 1; i <= colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            if (colCnt < 14) {
+                rsTmp.updateShort(14, (short)DatabaseMetaData.importedKeyNotDeferrable);
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
 
-        rs.setColName(1, "PKTABLE_CAT");
-        rs.setColLabel(1, "PKTABLE_CAT");
-        rs.setColName(2, "PKTABLE_SCHEM");
-        rs.setColLabel(2, "PKTABLE_SCHEM");
-        rs.setColName(5, "FKTABLE_CAT");
-        rs.setColLabel(5, "FKTABLE_CAT");
-        rs.setColName(6, "FKTABLE_SCHEM");
-        rs.setColLabel(6, "FKTABLE_SCHEM");
-
-        return rs;
+        return rsTmp;
     }
 
     /**
@@ -562,7 +601,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @see Connection
      */
     public int getDefaultTransactionIsolation() throws SQLException {
-        // XXX Need to check this for Sybase
         return Connection.TRANSACTION_READ_COMMITTED;
     }
 
@@ -692,8 +730,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getExtraNameCharacters() throws SQLException {
-        // @todo Maybe add the extended set characters, too, to this list
-        return "#$";
+        // MS driver returns "$#@" Sybase JConnect returns "@#$ге"
+        return "$#@";
     }
 
     /**
@@ -847,17 +885,23 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                            boolean unique,
                                            boolean approximate)
     throws SQLException {
-        String query = "exec sp_statistics ?, ?, ?, ?, ?, ?";
+        String colNames[] = {"TABLE_CAT",       "TABLE_SCHEM",
+                             "TABLE_NAME",      "NON_UNIQUE",
+                             "INDEX_QUALIFIER", "INDEX_NAME",
+                             "TYPE",            "ORDINAL_POSITION",
+                             "COLUMN_NAME",     "ASC_OR_DESC",
+                             "CARDINALITY",     "PAGES",
+                             "FILTER_CONDITION"};
+        int    colTypes[] = {Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.BIT,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.SMALLINT,    Types.SMALLINT,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.VARCHAR};
+        String query = "sp_statistics ?, ?, ?, ?, ?, ?";
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_statistics ?, ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_statistics ?, ?, ?, ?, ?, ?";
-            }
-        }
-
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, table);
         s.setString(2, schema);
@@ -867,17 +911,20 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setString(6, approximate ? "Q" : "E");
 
         JtdsResultSet rs = (JtdsResultSet) s.executeQuery();
+        int colCnt = rs.getMetaData().getColumnCount();
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        while (rs.next()) {
+            for (int i = 1; i <= colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
 
-        rs.setColName(1, "TABLE_CAT");
-        rs.setColLabel(1, "TABLE_CAT");
-        rs.setColName(2, "TABLE_SCHEM");
-        rs.setColLabel(2, "TABLE_SCHEM");
-        rs.setColName(8, "ORDINAL_POSITION");
-        rs.setColLabel(8, "ORDINAL_POSITION");
-        rs.setColName(10, "ASC_OR_DESC");
-        rs.setColLabel(10, "ASC_OR_DESC");
-
-        return rs;
+        return rsTmp;
     }
 
     //----------------------------------------------------------------------
@@ -893,8 +940,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxBinaryLiteralLength() throws SQLException {
-        // XXX Need to check for Sybase and SQLServer 7.0
-
+        // Sybase jConnect says 255
+        // Actual value is 16384 for Sybase 12.5
+        // MS JDBC says 0
+        // Probable maximum size for MS is 65,536 * network packet size
         return 131072;
         // per "Programming ODBC for SQLServer" Appendix A
     }
@@ -916,10 +965,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxCharLiteralLength() throws SQLException {
-        // XXX Need to check for Sybase
-
-        // per "Programming ODBC for SQLServer" Appendix A
+        // Sybase jConnect says 255
+        // Actual value is 16384 for Sybase 12.5
+        // MS JDBC says 0
+        // Probable maximum size for MS is 65,536 * network packet size
         return 131072;
+        // per "Programming ODBC for SQLServer" Appendix A
     }
 
     /**
@@ -929,8 +980,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxColumnNameLength() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return sysnameLength;
     }
@@ -942,9 +991,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxColumnsInGroupBy() throws SQLException {
-        // XXX Need to check for Sybase
-
+        // Sybase jConnect says 16
+        // MS JDBC says 16
         // per "Programming ODBC for SQLServer" Appendix A
+        // Actual MS value is 8060 / average bytes per column
         return (tdsVersion >= Driver.TDS70) ? 0 : 16;
     }
 
@@ -955,10 +1005,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxColumnsInIndex() throws SQLException {
-        // XXX need to find out if this is still true for SYBASE
-
         // per SQL Server Books Online "Administrator's Companion",
         // Part 1, Chapter 1.
+        // Sybase 12.5 is 31
         return 16;
     }
 
@@ -969,9 +1018,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxColumnsInOrderBy() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
+        // Sybase 12.5 is 31
+        // Actual MS value is 8060 / average bytes per column
         return (tdsVersion >= Driver.TDS70) ? 0 : 16;
     }
 
@@ -982,10 +1031,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxColumnsInSelect() throws SQLException {
-        // XXX Need to check for Sybase
-
+        // Sybase jConnect says 0
         // per "Programming ODBC for SQLServer" Appendix A
-        return 4000;
+        return 4096;
     }
 
     /**
@@ -995,9 +1043,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxColumnsInTable() throws SQLException {
-        // XXX How do we find this out for Sybase?
-
+        // Sybase jConnect says 250
         // per "Programming ODBC for SQLServer" Appendix A
+        // MS 2000 should be 4096
+        // Sybase 12.5 is now 1024
         return (tdsVersion >= Driver.TDS70) ? 1024 : 250;
     }
 
@@ -1008,8 +1057,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxConnections() throws SQLException {
-        // XXX need to find out if this is still true for SYBASE
-
+        // Sybase - could query syscurconfigs to get actual value
+        // which in practice will be a lot less than 32767!
         // per SQL Server Books Online "Administrator's Companion",
         // Part 1, Chapter 1.
         return 32767;
@@ -1022,8 +1071,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxCursorNameLength() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return sysnameLength;
     }
@@ -1035,10 +1082,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxIndexLength() throws SQLException {
-        // XXX Need to check for Sybase
-
+        // Sybase JConnect says 255
+        // Actual Sybase 12.5 is 600 - 5300 depending on page size
         // per "Programming ODBC for SQLServer" Appendix A
-        return 900;
+        return (tdsVersion >= Driver.TDS70) ? 900 : 255;
     }
 
     /**
@@ -1048,8 +1095,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxProcedureNameLength() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return sysnameLength;
     }
@@ -1061,8 +1106,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxRowSize() throws SQLException {
-        // XXX need to find out if this is still true for SYBASE
-
+        // Sybase jConnect says 1962 but this can be more with wide tables.
         // per SQL Server Books Online "Administrator's Companion",
         // Part 1, Chapter 1.
         return (tdsVersion >= Driver.TDS70) ? 8060 : 1962;
@@ -1085,10 +1129,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxStatementLength() throws SQLException {
-        // XXX Need to check for Sybase
-
+        // I think this should return 0 (no limit)
+        // actual limit for SQL 7/2000 is 65536 * packet size!
+        // Sybase JConnect says 0
+        // MS JDBC says 0
         // per "Programming ODBC for SQLServer" Appendix A
-        return 131072;
+        return 0;
     }
 
     /**
@@ -1109,8 +1155,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxTableNameLength() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return sysnameLength;
     }
@@ -1122,10 +1166,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxTablesInSelect() throws SQLException {
-        // XXX Need to check for Sybase
-
+        // Sybase JConnect says 256
+        // MS JDBC says 32!
+        // Actual Sybase 12.5 is 50
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion >= Driver.TDS70) ? 256 : 16;
+        return (tdsVersion > Driver.TDS50) ? 256 : 16;
     }
 
     /**
@@ -1135,7 +1180,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public int getMaxUserNameLength() throws SQLException {
-        // XXX need to find out if this is still true for SYBASE
         return sysnameLength;
     }
 
@@ -1146,10 +1190,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getNumericFunctions() throws SQLException {
-        // @todo Implement (a)%(b) for MOD(a,b)
-        // XXX need to find out if this is still true for SYBASE
-        return "ABS,ACOS,ASIN,ATAN,ATAN2,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,"
-            + "LOG10,MOD,PI,POWER,RADIANS,RAND,ROUND,SIGN,SIN,SQRT,TAN,TRUNCATE";
+        // I don't think either Sybase or SQL have a truncate maths function
+        // so I have removed it from the list.
+        // Also all other drivers return this list in lower case. Should we?
+        return "abs,acos,asin,atan,atan2,ceiling,cos,cot,degrees,exp,floor,log,"
+            + "log10,mod,pi,power,radians,rand,round,sign,sin,sqrt,tan";
     }
 
     /**
@@ -1177,30 +1222,35 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                              String schema,
                                              String table)
     throws SQLException {
-        String query = "exec sp_pkeys ?, ?, ?";
+        String colNames[] = {"TABLE_CAT",    "TABLE_SCHEM",
+                             "TABLE_NAME",   "COLUMN_NAME",
+                             "KEY_SEQ",      "PK_NAME"};
+        int    colTypes[] = {Types.VARCHAR,  Types.VARCHAR,
+                             Types.VARCHAR,  Types.VARCHAR,
+                             Types.SMALLINT, Types.VARCHAR};
+        String query = "sp_pkeys ?, ?, ?";
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_pkeys ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_pkeys ?, ?, ?";
-            }
-        }
-
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, table);
         s.setString(2, schema);
         s.setString(3, catalog);
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        int colCnt = rs.getMetaData().getColumnCount();
+        while (rs.next()) {
+            for (int i = 1; i < colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
 
-        rs.setColName(1, "TABLE_CAT");
-        rs.setColLabel(1, "TABLE_CAT");
-        rs.setColName(2, "TABLE_SCHEM");
-        rs.setColLabel(2, "TABLE_SCHEM");
-
-        return rs;
+        return rsTmp;
     }
 
     /**
@@ -1268,17 +1318,24 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                                   String procedureNamePattern,
                                                   String columnNamePattern)
     throws SQLException {
-        String query = "exec sp_sproc_columns ?, ?, ?, ?, ?";
+        String colNames[] = {"PROCEDURE_CAT",   "PROCEDURE_SCHEM",
+                             "PROCEDURE_NAME",  "COLUMN_NAME",
+                             "COLUMN_TYPE",     "DATA_TYPE",
+                             "TYPE_NAME",       "PRECISION",
+                             "LENGTH",          "SCALE",
+                             "RADIX",           "NULLABLE",
+                             "REMARKS"};
+        int   colTypes[]  = {Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.SMALLINT,    Types.INTEGER,
+                             Types.VARCHAR,     Types.INTEGER,
+                             Types.INTEGER,     Types.SMALLINT,
+                             Types.SMALLINT,    Types.SMALLINT,
+                             Types.VARCHAR};
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_sproc_columns ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_sproc_columns ?, ?, ?, ?, ?";
-            }
-        }
+        String query = "sp_sproc_columns ?, ?, ?, ?, ?";
 
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog,query));
 
         s.setString(1, procedureNamePattern);
         s.setString(2, schemaPattern);
@@ -1287,13 +1344,32 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setInt(5, 3); // ODBC version 3
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
-
-        rs.setColName(1, "PROCEDURE_CAT");
-        rs.setColLabel(1, "PROCEDURE_CAT");
-        rs.setColName(2, "PROCEDURE_SCHEM");
-        rs.setColLabel(2, "PROCEDURE_SCHEM");
-
-        return rs;
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        while (rs.next()) {
+            for (int i = 1; i <= colNames.length; i++) {
+                if (i == 3) {
+                    String name = rs.getString(i);
+                    if (name != null && name.length() > 0) {
+                        int pos = name.lastIndexOf(';');
+                        if (pos >= 0) {
+                            name = name.substring(0, pos);
+                        }
+                    }
+                    rsTmp.updateString(i, name);
+                } else if (i == 6) {
+                    int type = normalizeDataType(rs.getInt(i));
+                    rsTmp.updateInt(i, type);
+                } else {
+                    rsTmp.updateObject(i, rs.getObject(i));
+                }
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        return rsTmp;
     }
 
     /**
@@ -1336,17 +1412,18 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                             String schemaPattern,
                                             String procedureNamePattern)
     throws SQLException {
-        String query = "exec sp_stored_procedures ?, ?, ?";
+        String colNames[] = {"PROCEDURE_CAT",   "PROCEDURE_SCHEM",
+                             "PROCEDURE_NAME",  "RESERVED_1",
+                             "RESERVED_2",      "RESERVED_3",
+                             "REMARKS",         "PROCEDURE_TYPE"};
+        int colTypes[]    = {Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.INTEGER,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.VARCHAR,     Types.SMALLINT};
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_stored_procedures ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_stored_procedures ?, ?, ?";
-            }
-        }
+        String query = "sp_stored_procedures ?, ?, ?";
 
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, procedureNamePattern);
         s.setString(2, schemaPattern);
@@ -1354,12 +1431,38 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
 
-        rs.setColName(1,  "PROCEDURE_CAT");
-        rs.setColLabel(1, "PROCEDURE_CAT");
-        rs.setColName(2,  "PROCEDURE_SCHEM");
-        rs.setColLabel(2, "PROCEDURE_SCHEM");
-
-        return rs;
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        int colCnt = rs.getMetaData().getColumnCount();
+        //
+        // Copy results to local result set.
+        //
+        while (rs.next()) {
+            rsTmp.updateString(1, rs.getString(1));
+            rsTmp.updateString(2, rs.getString(2));
+            String name = rs.getString(3);
+            if (name != null) {
+                // Remove grouping integer
+                int pos = name.lastIndexOf(';');
+                if (pos >= 0) {
+                    name = name.substring(0, pos);
+                }
+            }
+            rsTmp.updateString(3, name);
+            // Copy over rest of fields
+            for (int i = 4; i <= colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            if (colCnt < 8) {
+                // Sybase does not return this column so fake it now.
+                rsTmp.updateShort(8, (short)DatabaseMetaData.procedureReturnsResult);
+            }
+            rsTmp.insertRow();
+        }
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.close();
+        return rsTmp;
     }
 
     /**
@@ -1369,8 +1472,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getProcedureTerm() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return "stored procedure";
     }
@@ -1416,7 +1517,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getSchemaTerm() throws SQLException {
-        // need to check this for Sybase
         return "owner";
     }
 
@@ -1432,8 +1532,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getSearchStringEscape() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return "\\";
     }
@@ -1446,16 +1544,21 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException  if a database-access error occurs.
      */
     public String getSQLKeywords() throws SQLException {
-        return "BREAK,BROWSE,BULK,CHECKPOINT,CLUSTERED,COMMITTED,COMPUTE,"
-        + "CONFIRM,CONTROLROW,DATABASE,DBCC,DISK,DISTRIBUTED,DUMMY,DUMP,"
-        + "ERRLVL,ERROREXIT,EXIT,FILE,FILLFACTOR,FLOPPY,HOLDLOCK,"
-        + "IDENTITY_INSERT,IDENTITYCOL,IF,KILL,LINENO,LOAD,MIRROREXIT,"
-        + "NONCLUSTERED,OFF,OFFSETS,ONCE,OVER,PERCENT,PERM,PERMANENT,PLAN,"
-        + "PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,RECONFIGURE,"
-        + "REPEATABLE,RETURN,ROWCOUNT,RULE,SAVE,SERIALIZABLE,SETUSER,"
-        + "SHUTDOWN,STATISTICS,TAPE,TEMP,TEXTSIZE,TOP,TRAN,TRIGGER,"
-        + "TRUNCATE,TSEQUEL,UNCOMMITTED,UPDATETEXT,USE,WAITFOR,WHILE,"
-        + "WRITETEXT";
+        //
+        // This is a superset of the SQL keywords in SQL Server and Sybase
+        //
+        return "ARITH_OVERFLOW,BREAK,BROWSE,BULK,CHAR_CONVERT,CHECKPOINT,"
+                + "CLUSTERED,COMPUTE,CONFIRM,CONTROLROW,DATA_PGS,DATABASE,DBCC,"
+                + "DISK,DUMMY,DUMP,ENDTRAN,ERRLVL,ERRORDATA,ERROREXIT,EXIT,"
+                + "FILLFACTOR,HOLDLOCK,IDENTITY_INSERT,IF,INDEX,KILL,LINENO,"
+                + "LOAD,MAX_ROWS_PER_PAGE,MIRROR,MIRROREXIT,NOHOLDLOCK,NONCLUSTERED,"
+                + "NUMERIC_TRUNCATION,OFF,OFFSETS,ONCE,ONLINE,OVER,PARTITION,PERM,"
+                + "PERMANENT,PLAN,PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,"
+                + "RECONFIGURE,REPLACE,RESERVED_PGS,RETURN,ROLE,ROWCNT,ROWCOUNT,"
+                + "RULE,SAVE,SETUSER,SHARED,SHUTDOWN,SOME,STATISTICS,STRIPE,"
+                + "SYB_IDENTITY,SYB_RESTREE,SYB_TERMINATE,TEMP,TEXTSIZE,TRAN,"
+                + "TRIGGER,TRUNCATE,TSEQUAL,UNPARTITION,USE,USED_PGS,USER_OPTION,"
+                + "WAITFOR,WHILE,WRITETEXT";
     }
 
     /**
@@ -1465,8 +1568,13 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException  if a database-access error occurs.
      */
     public String getStringFunctions() throws SQLException {
-        return "ASCII,CHAR,CONCAT,DIFFERENCE,INSERT,LCASE,LEFT,LENGTH,LOCATE,"
-             + "LTRIM,REPEAT,REPLACE,RIGHT,RTRIM,SOUNDEX,SPACE,SUBSTRING,UCASE";
+        if (connection.getServerType() == Driver.SQLSERVER) {
+            return "ascii,char,concat,difference,insert,lcase,left,length,locate,"
+                 + "ltrim,repeat,replace,right,rtrim,soundex,space,substring,ucase";
+        } else {
+            return "ascii,char,concat,difference,insert,lcase,length,"
+                 + "ltrim,repeat,right,rtrim,soundex,space,substring,ucase";
+        }
     }
 
     /**
@@ -1476,7 +1584,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getSystemFunctions() throws SQLException {
-        return "DATABASE,IFNULL,USER";
+        return "database,ifnull,user,convert";
     }
 
     /**
@@ -1517,17 +1625,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                                  String schemaPattern,
                                                  String tableNamePattern)
     throws SQLException {
-        String query = "exec sp_table_privileges ?, ?, ?";
+        String query = "sp_table_privileges ?, ?, ?";
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_table_privileges ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_table_privileges ?, ?, ?";
-            }
-        }
-
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, tableNamePattern);
         s.setString(2, schemaPattern);
@@ -1535,10 +1635,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
 
-        rs.setColName(1, "TABLE_CAT");
         rs.setColLabel(1, "TABLE_CAT");
-        rs.setColName(2, "TABLE_SCHEM");
         rs.setColLabel(2, "TABLE_SCHEM");
+
+        upperCaseColumnNames(rs);
 
         return rs;
     }
@@ -1556,9 +1656,19 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *   <LI> <B>TABLE_SCHEM</B> String =>table schema (may be null)
      *   <LI> <B>TABLE_NAME</B> String =>table name
      *   <LI> <B>TABLE_TYPE</B> String =>table type. Typical types are "TABLE",
-     *   "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY",
-     *   "ALIAS", "SYNONYM".
+     *     "VIEW", "SYSTEM TABLE", "GLOBAL TEMPORARY", "LOCAL TEMPORARY",
+     *     "ALIAS", "SYNONYM".
      *   <LI> <B>REMARKS</B> String =>explanatory comment on the table
+     *   <LI> <B>TYPE_CAT</B> String => the types catalog (may be
+     *     <code>null</code>)
+     *   <LI> <B>TYPE_SCHEM</B> String => the types schema (may be
+     *     <code>null</code>)
+     *   <LI> <B>TYPE_NAME</B> String => type name (may be <code>null</code>)
+     *   <LI> <B>SELF_REFERENCING_COL_NAME</B> String => name of the designated
+     *     "identifier" column of a typed table (may be <code>null</code>)
+     *	 <LI> <B>REF_GENERATION</B> String => specifies how values in
+     *     SELF_REFERENCING_COL_NAME are created. Values are "SYSTEM", "USER",
+     *     "DERIVED". (may be <code>null</code>)
      * </OL>
      * <P>
      *
@@ -1580,17 +1690,19 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                         String tableNamePattern,
                                         String types[])
     throws SQLException {
-        String query = "exec sp_tables ?, ?, ?, ?";
+        String colNames[] = {"TABLE_CAT",                   "TABLE_SCHEM",
+                             "TABLE_NAME",                  "TABLE_TYPE",
+                             "REMARKS",                     "TYPE_CAT",
+                             "TYPE_SCHEM",                  "TYPE_NAME",
+                             "SELF_REFERENCING_COL_NAME",   "REF_GENERATION"};
+        int    colTypes[] = {Types.VARCHAR,                 Types.VARCHAR,
+                             Types.VARCHAR,                 Types.VARCHAR,
+                             Types.VARCHAR,                 Types.VARCHAR,
+                             Types.VARCHAR,                 Types.VARCHAR,
+                             Types.VARCHAR,                 Types.VARCHAR};
+        String query = "sp_tables ?, ?, ?, ?";
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_tables ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_tables ?, ?, ?, ?";
-            }
-        }
-
-        CallableStatement cstmt = connection.prepareCall(query);
+        CallableStatement cstmt = connection.prepareCall(syscall(catalog, query));
 
         cstmt.setString(1, tableNamePattern);
         cstmt.setString(2, schemaPattern);
@@ -1616,13 +1728,22 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         JtdsResultSet rs = (JtdsResultSet) cstmt.executeQuery();
-
-        rs.setColName(1, "TABLE_CAT");
-        rs.setColLabel(1, "TABLE_CAT");
-        rs.setColName(2, "TABLE_SCHEM");
-        rs.setColLabel(2, "TABLE_SCHEM");
-
-        return rs;
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)cstmt, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        int colCnt = rs.getMetaData().getColumnCount();
+        //
+        // Copy results to local result set.
+        //
+        while (rs.next()) {
+            for (int i = 1; i <= colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            rsTmp.insertRow();
+        }
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.close();
+        return rsTmp;
     }
 
     /**
@@ -1640,7 +1761,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public java.sql.ResultSet getTableTypes() throws SQLException {
-        // XXX see if this is still true for Sybase
         String sql = "select 'SYSTEM TABLE' TABLE_TYPE "
                      + "union select 'TABLE' TABLE_TYPE "
                      + "union select 'VIEW' TABLE_TYPE "
@@ -1657,9 +1777,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getTimeDateFunctions() throws SQLException {
-        return "CURDATE,CURTIME,DAYNAME,DAYOFMONTH,DAYOFWEEK,DAYOFYEAR,HOUR,"
-            + "MINUTE,MONTH,MONTHNAME,NOW,QUARTER,TIMESTAMPADD,TIMESTAMPDIFF,"
-            + "SECOND,WEEK,YEAR";
+        return "curdate,curtime,dayname,dayofmonth,dayofweek,dayofyear,hour,"
+            + "minute,month,monthname,now,quarter,timestampadd,timestampdiff,"
+            + "second,week,year";
     }
 
     /**
@@ -1714,12 +1834,27 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getTypeInfo() throws SQLException {
         Statement s = connection.createStatement();
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery("exec sp_datatype_info @ODBCVer=3");
-
-        rs.setColumnCount(18);
-        rs.setColName(11, "FIXED_PREC_SCALE");
-        rs.setColLabel(11, "FIXED_PREC_SCALE");
-
-        return rs;
+        CachedResultSet rsTmp = new CachedResultSet(rs);
+        rsTmp.setColumnCount(18);
+        rsTmp.setColLabel(3, "PRECISION");
+        rsTmp.setColLabel(11, "FIXED_PREC_SCALE");
+        upperCaseColumnNames(rsTmp);
+        int colCnt = 18;
+        rsTmp.moveToInsertRow();
+        while (rs.next()) {
+            rsTmp.updateString(1, rs.getString(1));
+            int type = normalizeDataType(rs.getInt(2));
+            rsTmp.updateInt(2, type);
+            for (int i = 3; i <= colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            rsTmp.insertRow();
+        }
+        rs.close();
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        // TODO Sort output into data type order
+        return rsTmp;
     }
 
     /**
@@ -1761,27 +1896,20 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getUDTs(String catalog, String schemaPattern,
                                       String typeNamePattern, int[] types)
     throws SQLException {
-        String colNames[] = {"TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "CLASS_NAME", "DATA_TYPE", "REMARKS"};
-
+        String colNames[] = {"TYPE_CAT",    "TYPE_SCHEM",
+                             "TYPE_NAME",   "CLASS_NAME",
+                             "DATA_TYPE",   "REMARKS",
+                             "BASE_TYPE"};
+        int    colTypes[] = {Types.VARCHAR, Types.VARCHAR,
+                             Types.VARCHAR, Types.VARCHAR,
+                             Types.INTEGER, Types.VARCHAR,
+                             Types.SMALLINT};
         //
         // Return an empty result set
         //
-        ColInfo columns[] = new ColInfo[6];
-
-        for (int i = 0; i < 6; i++) {
-            columns[i] = new ColInfo();
-        }
-
         JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
-        JtdsResultSet rs = new DummyResultSet(dummyStmt, columns, null);
-        for (int i = 0; i < 6; i++) {
-            int column = i + 1;
-
-            rs.setColType(column, java.sql.Types.VARCHAR);
-            rs.setColLabel(column, colNames[i]);
-            rs.setColName(column, colNames[i]);
-        }
-
+        CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
+        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
         return rs;
     }
 
@@ -1866,17 +1994,18 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                                                 String schema,
                                                 String table)
     throws SQLException {
-        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+        String colNames[] = {"SCOPE", "COLUMN_NAME","DATA_TYPE",
+                             "TYPE_NAME","COLUMN_SIZE",
+                             "BUFFER_LENGTH","DECIMAL_DIGITS",
+                             "PSEUDO_COLUMN"};
+        int    colTypes[] = {Types.SMALLINT,Types.VARCHAR,
+                             Types.INTEGER, Types.VARCHAR,
+                             Types.INTEGER, Types.INTEGER,
+                             Types.SMALLINT,Types.SMALLINT};
 
-        if (catalog != null) {
-            if (tdsVersion >= Driver.TDS70) {
-                query = "exec [" + catalog + "]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
-            } else {
-                query = "exec " + catalog + "..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
-            }
-        }
+        String query = "sp_special_columns ?, ?, ?, ?, ?, ?, ?";
 
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
         s.setString(1, table);
         s.setString(2, schema);
@@ -1887,15 +2016,22 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setInt(7, 3); // ODBC version 3
 
         JtdsResultSet rs = (JtdsResultSet) s.executeQuery();
-
-        rs.setColName(5, "COLUMN_SIZE");
-        rs.setColLabel(5, "COLUMN_SIZE");
-        rs.setColName(6, "BUFFER_LENGTH");
-        rs.setColLabel(6, "BUFFER_LENGTH");
-        rs.setColName(7, "DECIMAL_DIGITS");
-        rs.setColLabel(7, "DECIMAL_DIGITS");
-
-        return rs;
+        CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
+        rsTmp.moveToInsertRow();
+        int colCnt = rs.getMetaData().getColumnCount();
+        //
+        // Copy results to local result set.
+        //
+        while (rs.next()) {
+            for (int i = 1; i <= colCnt; i++) {
+                rsTmp.updateObject(i, rs.getObject(i));
+            }
+            rsTmp.insertRow();
+        }
+        rsTmp.moveToCurrentRow();
+        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        rs.close();
+        return rsTmp;
     }
 
     /**
@@ -1938,8 +2074,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean nullPlusNonNullIsNull() throws SQLException {
-        // XXX Need to check for Sybase.
-
+        // Sybase 11.92 says true
         // MS SQLServer seems to break with the SQL standard here.
         // maybe there is an option to make null behavior comply
         //
@@ -1954,7 +2089,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean nullsAreSortedAtEnd() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -1965,7 +2099,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean nullsAreSortedAtStart() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -1976,7 +2109,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean nullsAreSortedHigh() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -1987,7 +2119,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean nullsAreSortedLow() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -1999,7 +2130,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean storesLowerCaseIdentifiers() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2011,7 +2141,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean storesLowerCaseQuotedIdentifiers() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2049,7 +2178,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean storesUpperCaseIdentifiers() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2061,7 +2189,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean storesUpperCaseQuotedIdentifiers() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2096,7 +2223,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsANSI92EntryLevelSQL() throws SQLException {
-        // XXX Will have to check for Sybase
         return true;
     }
 
@@ -2107,7 +2233,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsANSI92FullSQL() throws SQLException {
-        // XXX Will have to check for Sybase
         return false;
     }
 
@@ -2118,7 +2243,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsANSI92IntermediateSQL() throws SQLException {
-        // XXX Will have to check for Sybase
         return false;
     }
 
@@ -2129,7 +2253,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2140,7 +2263,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2151,7 +2273,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2162,7 +2283,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2173,7 +2293,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2188,7 +2307,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsColumnAliasing() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2269,7 +2387,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCoreSQLGrammar() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2280,7 +2397,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsCorrelatedSubqueries() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2293,8 +2409,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
     throws SQLException {
-        // XXX Need to check for Sybase
-        return connection.getServerType() == Driver.SQLSERVER;
+        // Sybase requires the 'DDL IN TRAN' db option to be set for
+        // This to be strictly true.
+        return true;
     }
 
     /**
@@ -2305,8 +2422,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsDataManipulationTransactionsOnly()
     throws SQLException {
-        // XXX Need to check for Sybase
-        return connection.getServerType()!= Driver.SQLSERVER;
+        return false;
     }
 
     /**
@@ -2317,7 +2433,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsDifferentTableCorrelationNames() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2328,7 +2443,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsExpressionsInOrderBy() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2339,7 +2453,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsExtendedSQLGrammar() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2350,9 +2463,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsFullOuterJoins() throws SQLException {
-        // XXX Need to check for Sybase
-
-        // per "Programming ODBC for SQLServer" Appendix A
+        if (connection.getServerType() == Driver.SYBASE) {
+            // Supported since version 12
+            return getDatabaseMajorVersion() >= 12;
+        }
         return true;
     }
 
@@ -2374,8 +2488,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsGroupByBeyondSelect() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return true;
     }
@@ -2387,7 +2499,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsGroupByUnrelated() throws SQLException {
-        // XXX Need to check this for Sybase
         return true;
     }
 
@@ -2398,7 +2509,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsIntegrityEnhancementFacility() throws SQLException {
-        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2410,8 +2520,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsLikeEscapeClause() throws SQLException {
-        // XXX Need to check for Sybase
-
         // per "Programming ODBC for SQLServer" Appendix A
         return true;
     }
@@ -2435,7 +2543,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsMinimumSQLGrammar() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2504,7 +2611,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException {
-        // XXX Need to check for Sybase
+        // MS JDBC says false
         return true;
     }
 
@@ -2516,8 +2623,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException {
-        // XXX Need to check for Sybase
-        return false;
+        // JConnect says true
+        return connection.getServerType() == Driver.SYBASE;
     }
 
     /**
@@ -2549,7 +2656,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsOrderByUnrelated() throws SQLException {
-        // XXX need to verify for Sybase
         return true;
     }
 
@@ -2592,7 +2698,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2603,7 +2708,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2614,7 +2718,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2625,7 +2728,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInProcedureCalls() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2636,7 +2738,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2647,7 +2748,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSelectForUpdate() throws SQLException {
-        // XXX Need to check for Sybase
+        // XXX Server supports it driver doesn't currently
+        // As far as I know the SQL Server FOR UPDATE is not the same as the
+        // standard SQL FOR UPDATE
         return false;
     }
 
@@ -2703,7 +2806,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsSubqueriesInQuantifieds() throws SQLException {
-        // XXX Need to check for Sybase
         return true;
     }
 
@@ -2958,7 +3060,36 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     public java.sql.ResultSet getAttributes(String str, String str1, String str2, String str3) throws SQLException {
-        throw new UnsupportedOperationException();
+        String colNames[] = {"TYPE_CAT",        "TYPE_SCHEM",
+                             "TYPE_NAME",       "ATTR_NAME",
+                             "DATA_TYPE",       "ATTR_TYPE_NAME",
+                             "ATTR_SIZE",       "DECIMAL_DIGITS",
+                             "NUM_PREC_RADIX",  "NULLABLE",
+                             "REMARKS",         "ATTR_DEF",
+                             "SQL_DATA_TYPE",   "SQL_DATETIME_SUB",
+                             "CHAR_OCTET_LENGTH","ORDINAL_POSITION",
+                             "IS_NULLABLE",     "SCOPE_CATALOG",
+                             "SCOPE_SCHEMA",    "SCOPE_TABLE",
+                             "SOURCE_DATA_TYPE"};
+        int colTypes[]    = {Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.INTEGER,     Types.VARCHAR,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.INTEGER,     Types.INTEGER,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.SMALLINT};
+        //
+        // Return an empty result set
+        //
+        JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
+        CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
+        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+
+        return rs;
     }
 
     /**
@@ -2998,11 +3129,34 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     public java.sql.ResultSet getSuperTables(String str, String str1, String str2) throws SQLException {
-        throw new UnsupportedOperationException();
+        String colNames[] = {"TABLE_CAT",   "TABLE_SCHEM",
+                             "TABLE_NAME",  "SUPERTABLE_NAME"};
+        int    colTypes[] = {Types.VARCHAR, Types.VARCHAR,
+                             Types.VARCHAR, Types.VARCHAR};
+        //
+        // Return an empty result set
+        //
+        JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
+        CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
+        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        return rs;
     }
 
     public java.sql.ResultSet getSuperTypes(String str, String str1, String str2) throws SQLException {
-        throw new UnsupportedOperationException();
+
+        String colNames[] = {"TYPE_CAT",        "TYPE_SCHEM",
+                             "TYPE_NAME",       "SUPERTYPE_CAT",
+                             "SUPERTYPE_SCHEM", "SUPERTYPE_NAME"};
+        int    colTypes[] = {Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.VARCHAR,
+                             Types.VARCHAR,     Types.VARCHAR};
+        //
+        // Return an empty result set
+        //
+        JtdsStatement dummyStmt = (JtdsStatement) connection.createStatement();
+        CachedResultSet rs = new CachedResultSet(dummyStmt, colNames, colTypes);
+        rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+        return rs;
     }
 
     /**
@@ -3041,7 +3195,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     public boolean supportsResultSetHoldability(int param) throws SQLException {
-        throw new UnsupportedOperationException();
+        // Not really sure about this one!
+        return false;
     }
 
     /**
@@ -3058,5 +3213,74 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsStatementPooling() throws SQLException {
         return true;
+    }
+
+    /**
+     * Format the supplied procedure call as a valid JDBC call escape.
+     *
+     * @param catalog the database name or null
+     * @param call the stored procedure call to format
+     * @return the formatted call escape as a <code>String</code>
+     */
+    private String syscall(String catalog, String call)
+    {
+        StringBuffer sql = new StringBuffer();
+        sql.append("{call ");
+        if (catalog != null) {
+            if (tdsVersion >= Driver.TDS70) {
+                sql.append('[').append(catalog).append(']');
+            } else {
+                sql.append(catalog);
+            }
+            sql.append("..");
+        }
+        sql.append(call).append('}');
+        return sql.toString();
+    }
+
+    /**
+     * Uppercase all column names.
+     * <p>
+     * Sybase returns column names in lowecase while the JDBC standard suggests
+     * they should be uppercase.
+     *
+     * @param results the result set to modify
+     * @throws SQLException
+     */
+    private void upperCaseColumnNames(JtdsResultSet results)
+            throws SQLException {
+        ResultSetMetaData rsmd = results.getMetaData();
+        int cnt = rsmd.getColumnCount();
+
+        for (int i = 1; i <= cnt; i++) {
+            String name = rsmd.getColumnLabel(i);
+            if (name != null && name.length() > 0) {
+                results.setColLabel(i, name.toUpperCase());
+            }
+        }
+    }
+
+    /**
+     * Return a {@link java.sql.Types}-defined type for an SQL Server specific
+     * data type.
+     *
+     * @param serverDataType the data type, as returned by the server
+     * @return the equivalent data type defined by <code>java.sql.Types</code>
+     */
+    private int normalizeDataType(int serverDataType) {
+        switch (serverDataType) {
+            case   -8: // NCHAR
+                return Types.CHAR;
+            case   -9: // NVARCHAR
+                return Types.VARCHAR;
+            case  -10: // NTEXT
+                return Types.LONGVARCHAR;
+            case  -11: // UNIQUEIDENTIFIER
+                return Types.CHAR;
+            case -150: // SQL_VARIANT
+                return Types.VARCHAR;
+            default:
+                return serverDataType;
+        }
     }
 }

@@ -21,7 +21,7 @@ package net.sourceforge.jtds.jdbc;
  * This class encapsulates the MS SQL2000 UniqueIdentifer data type.
  *
  * @author Mike Hutchinson.
- * @version $Id: UniqueIdentifier.java,v 1.2 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: UniqueIdentifier.java,v 1.3 2004-10-27 14:57:45 alin_sinpalean Exp $
  */
 public class UniqueIdentifier {
     private byte[] bytes;
@@ -39,7 +39,7 @@ public class UniqueIdentifier {
      * @return The unique identifier as a <code>byte[]</code>.
      */
     public byte[] getBytes() {
-        return bytes;
+        return (byte [])bytes.clone();
     }
 
     /**

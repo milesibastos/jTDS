@@ -582,6 +582,7 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, rowsToAdd);
+        stmt.close();
     }
 
     public void testMissingParameter0016() throws Exception {
@@ -589,8 +590,6 @@ public class TimestampTest extends DatabaseTestCase {
         stmt.executeUpdate("create table #t0016 "
             + "  (i  integer  not null,      "
             + "   s  char(10) not null)      ");
-
-        stmt = con.createStatement();
 
         final int rowsToAdd = 20;
         int count = 0;
@@ -600,6 +599,7 @@ public class TimestampTest extends DatabaseTestCase {
             count += stmt.executeUpdate(sql);
         }
 
+        stmt.close();
         assertEquals(count, rowsToAdd);
 
         PreparedStatement   pstmt = con.prepareStatement(
@@ -651,6 +651,8 @@ public class TimestampTest extends DatabaseTestCase {
             assertTrue("07000".equals(e.getSQLState())
                     && e.getMessage().indexOf('1') >= 0);
         }
+
+        pstmt.close();
     }
 
     Object[][] getDatatypes() {
@@ -708,7 +710,7 @@ public class TimestampTest extends DatabaseTestCase {
             {"float(6)",      "65.4321",                new BigDecimal("65.4321")},
             {"binary(5)",     "0x1213141516",           new byte[] { 0x12, 0x13, 0x14, 0x15, 0x16}},
             {"varbinary(4)",  "0x1718191A",             new byte[] { 0x17, 0x18, 0x19, 0x1A}},
-            {"varchar(8)",    "'12345678'",             new String("12345678")},
+            {"varchar(8)",    "'12345678'",             "12345678"},
             {"datetime",      "'19990815 21:29:59.01'", Timestamp.valueOf("1999-08-15 21:29:59.01")},
             {"smalldatetime", "'19990215 20:45'",       Timestamp.valueOf("1999-02-15 20:45:00")},
             {"float(6)",      "65.4321",                new Float(65.4321)/* new BigDecimal("65.4321") */},
@@ -727,12 +729,12 @@ public class TimestampTest extends DatabaseTestCase {
             {"money",         "19.95",                  new BigDecimal("19.95")},
             {"smallmoney",    "9.97",                   new BigDecimal("9.97")},
             {"bit",           "1",                      Boolean.TRUE},
-//			{ "text",          "'abcedefg'",             new String("abcdefg") },
+//			{ "text",          "'abcedefg'",             "abcdefg" },
 /*			{ "char(1000)",
               "'123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'",
-               new String("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890") },
+               "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" },
                            */
-//			{ "char(1000)",      "'1234567890'",           new String("1234567890") },
+//			{ "char(1000)",      "'1234567890'",           "1234567890" },
 //            { "image",         "0x0a0a0b",               new byte[] { 0x0a, 0x0a, 0x0b } },
 
         };
@@ -805,10 +807,13 @@ public class TimestampTest extends DatabaseTestCase {
                     assertEquals("Failed on " + datatypes[i][0], cstmt.getObject(1), datatypes[i][2]);
                 }
 
+                cstmt.close();
             }  // for (pass
 
             stmt.executeUpdate(" drop procedure #jtds_outputTest");
         }  // for (int
+
+        stmt.close();
     }
 
     public void testStatements0020() throws Exception {
@@ -875,16 +880,14 @@ public class TimestampTest extends DatabaseTestCase {
                 stmtC.setInt(1, rs2.getInt(1));
                 ResultSet rs3 = stmtC.executeQuery();
                 assertNotNull(rs3);
-
-                if (rs3.next()) {
-                    // nop
-                }
+                rs3.next();
             }
         }
 
         stmt.close();
         stmtA.close();
         stmtB.close();
+        stmtC.close();
     }
 
     public void testBlob0021() throws Exception {
@@ -1038,19 +1041,21 @@ public class TimestampTest extends DatabaseTestCase {
 
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmtA.setInt(1, i);
-            String tmp = "";
+            StringBuffer tmp = new StringBuffer(255);
 
             while (tmp.length() < 240) {
-                tmp = tmp + "row " + i + ". ";
+                tmp.append("row ").append(i).append(". ");
             }
 
-            pStmtA.setString(2, tmp);
+            pStmtA.setString(2, tmp.toString());
             count += pStmtA.executeUpdate();
 
             pStmtB.setInt(1, i);
             pStmtB.executeUpdate();
         }
 
+        pStmtA.close();
+        pStmtB.close();
         assertEquals(count, rowsToAdd);
 
         Statement stmtA = con.createStatement();
@@ -1309,13 +1314,13 @@ public class TimestampTest extends DatabaseTestCase {
 
         for (int i = 1; i <= rowsToAdd; i++) {
             pstmtA.setInt(1, i);
-            String tmp = "";
+            StringBuffer tmp = new StringBuffer(255);
 
             while (tmp.length() < 240) {
-                tmp = tmp + "row " + i + ". ";
+                tmp.append("row ").append(i).append(". ");
             }
 
-            pstmtA.setString(2, tmp);
+            pstmtA.setString(2, tmp.toString());
             count += pstmtA.executeUpdate();
 
             pstmtB.setInt(1, i);

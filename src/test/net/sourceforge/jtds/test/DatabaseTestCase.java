@@ -5,7 +5,7 @@ import java.util.Map;
 import java.math.BigDecimal;
 
 public abstract class DatabaseTestCase extends TestBase {
-    protected static Map typemap = null;
+    private static Map typemap = null;
 
     public DatabaseTestCase(String name) {
         super(name);
@@ -127,22 +127,22 @@ public abstract class DatabaseTestCase extends TestBase {
     }
 
     protected String getLongString(int length) {
-        String  result = "";
+        StringBuffer result = new StringBuffer(length);
 
         for (int i = 0; i < length; i++) {
-            result = result + "a";
+            result.append('a');
         }
 
-        return result;
+        return result.toString();
     }
 
     protected String getLongString(char ch)  {
-        String str255 = "";
+        StringBuffer str255 = new StringBuffer(255);
 
         for (int i = 0; i < 255; i++) {
-            str255 = str255 + ch;
+            str255.append(ch);
         }
 
-        return str255;
+        return str255.toString();
     }
 }

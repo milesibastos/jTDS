@@ -11,7 +11,7 @@ public class PacketLogger
     {
         int ln = (int)(b & 0xf);
         int hn = (int)((b & 0xf0) >> 4);
-        return new String("" + hexstring.charAt(hn) + hexstring.charAt(ln));
+        return "" + hexstring.charAt(hn) + hexstring.charAt(ln);
     }
     static String hex(short b)
     {

@@ -81,6 +81,8 @@ public class EncodingTest extends TestBase {
         }
 
         rs.close();
+        stmt.close();
+
         stmt = con.createStatement();
         rs = stmt.executeQuery("SELECT id, data FROM #test ORDER BY id");
 

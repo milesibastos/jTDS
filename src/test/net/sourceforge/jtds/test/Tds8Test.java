@@ -162,11 +162,13 @@ public class Tds8Test extends DatabaseTestCase {
                 "BEGIN\r\n" +
                 "RETURN 'Test ' + @data\r\n" +
                 "END");
+        stmt.close();
         CallableStatement cstmt = con.prepareCall("{?=call f_varret(?)}");
         cstmt.registerOutParameter(1, java.sql.Types.OTHER);
         cstmt.setString(2, "String");
         cstmt.execute();
         assertEquals("Test String", cstmt.getString(1));
+        cstmt.close();
         dropFunction("f_varret");
     }
 

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.29 2004-10-12 13:32:07 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.30 2004-10-27 14:57:44 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -162,6 +162,19 @@ public class TdsData {
     private static final int SYBUINT8              = 67; // 0x43
     private static final int SYBUNIQUE             = 36; // 0x24
     private static final int SYBVARIANT            = 98; // 0x62
+
+    /*
+     * Constants for Sybase User Defined data types used to
+     * qualify the new longchar and longbinary types.
+     */
+    private static final int UDT_CHAR              =  1; // 0x01
+    private static final int UDT_VARCHAR           =  2; // 0x02
+    private static final int UDT_BINARY            =  3; // 0x03
+    private static final int UDT_VARBINARY         =  4; // 0x04
+    private static final int UDT_NCHAR             = 18; // 0x03
+    private static final int UDT_NVARCHAR          = 19; // 0x03
+    private static final int UDT_UNICHAR           = 34; // 0x22
+    private static final int UDT_UNIVARCHAR        = 35; // 0x23
 
     /**
      * Array of TDS data type descriptors.
@@ -413,22 +426,22 @@ public class TdsData {
         if (isTds5) {
             if (ci.tdsType == SYBLONGBINARY) {
                 switch (ci.userType) {
-                    case  3: // BINARY
+                    case  UDT_BINARY:
                         ci.sqlType     = "binary";
                         ci.displaySize = ci.bufferSize * 2;
                         ci.jdbcType    = java.sql.Types.BINARY;
                         break;
-                    case  4: // VARBINARY
+                    case  UDT_VARBINARY:
                         ci.sqlType     = "varbinary";
                         ci.displaySize = ci.bufferSize * 2;
                         ci.jdbcType    = java.sql.Types.VARBINARY;
                         break;
-                    case 34: // UNICHAR
+                    case UDT_UNICHAR:
                         ci.sqlType     = "unichar";
                         ci.displaySize = ci.bufferSize / 2;
                         ci.jdbcType    = java.sql.Types.CHAR;
                         break;
-                    case 35: // UNIVARCHAR
+                    case UDT_UNIVARCHAR:
                         ci.sqlType     = "univarchar";
                         ci.displaySize = ci.bufferSize / 2;
                         ci.jdbcType    = java.sql.Types.VARCHAR;
@@ -437,22 +450,22 @@ public class TdsData {
             } else
             if (ci.tdsType == XSYBCHAR) {
                 switch (ci.userType) {
-                    case  1: // CHAR
+                    case  UDT_CHAR:
                        ci.sqlType      = "char";
                         ci.displaySize = ci.bufferSize;
                         ci.jdbcType    = java.sql.Types.CHAR;
                         break;
-                    case  2: // VARCHAR
+                    case  UDT_VARCHAR:
                         ci.sqlType     = "varchar";
                         ci.displaySize = ci.bufferSize;
                         ci.jdbcType    = java.sql.Types.VARCHAR;
                         break;
-                    case 24: // NCHAR
+                    case UDT_NCHAR:
                         ci.sqlType     = "nchar";
                         ci.displaySize = ci.bufferSize;
                         ci.jdbcType    = java.sql.Types.CHAR;
                         break;
-                    case 25: // NVARCHAR
+                    case UDT_NVARCHAR:
                         ci.sqlType     = "nvarchar";
                         ci.displaySize = ci.bufferSize;
                         ci.jdbcType    = java.sql.Types.VARCHAR;
@@ -1175,7 +1188,11 @@ public class TdsData {
         }
 
         out.write((byte) (pi.isOutput ? 1 : 0)); // Output param
-        out.write((int) 0); // user type
+        if (pi.sqlType.startsWith("univarchar")) {
+            out.write((int) UDT_UNIVARCHAR);
+        } else {
+            out.write((int) 0); // user type
+        }
         out.write((byte) pi.tdsType); // TDS data type token
 
         // Output length fields
@@ -2276,8 +2293,6 @@ public class TdsData {
 
     /**
      * Establish if a String can be converted to a byte based character set.
-     * <p>
-     * For now just check if ASCII. This is not fool proof but is quick.
      *
      * @param value The String to test.
      * @param charset The server character set in force.
@@ -2285,12 +2300,43 @@ public class TdsData {
      */
     private static boolean canEncode(String value, String charset)
     {
-        char[] buf = value.toCharArray();
-        for (int i = 0; i < buf.length; i++) {
-            if (buf[i] > 127) {
-                return false; // Non ASCII
-            }
+        if (charset.equals("UTF-8")) {
+            // Should be no problem with UTF-8
+            return true;
         }
-        return true;
+        if (charset.equals("ISO-8859-1")) {
+            // ISO_1 = lower byte of unicode
+            for (int i = value.length() - 1; i >= 0; i--) {
+                if (value.charAt(i) > 255) {
+                    return false; // Outside range
+                }
+            }
+            return true;
+        }
+        if (charset.equals("ISO-8859-15") || charset.equals("Cp1252")) {
+            // These will accept euro symbol
+            for (int i = value.length() - 1; i >= 0; i--) {
+                // FIXME This is not correct! Cp1252 also contains other characters.
+                char c = value.charAt(i);
+                if (c > 255 && c != 0x20AC) {
+                    return false; // Outside range
+                }
+            }
+            return true;
+        }
+        if (charset.equals("US-ASCII")) {
+            for (int i = value.length() - 1; i >= 0; i--) {
+                if (value.charAt(i) > 127) {
+                    return false; // Outside range
+                }
+            }
+            return true;
+        }
+        // OK need to do an expensive check
+        try {
+            return new String(value.getBytes(charset), charset).equals(value);
+        } catch (UnsupportedEncodingException e) {
+            return false;
+        }
     }
 }

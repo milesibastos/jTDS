@@ -22,7 +22,7 @@ package net.sourceforge.jtds.jdbc;
  * describes the location of text and image column data.
  *
  * @author Mike Hutchinson
- * @version $Id: TextPtr.java,v 1.3 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: TextPtr.java,v 1.4 2004-10-27 14:57:45 alin_sinpalean Exp $
  */
 public class TextPtr {
     /** The 16 byte Text Pointer. */
@@ -32,7 +32,7 @@ public class TextPtr {
     /** The length of the text or image data. */
     int len;
     /** True if the data has actually been read from the server. */
-    boolean isRead;
+//    boolean isRead; // Not used
     /** The actual String or byte[] value. */
     Object value;
 

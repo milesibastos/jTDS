@@ -67,6 +67,7 @@ public class CallableStatementJDBC3Test extends TestBase {
         assertTrue(!rs.next());
 
         rs.close();
+        stmt.close();
     }
 
     /**

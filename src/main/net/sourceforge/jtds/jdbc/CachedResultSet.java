@@ -67,6 +67,8 @@ public class CachedResultSet extends JtdsResultSet {
     protected boolean rowDeleted  = false;
     /** The row count of the initial result set. */
     protected int initialRowCnt;
+    /** True if this is a local temporary result set. */
+    protected boolean tempResultSet = false;
 
     /**
      * Construct a new cached result set.
@@ -88,6 +90,74 @@ public class CachedResultSet extends JtdsResultSet {
         super(statement, resultSetType, concurrency, null, false);
 
         cursorCreate(sql, procName, procedureParams);
+    }
+
+    /**
+     * Construct a cached result set based on locally generated data.
+     * @param statement       The parent statement object.
+     * @param colName         Array of column names.
+     * @param colType         Array of corresponding data types.
+     * @exception java.sql.SQLException
+     */
+    CachedResultSet(JtdsStatement statement,
+                    String[] colName, int[] colType) throws SQLException {
+        super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null, false);
+        //
+        // Construct the column descriptor array
+        //
+        this.columns = new ColInfo[colName.length];
+        for (int i = 0; i < colName.length; i++) {
+            ColInfo ci = new ColInfo();
+            ci.name     = colName[i];
+            ci.realName = colName[i];
+            ci.jdbcType = colType[i];
+            switch (ci.jdbcType) {
+                case java.sql.Types.VARCHAR:
+                    ci.sqlType = "varchar";
+                    break;
+                case java.sql.Types.INTEGER:
+                    ci.sqlType = "int";
+                    break;
+                case java.sql.Types.SMALLINT:
+                    ci.sqlType = "smallint";
+                    break;
+            }
+            columns[i] = ci;
+        }
+        columnCount        = columns.length;
+        this.columnCount   = getColumnCount(columns);
+        this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
+        this.rowsInResult  = 0;
+        this.initialRowCnt = 0;
+        this.pos           = POS_BEFORE_FIRST;
+        this.tempResultSet = true;
+    }
+
+    /**
+     * Create a cached result set with the same columns as an existing result set.
+     * @param rs The result set to copy.
+     * @throws SQLException
+     */
+    CachedResultSet(JtdsResultSet rs) throws SQLException {
+        super((JtdsStatement)rs.getStatement(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null, false);
+        this.columns       = rs.getColumns();
+        columnCount        = columns.length;
+        this.columnCount   = getColumnCount(columns);
+        this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
+        this.rowsInResult  = 0;
+        this.initialRowCnt = 0;
+        this.pos           = POS_BEFORE_FIRST;
+        this.tempResultSet = true;
+    }
+
+    /**
+     * Modify the concurrency of the result set.
+     * <p>Use to make result set read only once loaded.
+     * @param concurrency The concurrency value eg ResultSet.CONCUR_READ_ONLY.
+     */
+    void setConcurrency(int concurrency)
+    {
+        this.concurrency = concurrency;
     }
 
     /**
@@ -455,6 +525,17 @@ public class CachedResultSet extends JtdsResultSet {
 
      public void insertRow() throws SQLException {
          checkOpen();
+         //
+         // If this is a local temporary result set just insert row into buffer
+         //
+         if (tempResultSet) {
+             rowData.add(insertRow);
+             rowsInResult++;
+             initialRowCnt++;
+             insertRow = newRow();
+             return;
+         }
+
          checkUpdateable();
 
          if (!onInsertRow) {

@@ -36,7 +36,6 @@ public class AsTest extends DatabaseTestCase {
     }
 
     public void testProc1() throws Exception {
-        boolean passed = false;
         Statement stmt = con.createStatement();
         dropProcedure(stmt, "#spTestExec");
         dropProcedure(stmt, "#spTestExec2");
@@ -48,6 +47,8 @@ public class AsTest extends DatabaseTestCase {
                            "create table #tmp ( Result varchar(50) ) " +
                            "insert #tmp execute #spTestExec2 " +
                            "select * from #tmp");
+        stmt.close();
+
         CallableStatement cstmt = con.prepareCall("#spTestExec");
         assertFalse(cstmt.execute());
         assertEquals(0, cstmt.getUpdateCount());
@@ -67,14 +68,15 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(cstmt.getUpdateCount() == 1);  // insert
         assertTrue(cstmt.getMoreResults());
 
+        boolean passed = false;
         ResultSet rs = cstmt.getResultSet();
         while (rs.next()) {
             passed = true;
         }
+        assertTrue("Expecting at least one result row", passed);
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == -1);
-        assertTrue(passed);
+        cstmt.close();
         // stmt.executeQuery("execute spTestExec");
-
     }
 
     public void testProc2() throws Exception {
@@ -105,6 +107,7 @@ public class AsTest extends DatabaseTestCase {
         dropProcedure(stmt, "#multi1nocount");
         stmt.executeUpdate(sqlwithcount);
         stmt.executeUpdate(sqlnocount);
+        stmt.close();
 
         CallableStatement cstmt = con.prepareCall("#multi1nocount");
         assertTrue(cstmt.execute());
@@ -126,6 +129,7 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertTrue(!rs.next());
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == -1);
+        cstmt.close();
 
         cstmt = con.prepareCall("#multi1withcount");
 
@@ -158,6 +162,7 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertTrue(!rs.next());
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == -1);
+        cstmt.close();
 
     }
 
@@ -233,16 +238,19 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(!stmt.getMoreResults());    // drop table
         assertEquals(0, stmt.getUpdateCount());
         assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
+        stmt.close();
     }
 
     public void testBug457955() throws Exception {
         Statement stmt = con.createStatement();
         dropProcedure("#Bug457955");
         stmt.executeUpdate("  create procedure #Bug457955 (@par1 VARCHAR(10)) as select @par1");
+        stmt.close();
         String param = "123456789";
-        CallableStatement s = con.prepareCall("exec #Bug457955 ?");
-        s.setString(1, param);
-        s.executeQuery();
+        CallableStatement cstmt = con.prepareCall("exec #Bug457955 ?");
+        cstmt.setString(1, param);
+        cstmt.executeQuery();
+        cstmt.close();
     }
 
 
@@ -308,15 +316,16 @@ public class AsTest extends DatabaseTestCase {
         Statement stmt = con.createStatement();
         dropTable("#ICEributeTest_AttributeTest2");
         stmt.executeUpdate(tabdef);
+        stmt.close();
         PreparedStatement istmt = con.prepareStatement(
-                                                      "INSERT INTO #ICEributeTest_AttributeTest2 ("
-                                                      + "ICEobjectId,BSF_FILTER_ATTRIBUTE_NAME,ICEtestShort,ICEtestFloat,ICEtestDecimal,"
-                                                      + "ICEtestCharacter,ICEtestInteger,ICEtestString,ICEtestBoolean,ICEtestByte,"
-                                                      + "ICEtestDouble,ICEtestLong,ICEtestCombined1,ICEtestDate,testCombined_testFloat,"
-                                                      + "testCombined_testShort,testCombined_testDecimal,testCombined_testCharacter,testCombined_testInteger,testCombined_testString,"
-                                                      + "testCombined_testBoolean,testCombined_testByte,testCombined_testDouble,testCombined_testLong"
-                                                      + ",testCombined_testDate,ICEtestContainedArrays,updateCount ) "
-                                                      + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                "INSERT INTO #ICEributeTest_AttributeTest2 ("
+                + "ICEobjectId,BSF_FILTER_ATTRIBUTE_NAME,ICEtestShort,ICEtestFloat,ICEtestDecimal,"
+                + "ICEtestCharacter,ICEtestInteger,ICEtestString,ICEtestBoolean,ICEtestByte,"
+                + "ICEtestDouble,ICEtestLong,ICEtestCombined1,ICEtestDate,testCombined_testFloat,"
+                + "testCombined_testShort,testCombined_testDecimal,testCombined_testCharacter,testCombined_testInteger,testCombined_testString,"
+                + "testCombined_testBoolean,testCombined_testByte,testCombined_testDouble,testCombined_testLong"
+                + ",testCombined_testDate,ICEtestContainedArrays,updateCount ) "
+                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         istmt.setLong(1, (long) 650002);
         istmt.setInt(2, -1461101755);
         istmt.setNull(3, java.sql.Types.INTEGER);
@@ -354,6 +363,7 @@ public class AsTest extends DatabaseTestCase {
         istmt.setInt(27, 1);
 
         assertEquals(1, istmt.executeUpdate());
+        istmt.close();
     }
 
     public void testBigInt() throws Throwable {
@@ -362,6 +372,7 @@ public class AsTest extends DatabaseTestCase {
         dropTable("#testBigInt");
         Statement stmt = con.createStatement();
         stmt.executeUpdate(crtab);
+        stmt.close();
         PreparedStatement pstmt = con.prepareStatement("insert into #testBigInt values (?)");
         pstmt.setNull(1, java.sql.Types.BIGINT);
         assertTrue(!pstmt.execute());
@@ -381,6 +392,7 @@ public class AsTest extends DatabaseTestCase {
         pstmt.setLong(1, 99999999999L);
         assertTrue(!pstmt.execute());
         assertTrue(pstmt.getUpdateCount() == 1);
+        pstmt.close();
     }
 
     public void testBoolean() throws Throwable {
@@ -401,6 +413,7 @@ public class AsTest extends DatabaseTestCase {
         rs = stmt.executeQuery("select * from #testBit where a = 1");
         rs.next();
         rs.getBoolean(1);
+        stmt.close();
         PreparedStatement pstmt = con.prepareStatement("insert into #testBit values (?)");
         pstmt.setBoolean(1, true);
         assertTrue(!pstmt.execute());
@@ -411,6 +424,7 @@ public class AsTest extends DatabaseTestCase {
         pstmt.setNull(1, java.sql.Types.BIT);
         assertTrue(!pstmt.execute());
         assertTrue(pstmt.getUpdateCount() == 1);
+        pstmt.close();
     }
 
 
@@ -423,9 +437,11 @@ public class AsTest extends DatabaseTestCase {
         }
         Statement stmt = con.createStatement();
         stmt.executeUpdate(crtab);
+        stmt.close();
         PreparedStatement pstmt = con.prepareStatement("insert into #testBinary values (?)");
         pstmt.setObject(1, ba);
         pstmt.execute();
+        pstmt.close();
     }
 
     private void checkTime(long time) throws Throwable {
@@ -440,6 +456,7 @@ public class AsTest extends DatabaseTestCase {
         java.sql.Timestamp tsres = rs.getTimestamp(1);
         assertTrue(ts.equals(tsres));
         stmt.executeUpdate("truncate table #testTimestamp");
+        stmt.close();
     }
 
     public void testSpecTime() throws Throwable {
@@ -447,6 +464,7 @@ public class AsTest extends DatabaseTestCase {
         dropTable("#testTimestamp");
         Statement stmt = con.createStatement();
         stmt.executeUpdate(crtab);
+        stmt.close();
         checkTime(92001000);
         checkTime(4200000);  // sent in 4 Bytes
         checkTime(4201000);
@@ -460,6 +478,7 @@ public class AsTest extends DatabaseTestCase {
         dropTable("#testBigDecimal");
         Statement stmt = con.createStatement();
         stmt.executeUpdate(crtab);
+        stmt.close();
         PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal values (?)");
         pstmt.setObject(1, new BigDecimal("10.200"));
         pstmt.execute();
@@ -485,6 +504,7 @@ public class AsTest extends DatabaseTestCase {
         pstmt.execute();
         pstmt.setDouble(1, 1.1);
         pstmt.execute();
+        pstmt.close();
     }
 }
 

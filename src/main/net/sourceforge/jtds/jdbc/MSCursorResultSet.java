@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.22 2004-10-04 12:17:58 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.23 2004-10-27 14:57:43 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -723,9 +723,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         ParamInfo param[];
 
         if (opType == CURSOR_OP_DELETE) {
-            if (row != null) {
-            }
-
             // 3 parameters for delete
             param = new ParamInfo[3];
         } else {

@@ -26,20 +26,22 @@ import java.sql.*;
  * NOTE: This test needs to be updated to run properly within the test harness.
  * It is being included now for complete application of the patch included in
  * bug [1017616] 0.9-RC1 Threading problem.
+ *
+ * @version $Id: TestMultiThread.java,v 1.2 2004-10-27 14:57:58 alin_sinpalean Exp $
  */
 public class TestMultiThread extends Thread {
-    public static String driverClass = "net.sourceforge.jtds.jdbc.Driver";
-    public static String driverUrl = "jdbc:jtds:sqlserver://localhost/jtds;tds=8.0";
-    public static Connection con;
+    public static final String driverClass = "net.sourceforge.jtds.jdbc.Driver";
+    public static final String driverUrl = "jdbc:jtds:sqlserver://localhost/jtds;tds=8.0";
     public static final int THREAD_MAX = 20;
     public static final int LOOP_MAX = 100;
-    public static int live;
-    public int threadId;
+    static Connection con;
+    static int live;
+    int threadId;
 
     public TestMultiThread(int n) {
         threadId = n;
     }
-    
+
     public void run() {
         try {
             Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -62,10 +64,11 @@ public class TestMultiThread extends Thread {
 
         live--;
     }
-        
+
     public static void main(String[] args) {
         try {
-            Driver jtds = (Driver)Class.forName(driverClass).newInstance();
+            Class.forName(driverClass).newInstance();
+
             DriverManager.setLoginTimeout(5);
             con = DriverManager.getConnection(driverUrl, "xxxx", "xxxx");
             Statement stmt = con.createStatement();
@@ -91,6 +94,6 @@ public class TestMultiThread extends Thread {
             con.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }        
+        }
     }
 }

@@ -12,12 +12,12 @@ import junit.framework.TestCase;
 
 /**
  * @author  builder
- * @version 1.0
+ * @version $Id: TestBase.java,v 1.19 2004-10-27 14:57:58 alin_sinpalean Exp $
  */
 public abstract class TestBase extends TestCase {
 
     private static final String CONNECTION_PROPERTIES = "conf/connection.properties";
-    public static Properties props = loadProperties(CONNECTION_PROPERTIES);
+    public static final Properties props = loadProperties(CONNECTION_PROPERTIES);
     Connection con;
 
     public TestBase(String name) {
@@ -25,11 +25,13 @@ public abstract class TestBase extends TestCase {
     }
 
     public void setUp() throws Exception {
+        super.setUp();
         connect();
     }
 
     public void tearDown() throws Exception {
         disconnect();
+        super.tearDown();
     }
 
     public Connection getConnection() throws Exception {

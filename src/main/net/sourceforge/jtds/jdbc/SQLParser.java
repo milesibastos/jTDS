@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.9 2004-10-25 16:12:26 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.10 2004-10-27 14:57:43 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -721,7 +721,7 @@ class SQLParser {
     private void escape() throws SQLException {
         char tc = terminator;
         terminator = '}';
-        String esc = "";
+        StringBuffer escBuf = new StringBuffer();
         s++;
         skipWhiteSpace();
 
@@ -732,10 +732,11 @@ class SQLParser {
             skipWhiteSpace();
 
             while (Character.isLetter(in[s])) {
-                esc = esc + in[s++];
+                escBuf.append(in[s++]);
             }
 
             skipWhiteSpace();
+            String esc = escBuf.toString();
 
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();
@@ -747,10 +748,11 @@ class SQLParser {
             }
         } else {
             while (Character.isLetter(in[s])) {
-                esc = esc + in[s++];
+                escBuf.append(in[s++]);
             }
 
             skipWhiteSpace();
+            String esc = escBuf.toString();
 
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();

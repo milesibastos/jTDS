@@ -205,13 +205,12 @@ public class CallableStatementTest extends TestBase {
 
         if (rs == null) {
             fail("Null ResultSet returned");
-            return;
+        } else {
+            dump(rs);
+            rs.close();
         }
 
-        dump(rs);
-
         cstmt.close();
-        rs.close();
     }
 
     public void testCallableStatementParsing1() throws Exception {
@@ -240,6 +239,7 @@ public class CallableStatementTest extends TestBase {
 
         assertTrue(!rs.next());
         rs.close();
+        stmt.close();
     }
 
     /**
@@ -286,6 +286,15 @@ public class CallableStatementTest extends TestBase {
         } catch (SQLException ex) {
             assertEquals("22025", ex.getSQLState());
         }
+    }
+
+    /**
+     * Test for bug [1052942] Error processing JDBC call escape. (A blank
+     * before the final <code>}</code> causes the parser to fail).
+     */
+    public void testCallableStatementParsing5() throws Exception {
+        CallableStatement cstmt = con.prepareCall(" { Call Test(?,?) } ");
+        cstmt.close();
     }
 
     /**
@@ -492,6 +501,8 @@ public class CallableStatementTest extends TestBase {
 
         assertFalse(cstmt.getMoreResults());
         assertEquals(-1, cstmt.getUpdateCount());
+
+        cstmt.close();
     }
 
     /**
@@ -547,6 +558,8 @@ public class CallableStatementTest extends TestBase {
 
         assertFalse(cstmt.getMoreResults());
         assertEquals(-1, cstmt.getUpdateCount());
+
+        cstmt.close();
     }
 
     public static void main(String[] args) {

@@ -21,12 +21,12 @@ import java.util.Collection;
 
 /**
  * A caching implementation that performs no caching. This cache implementation
- * is generally only useful when the driver is not creating statement handles
+ * is generally only useful when the driver is not reusing statement handles
  * as it will save a slight amount of memory and time by not performing any
  * caching logic.
  *
  * @author Brian Heineman
- * @version $Id: NonCachingStatementCache.java,v 1.4 2004-10-26 12:53:36 alin_sinpalean Exp $
+ * @version $Id: NonCachingStatementCache.java,v 1.5 2004-10-26 16:03:10 bheineman Exp $
  */
 public class NonCachingStatementCache implements StatementCache {
 	/**

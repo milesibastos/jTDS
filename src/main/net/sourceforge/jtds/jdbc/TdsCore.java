@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.80 2005-02-28 22:47:22 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.81 2005-02-28 23:22:39 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2752,8 +2752,8 @@ public class TdsCore {
         // parameter name beginning with '@'. Ignore any other spurious parameters
         // such as those returned from calls to writetext in the proc.
         //
-        if (parameters != null &&
-            (name.length() == 0 || name.startsWith("@"))) {
+        if (parameters != null
+                && (name.length() == 0 || name.startsWith("@"))) {
             if (tdsVersion >= Driver.TDS80
                 && returnParam != null
                 && !returnParam.isSetOut) {
@@ -2890,7 +2890,14 @@ public class TdsCore {
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
                 TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false);
-            if (parameters != null) {
+            String name = currentToken.dynamParamInfo[i].realName;
+            //
+            // Real output parameters will either be unnamed or will have a valid
+            // parameter name beginning with '@'. Ignore any other Spurious parameters
+            // such as those returned from calls to writetext in the proc.
+            //
+            if (parameters != null
+                    && (name.length() == 0 || name.startsWith("@"))) {
                 // Sybase 12+ this token used to set output parameter results
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {

@@ -12,6 +12,8 @@ Changes from jTDS 1.0.2
  o Completely synchronized access to cancelPending and endOfResponse in TdsCore
    and cancelPending and responseOwner in SharedSocket. This should prevent any
    race conditions when a cancel() is issued.
+ o Applied the rest of Mike's fix for bug [1152329] Spurious output params 
+   assigned (TIMESTMP). Missed part of it when doing the merge.
 
 02/27/2005 - Alin Sinpalean
  o Enhanced update count caching implementation by always caching update counts

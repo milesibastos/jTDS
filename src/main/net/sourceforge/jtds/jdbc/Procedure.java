@@ -43,22 +43,23 @@ import java.sql.*;
 import java.util.StringTokenizer;
 
 public class Procedure {
-    public static final String cvsVersion = "$Id: Procedure.java,v 1.6 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: Procedure.java,v 1.7 2004-02-14 00:04:11 bheineman Exp $";
+
+    // next number to return from the getUniqueId() method
+    private static long  id = 1;
 
     private ParameterListItem _parameterList[]; // Intentionally not initialized
     private String _sqlProcedureName; // Intentionally not initialized
     private String _procedureString; // Intentionally not initialized
     private String _signature; // Intentionally not initialized
-    private boolean _hasLobs = false;
 
     public Procedure(String rawQueryString,
                      String signature,
-                     String sqlProcedureName,
                      ParameterListItem[] parameterListIn,
                      Tds tds)
     throws SQLException {
         _signature = signature;
-        _sqlProcedureName = sqlProcedureName;
+        _sqlProcedureName = getUniqueProcedureName(tds);
 
         // Create actual to formal parameter mapping
         // SAfe No need for this. It's already done by PreparedStatement_base.
@@ -71,12 +72,6 @@ public class Procedure {
         for (int i = 0; i < _parameterList.length; i++) {
             _parameterList[i] = (ParameterListItem) parameterListIn[i].clone();
             _parameterList[i].value = null; // MJH allow value to be garbage collected
-
-            if (_parameterList[i].formalType.equalsIgnoreCase("image")
-                || _parameterList[i].formalType.equalsIgnoreCase("text")
-                || _parameterList[i].formalType.equalsIgnoreCase("ntext")) {
-                _hasLobs = true;
-            }
         }
 
         // Create the procedure text; allocate a buffer large enough for the raw string
@@ -85,7 +80,7 @@ public class Procedure {
                                                         + 128);
 
         procedureString.append("create proc ");
-        procedureString.append(sqlProcedureName);
+        procedureString.append(_sqlProcedureName);
 
         // add the formal parameter list to the sql string
         createFormalParameterList(_parameterList, procedureString);
@@ -135,8 +130,12 @@ public class Procedure {
         return _sqlProcedureName;
     }
 
-    public ParameterListItem getParameter(int index) {
-        return _parameterList[index];
+    public String getSignature() {
+        return _signature;
+    }
+
+    public ParameterListItem[] getParameterList() {
+        return _parameterList;
     }
 
     private void createFormalParameterList(ParameterListItem[] parameterList,
@@ -163,19 +162,79 @@ public class Procedure {
         }
     }
 
-    public ParameterListItem[] getParameterList() {
-        return _parameterList;
-    }
+    /**
+     * Create a new and unique name for a store procedure. This routine will
+     * return a unique name for a stored procedure that will be associated with
+     * a PreparedStatement().
+     * <p>
+     * Since SQLServer supports temporary procedure names we can just use
+     * UniqueId.getUniqueId() to generate a unique (for the connection) name.
+     * <p>
+     * Sybase does not support temporary procedure names so we will have to
+     * have a per user table devoted to storing user specific stored
+     * procedures. The table name will be of the form
+     * database.user.jdbc_temp_stored_proc_names. The table will be defined as
+     * <code>CREATE TABLE database.user.jdbc_temp_stored_proc_names ( id
+     * NUMERIC(10, 0) IDENTITY; session int not null; name char(29) )</code>
+     * This routine will use that table to track names that are being used.
+     *
+     * @return the UniqueProcedureName value
+     * @throws SQLException description of exception
+     */
+    private String getUniqueProcedureName(Tds tds) throws SQLException {
+        if (tds.getServerType() == Tds.SYBASE) {
+            // Fix for bug 822544 ???
 
-    public String getSignature() {
-        return _signature;
+            // Since Sybase does not support temporary stored procedures, construct
+            // permenant stored procedures with a UUID as the name.
+            // Since I do not have access to Sybase I was unable to test this...
+            Statement stmt = null;
+            ResultSet rs = null;
+            String result;
+
+            try {
+                stmt = tds.getConnection().createStatement();
+
+                if (!stmt.execute("SELECT NEWID()")) {
+                    throw new SQLException("Confused.  Was expecting a result set.");
+                }
+
+                rs = stmt.getResultSet();
+
+                if (!rs.next()) {
+                    throw new SQLException("Couldn't get stored proc name [NEWID()]");
+                }
+
+                result = rs.getString(1);
+            } finally {
+                stmt.close();
+                rs.close();
+            }
+
+            // NEWID() - "86C5075D-6625-411F-B979-9972F68DC5D6"
+            // Prepend "jTDS" and remove the dashes '-' from the UUID.  Since stored
+            // procedure names in Sybase can only be 30 characters long, remove the first
+            // 6 (the machine address which should always be the same for the DB) and
+            // prefix the name with "jTDS" so that the procedures can be deleted easily
+            // by a system administrator.
+            return "jTDS" + result.substring(6, 8) + result.substring(9, 13)
+                    + result.substring(14, 18) + result.substring(19, 23)
+                    + result.substring(24);
+        } else {
+            return "#jdbc#" + getUniqueId();
+        }
     }
 
     /**
-     * Check if the formal parameter list includes LOB parameters.
-     * MJH This method is not actually used at present.
+     * return a unique number.
+     * <p>
+     * The number is unique for a given invocation of the JVM.  Currently
+     * the number is monotonically increasing, but I make no guarantees
+     * that it will be that way in future releases.
+     *
+     * @return unique number
      */
-    public boolean hasLobParameters() {
-        return _hasLobs;
+    public static synchronized long getUniqueId() {
+       return id++;
     }
 }

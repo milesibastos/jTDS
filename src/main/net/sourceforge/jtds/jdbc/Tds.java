@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.29 2004-02-12 23:07:57 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.30 2004-02-14 00:04:11 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -89,8 +89,8 @@ public class Tds implements TdsDefinitions {
     private final boolean lastUpdateCount;
 
     // SAfe Access to both of these fields is synchronized on procedureCache
-    private HashMap   procedureCache = null;
-    private ArrayList proceduresOfTra = null;
+    private HashMap procedureCache = new HashMap();
+    private ArrayList proceduresOfTra = new ArrayList();
 
     private Boolean cancelActive = Boolean.FALSE;
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.29 2004-02-12 23:07:57 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.30 2004-02-14 00:04:11 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -145,9 +145,6 @@ public class Tds implements TdsDefinitions {
         useUnicode = "true".equalsIgnoreCase(props.getProperty(PROP_USEUNICODE, "true"));
         lastUpdateCount = "true".equalsIgnoreCase(
                 props.getProperty(PROP_LAST_UPDATE_COUNT, "false"));
-
-        procedureCache = new HashMap(); // new Vector();   // XXX as
-        proceduresOfTra = new ArrayList();
 
         //mdb: if the domain is set, then the user wants NT auth (instead of SQL)
         domain = props.getProperty(PROP_DOMAIN, "");
@@ -209,62 +206,6 @@ public class Tds implements TdsDefinitions {
      */
     public int getServerType() {
         return serverType;
-    }
-
-    /**
-     * Create a new and unique name for a store procedure. This routine will
-     * return a unique name for a stored procedure that will be associated with
-     * a PreparedStatement().
-     * <p>
-     * Since SQLServer supports temporary procedure names we can just use
-     * UniqueId.getUniqueId() to generate a unique (for the connection) name.
-     * <p>
-     * Sybase does not support temporary procedure names so we will have to
-     * have a per user table devoted to storing user specific stored
-     * procedures. The table name will be of the form
-     * database.user.jdbc_temp_stored_proc_names. The table will be defined as
-     * <code>CREATE TABLE database.user.jdbc_temp_stored_proc_names ( id
-     * NUMERIC(10, 0) IDENTITY; session int not null; name char(29) )</code>
-     * This routine will use that table to track names that are being used.
-     *
-     * @return                            The UniqueProcedureName value
-     * @exception  java.sql.SQLException  Description of Exception
-     */
-    public String getUniqueProcedureName() throws SQLException {
-        if (serverType == SYBASE) {
-            // Fix for bug 822544 ???
-
-            // Since Sybase does not support temporary stored procedures, construct
-            // permenant stored procedures with a UUID as the name.
-            // Since I do not have access to Sybase I was unable to test this...
-            final Statement stmt = connection.createStatement();
-
-            if (!stmt.execute("SELECT NEWID()")) {
-                throw new SQLException("Confused.  Was expecting a result set.");
-            }
-
-            final ResultSet rs = stmt.getResultSet();
-
-            if (!rs.next()) {
-                throw new SQLException("Couldn't get stored proc name [NEWID()]");
-            }
-
-            final String result = rs.getString(1);
-
-            stmt.close();
-            rs.close();
-
-            // NEWID() - "86C5075D-6625-411F-B979-9972F68DC5D6"
-            // Prepend "jTDS" and remove the dashes '-' from the UUID.  Since stored
-            // procedure names in Sybase can only be 30 characters long, remove the first
-            // 6 (the machine address which should always be the same for the DB) and
-            // prefix the name with "jTDS" so that the procedures can be deleted easily
-            // by a system administrator.
-            return "jTDS" + result.substring(6, 8) + result.substring(9, 13)
-                    + result.substring(14, 18) + result.substring(19, 23) + result.substring(24);
-        } else {
-            return "#jdbc#" + UniqueId.getUniqueId();
-        }
     }
 
     /**
@@ -3608,6 +3549,7 @@ public class Tds implements TdsDefinitions {
                 // rather than rawSqlQueryString
                 procedureCache.remove(p.getSignature());
             }
+
             proceduresOfTra.clear();
         }
 
@@ -3878,8 +3820,9 @@ public class Tds implements TdsDefinitions {
             procedureCache.put(procedure.getSignature(), procedure);
 
             // MJH Only record the proc name in proceduresOfTra if in manual commit mode
-            if (!connection.getAutoCommit())
+            if (!connection.getAutoCommit()) {
                 proceduresOfTra.add(procedure);
+            }
         }
     }
 

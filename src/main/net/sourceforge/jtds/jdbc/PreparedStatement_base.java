@@ -54,13 +54,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.18 2004-02-11 19:10:25 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.19 2004-02-14 00:04:11 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.18 2004-02-11 19:10:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.19 2004-02-14 00:04:11 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -159,7 +159,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             // Create the stored procedure
             // MJH Pass in the caculated signature to be used as the cache key
             procedure = new Procedure(rawQueryString, signature.toString(),
-                tds.getUniqueProcedureName(), parameterList, tds );
+                parameterList, tds);
 
             // SAfe Submit it to the SQL Server before adding it to the cache or procedures of transaction list.
             //      Otherwise, if submitProcedure fails (e.g. because of a syntax error) it will be in our procedure
@@ -180,8 +180,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
     private void submitProcedure(Tds tds, Procedure proc)
              throws SQLException {
-        String sql = proc.getPreparedSqlString();
-        tds.submitProcedure(sql, warningChain);
+        tds.submitProcedure(proc.getPreparedSqlString(), warningChain);
         warningChain.checkForExceptions();
     }
 

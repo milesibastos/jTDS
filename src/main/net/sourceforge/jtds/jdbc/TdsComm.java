@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.2 2003-02-15 14:19:21 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.2 2003-02-15 14:19:21 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -654,22 +654,23 @@ public class TdsComm implements TdsDefinitions {
      *@exception  java.io.IOException                    @todo Description of
      *      Exception
      */
-    public String getString( int len )
-             throws net.sourceforge.jtds.jdbc.TdsException,
-            java.io.IOException
+    public String getString(int len, EncodingHelper enc) throws TdsException, java.io.IOException
     {
-        if ( tdsVer == TDS70 ) {
+        if( tdsVer == TDS70 )
+        {
             char[] chars = new char[len];
-            for ( int i = 0; i < len; ++i ) {
+
+            for( int i=0; i<len; i++ )
+            {
                 int lo = getByte() & 0xFF;
                 int hi = getByte() & 0xFF;
                 chars[i] = ( char ) ( lo | ( hi << 8 ) );
             }
+
             return new String( chars );
         }
-        else {
-            return new String( getBytes(len, false), 0, len );
-        }
+        else
+            return enc.getString(getBytes(len, false), 0, len);
     }
 
 

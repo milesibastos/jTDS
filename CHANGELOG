@@ -1,3 +1,15 @@
+Changes from jTDS 0.5.1
+=======================
+
+02/15/2003 - Alin Sinpalean
+ o Fixed bug #679040: database-specified charset preferred over client-
+   specified.
+ o Fixed bug #679041: (possible) charset problems with platform default
+   encoding. Not so sure if all Strings read from the server should be
+   converted using the EncodingHelper, but that's how it works now.
+ o Also removed some checks and prints to System.out in Tds following warnings
+   received (initially this was done because getWarnings was not implemented).
+
 ===============================================================================
 01/30/2002 - jTDS 0.5.1 released
 ===============================================================================

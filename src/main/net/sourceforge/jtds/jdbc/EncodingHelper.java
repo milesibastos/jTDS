@@ -7,11 +7,11 @@ import java.util.Hashtable;
  * Helper class to handle server character set conversion.
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
- * @version  $Id: EncodingHelper.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version  $Id: EncodingHelper.java,v 1.2 2003-02-15 14:19:20 alin_sinpalean Exp $
  */
 public class EncodingHelper
 {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.2 2003-02-15 14:19:20 alin_sinpalean Exp $";
 
     /**
      * Array containig the bytes 0x00 - 0xFF.
@@ -34,11 +34,6 @@ public class EncodingHelper
      * Is this a DBCS charset (does it need more than one byte per character)?
      */
     private boolean wideChars;
-    /**
-     * A String containing all characters of the charset (if this is not
-     * a DBCS charset).
-     */
-    private String converted;
 
     static
     {
@@ -51,11 +46,8 @@ public class EncodingHelper
     private EncodingHelper(String name) throws UnsupportedEncodingException
     {
         this.name = name;
-        converted = new String(convArray, name);
-        wideChars = converted.length()!=convArray.length;
-
-        if( wideChars )
-            converted = null;
+        // SAfe Hope this works in all cases.
+        wideChars = new String(convArray, name).length()!=convArray.length;
     }
 
     /**
@@ -107,21 +99,21 @@ public class EncodingHelper
 
     /**
      * Can the given String be converted to the server's charset?
-     *
-     * <p>Does not work for DBCS charsets.
      */
     public boolean canBeConverted(String value)
     {
-        if( isDBCS() )
-            throw new IllegalStateException(name+" is a DBCS charset");
-
-        int len = value.length();
-
-        for( int i=0; i<len; i++ )
-            if( converted.indexOf(value.charAt(i)) == -1 )
-                return false;
-
-        return true;
+        try
+        {
+            // SAfe Not very efficient, since a String is always created, but it's the only way I
+            //      could think of. Maybe some Reader/Writer combination would have been better
+            //      but...
+            return new String(value.getBytes(name), name).equals(value);
+        }
+        catch( UnsupportedEncodingException ex )
+        {
+            // SAfe No way.
+            return false;
+        }
     }
 
     /**
@@ -146,7 +138,7 @@ public class EncodingHelper
             }
             catch( UnsupportedEncodingException ex )
             {
-                res = (EncodingHelper)knownEncodings.get("iso_1");
+                res = null;
             }
 
         return res;

@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -67,14 +67,14 @@ class TimeoutHandler extends Thread
 
     public void run()
     {
-        try {
+        try
+        {
             sleep( timeout * 1000 );
             // SAfe The java.sql.Statement.cancel() javadoc says an SQLException
             //      must be thrown if the execution timed out, so that's what
             //      we're going to do.
             wChain.addException(new SQLException("Query has timed out."));
             tds.cancel();
-            System.out.println("Cancel done.");
         }
         // Ignore interrupts (this is how we know all was ok)
         catch( java.lang.InterruptedException e )
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -138,6 +138,11 @@ public class Tds implements TdsDefinitions {
 
     private EncodingHelper encoder = null;
     private String charset = null;
+    /**
+     * This is set if the user specifies an explicit charset, so that we'll ignore the server
+     * charset.
+     */
+    private boolean charsetSpecified = false;
 
     // int          rowCount    = -1;    // number of rows selected or updated
     private boolean moreResults = false;
@@ -151,9 +156,6 @@ public class Tds implements TdsDefinitions {
     // Added 2000-06-07.  Used to control TDS version-specific behavior.
     private int tdsVer = Tds.TDS70;
 
-    // RMK 2000-06-08.
-    private boolean showWarnings = false;
-
     // RMK 2000-06-12.  Time zone offset on client (disregarding DST).
     private int zoneOffset = Calendar.getInstance().get(Calendar.ZONE_OFFSET);
 
@@ -161,7 +163,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -216,13 +218,6 @@ public class Tds implements TdsDefinitions {
             tdsVer = Tds.TDS42;
         }
 
-        // RMK 2000-06-08
-        if (System.getProperty("TDS_SHOW_WARNINGS") != null
-                 ||
-                props_.getProperty("TDS_SHOW_WARNINGS") != null) {
-            showWarnings = true;
-        }
-
         cancelController = new CancelController();
 
         // Send the logon packet to the server
@@ -232,7 +227,9 @@ public class Tds implements TdsDefinitions {
 
         String cs = props_.getProperty("CHARSET");
         cs = cs==null ? props_.getProperty("charset") : cs;
-        setCharset(cs);
+
+        // Adellera
+        charsetSpecified = setCharset(cs);
 
         autoCommit = connection.getAutoCommit();
         transactionIsolationLevel = connection.getTransactionIsolation();
@@ -1222,7 +1219,7 @@ public class Tds implements TdsDefinitions {
       throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
    {
       getSubPacketLength(); // Packet length
-      comm.getString(comm.getByte() & 0xff); // Column name
+      comm.getString(comm.getByte()&0xff, encoder); // Column name
       comm.skip(5);
 
       byte colType = comm.getByte();
@@ -1550,18 +1547,38 @@ public class Tds implements TdsDefinitions {
     }
 
 
-    private void setCharset(String charset)
+    private boolean setCharset(String charset)
     {
+        // If true at the end of the method, the specified charset was used. Otherwise, iso_1 was.
+        boolean used = charset!=null;
+
         if (charset == null || charset.length() > 30)
             charset = "iso_1";
 
         if( charset.startsWith("cp") )
             charset = "Cp" + charset.substring(2);
 
-        if (!charset.equals(this.charset)) {
+        if( !charset.equals(this.charset) )
+        {
             encoder = EncodingHelper.getHelper(charset);
+
+            if( encoder == null )
+            {
+                if( Logger.isActive() )
+                    Logger.println("Invalid charset: "+charset+". Trying iso_1 instead.");
+
+                charset = "iso_1";
+                encoder = EncodingHelper.getHelper(charset);
+                used = false;
+            }
+
             this.charset = charset;
         }
+
+        if( Logger.isActive() )
+            Logger.println("Set charset to "+charset+'/'+encoder.getName());
+
+        return used;
     }
 
 
@@ -1966,7 +1983,7 @@ public class Tds implements TdsDefinitions {
       }
       else if (len >= 0) {
           if (wideChars) {
-              result = comm.getString(len / 2);
+              result = comm.getString(len/2, encoder);
           }
           else {
               result = encoder.getString(comm.getBytes(len, false), 0, len);
@@ -2018,7 +2035,7 @@ public class Tds implements TdsDefinitions {
             //else
             if (len >= 0) {
                 if (wideChars) {
-                    result = comm.getString(len / 2);
+                    result = comm.getString(len/2, encoder);
                 }
                 else {
                     result = encoder.getString(comm.getBytes(len, false), 0, len);
@@ -2703,24 +2720,15 @@ public class Tds implements TdsDefinitions {
         msg.severity = comm.getByte();
 
         int msgLen = comm.getTdsShort();
-        msg.message = comm.getString(msgLen);
-
-        // RMK 2000-06-08: the getWarnings() methods aren't implemented, so we
-        //                 need to do something with these.
-        if (showWarnings && msg.message != null) {
-            String warn = msg.message.trim();
-            if (warn.length() > 0) {
-                System.err.println("Server message: " + warn);
-            }
-        }
+        msg.message = comm.getString(msgLen, encoder);
 
         int srvNameLen = comm.getByte() & 0xFF;
-        msg.server = comm.getString(srvNameLen);
+        msg.server = comm.getString(srvNameLen, encoder);
 
         if (packetSubType == TDS_INFO || packetSubType == TDS_ERROR) {
             // nop
             int procNameLen = comm.getByte() & 0xFF;
-            msg.procName = comm.getString(procNameLen);
+            msg.procName = comm.getString(procNameLen, encoder);
         }
         else {
             throw new TdsConfused("Was expecting a msg or error token.  " +
@@ -2766,7 +2774,7 @@ public class Tds implements TdsDefinitions {
                 String blocksize;
                 int clen = comm.getByte() & 0xFF;
                 if (tdsVer == TDS70) {
-                    blocksize = comm.getString(clen);
+                    blocksize = comm.getString(clen, encoder);
                     comm.skip(len - 2 - clen * 2);
                 }
                 else {
@@ -2784,26 +2792,26 @@ public class Tds implements TdsDefinitions {
                 int clen = comm.getByte() & 0xFF;
                 String charset;
                 if (tdsVer == TDS70) {
-                    charset = comm.getString(clen);
+                    charset = comm.getString(clen, encoder);
                     comm.skip(len - 2 - clen * 2);
                 }
                 else {
                     charset = encoder.getString(comm.getBytes(clen, false), 0, clen);
                     comm.skip(len - 2 - clen);
                 }
-                setCharset(charset);
-                if( Logger.isActive() )
-                    Logger.println("Changed charset to "+charset+'/'+encoder.getName());
+                if( !charsetSpecified )
+                    setCharset(charset);
+                else
+                    if( Logger.isActive() )
+                        Logger.println("Server charset "+charset+". Ignoring.");
                 break;
             }
             case TDS_ENV_DATABASE:
             {
                 int clen = comm.getByte() & 0xFF;
-                String newDb = tdsVer==TDS70 ? comm.getString(clen) :
-                    encoder.getString(comm.getBytes(clen, false), 0, clen);
+                String newDb = comm.getString(clen, encoder);
                 clen = comm.getByte() & 0xFF;
-                String oldDb = tdsVer==TDS70 ? comm.getString(clen) :
-                    encoder.getString(comm.getBytes(clen, false), 0, clen);
+                String oldDb = comm.getString(clen, encoder);
 
                 if( database!=null && !oldDb.equals(database) )
                     throw new TdsException("Old database mismatch.");
@@ -3634,7 +3642,7 @@ public class Tds implements TdsDefinitions {
         {
             comm.skip(5);
             int nameLen = comm.getByte();
-            databaseProductName = comm.getString(nameLen);
+            databaseProductName = comm.getString(nameLen, encoder);
             databaseProductVersion = ("0" + (databaseMajorVersion=comm.getByte()) + ".0"
                      + comm.getByte() + ".0"
                      + ((256 * (comm.getByte()+1)) + comm.getByte()));
@@ -3643,7 +3651,7 @@ public class Tds implements TdsDefinitions {
         {
             comm.skip(5);
             short nameLen = comm.getByte();
-            databaseProductName = comm.getString(nameLen);
+            databaseProductName = comm.getString(nameLen, encoder);
             comm.skip(1);
             databaseProductVersion = ("" + (databaseMajorVersion=comm.getByte()) + "." + comm.getByte());
             comm.skip(1);
@@ -3758,7 +3766,7 @@ public class Tds implements TdsDefinitions {
                 bufLength = comm.getTdsInt();
 
                 // Get table name.
-                tableName = comm.getString(comm.getTdsShort());
+                tableName = comm.getString(comm.getTdsShort(), encoder);
             }
             // Fixed types have no size field in the packet.
             else if (isFixedSizeColumn((byte) columnType)) {
@@ -3784,7 +3792,7 @@ public class Tds implements TdsDefinitions {
              * bytes.  The getString() method handles this.
              */
             int colNameLen = comm.getByte();
-            String columnName = comm.getString(colNameLen);
+            String columnName = comm.getString(colNameLen, encoder);
 
             // Populate the Column object.
             populateColumn(columns.getColumn(colNum), columnType, columnName,

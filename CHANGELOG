@@ -13,6 +13,9 @@ Changes from jTDS 0.4
    incorrect because the backslash was considered an escape character).
  o Implementede DatabaseMetaData.getUDTs(). It now returns a hand-made empty
    result set; inspired from the MS driver's docs. :o)
+ o Slight misunderstanding in TimestampTest.testGetBoolean0025(): not sure
+   which VARCHAR/CHAR values are true and which are false with getBoolean().
+   Have to take a look at this.
 
 10/18/2002 - Alin Sinpalean
 

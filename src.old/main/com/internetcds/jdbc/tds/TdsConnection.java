@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $
+ * @version    $Id: TdsConnection.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -410,25 +410,9 @@ public class TdsConnection implements ConnectionHelper, Connection
         return null;
     }
 
-    public synchronized void markAsClosed(java.sql.Statement stmt) throws TdsException
+    public synchronized void markAsClosed(java.sql.Statement stmt)
     {
-        if( !allStatements.removeElement(stmt) )
-            throw new TdsException("Statement was not known by the connection");
-    }
-
-    /**
-     * Return a tds instance back to the tds pool for reuse. A thread that is
-     * using a tds instance should return the instance back to the tds pool
-     * when it is finished using it.
-     *
-     * @param  tds               Description of Parameter
-     * @exception  TdsException  Description of Exception
-     * @see                      #allocateTds
-     */
-    public synchronized void relinquish(Tds tds) throws SQLException, TdsException
-    {
-        checkClosed();
-        freeTds(tds);
+        allStatements.removeElement(stmt);
     }
 
     /**
@@ -565,17 +549,46 @@ public class TdsConnection implements ConnectionHelper, Connection
     public synchronized void close() throws SQLException
     {
         int i;
+        SQLException exception = null;
 
+        // SAfe First close all Statements, to ensure nothing is left behind
+        //      This is needed to ensure rollback below doesn't crash.
         for( i=0; i<allStatements.size(); i++ )
-            ((Statement)allStatements.elementAt(i)).close();
+            try
+            {
+                ((Statement)allStatements.elementAt(i)).close();
+            }
+            catch( SQLException ex )
+            {
+                // SAfe Add the old exceptions to the chain
+                ex.setNextException(exception);
+                exception = ex;
+            }
         allStatements.clear();
 
+        /*
+        ** MJH Need to do roll back for manual commit connections.
+        */
         for( i=0; i<tdsPool.size(); i++ )
-            ((TdsInstance)tdsPool.elementAt(i)).tds.close();
+            try
+            {
+                if( !autoCommit )
+                    ((TdsInstance)tdsPool.elementAt(i)).tds.rollback(); // MJH
+                ((TdsInstance)tdsPool.elementAt(i)).tds.close();
+            }
+            catch( SQLException ex )
+            {
+                // SAfe Add the old exceptions to the chain
+                ex.setNextException(exception);
+                exception = ex;
+            }
         tdsPool.clear();
 
         clearWarnings();
         isClosed = true;
+
+        if( exception != null )
+            throw exception;
     }
 
     /**
@@ -800,94 +813,104 @@ public class TdsConnection implements ConnectionHelper, Connection
 
         // XXX race condition here.  It is possible that a statement could
         // close while running this for loop.
+        // SAfe Consume all outstanding data first.
         for( i=0; i<allStatements.size(); i++ )
         {
             TdsStatement stmt = (TdsStatement) allStatements.elementAt(i);
+            try
+            {
+                stmt.skipToEnd();
+                stmt.releaseTds();
+            }
+            catch( SQLException ex )
+            {
+                ex.setNextException(exception);
+                exception = ex;
+            }
+        }
 
-            if( stmt.actTds != null )
-                try
-                {
-                    if( commit )
-                        stmt.commit();
-                    else
-                        stmt.rollback();
-                }
-                // XXX need to put all of these into the warning chain.
-                //
-                // Don't think so, the warnings would belong to Statement anyway -- SB
-                catch (java.sql.SQLException e) {
-                    exception = e;
-                }
-                catch (java.io.IOException e) {
-                    exception = new SQLException(e.getMessage());
-                }
-                catch (com.internetcds.jdbc.tds.TdsException e) {
-                    exception = new SQLException(e.getMessage());
-                }
+        // MJH Commit or Rollback Tds connections directly rather
+        //     than mess with TdsStatement
+        for( i=0; i<tdsPool.size(); i++ )
+        {
+            try
+            {
+                if( commit )
+                    ((TdsInstance)tdsPool.elementAt(i)).tds.commit();
+                else
+                    ((TdsInstance)tdsPool.elementAt(i)).tds.rollback();
+            }
+            // XXX need to put all of these into the warning chain.
+            //
+            // Don't think so, the warnings would belong to Statement anyway -- SB
+            catch( java.sql.SQLException e )
+            {
+                exception = e;
+            }
         }
 
         if( exception != null )
             throw exception;
     }
-    
+
     public java.sql.Statement createStatement(int param, int param1, int param2) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getHoldability() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.CallableStatement prepareCall(String str, int param, int param2, int param3) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.PreparedStatement prepareStatement(String str, int param) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.PreparedStatement prepareStatement(String str, int[] values) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.PreparedStatement prepareStatement(String str, String[] str1) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.PreparedStatement prepareStatement(String str, int param, int param2, int param3) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public void releaseSavepoint(java.sql.Savepoint savepoint) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public void rollback(java.sql.Savepoint savepoint) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public void setHoldability(int param) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.Savepoint setSavepoint() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.Savepoint setSavepoint(String str) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
 }

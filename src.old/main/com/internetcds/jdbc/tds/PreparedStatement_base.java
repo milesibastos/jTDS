@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -165,7 +165,7 @@ public class PreparedStatement_base
         Procedure procedure = null;
         boolean result = false;
 
-        closeResults();
+        closeResults(false);
         updateCount = -2;
 
         // First make sure the caller has filled in all the parameters.
@@ -188,7 +188,9 @@ public class PreparedStatement_base
             // procedureCache.addElement(procedure);
             // store it in the procedureCache
             tds.procedureCache.put( rawQueryString, procedure );
-            tds.proceduresOfTra.add( procedure );
+            // MJH Only record the proc name if in manual commit mode
+            if( !connection.getAutoCommit() ) // MJH
+                tds.proceduresOfTra.add( procedure );
 
             // create it on the SQLServer.
             submitProcedure( tds, procedure );
@@ -382,12 +384,11 @@ public class PreparedStatement_base
      */
     public int executeUpdate() throws SQLException
     {
-        closeResults();
+        closeResults(false);
 
         Tds tds = getTds( "UPDATE " );
         if ( execute( tds ) ) {
-            startResultSet( tds );
-            closeResults();
+            skipToEnd();
             releaseTds();
             throw new SQLException( "executeUpdate can't return a result set" );
         }
@@ -1194,16 +1195,16 @@ public class PreparedStatement_base
     {
         NotImplemented();
     }
-    
+
     public java.sql.ParameterMetaData getParameterMetaData() throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public void setURL(int param, java.net.URL url) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
 }

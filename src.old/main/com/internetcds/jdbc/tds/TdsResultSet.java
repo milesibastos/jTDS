@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.9 2002-08-16 15:22:10 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.10 2002-09-09 12:14:32 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,7 +110,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.9 2002-08-16 15:22:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.10 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, Columns columns)
     {
@@ -326,6 +326,11 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public synchronized void close() throws SQLException
     {
+        close(true);
+    }
+
+    public synchronized void close(boolean allowTdsRelease) throws SQLException
+    {
         Exception exception = null;
 
         /** @todo SAfe: Maybe an exception should be thrown here */
@@ -339,7 +344,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             {
                 tds.discardResultSetOld(context);
                 hitEndOfData = true;
-                stmt.eofResults();
+                if( allowTdsRelease )
+                    stmt.releaseTds();
             }
             catch( TdsException e )
             {
@@ -756,16 +762,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         else if( rowIndex >= rowCount )
             throw new SQLException("No more results in ResultSet");
         return rowCache[rowIndex];
-    }
-
-    protected void finalize() throws Exception
-    {
-        try {
-            close();
-        }
-        catch (SQLException ex) {
-            ex.printStackTrace();
-        }
     }
 
     /**

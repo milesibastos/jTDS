@@ -38,13 +38,10 @@ package com.internetcds.jdbc.tds;
  * interface to work around circular references
  *
  * @author Craig Spannring
- * @version  $Id: ConnectionHelper.java,v 1.4 2002-08-30 14:13:51 alin_sinpalean Exp $
+ * @version  $Id: ConnectionHelper.java,v 1.5 2002-09-09 12:14:32 alin_sinpalean Exp $
  */
 public interface ConnectionHelper {
-   String ConnectionHelperCvsVersion = "$Id: ConnectionHelper.java,v 1.4 2002-08-30 14:13:51 alin_sinpalean Exp $";
-
-
-   void relinquish(Tds tds) throws java.sql.SQLException, TdsException;
+   String ConnectionHelperCvsVersion = "$Id: ConnectionHelper.java,v 1.5 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
    /**
     * Mark a statement as closed.

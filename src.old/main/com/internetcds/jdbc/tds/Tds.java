@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -4232,25 +4232,53 @@ public class Tds implements TdsDefinitions {
     }
 
     /**
-     * All procedures of the current transaction were subitted.
+     * All procedures of the current transaction were submitted.
      */
-    void commit()
+    void commit() throws SQLException
     {
-      proceduresOfTra.clear();
+        // MJH Move commit code from TdsStatement to Tds as this
+        // object represents the connection which the server uses
+        // to control the session.
+        String sql = "IF @@TRANCOUNT>0 COMMIT TRAN";
+        submitProcedure(sql, new SQLWarningChain());
+
+        proceduresOfTra.clear();
     }
 
     /**
      * All procedures of the current transaction were rolled back.
      */
-    void rollback()
+    void rollback() throws SQLException
     {
+        // MJH Move the rollback code from TdsStatement to Tds as this
+        // object represents the connection which the server uses
+        // to control the session.
+        // Also reinstate code to add back procedures after rollback as
+        // this does lead to performance benefits with EJB.
+        SQLException exception = null;
+        try
+        {
+            submitProcedure("IF @@TRANCOUNT>0 ROLLBACK TRAN", new SQLWarningChain());
+        }
+        catch( SQLException e )
+        {
+            exception = e;
+        }
+
+        // SAfe No need to reinstate procedures. This ONLY leads to performance
+        //      benefits if the statement is reused. The overhead is the same
+        //      (plus some memory that's freed and reallocated).
         Iterator it = proceduresOfTra.iterator();
-        while (it.hasNext()) {
-          Procedure p = (Procedure)it.next();
-          String sql  = p.getPreparedSqlString();
-          procedureCache.remove(p.rawQueryString);
+        while( it.hasNext() )
+        {
+            Procedure p = (Procedure)it.next();
+            String sql  = p.getPreparedSqlString();
+            procedureCache.remove(p.rawQueryString);
         }
         proceduresOfTra.clear();
+
+        if( exception != null )
+            throw exception;
     }
 
     void skipToEnd()

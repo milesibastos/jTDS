@@ -1,3 +1,47 @@
+Changes from jTDS 0.3.1
+=======================
+
+09/09/2002 - Alin Sinpalean
+
+ o Removed relinquish() from ConnectionHelper interface. I don't even know what
+   ConnectionHelper is for...
+ o Chenged Statement.closeResults() and ResultSet.close() by adding a parameter
+   which says if the Tds should be released or not, if possible.
+ o Modified a bit TdsStatement.skipToEnd() to also include a call to
+   closeResults(). This way, skipToEnd() will work regardless of the state the
+   Statement is currently in.
+
+09/08/2002 - Mike Hutchinson, Alin Sinpalean
+
+ o Alin: First of all I have to thank Mike for the ideas (these were all his)
+   and the patch he sent me. I took the liberty of changing them as I saw fit
+   (there were some small issues, but all in all the ideas are simply great).
+ o Moved the logic for commit/rollback to Tds instead of TdsStatement. This way
+   it's possible to not rollback a Tds when the Statement is closed (which, as
+   Mike noted, is wrong).
+ o TdsConnection.close now rolls back explicitly all Tds objects prior to
+   closing them (this was done until now by TdsStatement.close(), which was
+   wrong).
+ o TdsConnection.commitOrRollback calls directly the commit() and rollback()
+   methods of Tds instead of TdsStatement, due to the changes above.
+ o PreparedStatement_base.execute() only adds the newly created stored
+   procedure to tds.proceduresOfTra if the Connection is not in autoCommit
+   mode.
+ o TdsStatement.releaseTds() releases the Tds even if in manual commit mode.
+   This is possible because we're no longer commiting Statements but the Tds
+   connections themselves.
+ o TdsStatement.close() no longer calls rollback(). This was wrong.
+ o TdsStatement.close() only called Connection.markAsClosed(this) if actTds was
+   not null (which was ok considering the way jTDS worked until now). However,
+   since a TdsStatement can now release the Tds even when in manual commit mode
+   markAsClosed always has to be called. Even if this is sometimes redundant it
+   ensures Statements are removed from the Connection's list of active
+   Statements not causing any memory leakage (which, as I understood from Mike,
+   was pretty serious, leading to VM crashes).
+ o Removed TdsStatement.commit(), TdsStatement.rollback(),
+   TdsStatement.finalize() and TdsResultSet.finalize() as they were no longer
+   needed.
+
 ===============================================================================
 09/06/2002 - jTDS 0.3.1 released
 ===============================================================================
@@ -45,7 +89,7 @@ Changes from jTDS 0.3
 08/28/2002 - Alin Sinpalean
 
  o Modifications to the javadoc comments in a lot of places (warnings were
-   thrown by javasoc).
+   thrown by javadoc).
  o Beautification of TdsDefinitions.
  o TdsConnection.getMetaData() no longer allocates a Tds, because it didn't use
    it anyway. The Tds instance DatabaseMetaData contains is used only for calls

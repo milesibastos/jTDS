@@ -74,7 +74,7 @@ import java.util.Calendar;
 public class CallableStatement_base
          extends com.internetcds.jdbc.tds.PreparedStatement_base
          implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.10 2002-09-03 19:57:47 justinsb Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.11 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -510,7 +510,7 @@ public class CallableStatement_base
     {
         boolean result;
 
-        closeResults();
+        closeResults(false);
         updateCount = -2;
         lastOutParam = -1;
 
@@ -904,284 +904,283 @@ public class CallableStatement_base
     {
         NotImplemented();
     }
-    
+
     public void registerOutParameter(String str, int param, int param2) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void registerOutParameter(String str, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public java.sql.Array getArray(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.math.BigDecimal getBigDecimal(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Blob getBlob(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public boolean getBoolean(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return false;
     }
-    
+
     public byte getByte(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return 0;
     }
-    
+
     public byte[] getBytes(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Clob getClob(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Date getDate(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Date getDate(String str, java.util.Calendar calendar) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public double getDouble(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return 0;
     }
-    
+
     public float getFloat(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return 0;
     }
-    
+
     public int getInt(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return 0;
     }
-    
+
     public long getLong(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return 0;
     }
-    
+
     public Object getObject(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public Object getObject(String str, java.util.Map map) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Ref getRef(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public short getShort(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return 0;
     }
-    
+
     public String getString(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Time getTime(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Time getTime(String str, java.util.Calendar calendar) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Timestamp getTimestamp(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.sql.Timestamp getTimestamp(String str, java.util.Calendar calendar) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.net.URL getURL(int param) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public java.net.URL getURL(String str) throws java.sql.SQLException
     {
         NotImplemented();
         return null;
     }
-    
+
     public void setAsciiStream(String str, java.io.InputStream inputStream, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setBigDecimal(String str, java.math.BigDecimal bigDecimal) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setBinaryStream(String str, java.io.InputStream inputStream, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setBoolean(String str, boolean param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setByte(String str, byte param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setBytes(String str, byte[] values) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setCharacterStream(String str, java.io.Reader reader, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setDate(String str, java.sql.Date date) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setDate(String str, java.sql.Date date, java.util.Calendar calendar) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setDouble(String str, double param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setFloat(String str, float param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setInt(String str, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setLong(String str, long param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setNull(String str, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setNull(String str, int param, String str2) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setObject(String str, Object obj) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setObject(String str, Object obj, int param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setObject(String str, Object obj, int param, int param3) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setShort(String str, short param) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setString(String str, String str1) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setTime(String str, java.sql.Time time) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setTime(String str, java.sql.Time time, java.util.Calendar calendar) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setTimestamp(String str, java.sql.Timestamp timestamp) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setTimestamp(String str, java.sql.Timestamp timestamp, java.util.Calendar calendar) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
+
     public void setURL(String str, java.net.URL url) throws java.sql.SQLException
     {
         NotImplemented();
     }
-    
 }

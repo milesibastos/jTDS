@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.20 2002-09-03 19:57:48 justinsb Exp $
+ * @version $Id: TdsStatement.java,v 1.21 2002-09-09 12:14:32 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.20 2002-09-03 19:57:48 justinsb Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.21 2002-09-09 12:14:32 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -113,9 +113,8 @@ public class TdsStatement implements java.sql.Statement
 
    protected void releaseTds() throws SQLException
    {
-      // If the connection is not in autocommit mode, don't free the Tds.
-      // If we do that, we won't be able to commit/rollback the statement.
-      if( actTds==null || !connection.getAutoCommit() )
+      // MJH remove test of autoCommit
+      if( actTds==null )
          return;
 
       // Don't free the Tds if there are any results left.
@@ -131,7 +130,7 @@ public class TdsStatement implements java.sql.Statement
       }
       catch (TdsException e)
       {
-         throw new SQLException("confusion in freeing Tds " + e);
+         throw new SQLException("Confusion in freeing Tds " + e);
       }
    }
 
@@ -139,18 +138,6 @@ public class TdsStatement implements java.sql.Statement
    {
       throw new SQLException("Not Implemented");
    }
-
-   protected void finalize()
-      throws Throwable
-   {
-      super.finalize();
-
-      if (actTds != null)
-      {
-         close();
-      }
-   }
-
 
    /**
     * Execute an SQL statement that returns a single <code>ResultSet</code>.
@@ -221,7 +208,7 @@ public class TdsStatement implements java.sql.Statement
       if (execute(sql))
       {
          startResultSet(actTds);
-         closeResults();
+         closeResults(true);
          throw new SQLException("executeUpdate can't return a result set");
       }
       else
@@ -232,7 +219,7 @@ public class TdsStatement implements java.sql.Statement
       }
    }
 
-   protected void closeResults()
+   protected void closeResults(boolean allowTdsRelease)
       throws java.sql.SQLException
    {
       // If we have a ResultSet that was not opened by the user although a call
@@ -241,7 +228,7 @@ public class TdsStatement implements java.sql.Statement
          startResultSet(actTds);
       if (results != null)
       {
-         results.close();
+         results.close(allowTdsRelease);
          results = null;
       }
    }
@@ -256,47 +243,14 @@ public class TdsStatement implements java.sql.Statement
     * server response without processing it, but that requires some changes in
     * <code>TdsComm</code>, too.
     */
-   private void skipToEnd(Tds tds)
+   protected void skipToEnd()
       throws java.sql.SQLException
    {
-      while( getMoreResultsImpl(tds, false) || updateCount!=-1 );
-   }
-
-   public void commit()
-      throws java.sql.SQLException, java.io.IOException, com.internetcds.jdbc.tds.TdsUnknownPacketSubType, com.internetcds.jdbc.tds.TdsException
-   {
-      String sql = "IF @@TRANCOUNT > 0 COMMIT TRAN ";
-
-      if( actTds == null )
+      if( actTds != null )
       {
-         throw new SQLException("Statement is closed");
+         closeResults(false);
+         while( getMoreResultsImpl(actTds, false) || updateCount!=-1 );
       }
-
-      internalExecuteQuery(actTds,sql);
-      skipToEnd(actTds);
-      actTds.commit();
-      connection.freeTds(actTds);
-      actTds = null;
-   }
-
-   public void rollback()
-      throws java.sql.SQLException, java.io.IOException, com.internetcds.jdbc.tds.TdsUnknownPacketSubType, com.internetcds.jdbc.tds.TdsException
-   {
-      String sql = "IF @@TRANCOUNT > 0 ROLLBACK TRAN ";
-
-      if( actTds == null )
-      {
-         throw new SQLException("Statement is closed");
-      }
-
-      internalExecuteQuery(actTds,sql);
-      skipToEnd(actTds);
-      if( !actTds.autoCommit )
-         actTds.rollback();
-      else
-         actTds.commit();
-      connection.freeTds(actTds);
-      actTds = null;
    }
 
    /**
@@ -313,46 +267,24 @@ public class TdsStatement implements java.sql.Statement
     */
    public void close() throws SQLException
    {
-      // Already closed.
-      if( actTds == null )
-         return;
+      // MJH MarkAsClosed is always called to prevent memory leak.
+      connection.markAsClosed(this);
 
-      closeResults();
-
-      // now we need to relinquish the connection
+      // Tds not yet released.
       if( actTds != null )
-      {
-          // Rollback any pending transactions
-          try
-          {
-             rollback();
-          }
-          catch (com.internetcds.jdbc.tds.TdsUnknownPacketSubType e)
-          {
-             throw new SQLException("Unknown packet. \n" + e.getMessage());
-          }
-          catch (com.internetcds.jdbc.tds.TdsException e)
-          {
-             // XXX
-             // ignore this for now
-          }
-          catch (java.io.IOException e)
-          {
-             // XXX
-             // ignore this for now
-          }
-      }
+         try
+         {
+            // SAfe: Must do this to ensure no garbage is left behind
+            skipToEnd();
 
-      try
-      {
-         ((ConnectionHelper)connection).markAsClosed(this);
-      }
-      catch(TdsException e)
-      {
-        // System.out.println("XXX: " + e.getMessage());
-         // throw new SQLException(e.getMessage());
-        // already closed by connection close ??
-      }
+            // MJH Do not Rollback any pending transactions!
+            connection.freeTds(actTds);
+            actTds = null;
+         }
+         catch( com.internetcds.jdbc.tds.TdsException e )
+         {
+            throw new SQLException(e.toString());
+         }
    }
 
    /**
@@ -555,16 +487,13 @@ public class TdsStatement implements java.sql.Statement
     */
    public boolean execute(Tds tds, String sql) throws SQLException
    {
-      // Clear warnings before closing results, otherwise the last exception will be thrown.
-      clearWarnings();
-      closeResults();
-      // SAfe: Don't know if this is ok, but it's here
+      // Clear warnings, otherwise the last exception will be thrown.
       clearWarnings();
       updateCount = -1;
 
       // Consume all outstanding results. Otherwise it will either deadlock or
       // return results from the previous query.
-      skipToEnd(tds);
+      skipToEnd();
 
       try
       {
@@ -604,7 +533,7 @@ public class TdsStatement implements java.sql.Statement
 
          // There is no unopened result, we are just doing that
          unopenedResult = false;
-         closeResults();
+         closeResults(false);
 
          if (actTds.peek()==TdsDefinitions.TDS_DONEINPROC)
          {
@@ -722,7 +651,7 @@ public class TdsStatement implements java.sql.Statement
       }
 
       // Reset all internal variables (do it before checking for more results)
-      closeResults();
+      closeResults(false);
 
       if( !tds.moreResults() )
       {
@@ -1114,7 +1043,10 @@ public class TdsStatement implements java.sql.Statement
         {
             String query = actTds.sqlStatementForSettings(autoCommit, transactionIsolationLevel);
             if( query != null )
-                execute(actTds, query);
+            {
+                internalExecuteQuery(actTds, query);
+                skipToEnd();
+            }
         }
     }
 
@@ -1182,42 +1114,42 @@ public class TdsStatement implements java.sql.Statement
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public boolean execute(String str, String[] str1) throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public boolean execute(String str, int[] values) throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public int executeUpdate(String str, String[] str1) throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public int executeUpdate(String str, int[] values) throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public int executeUpdate(String str, int param) throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
    public int getResultSetHoldability() throws java.sql.SQLException
    {
         throw new SQLException("Not Implemented");
    }
-   
+
 }
 
 

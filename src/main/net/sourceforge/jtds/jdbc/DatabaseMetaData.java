@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.13 2004-01-28 22:04:56 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.14 2004-01-30 20:28:56 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.13 2004-01-28 22:04:56 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.14 2004-01-30 20:28:56 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -3152,44 +3152,28 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Returns the database major version.
      */
-    public int getDatabaseMajorVersion() throws SQLException
-    {
+    public int getDatabaseMajorVersion() throws SQLException {
         return tds.getDatabaseMajorVersion();
     }
 
     /**
      * Returns the database minor version.
      */
-    public int getDatabaseMinorVersion() throws SQLException
-    {
-        String version = tds.getDatabaseProductVersion();
-        int pos = version.indexOf('.');
-
-        try {
-            if (pos == -1 || pos == version.length() - 1) {
-                return 0;
-            } else {
-                return Integer.valueOf(version.substring(pos + 1)).intValue();
-            }
-        } catch (NumberFormatException e) {
-            throw new SQLException("Unable to determine database minor version: "
-                                   + e.getMessage());
-        }
+    public int getDatabaseMinorVersion() throws SQLException {
+        return tds.getDatabaseMinorVersion();
     }
 
     /**
      * Returns the JDBC major version.
      */
-    public int getJDBCMajorVersion() throws SQLException
-    {
+    public int getJDBCMajorVersion() throws SQLException {
         return 2;
     }
 
     /**
      * Returns the JDBC minor version.
      */
-    public int getJDBCMinorVersion() throws SQLException
-    {
+    public int getJDBCMinorVersion() throws SQLException {
         return 1;
     }
 
@@ -3220,8 +3204,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * NOTE: Since SQL Server / Sybase do not support LOB locators as Oracle does (AFAIK);
      * this method always returns <code>true</code>.
      */
-    public boolean locatorsUpdateCopy() throws SQLException
-    {
+    public boolean locatorsUpdateCopy() throws SQLException {
         return true;
     }
 
@@ -3229,8 +3212,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * Returns <code>true</code> if getting auto-generated keys is supported after a
      * statment is executed; returns <code>false</code> otherwise
      */
-    public boolean supportsGetGeneratedKeys() throws SQLException
-    {
+    public boolean supportsGetGeneratedKeys() throws SQLException {
         return false;
     }
 

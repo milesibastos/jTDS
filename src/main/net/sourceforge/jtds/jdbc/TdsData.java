@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.42 2005-02-24 12:56:47 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.43 2005-02-27 14:47:19 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -890,8 +890,8 @@ public class TdsData {
     /**
      * Retrieve the signed status of the column.
      *
-     * @param ci The column meta data.
-     * @return <code>boolean</code> true if the column is a signed numeric.
+     * @param ci the column meta data
+     * @return <code>true</code> if the column is a signed numeric.
      */
     static boolean isSigned(ColInfo ci) {
         int type = ci.tdsType;
@@ -908,10 +908,11 @@ public class TdsData {
 
     /**
      * Retrieve the collation status of the column.
+     * <p/>
+     * TDS 8.0 character columns include collation information.
      *
-     * <p>TDS8 character columns include collation information.
-     * @param ci The column meta data.
-     * @return <code>boolean</code> true if the column requires collation data.
+     * @param ci the column meta data
+     * @return <code>true</code> if the column requires collation data.
      */
     static boolean isCollation(ColInfo ci) {
         int type = ci.tdsType;
@@ -944,8 +945,8 @@ public class TdsData {
     /**
      * Retrieve the searchable status of the column.
      *
-     * @param ci The column meta data.
-     * @return <code>boolean</code> true if the column is not a text or image type.
+     * @param ci the column meta data
+     * @return <code>true</code> if the column is not a text or image type.
      */
     static boolean isSearchable(ColInfo ci) {
         int type = ci.tdsType;
@@ -956,6 +957,34 @@ public class TdsData {
         }
 
         return types[type].size != -4;
+    }
+
+    /**
+     * Determines whether the column is Unicode encoded.
+     *
+     * @param ci the column meta data
+     * @return <code>true</code> if the column is Unicode encoded
+     */
+    static boolean isUnicode(ColInfo ci) {
+        int type = ci.tdsType;
+
+        if (type < 0 || type > 255 || types[type] == null) {
+            throw new IllegalArgumentException("TDS data type " + type
+                    + " invalid");
+        }
+
+        switch (type) {
+            case SYBNVARCHAR:
+            case SYBNTEXT:
+            case XSYBNCHAR:
+            case XSYBNVARCHAR:
+            case XSYBCHAR:     // Not always
+            case SYBVARIANT:   // Not always
+                return true;
+
+            default:
+                return false;
+        }
     }
 
     /**

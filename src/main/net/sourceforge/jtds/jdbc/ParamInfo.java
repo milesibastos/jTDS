@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.13 2005-01-06 15:45:06 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.14 2005-02-27 14:47:17 alin_sinpalean Exp $
  */
 class ParamInfo implements Cloneable {
     /** Flag as an input parameter. */
@@ -45,13 +45,13 @@ class ParamInfo implements Cloneable {
     /** JDBC type constant from java.sql.Types */
     int jdbcType = 0;
     /** Formal parameter name eg @P1 */
-    String name = null;
+    String name;
     /** SQL type name eg varchar(10) */
-    String sqlType = null;
+    String sqlType;
     /** Parameter offset in target SQL statement */
     int markerPos = -1;
     /** Current parameter value */
-    Object value = null;
+    Object value;
     /** Parameter decimal precision */
     int precision = -1;
     /** Parameter decimal scale */
@@ -59,29 +59,31 @@ class ParamInfo implements Cloneable {
     /** Length of InputStream */
     int length = -1;
     /** Parameter is an output parameter */
-    boolean isOutput = false;
+    boolean isOutput;
     /** Parameter is used as  SP return value */
-    boolean isRetVal = false;
+    boolean isRetVal;
     /** IN parameter has been set */
-    boolean isSet = false;
+    boolean isSet;
     /** Parameter should be sent as unicode */
-    boolean isUnicode = true;
+    boolean isUnicode;
     /** TDS 8 Collation string. */
-    byte collation[] = null;
+    byte collation[];
     /** Character set descriptor (if different from default) */
     CharsetInfo charsetInfo;
     /** OUT parameter value is set.*/
-    boolean isSetOut = false;
+    boolean isSetOut;
     /** OUT Parameter value. */
-    Object outValue = null;
+    Object outValue;
 
     /**
      * Construct a parameter with parameter marker offset.
      *
-     * @param pos the offset of the ? symbol in the target SQL string
+     * @param pos       the offset of the ? symbol in the target SQL string
+     * @param isUnicode <code>true</code> if the parameter is Unicode encoded
      */
-    ParamInfo(int pos) {
+    ParamInfo(int pos, boolean isUnicode) {
         markerPos = pos;
+        this.isUnicode = isUnicode;
     }
 
     /**
@@ -124,6 +126,7 @@ class ParamInfo implements Cloneable {
         this.sqlType   = ci.sqlType;
         this.collation = ci.collation;
         this.charsetInfo = ci.charsetInfo;
+        this.isUnicode = TdsData.isUnicode(ci);
         this.isSet     = true;
         this.value     = value;
         this.length    = length;

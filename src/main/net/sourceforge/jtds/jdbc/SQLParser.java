@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.18 2005-02-27 12:33:45 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.19 2005-02-27 14:47:17 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -98,7 +98,7 @@ class SQLParser {
 
             if (c == '?') {
                 // param marker embedded in escape
-                ParamInfo pi = new ParamInfo(d);
+                ParamInfo pi = new ParamInfo(d, connection.isUseUnicode());
                 params.add(pi);
             }
 
@@ -152,7 +152,7 @@ class SQLParser {
      * @param pos The parameter marker position in the output buffer.
      */
     private void copyParam(String name, int pos) {
-        ParamInfo pi = new ParamInfo(pos);
+        ParamInfo pi = new ParamInfo(pos, connection.isUseUnicode());
         pi.name = name;
 
         if (pos >= 0) {

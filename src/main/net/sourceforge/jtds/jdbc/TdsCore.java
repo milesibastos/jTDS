@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.76 2005-02-25 23:21:41 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.77 2005-02-27 14:47:18 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -973,6 +973,10 @@ public class TdsCore {
                                     Integer.toString(i + 1)), "07000");
                         }
                         parameters[i].clearOutValue();
+                        // FIXME Should only set TDS type if not already set
+                        // but we might need to take a lot of care not to
+                        // exceed size limitations (e.g. write 11 chars in a
+                        // VARCHAR(10) )
                         TdsData.getNativeType(connection, parameters[i]);
                     }
                 }

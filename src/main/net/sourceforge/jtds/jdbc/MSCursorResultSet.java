@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.43 2005-02-27 11:01:08 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.44 2005-02-27 14:47:17 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -177,7 +177,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         if (pi == null) {
-            pi = new ParamInfo(-1);
+            pi = new ParamInfo(-1, TdsData.isUnicode(ci));
             pi.name = '@'+ci.realName;
             pi.collation = ci.collation;
             pi.charsetInfo = ci.charsetInfo;
@@ -627,7 +627,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             params[0] = PARAM_CURSOR_HANDLE;
             PARAM_OPTYPE.value = new Integer(2);
             params[1] = PARAM_OPTYPE;
-            params[2] = new ParamInfo(Types.VARCHAR, cursorName, ParamInfo.INPUT);
+            params[2] = new ParamInfo(Types.VARCHAR, cursorName, ParamInfo.UNICODE);
             tds.executeSQL(null, "sp_cursoroption", params, true, 0, -1, -1, true);
             tds.clearResponseQueue();
             if (tds.getReturnStatus().intValue() != 0) {

@@ -3,11 +3,8 @@ package net.sourceforge.jtds.test;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import java.util.Properties;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.util.Enumeration;
+import java.sql.*;
 
 import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 import net.sourceforge.jtds.jdbc.Driver;
@@ -169,29 +166,92 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
         }
     }
 
-    public void testForceCharset() throws Exception {
-        // Get properties, set charset to Cp1251 and Unicode parameters to false
+    /**
+     * Creates a <code>Connection</code>, overriding the default properties
+     * with the ones provided.
+     *
+     * @param override the overriding properties
+     * @return a <code>Connection</code> object
+     */
+    private Connection getConnectionOverrideProperties(Properties override)
+            throws Exception {
+        // Get properties, override with provided values
         Properties props = (Properties) TestBase.props.clone();
-        props.setProperty(Messages.get(Driver.CHARSET), "Cp1251");
-        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE),
-                "false");
+        for (Enumeration e = override.keys(); e.hasMoreElements();) {
+            String key = (String) e.nextElement();
+            props.setProperty(key, override.getProperty(key));
+        }
 
         // Obtain connection
         Class.forName(props.getProperty("driver"));
         String url = props.getProperty("url");
-        Connection con = DriverManager.getConnection(url, props);
+        return DriverManager.getConnection(url, props);
+    }
 
-        // Test both sending and retrieving of values
-        String value = "\u0410\u0411\u0412";
-        PreparedStatement pstmt = con.prepareStatement("select ?");
-        pstmt.setString(1, value);
-        ResultSet rs = pstmt.executeQuery();
-        assertTrue(rs.next());
-        assertEquals(value, rs.getString(1));
-        assertFalse(rs.next());
-        rs.close();
+    /**
+     * Test correct behavior of the <code>charset</code> property.
+     * Values should be stored and retrieved using the requested charset rather
+     * than the server's as long as Unicode is not used.
+     */
+    public void testForceCharset1() throws Exception {
+        // Set charset to Cp1251 and Unicode parameters to false
+        Properties props = new Properties();
+        props.setProperty(Messages.get(Driver.CHARSET), "Cp1251");
+        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE),
+                "false");
+        // Obtain connection
+        Connection con = getConnectionOverrideProperties(props);
 
-        pstmt.close();
-        con.close();
+        try {
+            // Test both sending and retrieving of values
+            String value = "\u0410\u0411\u0412";
+            PreparedStatement pstmt = con.prepareStatement("select ?");
+            pstmt.setString(1, value);
+            ResultSet rs = pstmt.executeQuery();
+            assertTrue(rs.next());
+            assertEquals(value, rs.getString(1));
+            assertFalse(rs.next());
+            rs.close();
+
+            pstmt.close();
+        } finally {
+            con.close();
+        }
+    }
+
+    /**
+     * Test correct behavior of the <code>charset</code> property.
+     * Stored procedure output parameters should be decoded using the specified
+     * charset rather than the server's as long as they are non-Unicode.
+     */
+    public void testForceCharset2() throws Exception {
+        // Set charset to Cp1251 and Unicode parameters to false
+        Properties props = new Properties();
+        props.setProperty(Messages.get(Driver.CHARSET), "Cp1251");
+        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE),
+                "false");
+        // Obtain connection
+        Connection con = getConnectionOverrideProperties(props);
+
+        try {
+            Statement stmt = con.createStatement();
+            assertEquals(0,
+                    stmt.executeUpdate("create procedure #testForceCharset2 "
+                    + "@inParam varchar(10), @outParam varchar(10) output as "
+                    + "set @outParam = @inParam"));
+            stmt.close();
+
+            // Test both sending and retrieving of parameters
+            String value = "\u0410\u0411\u0412";
+            CallableStatement cstmt =
+                    con.prepareCall("{call #testForceCharset2(?, ?)}");
+            cstmt.setString(1, value);
+            cstmt.registerOutParameter(2, Types.VARCHAR);
+            assertEquals(0, cstmt.executeUpdate());
+            assertEquals(value, cstmt.getString(2));
+            cstmt.close();
+        } finally {
+            con.close();
+        }
     }
 }

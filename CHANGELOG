@@ -13,6 +13,8 @@ Changes from jTDS 1.0.2
  o Corrected a problem in SQLParser causing an error message with the wrong
    terminator value missing (i.e. ')' instead of '}' missing from
    "{call proc(?)").
+ o Corrected a problem with output parameters being defined as Unicode even
+   though sendStringParametersAsUnicode=false was specified.
 
 02/25/2005 - Alin Sinpalean
  o Added code to close the socket and release any data buffered at the socket

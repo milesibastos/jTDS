@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.38 2005-02-27 11:01:08 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.39 2005-02-27 14:47:17 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -695,7 +695,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 // by the user as we need to set a flag and null out the data.
                 ParamInfo[] params = new ParamInfo[parameters.length];
                 for (int i = 0; i < params.length; i++) {
-                    params[i] = new ParamInfo(parameters[i].markerPos);
+                    params[i] = new ParamInfo(parameters[i].markerPos, false);
                     params[i].isSet = true;
                 }
 

@@ -49,7 +49,7 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.13 2005-02-27 11:01:07 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.14 2005-02-27 14:47:17 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -699,11 +699,12 @@ public class CachedResultSet extends JtdsResultSet {
         colIndex--;
         ParamInfo pi;
         ColInfo ci = columns[colIndex];
+        boolean isUnicode = TdsData.isUnicode(ci);
 
         if (onInsertRow) {
             pi = insertRow[colIndex];
             if (pi == null) {
-                pi = new ParamInfo(-1);
+                pi = new ParamInfo(-1, isUnicode);
                 pi.collation = ci.collation;
                 pi.charsetInfo = ci.charsetInfo;
                 insertRow[colIndex] = pi;
@@ -714,7 +715,7 @@ public class CachedResultSet extends JtdsResultSet {
             }
             pi = updateRow[colIndex];
             if (pi == null) {
-                pi = new ParamInfo(-1);
+                pi = new ParamInfo(-1, isUnicode);
                 pi.collation = ci.collation;
                 pi.charsetInfo = ci.charsetInfo;
                 updateRow[colIndex] = pi;
@@ -729,11 +730,8 @@ public class CachedResultSet extends JtdsResultSet {
         } else {
             pi.value     = value;
             pi.length    = length;
-            pi.isSet     = true;
             pi.jdbcType  = jdbcType;
-            pi.isUnicode = ci.sqlType.equals("ntext") ||
-                           ci.sqlType.equals("nchar") ||
-                           ci.sqlType.equals("nvarchar");
+            pi.isSet     = true;
         }
     }
 

@@ -1,6 +1,10 @@
 Changes from jTDS 0.6
 ========================
 
+02/15/2004 - Brian Heineman
+ o Corrected bug in CallableStatement parsing where [ and " would cause the
+   procedure name to be parsed incorrectly.
+
 02/13/2004 - Brian Heineman
  o Minor cleanup of CallableStatement and refactoring of PreparedStatement
    procedure logic.

@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.12 2004-02-14 01:02:46 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.13 2004-02-16 03:12:20 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.12 2004-02-14 01:02:46 bheineman Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.13 2004-02-16 03:12:20 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -118,7 +118,11 @@ implements java.sql.CallableStatement {
         for (; i < length; i++) {
             char ch = rawQueryString.charAt(i);
 
-            if (Character.isLetterOrDigit(ch) || ch == '#' || ch == '?') {
+            if (Character.isLetterOrDigit(ch)
+                || ch == '#'                
+                || ch == '['
+                || ch == '"'
+                || ch == '?') {
                 break;
             }
         }
@@ -145,7 +149,12 @@ implements java.sql.CallableStatement {
         for (; i < length; i++) {
             char ch = rawQueryString.charAt(i);
 
-            if (!Character.isLetterOrDigit(ch) && ch != '#' && ch != '_' && ch != '.') {
+            if (!Character.isLetterOrDigit(ch)
+                && ch != '#'
+                && ch != '_'
+                && ch != '.'
+                && ch != ']'
+                && ch != '"') {
                 break;
             }
         }

@@ -35,7 +35,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.8 2004-08-06 23:10:44 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.9 2004-08-07 00:12:39 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -242,7 +242,7 @@ public class DriverUnitTest extends UnitTestBase {
 
 
     /**
-     * Class use to test {@link Driver#parseURL(String, Properties)}.
+     * Class used to test {@link Driver#parseURL(String, Properties)}.
      */
     public static class DefaultPropertiesTestLibrary_Driver_parseURL extends DefaultPropertiesTestLibrary {
 
@@ -289,7 +289,7 @@ public class DriverUnitTest extends UnitTestBase {
 
 
     /**
-     * Class use to test {@link Driver#getPropertyInfo(String, Properties)}.
+     * Class used to test {@link Driver#getPropertyInfo(String, Properties)}.
      */
     public static class DefaultPropertiesTestLibrary_Driver_getPropertyInfo extends DefaultPropertiesTestLibrary {
 

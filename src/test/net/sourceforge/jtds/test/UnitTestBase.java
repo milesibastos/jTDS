@@ -27,7 +27,7 @@ import java.lang.reflect.Constructor;
  * Base class for unit tests which do not connect to a database.
  * 
  * @author David D. Kilzer.
- * @version $Id: UnitTestBase.java,v 1.2 2004-08-01 17:56:41 bheineman Exp $
+ * @version $Id: UnitTestBase.java,v 1.3 2004-08-03 19:12:00 ddkilzer Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 
@@ -51,7 +51,13 @@ public abstract class UnitTestBase extends TestCase {
      */ 
     public static Object invokeConstructor(final Class klass, final Class[] classes, final Object[] objects) {
         try {
-            Constructor constructor = klass.getDeclaredConstructor(classes);
+            Constructor constructor;
+            try {
+                constructor = klass.getDeclaredConstructor(classes);
+            }
+            catch (NoSuchMethodException e) {
+                constructor = klass.getConstructor(classes);
+            }
             constructor.setAccessible(true);
             return constructor.newInstance(objects);
         }
@@ -83,7 +89,13 @@ public abstract class UnitTestBase extends TestCase {
             final Object instance, final String methodName, final Class[] classes, final Object[] objects) {
 
         try {
-            Method method = instance.getClass().getDeclaredMethod(methodName, classes);
+            Method method;
+            try {
+                method = instance.getClass().getDeclaredMethod(methodName, classes);
+            }
+            catch (NoSuchMethodException e) {
+                method = instance.getClass().getMethod(methodName, classes);
+            }
             method.setAccessible(true);
             return method.invoke(instance, objects);
         }
@@ -112,7 +124,13 @@ public abstract class UnitTestBase extends TestCase {
             final Class klass, final String methodName, final Class[] classes, final Object[] objects) {
 
         try {
-            Method method = klass.getDeclaredMethod(methodName, classes);
+            Method method;
+            try {
+                method = klass.getDeclaredMethod(methodName, classes);
+            }
+            catch (NoSuchMethodException e) {
+                method = klass.getMethod(methodName, classes);
+            }
             method.setAccessible(true);
             return method.invoke(klass, objects);
         }

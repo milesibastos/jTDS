@@ -2,6 +2,8 @@ Changes from jTDS 0.8-rc1
 =========================
 
 04/02/2004 - Brian Heineman
+ o Added support to TdsUtil for Blob and Clob data types to improve exception
+   reporting.
  o Cleaned up EncodingHelper in preperation for Clob stream support; removed
    initialization logic for Microsofts VM (which jTDS is no longer compatible
    with as it uses Java 2 classes).

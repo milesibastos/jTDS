@@ -611,7 +611,6 @@ public class SAfeTest extends DatabaseTestCase
      * finally the <code>ResultSet</code>).
      */
     public void testOutOfOrderClose0013() throws Exception {
-        Logger.setActive(true);
         Connection localConn = getConnection();
         Statement stmt = localConn.createStatement();
         stmt.execute("CREATE TABLE #SAfe0013(value VARCHAR(255) PRIMARY KEY)");
@@ -634,5 +633,79 @@ public class SAfeTest extends DatabaseTestCase
 
         // And finally, close the ResultSet
         rs.close();
+    }
+
+    /**
+     * Test cursor-based <code>ResultSet</code>s obtained from
+     * <code>PreparedStatement</code>s and <code>CallableStatement</code>s.
+     */
+    public void testPreparedAndCallableCursors0014() throws Exception {
+        Logger.setActive(true);
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("CREATE TABLE #SAfe0014(id INT PRIMARY KEY)");
+        stmt.executeUpdate("INSERT INTO #SAfe0014 VALUES (1)");
+        stmt.executeUpdate("CREATE PROCEDURE #sp_SAfe0014(@P1 INT, @P2 INT) AS "
+                                + "SELECT id, @P2 FROM #SAfe0014 WHERE id=@P1");
+        stmt.close();
+
+        PreparedStatement ps = con.prepareStatement("SELECT id FROM #SAfe0014",
+                                                    ResultSet.TYPE_SCROLL_SENSITIVE,
+                                                    ResultSet.CONCUR_UPDATABLE);
+        ResultSet resultSet = ps.executeQuery();
+        // No warnings
+        assertEquals(null, resultSet.getWarnings());
+        assertEquals(null, ps.getWarnings());
+        // Correct ResultSet
+        assertTrue(resultSet.next());
+        assertEquals(1, resultSet.getInt(1));
+        assertTrue(!resultSet.next());
+        // Correct meta data
+        ResultSetMetaData rsmd = resultSet.getMetaData();
+        assertEquals("id", rsmd.getColumnName(1));
+        assertEquals("#SAfe0014", rsmd.getTableName(1));
+        resultSet.close();
+        ps.close();
+
+        ps = con.prepareStatement("SELECT id, ? FROM #SAfe0014 WHERE id = ?",
+                                  ResultSet.TYPE_SCROLL_SENSITIVE,
+                                  ResultSet.CONCUR_UPDATABLE);
+        ps.setInt(1, 5);
+        ps.setInt(2, 1);
+        resultSet = ps.executeQuery();
+        // No warnings
+        assertEquals(null, resultSet.getWarnings());
+        assertEquals(null, ps.getWarnings());
+        // Correct ResultSet
+        assertTrue(resultSet.next());
+        assertEquals(1, resultSet.getInt(1));
+        assertEquals(5, resultSet.getInt(2));
+        assertTrue(!resultSet.next());
+        // Correct meta data
+        rsmd = resultSet.getMetaData();
+        assertEquals("id", rsmd.getColumnName(1));
+        assertEquals("#SAfe0014", rsmd.getTableName(1));
+        resultSet.close();
+        ps.close();
+
+        CallableStatement cs = con.prepareCall("{call #sp_SAfe0014(?,?)}",
+                                               ResultSet.TYPE_SCROLL_SENSITIVE,
+                                               ResultSet.CONCUR_UPDATABLE);
+        cs.setInt(1, 1);
+        cs.setInt(2, 3);
+        resultSet = cs.executeQuery();
+        // No warnings
+        assertEquals(null, resultSet.getWarnings());
+        assertEquals(null, cs.getWarnings());
+        // Correct ResultSet
+        assertTrue(resultSet.next());
+        assertEquals(1, resultSet.getInt(1));
+        assertEquals(3, resultSet.getInt(2));
+        assertTrue(!resultSet.next());
+        // Correct meta data
+        rsmd = resultSet.getMetaData();
+        assertEquals("id", rsmd.getColumnName(1));
+        assertEquals("#SAfe0014", rsmd.getTableName(1));
+        resultSet.close();
+        cs.close();
     }
 }

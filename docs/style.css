@@ -26,7 +26,8 @@ a.outer:hover
 body
 {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-size: 6px;
+    font-size: 9px;
+    color: white;
     background-color: #7190B3;
 }
 

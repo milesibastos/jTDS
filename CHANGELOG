@@ -1,3 +1,13 @@
+Changes from jTDS 0.7
+========================
+
+02/27/2004 - Alin Sinpalean
+ o Fixed the implementation of cursor-based ResultSets obtained from prepared
+   and callable statements with parameters. Initially I wrote no tests and I
+   just supposed it will work. Well, I was wrong.
+ o Wrote a test for the newly implemented functionality and it finally seems to
+   work.
+
 ===============================================================================
 02/26/2004 - jTDS 0.7 released
 ===============================================================================

@@ -486,12 +486,58 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         param[4].type = Types.INTEGER;
         param[4].isOutput = true;
 
-        if (procedureParams != null) {
-            param = new ParameterListItem[5+procedureParams.length];
+        // @todo Add return value handling for stored procedure calls
+        if (procedureParams != null && procedureParams.length != 0) {
+            StringBuffer buf = new StringBuffer(64);
+            buf.append("exec ").append(sql).append(' ');
+            for (int i = 0; ; ) {
+                if (procedureParams[i].formalName != null) {
+                    buf.append(procedureParams[i].formalName);
+                } else {
+                    buf.append("@P").append(i + 1);
+                }
+                // SAfe Doesn't actually work, because if the stored procedure
+                //      does anything else than the SELECT (even a RETURN or
+                //      SET) the sp_cursoropen will fail.
+                /*if (procedureParams[i].isOutput) {
+                    buf.append(" output");
+                }*/
+                if (++i == procedureParams.length) {
+                    break;
+                }
+                buf.append(',');
+            }
+            param[1].value = buf.toString();
+            param[2].value = new Integer(scrollOpt | 0x1000);
+
+            param = new ParameterListItem[6 + procedureParams.length];
             System.arraycopy(parameterList, 0, param, 0, 5);
 
-            for (int i=0; i<procedureParams.length; i++) {
-                param[5+i] = procedureParams[i];
+            buf.delete(0, buf.length());
+            // Parameter declarations
+            for (int i = 0; ; ) {
+                if (procedureParams[i].formalName == null) {
+                    buf.append("@P").append(i + 1);
+                } else {
+                    buf.append(procedureParams[i].formalName);
+                }
+                buf.append(' ').append(procedureParams[i].formalType);
+                if (++i == procedureParams.length) {
+                    break;
+                }
+                buf.append(',');
+            }
+            param[5] = new ParameterListItem();
+            param[5].isSet = true;
+            param[5].type = Types.LONGVARCHAR;
+            param[5].maxLength = Integer.MAX_VALUE;
+            // Use the same type as determined for the SQL query
+            param[5].formalType = param[1].formalType;
+            param[5].value = buf.toString();
+
+            // Parameter values
+            for (int i = 0; i < procedureParams.length; i++) {
+                param[6 + i] = procedureParams[i];
             }
         }
 

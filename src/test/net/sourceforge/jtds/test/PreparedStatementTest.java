@@ -135,6 +135,45 @@ extends TestBase
         rs.close();
     }
 
+    /**
+     * Test for [931090] ArrayIndexOutOfBoundsException in rollback()
+     */
+    public void testPreparedStatementRollback1() throws Exception {
+        try {
+            Statement stmt = con.createStatement();
+
+            stmt.execute("CREATE TABLE #psr1 (data BIT)");
+            stmt.close();
+
+            con.setAutoCommit(false);
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psr1 (data) VALUES (?)");
+
+            pstmt.setBoolean(1, true);
+            assertTrue(pstmt.executeUpdate() == 1);
+            pstmt.close();
+
+            con.rollback();
+
+            stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT data FROM #psr1");
+
+            assertTrue(!rs.next());
+
+            rs.close();
+
+            disconnect();
+
+            try {
+                con.rollback();
+                assertTrue(false);
+            } catch (Exception e) {
+                assertTrue(e instanceof SQLException);
+            }
+        } finally {
+            connect();
+        }
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

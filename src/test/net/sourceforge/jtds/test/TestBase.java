@@ -63,7 +63,7 @@ public class TestBase extends TestCase {
     }
 
 
-    private void disconnect()
+    protected void disconnect()
              throws Exception
     {
         if ( con != null ) {

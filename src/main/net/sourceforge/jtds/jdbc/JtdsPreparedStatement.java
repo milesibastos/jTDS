@@ -56,7 +56,7 @@ import java.lang.reflect.Constructor;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.2 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.3 2004-07-07 18:39:04 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -455,29 +455,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setObject(int parameterIndex, Object x) throws SQLException {
-        if (x == null) {
-            ParamInfo pi = getParameter(parameterIndex);
-
-            // Hope we can inherit the data type from a previous call
-            if (pi.jdbcType == 0) {
-                // Not previously set so send a null string
-                setParameter(parameterIndex, x, java.sql.Types.VARCHAR, 0, 0);
-            } else {
-                setParameter(parameterIndex, x, pi.jdbcType, pi.scale, 0);
-            }
-        } else {
-            if (x instanceof Clob) {
-                Clob clob = (Clob) x;
-
-                x = clob.getSubString(1, (int) clob.length());
-            } else if (x instanceof Blob) {
-                Blob blob = (Blob) x;
-
-                x = blob.getBytes(1, (int) blob.length());
-            }
-
-            setObject(parameterIndex, x, Support.getJdbcType(x));
-        }
+        setObject(parameterIndex, x, Support.getJdbcType(x));
     }
 
     public void setObject(int parameterIndex, Object x, int targetSqlType)

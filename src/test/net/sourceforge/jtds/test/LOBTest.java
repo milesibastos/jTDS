@@ -728,6 +728,9 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
+    /**
+     * Test for bug [985956] Cannot setObject(null) on image 
+     */
     public void testBlobSetNull4() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #blobsetnull4 (data IMAGE NULL)");
@@ -735,8 +738,8 @@ public class LOBTest extends TestBase {
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull4 (data) VALUES (?)");
 
-        // Test PreparedStatement.setObject(int,Object,int)
-        pstmt.setObject(1, null, Types.BLOB);
+        // Test PreparedStatement.setObject(int,Object)
+        pstmt.setObject(1, null);
         assertTrue(pstmt.executeUpdate() == 1);
 
         pstmt.close();
@@ -766,7 +769,7 @@ public class LOBTest extends TestBase {
         stmt2.close();
         rs.close();
     }
-
+    
     public void testBlobSetNull5() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #blobsetnull5 (data IMAGE NULL)");
@@ -774,8 +777,8 @@ public class LOBTest extends TestBase {
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull5 (data) VALUES (?)");
 
-        // Test PreparedStatement.setNull()
-        pstmt.setNull(1, Types.BLOB);
+        // Test PreparedStatement.setObject(int,Object,int)
+        pstmt.setObject(1, null, Types.BLOB);
         assertTrue(pstmt.executeUpdate() == 1);
 
         pstmt.close();
@@ -808,47 +811,41 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull6() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull6 (id NUMERIC IDENTITY, data IMAGE, "
-                     + "CONSTRAINT pk_blobsetnull6 PRIMARY KEY CLUSTERED (id))");
+        stmt.execute("CREATE TABLE #blobsetnull6 (data IMAGE NULL)");
         stmt.close();
 
-        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull6");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull6 (data) VALUES (?)");
 
-        rs.moveToInsertRow();
+        // Test PreparedStatement.setNull()
+        pstmt.setNull(1, Types.BLOB);
+        assertTrue(pstmt.executeUpdate() == 1);
 
-        // Test ResultSet.updateBinaryStream()
-        rs.updateBinaryStream(2, null, 0);
-
-        rs.insertRow();
-
-        stmt.close();
-        rs.close();
+        pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull6");
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull6");
 
-        assertTrue(rs2.next());
+        assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs2.getBinaryStream(1) == null);
-        assertTrue(rs2.wasNull());
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs2.getBlob(1) == null);
-        assertTrue(rs2.wasNull());
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs2.getBytes(1) == null);
-        assertTrue(rs2.wasNull());
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
-        assertTrue(rs2.wasNull());
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
 
-        assertTrue(!rs2.next());
+        assertTrue(!rs.next());
         stmt2.close();
-        rs2.close();
+        rs.close();
     }
 
     public void testBlobSetNull7() throws Exception {
@@ -862,8 +859,8 @@ public class LOBTest extends TestBase {
 
         rs.moveToInsertRow();
 
-        // Test ResultSet.updateBlob()
-        rs.updateBlob(2, null);
+        // Test ResultSet.updateBinaryStream()
+        rs.updateBinaryStream(2, null, 0);
 
         rs.insertRow();
 
@@ -907,8 +904,8 @@ public class LOBTest extends TestBase {
 
         rs.moveToInsertRow();
 
-        // Test ResultSet.updateBytes()
-        rs.updateBytes(2, null);
+        // Test ResultSet.updateBlob()
+        rs.updateBlob(2, null);
 
         rs.insertRow();
 
@@ -952,8 +949,8 @@ public class LOBTest extends TestBase {
 
         rs.moveToInsertRow();
 
-        // Test ResultSet.updateObject()
-        rs.updateObject(2,  null);
+        // Test ResultSet.updateBytes()
+        rs.updateBytes(2, null);
 
         rs.insertRow();
 
@@ -997,8 +994,8 @@ public class LOBTest extends TestBase {
 
         rs.moveToInsertRow();
 
-        // Test ResultSet.updateNull()
-        rs.updateNull(2);
+        // Test ResultSet.updateObject()
+        rs.updateObject(2,  null);
 
         rs.insertRow();
 
@@ -1031,6 +1028,51 @@ public class LOBTest extends TestBase {
         rs2.close();
     }
 
+    public void testBlobSetNull11() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull11 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobsetnull11 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull11");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateNull()
+        rs.updateNull(2);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull11");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs2.getBinaryStream(1) == null);
+        assertTrue(rs2.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs2.getBlob(1) == null);
+        assertTrue(rs2.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs2.getBytes(1) == null);
+        assertTrue(rs2.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs2.getObject(1) == null);
+        assertTrue(rs2.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+    
     /*************************************************************************
      *************************************************************************
      **                          CLOB TESTS                                 **

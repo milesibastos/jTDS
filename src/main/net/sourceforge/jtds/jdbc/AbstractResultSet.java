@@ -16,10 +16,10 @@ import java.util.GregorianCalendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.7 2004-02-09 20:43:31 bheineman Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.8 2004-02-16 20:11:40 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.7 2004-02-09 20:43:31 bheineman Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.8 2004-02-16 20:11:40 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
 
@@ -250,11 +250,13 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public Object getObject(int index) throws SQLException {
-        if (currentRow() == null) {
+        PacketRowResult row = currentRow();
+
+        if (row == null) {
             throw new SQLException("No current row in the result set.");
         }
 
-        return currentRow().getObject(index);
+        return row.getObject(index);
     }
 
     public String getString(int index) throws SQLException {

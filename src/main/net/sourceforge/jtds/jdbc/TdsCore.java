@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.51 2004-11-29 16:33:56 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.52 2004-12-01 15:37:19 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -74,7 +74,7 @@ public class TdsCore {
         /** The dynamic parameters from the last TDS_DYNAMIC token. */
         ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
-        ColData[] dynamParamData;
+        Object[] dynamParamData;
 
         /**
          * Retrieve the update count status.
@@ -343,7 +343,7 @@ public class TdsCore {
     /** The array of column meta data objects for this result set. */
     private ColInfo[] columns;
     /** The array of column data objects in the current row. */
-    private ColData[] rowData;
+    private Object[] rowData;
     /** The array of table names associated with this result. */
     private TableMetaData[] tables;
     /** The descriptor object for the current TDS token. */
@@ -437,7 +437,7 @@ public class TdsCore {
      *
      * @return The row data as a <code>ColData[]</code>.
      */
-    ColData[] getRowData() {
+    Object[] getRowData() {
         return rowData;
     }
 
@@ -819,7 +819,7 @@ public class TdsCore {
                     executeSQL42(sql, procName, parameters, noMetaData);
                     break;
                 case Driver.TDS50:
-                    executeSQL50(sql, procName, parameters, noMetaData);
+                    executeSQL50(sql, procName, parameters);
                     break;
                 case Driver.TDS70:
                 case Driver.TDS80:
@@ -1090,7 +1090,7 @@ public class TdsCore {
         if (getMoreResults()) {
             if (getNextRow()) {
                 // FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
-                results = rowData[0].getValue();
+                results = rowData[0];
             }
         }
 
@@ -1126,7 +1126,7 @@ public class TdsCore {
 
         if (getMoreResults()) {
             if (getNextRow()) {
-                results = rowData[0].getValue();
+                results = rowData[0];
             }
         }
 
@@ -1185,7 +1185,7 @@ public class TdsCore {
         byte[] tmAddress = null;
         if (getMoreResults() && getNextRow()) {
             if (rowData.length == 1) {
-                Object x = rowData[0].getValue();
+                Object x = rowData[0];
                 if (x instanceof byte[]) {
                     tmAddress = (byte[])x;
                 }
@@ -1842,7 +1842,7 @@ public class TdsCore {
         }
         currentToken.previousToken  = TDS5_PARAMFMT2_TOKEN;
         currentToken.dynamParamInfo = params;
-        currentToken.dynamParamData = new ColData[paramCnt];
+        currentToken.dynamParamData = new Object[paramCnt];
     }
 
     /**
@@ -1857,7 +1857,7 @@ public class TdsCore {
          in.readInt(); // Packet length
          int colCnt   = in.readShort();
          this.columns = new ColInfo[colCnt];
-         this.rowData = new ColData[colCnt];
+         this.rowData = new Object[colCnt];
          this.tables  = null;
 
          for (int colNum = 0; colNum < colCnt; ++colNum) {
@@ -1953,7 +1953,7 @@ public class TdsCore {
         }
 
         this.columns = new ColInfo[colCnt];
-        this.rowData = new ColData[colCnt];
+        this.rowData = new Object[colCnt];
         this.tables = null;
 
         for (int i = 0; i < colCnt; i++) {
@@ -2014,7 +2014,7 @@ public class TdsCore {
 
         int colCnt  = colList.size();
         this.columns = (ColInfo[]) colList.toArray(new ColInfo[colCnt]);
-        this.rowData = new ColData[colCnt];
+        this.rowData = new Object[colCnt];
     }
 
     /**
@@ -2400,7 +2400,7 @@ public class TdsCore {
      */
     private void tdsRowToken() throws IOException, ProtocolException {
         for (int i = 0; i < columns.length; i++) {
-            rowData[i] =  new ColData(TdsData.readData(connection, in, columns[i], readTextMode), tdsVersion);
+            rowData[i] =  TdsData.readData(connection, in, columns[i], readTextMode);
         }
 
         endOfResults = false;
@@ -2427,12 +2427,12 @@ public class TdsCore {
 
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
-                new ColData(TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false), tdsVersion);
+                TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false);
             if (parameters != null) {
                 // Sybase 12+ this token used to set output parameter results
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {
-                        Object value = currentToken.dynamParamData[i].getValue();
+                        Object value = currentToken.dynamParamData[i];
                         if (value != null) {
                             parameters[nextParam].setOutValue(
                                 Support.convert(connection, value,
@@ -2731,7 +2731,7 @@ public class TdsCore {
         }
         currentToken.previousToken  = TDS5_PARAMFMT_TOKEN;
         currentToken.dynamParamInfo = params;
-        currentToken.dynamParamData = new ColData[paramCnt];
+        currentToken.dynamParamData = new Object[paramCnt];
     }
 
     /**
@@ -2775,7 +2775,7 @@ public class TdsCore {
         in.readShort(); // Packet length
         int colCnt = in.readShort();
         this.columns = new ColInfo[colCnt];
-        this.rowData = new ColData[colCnt];
+        this.rowData = new Object[colCnt];
         this.tables = null;
 
         for (int colNum = 0; colNum < colCnt; ++colNum) {
@@ -2920,13 +2920,11 @@ public class TdsCore {
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
-     * @param noMetaData Suppress meta data for cursor calls.
      * @throws SQLException
      */
     private void executeSQL50(String sql,
                               String procName,
-                              ParamInfo[] parameters,
-                              boolean noMetaData)
+                              ParamInfo[] parameters)
         throws IOException, SQLException {
         boolean haveParams    = parameters != null;
         boolean useParamNames = false;

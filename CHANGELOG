@@ -2,6 +2,8 @@ Changes from jTDS 0.9
 =========================
 
 12/01/2004 - Alin Sinpalean
+ o Applied patch [1076337] Elimination of ColData class. Thanks a lot, Mike for
+   all the effort!
  o Applied patch [1076383] ResultSetMetaData for more complex statements for
    SQL Server.
 

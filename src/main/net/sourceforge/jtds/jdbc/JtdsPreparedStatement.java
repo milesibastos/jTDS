@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.27 2004-12-01 13:51:52 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.28 2004-12-01 15:37:19 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -272,9 +272,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 if (x instanceof BigDecimal) {
                     x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
                 } else if (x instanceof Number) {
-                    f.setGroupingUsed(false);
-                    f.setMaximumFractionDigits(scale);
-                    x = Support.convert(this, f.format(x), targetSqlType, connection.getCharset());
+                    synchronized (f) {
+                        f.setGroupingUsed(false);
+                        f.setMaximumFractionDigits(scale);
+                        x = Support.convert(this, f.format(x), targetSqlType,
+                                connection.getCharset());
+                    }
                 }
             }
 

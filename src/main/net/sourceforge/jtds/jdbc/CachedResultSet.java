@@ -52,12 +52,12 @@ public class CachedResultSet extends JtdsResultSet {
     protected ArrayList rowData;
     /** Initial size for row array. */
     protected final static int INITIAL_ROW_COUNT = 1000;
-    /** Saved row data used to track changes. */
-    protected ColData[] savedRow;
-    /** Buffer row used for inserts. */
-    protected ColData[] insertRow;
     /** Indicates currently inserting. */
     protected boolean onInsertRow;
+    /** Buffer row used for inserts. */
+    protected ParamInfo[] insertRow;
+    /** The "update" row. */
+    protected ParamInfo[] updateRow;
     /** Indicates that result set is keyed. */
     protected boolean hasKeys;
     // FIXME Remember if the row was updated/deleted for each row in the ResultSet
@@ -121,6 +121,9 @@ public class CachedResultSet extends JtdsResultSet {
                 case java.sql.Types.SMALLINT:
                     ci.sqlType = "smallint";
                     break;
+                case java.sql.Types.BIT:
+                    ci.sqlType = "bit";
+                    break;
             }
             columns[i] = ci;
         }
@@ -138,7 +141,8 @@ public class CachedResultSet extends JtdsResultSet {
      * @throws SQLException
      */
     CachedResultSet(JtdsResultSet rs) throws SQLException {
-        super((JtdsStatement)rs.getStatement(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null, false);
+        super((JtdsStatement)rs.getStatement(), ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_UPDATABLE, null, false);
         this.columns       = rs.getColumns();
         this.columnCount   = getColumnCount(columns);
         this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
@@ -156,7 +160,7 @@ public class CachedResultSet extends JtdsResultSet {
      * @throws SQLException
      */
     CachedResultSet(JtdsStatement statement,
-            ColInfo columns[], ColData data[]) throws SQLException {
+            ColInfo columns[], Object data[]) throws SQLException {
         super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, null, false);
         this.columns       = columns;
         this.columnCount   = getColumnCount(columns);
@@ -192,11 +196,14 @@ public class CachedResultSet extends JtdsResultSet {
             throws SQLException {
         TdsCore tds = statement.getTds();
 
-        if (concurrency == ResultSet.CONCUR_UPDATABLE || resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+        if (concurrency == ResultSet.CONCUR_UPDATABLE ||
+            resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
             // User is requesting an updateable or sensitive result set
             // We need to see if the SQL statement is a select
             // that references only one underlying table.
-            if (procName == null || procName.startsWith("#jtds") || TdsCore.isPreparedProcedureName(procName)) {
+            if (procName == null ||
+                procName.startsWith("#jtds") ||
+                TdsCore.isPreparedProcedureName(procName)) {
                 // OK Should have an SQL select statement
                 // append " FOR BROWSE" to obtain table names
                 // NB. We can't use any jTDS temporary stored proc
@@ -212,8 +219,9 @@ public class CachedResultSet extends JtdsResultSet {
                         String tableName = null;
                         for (int i = 0; i < columns.length; i++) {
                             if (columns[i].tableName != null) {
-                                if (tableName != null && !tableName.equals(columns[i].tableName)) {
-                                // Too many table names
+                                if (tableName != null &&
+                                    !tableName.equals(columns[i].tableName)) {
+                                    // Too many table names
                                     columns = null;
                                     break;
                                 }
@@ -236,7 +244,9 @@ public class CachedResultSet extends JtdsResultSet {
                 }
             } // else a stored procedure so we can't discover table names
         }
-        if (columns != null && resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE && !isKeyed()) {
+        if (columns != null &&
+            resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE &&
+            !isKeyed()) {
             //
             // We have downgraded to scroll insensitive tell user
             //
@@ -288,7 +298,6 @@ public class CachedResultSet extends JtdsResultSet {
      */
     private boolean cursorFetch(int rowNum)
             throws SQLException {
-        savedRow = null;
         rowUpdated = false;
         if (rowsInResult == 0) {
             pos = POS_BEFORE_FIRST;
@@ -313,9 +322,10 @@ public class CachedResultSet extends JtdsResultSet {
             return false;
         }
         pos = rowNum;
-        currentRow = (ColData[])rowData.get(rowNum-1);
+        currentRow = (Object[])rowData.get(rowNum-1);
         rowDeleted = currentRow == null;
-        if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE && currentRow != null) {
+        if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE &&
+            currentRow != null) {
             refreshRow();
         }
         return true;
@@ -338,30 +348,23 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a cloned copy of the specifed ROW.
-     *
-     * @param row The row to copy.
-     */
-    private void saveRow(ColData[] row) {
-        savedRow = new ColData[row.length];
-        for (int i = 0; i < row.length; i++) {
-            savedRow[i] = (ColData) row[i].clone();
-        }
-    }
-
-    /**
      * Create a parameter object for an update, delete or insert statement.
      *
-     * @param pos  The substitution position of the parameter marker in the SQL.
-     * @param info The ColInfo column descriptor.
-     * @param col  The column data item.
+     * @param pos   the substitution position of the parameter marker in the SQL
+     * @param info  the ColInfo column descriptor
+     * @param value the column data item
      * @return The new parameter as a <code>ParamInfo</code> object.
      */
-    protected ParamInfo buildParameter(int pos, ColInfo info, ColData col)
+    protected ParamInfo buildParameter(int pos, ColInfo info, Object value)
             throws SQLException {
 
-        Object value  = col.getValue();
-        int    length = col.getLength();
+        int length = 0;
+        if (value instanceof String) {
+            length = ((String)value).length();
+        } else
+        if (value instanceof byte[]) {
+            length = ((byte[])value).length;
+        } else
         if (value instanceof BlobImpl) {
             BlobImpl blob = (BlobImpl)value;
             value   = blob.getBinaryStream();
@@ -387,24 +390,49 @@ public class CachedResultSet extends JtdsResultSet {
      * @param colIndex The index of the column in the row.
      * @param value The new column value.
      */
-    protected void setColValue(int colIndex, Object value, int length)
+    protected void setColValue(int colIndex, int jdbcType, Object value, int length)
             throws SQLException {
 
-        if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
+        super.setColValue(colIndex, jdbcType, value, length);
+
+        if (!onInsertRow && currentRow == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
+        colIndex--;
+        ParamInfo pi;
+        ColInfo ci = columns[colIndex];
 
-        ColData col;
         if (onInsertRow) {
-            col = insertRow[colIndex - 1];
-        } else {
-            if (savedRow == null) {
-                saveRow(currentRow);
+            pi = insertRow[colIndex];
+            if (pi == null) {
+                pi = new ParamInfo(-1);
+                insertRow[colIndex] = pi;
             }
-            col = currentRow[colIndex - 1];
+        } else {
+            if (updateRow == null) {
+                updateRow = new ParamInfo[columnCount];
+            }
+            pi = updateRow[colIndex];
+            if (pi == null) {
+                pi = new ParamInfo(-1);
+                updateRow[colIndex] = pi;
+            }
         }
-        col.setValue(value);
-        col.setLength(length);
+
+        if (value == null) {
+            pi.value    = null;
+            pi.length   = 0;
+            pi.jdbcType = ci.jdbcType;
+            pi.isSet    = true;
+        } else {
+            pi.value     = value;
+            pi.length    = length;
+            pi.isSet     = true;
+            pi.jdbcType  = jdbcType;
+            pi.isUnicode = ci.sqlType.equals("ntext") ||
+                           ci.sqlType.equals("nchar") ||
+                           ci.sqlType.equals("nvarchar");
+        }
     }
 
 //
@@ -434,10 +462,12 @@ public class CachedResultSet extends JtdsResultSet {
          if (onInsertRow) {
              throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
          }
-         if (savedRow != null) {
+         if (updateRow != null) {
              rowUpdated = false;
-             for (int i = 0; i < savedRow.length; i++) {
-                 currentRow[i] = (ColData) savedRow[i].clone();
+             for (int i = 0; i < updateRow.length; i++) {
+                 if (updateRow[i] != null) {
+                     updateRow[i].clearInValue();
+                 }
              }
          }
      }
@@ -491,7 +521,7 @@ public class CachedResultSet extends JtdsResultSet {
          sql.append(" WHERE ");
          int count = 0;
          for (int i = 0; i < columnCount; i++) {
-             if (currentRow[i].getValue() == null) {
+             if (currentRow[i] == null) {
                  if (count > 0) {
                      sql.append(" AND ");
                  }
@@ -541,98 +571,115 @@ public class CachedResultSet extends JtdsResultSet {
 
      public void insertRow() throws SQLException {
          checkOpen();
-         //
-         // If this is a local temporary result set just insert row into buffer
-         //
-         if (tempResultSet) {
-             rowData.add(insertRow);
-             rowsInResult++;
-             initialRowCnt++;
-             insertRow = newRow();
-             return;
-         }
 
          checkUpdateable();
 
          if (!onInsertRow) {
              throw new SQLException(Messages.get("error.resultset.notinsrow"), "24000");
          }
-         //
-         // Construct an SQL INSERT statement
-         //
-         StringBuffer sql = new StringBuffer(128);
-         String dbName    = columns[0].catalog;
-         String userName  = columns[0].schema;
-         String tableName = columns[0].tableName;
-         ArrayList params = new ArrayList();
-         sql.append("INSERT INTO ");
-         if (dbName != null) {
-             sql.append(dbName);
-             sql.append('.');
-             if (userName == null) {
+         if (!tempResultSet) {
+             //
+             // Construct an SQL INSERT statement
+             //
+             StringBuffer sql = new StringBuffer(128);
+             String dbName    = columns[0].catalog;
+             String userName  = columns[0].schema;
+             String tableName = columns[0].tableName;
+             ArrayList params = new ArrayList();
+             sql.append("INSERT INTO ");
+             if (dbName != null) {
+                 sql.append(dbName);
+                 sql.append('.');
+                 if (userName == null) {
+                     sql.append('.');
+                 }
+             }
+             if (userName != null) {
+                 sql.append(userName);
                  sql.append('.');
              }
-         }
-         if (userName != null) {
-             sql.append(userName);
-             sql.append('.');
-         }
-         sql.append(tableName);
-         //
-         // Create column list
-         //
-         sql.append(" (");
-         int count = 0;
-         for (int i = 0; i < columnCount; i++) {
-             if (insertRow[i].isUpdated()) {
-                 if (count > 0) {
-                     sql.append(", ");
+             sql.append(tableName);
+             int sqlLen = sql.length();
+             //
+             // Create column list
+             //
+             sql.append(" (");
+             int count = 0;
+             for (int i = 0; i < columnCount; i++) {
+                 if (insertRow[i] != null) {
+                     if (count > 0) {
+                         sql.append(", ");
+                     }
+                     sql.append(columns[i].realName);
+                     count++;
                  }
-                 sql.append(columns[i].realName);
-                 count++;
+             }
+             //
+             // Create new values list
+             //
+             sql.append(") VALUES(");
+             count = 0;
+             for (int i = 0; i < columnCount; i++) {
+                 if (insertRow[i] != null) {
+                     if (count > 0) {
+                         sql.append(", ");
+                     }
+                     sql.append("?");
+                     insertRow[i].markerPos = sql.length()-1;
+                     params.add(insertRow[i]);
+                     count++;
+                 }
+             }
+             sql.append(')');
+             if (count == 0) {
+                 // Empty insert
+                 sql.setLength(sqlLen);
+                 sql.append(" DEFAULT VALUES");
+             }
+             ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+             //
+             // execute the insert statement
+             //
+             TdsCore tds = statement.getTds();
+             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows());
+             int updateCount = 0;
+             while (!tds.isEndOfResponse()) {
+                 if (!tds.getMoreResults()) {
+                     if (tds.isUpdateCount()) {
+                         updateCount = tds.getUpdateCount();
+                     }
+                 }
+             }
+             tds.clearResponseQueue();
+             statement.getMessages().checkErrors();
+             if (updateCount < 1) {
+                 // No Insert. Probably will not get here as duplicate key etc
+                 // will have already been reported as an exception.
+                 throw new SQLException(Messages.get("error.resultset.insertfail"), "24000");
              }
          }
          //
-         // Create new values list
+         // Now insert copy of row into result set buffer
          //
-         sql.append(") VALUES(");
-         count = 0;
-         for (int i = 0; i < columnCount; i++) {
-             if (insertRow[i].isUpdated()) {
-                 if (count > 0) {
-                     sql.append(", ");
-                 }
-                 sql.append("?");
-                 params.add(buildParameter(sql.length()-1, columns[i], insertRow[i]));
-                 count++;
+         ConnectionJDBC2 con = (ConnectionJDBC2)statement.getConnection();
+         Object row[] = newRow();
+         for (int i = 0; i < insertRow.length; i++) {
+             if (insertRow[i] != null) {
+                 row[i] = Support.convert(con, insertRow[i].value,
+                                           columns[i].jdbcType, con.getCharset());
              }
          }
-         sql.append(')');
-         ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+         rowData.add(row);
+         rowsInResult++;
+         initialRowCnt++;
          //
-         // execute the insert statement
+         // Clear row data
          //
-         TdsCore tds = statement.getTds();
-         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows());
-         int updateCount = 0;
-         while (!tds.isEndOfResponse()) {
-             if (!tds.getMoreResults()) {
-                 if (tds.isUpdateCount()) {
-                     updateCount = tds.getUpdateCount();
-                 }
+         for (int i = 0; insertRow != null && i < insertRow.length; i++) {
+             if (insertRow[i] != null) {
+                 insertRow[i].clearInValue();
              }
          }
-         tds.clearResponseQueue();
-         statement.getMessages().checkErrors();
-         if (updateCount > 0) {
-             rowData.add(insertRow);
-             rowsInResult++;
-         } else {
-             // No Insert. Probably will not get here as duplicate key etc
-             // will have already been reported as an exception.
-             throw new SQLException(Messages.get("error.resultset.insertfail"), "24000");
-         }
-         insertRow = newRow();
      }
 
      public void moveToCurrentRow() throws SQLException {
@@ -646,7 +693,7 @@ public class CachedResultSet extends JtdsResultSet {
      public void moveToInsertRow() throws SQLException {
          checkOpen();
          checkUpdateable();
-         insertRow   = newRow();
+         insertRow   = new ParamInfo[columnCount];
          onInsertRow = true;
      }
 
@@ -659,11 +706,9 @@ public class CachedResultSet extends JtdsResultSet {
          //
          // If row is being updated discard updates now
          //
-         if (savedRow != null) {
+         if (concurrency == CONCUR_UPDATABLE) {
+             cancelRowUpdates();
              rowUpdated = false;
-             for (int i = 0; i < savedRow.length; i++) {
-                 currentRow[i] = (ColData) savedRow[i].clone();
-             }
          }
          //
          // If result set is keyed we can refresh the row data from the
@@ -703,7 +748,7 @@ public class CachedResultSet extends JtdsResultSet {
              int count = 0;
              for (int i = 0; i < columns.length; i++) {
                  if (columns[i].isKey) {
-                     if (currentRow[i].getValue() == null) {
+                     if (currentRow[i] == null) {
                          if (count > 0) {
                              sql.append(" AND ");
                          }
@@ -729,7 +774,7 @@ public class CachedResultSet extends JtdsResultSet {
              if (!tds.isEndOfResponse()) {
                  if (tds.getMoreResults() && tds.getNextRow()) {
                      // refresh the row data
-                     ColData col[] = tds.getRowData();
+                     Object col[] = tds.getRowData();
                      for (int i = 0; i < col.length; i++) {
                          currentRow[i] = col[i];
                      }
@@ -760,7 +805,7 @@ public class CachedResultSet extends JtdsResultSet {
              throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
          }
 
-         if (savedRow == null) {
+         if (updateRow == null) {
              // Nothing to update
              return;
          }
@@ -792,13 +837,14 @@ public class CachedResultSet extends JtdsResultSet {
          sql.append(" SET ");
          int count = 0;
          for (int i = 0; i < columnCount; i++) {
-             if (currentRow[i].isUpdated()) {
+             if (updateRow[i] != null) {
                  if (count > 0) {
                      sql.append(", ");
                  }
                  sql.append(columns[i].realName);
                  sql.append("=?");
-                 params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
+                 updateRow[i].markerPos = sql.length()-1;
+                 params.add(updateRow[i]);
                  count++;
              }
          }
@@ -808,7 +854,7 @@ public class CachedResultSet extends JtdsResultSet {
          sql.append(" WHERE ");
          count = 0;
          for (int i = 0; i < columnCount; i++) {
-             if (savedRow[i].getValue() == null) {
+             if (currentRow[i] == null) {
                  if (count > 0) {
                      sql.append(" AND ");
                  }
@@ -825,7 +871,7 @@ public class CachedResultSet extends JtdsResultSet {
                      sql.append(columns[i].realName);
                      sql.append("=?");
                      count++;
-                     params.add(buildParameter(sql.length()-1, columns[i], savedRow[i]));
+                     params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
                  }
              }
          }
@@ -846,11 +892,26 @@ public class CachedResultSet extends JtdsResultSet {
          tds.clearResponseQueue();
          statement.getMessages().checkErrors();
          rowUpdated = updateCount > 0;
-         savedRow = null;
+
          if (updateCount == 0) {
              // No update. Possibly row was changed on database by another user?
              throw new SQLException(Messages.get("error.resultset.updatefail"), "24000");
          }
+         if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+             // Make in memory copy reflect database update
+             // Could use refreshRow but this is much faster.
+             ConnectionJDBC2 con = (ConnectionJDBC2)statement.getConnection();
+             for (int i = 0; i < updateRow.length; i++) {
+                 if (updateRow[i] != null) {
+                     currentRow[i] = Support.convert(con, updateRow[i].value,
+                                                 columns[i].jdbcType, con.getCharset());
+                 }
+             }
+         }
+         //
+         // Clear update values
+         //
+         cancelRowUpdates();
      }
 
      public boolean first() throws SQLException {

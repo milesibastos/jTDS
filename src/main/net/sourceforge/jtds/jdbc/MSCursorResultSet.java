@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.32 2004-11-26 15:30:38 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.33 2004-12-01 15:37:19 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -106,7 +106,9 @@ public class MSCursorResultSet extends JtdsResultSet {
     /** Set when <code>moveToInsertRow()</code> was called. */
     private boolean onInsertRow = false;
     /** The "insert row". */
-    private ColData[] insertRow = null;
+    private ParamInfo[] insertRow = null;
+    /** The "update row". */
+    private ParamInfo[] updateRow = null;
 
     //
     // Fixed sp_XXX parameters
@@ -138,14 +140,6 @@ public class MSCursorResultSet extends JtdsResultSet {
     /** <code>sp_cursor</code> table parameter. */
     private final ParamInfo PARAM_TABLE = new ParamInfo(Types.VARCHAR, "", ParamInfo.UNICODE);
 
-
-    /**
-     * Parameters for columns, to avoid creating <code>ParamInfo</code>
-     * instances for each updated column on each <code>sp_cursor</code>
-     * operation.
-     */
-    private ParamInfo columnParams[];
-
     /**
      * Construct a cursor result set using Microsoft sp_cursorcreate etc.
      *
@@ -172,20 +166,51 @@ public class MSCursorResultSet extends JtdsResultSet {
      * @param colIndex The index of the column in the row.
      * @param value The new column value.
      */
-    protected void setColValue(int colIndex, Object value, int length)
+    protected void setColValue(int colIndex, int jdbcType, Object value, int length)
     throws SQLException {
 
-        if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
+        super.setColValue(colIndex, jdbcType, value, length);
+
+        if (!onInsertRow && currentRow == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
-        ColData col;
+        colIndex--;
+        ParamInfo pi;
+        ColInfo ci = columns[colIndex];
+
         if (onInsertRow) {
-            col = insertRow[colIndex - 1];
+            pi = insertRow[colIndex];
+            if (pi == null) {
+                pi = new ParamInfo(-1);
+                pi.name = '@'+ci.realName;
+                insertRow[colIndex] = pi;
+            }
         } else {
-            col = currentRow[colIndex - 1];
+            if (updateRow == null) {
+                updateRow = new ParamInfo[columnCount];
+            }
+            pi = updateRow[colIndex];
+            if (pi == null) {
+                pi = new ParamInfo(-1);
+                pi.name = '@'+ci.realName;
+                updateRow[colIndex] = pi;
+            }
         }
-        col.setValue(value);
-        col.setLength(length);
+
+        if (value == null) {
+            pi.value    = null;
+            pi.length   = 0;
+            pi.jdbcType = ci.jdbcType;
+            pi.isSet    = true;
+        } else {
+            pi.value     = value;
+            pi.length    = length;
+            pi.isSet     = true;
+            pi.jdbcType  = jdbcType;
+            pi.isUnicode = ci.sqlType.equals("ntext")
+                    || ci.sqlType.equals("nchar")
+                    || ci.sqlType.equals("nvarchar");
+        }
     }
 
     /**
@@ -195,19 +220,19 @@ public class MSCursorResultSet extends JtdsResultSet {
      * @return The column value as a <code>ColData</code> object.
      * @throws SQLException
      */
-    protected ColData getColumn(int index) throws SQLException {
+    protected Object getColumn(int index) throws SQLException {
         if (index < 1 || index > columnCount) {
             throw new SQLException(Messages.get("error.resultset.colindex",
                     Integer.toString(index)),
                     "07009");
         }
 
-        if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
+        if (onInsertRow || currentRow == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
-        ColData data = (onInsertRow) ? insertRow[index - 1] : currentRow[index - 1];
-        wasNull = data.isNull();
+        Object data = currentRow[index - 1];
+        wasNull = data == null;
 
         return data;
     }
@@ -714,7 +739,7 @@ public class MSCursorResultSet extends JtdsResultSet {
      * @param row    the row number to update
      * @throws SQLException
      */
-    private void cursor(Integer opType , ColData[] row) throws SQLException {
+    private void cursor(Integer opType , ParamInfo[] row) throws SQLException {
         TdsCore tds = statement.getTds();
 
         statement.clearWarnings();
@@ -753,35 +778,18 @@ public class MSCursorResultSet extends JtdsResultSet {
             // Name of the table to insert default values into (if necessary)
             String tableName = null;
 
-            if (columnParams == null) {
-                columnParams = new ParamInfo[colCnt];
-            }
-
             for (int i = 0; i < colCnt; i++) {
+                ParamInfo pi = row[i];
                 ColInfo col = columns[i];
-                ColData colData = row[i];
 
-                if (colData.isUpdated()) {
+                if (pi != null && pi.isSet) {
                     if (!col.isWriteable) {
                         // Column is read-only but was updated
                         throw new SQLException(Messages.get("error.resultset.insert",
                                 Integer.toString(i + 1), col.realName), "24000");
                     }
 
-                    if (columnParams[i] == null) {
-                        // If the parameter is null, create it
-                        columnParams[i] = new ParamInfo(col,
-                                '@' + col.realName,
-                                colData.getValue(),
-                                colData.getLength());
-                    } else {
-                        // Otherwise just update its value and length
-                        columnParams[i].value = colData.getValue();
-                        columnParams[i].length = colData.getLength();
-                    }
-                    param[crtCol] = columnParams[i];
-
-                    ++crtCol;
+                    param[crtCol++] = pi;
                 }
                 if (tableName == null && col.tableName != null) {
                     if (col.catalog != null || col.schema != null) {
@@ -825,19 +833,18 @@ public class MSCursorResultSet extends JtdsResultSet {
         tds.executeSQL(null, "sp_cursor", param, false, statement.getQueryTimeout(), -1);
         tds.clearResponseQueue();
 
-        if (columnParams != null) {
-            // Clean up the column parameter values, for garbage collection
-            for (int i = columnParams.length - 1; i >= 0; i--) {
-                ParamInfo col = columnParams[i];
-                if (col != null) {
-                    col.value = null;
-                    col.length = -1;
+        statement.getMessages().checkErrors();
+        retVal = tds.getReturnStatus();
+        //
+        // Allow row values to be garbage collected
+        //
+        if (row != null) {
+            for (int i = 0; i < row.length; i++) {
+                if (row[i] != null) {
+                    row[i].clearInValue();
                 }
             }
         }
-
-        statement.getMessages().checkErrors();
-        retVal = tds.getReturnStatus();
     }
 
     /**
@@ -903,7 +910,11 @@ public class MSCursorResultSet extends JtdsResultSet {
             throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
-        refreshRow();
+        for (int i = 0; updateRow != null && i < updateRow.length; i++) {
+            if (updateRow[i] != null) {
+                updateRow[i].clearInValue();
+            }
+        }
     }
 
     public void close() throws SQLException {
@@ -935,7 +946,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         // No need to re-fetch the row, just mark it as deleted
 //        cursorFetch(FETCH_REPEAT, 1);
         // Mark the row as deleted instead
-        currentRow[currentRow.length - 1].setValue(new Integer(SQL_ROW_DELETED));
+        currentRow[currentRow.length - 1] = new Integer(SQL_ROW_DELETED);
     }
 
     public void insertRow() throws SQLException {
@@ -954,8 +965,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         if (resultSetType == TYPE_SCROLL_SENSITIVE) {
             rowsInResult++;
         }
-
-        insertRow = newRow();
     }
 
     public void moveToCurrentRow() throws SQLException {
@@ -969,9 +978,10 @@ public class MSCursorResultSet extends JtdsResultSet {
     public void moveToInsertRow() throws SQLException {
         checkOpen();
         checkUpdateable();
-
+        if (insertRow == null) {
+            insertRow = new ParamInfo[columnCount];
+        }
         onInsertRow = true;
-        insertRow = newRow();
     }
 
     public void refreshRow() throws SQLException {
@@ -996,7 +1006,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
-        cursor(CURSOR_OP_UPDATE, currentRow);
+        cursor(CURSOR_OP_UPDATE, updateRow);
         // Update the number of rows and the cursor position
 //        cursorFetch(FETCH_INFO, 1);
         // SAfe On SQL Server own updates delete the row and a new row shows up
@@ -1008,7 +1018,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Don't reload the row, it's not necessary
 //        refreshRow();
         // Mark the row as deleted instead
-        currentRow[currentRow.length - 1].setValue(new Integer(SQL_ROW_DELETED));
+        currentRow[currentRow.length - 1] = new Integer(SQL_ROW_DELETED);
     }
 
     public boolean first() throws SQLException {
@@ -1084,9 +1094,9 @@ public class MSCursorResultSet extends JtdsResultSet {
     }
 
     private int getRowStat() throws SQLException {
-        ColData data = currentRow[columns.length - 1];
+        Object data = currentRow[columns.length - 1];
 
-        return((Integer)Support.convert(this, data.getValue(), Types.INTEGER, null)).intValue();
+        return((Integer)Support.convert(this, data, Types.INTEGER, null)).intValue();
     }
 
     public boolean absolute(int row) throws SQLException {

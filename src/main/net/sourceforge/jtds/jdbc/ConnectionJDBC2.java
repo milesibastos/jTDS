@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.50 2004-11-29 17:41:16 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.51 2004-12-01 15:37:19 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1234,9 +1234,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             if (baseTds.getMoreResults()) {
                 // This had better be the results from a xa_recover command
                 while (baseTds.getNextRow()) {
-                    ColData row[] = baseTds.getRowData();
-                    if (row.length == 1 && row[0].getValue() instanceof byte[]) {
-                        xids.add(row[0].getValue());
+                    Object row[] = baseTds.getRowData();
+                    if (row.length == 1 && row[0] instanceof byte[]) {
+                        xids.add(row[0]);
                     }
                 }
             }

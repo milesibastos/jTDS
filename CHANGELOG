@@ -1,6 +1,11 @@
 Changes from jTDS 0.9
 =========================
 
+11/10/2004 - David Kilzer
+ o Fixed case of 'props.tcpnodelay' in JtdsDataSource.getConnection() (two
+   unit tests were failing).
+ o Added test for 'tcpNoDelay' property to DefaultPropertiesTestLibrary.
+
 11/08/2004 - Brian Heineman
  o Added tcpNoDelay driver property; default is true.
 

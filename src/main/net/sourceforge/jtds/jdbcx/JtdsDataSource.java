@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.20 2004-11-08 20:14:06 bheineman Exp $
+ * @version $Id: JtdsDataSource.java,v 1.21 2004-11-10 22:46:13 ddkilzer Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -174,7 +174,7 @@ public class JtdsDataSource
         props.setProperty(Messages.get("prop.macaddress"), macAddress);
         props.setProperty(Messages.get("prop.preparesql"), prepareSql);
         props.setProperty(Messages.get("prop.packetsize"), packetSize);
-        props.setProperty(Messages.get("prop.tcpNoDelay"), tcpNoDelay);
+        props.setProperty(Messages.get("prop.tcpnodelay"), tcpNoDelay);
         props.setProperty(Messages.get("prop.user"), user);
         props.setProperty(Messages.get("prop.password"), password);
         props.setProperty(Messages.get("prop.logintimeout"), loginTimeout);
@@ -415,7 +415,7 @@ public class JtdsDataSource
     public void setTcpNoDelay(boolean tcpNoDelay) {
         this.tcpNoDelay = String.valueOf(tcpNoDelay);
     }
-    
+
     public void setPrepareSql(int prepareSql) {
         this.prepareSql = String.valueOf(prepareSql);
     }

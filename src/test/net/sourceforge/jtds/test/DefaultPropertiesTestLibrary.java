@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.11 2004-09-23 14:27:01 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.12 2004-11-10 22:46:19 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -289,6 +289,20 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String fieldName = "sendStringParametersAsUnicode";
         String messageKey = "prop.useunicode";
         String expectedValue = String.valueOf(DefaultProperties.USE_UNICODE);
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+
+    /**
+     * Test the <code>tcpNoDelay</code> property.
+     */
+    public void test_tcpNoDelay() {
+        String fieldName = "tcpNoDelay";
+        String messageKey = "prop.tcpnodelay";
+        String expectedValue = String.valueOf(DefaultProperties.TCP_NODELAY);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);

@@ -1,6 +1,10 @@
 Changes from jTDS 0.8.1
 =========================
 
+08/01/2004 - Brian Heineman
+ o Partial application of patch [997595] SQL 6.5 Test suite.; general test clean
+   up.
+
 07/30/2004 - Brian Heineman
  o Updated build process to correct bug [999702] LICENSE file not included in
    source distribution

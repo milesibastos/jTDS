@@ -1,6 +1,7 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
+import junit.framework.TestCase;
 
 /**
  * @created    March 17, 2001
@@ -8,6 +9,7 @@ import java.sql.*;
  */
 
 public class UpdateTest extends TestBase {
+
     public UpdateTest(String name) {
         super(name);
     }
@@ -17,7 +19,7 @@ public class UpdateTest extends TestBase {
 
         stmt.execute("CREATE TABLE #temp (pk INT PRIMARY KEY, f_string VARCHAR(30), f_float FLOAT)");
 
-        //populate in the traditional way
+        // populate in the traditional way
         for (int i = 0; i < 100; i++) {
             stmt.execute(
                 "INSERT INTO #temp "
@@ -29,14 +31,13 @@ public class UpdateTest extends TestBase {
 
         dump(stmt.executeQuery("SELECT Count(*) FROM #temp"));
 
-        // Navigate around
+        //Navigate around
         ResultSet rs = stmt.executeQuery("SELECT * FROM #temp");
 
         rs.first();
         rs.last();
         rs.first();
 
-        stmt.execute("DROP TABLE #temp");
         stmt.close();
     }
 

@@ -8,6 +8,7 @@ import java.sql.*;
  * @created    9 August 2001
  * @version    1.0
  */
+
 public class SanityTest extends TestBase {
     public SanityTest(String name) {
         super(name);
@@ -35,7 +36,7 @@ public class SanityTest extends TestBase {
 
         assertEquals("Expected an update count", false,
                      stmt.execute( "DECLARE cursor1 SCROLL CURSOR FOR"
-                                   + "\nSELECT * FROM #test"));
+                                   + "\nSELECT * FROM ##test"));
 
         showWarnings(stmt.getWarnings());
 
@@ -62,7 +63,7 @@ public class SanityTest extends TestBase {
         makeTestTables(stmt);
         makeObjects(stmt, 5);
 
-        ResultSet rs = stmt.executeQuery("Select * from #test order by 1");
+        ResultSet rs = stmt.executeQuery("Select * from ##test order by 1");
 
         // Move to last row (5)
         rs.last();
@@ -76,12 +77,14 @@ public class SanityTest extends TestBase {
         // Move before first row
         rs.beforeFirst();
         assertEquals(0, rs.getRow());
+
         try {
             rs.getInt(1);
             fail("There should be no current row.");
         } catch (SQLException ex) {
             // This is ok, there's no row
         }
+
         assertEquals(true, rs.isBeforeFirst());
         assertEquals(false, rs.isFirst());
         assertEquals(false, rs.isLast());
@@ -102,12 +105,14 @@ public class SanityTest extends TestBase {
         // Move after last row
         rs.afterLast();
         assertEquals(0, rs.getRow());
+
         try {
             rs.getInt(1);
             fail("There should be no current row.");
         } catch (SQLException ex) {
             // This is ok, there's no row
         }
+
         assertEquals(false, rs.isBeforeFirst());
         assertEquals(false, rs.isFirst());
         assertEquals(false, rs.isLast());
@@ -151,7 +156,7 @@ public class SanityTest extends TestBase {
         makeTestTables(stmt);
         makeObjects(stmt, 5);
 
-        ResultSet rs = stmt.executeQuery("Select * from #test");
+        ResultSet rs = stmt.executeQuery("Select * from ##test");
 
         while (rs.next());
 

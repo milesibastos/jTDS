@@ -1,26 +1,17 @@
+/*
+ * TestBase.java
+ *
+ * Created on 8. September 2001, 13:34
+ */
 package net.sourceforge.jtds.test;
-
 import java.io.*;
 import java.sql.*;
 
 import java.util.*;
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
-//
-// MJH - Changes made to work with new version of jTDS
-// Changed makeTestTables and makeObjects to use their own
-// statement objects rather than the one passed in.
-// This change is required because this version of jTDS does not
-// allow one to invoke say execut(sql) on a prepared or callable statement
-// only on a Statement object proper. This seems to be in line with all the
-// other drivers I have tested.
-//
-
 /**
- * TestBase.java
- *
- * Created on 8. September 2001, 13:34
- *
  * @author  builder
  * @version 1.0
  */
@@ -109,6 +100,7 @@ public abstract class TestBase extends TestCase {
 
     private void initLanguage(Connection con) throws SQLException {
         Statement stmt = con.createStatement();
+
         stmt.executeUpdate("set LANGUAGE 'us_english'");
         stmt.close();
     }
@@ -132,25 +124,35 @@ public abstract class TestBase extends TestCase {
     }
 
     protected void makeTestTables(Statement stmt) throws SQLException {
-        String sql = "CREATE TABLE #test ("
+        stmt = con.createStatement();
+        String sql = "CREATE TABLE ##test ("
                      + " f_int INT,"
                      + " f_varchar VARCHAR(255))";
-        stmt = con.createStatement();
-        stmt.execute(sql);
 
+        stmt.execute(sql);
+        stmt.close();
     }
 
     public void makeObjects(Statement stmt, int count) throws SQLException {
         stmt = con.createStatement();
-        stmt.execute("TRUNCATE TABLE #test");
+        stmt.execute("TRUNCATE TABLE ##test");
 
         for (int i = 0; i < count; i++) {
-            String sql = "INSERT INTO #test(f_int, f_varchar)"
+            String sql = "INSERT INTO ##test(f_int, f_varchar)"
                          + " VALUES (" + i + ", 'Row " + i + "')";
             stmt.execute(sql);
         }
+
+        stmt.close();
     }
-    
+
+    public void assertEquals(double value1, double value2) throws AssertionError {
+        if (value1 != value2) {
+            throw new AssertionFailedError("expected:<" + value1
+                                           + "> but was:<" + value2 + ">");
+        }
+    }
+
     public void compareInputStreams(InputStream is1, InputStream is2) throws IOException {
         try {
             if (is1 == null && is2 == null) {

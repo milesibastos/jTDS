@@ -13,7 +13,7 @@ public class PreparedStatementTest extends TestBase {
     }
 
     public void testPreparedStatement() throws Exception {
-        PreparedStatement pstmt = con.prepareStatement("SELECT * FROM #test");
+        PreparedStatement pstmt = con.prepareStatement("SELECT * FROM ##test");
 
         makeTestTables(pstmt);
         makeObjects(pstmt, 10);
@@ -31,10 +31,9 @@ public class PreparedStatementTest extends TestBase {
         makeObjects(stmt, 10);
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement(
-                                                      "SELECT * FROM #test",
-                                                      ResultSet.TYPE_SCROLL_SENSITIVE,
-                                                      ResultSet.CONCUR_READ_ONLY);
+        PreparedStatement pstmt = con.prepareStatement("SELECT * FROM ##test",
+                                                       ResultSet.TYPE_SCROLL_SENSITIVE,
+                                                       ResultSet.CONCUR_READ_ONLY);
 
         ResultSet rs = pstmt.executeQuery();
 
@@ -62,13 +61,13 @@ public class PreparedStatementTest extends TestBase {
         int count = 50;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #psbatch1 (f_int INT)");
+        stmt.execute("CREATE TABLE ##psbatch1 (f_int INT)");
         stmt.close();
 
         int sum = 0;
 
         con.setAutoCommit(false);
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psbatch1 (f_int) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psbatch1 (f_int) VALUES (?)");
 
         for (int i = 0; i < count; i++) {
             pstmt.setInt(1, i);
@@ -78,10 +77,10 @@ public class PreparedStatementTest extends TestBase {
 
         int[] results = pstmt.executeBatch();
 
-        assertTrue(results.length == count);
+        assertEquals(results.length, count);
 
         for (int i = 0; i < count; i++) {
-            assertTrue(results[i] == 1);
+            assertEquals(results[i], 1);
         }
 
         pstmt.close();
@@ -90,11 +89,11 @@ public class PreparedStatementTest extends TestBase {
         con.setAutoCommit(true);
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT SUM(f_int) FROM #psbatch1");
+        ResultSet rs = stmt2.executeQuery("SELECT SUM(f_int) FROM ##psbatch1");
 
         assertTrue(rs.next());
         System.out.println(rs.getInt(1));
-        assertTrue(rs.getInt(1) == sum);
+        assertEquals(rs.getInt(1), sum);
         stmt2.close();
         rs.close();
     }
@@ -106,20 +105,20 @@ public class PreparedStatementTest extends TestBase {
         String data = "New {order} plus {1} more";
         Statement stmt = con.createStatement();
 
-        stmt.execute("CREATE TABLE #psp1 (data VARCHAR(32))");
+        stmt.execute("CREATE TABLE ##psp1 (data VARCHAR(32))");
         stmt.close();
 
         stmt = con.createStatement();
-        stmt.execute("create procedure #sp_psp1 @data VARCHAR(32) as INSERT INTO #psp1 (data) VALUES(@data)");
+        stmt.execute("create procedure ##sp_psp1 @data VARCHAR(32) as INSERT INTO ##psp1 (data) VALUES(@data)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("{call #sp_psp1('" + data + "')}");
+        PreparedStatement pstmt = con.prepareStatement("{call ##sp_psp1('" + data + "')}");
 
         pstmt.execute();
         pstmt.close();
 
         stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psp1");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM ##psp1");
 
         assertTrue(rs.next());
 
@@ -136,20 +135,20 @@ public class PreparedStatementTest extends TestBase {
         try {
             Statement stmt = con.createStatement();
 
-            stmt.execute("CREATE TABLE #psr1 (data BIT)");
+            stmt.execute("CREATE TABLE ##psr1 (data BIT)");
             stmt.close();
 
             con.setAutoCommit(false);
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psr1 (data) VALUES (?)");
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psr1 (data) VALUES (?)");
 
             pstmt.setBoolean(1, true);
-            assertTrue(pstmt.executeUpdate() == 1);
+            assertEquals(pstmt.executeUpdate(), 1);
             pstmt.close();
 
             con.rollback();
 
             stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT data FROM #psr1");
+            ResultSet rs = stmt.executeQuery("SELECT data FROM ##psr1");
 
             assertTrue(!rs.next());
 
@@ -181,21 +180,21 @@ public class PreparedStatementTest extends TestBase {
         BigDecimal data = new BigDecimal(3.7D);
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #psso1 (data MONEY)");
+        stmt.execute("CREATE TABLE ##psso1 (data MONEY)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso1 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso1 (data) VALUES (?)");
 
         pstmt.setObject(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
         pstmt.close();
 
         stmt = con.createStatement();
 
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso1");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso1");
 
         assertTrue(rs.next());
-        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1));
         assertTrue(!rs.next());
         rs.close();
     }
@@ -207,21 +206,21 @@ public class PreparedStatementTest extends TestBase {
         BigDecimal data = new BigDecimal(3.7D);
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #psso2 (data MONEY)");
+        stmt.execute("CREATE TABLE ##psso2 (data MONEY)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso2 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso2 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.NUMERIC);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
         pstmt.close();
 
         stmt = con.createStatement();
 
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso2");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso2");
 
         assertTrue(rs.next());
-        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1));
         assertTrue(!rs.next());
         rs.close();
     }
@@ -233,21 +232,21 @@ public class PreparedStatementTest extends TestBase {
         BigDecimal data = new BigDecimal(3.7D);
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #psso3 (data MONEY)");
+        stmt.execute("CREATE TABLE ##psso3 (data MONEY)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso3 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso3 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.DECIMAL);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
         pstmt.close();
 
         stmt = con.createStatement();
 
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso3");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso3");
 
         assertTrue(rs.next());
-        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1));
         assertTrue(!rs.next());
         rs.close();
     }
@@ -259,21 +258,21 @@ public class PreparedStatementTest extends TestBase {
         BigDecimal data = new BigDecimal(3.7D);
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #psso4 (data MONEY)");
+        stmt.execute("CREATE TABLE ##psso4 (data MONEY)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso4 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso4 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.NUMERIC, 4);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
         pstmt.close();
 
         stmt = con.createStatement();
 
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso4");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso4");
 
         assertTrue(rs.next());
-        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1));
         assertTrue(!rs.next());
         rs.close();
     }
@@ -285,21 +284,21 @@ public class PreparedStatementTest extends TestBase {
         BigDecimal data = new BigDecimal(3.7D);
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #psso5 (data MONEY)");
+        stmt.execute("CREATE TABLE ##psso5 (data MONEY)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso5 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##psso5 (data) VALUES (?)");
 
         pstmt.setObject(1, data, Types.DECIMAL, 4);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
         pstmt.close();
 
         stmt = con.createStatement();
 
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso5");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso5");
 
         assertTrue(rs.next());
-        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1));
         assertTrue(!rs.next());
         rs.close();
     }
@@ -311,30 +310,30 @@ public class PreparedStatementTest extends TestBase {
     	int count = 500;
     	
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #updateCount1 (data INT)");
+        stmt.execute("CREATE TABLE ##updateCount1 (data INT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #updateCount1 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO ##updateCount1 (data) VALUES (?)");
 
         for (int i = 1; i <= count; i++) {
-        	pstmt.setInt(1, i);
-        	assertTrue(pstmt.executeUpdate() == 1);
+            pstmt.setInt(1, i);
+            assertEquals(pstmt.executeUpdate(), 1);
         }
 
         pstmt.close();
 
         stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM #updateCount1");
+        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM ##updateCount1");
 
         assertTrue(rs.next());
-        assertTrue(rs.getInt(1) == count);
+        assertEquals(rs.getInt(1), count);
         assertTrue(!rs.next());
         
         stmt.close();
         rs.close();
         
-        pstmt = con.prepareStatement("DELETE FROM #updateCount1");
-        assertTrue(pstmt.executeUpdate() == count);
+        pstmt = con.prepareStatement("DELETE FROM ##updateCount1");
+        assertEquals(pstmt.executeUpdate(), count);
         pstmt.close();
         
     }

@@ -51,7 +51,6 @@ public class Tds8Test extends DatabaseTestCase {
      * Test for [989963] BigInt becomes Numeric
      */
     public void testBigInt2() throws Exception {
-
         long data = 1;
 
         Statement stmt = con.createStatement();
@@ -99,6 +98,7 @@ public class Tds8Test extends DatabaseTestCase {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #VARTEST (id int, data sql_variant)");
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #VARTEST (id, data) VALUES (?, ?)");
+
         pstmt.setInt(1, 1);
         pstmt.setString(2, "TEST STRING");
         assertEquals("Insert 1 failed", pstmt.executeUpdate(), 1);

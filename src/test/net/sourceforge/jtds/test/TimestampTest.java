@@ -1,20 +1,12 @@
 package net.sourceforge.jtds.test;
 
-import java.sql.*;
 import java.math.BigDecimal;
-import net.sourceforge.jtds.util.Logger;
-import junit.framework.TestSuite;
-import java.util.*;
+import java.sql.*;
+import java.util.Calendar;
 
-//
-// MJH - Changes to work with the new version of jTDS
-// Changed testEscape to call Connection.nativeSQL() as the
-// EscapeProcessor class no longer exists.
-// Reversed the while clause in testOutputParams as it can loop as
-// the getUpdateCount should return -1.
-// Changed the error message checked for in testResultSet45 as this is
-// now standard between cursor and non cursor result sets.
-//
+import net.sourceforge.jtds.util.Logger;
+
+import junit.framework.TestSuite;
 
 /**
  * test getting timestamps from the database.
@@ -30,15 +22,14 @@ public class TimestampTest extends DatabaseTestCase {
 
         if (args.length > 0) {
             junit.framework.TestSuite s = new TestSuite();
-
             for (int i = 0; i < args.length; i++) {
-                s.addTest(new TimestampTest(args[i]));
+              s.addTest(new TimestampTest(args[i]));
             }
-
             junit.textui.TestRunner.run(s);
         } else {
             junit.textui.TestRunner.run(TimestampTest.class);
         }
+
         // new TimestampTest("test").testOutputParams();
     }
 
@@ -49,16 +40,18 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0000 "
-                           + "  (i  decimal(28,10) not null, "
-                           + "   s  char(10) not null) ");
+            + "  (i  decimal(28,10) not null, "
+            + "   s  char(10) not null) ");
 
         final int rowsToAdd = 20;
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             String sql = "insert into #t0000 values (" + i + ", 'row" + i + "')";
             count += stmt.executeUpdate(sql);
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         PreparedStatement pStmt = cx.prepareStatement("select i from #t0000 where i = ?");
 
@@ -67,7 +60,7 @@ public class TimestampTest extends DatabaseTestCase {
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
-        assertTrue(rs.getLong(1) == 7);
+        assertEquals(rs.getLong(1), 7);
         assertTrue("Expected no result set", !rs.next());
 
         pStmt.setLong(1, 8);
@@ -75,7 +68,7 @@ public class TimestampTest extends DatabaseTestCase {
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
-        assertTrue(rs.getLong(1) == 8);
+        assertEquals(rs.getLong(1), 8);
         assertTrue("Expected no result set", !rs.next());
     }
 
@@ -85,15 +78,15 @@ public class TimestampTest extends DatabaseTestCase {
         dropTable("#t0001");
 
         Statement stmt = cx.createStatement();
-        stmt.executeUpdate("create table #t0001             " +
-                           "  (t1 datetime not null,       " +
-                           "   t2 datetime null,           " +
-                           "   t3 smalldatetime not null,  " +
-                           "   t4 smalldatetime null)");
+        stmt.executeUpdate("create table #t0001             "
+                           + "  (t1 datetime not null,       "
+                           + "   t2 datetime null,           "
+                           + "   t3 smalldatetime not null,  "
+                           + "   t4 smalldatetime null)");
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0001 values (?, '1998-03-09 15:35:06.4',        " +
-                                                     "                          ?, '1998-03-09 15:35:00')");
+            "insert into #t0001 values (?, '1998-03-09 15:35:06.4',        "
+            + "                         ?, '1998-03-09 15:35:00')");
         Timestamp   t0 = Timestamp.valueOf("1998-03-09 15:35:06.4");
         Timestamp   t1 = Timestamp.valueOf("1998-03-09 15:35:00");
 
@@ -123,12 +116,12 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0004 "
-                           + "  (mytime  datetime not null, "
-                           + "   mytime2 datetime null,     "
-                           + "   mytime3 datetime null     )");
+            + "  (mytime  datetime not null, "
+            + "   mytime2 datetime null,     "
+            + "   mytime3 datetime null     )");
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0004 values ('1964-02-14 10:00:00.0', ?, ?)");
+            "insert into #t0004 values ('1964-02-14 10:00:00.0', ?, ?)");
 
         Timestamp   t0 = Timestamp.valueOf("1964-02-14 10:00:00.0");
         pStmt.setTimestamp(1, t0);
@@ -164,36 +157,37 @@ public class TimestampTest extends DatabaseTestCase {
 
     public void testEscape(String sql, String expected) throws Exception {
         String tmp = con.nativeSQL(sql);
+
         assertEquals(tmp, expected);
     }
 
     public void testEscapes0006() throws Exception {
         testEscape("select * from tmp where d={d 1999-09-19}",
-                   "select * from tmp where d='19990919'");
+            "select * from tmp where d='19990919'");
         testEscape("select * from tmp where d={d '1999-09-19'}",
-                   "select * from tmp where d='19990919'");
+            "select * from tmp where d='19990919'");
         testEscape("select * from tmp where t={t 12:34:00}",
-                   "select * from tmp where t='12:34:00'");
+            "select * from tmp where t='12:34:00'");
         testEscape("select * from tmp where ts={ts 1998-12-15 12:34:00.1234}",
-                   "select * from tmp where ts='19981215 12:34:00.123'");
+            "select * from tmp where ts='19981215 12:34:00.123'");
         testEscape("select * from tmp where ts={ts 1998-12-15 12:34:00}",
-                   "select * from tmp where ts='19981215 12:34:00.000'");
+            "select * from tmp where ts='19981215 12:34:00.000'");
         testEscape("select * from tmp where ts={ts 1998-12-15 12:34:00.1}",
-                   "select * from tmp where ts='19981215 12:34:00.100'");
+            "select * from tmp where ts='19981215 12:34:00.100'");
         testEscape("select * from tmp where ts={ts 1998-12-15 12:34:00}",
-                   "select * from tmp where ts='19981215 12:34:00.000'");
+            "select * from tmp where ts='19981215 12:34:00.000'");
         testEscape("select * from tmp where d={d 1999-09-19}",
-                   "select * from tmp where d='19990919'");
+            "select * from tmp where d='19990919'");
         testEscape("select * from tmp where a like '\\%%'",
-                   "select * from tmp where a like '\\%%'");
+            "select * from tmp where a like '\\%%'");
         testEscape("select * from tmp where a like 'b%%' {escape 'b'}",
-                   "select * from tmp where a like 'b%%' escape 'b'");
+            "select * from tmp where a like 'b%%' escape 'b'");
         testEscape("select * from tmp where a like 'bbb' {escape 'b'}",
-                   "select * from tmp where a like 'bbb' escape 'b'");
+            "select * from tmp where a like 'bbb' escape 'b'");
         testEscape("select * from tmp where a='{fn user}'",
-                   "select * from tmp where a='{fn user}'");
+            "select * from tmp where a='{fn user}'");
         testEscape("select * from tmp where a={fn user()}",
-                   "select * from tmp where a=user_name()");
+            "select * from tmp where a=user_name()");
     }
 
     public void testPreparedStatement0007() throws Exception {
@@ -203,8 +197,8 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0007 "
-                           + "  (i  integer  not null, "
-                           + "   s  char(10) not null) ");
+            + "  (i  integer  not null, "
+            + "   s  char(10) not null) ");
 
         final int rowsToAdd = 20;
         int count = 0;
@@ -215,7 +209,7 @@ public class TimestampTest extends DatabaseTestCase {
             count += stmt.executeUpdate(sql);
         }
 
-        assertTrue(count == rowsToAdd);
+        assertEquals(count, rowsToAdd);
 
         PreparedStatement pStmt = cx.prepareStatement("select s from #t0007 where i = ?");
 
@@ -243,31 +237,34 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0008              "
-                           + "  (i  integer  not null,      "
-                           + "   s  char(10) not null)      ");
+            + "  (i  integer  not null,      "
+            + "   s  char(10) not null)      ");
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0008 values (?, ?)");
+            "insert into #t0008 values (?, ?)");
 
         final int rowsToAdd = 8;
         final String theString = "abcdefghijklmnopqrstuvwxyz";
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             pStmt.setString(2, theString.substring(0, i));
 
             count += pStmt.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         pStmt.close();
 
         ResultSet rs = stmt.executeQuery("select s, i from #t0008");
         assertNotNull(rs);
 
         count = 0;
+
         while (rs.next()) {
             count++;
-            assertTrue(rs.getString(1).trim().length() == rs.getInt(2));
+            assertEquals(rs.getString(1).trim().length(), rs.getInt(2));
         }
         assertTrue(count == rowsToAdd);
     }
@@ -279,25 +276,27 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0009 "
-                           + "  (i  integer  not null,      "
-                           + "   s  char(10) not null)      ");
+            + "  (i  integer  not null,      "
+            + "   s  char(10) not null)      ");
 
         cx.setAutoCommit(false);
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0009 values (?, ?)");
+            "insert into #t0009 values (?, ?)");
 
         int rowsToAdd = 8;
         final String theString = "abcdefghijklmnopqrstuvwxyz";
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             pStmt.setString(2, theString.substring(0, i));
 
             count += pStmt.executeUpdate();
         }
+
         pStmt.close();
-        assertTrue(count == rowsToAdd);
+        assertEquals(count, rowsToAdd);
         cx.rollback();
 
         stmt = cx.createStatement();
@@ -305,24 +304,28 @@ public class TimestampTest extends DatabaseTestCase {
         assertNotNull(rs);
 
         count = 0;
+
         while (rs.next()) {
             count++;
-            assertTrue(rs.getString(1).trim().length() == rs.getInt(2));
+            assertEquals(rs.getString(1).trim().length(), rs.getInt(2));
         }
-        assertTrue(count == 0);
+
+        assertEquals(count, 0);
         cx.commit();
         stmt.close();
 
         pStmt = cx.prepareStatement("insert into #t0009 values (?, ?)");
         rowsToAdd = 6;
         count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             pStmt.setString(2, theString.substring(0, i));
 
             count += pStmt.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         cx.commit();
         pStmt.close();
 
@@ -330,11 +333,13 @@ public class TimestampTest extends DatabaseTestCase {
         rs = stmt.executeQuery("select s, i from #t0009");
 
         count = 0;
+
         while (rs.next()) {
             count++;
-            assertTrue(rs.getString(1).trim().length() == rs.getInt(2));
+            assertEquals(rs.getString(1).trim().length(), rs.getInt(2));
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         cx.commit();
         stmt.close();
         cx.setAutoCommit(true);
@@ -347,24 +352,26 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0010 "
-                           + "  (i  integer  not null,      "
-                           + "   s  char(10) not null)      ");
+            + "  (i  integer  not null,      "
+            + "   s  char(10) not null)      ");
 
         cx.setAutoCommit(false);
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0010 values (?, ?)");
+            "insert into #t0010 values (?, ?)");
 
         int rowsToAdd = 8;
         final String theString = "abcdefghijklmnopqrstuvwxyz";
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             pStmt.setString(2, theString.substring(0, i));
 
             count += pStmt.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         cx.rollback();
 
         stmt = cx.createStatement();
@@ -372,37 +379,48 @@ public class TimestampTest extends DatabaseTestCase {
         assertNotNull(rs);
 
         count = 0;
+
         while (rs.next()) {
             count++;
-            assertTrue(rs.getString(1).trim().length() == rs.getInt(2));
+            assertEquals(rs.getString(1).trim().length(), rs.getInt(2));
         }
-        assertTrue(count == 0);
+
+        assertEquals(count, 0);
         cx.commit();
 
         rowsToAdd = 6;
+
         for (int j = 1; j <= 2; j++) {
             count = 0;
+
             for (int i = 1; i <= rowsToAdd; i++) {
-                pStmt.setInt(1, i + ((j-1) * rowsToAdd));
+                pStmt.setInt(1, i + ((j - 1) * rowsToAdd));
                 pStmt.setString(2, theString.substring(0, i));
 
                 count += pStmt.executeUpdate();
             }
-            assertTrue(count == rowsToAdd);
+
+            assertEquals(count, rowsToAdd);
             cx.commit();
         }
 
         rs = stmt.executeQuery("select s, i from #t0010");
 
         count = 0;
+
         while (rs.next()) {
             count++;
+
             int i = rs.getInt(2);
-            if (i > rowsToAdd)
+
+            if (i > rowsToAdd) {
                 i -= rowsToAdd;
-            assertTrue(rs.getString(1).trim().length() == i);
+            }
+
+            assertEquals(rs.getString(1).trim().length(), i);
         }
-        assertTrue(count == (2 * rowsToAdd));
+
+        assertEquals(count, (2 * rowsToAdd));
         cx.commit();
         cx.setAutoCommit(true);
     }
@@ -414,8 +432,8 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0011 "
-                           + "  (mytime  datetime not null, "
-                           + "   mytime2 datetime null     )");
+            + "  (mytime  datetime not null, "
+            + "   mytime2 datetime null     )");
 
         ResultSet rs = stmt.executeQuery("select mytime, mytime2 from #t0011");
         assertNotNull(rs);
@@ -435,13 +453,13 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0012 "
-                           + "  (mytime  datetime not null, "
-                           + "   mytime2 datetime null     )");
+            + "  (mytime  datetime not null, "
+            + "   mytime2 datetime null     )");
 //		cx.close();
 
 //		cx = getConnection();
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "select mytime, mytime2 from #t0012");
+            "select mytime, mytime2 from #t0012");
 
         ResultSet rs = pStmt.executeQuery();
         assertNotNull(rs);
@@ -460,15 +478,15 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0013 "
-                           + "  (mytime  datetime not null, "
-                           + "   mytime2 datetime null     )");
+            + "  (mytime  datetime not null, "
+            + "   mytime2 datetime null     )");
 
         ResultSet rs1 = stmt.executeQuery("select mytime, mytime2 from #t0013");
         assertNotNull(rs1);
         assertTrue("Expected no result set", !rs1.next());
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "select mytime, mytime2 from #t0013");
+            "select mytime, mytime2 from #t0013");
         ResultSet rs2 = pStmt.executeQuery();
         assertNotNull(rs2);
         assertTrue("Expected no result set", !rs2.next());
@@ -483,42 +501,52 @@ public class TimestampTest extends DatabaseTestCase {
         stmt.executeUpdate("create table #t0014 (i integer not null)");
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0014 values (?)");
+            "insert into #t0014 values (?)");
 
         final int rowsToAdd = 100;
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             count += pStmt.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         pStmt.close();
 
         pStmt = cx.prepareStatement("select i from #t0014 for browse");
         ResultSet rs = pStmt.executeQuery();
         assertNotNull(rs);
         count = 0;
+
         while (rs.next()) {
             int n = rs.getInt("i");
+
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         pStmt.close();
 
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
         count = 0;
+
         while (rs.next()) {
             int n = rs.getInt("i");
+
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
         count = 0;
+
         while (rs.next() && count < 5) {
             int n = rs.getInt("i");
+
             count++;
         }
         assertTrue(count == 5);
@@ -526,11 +554,14 @@ public class TimestampTest extends DatabaseTestCase {
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
         count = 0;
+
         while (rs.next()) {
-            int   n = rs.getInt("i");
+            int n = rs.getInt("i");
+
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         stmt.close();
     }
 
@@ -541,49 +572,58 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0015 "
-                           + "  (i  integer  not null,      "
-                           + "   s  char(10) not null)      ");
+            + "  (i  integer  not null,      "
+            + "   s  char(10) not null)      ");
 
         PreparedStatement pStmt = cx.prepareStatement(
-                                                     "insert into #t0015 values (?, ?)");
+            "insert into #t0015 values (?, ?)");
 
         int rowsToAdd = 8;
         final String theString = "abcdefghijklmnopqrstuvwxyz";
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             pStmt.setString(2, theString.substring(0, i));
 
             count += pStmt.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         pStmt.close();
 
         stmt = cx.createStatement();
-        ResultSet rs = stmt.executeQuery("select s from #t0015 select i from #t0015");
+		stmt.execute("select s from #t0015 select i from #t0015");
+        ResultSet rs = stmt.getResultSet();
         assertNotNull(rs);
         count = 0;
+
         while (rs.next()) {
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         assertTrue(stmt.getMoreResults());
 
         rs = stmt.getResultSet();
         assertNotNull(rs);
         count = 0;
+
         while (rs.next()) {
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         rs = stmt.executeQuery("select i, s from #t0015");
         count = 0;
+
         while (rs.next()) {
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         cx.close();
     }
@@ -595,21 +635,23 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0016 "
-                           + "  (i  integer  not null,      "
-                           + "   s  char(10) not null)      ");
+            + "  (i  integer  not null,      "
+            + "   s  char(10) not null)      ");
 
         stmt = cx.createStatement();
 
         final int rowsToAdd = 20;
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             String sql = "insert into #t0016 values (" + i + ", 'row" + i + "')";
             count += stmt.executeUpdate(sql);
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         PreparedStatement   pStmt = cx.prepareStatement(
-                                                       "select s from #t0016 where i=? and s=?");
+            "select s from #t0016 where i=? and s=?");
 
         // see what happens if neither is set
         try {
@@ -617,11 +659,12 @@ public class TimestampTest extends DatabaseTestCase {
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue(
-                      (e.getMessage().equals("parameter #1 has not been set")
-                       || e.getMessage().equals("parameter #2 has not been set")));
+                (e.getMessage().equals("parameter #1 has not been set")
+                || e.getMessage().equals("parameter #2 has not been set")));
         }
 
         pStmt.clearParameters();
+
         try {
             pStmt.setInt(1, 7);
             pStmt.setString(2, "row7");
@@ -631,11 +674,12 @@ public class TimestampTest extends DatabaseTestCase {
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue(
-                      (e.getMessage().equals("parameter #1 has not been set")
-                       || e.getMessage().equals("parameter #2 has not been set")));
+                (e.getMessage().equals("parameter #1 has not been set")
+                || e.getMessage().equals("parameter #2 has not been set")));
         }
 
         pStmt.clearParameters();
+
         try {
             pStmt.setInt(1, 7);
             ResultSet rs = pStmt.executeQuery();
@@ -645,6 +689,7 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         pStmt.clearParameters();
+
         try {
             pStmt.setString(2, "row7");
             ResultSet rs = pStmt.executeQuery();
@@ -655,8 +700,7 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     Object[][] getDatatypes() {
-        return new Object[][]
-        {
+        return new Object[][] {
 /*			{ "binary(272)",
 
             "0x101112131415161718191a1b1c1d1e1f" +
@@ -707,35 +751,35 @@ public class TimestampTest extends DatabaseTestCase {
             0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
             } },
 */
-            { "float(6)",      "65.4321",                new BigDecimal("65.4321")},
-            { "binary(5)",     "0x1213141516",           new byte[] { 0x12, 0x13, 0x14, 0x15, 0x16}},
-            { "varbinary(4)",  "0x1718191A",             new byte[] { 0x17, 0x18, 0x19, 0x1A}},
-            { "varchar(8)",    "'12345678'",             new String("12345678")},
-            { "datetime",      "'19990815 21:29:59.01'", Timestamp.valueOf("1999-08-15 21:29:59.01")},
-            { "smalldatetime", "'19990215 20:45'",       Timestamp.valueOf("1999-02-15 20:45:00")},
-            { "float(6)",      "65.4321",                new Float(65.4321)/* new BigDecimal("65.4321") */},
-            { "float(14)",     "1.123456789",            new Double(1.123456789) /*new BigDecimal("1.123456789") */},
-            { "real",          "7654321.0",              new Double(7654321.0)},
-            { "int",           "4097",                   new Integer(4097)},
-            { "float(6)",      "65.4321",                new BigDecimal("65.4321")},
-            { "float(14)",     "1.123456789",            new BigDecimal("1.123456789")},
-            { "decimal(10,3)", "1234567.089",            new BigDecimal("1234567.089")},
-            { "numeric(5,4)",  "1.2345",                 new BigDecimal("1.2345")},
-            { "smallint",      "4094",                   new Short((short)4094)},
-            // { "tinyint",       "127",                    new Byte((byte)127) },
-            // { "tinyint",       "-128",                   new Byte((byte)-128) },
-            { "tinyint",       "127",                    new Byte((byte)127)},
-            { "tinyint",       "128",                    new Short((short)128)},
-            { "money",         "19.95",                  new BigDecimal("19.95")},
-            { "smallmoney",    "9.97",                   new BigDecimal("9.97")},
-            { "bit",           "1",                      Boolean.TRUE},
+            {"float(6)",      "65.4321",                new BigDecimal("65.4321")},
+            {"binary(5)",     "0x1213141516",           new byte[] { 0x12, 0x13, 0x14, 0x15, 0x16}},
+            {"varbinary(4)",  "0x1718191A",             new byte[] { 0x17, 0x18, 0x19, 0x1A}},
+            {"varchar(8)",    "'12345678'",             new String("12345678")},
+            {"datetime",      "'19990815 21:29:59.01'", Timestamp.valueOf("1999-08-15 21:29:59.01")},
+            {"smalldatetime", "'19990215 20:45'",       Timestamp.valueOf("1999-02-15 20:45:00")},
+            {"float(6)",      "65.4321",                new Float(65.4321)/* new BigDecimal("65.4321") */},
+            {"float(14)",     "1.123456789",            new Double(1.123456789) /*new BigDecimal("1.123456789") */},
+            {"real",          "7654321.0",              new Double(7654321.0)},
+            {"int",           "4097",                   new Integer(4097)},
+            {"float(6)",      "65.4321",                new BigDecimal("65.4321")},
+            {"float(14)",     "1.123456789",            new BigDecimal("1.123456789")},
+            {"decimal(10,3)", "1234567.089",            new BigDecimal("1234567.089")},
+            {"numeric(5,4)",  "1.2345",                 new BigDecimal("1.2345")},
+            {"smallint",      "4094",                   new Short((short) 4094)},
+            // {"tinyint",       "127",                    new Byte((byte) 127)},
+            // {"tinyint",       "-128",                   new Byte((byte) -128)},
+            {"tinyint",       "127",                    new Byte((byte) 127)},
+            {"tinyint",       "128",                    new Short((short) 128)},
+            {"money",         "19.95",                  new BigDecimal("19.95")},
+            {"smallmoney",    "9.97",                   new BigDecimal("9.97")},
+            {"bit",           "1",                      Boolean.TRUE},
 //			{ "text",          "'abcedefg'",             new String("abcdefg") },
 /*			{ "char(1000)",
               "'123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'",
                new String("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890") },
                            */
 //			{ "char(1000)",      "'1234567890'",           new String("1234567890") },
-            { "image",         "0x0a0a0b",               new byte[] { 0x0a, 0x0a, 0x0b}},
+//            { "image",         "0x0a0a0b",               new byte[] { 0x0a, 0x0a, 0x0b } },
 
         };
     }
@@ -745,36 +789,47 @@ public class TimestampTest extends DatabaseTestCase {
         dropProcedure("#jtds_outputTest");
 
         Object[][] datatypes = getDatatypes();
+
         for (int i = 0; i < datatypes.length; i++) {
             String valueToAssign;
             boolean bImage = datatypes[i][0].equals("image");
-            if (bImage)
+
+            if (bImage) {
                 valueToAssign = "";
-            else
+            } else {
                 valueToAssign = " = " + datatypes[i][1];
+            }
+
             String sql = "create procedure #jtds_outputTest "
-                         + "@a1 " + datatypes[i][0] + " = null out "
-                         + "as select @a1" + valueToAssign;
+                    + "@a1 " + datatypes[i][0] + " = null out "
+                    + "as select @a1" + valueToAssign;
             stmt.executeUpdate(sql);
 
             for (int pass = 0; (pass < 2 && !bImage) || pass < 1; pass++) {
                 CallableStatement cstmt = con.prepareCall("{call #jtds_outputTest(?)}");
 
                 int jtype = getType(datatypes[i][2]);
+
                 if (pass == 1)
                     cstmt.setObject(1, null, jtype, 10);
                 if (jtype == java.sql.Types.NUMERIC || jtype == java.sql.Types.DECIMAL) {
                     cstmt.registerOutParameter(1, jtype, 10);
-                    if (pass == 0)
+
+                    if (pass == 0) {
                         cstmt.setObject(1, datatypes[i][2], jtype, 10);
+                    }
                 } else if (jtype == java.sql.Types.VARCHAR) {
                     cstmt.registerOutParameter(1, jtype, 255);
-                    if (pass == 0)
+
+                    if (pass == 0) {
                         cstmt.setObject(1, datatypes[i][2]);
+                    }
                 } else {
                     cstmt.registerOutParameter(1, jtype);
-                    if (pass == 0)
+
+                    if (pass == 0) {
                         cstmt.setObject(1, datatypes[i][2]);
+                    }
                 }
 
                 assertEquals(bImage, cstmt.execute());
@@ -785,6 +840,7 @@ public class TimestampTest extends DatabaseTestCase {
                     assertTrue(compareBytes(cstmt.getBytes(1), (byte[]) datatypes[i][2]) == 0);
                 } else if (datatypes[i][2] instanceof Number) {
                     Number n = (Number) cstmt.getObject(1);
+
                     if (n != null) {
                         assertEquals("Failed on " + datatypes[i][0], n.doubleValue(),
                                      ((Number) datatypes[i][2]).doubleValue(), 0.001);
@@ -837,63 +893,69 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement  stmt    = cx.createStatement();
         stmt.executeUpdate("create table #t0020a ( " +
-                           "  i1   int not null,     " +
-                           "  s1   char(10) not null " +
-                           ")                        " +
-                           "");
+            "  i1   int not null,     " +
+            "  s1   char(10) not null " +
+            ")                        " +
+            "");
         stmt.executeUpdate("create table #t0020b ( " +
-                           "  i2a   int not null,     " +
-                           "  i2b   int not null,     " +
-                           "  s2   char(10) not null " +
-                           ")                        " +
-                           "");
+            "  i2a   int not null,     " +
+            "  i2b   int not null,     " +
+            "  s2   char(10) not null " +
+            ")                        " +
+            "");
         stmt.executeUpdate("create table #t0020c ( " +
-                           "  i3   int not null,     " +
-                           "  s3   char(10) not null " +
-                           ")                        " +
-                           "");
+            "  i3   int not null,     " +
+            "  s3   char(10) not null " +
+            ")                        " +
+            "");
 
         int nextB = 1;
         int nextC = 1;
+
         for (int i = 1; i < 50; i++) {
             stmt.executeUpdate("insert into #t0020a " +
-                               "  values(" + i + ", " +
-                               "         'row" + i + "') " +
-                               "");
+                "  values(" + i + ", " +
+                "         'row" + i + "') " +
+                "");
+
             for (int j = nextB; (nextB % 5) != 0; j++, nextB++) {
                 stmt.executeUpdate("insert into #t0020b " +
-                                   " values(" + i + ", " +
-                                   "        " + j + ", " +
-                                   "        'row" + i + "." + j + "' " +
-                                   "        )" +
-                                   "");
+                    " values(" + i + ", " +
+                    "        " + j + ", " +
+                    "        'row" + i + "." + j + "' " +
+                    "        )" +
+                    "");
+
                 for (int k = nextC; (nextC % 3) != 0; k++, nextC++) {
                     stmt.executeUpdate("insert into #t0020c " +
-                                       " values(" + j + ", " +
-                                       "        'row" + i + "." + j + "." + k + "' " +
-                                       "        )" +
-                                       "");
+                        " values(" + j + ", " +
+                        "        'row" + i + "." + j + "." + k + "' " +
+                        "        )" +
+                        "");
                 }
             }
         }
 
-        Statement         stmtA = cx.createStatement();
+        Statement stmtA = cx.createStatement();
         PreparedStatement stmtB = cx.prepareStatement(
-                                                     "select i2b, s2 from #t0020b where i2a=?");
+            "select i2b, s2 from #t0020b where i2a=?");
         PreparedStatement stmtC = cx.prepareStatement(
-                                                     "select s3 from #t0020c where i3=?");
+            "select s3 from #t0020c where i3=?");
 
         ResultSet rs1 = stmtA.executeQuery("select i1 from #t0020a");
         assertNotNull(rs1);
+
         while (rs1.next()) {
             int  i1 = rs1.getInt("i1");
             stmtB.setInt(1, rs1.getInt("i1"));
             ResultSet rs2 = stmtB.executeQuery();
             assertNotNull(rs2);
+
             while (rs2.next()) {
                 stmtC.setInt(1, rs2.getInt(1));
                 ResultSet rs3 = stmtC.executeQuery();
                 assertNotNull(rs3);
+
                 if (rs3.next()) {
                     // nop
                 }
@@ -902,14 +964,12 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testBlob0021() throws Exception {
-        byte smallarray[] =
-        {
+        byte smallarray[] = {
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10
         };
 
-        byte array1[] =
-        {
+        byte array1[] = {
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
@@ -949,38 +1009,39 @@ public class TimestampTest extends DatabaseTestCase {
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
         };
+
         String bigtext1 =
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "abcdefghijklmnop" +
-        "";
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "abcdefghijklmnop" +
+            "";
 
         Connection cx = getConnection();
         Statement stmt = cx.createStatement();
@@ -988,23 +1049,23 @@ public class TimestampTest extends DatabaseTestCase {
         dropTable("#t0021");
 
         stmt.executeUpdate(
-                          "create table #t0021 ( " +
-                          " mybinary         binary(16) not null, " +
-                          " myimage          image not null, " +
-                          " mynullimage      image null, " +
-                          " mytext           text not null, " +
-                          " mynulltext       text null) ");
+            "create table #t0021 ( " +
+            " mybinary         binary(16) not null, " +
+            " myimage          image not null, " +
+            " mynullimage      image null, " +
+            " mytext           text not null, " +
+            " mynulltext       text null) ");
 
         // Insert a row without nulls via a Statement
         PreparedStatement insert = cx.prepareStatement(
-                                                      "insert into #t0021(     " +
-                                                      " mybinary,             " +
-                                                      " myimage,              " +
-                                                      " mynullimage,          " +
-                                                      " mytext,               " +
-                                                      " mynulltext            " +
-                                                      ")                      " +
-                                                      "values(?, ?, ?, ?, ?)  ");
+            "insert into #t0021(     " +
+                " mybinary,             " +
+                " myimage,              " +
+                " mynullimage,          " +
+                " mytext,               " +
+                " mynulltext            " +
+                ")                      " +
+            "values(?, ?, ?, ?, ?)  ");
 
         insert.setBytes(1, smallarray);
         insert.setBytes(2, array1);
@@ -1013,7 +1074,7 @@ public class TimestampTest extends DatabaseTestCase {
         insert.setString(5, "defg" /* bigtext1 */);
 
         int count = insert.executeUpdate();
-        assertTrue(count == 1);
+        assertEquals(count, 1);
         insert.close();
 
         ResultSet rs = stmt.executeQuery("select * from #t0021");
@@ -1024,8 +1085,8 @@ public class TimestampTest extends DatabaseTestCase {
         byte[] a1 = rs.getBytes("myimage");
         byte[] a2 = rs.getBytes("mynullimage");
 
-        assertTrue(compareBytes(a1, array1) == 0);
-        assertTrue(compareBytes(a2, array1) == 0);
+        assertEquals(compareBytes(a1, array1), 0);
+        assertEquals(compareBytes(a2, array1), 0);
         cx.close();
     }
 
@@ -1037,33 +1098,37 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement  stmt    = cx.createStatement();
         stmt.executeUpdate("create table #t0022a "
-                           + "  (i   integer not null, "
-                           + "   str char(254) not null) ");
+            + "  (i   integer not null, "
+            + "   str char(254) not null) ");
 
         stmt.executeUpdate("create table #t0022b             "
-                           + "  (i   integer not null,      "
-                           + "   t   datetime not null)     ");
+            + "  (i   integer not null,      "
+            + "   t   datetime not null)     ");
 
         PreparedStatement  pStmtA = cx.prepareStatement(
-                                                       "insert into #t0022a values (?, ?)");
+            "insert into #t0022a values (?, ?)");
         PreparedStatement  pStmtB = cx.prepareStatement(
-                                                       "insert into #t0022b values (?, getdate())");
+            "insert into #t0022b values (?, getdate())");
 
-        final int rowsToAdd = 100;
+        final int rowsToAdd = 1000;
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmtA.setInt(1, i);
             String tmp = "";
+
             while (tmp.length() < 240) {
                 tmp = tmp + "row " + i + ". ";
             }
+
             pStmtA.setString(2, tmp);
             count += pStmtA.executeUpdate();
 
             pStmtB.setInt(1, i);
             pStmtB.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         Statement stmtA = cx.createStatement();
         Statement stmtB = cx.createStatement();
@@ -1071,25 +1136,26 @@ public class TimestampTest extends DatabaseTestCase {
         count = 0;
         ResultSet rsA = stmtA.executeQuery("select * from #t0022a");
         assertNotNull(rsA);
+
         while (rsA.next()) {
             count++;
 
             ResultSet  rsB = stmtB.executeQuery(
-                                               "select * from #t0022b where i=" + rsA.getInt("i"));
+                "select * from #t0022b where i=" + rsA.getInt("i"));
 
             assertNotNull(rsB);
             assertTrue("Expected a result set", rsB.next());
             assertTrue("Expected no result set", !rsB.next());
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         stmtA.close();
         stmtB.close();
     }
 
     public void testPrimaryKeyFloat0023() throws Exception {
-        Double d[] =
-        {
+        Double d[] = {
             new Double(-1.0),
             new Double(1234.543),
             new Double(0.0),
@@ -1111,55 +1177,60 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement  stmt    = cx.createStatement();
         stmt.executeUpdate(""
-                           + "create table #t0023 "
-                           + "  (pk   float not null, "
-                           + "   type char(30) not null, "
-                           + "   b    bit, "
-                           + "   str  char(30) not null, "
-                           + "   t int identity(1,1), "
-                           + "   primary key (pk, type))    ");
+            + "create table #t0023 "
+            + "  (pk   float not null, "
+            + "   type char(30) not null, "
+            + "   b    bit, "
+            + "   str  char(30) not null, "
+            + "   t int identity(1,1), "
+            + "   primary key (pk, type))    ");
 
         PreparedStatement  pStmt = cx.prepareStatement(
-                                                      "insert into #t0023 (pk, type, b, str) values(?, 'prepared', 0, ?)");
+            "insert into #t0023 (pk, type, b, str) values(?, 'prepared', 0, ?)");
 
         for (int i = 0; i < d.length; i++) {
             pStmt.setDouble(1, d[i].doubleValue());
             pStmt.setString(2, (d[i]).toString());
             int preparedCount = pStmt.executeUpdate();
-            assertTrue(preparedCount == 1);
+
+            assertEquals(preparedCount, 1);
 
             int adhocCount = stmt.executeUpdate(""
-                                                + "insert into #t0023        "
-                                                + " (pk, type, b, str)      "
-                                                + " values("
-                                                + "   " + d[i] + ",         "
-                                                + "       'adhoc',          "
-                                                + "       1,                "
-                                                + "   '" + d[i] + "')       ");
-            assertTrue(adhocCount == 1);
+                + "insert into #t0023        "
+                + " (pk, type, b, str)      "
+                + " values("
+                + "   " + d[i] + ",         "
+                + "       'adhoc',          "
+                + "       1,                "
+                + "   '" + d[i] + "')       ");
+
+            assertEquals(adhocCount, 1);
         }
 
         int count = 0;
         ResultSet rs = stmt.executeQuery("select * from #t0023 where type='prepared' order by t");
         assertNotNull(rs);
+
         while (rs.next()) {
             assertEquals(d[count].toString(), "" + rs.getDouble("pk"));
             count++;
         }
-        assertTrue(count == d.length);
+
+        assertEquals(count, d.length);
 
         count = 0;
         rs = stmt.executeQuery("select * from #t0023 where type='adhoc' order by t");
+
         while (rs.next()) {
             assertEquals(d[count].toString(), "" + rs.getDouble("pk"));
             count++;
         }
-        assertTrue(count == d.length);
+
+        assertEquals(count, d.length);
     }
 
     public void testPrimaryKeyReal0024() throws Exception {
-        Float d[] =
-        {
+        Float d[] = {
             new Float(-1.0),
             new Float(1234.543),
             new Float(0.0),
@@ -1179,18 +1250,18 @@ public class TimestampTest extends DatabaseTestCase {
 
         dropTable("#t0024");
 
-        Statement  stmt    = cx.createStatement();
+        Statement stmt = cx.createStatement();
         stmt.executeUpdate(""
-                           + "create table #t0024                  "
-                           + "  (pk   real not null,             "
-                           + "   type char(30) not null,          "
-                           + "   b    bit,                        "
-                           + "   str  char(30) not null,          "
-                           + "   t int identity(1,1), "
-                           +"    primary key (pk, type))    ");
+            + "create table #t0024                  "
+            + "  (pk   real not null,             "
+            + "   type char(30) not null,          "
+            + "   b    bit,                        "
+            + "   str  char(30) not null,          "
+            + "   t int identity(1,1), "
+            + "    primary key (pk, type))    ");
 
-        PreparedStatement  pStmt = cx.prepareStatement(
-                                                      "insert into #t0024 (pk, type, b, str) values(?, 'prepared', 0, ?)");
+        PreparedStatement pStmt = cx.prepareStatement(
+            "insert into #t0024 (pk, type, b, str) values(?, 'prepared', 0, ?)");
 
         for (int i=0; i < d.length; i++) {
             pStmt.setFloat(1, d[i].floatValue());
@@ -1199,36 +1270,42 @@ public class TimestampTest extends DatabaseTestCase {
             assertTrue(preparedCount == 1);
 
             int adhocCount = stmt.executeUpdate(""
-                                                + "insert into #t0024        "
-                                                + " (pk, type, b, str)      "
-                                                + " values("
-                                                + "   " + d[i] + ",         "
-                                                + "       'adhoc',          "
-                                                + "       1,                "
-                                                + "   '" + d[i] + "')       ");
-            assertTrue(adhocCount == 1);
+                + "insert into #t0024        "
+                + " (pk, type, b, str)      "
+                + " values("
+                + "   " + d[i] + ",         "
+                + "       'adhoc',          "
+                + "       1,                "
+                + "   '" + d[i] + "')       ");
+            assertEquals(adhocCount, 1);
         }
 
         int count = 0;
         ResultSet rs = stmt.executeQuery("select * from #t0024 where type='prepared' order by t");
         assertNotNull(rs);
+
         while (rs.next()) {
-            String   s1 = d[count].toString().trim();
-            String   s2 = ("" + rs.getFloat("pk")).trim();
+            String s1 = d[count].toString().trim();
+            String s2 = ("" + rs.getFloat("pk")).trim();
+
             assertTrue(s1.equalsIgnoreCase(s2));
             count++;
         }
-        assertTrue(count == d.length);
+
+        assertEquals(count, d.length);
 
         count = 0;
         rs = stmt.executeQuery("select * from #t0024 where type='adhoc' order by t");
+
         while (rs.next()) {
-            String   s1 = d[count].toString().trim();
-            String   s2 = ("" + rs.getFloat("pk")).trim();
+            String s1 = d[count].toString().trim();
+            String s2 = ("" + rs.getFloat("pk")).trim();
+
             assertTrue(s1.equalsIgnoreCase(s2));
             count++;
         }
-        assertTrue(count == d.length);
+
+        assertEquals(count, d.length);
     }
 
     public void testGetBoolean0025() throws Exception {
@@ -1238,10 +1315,10 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0025 " +
-                           "  (i      integer, " +
-                           "   b      bit,     " +
-                           "   s      char(5), " +
-                           "   f      float)   ");
+            "  (i      integer, " +
+            "   b      bit,     " +
+            "   s      char(5), " +
+            "   f      float)   ");
 
         // @todo Check which CHAR/VARCHAR values should be true and which should be false.
         assertTrue(stmt.executeUpdate("insert into #t0025 values(0, 0, 'false', 0.0)") == 1);
@@ -1294,39 +1371,43 @@ public class TimestampTest extends DatabaseTestCase {
     public void testNestedStatements0026() throws Exception {
         Connection cx = getConnection();
 
-        dropTable("#t0026a");
-        dropTable("#t0026b");
+        dropTable("##t0026a");
+        dropTable("##t0026b");
 
         Statement  stmt    = cx.createStatement();
-        stmt.executeUpdate("create table #t0026a "
-                           + "  (i   integer not null, "
-                           + "   str char(254) not null) ");
+        stmt.executeUpdate("create table ##t0026a "
+            + "  (i   integer not null, "
+            + "   str char(254) not null) ");
 
-        stmt.executeUpdate("create table #t0026b             "
-                           + "  (i   integer not null,      "
-                           + "   t   datetime not null)     ");
+        stmt.executeUpdate("create table ##t0026b             "
+        + "  (i   integer not null,      "
+        + "   t   datetime not null)     ");
         stmt.close();
 
-        PreparedStatement  pStmtA = cx.prepareStatement(
-                                                       "insert into #t0026a values (?, ?)");
-        PreparedStatement  pStmtB = cx.prepareStatement(
-                                                       "insert into #t0026b values (?, getdate())");
+        PreparedStatement pStmtA = cx.prepareStatement(
+            "insert into ##t0026a values (?, ?)");
+        PreparedStatement pStmtB = cx.prepareStatement(
+            "insert into ##t0026b values (?, getdate())");
 
-        final int rowsToAdd = 100;
+        final int rowsToAdd = 1000;
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmtA.setInt(1, i);
             String tmp = "";
+
             while (tmp.length() < 240) {
                 tmp = tmp + "row " + i + ". ";
             }
+
             pStmtA.setString(2, tmp);
             count += pStmtA.executeUpdate();
 
             pStmtB.setInt(1, i);
             pStmtB.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         pStmtA.close();
         pStmtB.close();
 
@@ -1334,19 +1415,22 @@ public class TimestampTest extends DatabaseTestCase {
         Statement stmtB = cx.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         count = 0;
-        ResultSet rsA = stmtA.executeQuery("select * from #t0026a");
+        ResultSet rsA = stmtA.executeQuery("select * from ##t0026a");
         assertNotNull(rsA);
+
         while (rsA.next()) {
             count++;
 
-            ResultSet  rsB = stmtB.executeQuery(
-                                               "select * from #t0026b where i=" + rsA.getInt("i"));
+            ResultSet rsB = stmtB.executeQuery(
+                "select * from ##t0026b where i=" + rsA.getInt("i"));
 
             assertNotNull(rsB);
             assertTrue("Expected a result set", rsB.next());
             assertTrue("Expected no result set", !rsB.next());
+			rsB.close();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         stmtA.close();
         stmtB.close();
@@ -1357,8 +1441,10 @@ public class TimestampTest extends DatabaseTestCase {
         Statement  stmt = cx.createStatement();
 
         final int numberToTest = 5;
+
         for (int i = 0; i < numberToTest; i++) {
-            String table = "#t0036_do_not_create_" + i;
+            String table = "#t0036_no_create_" + i;
+
             try {
                 stmt.executeUpdate("drop table " + table);
 
@@ -1371,32 +1457,32 @@ public class TimestampTest extends DatabaseTestCase {
 
     public void testTimestamps0037() throws Exception {
         Connection cx = getConnection();
-        Statement  stmt = cx.createStatement();
-        ResultSet  rs   = stmt.executeQuery(
-                                           "select                                    " +
-                                           "  convert(smalldatetime, '1999-01-02') a, " +
-                                           "  convert(smalldatetime, null)         b, " +
-                                           "  convert(datetime, '1999-01-02')      c, " +
-                                           "  convert(datetime, null)              d  " +
-                                           "");
+        Statement stmt = cx.createStatement();
+        ResultSet rs   = stmt.executeQuery(
+            "select                                    " +
+            "  convert(smalldatetime, '1999-01-02') a, " +
+            "  convert(smalldatetime, null)         b, " +
+            "  convert(datetime, '1999-01-02')      c, " +
+            "  convert(datetime, null)              d  " +
+            "");
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
 
-        assertTrue(rs.getDate("a") != null);
-        assertTrue(rs.getDate("b") == null);
-        assertTrue(rs.getDate("c") != null);
-        assertTrue(rs.getDate("d") == null);
+        assertNotNull(rs.getDate("a"));
+        assertNull(rs.getDate("b"));
+        assertNotNull(rs.getDate("c"));
+        assertNull(rs.getDate("d"));
 
-        assertTrue(rs.getTime("a") != null);
-        assertTrue(rs.getTime("b") == null);
-        assertTrue(rs.getTime("c") != null);
-        assertTrue(rs.getTime("d") == null);
+        assertNotNull(rs.getTime("a"));
+        assertNull(rs.getTime("b"));
+        assertNotNull(rs.getTime("c"));
+        assertNull(rs.getTime("d"));
 
-        assertTrue(rs.getTimestamp("a") != null);
-        assertTrue(rs.getTimestamp("b") == null);
-        assertTrue(rs.getTimestamp("c") != null);
-        assertTrue(rs.getTimestamp("d") == null);
+        assertNotNull(rs.getTimestamp("a"));
+        assertNull(rs.getTimestamp("b"));
+        assertNotNull(rs.getTimestamp("c"));
+        assertNull(rs.getTimestamp("d"));
 
         assertTrue("Expected no result set", !rs.next());
     }
@@ -1408,11 +1494,11 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("create table #t0038 ("
-                           + " keyField char(255)     not null, "
-                           + " descField varchar(255)  not null) ");
+            + " keyField char(255)     not null, "
+            + " descField varchar(255)  not null) ");
 
         int count = stmt.executeUpdate("insert into #t0038 values ('value', 'test')");
-        assertTrue(count == 1);
+        assertEquals(count, 1);
 
         conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
         conn.setAutoCommit(false);
@@ -1426,14 +1512,14 @@ public class TimestampTest extends DatabaseTestCase {
         Statement statement = conn.createStatement();
 
         ResultSet resultSet = statement.executeQuery(
-                                                    "select descField from #t0038 where keyField='value'");
+            "select descField from #t0038 where keyField='value'");
         assertTrue(resultSet.next());
         statement.close();
         conn.close();
     }
 
     public void testConnection0039() throws Exception {
-        for ( int i = 0; i < 10; i++ ) {
+        for (int i = 0; i < 10; i++) {
             Connection conn = getConnection();
             Statement statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery("select 5");
@@ -1452,8 +1538,8 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0040 ("
-                           + " c255 char(255)     not null, "
-                           + " v255 varchar(255)  not null) ");
+            + " c255 char(255)     not null, "
+            + " v255 varchar(255)  not null) ");
 
         PreparedStatement pStmt = cx.prepareStatement("insert into #t0040 values (?, ?)");
 
@@ -1462,15 +1548,17 @@ public class TimestampTest extends DatabaseTestCase {
 
         pStmt.setString(1, along);
         pStmt.setString(2, along);
+
         int count = pStmt.executeUpdate();
-        assertTrue(count == 1);
+
+        assertEquals(count, 1);
         pStmt.close();
 
         count = stmt.executeUpdate(""
-                                   + "insert into #t0040 values ( "
-                                   + "'" + blong + "', "
-                                   + "'" + blong + "')");
-        assertTrue(count == 1);
+            + "insert into #t0040 values ( "
+            + "'" + blong + "', "
+            + "'" + blong + "')");
+        assertEquals(count, 1);
 
         pStmt = cx.prepareStatement("select c255, v255 from #t0040 order by c255");
         ResultSet rs = pStmt.executeQuery();
@@ -1511,33 +1599,37 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0041 "
-                           + "  (i  integer  not null, "
-                           + "   s  text     not null) ");
+            + "  (i  integer  not null, "
+            + "   s  text     not null) ");
 
         PreparedStatement pStmt = cx.prepareStatement("insert into #t0041 values (?, ?)");
 
-        // TODO Check values
+        // TODO: Check values
         final int rowsToAdd = 400;
         final String theString = getLongString(400);
         int count = 0;
+
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             pStmt.setString(2, theString.substring(0, i));
 
             count += pStmt.executeUpdate();
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
         pStmt.close();
 
         ResultSet  rs = stmt.executeQuery("select s, i from #t0041");
         assertNotNull(rs);
 
         count = 0;
+
         while (rs.next()) {
             rs.getString("s");
             count++;
         }
-        assertTrue(count == rowsToAdd);
+
+        assertEquals(count, rowsToAdd);
 
         cx.close();
     }
@@ -1557,12 +1649,12 @@ public class TimestampTest extends DatabaseTestCase {
         pStmt.setInt(3, 1);
 
         int count = pStmt.executeUpdate();
-        assertTrue(count == 1);
+        assertEquals(count, 1);
 
         pStmt.setInt(2, 42);
         pStmt.setInt(3, 2);
         count = pStmt.executeUpdate();
-        assertTrue(count == 1);
+        assertEquals(count, 1);
         pStmt.close();
 
         pStmt = cx.prepareStatement("select i from #t0042 order by j");
@@ -1574,7 +1666,7 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue(rs.wasNull());
 
         assertTrue("Expected a result set", rs.next());
-        assertTrue(rs.getInt(1) == 42);
+        assertEquals(rs.getInt(1), 42);
         assertTrue(!rs.wasNull());
 
         assertTrue("Expected no result set", !rs.next());
@@ -1632,7 +1724,6 @@ public class TimestampTest extends DatabaseTestCase {
             assertTrue("Did not expect to reach here", false);
         } catch (java.sql.SQLException e) {
             assertTrue(e.getMessage().startsWith("No current row in the ResultSet"));
-//            assertTrue(e.getMessage().startsWith("No more results in ResultSet"));
         }
     }
 
@@ -1643,12 +1734,12 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0046 ("
-                           + "   i integer identity, "
-                           + "   a integer not null, "
-                           + "   b integer null ) ");
+            + "   i integer identity, "
+            + "   a integer not null, "
+            + "   b integer null ) ");
 
         int count = stmt.executeUpdate("insert into #t0046 (a, b) values (-2, -3)");
-        assertTrue(count == 1);
+        assertEquals(count, 1);
 
         ResultSet rs = stmt.executeQuery("select i, a, b, 17 c from #t0046");
         assertNotNull(rs);
@@ -1664,7 +1755,7 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue(md.isReadOnly(1));
         assertTrue(!md.isReadOnly(2));
         assertTrue(!md.isReadOnly(3));
-        assertTrue(md.isReadOnly(4));
+//        assertTrue(md.isReadOnly(4)); SQL 6.5 does not report this one correctly!
 
         assertEquals(md.isNullable(1),java.sql.ResultSetMetaData.columnNoNulls);
         assertEquals(md.isNullable(2),java.sql.ResultSetMetaData.columnNoNulls);
@@ -1681,23 +1772,24 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate(
-                          "create table #t0047 " +
-                          "(                               " +
-                          "  t1   datetime not null,       " +
-                          "  t2   datetime null,           " +
-                          "  t3   smalldatetime not null,  " +
-                          "  t4   smalldatetime null       " +
-                          ")");
+            "create table #t0047 " +
+            "(                               " +
+            "  t1   datetime not null,       " +
+            "  t2   datetime null,           " +
+            "  t3   smalldatetime not null,  " +
+            "  t4   smalldatetime null       " +
+            ")");
 
         String query =
-        "insert into #t0047 (t1, t2, t3, t4) " +
-        " values('2000-01-02 19:35:01.333', " +
-        "        '2000-01-02 19:35:01.333', " +
-        "        '2000-01-02 19:35:01.333', " +
-        "        '2000-01-02 19:35:01.333'  " +
-        ")";
+            "insert into #t0047 (t1, t2, t3, t4) " +
+            " values('2000-01-02 19:35:01.333', " +
+            "        '2000-01-02 19:35:01.333', " +
+            "        '2000-01-02 19:35:01.333', " +
+            "        '2000-01-02 19:35:01.333'  " +
+            ")";
         int count = stmt.executeUpdate(query);
-        assertTrue(count == 1);
+
+        assertEquals(count, 1);
 
         ResultSet rs = stmt.executeQuery("select t1, t2, t3, t4 from #t0047");
         assertNotNull(rs);
@@ -1725,13 +1817,13 @@ public class TimestampTest extends DatabaseTestCase {
 
         Statement stmt = cx.createStatement();
         stmt.executeUpdate(
-                          "create table #t0048              " +
-                          "(                               " +
-                          "  t1   datetime not null,       " +
-                          "  t2   datetime null,           " +
-                          "  t3   smalldatetime not null,  " +
-                          "  t4   smalldatetime null       " +
-                          ")");
+            "create table #t0048              " +
+            "(                               " +
+            "  t1   datetime not null,       " +
+            "  t2   datetime null,           " +
+            "  t3   smalldatetime not null,  " +
+            "  t4   smalldatetime null       " +
+            ")");
 
         java.sql.Timestamp r1;
         java.sql.Timestamp r2;
@@ -1739,7 +1831,7 @@ public class TimestampTest extends DatabaseTestCase {
         r2 = Timestamp.valueOf("2000-01-02 19:35:00");
 
         java.sql.PreparedStatement pstmt = cx.prepareStatement(
-                                                              "insert into #t0048 (t1, t2, t3, t4) values(?, ?, ?, ?)");
+            "insert into #t0048 (t1, t2, t3, t4) values(?, ?, ?, ?)");
 
         pstmt.setTimestamp(1, r1);
         pstmt.setTimestamp(2, r1);
@@ -1747,7 +1839,7 @@ public class TimestampTest extends DatabaseTestCase {
         pstmt.setTimestamp(4, r1);
 
         int count = pstmt.executeUpdate();
-        assertTrue(count == 1);
+        assertEquals(count, 1);
         pstmt.close();
 
         ResultSet rs = stmt.executeQuery("select t1, t2, t3, t4 from #t0048");
@@ -1772,19 +1864,19 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = stmt.executeQuery("select convert(DECIMAL(4,0), 0)");
         assertNotNull(rs);
         assertTrue("Expected a result set", rs.next());
-        assertTrue(rs.getInt(1) == 0);
+        assertEquals(rs.getInt(1), 0);
         assertTrue("Expected no result set", !rs.next());
 
         rs = stmt.executeQuery("select convert(DECIMAL(4,0), 1)");
         assertNotNull(rs);
         assertTrue("Expected a result set", rs.next());
-        assertTrue(rs.getInt(1) == 1);
+        assertEquals(rs.getInt(1), 1);
         assertTrue("Expected no result set", !rs.next());
 
         rs = stmt.executeQuery("select convert(DECIMAL(4,0), -1)");
         assertNotNull(rs);
         assertTrue("Expected a result set", rs.next());
-        assertTrue(rs.getInt(1) == -1);
+        assertEquals(rs.getInt(1), -1);
         assertTrue("Expected no result set", !rs.next());
     }
 

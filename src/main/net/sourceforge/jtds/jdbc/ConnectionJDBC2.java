@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.73 2005-03-04 00:10:55 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.74 2005-03-09 17:38:00 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -270,6 +270,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         SharedSocket.setMinMemPkts(8);
 
         try {
+            Object timer = null;
+            if (loginTimeout > 0) {
+                // Start a login timer
+                timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
+                        new TimerThread.TimerListener() {
+                            public void timerExpired() {
+                                if (socket != null) {
+                                    socket.forceClose();
+                                }
+                            }
+                        });
+            }
+
             if (namedPipe == true) {
                 // TODO Use namedPipe parameter to select implementation type
                 if(System.getProperty("os.name").toLowerCase().startsWith("windows")) {
@@ -284,7 +297,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             } else {
                 // Use plain TCP/IP socket
                 socket = new SharedSocket(serverName, portNumber, tdsVersion,
-                        serverType, tcpNoDelay);
+                        serverType, tcpNoDelay, loginTimeout);
+            }
+
+            if (timer != null && TimerThread.getInstance().hasExpired(timer)) {
+                // If the timer has expired during the connection phase, close
+                // the socket and throw an exception
+                socket.forceClose();
+                throw new IOException("Login timed out");
             }
 
             if ( charsetSpecified ) {
@@ -299,17 +319,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             // Create TDS protocol object
             //
             baseTds = new TdsCore(this, messages);
-            Object timer = null;
-
-            if (loginTimeout > 0) {
-                // Start a login timer
-                timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
-                        new TimerThread.TimerListener() {
-                            public void timerExpired() {
-                                socket.forceClose();
-                            }
-                        });
-            }
 
             //
             // Negotiate SSL connection if required
@@ -352,6 +361,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     new SQLException(Messages.get("error.connection.badhost",
                             e.getMessage()), "08S03"), e);
         } catch (IOException e) {
+            if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
+                throw new SQLException(
+                        Messages.get("error.connection.timeout"), "HYT01");
+            }
             throw Support.linkException(
                     new SQLException(Messages.get("error.connection.ioerror",
                             e.getMessage()), "08S01"), e);

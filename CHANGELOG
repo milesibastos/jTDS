@@ -2,6 +2,9 @@ Changes from jTDS 1.0.2
 =======================
 
 03/09/2005 - Alin Sinpalean
+ o Corrected bug [1158509] Various problems with connect/login timeouts. The
+   last problem fixed was concerned with socket connection not timing out (only
+   the login itself was timed and interrupted).
  o Applied patch [1155902] Implement parameter meta data retrieval, by Oded
    Arbel. Parameter mode was always returning parameterModeUnknown; now mode
    is determined based on actual parameters.

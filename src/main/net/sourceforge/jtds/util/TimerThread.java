@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.1 2005-02-01 23:28:18 alin_sinpalean Exp $
+ * @version $Id: TimerThread.java,v 1.2 2005-03-09 17:38:06 alin_sinpalean Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -194,7 +194,7 @@ public class TimerThread extends Thread {
      *
      * @param handle handle to the request to be removed from the queue (a
      *        <code>TimerRequest</code> instance)
-     * @return <code>boolean</code> true if timer had not expired
+     * @return <code>true</code> if timer had not expired
      */
     public boolean cancelTimer(Object handle) {
         TimerRequest t = (TimerRequest) handle;
@@ -205,6 +205,21 @@ public class TimerThread extends Thread {
                 updateNextTimeout();
             }
             return result;
+        }
+    }
+
+    /**
+     * Check whether a timer has expired.
+     *
+     * @param handle handle to the request to be checked for expiry (a
+     *        <code>TimerRequest</code> instance)
+     * @return <code>true</code> if timer has expired
+     */
+    public boolean hasExpired(Object handle) {
+        TimerRequest t = (TimerRequest) handle;
+
+        synchronized (timerList) {
+            return !timerList.contains(t);
         }
     }
 

@@ -30,6 +30,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 import net.sourceforge.jtds.ssl.SocketFactories;
 import net.sourceforge.jtds.util.Logger;
@@ -62,7 +64,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.27 2005-02-28 22:47:22 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.28 2005-03-09 17:38:01 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -239,16 +241,43 @@ class SharedSocket {
      * @param tdsVersion the TDS protocol version
      * @param tcpNoDelay <code>true</code> to enable TCP_NODELAY on the
      *                   underlying socket; <code>false</code> to disable
+     * @param timeout    timeout for establishing connection, in milliseconds
+     *                   (only used with Java 1.4+, no support in earlier
+     *                   versions)
      * @throws IOException if socket open fails
      */
     SharedSocket(String host, int port, int tdsVersion, int serverType,
-    		boolean tcpNoDelay)
+    		boolean tcpNoDelay, int timeout)
             throws IOException, UnknownHostException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
         this.host = host;
         this.port = port;
-        this.socket = new Socket(host, port);
+        if (Driver.JDBC3) {
+            try {
+                // Create the Socket
+                Constructor constructor =
+                        Socket.class.getConstructor(new Class[] {});
+                this.socket =
+                        (Socket) constructor.newInstance(new Object[] {});
+
+                // Create the InetSocketAddress
+                constructor = Class.forName("java.net.InetSocketAddress")
+                        .getConstructor(new Class[] {String.class, int.class});
+                Object address = constructor.newInstance(
+                                new Object[] {host, new Integer(port)});
+
+                // Call Socket.connect(InetSocketAddress, int)
+                Method connect = Socket.class.getMethod("connect", new Class[]
+                        {Class.forName("java.net.SocketAddress"), int.class});
+                connect.invoke(this.socket,
+                        new Object[] {address, new Integer(timeout)});
+            } catch (Exception ex) {
+                throw new IOException("Could not create socket: " + ex);
+            }
+        } else {
+            this.socket = new Socket(host, port);
+        }
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(tcpNoDelay);

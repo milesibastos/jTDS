@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.51 2005-03-04 00:10:57 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.52 2005-03-07 21:28:57 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -175,6 +175,9 @@ public class Driver implements java.sql.Driver {
             props.setProperty(Messages.get(Driver.LOGINTIMEOUT), Integer.toString(DriverManager.getLoginTimeout()));
         }
 
+        // Set default properties
+        props = DefaultProperties.addDefaultProperties(props);
+
         if (JDBC3) {
             return new ConnectionJDBC3(url, props);
         }
@@ -185,7 +188,8 @@ public class Driver implements java.sql.Driver {
     public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties props)
             throws SQLException {
 
-        final Properties parsedProps = parseURL(url, (props == null ? new Properties() : props));
+        Properties parsedProps = parseURL(url, (props == null ? new Properties() : props));
+        parsedProps = DefaultProperties.addDefaultProperties(parsedProps);
 
         if (parsedProps == null) {
             throw new SQLException(
@@ -303,9 +307,10 @@ public class Driver implements java.sql.Driver {
     /**
      * Parse the driver URL and extract the properties.
      *
-     * @param url The URL to parse.
-     * @param info Any existing properties already loaded in a Properties object.
-     * @return The URL properties as a <code>Properties</code> object.
+     * @param url  the URL to parse
+     * @param info any existing properties already loaded in a
+     *             <code>Properties</code> object
+     * @return the URL properties as a <code>Properties</code> object
      */
     private static Properties parseURL(String url, Properties info) {
         Properties props = new Properties();
@@ -392,11 +397,6 @@ public class Driver implements java.sql.Driver {
                 props.setProperty(tmp.toUpperCase(), "");
             }
         }
-
-        //
-        // Set default properties
-        //
-        props = DefaultProperties.addDefaultProperties(props);
 
         return props;
     }

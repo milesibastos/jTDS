@@ -1,6 +1,12 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/07/2005 - Alin Sinpalean
+ o Partially fixed bug [1158509] Various problems with connect/login timeouts.
+   FAQ was inexact (stated that loginTimeout was in milliseconds) and
+   DriverManager login timeout was ignored because the default values (0 for
+   login timeout) were set before the null check.
+
 03/06/2005 - Alin Sinpalean
  o Applied a patch from Mike with a cleaner batch implementation.
 

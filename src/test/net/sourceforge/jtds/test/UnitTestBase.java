@@ -27,7 +27,7 @@ import java.lang.reflect.Constructor;
  * Base class for unit tests which do not connect to a database.
  * 
  * @author David D. Kilzer.
- * @version $Id: UnitTestBase.java,v 1.1 2004-07-30 02:34:51 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.2 2004-08-01 17:56:41 bheineman Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 
@@ -56,16 +56,16 @@ public abstract class UnitTestBase extends TestCase {
             return constructor.newInstance(objects);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (InstantiationException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -88,13 +88,13 @@ public abstract class UnitTestBase extends TestCase {
             return method.invoke(instance, objects);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -117,13 +117,13 @@ public abstract class UnitTestBase extends TestCase {
             return method.invoke(klass, objects);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

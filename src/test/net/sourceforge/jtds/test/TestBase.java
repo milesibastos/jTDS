@@ -119,7 +119,7 @@ public abstract class TestBase extends TestCase {
             return props;
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -146,7 +146,7 @@ public abstract class TestBase extends TestCase {
         stmt.close();
     }
 
-    public void assertEquals(double value1, double value2) throws AssertionError {
+    public void assertEquals(double value1, double value2) {
         if (value1 != value2) {
             throw new AssertionFailedError("expected:<" + value1
                                            + "> but was:<" + value2 + ">");

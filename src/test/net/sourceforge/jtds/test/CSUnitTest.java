@@ -1344,13 +1344,10 @@ public class CSUnitTest extends DatabaseTestCase {
                     reader = (Reader) UnitTestBase.invokeInstanceMethod(
                             rs, "getCharacterStream", new Class[]{Integer.TYPE}, new Object[]{new Integer(2)});
                     reader.close();
+                } catch (NoSuchMethodException e) {
+                    output.println("JDBC 2 only");
                 } catch (RuntimeException e) {
-                    if (e.getCause() instanceof NoSuchMethodException) {
-                        output.println("JDBC 2 only");
-                    }
-                    else {
-                        throw e;
-                    }
+                    throw e;
                 } catch (Throwable t) {
                     passed = false;
                     output.println("Exception: "+t.getMessage());

@@ -47,7 +47,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.37 2004-12-03 16:52:00 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.38 2004-12-07 15:11:00 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -2408,6 +2408,9 @@ public class TdsData {
      */
     private static boolean canEncode(String value, String charset)
     {
+        if (value == null) {
+            return true;
+        }
         if (charset.equals("UTF-8")) {
             // Should be no problem with UTF-8
             return true;

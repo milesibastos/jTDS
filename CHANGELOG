@@ -2,6 +2,8 @@ Changes from jTDS 0.9
 =========================
 
 12/07/2004 - Alin Sinpalean
+ o Updated README and README.XA.
+ o Corrected bug [1080659] ParamInfo throws NullPointerException.
  o Corrected loading of Charsets.properties under a J2EE environment.
 
 12/06/2004 - Alin Sinpalean

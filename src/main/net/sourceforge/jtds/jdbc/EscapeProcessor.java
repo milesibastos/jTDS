@@ -36,7 +36,7 @@ import java.sql.*;
 import java.util.HashMap;
 
 public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.13 2004-03-27 17:26:48 bheineman Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.14 2004-06-08 20:24:45 bheineman Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -53,7 +53,7 @@ public class EscapeProcessor {
         _functionMap.put("user", "user_name");
         _functionMap.put("database", "db_name");
         _functionMap.put("ifnull", "isnull");
-        _functionMap.put("now", "translateDate");
+        _functionMap.put("now", "getdate");
         _functionMap.put("atan2", "atn2");
         _functionMap.put("length", "len");
         _functionMap.put("locate", "charindex");

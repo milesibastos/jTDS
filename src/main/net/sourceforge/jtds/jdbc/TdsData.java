@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.39 2005-01-04 10:30:54 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.40 2005-01-24 09:07:08 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1380,9 +1380,13 @@ public class TdsData {
                     out.write((byte) 0);
                 } else {
                     byte buf[] = pi.getBytes(charset);
-
-                    out.write((byte) buf.length);
-                    out.write(buf);
+                    if (out.getTdsVersion() < Driver.TDS70 && buf.length == 0) {
+                        // Sybase and SQL 6.5 do not allow zero length binary
+                        out.write((byte) 1); out.write((byte) 0);
+                    } else {
+                        out.write((byte) buf.length);
+                        out.write(buf);
+                    }
                 }
 
                 break;
@@ -1408,12 +1412,20 @@ public class TdsData {
                 } else {
                     if (pi.sqlType.startsWith("univarchar")){
                         String tmp = pi.getString(charset);
+                        if (tmp.length() == 0) {
+                            tmp = " ";
+                        }
                         out.write((int)tmp.length() * 2);
                         out.write(tmp.toCharArray(), 0, tmp.length());
                     } else {
                         byte buf[] = pi.getBytes(charset);
-                        out.write((int) buf.length);
-                        out.write(buf);
+                        if (buf.length > 0) {
+                            out.write((int) buf.length);
+                            out.write(buf);
+                        } else {
+                            out.write((int) 1);
+                            out.write((byte) 0);
+                        }
                     }
                 }
                 break;
@@ -1791,8 +1803,13 @@ public class TdsData {
                     out.write((byte) 0);
                 } else {
                     buf = pi.getBytes(pi.charsetInfo.getCharset());
-                    out.write((byte) buf.length);
-                    out.write(buf);
+                    if (out.getTdsVersion() < Driver.TDS70 && buf.length == 0) {
+                        // Sybase and SQL 6.5 do not allow zero length binary
+                        out.write((byte) 1); out.write((byte) 0);
+                    } else {
+                        out.write((byte) buf.length);
+                        out.write(buf);
+                    }
                 }
 
                 break;
@@ -1818,8 +1835,15 @@ public class TdsData {
                         out.write(buf);
                     }
                 } else {
-                    out.write((int) len);
-                    out.write((int) len);
+                    if (out.getTdsVersion() < Driver.TDS70) {
+                        // Sybase and SQL 6.5 do not allow zero length binary
+                        out.write((int) 1);
+                        out.write((int) 1);
+                        out.write((byte) 0);
+                    } else {
+                        out.write((int) len);
+                        out.write((int) len);
+                    }
                 }
 
                 break;

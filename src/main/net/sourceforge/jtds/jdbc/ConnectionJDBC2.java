@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.61 2005-01-04 17:12:52 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.62 2005-01-24 09:07:07 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -769,9 +769,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (tdsVersion < Driver.TDS80 && prepareSql == TdsCore.PREPEXEC) {
             prepareSql = TdsCore.PREPARE;
         }
-        // For SQL Server 6.5, only sp_executesql is available.
+        // For Sybase use equivalent of sp_executesql.
         if (tdsVersion < Driver.TDS70 && prepareSql == TdsCore.PREPARE) {
             prepareSql = TdsCore.EXECUTE_SQL;
+        }
+        // For SQL 6.5 sp_executesql not available so use stored procedures.
+        if (tdsVersion < Driver.TDS50 && prepareSql == TdsCore.EXECUTE_SQL) {
+            prepareSql = TdsCore.TEMPORARY_STORED_PROCEDURES;
         }
 
         ssl = info.getProperty(Messages.get(Driver.SSL));

@@ -1,6 +1,28 @@
 Changes from jTDS 0.9.1
 =======================
 
+01/24/2005 - Mike Hutchinson
+ o Amended the logic for downgrading the preparesql property values in
+   ConnectionJDBC2 as it was possible to select invalid options for Sybase and
+   SQL 6.5.
+ o Prevent JtdsPreparedStatement.setUnicodeStream from throwing an array index
+   exception when the length of the supplied stream exceeded the declared
+   length.
+ o When using preparesql=0, the driver would send zero length byte arrays as
+   null. This is wrong as the column should have a zero length non null value;
+   however, Sybase/SQL 6.5 do not permit zero length binary columns so the
+   driver has to output a single byte value instead. Amended
+   Support.embedData() to fix this problem.
+ o Related to the point above, TdsData.writeParam and writeTds5Param do the
+   wrong thing and output a zero length byte value as a null. Amended TdsData
+   to fix this problem.
+ o It is possible for Support.embedData to output a decimal literal that
+   exceeds the precision of the server. Amended embedData to truncate value
+   string.
+ o In TdsCore.executeSQL the inbatch flag is reset prematurely causing batched
+   prepared statements to fail to substitute parameters correctly. Amended
+   executeSQL to ensure that flag is reset after last packet sent.
+
 01/21/2005 - Alin Sinpalean
  o Changed the home page title to "jTDS JDBC Driver".
 

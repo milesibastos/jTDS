@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.35 2005-01-05 08:34:10 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.36 2005-01-24 09:07:08 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -526,7 +526,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             setString(parameterIndex, null);
         } else {
             try {
-               char[] tmp = new char[length / 2];
+               length = length / 2;
+               char[] tmp = new char[length];
                int pos = 0;
                int b1 = inputStream.read();
                int b2 = inputStream.read();

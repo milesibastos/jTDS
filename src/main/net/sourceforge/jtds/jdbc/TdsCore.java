@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.64 2005-01-10 12:17:26 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.65 2005-01-24 09:07:08 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -996,7 +996,9 @@ public class TdsCore {
                 connectionLock = null;
             }
             // Clear the in batch flag
-            inBatch = false;
+            if (sendNow) {
+                inBatch = false;
+            }
         }
     }
 

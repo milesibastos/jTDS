@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.36 2005-01-10 12:20:49 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.37 2005-01-24 09:07:08 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -682,7 +682,7 @@ public class Support {
      * @param buf The buffer in which the data will be embeded.
      * @param value The data object.
      */
-    static void embedData(StringBuffer buf, Object value, boolean isUnicode)
+    static void embedData(StringBuffer buf, Object value, boolean isUnicode, int tdsVersion)
             throws SQLException {
         buf.append(' ');
         if (value == null) {
@@ -705,17 +705,19 @@ public class Support {
 
             int len = bytes.length;
 
-            if (len > 0) {
+            if (len >= 0) {
                 buf.append('0').append('x');
+                if (len == 0 && tdsVersion < Driver.TDS70) {
+                    // Zero length binary values are not allowed
+                    buf.append('0').append('0');
+                } else {
+                    for (int i = 0; i < len; i++) {
+                        int b1 = bytes[i] & 0xFF;
 
-                for (int i = 0; i < len; i++) {
-                    int b1 = bytes[i] & 0xFF;
-
-                    buf.append(hex[b1 >> 4]);
-                    buf.append(hex[b1 & 0x0F]);
+                        buf.append(hex[b1 >> 4]);
+                        buf.append(hex[b1 & 0x0F]);
+                    }
                 }
-            } else {
-                buf.append("NULL");
             }
         } else if (value instanceof String) {
             String tmp = (String) value;
@@ -804,6 +806,26 @@ public class Support {
             }
         } else if (value instanceof Boolean) {
             buf.append(((Boolean) value).booleanValue() ? '1' : '0');
+        } else if (value instanceof BigDecimal) {
+            //
+            // Ensure large decimal number does not overflow the
+            // maximum precision of the server.
+            // Main problem is with small numbers e.g. BigDecimal(1.0).toString() =
+            // 0.1000000000000000055511151231....
+            //
+            String tmp = value.toString();
+            int maxlen = (tdsVersion == Driver.TDS42 || tdsVersion == Driver.TDS70) ? 28 : 38;
+            if (tmp.charAt(0) == '-') {
+                maxlen++;
+            }
+            if (tmp.indexOf('.') >= 0) {
+                maxlen++;
+            }
+            if (tmp.length() > maxlen) {
+                buf.append(tmp.substring(0, maxlen));
+            } else {
+                buf.append(tmp);
+            }
         } else {
             buf.append(value.toString());
         }
@@ -976,7 +998,7 @@ public class Support {
                 buf.append(sql.substring(start, list[i].markerPos));
                 start = pos + 1;
                 Support.embedData(buf, list[i].value,
-                        tdsVersion >= Driver.TDS70 && list[i].isUnicode);
+                        tdsVersion >= Driver.TDS70 && list[i].isUnicode, tdsVersion);
             }
         }
 

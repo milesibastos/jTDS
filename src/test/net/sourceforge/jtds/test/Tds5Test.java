@@ -1,12 +1,14 @@
 package net.sourceforge.jtds.test;
 
+import java.io.InputStream;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Time;
-
+import java.io.ByteArrayInputStream;
+import java.io.CharArrayReader;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -122,6 +124,80 @@ public class Tds5Test extends DatabaseTestCase {
         assertEquals(longString, rs.getString(2));
         assertEquals(longString, new String(rs.getBytes(3)));
         assertEquals(unichar, rs.getString(4));
+        stmt.close();
+    }
+
+    /**
+     * Test for bug [1161609]  Text or image data truncated on Sybase 12.5
+     * @throws Exception
+     */
+    public void testImageText() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTIT (id int, txt text, img image)");
+        StringBuffer data = new StringBuffer(20000);
+        for (int i = 0; i < 20000; i++) {
+            data.append((char)('A' + (i % 10)));
+        }
+        PreparedStatement pstmt = con.prepareStatement(
+           "INSERT INTO #TESTIT VALUES(?,?,?)");
+        pstmt.setInt(1, 1);
+        pstmt.setString(2, data.toString());
+        pstmt.setBytes(3, data.toString().getBytes());
+        assertEquals(1, pstmt.executeUpdate());
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TESTIT");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(data.length(), rs.getString(2).length());
+        assertEquals(data.length(), rs.getBytes(3).length);
+        pstmt.close();
+        stmt.close();
+    }
+
+    /**
+     * Test writing image data from InputStream
+     * @throws Exception
+     */
+    public void testStreamImage() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTIS (id int, img image)");
+        byte data[] = new byte[20000];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)('A' + (i % 10));
+        }
+        PreparedStatement pstmt = con.prepareStatement(
+            "INSERT INTO #TESTIS VALUES(?,?)");
+        pstmt.setInt(1, 1);
+        pstmt.setBinaryStream(2, new ByteArrayInputStream(data), data.length);
+        assertEquals(1, pstmt.executeUpdate());
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TESTIS");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(new String(data), new String(rs.getBytes(2)));
+        pstmt.close();
+        stmt.close();
+    }
+
+    /**
+     * Test writing text data from Reader
+     * @throws Exception
+     */
+    public void testStreamText() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTTR (id int, txt text)");
+        char data[] = new char[20000];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (char)('A' + (i % 10));
+        }
+        PreparedStatement pstmt = con.prepareStatement(
+            "INSERT INTO #TESTTR VALUES(?,?)");
+        pstmt.setInt(1, 1);
+        pstmt.setCharacterStream(2, new CharArrayReader(data), data.length);
+        assertEquals(1, pstmt.executeUpdate());
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TESTTR");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(new String(data), rs.getString(2));
+        pstmt.close();
         stmt.close();
     }
 

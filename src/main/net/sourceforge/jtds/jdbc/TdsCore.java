@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.83 2005-03-06 09:42:04 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.84 2005-03-12 22:39:29 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -789,6 +789,7 @@ public class TdsCore {
     synchronized void closeConnection() {
         try {
             if (tdsVersion == Driver.TDS50) {
+                socket.setTimeout(10000);
                 out.setPacketType(SYBQUERY_PKT);
                 out.write((byte)TDS_CLOSE_TOKEN);
                 out.write((byte)0);
@@ -1766,14 +1767,19 @@ public class TdsCore {
         putLoginString(String.valueOf(packetSize), 6); // length of tds packets
 
         out.write(empty, 0, 4);
+        //
         // Send capability request
+        // jTDS now disables the Sybase Extended Error data option as this
+        // information is never used by jTDS and the additional error
+        // parameters and end packets screw up the getBatchCounts method.
+        //
         byte capString[] = {
         // Request capabilities
             (byte)0x01,(byte)0x0A,(byte)0x03,(byte)0x84,(byte)0x0E,(byte)0xEF,
             (byte)0x65,(byte)0x7F,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xD6,
         // Response capabilities
             (byte)0x02,(byte)0x0A,(byte)0x00,(byte)0x02,(byte)0x00,(byte)0x07,
-            (byte)0x9E,(byte)0x06,(byte)0x48,(byte)0x00,(byte)0x00,(byte)0x00
+            (byte)0x9E,(byte)0x06,(byte)0x48,(byte)0x00,(byte)0x00,(byte)0x0C
         };
         out.write(TDS_CAP_TOKEN);
         out.write((short)capString.length);
@@ -3418,8 +3424,15 @@ public class TdsCore {
         currentToken.previousToken  = 0;
         currentToken.dynamParamInfo = null;
         currentToken.dynamParamData = null;
-
-        // Sybase does not allow text or image parameters
+        //
+        // Sybase does not allow text or image parameters as parameters
+        // to statements or stored procedures. With Sybase 12.5 it is
+        // possible to use a new TDS data type to send long data as
+        // parameters to statements (but not procedures). This usage
+        // replaces the writetext command that had to be used in the past.
+        // As we do not support writetext, with older versions of Sybase
+        // we just give up and embed all text/image data in the SQL statement.
+        //
         for (int i = 0; haveParams && i < parameters.length; i++) {
             if (parameters[i].sqlType.equals("text")
                 || parameters[i].sqlType.equals("image")) {
@@ -3433,13 +3446,13 @@ public class TdsCore {
                     throw new SQLException(
                                      Messages.get("error.bintoolong"), "HY000");
                 }
-
-                // prepared statement substitute parameters into SQL
-                sql = Support.substituteParameters(sql, parameters, tdsVersion);
-                haveParams = false;
-                procName = null;
-
-                break;
+                if (parameters[i].tdsType != TdsData.SYBLONGDATA) {
+                    // prepared statement substitute parameters into SQL
+                    sql = Support.substituteParameters(sql, parameters, tdsVersion);
+                    haveParams = false;
+                    procName = null;
+                    break;
+                }
             }
         }
 
@@ -3518,7 +3531,7 @@ public class TdsCore {
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5Param(out,
-                        connection.getCharset(),
+                        connection.getCharsetInfo(),
                         parameters[i]);
             }
         }

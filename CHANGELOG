@@ -1,6 +1,19 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/12/2005 - Mike Hutchinson
+ o Small change to ConnectionJDBC2 to ensure that the server character set is
+   used if none is specified by the user.
+ o TdsCore.closeConnection() has been modified to set a 10 second timeout on
+   the socket. This should address bug report [1161601] Connection.close() can
+   take a long time when Sybase down.
+ o TdsData and TdsCore have been modified to address bug [1161609] Text or
+   image data truncated on Sybase 12.5. A new TDS 5 data type (0x24) is used to
+   send bulk text or image data to the server.
+ o A small bug has been corrected in Support.substituteParameters which caused
+   short InputStreams to be written as a binary parameter rather than text when
+   running with Sybase 11.
+
 03/12/2005 - Alin Sinpalean
  o Added a fix suggested by rtdog to TimerThread.
 

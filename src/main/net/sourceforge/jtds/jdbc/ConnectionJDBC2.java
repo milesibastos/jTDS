@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.74 2005-03-09 17:38:00 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.75 2005-03-12 22:39:18 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -313,6 +313,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // Need a default charset to process login packets for TDS 4.2/5.0
                 // Will discover the actual serverCharset later
                 loadCharset("iso_1");
+                serverCharset = ""; // But don't send charset name to server!
             }
 
             //

@@ -44,11 +44,14 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.4 2004-01-31 00:00:15 bheineman Exp $
+ * @version    $Id: Driver.java,v 1.5 2004-02-02 19:09:11 bheineman Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.4 2004-01-31 00:00:15 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.5 2004-02-02 19:09:11 bheineman Exp $";
+
+    static final int MAJOR_VERSION = 0;
+    static final int MINOR_VERSION = 6;
 
     private final static String DEFAULT_SQL_SERVER_PORT = "1433";
     private final static String DEFAULT_SYBASE_PORT = "7100";
@@ -90,13 +93,27 @@ public class Driver implements java.sql.Driver {
         if (!parseUrl(url, info)) {
             return null;
         } else {
-            try {
-                return new TdsConnection(info);
-            } catch (NumberFormatException e) {
-                throw new SQLException("NumberFormatException converting port number.");
-            } catch (TdsException e) {
-                throw new SQLException(e.getMessage());
-            }
+            return getConnection(info);
+        }
+    }
+
+    /**
+     * Returns a new connection for the properties specified.
+     * 
+     * @param properties the database properties used to establish a new connection
+     * @return a new database connection
+     */
+    public static Connection getConnection(Properties properties) throws SQLException {
+        if (properties == null) {
+            throw new SQLException("properties cannot be null.");
+        }
+
+        try {
+            return new TdsConnection(properties);
+        } catch (NumberFormatException e) {
+            throw new SQLException("NumberFormatException converting port number.");
+        } catch (TdsException e) {
+            throw new SQLException(e.getMessage());
         }
     }
 
@@ -104,14 +121,14 @@ public class Driver implements java.sql.Driver {
      * Returns the drivers Major version.
      */
     public int getMajorVersion() {
-        return DriverVersion.getDriverMajorVersion();
+        return MAJOR_VERSION;
     }
 
     /**
      * Returns the drivers Minor version.
      */
     public int getMinorVersion() {
-        return DriverVersion.getDriverMinorVersion();
+        return MINOR_VERSION;
     }
 
     /**

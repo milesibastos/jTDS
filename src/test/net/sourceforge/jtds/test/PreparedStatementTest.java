@@ -697,18 +697,37 @@ public class PreparedStatementTest extends TestBase {
     public void testBigDecBadParamSpec() throws Exception
     {
         Statement stmt = con.createStatement();
-        stmt.execute(""
-                + "create table #test (id int primary key, val decimal(38,0))");
+        stmt.execute(
+                "create table #test (id int primary key, val decimal(38,0))");
         BigDecimal bd =
                 new BigDecimal("99999999999999999999999999999999999999");
         PreparedStatement pstmt =
                 con.prepareStatement("insert into #test values(?,?)");
-        pstmt.setInt(1,1);
+        pstmt.setInt(1, 1);
         pstmt.setBigDecimal(2, bd);
         assertEquals(1, pstmt.executeUpdate()); // Worked OK
         pstmt.setInt(1, 2);
         pstmt.setBigDecimal(2, bd.negate());
         assertEquals(1, pstmt.executeUpdate()); // Failed
+    }
+
+    /**
+     * Test for bug [1111516 ] Illegal Parameters in PreparedStatement.
+     */
+    public void testIllegalParameters() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #test (id int)");
+        PreparedStatement pstmt =
+                con.prepareStatement("select top ? from #test");
+        pstmt.setInt(1, 10);
+        try {
+            pstmt.executeQuery();
+            fail("Expecting an exception to be thrown.");
+        } catch (SQLException ex) {
+            assertEquals("37000", ex.getSQLState());
+        }
+        pstmt.close();
     }
 
     public static void main(String[] args) {

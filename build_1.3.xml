@@ -81,7 +81,15 @@
 
     <!-- Runtime jar only -->
     <jar basedir="${build}/classes" excludes="**Test/*" includes="**/*"
-         jarfile="${dist}/${ant.project.name}-${version}.jar"/>
+         jarfile="${dist}/${ant.project.name}-${version}.jar">
+        <manifest>
+            <attribute name="Implementation-Title" value="jTDS JDBC Driver"/>
+            <attribute name="Implementation-Version" value="${version}"/>
+            <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
+            <attribute name="Specification-Title" value="JDBC"/>
+            <attribute name="Specification-Version" value="2.1"/>
+        </manifest>
+    </jar>
 
     <!-- Full dist -->
     <copy todir="${dist}/tmp/doc">

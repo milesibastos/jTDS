@@ -8,6 +8,9 @@ Changes from jTDS 0.8-rc1
    the two classes depending on the Java specification version of the JVM.
  o Added some more old date tests, still haven't been able to reproduce anything
    on my machine.
+ o Added patch #926168 (add some meta-info to jar manifest) submitted by Fedor
+   Karpelevitch.
+ o Updated the connection.properties template to include the user property.
 
 03/28/2004 - Brian Heineman
  o Implemented Savepoint support.

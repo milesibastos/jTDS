@@ -57,11 +57,13 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.11 2004-08-11 19:24:34 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.12 2004-08-21 18:09:05 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
     protected String sql;
+    /** The first SQL keyword in the SQL string.*/
+    protected String sqlWord;
     /** The procedure name for CallableStatements. */
     protected String procName;
     /** The parameter list for the call. */
@@ -103,7 +105,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         ArrayList params = new ArrayList();
-        String[] parsedSql = new SQLParser(sql, params).parse();
+        String[] parsedSql = new SQLParser(sql, params, connection.getServerType()).parse(false);
 
         if (parsedSql[0].length() == 0) {
             throw new SQLException(Messages.get("error.prepare.nosql"), "07000");
@@ -117,8 +119,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 this.procName = parsedSql[1];
             }
         }
-
-        if (returnKeys && sql.substring(0, 6).equalsIgnoreCase("INSERT")) {
+        sqlWord = parsedSql[2];
+        
+        if (returnKeys && sqlWord.equals("insert")) {
             if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
                 this.sql += " SELECT SCOPE_IDENTITY() AS ID";
@@ -357,7 +360,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             spName = connection.prepareSQL(this, sql, parameters, returnKeys);
         }
 
-        executeSQL(sql, spName, parameters, returnKeys, true);
+        executeSQL(sql, spName, sqlWord, parameters, returnKeys, true);
 
         return updateCount;
     }
@@ -401,7 +404,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             spName = connection.prepareSQL(this, sql, parameters, returnKeys);
         }
 
-        return executeSQL(sql, spName, parameters, returnKeys, false);
+        return executeSQL(sql, spName, sqlWord, parameters, returnKeys, false);
     }
 
     public void setByte(int parameterIndex, byte x) throws SQLException {
@@ -628,41 +631,21 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 // For Microsoft we need to knock off the where clause which hopefully
                 // is the only bit with parameter markers and execute the query.
                 // SET FMTONLY ON asks the server just to return only meta data.
-                SQLParser parser = new SQLParser(sql, new ArrayList());
-                StringBuffer token = new StringBuffer();
-
-                if (parser.nextToken(token) != SQLParser.sy_sqlword
-                    || !token.toString().equalsIgnoreCase("select")) {
-                    return null; // Needs to be a select for this to work
+                ArrayList params = new ArrayList();
+                String[] parsedSql = new SQLParser(sql, params, connection.getServerType()).parse(true);
+                // This only works for select statements
+                if (!parsedSql[2].equals("select")) {
+                    return null;
                 }
 
-                int sy = parser.nextToken(token);
-
-                while (sy != SQLParser.sy_end) {
-                    String word = token.toString().toLowerCase();
-
-                    if (word.equals("where") || word.equals("group") || word.equals("order")) {
-                        break;
-                    }
-
-                    sy = parser.nextToken(token);
-                }
-
-                String query = "SET FMTONLY ON\r\n" ;
-
-                if (sy == SQLParser.sy_end) {
-                    // No where clause
-                    query += sql;
-                } else {
-                    query += sql.substring(0, parser.getTokenStart());
-                }
-
-                query += "\r\nSET FMTONLY OFF";
+                String query = "SET FMTONLY ON\r\n" + parsedSql[0] + "\r\nSET FMTONLY OFF";
 
                 try {
                     tds.submitSQL(query);
                     colMetaData = tds.getColumns();
                 } catch (SQLException e) {
+                    // Ensure FMTONLY is switched off!
+                    tds.submitSQL("SET FMTONLY OFF");
                     return null;
                 }
             }

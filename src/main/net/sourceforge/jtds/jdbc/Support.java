@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.14 2004-08-17 20:07:52 bheineman Exp $
+ * @version $Id: Support.java,v 1.15 2004-08-21 18:09:05 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -52,6 +52,8 @@ public class Support {
     private static final Integer INTEGER_ONE = new Integer(1);
     private static final Long LONG_ZERO = new Long(0L);
     private static final Long LONG_ONE = new Long(1L);
+    private static final Float FLOAT_ZERO = new Float(0.0);
+    private static final Float FLOAT_ONE = new Float(1.0);
     private static final Double DOUBLE_ZERO = new Double(0.0);
     private static final Double DOUBLE_ONE = new Double(1.0);
     private static final BigDecimal BIG_DECIMAL_ZERO = new BigDecimal(0.0);
@@ -214,6 +216,22 @@ public class Support {
                     break;
 
                 case java.sql.Types.REAL:
+                    if (x == null) {
+                        return FLOAT_ZERO;
+                    } else if (x instanceof Float) {
+                        return x;
+                    } else if (x instanceof Byte) {
+                        return new Float(((Byte)x).byteValue() & 0xFF);
+                    } else if (x instanceof Number) {
+                        return new Float(((Number) x).floatValue());
+                    } else if (x instanceof String) {
+                        return new Float(((String) x).trim());
+                    } else if (x instanceof Boolean) {
+                        return ((Boolean) x).booleanValue() ? FLOAT_ONE : FLOAT_ZERO;
+                    }
+
+                break;
+                
                 case java.sql.Types.FLOAT:
                 case java.sql.Types.DOUBLE:
                     if (x == null) {
@@ -372,6 +390,8 @@ public class Support {
                         return new java.sql.Timestamp(((java.sql.Date) x).getTime());
                     } else if (x instanceof java.sql.Time) {
                         return new java.sql.Timestamp(((java.sql.Time) x).getTime());
+                    } else if (x instanceof java.lang.String) {
+                        return java.sql.Timestamp.valueOf(((String)x).trim());
                     }
 
                     break;
@@ -393,6 +413,8 @@ public class Support {
 // VM1.4+ only              return new java.sql.Date(cal.getTimeInMillis());
                             return new java.sql.Date(cal.getTime().getTime());
                         }
+                    } else if (x instanceof java.lang.String) {
+                        return java.sql.Date.valueOf(((String) x).trim());
                     }
 
                     break;
@@ -406,20 +428,28 @@ public class Support {
                         return TIME_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
                         synchronized (cal) {
-                            cal.setTime((java.util.Date) x);
-                            cal.set(Calendar.YEAR, 0);
+// VM 1.4+ only             cal.setTimeInMillis(((java.sql.Timestamp)x).getTime());
+                            cal.setTime((java.util.Date)x);
+                            cal.set(Calendar.YEAR, 1970);
                             cal.set(Calendar.MONTH, 0);
-                            cal.set(Calendar.DAY_OF_MONTH, 0);
-// VM 1.4+ only             return new java.sql.Time(cal.getTimeInMillis());
+                            cal.set(Calendar.DAY_OF_MONTH,1);
+// VM 1.4+ only             return new java.sql.Time(cal.getTimeInMillis());*/
                             return new java.sql.Time(cal.getTime().getTime());
                         }
+                    } else if (x instanceof java.lang.String) {
+                        return java.sql.Time.valueOf(((String) x).trim());
                     }
 
                     break;
 
                 case java.sql.Types.OTHER:
-                case java.sql.Types.JAVA_OBJECT:
                     return x;
+                    
+                case java.sql.Types.JAVA_OBJECT:
+                throw new SQLException(
+                                      Messages.get("error.convert.badtypes",
+                                                 x.getClass().getName(),                                                
+                                                 getJdbcTypeName(jdbcType)), "22005");
 
                 case java.sql.Types.BLOB:
                     if (x == null) {
@@ -495,7 +525,8 @@ public class Support {
 
             throw new SQLException(
                                   Messages.get("error.convert.badtypes",
-                                             getJdbcTypeName(getJdbcType(x)),
+//                                             getJdbcTypeName(getJdbcType(x)),
+                                             x.getClass().getName(),                                                
                                              getJdbcTypeName(jdbcType)), "22005");
         } catch (NumberFormatException nfe) {
             throw new SQLException(
@@ -518,7 +549,7 @@ public class Support {
         Object type = typeMap.get(value.getClass());
 
         if (type == null) {
-            return java.sql.Types.OTHER;
+            return java.sql.Types.JAVA_OBJECT;
         }
 
         return ((Integer) type).intValue();
@@ -592,6 +623,8 @@ public class Support {
                 return "java.math.BigDecimal";
 
             case java.sql.Types.REAL:
+                return "java.lang.Float";
+                   
             case java.sql.Types.FLOAT:
             case java.sql.Types.DOUBLE:
                 return "java.lang.Double";
@@ -790,7 +823,7 @@ public class Support {
         
         return sql.toString();
     }
-    
+
     /**
      * Update the SQL string and replace the &#63; markers with parameter names
      * eg @P0, @P1 etc.

@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.24 2004-08-17 20:07:52 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.25 2004-08-21 18:09:05 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1348,7 +1348,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
-        String[] result = new SQLParser(sql, new ArrayList()).parse();
+        String[] result = new SQLParser(sql, new ArrayList(), serverType).parse(false);
 
         return result[0];
     }

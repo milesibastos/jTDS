@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.19 2004-08-12 22:49:47 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.20 2004-08-21 18:09:06 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -336,7 +336,7 @@ public class TdsData {
             } else {
                 ci.displaySize = types[SYBREAL].displaySize;
                 ci.precision = types[SYBREAL].precision;
-                ci.jdbcType = java.sql.Types.FLOAT;
+                ci.jdbcType = java.sql.Types.REAL;
                 ci.sqlType = types[SYBREAL].sqlType;
             }
         } else if (type == SYBINTN) {
@@ -579,7 +579,7 @@ public class TdsData {
                 break;
 
             case SYBREAL:
-                return new Double(Float.intBitsToFloat(in.readInt()));
+                return new Float(Float.intBitsToFloat(in.readInt()));
 
             case SYBFLT8:
                 return new Double(Double.longBitsToDouble(in.readLong()));
@@ -588,7 +588,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len == 4) {
-                    return new Double(Float.intBitsToFloat(in.readInt()));
+                    return new Float(Float.intBitsToFloat(in.readInt()));
                 } else if (len == 8) {
                     return new Double(Double.longBitsToDouble(in.readLong()));
                 }
@@ -864,9 +864,17 @@ public class TdsData {
             case java.sql.Types.NUMERIC:
                 pi.tdsType  = SYBDECIMAL;
                 if (connection.getMaxPrecision() > 28) {
-                    pi.sqlType = "decimal(38,10)";
+                    if (pi.scale > 10 && pi.scale <= 38) {
+                        pi.sqlType = "decimal(38," + pi.scale + ")";
+                    } else {
+                        pi.sqlType = "decimal(38,10)";
+                    }
                 } else {
-                    pi.sqlType = "decimal(28,10)";
+                    if (pi.scale > 10 && pi.scale <= 28) {
+                        pi.sqlType = "decimal(28," + pi.scale + ")";
+                    } else {
+                        pi.sqlType = "decimal(28,10)";
+                    }
                 }
 
                 if (pi.value instanceof BigDecimal) {
@@ -1447,7 +1455,7 @@ public class TdsData {
                 out.write((byte) pi.tdsType);
 
                 if (pi.value == null) {
-                    out.write((byte) 4);
+                    out.write((pi.sqlType.equals("bigint"))? (byte)8: (byte)4);
                     out.write((byte) 0);
                 } else {
                     if (pi.sqlType.equals("bigint")) {
@@ -1510,18 +1518,29 @@ public class TdsData {
             case SYBDECIMAL:
                 out.write((byte) pi.tdsType);
                 BigDecimal value = null;
-                int scale = (pi.jdbcType == java.sql.Types.BIGINT) ? 0 : DEFAULT_SCALE;
+                int scale = 0;
+                int prec = out.getMaxPrecision();
+
+                if (pi.jdbcType == java.sql.Types.BIGINT) {
+                    scale = 0;
+                } else {
+                    if (pi.scale > DEFAULT_SCALE && pi.scale < prec) {
+                        scale = pi.scale;
+                    } else {
+                        scale = DEFAULT_SCALE;
+                    }
+                }
 
                 if (pi.value != null) {
                     if (pi.value instanceof Long) {
                         value = new BigDecimal(((Long) pi.value).toString());
+                        scale = 0;
                     } else {
                         value = (BigDecimal) pi.value;
                         scale = value.scale();
                     }
                 }
 
-                int prec = out.getMaxPrecision();
                 int maxLen = (prec <= 28) ? 13 : 17;
                 out.write((byte) maxLen);
                 out.write((byte) prec);
@@ -1742,7 +1761,7 @@ public class TdsData {
             out.write((byte) 8);
             cal.setTime((java.util.Date) value);
 
-            if (!Driver.JDBC3) {
+            if (!Driver.JDBC3 && value instanceof java.sql.Timestamp) {
                 // Not Running under 1.4 so need to add milliseconds
                 cal.set(Calendar.MILLISECOND,
                         ((java.sql.Timestamp)value).getNanos() / 1000000);
@@ -1892,7 +1911,7 @@ public class TdsData {
                 return (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
 
             case SYBREAL:
-                return new Double(Float.intBitsToFloat(in.readInt()));
+                return new Float(Float.intBitsToFloat(in.readInt()));
 
             case SYBFLT8:
                 return new Double(Double.longBitsToDouble(in.readLong()));

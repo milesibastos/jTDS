@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.27 2004-08-17 23:53:49 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.28 2004-08-21 18:09:05 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -2047,7 +2047,7 @@ public class TdsCore {
      * @throws ProtocolException
      */
     private void tdsOutputParamToken()
-        throws IOException, ProtocolException {
+        throws IOException, ProtocolException, SQLException {
         in.readShort(); // Packet length
         in.readString(in.read()); // Column Name
         in.skip(5);
@@ -2060,17 +2060,26 @@ public class TdsCore {
             && returnParam != null
             && !returnParam.isSet) {
             // TDS 8 Allows function return values of types other than int
-                parameters[nextParam].jdbcType  = col.jdbcType;
-                parameters[nextParam].value     = value;
-                parameters[nextParam].collation = col.collation;
+            if (value != null) {
+                parameters[nextParam].value = 
+                    Support.convert(connection, value, 
+                                    parameters[nextParam].jdbcType, 
+                                    connection.getCharSet());
+                parameters[nextParam].collation = col.collation;                             
+            }
         } else {
             // Look for next output parameter in list
             if (parameters != null) {
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {
-                        parameters[nextParam].jdbcType = col.jdbcType;
-                        parameters[nextParam].value = value;
-                        parameters[nextParam].collation = col.collation;
+                        if (value != null) {
+                            parameters[nextParam].value = 
+                                Support.convert(connection, value, 
+                                                parameters[nextParam].jdbcType, 
+                                                connection.getCharSet());
+                            parameters[nextParam].collation = col.collation;                             
+                        }
+
                         break;
                     }
                 }

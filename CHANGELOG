@@ -1,6 +1,22 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/21/2004 - Brian Heineman
+ o Applied patch [1013432] Patches for SUN JDBC Compatibility test; (many thanks
+   again to Hutchinson for the patch.  The driver now passes the SUN JDBC
+   compatibility test suite 1.3.1).  The following issues were also addressed in
+   this patch:
+     [1012307] PreparedStatement.setObject (java.util.Date) not working;
+     (Server not reporting that java.util.Date is not a supported object type)
+     [1012301] 0.9-rc1: Prepared statement execution error;
+     (Leading spaces cause the parameter marker offsets to be incorrect)
+     [1011650] 0.9-rc1: comments get parsed; (Added Joel Fouse's patch plus
+     modifications to ensure that driver can cope with comments before the first
+     SQL statement).
+     [1002971] TimestampTest failures under JDK 1.3 (Possible class cast
+     exception in TdsData).
+     [1008126] Metadata getTimeDateFunctions() wrong
+
 08/17/2004 - Brian Heineman
  o Additional corrections for bug [966274] Trusted Connections no longer work;
    (thanks to David Kilzer and Joel Fouse).

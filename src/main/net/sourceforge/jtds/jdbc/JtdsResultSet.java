@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.11 2004-08-14 05:01:35 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.12 2004-08-21 18:09:05 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -613,7 +613,7 @@ public class JtdsResultSet implements ResultSet {
     public void setFetchSize(int size) throws SQLException {
         checkOpen();
 
-        if (size < 0 || statement != null && size > statement.getFetchSize()) {
+        if (size < 0 || (statement != null && statement.getMaxRows() > 0 && size > statement.getMaxRows())) {
             throw new SQLException(Messages.get("error.generic.badparam",
                                          Integer.toString(size), "setFetchSize"),
                                             "HY092");
@@ -839,15 +839,15 @@ public class JtdsResultSet implements ResultSet {
     public String getString(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
         Object tmp = data.getValue();
-
-        if (tmp != null && (tmp instanceof String)){
+        
+        if (tmp instanceof String) {
             return (String) tmp;
         }
-
+        
         String charSet = (statement != null) ?
                 ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
 
-        return (String) Support.convert(this, data.getValue(), java.sql.Types.LONGVARCHAR, charSet);
+        return (String) Support.convert(this, tmp, java.sql.Types.LONGVARCHAR, charSet);
     }
 
     public void updateString(int columnIndex, String x) throws SQLException {

@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.8 2004-08-05 21:28:33 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.9 2004-08-21 18:09:05 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1148,7 +1148,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public String getNumericFunctions() throws SQLException {
         // @todo Implement (a)%(b) for MOD(a,b)
         // XXX need to find out if this is still true for SYBASE
-        return "ABS,ACOS,ASIN,ATAN,ATAN2,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,PI,POWER,RADIANS,RAND,ROUND,SIGN,SIN,SQRT,TAN";
+        return "ABS,ACOS,ASIN,ATAN,ATAN2,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,"
+            + "LOG10,MOD,PI,POWER,RADIANS,RAND,ROUND,SIGN,SIN,SQRT,TAN,TRUNCATE";
     }
 
     /**
@@ -1351,7 +1352,14 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setString(2, schemaPattern);
         s.setString(3, catalog);
 
-        return s.executeQuery();
+        JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
+        
+        rs.setColName(1,  "PROCEDURE_CAT");
+        rs.setColLabel(1, "PROCEDURE_CAT");
+        rs.setColName(2,  "PROCEDURE_SCHEM");
+        rs.setColLabel(2, "PROCEDURE_SCHEM");
+
+        return rs;
     }
 
     /**
@@ -1435,15 +1443,15 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getSQLKeywords() throws SQLException {
         return "BREAK,BROWSE,BULK,CHECKPOINT,CLUSTERED,COMMITTED,COMPUTE,"
-        +"CONFIRM,CONTROLROW,DATABASE,DBCC,DISK,DISTRIBUTED,DUMMY,DUMP,"
-        +"ERRLVL,ERROREXIT,EXIT,FILE,FILLFACTOR,FLOPPY,HOLDLOCK,"
-        +"IDENTITY_INSERT,IDENTITYCOL,IF,KILL,LINENO,LOAD,MIRROREXIT,"
-        +"NONCLUSTERED,OFF,OFFSETS,ONCE,OVER,PERCENT,PERM,PERMANENT,PLAN,"
-        +"PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,RECONFIGURE,"
-        +"REPEATABLE,RETURN,ROWCOUNT,RULE,SAVE,SERIALIZABLE,SETUSER,"
-        +"SHUTDOWN,STATISTICS,TAPE,TEMP,TEXTSIZE,TOP,TRAN,TRIGGER,"
-        +"TRUNCATE,TSEQUEL,UNCOMMITTED,UPDATETEXT,USE,WAITFOR,WHILE,"
-        +"WRITETEXT";
+        + "CONFIRM,CONTROLROW,DATABASE,DBCC,DISK,DISTRIBUTED,DUMMY,DUMP,"
+        + "ERRLVL,ERROREXIT,EXIT,FILE,FILLFACTOR,FLOPPY,HOLDLOCK,"
+        + "IDENTITY_INSERT,IDENTITYCOL,IF,KILL,LINENO,LOAD,MIRROREXIT,"
+        + "NONCLUSTERED,OFF,OFFSETS,ONCE,OVER,PERCENT,PERM,PERMANENT,PLAN,"
+        + "PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,RECONFIGURE,"
+        + "REPEATABLE,RETURN,ROWCOUNT,RULE,SAVE,SERIALIZABLE,SETUSER,"
+        + "SHUTDOWN,STATISTICS,TAPE,TEMP,TEXTSIZE,TOP,TRAN,TRIGGER,"
+        + "TRUNCATE,TSEQUEL,UNCOMMITTED,UPDATETEXT,USE,WAITFOR,WHILE,"
+        + "WRITETEXT";
     }
 
     /**
@@ -1453,7 +1461,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException  if a database-access error occurs.
      */
     public String getStringFunctions() throws SQLException {
-        return "ASCII,CHAR,CONCAT,DIFFERENCE,INSERT,LCASE,LEFT,LENGTH,LOCATE,LTRIM,REPEAT,REPLACE,RIGHT,RTRIM,SOUNDEX,SPACE,SUBSTRING,UCASE";
+        return "ASCII,CHAR,CONCAT,DIFFERENCE,INSERT,LCASE,LEFT,LENGTH,LOCATE,"
+             + "LTRIM,REPEAT,REPLACE,RIGHT,RTRIM,SOUNDEX,SPACE,SUBSTRING,UCASE";
     }
 
     /**
@@ -1644,8 +1653,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getTimeDateFunctions() throws SQLException {
-        // @todo Implement this method correctly (and add dependencies to EscapeProcessor)!
-        return "GETDATE,DATEPART,DATENAME,DATEDIFF,DATEADD";
+        return "CURDATE,CURTIME,DAYNAME,DAYOFMONTH,DAYOFWEEK,DAYOFYEAR,HOUR,"
+            + "MINUTE,MONTH,MONTHNAME,NOW,QUARTER,TIMESTAMPADD,TIMESTAMPDIFF," 
+            + "SECOND,WEEK,YEAR";
     }
 
     /**

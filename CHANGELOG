@@ -1,6 +1,14 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/14/2002 - Alin Sinpalean
+
+ o Fix in TdsResultSetMetaData: getColumnTypeName() crashed on SYBBITN columns.
+ o Fix in TdsConnection: on close(), not all Statements were closed, because
+   the for was going from 1 up but Statements were removed from the Vector as
+   they closed, so every second Statement was skipped.
+ o Moved startResultSet logic from TdsStatement to TdsResultSet.
+
 09/13/2002 - Alin Sinpalean
 
  o Fixed DatabaseMetaData.getColumns() (temporarily, the final solution would

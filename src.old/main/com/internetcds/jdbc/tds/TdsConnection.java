@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.16 2002-09-14 01:44:23 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2002-09-09 12:14:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -553,7 +553,9 @@ public class TdsConnection implements ConnectionHelper, Connection
 
         // SAfe First close all Statements, to ensure nothing is left behind
         //      This is needed to ensure rollback below doesn't crash.
-        for( i=0; i<allStatements.size(); i++ )
+        // SAfe Need to do it backwards because when closing Statements remove
+        //      themselves from the list.
+        for( i=allStatements.size()-1; i>=0; i-- )
             try
             {
                 ((Statement)allStatements.elementAt(i)).close();

@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.11 2002-09-11 19:34:37 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.12 2002-09-14 01:44:23 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,17 +110,78 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.11 2002-09-11 19:34:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.12 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
-    public TdsResultSet(Tds tds_, TdsStatement stmt_, Columns columns)
+    public TdsResultSet(Tds tds_, TdsStatement stmt_) throws SQLException
     {
         tds = tds_;
         stmt = stmt_;
-        context = new Context(columns, tds.getEncoder());
+        startResultSet(tds, stmt.warningChain);
 
         hitEndOfData = false;
         warningChain = new SQLWarningChain();
         rowCache = new PacketRowResult[fetchSize];
+    }
+
+    private void startResultSet(Tds tds, SQLWarningChain stmtWarningChain) throws SQLException
+    {
+        Columns names = null;
+        Columns info  = null;
+
+        try
+        {
+            while( !tds.isResultRow() && !tds.isEndOfResults() )
+            {
+                PacketResult tmp = tds.processSubPacket();
+
+                if( tmp instanceof PacketColumnNamesResult )
+                    names = ((PacketColumnNamesResult)tmp).getColumnNames();
+                else if( tmp instanceof PacketColumnInfoResult )
+                    info = ((PacketColumnInfoResult)tmp).getColumnInfo();
+                else if( tmp instanceof PacketMsgResult )
+                    warningChain.addOrReturn((PacketMsgResult)tmp);
+                else if( tmp instanceof PacketColumnOrderResult )
+                {
+                    // XXX ORDER BY columns
+                }
+                else if( tmp instanceof PacketTabNameResult )
+                {
+                    // XXX Names of tables from which we got the results
+                }
+                else if( tmp instanceof PacketControlResult )
+                {
+                    // XXX Controlrow information
+                }
+                else if( tmp instanceof PacketUnknown )
+                {
+                    // XXX Need to add to the warning chain
+                }
+                else
+                {
+                    stmtWarningChain.addException(new SQLException("Trying to get a ResultSet. Found a "
+                        + tmp.getClass().getName()));
+                    break;
+                }
+            }
+
+            stmtWarningChain.checkForExceptions();
+
+            // TDS 7.0 includes everything in one subpacket.
+            if( info != null )
+                names.merge(info);
+
+            context = new Context(names, tds.getEncoder());
+        }
+        catch( com.internetcds.jdbc.tds.TdsException e )
+        {
+            stmtWarningChain.addException(new SQLException(e.getMessage()));
+        }
+        catch( java.io.IOException e)
+        {
+            stmtWarningChain.addException(new SQLException(e.getMessage()));
+        }
+
+        stmtWarningChain.checkForExceptions();
     }
 
     public Context getContext()
@@ -808,7 +869,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     private int internalFetchRows() throws SQLException
     {
-        // Need to set this so that next() will set it to 0
         rowCount = 0;
 
         do
@@ -819,6 +879,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
             rowCache[rowCount] = row;
             rowCount++;
+            // SAfe Need to set this so that next() will set it to 0
             // Not very efficient, but this should be set only if we got a row
             rowIndex = -1;
         } while (rowCount < fetchSize);

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.21 2002-09-09 12:14:32 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.22 2002-09-14 01:44:23 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.21 2002-09-09 12:14:32 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.22 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -176,7 +176,7 @@ public class TdsStatement implements java.sql.Statement
     * breaking the internal methods.
     */
    final public TdsResultSet internalExecuteQuery(Tds tds, String sql)
-   throws SQLException
+      throws SQLException
    {
       if (execute(tds, sql))
       {
@@ -324,7 +324,7 @@ public class TdsStatement implements java.sql.Statement
     * @exception SQLException if a database access error occurs
     */
 
-  public int getMaxRows() throws SQLException
+   public int getMaxRows() throws SQLException
    {
       return maxRows;
    }
@@ -356,7 +356,7 @@ public class TdsStatement implements java.sql.Statement
     * @exception SQLException if a database access error occurs
     */
 
-  public void setEscapeProcessing(boolean enable) throws SQLException
+   public void setEscapeProcessing(boolean enable) throws SQLException
    {
       escapeProcessing = enable;
    }
@@ -370,7 +370,7 @@ public class TdsStatement implements java.sql.Statement
     * @exception SQLException if a database access error occurs
     */
 
-  public int getQueryTimeout() throws SQLException
+   public int getQueryTimeout() throws SQLException
    {
       return timeout;
    }
@@ -382,7 +382,7 @@ public class TdsStatement implements java.sql.Statement
     * @exception SQLException if a database access error occurs
     */
 
-  public void setQueryTimeout(int seconds) throws SQLException
+   public void setQueryTimeout(int seconds) throws SQLException
    {
       timeout = seconds;
    }
@@ -391,7 +391,7 @@ public class TdsStatement implements java.sql.Statement
    *
    * @exception SQLException
    */
-  public void cancel() throws SQLException
+   public void cancel() throws SQLException
    {
       if (actTds == null)
       {
@@ -429,7 +429,7 @@ public class TdsStatement implements java.sql.Statement
     * @return the first SQLWarning on null
     * @exception SQLException if a database access error occurs
     */
-  public SQLWarning getWarnings() throws SQLException
+   public SQLWarning getWarnings() throws SQLException
    {
       return warningChain.getWarnings();
    }
@@ -441,7 +441,7 @@ public class TdsStatement implements java.sql.Statement
    *
    * @exception SQLException if a database access error occurs (why?)
    */
-  public void clearWarnings() throws SQLException
+   public void clearWarnings() throws SQLException
    {
       warningChain.clearWarnings();
    }
@@ -603,13 +603,6 @@ public class TdsStatement implements java.sql.Statement
     */
    public int getUpdateCount() throws SQLException
    {
-//        if (updateCount == -1)
-//        {
-//           throw new SQLException("Don't have a count yet.");
-//        }
-      // XXX This isn't correct.  We need to check to see if
-      // the result was a result set or if there are no more results.
-      // If either of those are true we are supposed to return -1
       return updateCount;
    }
 
@@ -622,15 +615,16 @@ public class TdsStatement implements java.sql.Statement
     */
    public boolean getMoreResults() throws SQLException
    {
-     return getMoreResults(actTds);
+      return getMoreResults(actTds);
    }
 
-    public boolean getMoreResults(int current) throws SQLException
+   public boolean getMoreResults(int current) throws SQLException
    {
-        throw new SQLException("Not Implemented");
+      throw new SQLException("Not Implemented");
    }
 
-   public void handleRetStat(PacketRetStatResult packet) {
+   public void handleRetStat(PacketRetStatResult packet)
+   {
    }
 
    public void handleParamResult(PacketOutputParamResult packet) throws SQLException
@@ -771,98 +765,23 @@ public class TdsStatement implements java.sql.Statement
       }
    }
 
-   protected void startResultSet(Tds tds)
-      throws SQLException
-   {
-      Columns      names     = null;
-      Columns      info      = null;
+    protected void startResultSet(Tds tds) throws SQLException
+    {
+        // We are just opening the next result set
+        unopenedResult = false;
 
-      try
-      {
-         // We are just opening the next result set
-         unopenedResult = false;
-
-         while (!tds.isResultRow() && !tds.isEndOfResults())
-         {
-            PacketResult   tmp = tds.processSubPacket();
-
-            if (tmp.getPacketType() == TdsDefinitions.TDS_DONEINPROC)
-            {
-               // XXX We should do something with the possible ret_stat
-            }
-            else if (tmp instanceof PacketColumnNamesResult)
-            {
-               names = ((PacketColumnNamesResult)tmp).getColumnNames();
-            }
-            else if (tmp instanceof PacketColumnInfoResult)
-            {
-               info = ((PacketColumnInfoResult)tmp).getColumnInfo();
-            }
-            else if (tmp instanceof PacketColumnOrderResult)
-            {
-               // nop
-               // XXX do we want to do anything with this
-            }
-            else if (tmp instanceof PacketTabNameResult)
-            {
-               // nop
-               // XXX What should be done with this information?
-            }
-            else if (tmp instanceof PacketControlResult)
-            {
-               // nop
-               // XXX do we want to do anything with this
-            }
-            else if (tmp instanceof PacketMsgResult)
-            {
-               warningChain.addOrReturn((PacketMsgResult)tmp);
-            }
-            else if (tmp instanceof PacketUnknown)
-            {
-               // XXX Need to add to the warning chain
-            }
-            else
-            {
-               throw new SQLException("Trying to get a result set.  Found a "
-                                      + tmp.getClass().getName());
-            }
-         }
-
-         warningChain.checkForExceptions();
-
-         if( !tds.isResultRow() && !tds.isEndOfResults() )
-         {
-            // XXX
-            throw new SQLException("Confused.  Was expecting a result row.  "
-               + "Got a 0x" + Integer.toHexString(tds.peek() & 0xff));
-         }
-
-         // TDS 7.0 includes everything in one subpacket.
-         if (info != null)
-            names.merge(info);
-
-         results = new TdsResultSet( tds, this, names );
-      }
-      catch(com.internetcds.jdbc.tds.TdsException e)
-      {
-         e.printStackTrace();
-         throw new SQLException(e.getMessage());
-      }
-      catch( java.io.IOException e)
-      {
-         e.printStackTrace();
-         throw new SQLException(e.getMessage());
-      }
-   }
+        results = new TdsResultSet(tds, this);
+    }
 
 
-   void fetchIntoCache() throws SQLException
-   {
-     if (results != null) {
-       // System.out.println("fetching into Cache !!");
-       results.fetchIntoCache();
-     }
-   }
+    void fetchIntoCache() throws SQLException
+    {
+        if (results != null)
+        {
+            // System.out.println("fetching into Cache !!");
+            results.fetchIntoCache();
+        }
+    }
 
 
 
@@ -887,10 +806,10 @@ public class TdsStatement implements java.sql.Statement
      * is not one of ResultSet.FETCH_FORWARD, ResultSet.FETCH_REVERSE, or
      * ResultSet.FETCH_UNKNOWN
      */
-   public void setFetchDirection(int direction) throws SQLException
-      {
-         NotImplemented();
-      }
+    public void setFetchDirection(int direction) throws SQLException
+    {
+        NotImplemented();
+    }
 
 
    /**
@@ -907,11 +826,11 @@ public class TdsStatement implements java.sql.Statement
     *          from this <code>Statement</code> object
     * @exception SQLException if a database access error occurs
     */
-   public int getFetchDirection() throws SQLException
-      {
-         NotImplemented();
-         return 0;
-      }
+    public int getFetchDirection() throws SQLException
+    {
+        NotImplemented();
+        return 0;
+    }
 
 
     /**
@@ -927,10 +846,10 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs, or the
      * condition 0 <= rows <= this.getMaxRows() is not satisfied.
      */
-   public void setFetchSize(int rows) throws SQLException
-      {
-         NotImplemented();
-      }
+    public void setFetchSize(int rows) throws SQLException
+    {
+        NotImplemented();
+    }
 
 
     /**
@@ -946,11 +865,11 @@ public class TdsStatement implements java.sql.Statement
      *          from this <code>Statement</code> object
      * @exception SQLException if a database access error occurs
      */
-   public int getFetchSize() throws SQLException
-      {
-         NotImplemented();
-         return 0;
-      }
+    public int getFetchSize() throws SQLException
+    {
+        NotImplemented();
+        return 0;
+    }
 
 
     /**
@@ -958,10 +877,10 @@ public class TdsStatement implements java.sql.Statement
      *
      * Retrieves the result set concurrency.
      */
-   public int getResultSetConcurrency() throws SQLException
-      {
-         return concurrency;
-      }
+    public int getResultSetConcurrency() throws SQLException
+    {
+        return concurrency;
+    }
 
 
     /**
@@ -969,10 +888,10 @@ public class TdsStatement implements java.sql.Statement
      *
      * Determine the result set type.
      */
-   public int getResultSetType()  throws SQLException
-      {
-         return type;
-      }
+    public int getResultSetType()  throws SQLException
+    {
+        return type;
+    }
 
 
     /**
@@ -985,10 +904,10 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs, or the
      * driver does not support batch statements
      */
-   public void addBatch( String sql ) throws SQLException
-      {
-         NotImplemented();
-      }
+    public void addBatch( String sql ) throws SQLException
+    {
+        NotImplemented();
+    }
 
     /**
      * JDBC 2.0
@@ -999,10 +918,10 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs or the
      * driver does not support batch statements
      */
-   public void clearBatch() throws SQLException
-      {
-         NotImplemented();
-      }
+    public void clearBatch() throws SQLException
+    {
+        NotImplemented();
+    }
 
 
     /**
@@ -1017,11 +936,11 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs or the
      * driver does not support batch statements
      */
-   public int[] executeBatch() throws SQLException
-      {
-         NotImplemented();
-         return null;
-      }
+    public int[] executeBatch() throws SQLException
+    {
+        NotImplemented();
+        return null;
+    }
 
 
     /**
@@ -1050,107 +969,43 @@ public class TdsStatement implements java.sql.Statement
         }
     }
 
-   static public void main(String args[])
-      throws java.lang.ClassNotFoundException,
-      java.lang.IllegalAccessException,
-      java.lang.InstantiationException,
-      SQLException
-   {
-
-      String query = null;
-
-      String   url = url = ""
-         + "jdbc:freetds:"
-         + "//"
-         + "kap"
-         + "/"
-         + "pubs";
-
-      Class.forName("com.internetcds.jdbc.tds.Driver").newInstance();
-      java.sql.Connection connection;
-      connection =  DriverManager.getConnection(url,
-                                                "testuser",
-                                                "password");
-      java.sql.Statement stmt = connection.createStatement();
-
-      query = ""
-         + "update titles                                     "
-         + "  set price=price+1.00                            "
-         + "   where title_id='MC3021' or title_id = 'BU1032' ";
-      int count = stmt.executeUpdate(query);
-      System.out.println("Updated " + count + " rows.");
-
-      query =
-         ""
-         +"select price, title_id, title, price*ytd_sales gross from titles"
-         +" where title like 'The%'";
-      java.sql.ResultSet rs = stmt.executeQuery(query);
-
-      while(rs.next())
-      {
-         float    price     = rs.getFloat("price");
-         if (rs.wasNull())
-         {
-            System.out.println("price:  null");
-         }
-         else
-         {
-            System.out.println("price:  " + price);
-         }
-
-         String   title_id  = rs.getString("title_id");
-         String   title     = rs.getString("title");
-         float    gross     = rs.getFloat("gross");
-
-
-         System.out.println("id:     " + title_id);
-         System.out.println("name:   " + title);
-         System.out.println("gross:  " + gross);
-         System.out.println("");
-      }
-   }
-
-   public boolean execute(String str, int param) throws java.sql.SQLException
-   {
+    public boolean execute(String str, int param) throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public boolean execute(String str, String[] str1) throws java.sql.SQLException
-   {
+    public boolean execute(String str, String[] str1) throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public boolean execute(String str, int[] values) throws java.sql.SQLException
-   {
+    public boolean execute(String str, int[] values) throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public int executeUpdate(String str, String[] str1) throws java.sql.SQLException
-   {
+    public int executeUpdate(String str, String[] str1) throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public int executeUpdate(String str, int[] values) throws java.sql.SQLException
-   {
+    public int executeUpdate(String str, int[] values) throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public int executeUpdate(String str, int param) throws java.sql.SQLException
-   {
+    public int executeUpdate(String str, int param) throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException
-   {
+    public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
+    }
 
-   public int getResultSetHoldability() throws java.sql.SQLException
-   {
+    public int getResultSetHoldability() throws java.sql.SQLException
+    {
         throw new SQLException("Not Implemented");
-   }
-
+    }
 }
-
-
-

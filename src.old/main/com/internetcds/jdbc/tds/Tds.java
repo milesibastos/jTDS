@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -731,6 +731,8 @@ public class Tds implements TdsDefinitions {
                         nameBytes.length,
                         (byte) 0);
             }
+            // SAfe I think if this is set to 2 it means "more requests"
+            //      More requests can be separated with 0x80
             comm.appendByte((byte) 0);
             comm.appendByte((byte) 0);
 

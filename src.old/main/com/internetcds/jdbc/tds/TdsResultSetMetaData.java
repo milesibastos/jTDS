@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.7 2002-08-30 10:27:18 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.8 2002-09-14 01:44:23 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.7 2002-08-30 10:27:18 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.8 2002-09-14 01:44:23 alin_sinpalean Exp $";
 
 
    /**
@@ -199,7 +199,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
          case Tds.SYBBINARY: return "binary";
          case Tds.SYBCHAR: return "char";
          case Tds.SYBINT1: return "tinyint";
-         case Tds.SYBBIT: return "bit";
+         case Tds.SYBBIT: case Tds.SYBBITN: return "bit";
          case Tds.SYBINT2: return "smallint";
          case Tds.SYBINT4: return "int";
          case Tds.SYBDATETIME4: return "smalldatetime";
@@ -253,7 +253,8 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
          }
       }
 
-      throw new SQLException("Unknown native type for column " + column);
+      throw new SQLException("Unknown native type for column "+column+": "
+         +columnsInfo.getNativeType(column));
    }
 
 

@@ -33,10 +33,13 @@
 
 package com.internetcds.jdbc.tds;
 
-
+/**
+ * TDS_CONTROL packages are only returned by Sybase, following a SELECT query
+ * with CONTROLROW. Even the Sybase spec says it's &quot;fairly obscure&quot;.
+ */
 public class PacketControlResult extends PacketResult
 {
-   public static final String cvsVersion = "$Id: PacketControlResult.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: PacketControlResult.java,v 1.3 2002-09-14 01:44:22 alin_sinpalean Exp $";
 
 
 

@@ -1,6 +1,11 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/28/2004 - Alin Sinpalean
+ o Compiled (a lot of) new documentation.
+ o Modified property names in TdsDefinitions and TdsDataSource to match the
+   documentation.
+
 03/28/2004 - Brian Heineman
  o Implemented Savepoint support.
  o Updated DatabaseMetaData.supportsSavepoints() to return true.

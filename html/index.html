@@ -42,36 +42,59 @@
         | <a href="license.html">License</a>
       </p>
       <p class="title">Overview</p>
-      <p> jTDS is an open source 100% pure Java (type 4) JDBC 2.1 driver for the 
-        Microsoft SQL Server series (6.5, 7.x and 2000) and Sybase 10. jTDS is 
-        based on the work of the <a href="http://www.freetds.org">FreeTDS</a> 
-        project and is currently the fastest complete JDBC driver for SQL Server 
-        and Sybase. Release 0.7.1 is 100% JDBC 2.1 compatible, supporting forward-only 
-        and scrollable/updateable ResultSets, multiple concurrent (completely 
-        independent) Statements per Connection and implementing all of the DatabaseMetaData 
-        and ResultSetMetaData methods. A few JDBC 3.0 features (such as retrieval 
-        of generated keys) are also implemented.</p>
-      <p> Quite a few of the commercial JDBC drivers out there are based on jTDS 
-        (or FreeTDS), even if they no longer acknowledge this. jTDS has been tested 
-        with virtually all of the available JDBC-based database management tools 
-        and is the driver of choice for most of these (DataDino and Aqua DataStudio 
-        even contain it). jTDS is also becoming a common choice for enterprise-level 
-        applications.</p>
-      <p class="title">Installation and usage</p>
-      <p> Because it's a type 4 driver, jTDS does not need any installation whatsoever. 
-        Just add the jar file to your application's classpath and you're done. 
-        All you need to know is the Driver and DataSource implementation class 
-        names and the URL format. The class names are <code>net.sourceforge.jtds.jdbc.Driver</code> 
-        and <code>net.sourceforge.jtds.jdbcx.TdsDataSource</code> and the URL 
-        looks like this:</p>
-      <pre>    jdbc:jtds:&lt;server_type&gt;://&lt;server&gt;[:&lt;port&gt;][/&lt;database&gt;][;&lt;property&gt;=&lt;value&gt;[;...]]</pre>
-      <p> where <code>&lt;server_type&gt;</code> is one of either 'sqlserver' 
-        or 'sybase' (the meaning is quite obvious), <code>&lt;port&gt;</code> 
-        is the server's TCP port (with a default of 1433 for SQL Server and 4000 
-        for Sybase) and <code>&lt;database&gt;</code> is the database name -- 
-        or catalog in the JDBC terminology -- (default is 'master'). For more 
-        information, check out the <a href="faq.html">Frequently Asked Questions</a> 
-        page.</p>
+      <p>jTDS is an open source 100% pure Java (type 4) JDBC 2.1 driver for the
+        Microsoft SQL Server series (6.5, 7.x and 2000) and Sybase 10. jTDS is
+        based on the work of the <a href="http://www.freetds.org">FreeTDS</a>
+        project and is currently the fastest complete JDBC driver for SQL Server
+        and Sybase. Starting with release 0.7.1 jTDS is 100% JDBC 2.1
+        compatible, supporting forward-only and scrollable/updateable
+        <code>ResultSet</code>s, multiple concurrent (completely independent)
+        <code>Statement</code>s per <code>Connection</code> and implementing all
+        of the <code>DatabaseMetaData</code> and <code>ResultSetMetaData</code>
+        methods. A number of JDBC 3.0 features (such as retrieval of generated
+        keys) are also implemented.</p>
+      <p>Quite a few of the commercial JDBC drivers out there are based on jTDS
+        (or FreeTDS), even if they no longer acknowledge this. jTDS has been
+        tested with virtually all of the available JDBC-based database
+        management tools and is the driver of choice for most of these
+        (<a href="http://www.datadino.com">DataDino</a> and
+        <a href="http://www.aquafold.com">Aqua Data Studio</a> even contain it).
+        jTDS is also becoming a common choice for enterprise-level applications:
+        starting with release 0.8-rc1 jTDS passes the
+        <a href="http://www.hibernate.org">Hibernate</a> test suite, making it
+        the driver of choice for SQL Server.</p>
+      <p class="title">Getting Started</p>
+      <p>Being a type 4 driver, jTDS does not need any special installation.
+        Just drop the jar file into your application's classpath and you're
+        done. All you need to know is the name of the <code>Driver</code> and
+        <code>DataSource</code> implementations and the URL format and you're
+        all set. You can get these and a lot more information from the
+        <a href="faq.html">Frequently Asked Questions</a> page.</p>
+      <p class="title">Why use jTDS?</p>
+      <p>Umm, good question... Let's see... Well, first of all because it's
+        open source. jTDS is released under the
+        <a href="http://www.opensource.org/licenses/lgpl-license.php"
+        alt="GNU Lesser General Public License">GNU LGPL</a>, giving you not
+        only the opportunity to tweak it to your own liking but also the right
+        to get any improvement anyone ever brings to jTDS. Plus your money
+        back. ;o)</p>
+      <p>You'll say there are other free choices... There's the JDBC-ODBC
+        bridge and Microsoft's own JDBC driver... Well yes, but both of them
+        crash on you every now and then, just to keep you on your toes, and lack
+        functionality. Indeed jTDS more stable than any of the two.
+        Just do a <a href="http://www.google.com">Google</a> search for jTDS and
+        you'll find posts from a lot of people moving to jTDS because of
+        stability issues.</p>
+      <p>Oh, and did I mention that jTDS is faster? Well it's not faster, it's
+        the fastest. Of all the SQL Server drivers. Including commercial ones.
+        Well, this seems to have caught your attention. We don't have any
+        benchmark of our own, we use those of the competition. And here are the
+        results of i-net software's <a href="benchTest.html">BenchTest 2.1 for
+        MS SQL Server</a> and JNetDirect's <a href="perfTest.html">JDBC
+        Performance Benchmark</a>.</p>
+      <p>Well anyway, just give it a try. Get the latest one from
+        <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">here</a>
+        and see if you like it or not.</p>
     </td>
     <td width="9" background="images/mainr.gif"><img src="images/spacer.gif"></td>
   </tr>

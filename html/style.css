@@ -200,3 +200,13 @@ td.logoWrapper
     border-bottom: 1px solid #AAA;
     border-left: 1px solid #000;
 }
+
+li
+{
+    margin-bottom: 2px;
+}
+
+li a:hover
+{
+    text-decoration: none;
+}

@@ -27,7 +27,7 @@ public class TdsObjectFactory implements ObjectFactory {
             ds.setUser((String) ref.get("user").getContent());
             ds.setPassword((String) ref.get("password").getContent());
             ds.setCharset((String) ref.get("charset").getContent());
-            ds.setTdsVersion((String) ref.get("tdsVersion").getContent());
+            ds.setTds((String) ref.get("tds").getContent());
             ds.setServerType(Integer.parseInt((String) ref.get("serverType").getContent()));
             ds.setDomain((String) ref.get("domain").getContent());
             ds.setInstance((String) ref.get("instance").getContent());

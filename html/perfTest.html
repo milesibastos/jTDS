@@ -55,7 +55,21 @@ table.inner td.fastest { color: #00ff00; }
 
 
 <p class="title">NetDirect JDBC Performance Test Results</p>
-<br>
+<p>These are the results of running JNetDirect's
+  <a href="http://www.jnetdirect.com/downloads.php?op=performsuite">JDBC
+  Performance Benchmark</a>. The tests were run against an SQL Server 2000 over
+  a 100Mbit network connection. The client machine was an AMD Duron 900MHz with
+  512MB RAM (no idea about the server).</p>
+<p>4 drivers were tested:
+  <a href="http://www.inetsoftware.de/English/Produkte/MERLIA/default.htm">i-net
+  Merlia 6.0</a>, Microsoft SQL Server Driver for JDBC SP2, NetDirect
+  JSQLConnect 3.3023 and jTDS 0.7. All tests were run 5 times and the final
+  result is the average of the 5 test runs.</p>
+<p>Unfortunately, the license of NetDirect JSQLConnect does not allow any
+  benchmarking results to be made public, but its results would not have
+  affected the final standings too much. If you want to see the results for
+  JSQLConnect, download it and the JDBC Performance Benchmark and do the testing
+  yourself. It's very easy.</p>
 <p class="title">Environment</p>
 Date:2004-02-18 01:59:04.044<br>
 VM Name:Java(TM) 2 Runtime Environment, Standard Edition<br>
@@ -67,22 +81,22 @@ SQL Server Version:8.0.760
 <p class="title">Drivers</p>
 NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Version:3.3023 (com.jnetdirect.jsql.JSQLDriver)<br>
 SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Version:2.2 (com.microsoft.jdbc.sqlserver.SQLServerDriver)<br>
-jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] Version:0.7 
+jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] Version:0.7
 (net.sourceforge.jtds.jdbc.Driver)<br>
 i-net MERLIA-xs[com.inet.tds.TdsDriver] Version:6.0 (com.inet.tds.TdsDriver)
 
 <p class="title">Results in Milliseconds</p>
-Fastest times are in bold.<br>
+Fastest times are in green.<br>
 <br>
       <table class="inner" cellspacing="0">
-        <tr> 
+        <tr>
           <td>Tests</td>
           <td>NetDirect JSQLConnect</td>
           <td>SQLServer</td>
           <td>jTDS JDBC Driver</td>
           <td>i-net MERLIA-xs</td>
         </tr>
-        <tr> 
+        <tr>
           <td>UnpreparedInsert</td>
           <td align='center'>***</td>
           <td align='center' class="fastest">47390<br>
@@ -92,7 +106,7 @@ Fastest times are in bold.<br>
           <td align='center'>47417<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>UnpreparedUpdate</td>
           <td align='center'>***</td>
           <td align='center'>26802<br>
@@ -101,7 +115,7 @@ Fastest times are in bold.<br>
           <td align='center'>26762<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>UnpreparedDelete</td>
           <td align='center'>***</td>
           <td align='center'>47849<br>
@@ -110,7 +124,7 @@ Fastest times are in bold.<br>
           <td align='center'>47780<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>PreparedInsert</td>
           <td align='center'>***</td>
           <td align='center'>20899<br>
@@ -119,7 +133,7 @@ Fastest times are in bold.<br>
           <td align='center'>20790<br>
             (+7%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>PreparedUpdate</td>
           <td align='center'>***</td>
           <td align='center'>26983<br>
@@ -128,7 +142,7 @@ Fastest times are in bold.<br>
           <td align='center'>26905<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>PreparedSelects</td>
           <td align='center'>***</td>
           <td align='center'>11376<br>
@@ -137,7 +151,7 @@ Fastest times are in bold.<br>
             (+32%)</td>
           <td align='center' class="fastest">5447</td>
         </tr>
-        <tr> 
+        <tr>
           <td>PreparedDelete</td>
           <td align='center'>***</td>
           <td align='center'>20835<br>
@@ -146,7 +160,7 @@ Fastest times are in bold.<br>
           <td align='center'>21021<br>
             (+2%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>PreparedInsertMultipleStatements</td>
           <td align='center'>***</td>
           <td align='center' class="fastest">91814<br>
@@ -156,7 +170,7 @@ Fastest times are in bold.<br>
           <td align='center'>92272<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>CursorInsert</td>
           <td align='center'>***</td>
           <td align='center'>38397<br>
@@ -165,7 +179,7 @@ Fastest times are in bold.<br>
           <td align='center'>37991<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>CursorUpdate</td>
           <td align='center'>***</td>
           <td align='center'>35557<br>
@@ -174,7 +188,7 @@ Fastest times are in bold.<br>
             (+5%)</td>
           <td align='center' class="fastest">34228</td>
         </tr>
-        <tr> 
+        <tr>
           <td>CursorDelete</td>
           <td align='center'>***</td>
           <td align='center'>39614<br>
@@ -183,7 +197,7 @@ Fastest times are in bold.<br>
           <td align='center'>38994<br>
             (+2%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>ResultSetReadAllRows</td>
           <td align='center'>***</td>
           <td align='center'>1528<br>
@@ -192,14 +206,14 @@ Fastest times are in bold.<br>
           <td align='center'>2906<br>
             (+165%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>ScrollingResultSet</td>
           <td align='center'>***</td>
           <td class="failed" align='center'>Failed<a href="#_note_Scrolling"><sup>1</sup></a></td>
           <td class="failed" align='center'>Failed<a href="#_note_Scrolling"><sup>1</sup></a></td>
           <td align='center' class="fastest">5790</td>
         </tr>
-        <tr> 
+        <tr>
           <td>CursorReadAllRows</td>
           <td align='center'>***</td>
           <td align='center'>4123<br>
@@ -209,7 +223,7 @@ Fastest times are in bold.<br>
           <td align='center' class="fastest">1738<br>
             (+62%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>BatchUnpreparedInsert</td>
           <td align='center'>***</td>
           <td align='center'>28890<br>
@@ -218,7 +232,7 @@ Fastest times are in bold.<br>
           <td align='center'>28757<br>
             (+0%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>BatchUnpreparedUpdate</td>
           <td align='center'>***</td>
           <td align='center'>26048<br>
@@ -227,7 +241,7 @@ Fastest times are in bold.<br>
           <td align='center'>26073<br>
             (+1%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>BatchPreparedInsert</td>
           <td align='center'>***</td>
           <td align='center' class="fastest">29313<br>
@@ -237,7 +251,7 @@ Fastest times are in bold.<br>
           <td align='center'>29369<br>
             (+1%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>BatchPreparedUpdate</td>
           <td align='center'>***</td>
           <td align='center'>13426<br>
@@ -247,7 +261,7 @@ Fastest times are in bold.<br>
           <td align='center' class="fastest">13249<br>
             (+1%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>BlobInsert</td>
           <td align='center'>***</td>
           <td align='center'>17384<br>
@@ -256,7 +270,7 @@ Fastest times are in bold.<br>
             (+1%)</td>
           <td align='center' class="fastest">16847</td>
         </tr>
-        <tr> 
+        <tr>
           <td>ClobInsert</td>
           <td align='center'>***</td>
           <td align='center' class="fastest">18988</td>
@@ -265,7 +279,7 @@ Fastest times are in bold.<br>
           <td align='center'>19373<br>
             (+2%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>BlobRetrieve</td>
           <td align='center'>***</td>
           <td align='center' class="fastest">398</td>
@@ -274,7 +288,7 @@ Fastest times are in bold.<br>
           <td align='center'>795<br>
             (+99%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>ClobRetrieve</td>
           <td align='center'>***</td>
           <td align='center'>2970<br>
@@ -283,7 +297,7 @@ Fastest times are in bold.<br>
             (+21%)</td>
           <td align='center' class="fastest">1013</td>
         </tr>
-        <tr> 
+        <tr>
           <td>TransactionManagement</td>
           <td align='center'>***</td>
           <td class="failed" align='center'>Failed</td>
@@ -291,7 +305,7 @@ Fastest times are in bold.<br>
           <td align='center'>10975<br>
             (+4%)</td>
         </tr>
-        <tr> 
+        <tr>
           <td>InvokeStoredProcedure</td>
           <td align='center'>***</td>
           <td align='center'>3585<br>
@@ -319,10 +333,10 @@ PreparedInsertMultipleStatements: Insert 500 rows with multiple prepared stateme
 CursorInsert: Insert 4000 rows into an updateable result set cursor<br>
 CursorUpdate: Update 4000 rows in an updateable result set cursor<br>
 CursorDelete: Delete 4000 rows in an updateable result set cursor<br>
-ResultSetReadAllRows: Retrieve all columns by index for 7000 rows of a result 
+ResultSetReadAllRows: Retrieve all columns by index for 7000 rows of a result
 set<br>
 ScrollingResultSet: Scroll forward and backward within a 7000 row result set<br>
-CursorReadAllRows: Retrieve all columns by index for 5000 rows of an updateable 
+CursorReadAllRows: Retrieve all columns by index for 5000 rows of an updateable
 result set<br>
 BatchUnpreparedInsert: Insert 3000 rows with an unprepared batch statement<br>
 BatchUnpreparedUpdate: Update 3000 rows with an unprepared batch statement<br>
@@ -332,195 +346,195 @@ BlobInsert: Insert BLOB objects via a prepared statement<br>
 ClobInsert: Insert 5MB CLOB objects via a prepared statement<br>
 BlobRetrieve: Retrieve a BLOB object stream in a result set<br>
 ClobRetrieve: Retrieve a CLOB object stream in a result set<br>
-TransactionManagement: Insert rows with auto-commit off and commit under program 
+TransactionManagement: Insert rows with auto-commit off and commit under program
 control<br>
 InvokeStoredProcedure: Invoke a stored procedure and return a status<br>
 
 <p class="title">Test Log</p>
-UnpreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+UnpreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-UnpreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+UnpreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-UnpreparedDelete NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+UnpreparedDelete NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-PreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+PreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-PreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+PreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-PreparedSelects NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+PreparedSelects NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-PreparedDelete NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+PreparedDelete NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-PreparedInsertMultipleStatements NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] 
+PreparedInsertMultipleStatements NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver]
 Average:*** Min:*** Max:***<br>
-CursorInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+CursorInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-CursorUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+CursorUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-CursorDelete NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+CursorDelete NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-ResultSetReadAllRows NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+ResultSetReadAllRows NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-ScrollingResultSet NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+ScrollingResultSet NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-CursorReadAllRows NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+CursorReadAllRows NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-BatchUnpreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+BatchUnpreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-BatchUnpreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+BatchUnpreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-BatchPreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+BatchPreparedInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-BatchPreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+BatchPreparedUpdate NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-BlobInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** Min:*** 
+BlobInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** Min:***
 Max:***<br>
-ClobInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** Min:*** 
+ClobInsert NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** Min:***
 Max:***<br>
-BlobRetrieve NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+BlobRetrieve NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-ClobRetrieve NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+ClobRetrieve NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-TransactionManagement NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+TransactionManagement NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-InvokeStoredProcedure NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:*** 
+InvokeStoredProcedure NetDirect JSQLConnect[com.jnetdirect.jsql.JSQLDriver] Average:***
 Min:*** Max:***<br>
-UnpreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:47390 
+UnpreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:47390
 Min:46945 Max:48665<br>
-UnpreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:26802 
+UnpreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:26802
 Min:26266 Max:27238<br>
-UnpreparedDelete SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:47849 
+UnpreparedDelete SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:47849
 Min:47109 Max:49769<br>
-PreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:20899 
+PreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:20899
 Min:20639 Max:21490<br>
-PreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:26983 
+PreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:26983
 Min:26598 Max:27436<br>
-PreparedSelects SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:11376 
+PreparedSelects SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:11376
 Min:11285 Max:11677<br>
-PreparedDelete SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:20835 
+PreparedDelete SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:20835
 Min:20569 Max:21158<br>
-PreparedInsertMultipleStatements SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] 
+PreparedInsertMultipleStatements SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver]
 Average:91814 Min:91367 Max:92619<br>
-CursorInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:38397 
+CursorInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:38397
 Min:37464 Max:39635<br>
-CursorUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:35557 
+CursorUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:35557
 Min:34929 Max:35930<br>
-CursorDelete SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:39614 
+CursorDelete SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:39614
 Min:38889 Max:40327<br>
-ResultSetReadAllRows SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:1528 
+ResultSetReadAllRows SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:1528
 Min:1422 Max:1602<br>
-ScrollingResultSet SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:0 
+ScrollingResultSet SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:0
 Min:0 Max:0<br>
-CursorReadAllRows SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:4123 
+CursorReadAllRows SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:4123
 Min:3945 Max:4175<br>
-BatchUnpreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] 
+BatchUnpreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver]
 Average:28890 Min:27960 Max:30543<br>
-BatchUnpreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] 
+BatchUnpreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver]
 Average:26048 Min:25466 Max:26827<br>
-BatchPreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:29313 
+BatchPreparedInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:29313
 Min:28160 Max:30643<br>
-BatchPreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:13426 
+BatchPreparedUpdate SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:13426
 Min:13149 Max:13869<br>
-BlobInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:17384 
+BlobInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:17384
 Min:17185 Max:17785<br>
-ClobInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:18988 
+ClobInsert SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:18988
 Min:18747 Max:19206<br>
-BlobRetrieve SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:398 
+BlobRetrieve SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:398
 Min:391 Max:401<br>
-ClobRetrieve SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:2970 
+ClobRetrieve SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] Average:2970
 Min:2854 Max:3125<br>
-TransactionManagement SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] 
+TransactionManagement SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver]
 Average:0 Min:0 Max:0<br>
-InvokeStoredProcedure SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver] 
+InvokeStoredProcedure SQLServer[com.microsoft.jdbc.sqlserver.SQLServerDriver]
 Average:3585 Min:3525 Max:3806<br>
-UnpreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+UnpreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:47529 Min:46665 Max:48338<br>
-UnpreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+UnpreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:26637 Min:26226 Max:27559<br>
-UnpreparedDelete jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+UnpreparedDelete jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:47563 Min:46977 Max:47916<br>
-PreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+PreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:19403 Min:19217 Max:19619<br>
-PreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+PreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:26860 Min:26407 Max:27320<br>
-PreparedSelects jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+PreparedSelects jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:7234 Min:7151 Max:7460<br>
-PreparedDelete jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+PreparedDelete jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:20604 Min:20370 Max:20858<br>
-PreparedInsertMultipleStatements jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+PreparedInsertMultipleStatements jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:94647 Min:91323 Max:104294<br>
-CursorInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+CursorInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:37668 Min:37210 Max:38204<br>
-CursorUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+CursorUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:36018 Min:35370 Max:37462<br>
-CursorDelete jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+CursorDelete jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:38081 Min:36732 Max:39004<br>
-ResultSetReadAllRows jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+ResultSetReadAllRows jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:1093 Min:1072 Max:1112<br>
-ScrollingResultSet jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+ScrollingResultSet jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:0 Min:0 Max:0<br>
-CursorReadAllRows jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+CursorReadAllRows jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:3611 Min:3585 Max:3635<br>
-BatchUnpreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+BatchUnpreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:28609 Min:28289 Max:29021<br>
-BatchUnpreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+BatchUnpreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:25675 Min:25476 Max:25936<br>
-BatchPreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+BatchPreparedInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:29502 Min:29131 Max:29910<br>
-BatchPreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+BatchPreparedUpdate jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:13440 Min:13008 Max:14189<br>
-BlobInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+BlobInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:17156 Min:16753 Max:17985<br>
-ClobInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+ClobInsert jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:19723 Min:18896 Max:20159<br>
-BlobRetrieve jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+BlobRetrieve jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:664 Min:641 Max:671<br>
-ClobRetrieve jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+ClobRetrieve jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:1229 Min:1211 Max:1262<br>
-TransactionManagement jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+TransactionManagement jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:10528 Min:10155 Max:10985<br>
-InvokeStoredProcedure jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver] 
+InvokeStoredProcedure jTDS Type 4 JDBC Driver for MS SQL Server[net.sourceforge.jtds.jdbc.Driver]
 Average:1253 Min:1221 Max:1362<br>
-UnpreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:47417 Min:47224 
+UnpreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:47417 Min:47224
 Max:47828<br>
-UnpreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:26762 Min:26465 
+UnpreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:26762 Min:26465
 Max:27098<br>
-UnpreparedDelete i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:47780 Min:47586 
+UnpreparedDelete i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:47780 Min:47586
 Max:48055<br>
-PreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:20790 Min:20569 
+PreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:20790 Min:20569
 Max:21170<br>
-PreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:26905 Min:26606 
+PreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:26905 Min:26606
 Max:27128<br>
-PreparedSelects i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:5447 Min:5407 
+PreparedSelects i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:5447 Min:5407
 Max:5578<br>
-PreparedDelete i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:21021 Min:20788 
+PreparedDelete i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:21021 Min:20788
 Max:21170<br>
-PreparedInsertMultipleStatements i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:92272 
+PreparedInsertMultipleStatements i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:92272
 Min:91612 Max:93820<br>
 CursorInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:37991 Min:37584 Max:38174<br>
 CursorUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:34228 Min:33969 Max:34879<br>
 CursorDelete i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:38994 Min:38644 Max:39365<br>
-ResultSetReadAllRows i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:2906 Min:2884 
+ResultSetReadAllRows i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:2906 Min:2884
 Max:2934<br>
-ScrollingResultSet i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:5790 Min:5768 
+ScrollingResultSet i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:5790 Min:5768
 Max:5798<br>
-CursorReadAllRows i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:1738 Min:1732 
+CursorReadAllRows i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:1738 Min:1732
 Max:1752<br>
-BatchUnpreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:28757 Min:28010 
+BatchUnpreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:28757 Min:28010
 Max:29663<br>
-BatchUnpreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:26073 Min:25275 
+BatchUnpreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:26073 Min:25275
 Max:27018<br>
-BatchPreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:29369 Min:28552 
+BatchPreparedInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:29369 Min:28552
 Max:29992<br>
-BatchPreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:13249 Min:12949 
+BatchPreparedUpdate i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:13249 Min:12949
 Max:13509<br>
 BlobInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:16847 Min:16343 Max:17234<br>
 ClobInsert i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:19373 Min:19006 Max:19809<br>
 BlobRetrieve i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:795 Min:781 Max:811<br>
 ClobRetrieve i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:1013 Min:1011 Max:1022<br>
-TransactionManagement i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:10975 Min:10454 
+TransactionManagement i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:10975 Min:10454
 Max:11677<br>
-InvokeStoredProcedure i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:1159 Min:1132 
+InvokeStoredProcedure i-net MERLIA-xs[com.inet.tds.TdsDriver] Average:1159 Min:1132
 Max:1232<br>
 
 

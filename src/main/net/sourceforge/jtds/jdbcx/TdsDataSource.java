@@ -24,7 +24,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
     private String user;
     private String password = "";
     private String description;
-    private String tdsVersion = "7.0";
+    private String tds = "7.0";
     private int serverType = Tds.SQLSERVER;
     private String charset;
     private String domain = "";
@@ -65,7 +65,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
         props.setProperty(Tds.PROP_SERVERTYPE, String.valueOf(serverType));
         props.setProperty(Tds.PROP_PORT, String.valueOf(portNumber));
         props.setProperty(Tds.PROP_DBNAME, databaseName);
-        props.setProperty(Tds.PROP_TDS, tdsVersion);
+        props.setProperty(Tds.PROP_TDS, tds);
         props.setProperty(Tds.PROP_CHARSET, charset);
         props.setProperty(Tds.PROP_DOMAIN, domain);
         props.setProperty(Tds.PROP_INSTANCE, instance);
@@ -133,7 +133,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
         ref.add(new StringRefAddr("user", user));
         ref.add(new StringRefAddr("password", password));
         ref.add(new StringRefAddr("charset", charset));
-        ref.add(new StringRefAddr("tdsVersion", tdsVersion));
+        ref.add(new StringRefAddr("tds", tds));
         ref.add(new StringRefAddr("serverType", String.valueOf(serverType)));
         ref.add(new StringRefAddr("domain", domain));
         ref.add(new StringRefAddr("instance", instance));
@@ -194,12 +194,12 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
         return user;
     }
 
-    public void setTdsVersion(String tdsVersion) {
-        this.tdsVersion = tdsVersion;
+    public void setTds(String tds) {
+        this.tds = tds;
     }
 
-    public String getTdsVersion() {
-        return tdsVersion;
+    public String getTds() {
+        return tds;
     }
 
     public void setServerType(int serverType) {

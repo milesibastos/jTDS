@@ -41,164 +41,265 @@
         | <a href="links.html">Links</a>
         | <a href="license.html">License</a>
       </p>
+
       <p class="title">Frequently Asked Questions</p>
-      <ol>
+      <p class="question">Getting Started</p>
+      <ul>
+        <li><a href="#driverImplementation">What is the class name of the <code>Driver</code>
+          and <code>DataSource</code> implementations?</a></li>
         <li><a href="#urlFormat">What is the URL format used by jTDS?</a></li>
-        <li><a href="#driverImplementation">What is the class name of the <code>Driver</code>/<code>DataSource</code> 
-          implementation?</a></li>
-        <li> <a href="#classNotFound">Why do I get a <code>ClassNotFoundError</code> 
-          when doing <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</a></li>
-        <li><a href="#noSuitableDriver">Why do I get a <code>&quot;java.sql.SQLException: 
-          No suitable driver&quot;</code> when trying to get a connection?</a></li>
-        <li><a href="#features">Which JDBC 2.0 features are and which features 
-          are not supported by jTDS?</a></li>
-        <li><a href="#windowsAuth">I was hoping that appending <code>";domain=X"</code> 
-          to the URL would be enough on a workstation that was already logged 
-          into domain X. Why do I still need to provide a username and password?</a></li>
-        <li><a href="#instanceName">Where does one place an instance name in the 
+        <li><a href="#benchmarks">jTDS is supposed to be the fastest JDBC driver
+          around. Have you got any figures to prove that? Or even better, a
+          benchmark I can run myself?</a></li>
+        <li><a href="#features">Which JDBC features are and which features are
+          not supported by jTDS?</a></li>
+      </ul>
+      <p class="question">Error Conditions</p>
+      <ul>
+        <li><a href="#classNotFound">Why do I get a <code>ClassNotFoundError</code>
+          when calling <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</a></li>
+        <li><a href="#noSuitableDriver">Why do I get a <code>java.sql.SQLException:
+          &quot;No suitable driver&quot;</code> when trying to get a connection?</a></li>
+        <li><a href="#instanceName">Where does one place an instance name in the
           connect string? Connecting with <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code>
           gives an SQLException with the message "Logon failed".</a></li>
-        <li><a href="#getConnectionHangs">I'm trying to connect to SQL Server 
+        <li><a href="#instanceGetInfo">Why do I get a <code>java.sql.SQLException:
+          &quot;Unable to get info from SQL Server&quot;</code> when trying to
+          connect to a SQL Server instance?</a></li>
+        <li><a href="#windowsAuth">I was hoping that appending <code>";domain=X"</code>
+          to the URL would be enough on a workstation that was already logged
+          into domain X. Why do I still need to provide a username and password?</a></li>
+        <li><a href="#expectingResultSet"><code>executeQuery()</code> throws
+          <code>java.sql.SQLException: "Was expecting a result set"</code>.</a></li>
+        <li><a href="#forwardOnlyResultSet">I get <code>java.sql.SQLException:
+          &quot;The result set type is TYPE_FORWARD_ONLY&quot;</code> or
+          <code>&quot;ResultSet is not updateable&quot;</code> when using a
+          scrollable and/or updateable <code>ResultSet</code>.</a></li>
+        <li><a href="#sqlStates">Not all <code>SQLException</code>s thrown by
+          jTDS seem to have associated SQL state values.</a></li>
+      </ul>
+      <p class="question">Incorrect Behavior</p>
+      <ul>
+        <li><a href="#callableStatementOutput"><code>CallableStatement</code>
+          returns incorrect output parameter/return values.</a></li>
+        <li><a href="#lastUpdateCount">
+          <code>PreparedStatement.executeUpdate()</code> returns an incorrect
+          update count.</a></li>
+      </ul>
+      <p class="question">Memory Usage</p>
+      <ul>
+        <li><a href="#lobOome">I get an <code>OutOfMemoryError</code>
+          while reading/writing LOBs.</a></li>
+        <li><a href="#preparedStatmentMemoryLeak">Memory usage keeps increasing
+          when using generated <code>PreparedStatements</code>.</a></li>
+      </ul>
+      <p class="question">TDS Protocol Version</p>
+      <ul>
+        <li><a href="#getConnectionHangs">I'm trying to connect to SQL Server
           6.5, but it hangs when calling <code>getConnection()</code>.</a></li>
-        <li><a href="#longColumnNames">Why do column names more than 30 characters 
+        <li><a href="#longColumnNames">Why do column names more than 30 characters
           long, get chopped off at 30 characters?</a></li>
-        <li><a href="#imageData4k">jTDS fetches only the first 4Kb of <code>IMAGE</code> 
+        <li><a href="#imageData4k">jTDS fetches only the first 4Kb of <code>IMAGE</code>
           data.</a></li>
-        <li><a href="#other">I didn't manage to find an answer to my problem in
+      </ul>
+      <p class="question">Other</p>
+      <ul>
+        <li><a href="#other">I didn't manage to find the answer to my problem in
           this FAQ. What should I do?</a></li>
-      </ol>
-      <p class="question"><a name="urlFormat"></a>What is the URL format used 
+      </ul>
+
+      <p class="title">Getting Started</p>
+      <p class="question"><a name="driverImplementation"></a>What is the class name
+        of the <code>Driver</code> and <code>DataSource</code> implementations?</p>
+      <p>The class name of jTDS' <code>java.sql.Driver</code> implementation is
+        <code>net.sourceforge.jtds.jdbc.Driver</code>. The class name of the <code>javax.sql.DataSource</code>
+        implementation is <code>net.sourceforge.jtds.jdbcx.TdsDataSource</code>.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="urlFormat"></a>What is the URL format used
         by jTDS?</p>
       <p>The URL format for jTDS is:</p>
       <pre>    jdbc:jtds:&lt;server_type&gt;://&lt;server&gt;[:&lt;port&gt;][/&lt;database&gt;][;&lt;property&gt;=&lt;value&gt;[;...]]</pre>
-      <p>where <code>&lt;server_type&gt;</code> is one of either <code>'sqlserver'</code> 
-        or <code>'sybase'</code> (their meaning is quite obvious), <code>&lt;port&gt;</code> 
-        is the port the database server is listening to (default is 1433 for SQL 
-        Server and 4000 for Sybase) and <code>&lt;database&gt;</code> is the database 
-        name -- JDBC term: catalog -- (if not specified, the user's default database 
+      <p>where <code>&lt;server_type&gt;</code> is one of either <code>'sqlserver'</code>
+        or <code>'sybase'</code> (their meaning is quite obvious), <code>&lt;port&gt;</code>
+        is the port the database server is listening to (default is 1433 for SQL
+        Server and 4000 for Sybase) and <code>&lt;database&gt;</code> is the database
+        name -- JDBC term: catalog -- (if not specified, the user's default database
         is used). The set of properties supported by jTDS is:</p>
-      <dl> 
+      <dl>
         <dt><code>user</code> (required)</dt>
-        <dd>User name to use for login. When using <code>getConnection(String 
-          url, String user, String password)</code> it's not required to set this 
-          property as it is passed as parameter, but you will have to set it when 
+        <dd>User name to use for login. When using <code>getConnection(String
+          url, String user, String password)</code> it's not required to set this
+          property as it is passed as parameter, but you will have to set it when
           using <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
         <dt><code>password</code> (required)</dt>
-        <dd>Password to use for login. When using <code>getConnection(String url, 
-          String user, String password)</code> it's not required to set this property 
-          as it is passed as parameter, but you will have to set it when using 
+        <dd>Password to use for login. When using <code>getConnection(String url,
+          String user, String password)</code> it's not required to set this property
+          as it is passed as parameter, but you will have to set it when using
           <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
         <dt><code>TDS</code> (default - <code>&quot;7.0&quot;</code>)</dt>
-        <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol 
-          used by Microsoft SQL Server and Sybase to communicate with database 
-          clients. jTDS can use TDS 4.2 and 7.0. Version 4.2 is used by SQL Server 
-          6.5 and Sybase 10, version 7.0 is used by SQL Server 7.0. SQL Server 
-          2000 uses version 8.0 of the protocol, but jTDS can still communicate 
-          with SQL Server 2000 because newer database server versions understand 
+        <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol
+          used by Microsoft SQL Server and Sybase to communicate with database
+          clients. jTDS can use TDS 4.2 and 7.0. Version 4.2 is used by SQL Server
+          6.5 and Sybase 10, version 7.0 is used by SQL Server 7.0. SQL Server
+          2000 uses version 8.0 of the protocol, but jTDS can still communicate
+          with SQL Server 2000 because newer database server versions understand
           older protocol versions.<br>
-          This means on one hand that SQL Server 7.0 can be used with TDS 4.2 
-          and on the other hand that the limitations of the protocol apply regardless 
-          of the server version (e.g. when using TDS 4.2 <code>VARCHAR</code>s 
-          are limited to 255 characters). As a conclusion, you must set this property 
-          to <code>&quot;4.2&quot;</code> when connecting to SQL Server 6.5 or 
-          Sybase and you should not set it (or set it to <code>&quot;7.0&quot;</code>) 
+          This means on one hand that SQL Server 7.0 can be used with TDS 4.2
+          and on the other hand that the limitations of the protocol apply regardless
+          of the server version (e.g. when using TDS 4.2 <code>VARCHAR</code>s
+          are limited to 255 characters). As a conclusion, you must set this property
+          to <code>&quot;4.2&quot;</code> when connecting to SQL Server 6.5 or
+          Sybase and you should not set it (or set it to <code>&quot;7.0&quot;</code>)
           when connecting to any newer version of SQL Server.</dd>
-        <dt><code>charset</code> (default - the character set the server was installed 
+        <dt><code>charset</code> (default - the character set the server was installed
           with)</dt>
-        <dd>Very important setting, determines the byte value to character mapping 
-          for <code>CHAR</code>/<code>VARCHAR</code>/<code>TEXT</code> values. 
-          Applies for characters from the extended set (codes 128-255). For <code>NCHAR</code>/<code>NVARCHAR</code>/<code>NTEXT</code> 
+        <dd>Very important setting, determines the byte value to character mapping
+          for <code>CHAR</code>/<code>VARCHAR</code>/<code>TEXT</code> values.
+          Applies for characters from the extended set (codes 128-255). For <code>NCHAR</code>/<code>NVARCHAR</code>/<code>NTEXT</code>
           values doesn't have any effect since these are stored using Unicode.</dd>
         <dt><code>domain</code></dt>
-        <dd>Specifies the Windows domain to authenticate in. If present, jTDS 
-          uses Windows (NTLM) authentication instead of the usual SQL Server authentication 
+        <dd>Specifies the Windows domain to authenticate in. If present, jTDS
+          uses Windows (NTLM) authentication instead of the usual SQL Server authentication
           (i.e. the user and password provided are the domain user and password).</dd>
         <dt><code>instance</code></dt>
-        <dd>Named instance to connect to. SQL Server can run multiple so-called 
-          "named instances" (i.e. different server instances, running on different 
-          TCP ports) on the same machine. When using Microsoft tools, selecting 
-          one of these instances is made by using "&lt;host_name&gt;\&lt;instance_name&gt;" 
-          instead of the usual "&lt;host_name&gt". With jTDS you will have to 
+        <dd>Named instance to connect to. SQL Server can run multiple so-called
+          "named instances" (i.e. different server instances, running on different
+          TCP ports) on the same machine. When using Microsoft tools, selecting
+          one of these instances is made by using "&lt;host_name&gt;\&lt;instance_name&gt;"
+          instead of the usual "&lt;host_name&gt". With jTDS you will have to
           split the two and use the instance name as a property.</dd>
         <dt><code>appName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
-        <dd>Client library name. No practical use, it's displayed by Enterprise 
+        <dd>Client library name. No practical use, it's displayed by Enterprise
           Manager or Profiler associated with the connection.</dd>
         <dt><code>progName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
-        <dd>Application name. No practical use, it's displayed by Enterprise Manager 
+        <dd>Application name. No practical use, it's displayed by Enterprise Manager
           or Profiler associated with the connection.</dd>
+        <dt><code>macAddress</code> (default - <code>"000000000000"</code>)</dt>
+        <dd>Network interface card MAC address. It's displayed by Enterprise
+          Manager or Profiler associated with the connection and is needed to
+          resolve some issues regarding the number of clients allowed by the
+          SQL Server license. The MAC address cannot be determined automatically
+          from Java (i.e. without using native code) so you'll have to specify
+          it yourself if you need it.</dd>
         <dt><code>SendStringParametersAsUnicode</code> (default - <code>true</code>)</dt>
-        <dd>Determines whether string parameters are sent to the SQL Server database 
-          in Unicode or in the default character encoding of the database. This 
-          seriously affects SQL Server 2000 performance since it does not automatically 
-          cast the types (as 7.0 does), meaning that if a index column is Unicode 
-          and the string is submitted using the default character encoding (or 
-          the other way around) SQLServer will perform an index scan instead of 
+        <dd>Determines whether string parameters are sent to the SQL Server database
+          in Unicode or in the default character encoding of the database. This
+          seriously affects SQL Server 2000 performance since it does not automatically
+          cast the types (as 7.0 does), meaning that if a index column is Unicode
+          and the string is submitted using the default character encoding (or
+          the other way around) SQLServer will perform an index scan instead of
           an index seek.</dd>
         <dt><code>lastUpdateCount</code> (default - <code>false</code>)</dt>
-        <dd>If <code>true</code> only the last update count will be returned by 
-          <code>executeUpdate()</code>. This is useful in case you are updating 
-          or inserting into tables that have triggers (such as replicated tables); 
-          there's no way to make the difference between an update count returned 
-          by a trigger and the actual update count but the actual update count 
-          is always the last as the triggers execute first. If <code>false</code> 
-          all update counts are returned; use <code>getMoreResults()</code> to 
+        <dd>If <code>true</code> only the last update count will be returned by
+          <code>executeUpdate()</code>. This is useful in case you are updating
+          or inserting into tables that have triggers (such as replicated tables);
+          there's no way to make the difference between an update count returned
+          by a trigger and the actual update count but the actual update count
+          is always the last as the triggers execute first. If <code>false</code>
+          all update counts are returned; use <code>getMoreResults()</code> to
           loop through them.</dd>
       </dl>
-      <p>These properties can be passed to jTDS in one of three ways: in the URL, in 
-        a <code>Properties</code> object passed to <code>getConnection()</code> 
-        or by using the <code>TdsDataSource</code>'s setters (if connections are 
-        obtained through a <code>DataSource</code> rather than using the <code>DriverManager</code>).
-        Because there is no URL when using the <code>TdsDataSource</code> there are
-        three other properties (with setters and getters) to take its place:
-        serverName, portNumber and databaseName (their meaning is quite clear).</p>
+      <p>These properties can be passed to jTDS in one of three ways: in the URL, in
+        the <code>Properties</code> object passed to <code>getConnection()</code>
+        or by using the <code>TdsDataSource</code>'s setters (if connections are
+        obtained through a <code>DataSource</code> rather than using the
+        <code>DriverManager</code>). Because there is no URL when using the
+        <code>TdsDataSource</code> there are three other properties (with
+        setters and getters) to take the place of those items that are part of
+        the URL: <code>serverName</code>, <code>portNumber</code> and
+        <code>databaseName</code> (their meaning is quite clear).</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="driverImplementation"></a>What is the class name of the 
-        <code>Driver</code>/<code>DataSource</code> implementation?</p>
-      <p>The class name of jTDS' <code>java.sql.Driver</code> implementation is 
-        <code>net.sourceforge.jtds.jdbc.Driver</code>. The class name of the <code>javax.sql.DataSource</code> 
-        implementation is <code>net.sourceforge.jtds.jdbcx.TdsDataSource</code>.</p>
+      <p class="question"><a name="benchmarks"></a>jTDS is supposed to be the
+        fastest JDBC driver around. Have you got any figures to prove that? Or
+        even better, a benchmark I can run myself?</p>
+      <p>Actually we do have benchmark results from two different benchmarks,
+        both developed by large commercial SQL Server JDBC driver vendors to
+        demonstrate the performance of their own drivers. In our oppinion this
+        is even better than having a benchmark of our own, which could be
+        designed in such a way as to give jTDS the edge. These benchmarks are
+        free so you can download and run them yourself if you like.</p>
+      <p>We have benchmarked jTDS against the two most used commercial drivers
+        and of course the Microsoft driver and the JDBC-ODBC bridge, using these
+        benchmarks:
+        <a href="http://www.inetsoftware.de/English/Produkte/OPTA/Benchmark.htm">i-net
+        software's BenchTest 2.1 for MS SQL Server</a> and
+        <a href="http://www.jnetdirect.com/downloads.php?op=performsuite">JNetDirect's
+        JDBC Performance Benchmark</a>. And here are the results:
+        <a href="benchTest.html">BenchTest 2.1 for MS SQL Server</a> and
+        <a href="perfTest.html">NetDirect JDBC Performance Benchmark</a>. And,
+        by the way, jTDS is the fastest.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="features"></a>Why do I get a <code>ClassNotFoundError</code> 
-        when doing <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</p>
-      <p><code>ClassNotFoundError</code> is thrown by the Java VM when the classloader 
-        can not find a certain class. In this case it's the <code>net.sourceforge.jtds.jdbc.Driver</code>, 
-        which means that <code>jtds.jar</code> is not in the classpath. If you 
-        are getting this in an application start your application with</p>
-      <pre>    java -cp &lt;path_to_jtds&gt;/jtds.jar &lt;your_class&gt;</pre>
-      <p>If you experience this problem in a servlet/JSP you will have to add 
-        <code>jtds.jar</code> to your wep application's class path (e.g. in the 
-        application's web.xml file).</p>
-      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-0.6.jar</code> 
-        or something similar. If that's the case, replace <code>jtds.jar</code> 
-        in the above example with <code>jtds-0.6.jar</code> or whatever your specific 
+      <p class="question"><a name="features"></a>Which JDBC features are and
+        which features are not supported by jTDS?</p>
+      <p>jTDS offers full support for all JDBC 2.1 features: forward-only and
+        scrollable/updateable result sets, batch updates, prepared and callable
+        statements, unlimited number of statements per connection, complete
+        database and result set meta data, and a <code>DataSource</code>
+        implementation (which also implements
+        <code>ConnectionPoolDataSource</code>). Support for a number of JDBC 3.0
+        features such as generated keys retrieval is also implemented. There is
+        currently no support for XA (distributed) transactions. Check out the
+        jTDS <a href="features.html">feature matrix</a> for more details.</p>
+      <p><a href="#">^ top ^</a></p>
+
+      <p class="title">Error Conditions</p>
+      <p class="question"><a name="classNotFound"></a>Why do I get a
+        <code>ClassNotFoundError</code> when calling
+        <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</p>
+      <p><code>ClassNotFoundError</code> is thrown by the classloader when it
+        can not find a certain class. In this case it's the
+        <code>net.sourceforge.jtds.jdbc.Driver</code> class, which means that
+        <code>jtds.jar</code> is not in the classpath. If you are getting this
+        in an application, start your application with</p>
+      <pre>    java -cp &lt;path_to_jtds&gt;/jtds.jar &lt;main_class&gt;</pre>
+      <p>If you experience this problem in a servlet/JSP you will have to add
+        <code>jtds.jar</code> to your web application's class path (e.g. by
+        editing the application's web.xml file or by copying the jar into the
+        application's/server's <code>/lib</code> directory).</p>
+      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-0.6.jar</code>
+        or something similar. If that's the case, replace <code>jtds.jar</code>
+        in the above example with <code>jtds-0.6.jar</code> or whatever your specific
         file name is.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="noSuitableDriver"></a>Why do I get a <code>&quot;java.sql.SQLException: 
-        No suitable driver&quot;</code> when trying to get a connection?</p>
-      <p>The <code>&quot;No suitable driver&quot;</code> exception is thrown by 
-        the <code>DriverManager</code> when none of the registered <code>Driver</code> 
-        implementations recognizes the supplied URL. This means that you either 
-        did not register jTDS with the <code>DriverManager</code> (by doing a 
-        <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code> 
-        first) or you mistyped the URL (e.g. <code>&quot;jbdc:jtds:...&quot;</code> 
+      <p class="question"><a name="noSuitableDriver"></a>Why do I get a <code>java.sql.SQLException:
+        &quot;No suitable driver&quot;</code> when trying to get a connection?</p>
+      <p>The <code>&quot;No suitable driver&quot;</code> exception is thrown by
+        the <code>DriverManager</code> when none of the registered <code>Driver</code>
+        implementations recognizes the supplied URL. This means that you either
+        did not register jTDS with the <code>DriverManager</code> first (by calling
+        <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>)
+        or you mistyped the URL (e.g. <code>&quot;jbdc:jtds:...&quot;</code>
         instead of <code>&quot;jdbc:jtds:...&quot;</code>).</p>
       <p>A common mistake is to append a semicolon (";") to the end of the URL
         (e.g. <code>"jdbc:jtds:sqlserver://server/db;TDS=7.0;"</code> is wrong!).
+      <p>For more information about URL format and the properties that may be
+        passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="features"></a>Which JDBC 2.1 features are and 
-        which features are not supported by jTDS?</p>
-      <p>jTDS offers full support for forward-only and scrollable/updateable result 
-        sets, batch updates, prepared and callable statements, unlimited number 
-        of statements per connection, complete database and result set meta data, 
-        and a <code>DataSource</code> implementation (which also implements <code>ConnectionPoolDataSource</code>). 
-        Support for a few JDBC 3.0 features such as generated keys retrieval is 
-        also implemented. There is currently no support for XA (distributed) transactions. 
-        Check out the jTDS <a href="features.html">feature matrix</a> for more 
-        details.</p>
+      <p class="question"><a name="instanceName"></a>Where does one place an instance
+        name in the connect string? Connecting with
+        <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code> gives an
+        SQLException with the message "Logon failed".
+      <p>You will have to use the <code>instance</code> property (either append it to the
+        URL or place it into the <code>Properties</code> you supply to <code>getConnection</code>)
+        instead of doing it the Microsoft way. Sorry, but jTDS (and its ancestor
+        FreeTDS) existed a long time before named instances so the URL could not
+        be changed (and using it this way confuses the URL parser).
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="windowsAuth"></a>I was hoping that appending 
-        <code>";domain=X"</code> to the URL would be enough on a workstation that 
-        was already logged into domain X. Why do I still need to provide a username 
+      <p class="question"><a name="instanceGetInfo"></a>Why do I get a
+        <code>java.sql.SQLException: &quot;Unable to get info from SQL
+        Server&quot;</code> when trying to connect to a SQL Server instance?</p>
+      <p>The exception you are getting is usually caused by a timeout. When
+        connecting to named instances jTDS needs to connect via UDP to port 1434
+        to get information about available SQL Server instances. While doing
+        this it times out, throwing the exception you see (which means that jTDS
+        was not able to get information about the running instances).</p>
+      <p>Connection timeouts occur when there is no server listening on the port
+        (BTW, are you sure your SQL Server is configured to use TCP/IP and that
+        you actually use named instances?).</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="windowsAuth"></a>I was hoping that appending
+        <code>";domain=X"</code> to the URL would be enough on a workstation that
+        was already logged into domain X. Why do I still need to provide a username
         and password?</p>
       <p>jTDS is a type 4 (pure Java) JDBC driver. This means (among other things)
         that it cannot access platform-specific features, such as determining the
@@ -206,69 +307,274 @@
         have to provide the username and password because otherwise jTDS cannot log
         into SQL Server.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="instanceName"></a>Where does one place an instance
-        name in the connect string? Connecting with 
-        <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code> gives an 
-        SQLException with the message "Logon failed".
-      <p>You will have to use the <code>instance</code> property (either append it to the 
-        URL or place it into the <code>Properties</code> you supply to <code>getConnection</code>) 
-        instead of doing it the Microsoft way. Sorry, but jTDS (and its ancestor 
-        FreeTDS) existed a long time before named instances so the URL could not 
-        be changed (and using it this way confuses the URL parser). 
+      <p class="question"><a name="expectingResultSet"></a>
+        <code>executeQuery()</code> throws <code>java.sql.SQLException: "Was
+        expecting a result set"</code>.</p>
+      <p>The <a href="http://java.sun.com/products/jdbc/download.html">JDBC
+        spec</a> and
+        <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Statement.html#executeQuery(java.lang.String)">API
+        documentation</a> for <code>Statement</code> both state that
+        <code>executeQuery()</code> is intended to be used with queries that
+        return a <code>ResultSet</code>, typically <code>SELECT</code>
+        statements. On the the other hand, <code>executeUpdate()</code> is
+        intended for <code>INSERT</code>, <code>UPDATE</code>,
+        <code>DELETE</code> or DDL statements that return update counts. Both of
+        these (<code>ResultSets</code> and update counts) are considered by JDBC
+        to be "results". For queries that return multiple results the JDBC spec
+        requires <code>execute()</code> to be used.</p>
+      <p>If you'll look at the query you are trying to execute, you'll see that
+        it probably returns an update count first, followed by a
+        <code>ResultSet</code>. So according to the JDBC spec you should use
+        <code>execute()</code> to run it, call <code>getMoreResults()</code> to
+        skip the update count and then call <code>getResultSet()</code> to
+        obtain the <code>ResultSet</code> you want.</p>
+      <p>As a sidenote, The Microsoft driver (and probably the others, too)
+        "optimize" this behavior by skipping over the update count, which is
+        wrong according to the JDBC spec. So, for maximum compatibility, I would
+        recommend that you use <code>execute()</code> anytime you run queries
+        returning more than one result even if the particular driver you are
+        using allows you to do otherwise.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="getConnectionHangs"></a>I'm trying to connect 
+      <p class="question"><a name="forwardOnlyResultSet"></a>I get
+        <code>java.sql.SQLException: &quot;The result set type is
+        TYPE_FORWARD_ONLY&quot;</code> or <code>&quot;ResultSet is not
+        updateable&quot;</code> when using a scrollable and/or updateable
+        <code>ResultSet</code>.</p>
+      <p>There are two possible causes to this (if we exclude not creating the
+        <code>ResultSet</code> with the appropriate type and concurrency in the
+        first place):</p>
+      <ol>
+        <li>The scroll insensitive/updateable combination is not supported by
+          SQL Server, so such a <code>ResultSet</code> is automatically
+          downgraded to scroll insensitive/read-only by the server. Use the
+          scroll sensitive/updateable combination and it should work.</li>
+        <li>The other possible cause is that the cursor is keyset-based and
+          either the table you are selecting from does not have a unique primary
+          key or that primary key is not included in your <code>SELECT</code>.
+          See the
+          <a href="http://msdn.microsoft.com/library/en-us/acdata/ac_8_con_07_66sz.asp">SQL
+          Server Documentation on cursor types</a> for more information.</li>
+      </ol>
+      <p>In both cases if you call <code>Statement.getWarnings()</code> right
+        after calling <code>executeQuery()</code> you'll get a warning about the
+        <code>ResultSet</code> being downgraded.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="sqlStates"></a>Not all
+        <code>SQLException</code>s thrown by jTDS seem to have associated SQL
+        state values.</p>
+      <p>Indeed, from this point of view, at the moment the driver is a bit
+        inconsistent, some SQLExceptions are reported with a correct state code
+        and some not. As the server itself does not return an SQL state code,
+        the SQLMessage class associates native error numbers with SQL state
+        codes (actually there's a very comprehensive map there); SQL Server
+        originated errors and warnings that are not found in this map are given
+        a default code of 'S1000', respectively '01000'. This is what happens
+        with SQL Server-returned errors and warnings and is consistent with how
+        other drivers handle exceptions; errors and warnings generated
+        internally by jTDS have not been completely reviewed yet, so some of
+        them still have no SQL state (and of course there's no native error
+        number either).</p>
+      <p>See the
+        <a href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">SQL
+        92</a> spec for the complete list and description of SQL state
+        codes.</p>
+      <p><a href="#">^ top ^</a></p>
+
+      <p class="title">Incorrect Behavior</p>
+      <p class="question"><a name="callableStatementOutput"></a>
+        <code>CallableStatement</code> returns incorrect output parameter/return
+        values.</p>
+      <p>When executing a stored procedure (or any query, for that matter) the
+        response from the SQL Server is serialized in the same order it is
+        executed in: for stored procedures this means <code>ResultSet</code>s
+        first, output parameters and return value last. So, because jTDS doesn't
+        cache the <code>ResultSet</code>s into memory, you will have to go
+        through all the <code>ResultSet</code>s returned by the procedure (i.e.
+        call <code>getMoreResults()</code> until it returns false AND
+        <code>getUpdateCount()</code> returns -1) before getting the return
+        value and output parameters.</p>
+      <p>In case you are wondering if this is right, this is a quote from the
+        <code>CallableStatement</code> API documentation: "For maximum
+        portability, a call's <code>ResultSet</code> objects and update counts
+        should be processed prior to getting the values of output
+        parameters". Although this means that a "good" driver could "fix" this
+        behavior, fixing it would imply caching the whole server response,
+        equaling a huge performance drop.</p>
+      <p>We will probably change the behavior of jTDS to throw an exception if
+        output values are accessed before being retrieved, in order to make sure
+        this doesn't go unobserved by the user.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="lastUpdateCount"></a>
+        <code>PreparedStatement.executeUpdate()</code> returns an incorrect
+        update count.</p>
+      <p>This is caused by triggers; replication is also implemented through
+        triggers, so you will encounter this issue on replicated databases too.
+        The root cause is that triggers also return update counts and jTDS can't
+        make the difference between these update counts and the &quot;real&quot;
+        one (neither could any other SQL Server client). However, the update
+        count you need is the last of them (because the actual
+        <code>UPDATE</code>/<code>INSERT</code>/<code>DELETE</code> gets
+        executed only after the triggers) and there is luckily a parameter you
+        can specify in the URL (or the connection <code>Properties</code> or in
+        the <code>DataSource</code>) in order for jTDS to return only this last
+        update count (and ignore the rest of them). This parameter is
+        <code>lastUpdateCount</code> and you can find out more about it
+        <a href="#urlFormat">here</a>.</p>
+      <p>Please note that setting <code>lastUpdateCount</code> to
+        <code>true</code> could cause problems if you use queries that do
+        actually return more than one update count (such as queries consisting
+        of multiple updates/inserts), because it will also return only the last
+        of these update counts. Although queries returning multiple results are
+        not very common, it is the reason why this behavior is customizable from
+        the URL.</p>
+      <p>If you have both queries consisting of multiple
+        <code>UPDATE</code>s/<code>INSERT</code>s/<code>DELETE</code>s and
+        triggers you won't be able to set <code>lastUpdateCount</code> to
+        <code>true</code> if you want all the update counts, so you will have to
+        skip over the irrelevant update counts by calling
+        <code>getMoreResults()</code> yourself, when needed.</p>
+      <p><a href="#">^ top ^</a></p>
+
+      <p class="title">Memory Usage</p>
+      <p class="question"><a name="lobOome"></a>I get an
+        <code>OutOfMemoryError</code> while reading/writing LOBs.</p>
+      <p>This is a known issue, caused by an area of the driver that still needs
+        some more work. LOB streams are not written directly into the database,
+        but are cached into a byte array first.</p>
+      <p>As a workaround for this issue, you could reduce the default fetch size
+        of the <code>ResultSet</code>. In jTDS a <code>ResultSet</code> fetches
+        100 rows at once (if I recall correctly). This means that 100 LOBs are
+        cached at once. Reducing the fetch size to 1 does not affect performance
+        very much (because there's no request sent to the DB, just some reading
+        from the socket going on), but it will certainly reduce memory usage.
+        However, if the problem is caused by writing or reading a single LOB,
+        then the only workaround for now would be to increase the maximum VM
+        heap size.</p>
+      <p>Taking a look at possible solutions, passing <code>InputStreams</code>
+        to the database directly when writing a LOB is possible because jTDS can
+        simply "feed" the DB from the stream, rather than cache its content. The
+        problem with reading LOBs, however, is completely different. jTDS allows
+        users to access the columns of a <code>ResultSet</code> in arbitrary
+        order. A lot of applications rely on this behavior. This means that if
+        you do a <code>"SELECT a, b, c FROM x"</code> and <code>b</code> is a
+        LOB then the user must be able to access <code>c</code> before
+        completely reading <code>b</code> (or even accessing it at all). This
+        means that <code>b</code> has to be cached somewhere. Currently it is
+        cached into memory; in order to no longer have problems with
+        <code>OutOfMemoryErrors</code> we must cache it to disk, there is no
+        other choice.</p>
+      <p>Actually, there would be one, restricting random access to columns when
+        there are LOBs in the <code>ResultSet</code>, but this is not as easy as
+        it seems as it would seriously affect the <code>ResultSet</code>
+        implementation which will in turn affect other things. The one thing
+        that might save us would be if we found out how to obtain only the
+        reference to the LOB when doing the <code>SELECT</code>. This would
+        allow us to create a <code>Blob</code>/<code>Clob</code> instance that
+        initially only contained the reference and then access the LOB content
+        only on request. Problem is, we don't know how to do it with TDS (or
+        even if it works, because no other SQL Server driver seems to be doing
+        this). (Actually there seems to be a possible solution, but we are not
+        100% sure it can be implemented so we think we shouldn't yet blow the
+        whistle about it; the idea is that TDS seems to return the text pointer
+        to LOBs so by setting <code>TEXTSIZE</code> to low values when
+        retrieving <code>ResultSets</code> and again to maximum values when
+        getting LOB contents we might just be able to pull it out.)</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="preparedStatmentMemoryLeak"></a>Memory usage
+        keeps increasing when using generated
+        <code>PreparedStatements</code>.</p>
+      <p>Normally, with a JDBC driver, <code>PreparedStatement</code>s are
+        precompiled on creation, which gives increased performance if they are
+        used a sufficient number of times. jTDS takes this one step further:
+        when you create a PreparedStatement, jTDS caches it internally and keeps
+        it there even after you close it so that every time you create it again
+        it doesn't need to be recompiled, it's just fetched from the cache. This
+        gives jTDS a 2x performance increase over the next fastest driver in
+        some (not so uncommon) cases. For example, if you have a method that
+        inserts a row into a table by creating a <code>PreparedStatement</code>,
+        using it once and then closing it (which is necessary if you have more
+        than one connection and using transactions), this means that your
+        statement will be compiled only once for each connection, no matter how
+        many times you call that method.</p>
+      <p>However, if the <code>PreparedStatement</code>s you use are not
+        parameterized (i.e. they look like <code>"SELECT x FROM y WHERE z&gt;" +
+        min + " AND z&lt;" + max</code> instead of <code>"SELECT x from y WHERE
+        z&gt;? AND z&lt;?"</code>) you will cause jTDS to cache large numbers of
+        <code>PreparedStatement</code>s (which will probably never be reused),
+        leading to memory leaks.</p>
+      <p>We have decided not to address this issue because it would encourage
+        bad coding on the user side. To be more specific, using parameters in
+        your <code>PreparedStatement</code>s allows precompilation of these
+        statements, bringing big performance benefits when reusing them. For
+        regular queries there is the <code>Statement</code> class. (Don't get me
+        wrong, I'm not saying that queries without parameters should be executed
+        only using <code>Statement</code>; what I mean is that you should not
+        use <code>PreparedStatement</code> with generated queries, as you will
+        probably never reuse them.) Another reason for not changing anything is
+        that although it might help bad code run better, it will certainly cause
+        well-written code to be slower (because of the overhead and of useful
+        statements being potentially dropped and having to be recompiled).</p>
+      <p><a href="#">^ top ^</a></p>
+
+      <p class="title">TDS Protocol Version</p>
+      <p class="question"><a name="getConnectionHangs"></a>I'm trying to connect
         to SQL Server 6.5, but it hangs when calling <code>getConnection()</code>.</p>
-      <p>jTDS uses by default TDS 7.0 (which is SQL Server 7.0's protocol) to 
-        communicate with the database server. When jTDS sends the 7.0 login request 
-        SQL Server 6.5 doesn't understand the it so it returns an error (<code>Login 
-        failed</code>). But because jTDS is expecting a TDS 7.0 packet as a response 
-        (not a TDS 4.2 packet) it doesn't properly understand the response packet 
-        and it hangs waiting for more data from the server. The solution is to set 
-        the <code>&quot;TDS&quot;</code> property to <code>&quot;4.2&quot;</code> 
-        (through the URL or <code>Properties</code> object passed to <code>getConnection()</code> 
-        or using the appropriate setter of <code>TdsDataSource</code>, if you 
+      <p>jTDS uses by default TDS 7.0 (which is SQL Server 7.0's protocol) to
+        communicate with the database server. When jTDS sends the 7.0 login request
+        SQL Server 6.5 doesn't understand it so it returns a 4.2 error (<code>Login
+        failed</code>). But because jTDS is expecting a TDS 7.0 packet as a response
+        (not a TDS 4.2 packet) it doesn't properly understand the response packet
+        and it hangs waiting for more data from the server. The solution is to set
+        the <code>&quot;TDS&quot;</code> property to <code>&quot;4.2&quot;</code>
+        (through the URL or <code>Properties</code> object passed to <code>getConnection()</code>
+        or using the appropriate setter of <code>TdsDataSource</code>, if you
         are using the <code>TdsDataSource</code>).</p>
-      <p>For more information about URL format and the properties that may be 
+      <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="longColumnNames"></a>Why do column names more 
+      <p class="question"><a name="longColumnNames"></a>Why do column names more
         than 30 characters long, get chopped off at 30 characters?</p>
-      <p>You are very probably using TDS 4.2 to communicate with the SQL Server. 
-        TDS 4.2 is the protocol used by SQL Server 6.5 and it has the limitations 
-        of SQL Server 6.5 (among which a maximum column name size of 30 characters). 
-        jTDS 0.2 and earlier use TDS 4.2 by default. In order to change that you 
-        have to specify it explicitly in the <code>Properties</code> or the URL 
-        you supply when you create the connection. If you experience this problem 
-        with versions 0.3 or later, then you have specified (in the connection 
+      <p>You are very probably using TDS 4.2 to communicate with the SQL Server.
+        TDS 4.2 is the protocol used by SQL Server 6.5 and it has the limitations
+        of SQL Server 6.5 (among which a maximum column name size of 30 characters).
+        jTDS 0.2 and earlier use TDS 4.2 by default. In order to change that you
+        have to specify it explicitly in the <code>Properties</code> or the URL
+        you supply when you create the connection. If you experience this problem
+        with versions 0.3 or later, then you have specified (in the connection
         properties or URL) that TDS 4.2 should be used; remove that setting.</p>
-      <p>For more information about URL format and the properties that may be 
+      <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="imageData4k"></a>jTDS fetches only the first 
+      <p class="question"><a name="imageData4k"></a>jTDS fetches only the first
         4Kb of <code>IMAGE</code> data.</p>
-      <p>You are very probably using TDS 4.2 to communicate with the SQL Server. 
-        TDS 4.2 is the protocol used by SQL Server 6.5 and it has the limitations 
-        of SQL Server 6.5 (among which a maximum size for <code>IMAGE</code> data 
-        of 4Kb). jTDS 0.2 and earlier use TDS 4.2 by default. In order to change 
-        that you have to specify it explicitly in the <code>Properties</code> 
-        or the URL you supply when you create the connection. If you experience 
-        this problem with versions 0.3 or later, then you have specified (in the 
-        connection properties or URL) that TDS 4.2 should be used; remove that 
+      <p>You are very probably using TDS 4.2 to communicate with the SQL Server.
+        TDS 4.2 is the protocol used by SQL Server 6.5 and it has the limitations
+        of SQL Server 6.5 (among which a maximum size for <code>IMAGE</code> data
+        of 4Kb). jTDS 0.2 and earlier use TDS 4.2 by default. In order to change
+        that you have to specify it explicitly in the <code>Properties</code>
+        or the URL you supply when you create the connection. If you experience
+        this problem with versions 0.3 or later, then you have specified (in the
+        connection properties or URL) that TDS 4.2 should be used; remove that
         setting.</p>
-      <p>For more information about URL format and the properties that may be 
+      <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
       <p><a href="#">^ top ^</a></p>
-      <p class="question"><a name="other"></a>I didn't manage to find an answer 
+
+      <p class="title">Other</p>
+      <p class="question"><a name="other"></a>I didn't manage to find the answer
         to my problem in this FAQ. What should I do?</p>
-      <p>If you need help with any jTDS-related issue, post a message in the Help
-        forum (click <a href="http://sourceforge.net/forum/?group_id=33291">here</a>,
-        then click on "Help"). One thing, though: please register as a SourceForge
-        member if you haven't done so yet, so you can be automatically notified of
-        updates to the questions you post.</p>
-      <p>If you encountered an issue that you have tested and retested and you're 
+      <p>If you need help with any other jTDS-related issue, search the
+        <a href="http://sourceforge.net/forum/forum.php?forum_id=104389">Help
+        forum</a> first and if you still don't find anything, post a question.
+        It will usually get answered within 24 hours. One thing, though: please
+        register as a SourceForge member and log in if you haven't done so yet,
+        so you can be automatically notified of updates to the questions you
+        post.</p>
+      <p>If you encountered an issue that you have tested and retested and you're
         sure it's a bug, use the Bugs link on top of the page. Again, make sure you
         are a SourceForge member AND that you are logged in when you post.
       <p><a href="#">^ top ^</a></p>
+
     </td>
     <td width="9" background="images/mainr.gif"><img src="images/spacer.gif"></td>
   </tr>

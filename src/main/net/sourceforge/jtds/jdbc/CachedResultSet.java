@@ -345,7 +345,7 @@ public class CachedResultSet extends JtdsResultSet {
     private void saveRow(ColData[] row) {
         savedRow = new ColData[row.length];
         for (int i = 0; i < row.length; i++) {
-            savedRow[i] = new ColData(row[i]);
+            savedRow[i] = (ColData) row[i].clone();
         }
     }
 
@@ -437,7 +437,7 @@ public class CachedResultSet extends JtdsResultSet {
          if (savedRow != null) {
              rowUpdated = false;
              for (int i = 0; i < savedRow.length; i++) {
-                 currentRow[i] = new ColData(savedRow[i]);
+                 currentRow[i] = (ColData) savedRow[i].clone();
              }
          }
      }
@@ -662,7 +662,7 @@ public class CachedResultSet extends JtdsResultSet {
          if (savedRow != null) {
              rowUpdated = false;
              for (int i = 0; i < savedRow.length; i++) {
-                 currentRow[i] = new ColData(savedRow[i]);
+                 currentRow[i] = (ColData) savedRow[i].clone();
              }
          }
          //

@@ -2,6 +2,7 @@ Changes from jTDS 0.9
 =========================
 
 11/19/2004 - Alin Sinpalean
+ o Replaced the ColData copy constructor with clone().
  o Added tests to ensure Blob.getBytes(0, length) and Clob.getSubString(0,
    length) fail.
 

@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.10 2004-08-10 14:57:44 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.11 2004-08-11 19:24:34 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -103,7 +103,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         ArrayList params = new ArrayList();
-        String parsedSql[] = new SQLParser(sql, params).parse();
+        String[] parsedSql = new SQLParser(sql, params).parse();
 
         if (parsedSql[0].length() == 0) {
             throw new SQLException(Messages.get("error.prepare.nosql"), "07000");

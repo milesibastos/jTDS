@@ -4,6 +4,7 @@ Changes from jTDS 0.9-rc1
 08/11/2004 - Brian Heineman
  o Applied patch in bug [1006845] Stored procedure with 18 parameters; (thanks
    to Mike Hutchinson for the patch).
+ o Added test for bug [1006845] Stored procedure with 18 parameters
 
 08/10/2004 - Brian Heineman
  o Applied patch in bug [1006218] getObject returns incorrect Java class;

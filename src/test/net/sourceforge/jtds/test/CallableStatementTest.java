@@ -103,7 +103,7 @@ public class CallableStatementTest extends TestBase {
             stmt.close();
         }
     }
-    
+
     public void testCallableStatementExec1() throws Exception {
         CallableStatement cstmt = con.prepareCall("exec sp_who");
 
@@ -297,6 +297,13 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
+     * Test for bug [1006845] Stored procedure with 18 parameters
+     */
+    public void testCallableStatementParsing3() throws Exception {
+        CallableStatement cstmt = con.prepareCall("{Call Test(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+    }
+
+    /**
      * Test for reature request [956800] setNull(): Not implemented
      */
     public void testCallableSetNull1() throws Exception {
@@ -315,7 +322,7 @@ public class CallableStatementTest extends TestBase {
             cstmt.setNull(1, Types.NULL);
             cstmt.execute();
             cstmt.close();
-            
+
             stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT data FROM #callablesetnull1");
 
@@ -345,17 +352,17 @@ public class CallableStatementTest extends TestBase {
                      + "return 1\r\n"
                      + "end");
         stmt.close();
-        
+
         CallableStatement cstmt = con.prepareCall("{? = call #rop1(?, ?)}");
 
-        cstmt.registerOutParameter(1, Types.INTEGER);        
-        cstmt.setString(2, "a");        
-        cstmt.setString(3, "b");        
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.setString(2, "a");
+        cstmt.setString(3, "b");
         cstmt.execute();
-        
+
         assertEquals(1, cstmt.getInt(1));
         assertEquals("1", cstmt.getString(1));
-        
+
         cstmt.close();
     }
 
@@ -369,7 +376,7 @@ public class CallableStatementTest extends TestBase {
                      + "set @data = 1.1\r\n"
                      + "end");
         stmt.close();
-        
+
         CallableStatement cstmt = con.prepareCall("{call #rop2(?)}");
 
         cstmt.registerOutParameter(1, Types.FLOAT);
@@ -389,7 +396,7 @@ public class CallableStatementTest extends TestBase {
                      + "set @data = null\r\n"
                      + "end");
         stmt.close();
-        
+
         CallableStatement cstmt = con.prepareCall("{call #rop3(?)}");
 
         cstmt.registerOutParameter(1, Types.INTEGER);
@@ -405,17 +412,17 @@ public class CallableStatementTest extends TestBase {
      */
     public void testCallableRegisterOutParameter4() throws Exception {
         CallableStatement cstmt = con.prepareCall("{call sp_addtype T_INTEGER, int, 'NULL'}");
-        
+
         cstmt.execute();
         cstmt.close();
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create procedure rop4 @data T_INTEGER OUTPUT as\r\n "
                      + "begin\r\n"
                      + "set @data = 1\r\n"
                      + "end");
         stmt.close();
-        
+
         cstmt = con.prepareCall("{call rop4(?)}");
 
         cstmt.registerOutParameter(1, Types.VARCHAR);
@@ -428,25 +435,25 @@ public class CallableStatementTest extends TestBase {
         stmt = con.createStatement();
         stmt.execute("drop procedure rop4");
         stmt.close();
-        
-        cstmt = con.prepareCall("{call sp_droptype 'T_INTEGER'}");        
+
+        cstmt = con.prepareCall("{call sp_droptype 'T_INTEGER'}");
         cstmt.execute();
-        cstmt.close();        
+        cstmt.close();
     }
-    
+
     /**
      * Test for bug [991640] java.sql.Date error and RAISERROR problem
      */
     public void testCallableError1() throws Exception {
         String text = "test message";
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create procedure #ce1 as\r\n "
                      + "begin\r\n"
                      + "RAISERROR('" + text + "', 16, 1 )\r\n"
                      + "end");
         stmt.close();
-        
+
         CallableStatement cstmt = con.prepareCall("{call #ce1}");
 
         try {
@@ -455,10 +462,10 @@ public class CallableStatementTest extends TestBase {
         } catch (SQLException e) {
             assertTrue(e.getMessage().equals(text));
         }
-        
+
         cstmt.close();
     }
-    
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

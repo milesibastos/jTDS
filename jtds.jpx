@@ -37,5 +37,6 @@
   </node>
   <file path="build.xml" />
   <file path="README" />
+  <file path="CHANGELOG" />
 </project>
 

@@ -1,0 +1,5 @@
+Changes from jTDS 0.2
+=====================
+
+ o TdsStatement checks if it isn't already closed on a call to close() and the
+   allocated Tds object isn't freed until no more results are available

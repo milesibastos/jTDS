@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.31 2004-11-18 16:32:29 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.32 2004-11-26 15:30:38 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -543,7 +543,8 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         retVal = null;
 
-        tds.executeSQL(null, procName, parameters, false, statement.getQueryTimeout(), 0);
+        tds.executeSQL(null, procName, parameters, false,
+                statement.getQueryTimeout(), statement.getMaxRows());
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 

@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+11/26/2004 - Alin Sinpalean
+ o Corrected a bug which was causing Statement.setMaxRows() to not work with
+   cursor-based ResultSets.
+
 11/24/2004 - Alin Sinpalean
  o Extracted getConnection(callerReference) out of BlobImpl and ClobImpl and
    moved it to Support.

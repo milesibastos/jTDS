@@ -811,6 +811,45 @@ public class ResultSetTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test that <code>Statement.setMaxRows()</code> works on cursor
+     * <code>ResultSet</code>s.
+     */
+    public void testCursorMaxRows() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #cursorMaxRows (val int)");
+        stmt.close();
+
+        // Insert 10 rows
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into #cursorMaxRows (val) values (?)");
+        for (int i = 0; i < 10; i++) {
+            pstmt.setInt(1, i);
+            assertEquals(1, pstmt.executeUpdate());
+        }
+        pstmt.close();
+
+        // Create a cursor ResultSet
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // Set maxRows to 5
+        stmt.setMaxRows(5);
+
+        // Select all (should only return 5 rows)
+        ResultSet rs = stmt.executeQuery("select * from #cursorMaxRows");
+        rs.last();
+        assertEquals(5, rs.getRow());
+        rs.beforeFirst();
+
+        int cnt = 0;
+        while (rs.next()) {
+            cnt++;
+        }
+        assertEquals(5, cnt);
+
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/28/2004 - Brian Heineman
+ o Corrected bug [1017957] 9.1 rc1 and resin 3.0.8 incompatibilities?;
+   JtdsDataSource no longer inherits accessors and mutators from another class.
+
 08/24/2004 - Brian Heineman
  o Corrected JDBC compliance test files per Mike Hutchinson's recommendations:
    http://sourceforge.net/forum/message.php?msg_id=2724244

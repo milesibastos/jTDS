@@ -9,6 +9,8 @@ Changes from jTDS 0.8.1
    NullPointerException to be thrown for disk based LOBs.
  o Corrected bug in TestBase where InputStreams and Readers were not being
    closed.
+ o Added test for bug [945462] getResultSet() return null if you use
+   scrollable/updatable
 
 07/21/2004 - Brian Heineman
  o Added test for bug [994988] Network error when null is returned via int

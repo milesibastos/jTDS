@@ -222,7 +222,37 @@ public class ResultSetTest extends TestBase {
         ResultSet rs = stmt2.executeQuery("SELECT data FROM #resultSetScroll1");
 
         assertTrue(rs.last());
-        assertTrue(rs.getRow() == count);
+        assertEquals(rs.getRow(), count);
+        
+        stmt2.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [945462] getResultSet() return null if you use scrollable/updatable
+     */
+    public void testResultSetScroll2() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #resultSetScroll2 (data INT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll2 (data) VALUES (?)");
+
+        pstmt.setInt(1, 1);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+        stmt2.executeQuery("SELECT data FROM #resultSetScroll2");
+
+        ResultSet rs = stmt2.getResultSet();
+        
+        assertTrue(rs != null);
+        assertTrue(rs.next());
+        assertEquals(rs.getInt(1), 1);
+        assertTrue(!rs.next());
         
         stmt2.close();
         rs.close();

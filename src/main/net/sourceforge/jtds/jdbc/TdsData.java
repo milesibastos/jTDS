@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.18 2004-08-10 14:57:44 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.19 2004-08-12 22:49:47 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -1514,7 +1514,7 @@ public class TdsData {
 
                 if (pi.value != null) {
                     if (pi.value instanceof Long) {
-                        value = new BigDecimal(((Long) pi.value).longValue());
+                        value = new BigDecimal(((Long) pi.value).toString());
                     } else {
                         value = (BigDecimal) pi.value;
                         scale = value.scale();

@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.35 2005-01-04 10:22:07 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.36 2005-01-10 12:20:49 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -881,6 +881,7 @@ public class Support {
         char[] buf = new char[sql.length() + list.length * 7];
         int bufferPtr = 0; // Output buffer pointer
         int start = 0;     // Input string pointer
+        StringBuffer number = new StringBuffer(4);
 
         for (int i = 0; i < list.length; i++) {
             int pos = list[i].markerPos;
@@ -896,7 +897,10 @@ public class Support {
                 buf[bufferPtr++] = 'P';
 
                 // Append parameter number
-                String number = String.valueOf(i);
+                // Rather complicated, but it's the only way in which no
+                // unnecessary objects are created
+                number.setLength(0);
+                number.append(i);
                 number.getChars(0, number.length(), buf, bufferPtr);
                 bufferPtr += number.length();
 

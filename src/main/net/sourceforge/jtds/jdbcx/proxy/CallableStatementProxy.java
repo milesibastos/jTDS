@@ -21,20 +21,22 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
 
+import net.sourceforge.jtds.jdbc.*;
+
 /**
  * This class would be better implemented as a java.lang.reflect.Proxy.  However, this
  * feature was not added until 1.3 and reflection performance was not improved until 1.4.
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a callable statement with minimal overhead.
  *
- * @version $Id: CallableStatementProxy.java,v 1.1 2004-07-23 12:08:39 bheineman Exp $
+ * @version $Id: CallableStatementProxy.java,v 1.2 2004-07-25 14:57:20 bheineman Exp $
  */
 public class CallableStatementProxy
 extends PreparedStatementProxy
 implements CallableStatement {
-    private CallableStatement _callableStatement;
+    private JtdsCallableStatement _callableStatement;
     
-    CallableStatementProxy(ConnectionProxy connection, CallableStatement callableStatement) {
+    CallableStatementProxy(ConnectionProxy connection, JtdsCallableStatement callableStatement) {
         super(connection, callableStatement);
         
         _callableStatement = callableStatement;

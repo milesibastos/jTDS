@@ -19,7 +19,7 @@ package net.sourceforge.jtds.jdbcx.proxy;
 
 import java.sql.*;
 
-import net.sourceforge.jtds.jdbc.Support;
+import net.sourceforge.jtds.jdbc.*;
 
 /**
  * This class would be better implemented as a java.lang.reflect.Proxy.  However, this
@@ -27,13 +27,13 @@ import net.sourceforge.jtds.jdbc.Support;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a statement with minimal overhead.
  *
- * @version $Id: StatementProxy.java,v 1.1 2004-07-23 12:08:39 bheineman Exp $
+ * @version $Id: StatementProxy.java,v 1.2 2004-07-25 14:57:20 bheineman Exp $
  */
 public class StatementProxy implements Statement {
     private ConnectionProxy _connection;
-    private Statement _statement;
+    private JtdsStatement _statement;
 
-    StatementProxy(ConnectionProxy connection, Statement statement) {
+    StatementProxy(ConnectionProxy connection, JtdsStatement statement) {
         _connection = connection;
         _statement = statement;
     }

@@ -1,6 +1,10 @@
 Changes from jTDS 0.9.1
 =======================
 
+12/16/2004 - Alin Sinpalean
+ o Fixed a bug that was causing setSavepoint() to fail when no statements to
+   actually start a transaction were executed before.
+
 12/14/2004 - Alin Sinpalean
  o Implemented fetching of row blocks with cursor ResultSets, controllable
    through setFetchSize(). As part of this, also implemented support for

@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.10 2004-12-03 14:42:34 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.11 2004-12-16 08:46:08 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -61,7 +61,8 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         try {
             statement = createStatement();
-            statement.execute("SAVE TRAN jtds" + savepoint.getId());
+            statement.execute("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds" 
+                    + savepoint.getId());
         } finally {
             if (statement != null) {
                 statement.close();

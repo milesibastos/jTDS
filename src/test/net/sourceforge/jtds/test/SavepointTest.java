@@ -41,7 +41,7 @@ public class SavepointTest extends TestBase {
 
         Savepoint savepoint = con.setSavepoint();
 
-        assertTrue(savepoint != null);
+        assertNotNull(savepoint);
         assertTrue(savepoint.getSavepointId() == 1);
 
         try {
@@ -95,7 +95,7 @@ public class SavepointTest extends TestBase {
 
         Savepoint savepoint = con.setSavepoint(savepointName);
 
-        assertTrue(savepoint != null);
+        assertNotNull(savepoint);
         assertTrue(savepointName.equals(savepoint.getSavepointName()));
 
         try {
@@ -190,7 +190,7 @@ public class SavepointTest extends TestBase {
 
         Savepoint savepoint1 = con.setSavepoint();
 
-        assertTrue(savepoint1 != null);
+        assertNotNull(savepoint1);
         assertTrue(savepoint1.getSavepointId() == 1);
 
         pstmt.setInt(1, 2);
@@ -198,7 +198,7 @@ public class SavepointTest extends TestBase {
 
         Savepoint savepoint2 = con.setSavepoint();
 
-        assertTrue(savepoint2 != null);
+        assertNotNull(savepoint2);
         assertTrue(savepoint2.getSavepointId() == 2);
 
         pstmt.setInt(1, 3);
@@ -206,7 +206,7 @@ public class SavepointTest extends TestBase {
 
         Savepoint savepoint3 = con.setSavepoint();
 
-        assertTrue(savepoint3 != null);
+        assertNotNull(savepoint3);
         assertTrue(savepoint3.getSavepointId() == 3);
 
         pstmt.setInt(1, 4);
@@ -302,7 +302,7 @@ public class SavepointTest extends TestBase {
             assertTrue(pstmt.executeUpdate() == 1);
 
             Savepoint savepoint = con.setSavepoint();
-            assertTrue(savepoint != null);
+            assertNotNull(savepoint);
             assertTrue(savepoint.getSavepointId() == 1);
 
             try {
@@ -339,6 +339,17 @@ public class SavepointTest extends TestBase {
             con.rollback();
         }
 
+        con.setAutoCommit(true);
+    }
+
+    /**
+     * Test to ensure savepoints can be created even when no statements have
+     * been issued.
+     */
+    public void testSavepoint5() throws Exception {
+        con.setAutoCommit(false);
+        con.setSavepoint();
+        con.rollback();
         con.setAutoCommit(true);
     }
 

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.78 2005-02-27 16:27:57 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.79 2005-02-27 17:02:19 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -3281,29 +3281,30 @@ public class TdsCore {
             currentToken.status &= ~DONE_ROW_COUNT;
             endOfResults = true;
         }
-        //
-        // Check for cancel ack
-        //
-        if ((currentToken.status & DONE_CANCEL) != 0) {
-            synchronized (cancelMonitor) {
+
+        synchronized (cancelMonitor) {
+            //
+            // Check for cancel ack
+            //
+            if ((currentToken.status & DONE_CANCEL) != 0) {
                 cancelPending = false;
+                // Indicates cancel packet
+                messages.addException(
+                         new SQLException("Request cancelled", "S1008", 0));
             }
-            // Indicates cancel packet
-            messages.addException(
-                     new SQLException("Request cancelled", "S1008", 0));
-        }
 
-        if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
-            //
-            // There are no more results or pending cancel packets
-            // to process.
-            //
-            endOfResponse = !cancelPending;
+            if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
+                //
+                // There are no more results or pending cancel packets
+                // to process.
+                //
+                endOfResponse = !cancelPending;
 
-            if (fatalError) {
-                // A fatal error has occured, the server has closed the
-                // connection
-                connection.setClosed();
+                if (fatalError) {
+                    // A fatal error has occured, the server has closed the
+                    // connection
+                    connection.setClosed();
+                }
             }
         }
 

@@ -19,6 +19,8 @@ Changes from jTDS 1.0.2
    (TIMESTMP). WRITETEXT and UPDATETEXT commands generate spurious output
    parameter packets, which interfere with the real output parameters. Fix
    ignores output parameters with names not beginning with '@'.
+ o Synchronized all accesses to the cancelPending flag, to fix any possible
+   issues caused by race conditions.
 
 02/25/2005 - Alin Sinpalean
  o Added code to close the socket and release any data buffered at the socket

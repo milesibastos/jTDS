@@ -648,7 +648,7 @@ public class ResultSetTest extends TestBase {
 
     /**
      * Test that inserted rows are visible in a scroll sensitive
-     * <code>ResultSet</code>.
+     * <code>ResultSet</code> and that they show up at the end.
      */
     public void testInsertRowVisible() throws Exception
     {
@@ -795,6 +795,270 @@ public class ResultSetTest extends TestBase {
         assertFalse(rs.next());
         rs.close();
         stmt.close();
+    }
+
+    /**
+     * Test the behavior of <code>sp_cursorfetch</code> with fetch sizes
+     * greater than 1.
+     * <p>
+     * <b>Assertions tested:</b>
+     * <ul>
+     *   <li>The <i>current row</i> is always the first row returned by the
+     *     last fetch, regardless of what fetch type was used.
+     *   <li>Row number parameter is ignored by fetch types other than absolute
+     *     and relative.
+     *   <li>Refresh fetch type simply reruns the previous request (it ignores
+     *     both row number and number of rows) and will not affect the
+     *     <i>current row</i>.
+     *   <li>Fetch next returns the packet of rows right after the last row
+     *     returned by the last fetch (regardless of what type of fetch that
+     *     was).
+     *   <li>Fetch previous returns the packet of rows right before the first
+     *     row returned by the last fetch (regardless of what type of fetch
+     *     that was).
+     *   <li>If a fetch previous tries to read before the start of the
+     *     <code>ResultSet</code> the requested number of rows is returned,
+     *     starting with row 1 and the error code returned is non-zero (2).
+     * </ul>
+     */
+    public void testCursorFetch() throws Exception
+    {
+        int rows = 10;
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate(
+                "create table #testCursorFetch (id int primary key, val int)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into #testCursorFetch (id, val) values (?, ?)");
+        for (int i = 1; i <= rows; i++) {
+            pstmt.setInt(1, i);
+            pstmt.setInt(2, i);
+            pstmt.executeUpdate();
+        }
+        pstmt.close();
+
+        //
+        // Open cursor
+        //
+        CallableStatement cstmt = con.prepareCall(
+                "{?=call sp_cursoropen(?, ?, ?, ?, ?)}");
+        // Return value (OUT)
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        // Cursor handle (OUT)
+        cstmt.registerOutParameter(2, Types.INTEGER);
+        // Statement (IN)
+        cstmt.setString(3, "select * from #testCursorFetch order by id");
+        // Scroll options (INOUT)
+        cstmt.setInt(4, 1); // Keyset driven
+        cstmt.registerOutParameter(4, Types.INTEGER);
+        // Concurrency options (INOUT)
+        cstmt.setInt(5, 2); // Scroll locks
+        cstmt.registerOutParameter(5, Types.INTEGER);
+        // Row count (OUT)
+        cstmt.registerOutParameter(6, Types.INTEGER);
+
+        ResultSet rs = cstmt.executeQuery();
+        assertEquals(2, rs.getMetaData().getColumnCount());
+        assertFalse(rs.next());
+
+        assertEquals(0, cstmt.getInt(1));
+        int cursor = cstmt.getInt(2);
+        assertEquals(1, cstmt.getInt(4));
+        assertEquals(2, cstmt.getInt(5));
+        assertEquals(rows, cstmt.getInt(6));
+
+        cstmt.close();
+
+        //
+        // Play around with fetch
+        //
+        cstmt = con.prepareCall("{?=call sp_cursorfetch(?, ?, ?, ?)}");
+        // Return value (OUT)
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        // Cursor handle (IN)
+        cstmt.setInt(2, cursor);
+        // Fetch type (IN)
+        cstmt.setInt(3, 2); // Next row
+        // Row number (INOUT)
+        cstmt.setInt(4, 1); // Only matters for absolute and relative fetching
+        // Number of rows (INOUT)
+        cstmt.setInt(5, 2); // Read 2 rows
+
+        // Fetch rows 1-2 (current row is 1)
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch rows 3-4 (current row is 3)
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertEquals(4, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Refresh rows 3-4 (current row is 3)
+        cstmt.setInt(3, 0x80); // Refresh
+        cstmt.setInt(4, 2);    // Try to refresh only 2nd row (will be ignored)
+        cstmt.setInt(5, 1);    // Try to refresh only 1 row (will be ignored)
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertEquals(4, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch rows 5-6 (current row is 5)
+        cstmt.setInt(3, 2); // Next
+        cstmt.setInt(4, 1); // Row number 1
+        cstmt.setInt(5, 2); // Get 2 rows
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertEquals(6, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch previous rows (3-4) (current row is 3)
+        cstmt.setInt(3, 4); // Previous
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(4, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Refresh rows 3-4 (current row is 3)
+        cstmt.setInt(3, 0x80); // Refresh
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(4, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch previous rows (1-2) (current row is 1)
+        cstmt.setInt(3, 4); // Previous
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch next rows (3-4) (current row is 3)
+        cstmt.setInt(3, 2); // Next
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(4, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch first rows (1-2) (current row is 1)
+        cstmt.setInt(3, 1); // First
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch last rows (9-10) (current row is 9)
+        cstmt.setInt(3, 8); // Last
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(9, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(10, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch next rows; should not fail (current position is after last)
+        cstmt.setInt(3, 2); // Next
+        rs = cstmt.executeQuery();
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch absolute starting with 6 (6-7) (current row is 6)
+        cstmt.setInt(3, 0x10); // Absolute
+        cstmt.setInt(4, 6);
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(6, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(7, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch relative -4 (2-3) (current row is 2)
+        cstmt.setInt(3, 0x20); // Relative
+        cstmt.setInt(4, -4);
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        // Fetch previous 2 rows; should fail (current row is 1)
+        cstmt.setInt(3, 4); // Previous
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        // Returns 2 on error
+        assertEquals(2, cstmt.getInt(1));
+
+        // Fetch next rows (3-4) (current row is 3)
+        cstmt.setInt(3, 2); // Next
+        rs = cstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(4, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(0, cstmt.getInt(1));
+
+        cstmt.close();
+
+        //
+        // Close cursor
+        //
+        cstmt = con.prepareCall("{?=call sp_cursorclose(?)}");
+        // Return value (OUT)
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        // Cursor handle (IN)
+        cstmt.setInt(2, cursor);
+        assertFalse(cstmt.execute());
+        assertEquals(0, cstmt.getInt(1));
+        cstmt.close();
     }
 
     /**

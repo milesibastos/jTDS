@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.36 2004-12-09 15:26:51 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.37 2004-12-10 13:17:26 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -1064,7 +1064,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     public boolean rowDeleted() throws SQLException {
         checkOpen();
 
-        return getRowStat() == SQL_ROW_DELETED;
+        return SQL_ROW_DELETED.equals(getRowStat());
     }
 
     public boolean rowInserted() throws SQLException {

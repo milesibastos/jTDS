@@ -1,13 +1,17 @@
-Changes from jTDS 0.9
-=========================
+Changes from jTDS 0.9.1
+=======================
 
 12/09/2004 - Alin Sinpalean
+ o Added some tests to verify the behavior of sp_cursorfetch with fetch sizes
+   greater than 1.
  o Added code to ensure scroll sensitive ResultSet rows are reloaded after
    updated (delete just marks the row as deleted, while insert adds a row at
    the end of the ResultSet).
  o Fixed some cursor ResultSet issues caused by invalid suppositions considered
    when optimizing (i.e. that updating a row will always delete the current row
-   and create a new one at the end of the ResultSet).
+   and create a new one at the end of the ResultSet). This will affect update
+   performance (by making an additional request) but it is necessary to ensure
+   correctness.
  o Updated DatabaseMetaData boolean getters related to the capabilities of
    detecting updates/inserts/deletes (only deletes can in fact be detected on
    SQL Server).
@@ -22,7 +26,7 @@ Changes from jTDS 0.9
 ===============================================================================
 
 Changes from jTDS 0.9
-=========================
+=====================
 
 12/08/2004 - Alin Sinpalean
  o Updated the index.html with support information and added a description for
@@ -581,7 +585,7 @@ Changes from jTDS 0.9-rc1
 ===============================================================================
 
 Changes from jTDS 0.8.1
-=========================
+=======================
 
 08/09/2004 - Brian Heineman
  o Corrected bug [1005881] Typo in Exception message "Uknown server host name
@@ -931,7 +935,7 @@ Changes from jTDS 0.8.1
 ===============================================================================
 
 Changes from jTDS 0.8
-=========================
+=====================
 
 07/08/2004 - Brian Heineman
  o Corrected bug [983561] getDatetimeValue truncates fractional milliseconds.
@@ -1127,7 +1131,7 @@ Changes from jTDS 0.8-rc1
 ===============================================================================
 
 Changes from jTDS 0.7.1
-========================
+=======================
 
 03/29/2004 - Alin Sinpalean
  o jTDS is now licensed under the LGPL. This means that noone will be able to
@@ -1244,7 +1248,7 @@ Changes from jTDS 0.7.1
 ===============================================================================
 
 Changes from jTDS 0.7
-========================
+=====================
 
 03/03/2004 - Alin Sinpalean
  o Added the 'macAddress' URL parameter allowing the user to specify the MAC
@@ -1272,7 +1276,7 @@ Changes from jTDS 0.7
 ===============================================================================
 
 Changes from jTDS 0.6
-========================
+=====================
 
 02/26/2004 - Alin Sinpalean
  o Applied part of a patch from Christian Ullenboom, with various small
@@ -1732,7 +1736,7 @@ Changes from jTDS 0.5.1
 ===============================================================================
 
 Changes from jTDS 0.5
-=======================
+=====================
 
 01/30/2003 - Alin Sinpalean
  o Hope I fixed the "Tds 0 already allocated" issue (for Tds other than 0 it
@@ -1789,7 +1793,7 @@ Changes from jTDS 0.5
 ===============================================================================
 
 Changes from jTDS 0.4
-=======================
+=====================
 
 11/11/2002 - Alin Sinpalean
 

@@ -12,7 +12,7 @@ import junit.framework.TestCase;
 
 /**
  * @author  builder
- * @version $Id: TestBase.java,v 1.19 2004-10-27 14:57:58 alin_sinpalean Exp $
+ * @version $Id: TestBase.java,v 1.20 2004-12-10 13:17:30 alin_sinpalean Exp $
  */
 public abstract class TestBase extends TestCase {
 
@@ -38,7 +38,7 @@ public abstract class TestBase extends TestCase {
         Class.forName(props.getProperty("driver"));
         String url = props.getProperty("url");
         Connection con = DriverManager.getConnection(url, props);
-        showWarnings(con.getWarnings());
+//        showWarnings(con.getWarnings());
         initLanguage(con);
 
         return con;

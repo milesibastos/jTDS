@@ -32,14 +32,16 @@ public class PreparedStatementTest extends TestBase {
     public void testPreparedStatement() throws Exception {
         PreparedStatement pstmt = con.prepareStatement("SELECT * FROM #test");
 
-        makeTestTables(pstmt);
-        makeObjects(pstmt, 10);
+        Statement stmt = con.createStatement();
+        makeTestTables(stmt);
+        makeObjects(stmt, 10);
+        stmt.close();
 
         ResultSet rs = pstmt.executeQuery();
-
         dump(rs);
 
         rs.close();
+        pstmt.close();
     }
 
     public void testScrollablePreparedStatement() throws Exception {

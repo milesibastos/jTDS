@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.25 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.26 2004-09-16 13:53:45 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -122,6 +122,8 @@ public class TdsData {
     private static final int SYBVARCHAR            = 39; // 0x27
     private static final int SYBINTN               = 38; // 0x26
     private static final int SYBINT1               = 48; // 0x30
+    private static final int SYBDATE               = 49; // 0x31 Sybase 12
+    private static final int SYBTIME               = 51; // 0x33 Sybase 12
     private static final int SYBINT2               = 52; // 0x34
     private static final int SYBINT4               = 56; // 0x38
     private static final int SYBINT8               = 127;// 0x7F
@@ -145,13 +147,15 @@ public class TdsData {
     private static final int SYBFLTN               = 109;// 0x6D
     private static final int SYBMONEYN             = 110;// 0x6E
     private static final int SYBDATETIMN           = 111;// 0x6F
+    private static final int SYBDATEN              = 123;// 0x7B SYBASE 12
+    private static final int SYBTIMEN              = 147;// 0x93 SYBASE 12
     private static final int XSYBCHAR              = 175;// 0xAF
     private static final int XSYBVARCHAR           = 167;// 0xA7
     private static final int XSYBNVARCHAR          = 231;// 0xE7
     private static final int XSYBNCHAR             = 239;// 0xEF
     private static final int XSYBVARBINARY         = 165;// 0xA5
     private static final int XSYBBINARY            = 173;// 0xAD
-    private static final int SYBLONGBINARY         = 225;// 0xE1
+    private static final int SYBLONGBINARY         = 225;// 0xE1 SYBASE 12
     private static final int SYBSINT1              = 64; // 0x40
     private static final int SYBUINT2              = 65; // 0x41
     private static final int SYBUINT4              = 66; // 0x42
@@ -195,13 +199,17 @@ public class TdsData {
         types[SYBFLTN]      = new TypeInfo("float",         -1, 15, 24, true,  false, java.sql.Types.DOUBLE);
         types[SYBMONEYN]    = new TypeInfo("money",         -1, 19, 21, true,  false, java.sql.Types.DECIMAL);
         types[SYBDATETIMN]  = new TypeInfo("datetime",      -1, 23, 23, false, false, java.sql.Types.TIMESTAMP);
+        types[SYBDATE]      = new TypeInfo("date",           4, 10, 10, false, false, java.sql.Types.DATE);
+        types[SYBTIME]      = new TypeInfo("time",           4,  8,  8, false, false, java.sql.Types.TIME);
+        types[SYBDATEN]     = new TypeInfo("date",          -1, 10, 10, false, false, java.sql.Types.DATE);
+        types[SYBTIMEN]     = new TypeInfo("time",          -1,  8,  8, false, false, java.sql.Types.TIME);
         types[XSYBCHAR]     = new TypeInfo("char",          -2, -1,  1, false, true,  java.sql.Types.CHAR);
         types[XSYBVARCHAR]  = new TypeInfo("varchar",       -2, -1,  1, false, true,  java.sql.Types.VARCHAR);
         types[XSYBNVARCHAR] = new TypeInfo("nvarchar",      -2, -1, -2, false, true,  java.sql.Types.VARCHAR);
         types[XSYBNCHAR]    = new TypeInfo("nchar",         -2, -1, -2, false, true,  java.sql.Types.CHAR);
         types[XSYBVARBINARY]= new TypeInfo("varbinary",     -2, -1,  2, false, false, java.sql.Types.VARBINARY);
         types[XSYBBINARY]   = new TypeInfo("binary",        -2, -1,  2, false, false, java.sql.Types.BINARY);
-        types[SYBLONGBINARY]= new TypeInfo("long binary",   -2, -1,  2, false, false, java.sql.Types.BINARY);
+        types[SYBLONGBINARY]= new TypeInfo("varbinary",     -5, -1,  2, false, false, java.sql.Types.BINARY);
         types[SYBSINT1]     = new TypeInfo("tinyint",        1,  2,  3, false, false, java.sql.Types.TINYINT);
         types[SYBUINT2]     = new TypeInfo("smallint",       2,  5,  6, false, false, java.sql.Types.SMALLINT);
         types[SYBUINT4]     = new TypeInfo("int",            4, 10, 11, false, false, java.sql.Types.INTEGER);
@@ -256,6 +264,7 @@ public class TdsData {
     static int readType(ResponseStream in, ColInfo ci)
     throws IOException, ProtocolException {
         boolean isTds8 = in.getTdsVersion() >= Driver.TDS80;
+        boolean isTds5 = in.getTdsVersion() == Driver.TDS50;
         int bytesRead = 1;
         // Get the TDS data type code
         int type = in.read();
@@ -264,15 +273,14 @@ public class TdsData {
             throw new ProtocolException("Invalid TDS data type 0x" + Integer.toHexString(type));
         }
 
-        ci.tdsType = type;
-        ci.jdbcType = types[type].jdbcType;
-        ci.displaySize = -1;
-        ci.tableName = "";
-        ci.bufferSize = types[type].size;
+        ci.tdsType     = type;
+        ci.jdbcType    = types[type].jdbcType;
+        ci.bufferSize  = types[type].size;
 
         // Now get the buffersize if required
         if (ci.bufferSize == -5) {
             // sql_variant
+            // Sybase long binary
             ci.bufferSize = in.readInt();
             bytesRead += 4;
         } else if (ci.bufferSize == -4) {
@@ -289,13 +297,18 @@ public class TdsData {
             bytesRead += 6 + ((in.getTdsVersion() >= Driver.TDS70) ? lenName * 2 : lenName);
         } else if (ci.bufferSize == -2) {
             // longvarchar longvarbinary
-            ci.bufferSize = in.readShort();
+            if (isTds5 && ci.tdsType == XSYBCHAR) {
+                ci.bufferSize = in.readInt();
+                bytesRead += 4;
+            } else {
+                ci.bufferSize = in.readShort();
+                bytesRead += 2;
+            }
 
             if (isTds8) {
                 bytesRead += getCollation(in, ci);
             }
 
-            bytesRead += 2;
         } else if (ci.bufferSize == -1) {
             // varchar varbinary decimal etc
             bytesRead += 1;
@@ -311,61 +324,61 @@ public class TdsData {
 
         // Set default displaySize and precision
         ci.displaySize = types[type].displaySize;
-        ci.precision = types[type].precision;
-        ci.sqlType = types[type].sqlType;
+        ci.precision   = types[type].precision;
+        ci.sqlType     = types[type].sqlType;
 
         // Now fine tune sizes for specific types
         if (type == SYBDATETIMN) {
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBDATETIME].displaySize;
-                ci.precision = types[SYBDATETIME].precision;
+                ci.precision   = types[SYBDATETIME].precision;
             } else {
                 ci.displaySize = types[SYBDATETIME4].displaySize;
-                ci.precision = types[SYBDATETIME4].precision;
-                ci.sqlType = types[SYBDATETIME4].sqlType;
+                ci.precision   = types[SYBDATETIME4].precision;
+                ci.sqlType     = types[SYBDATETIME4].sqlType;
             }
         } else if (type == SYBFLTN) {
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBFLT8].displaySize;
-                ci.precision = types[SYBFLT8].precision;
+                ci.precision   = types[SYBFLT8].precision;
             } else {
                 ci.displaySize = types[SYBREAL].displaySize;
-                ci.precision = types[SYBREAL].precision;
-                ci.jdbcType = java.sql.Types.REAL;
-                ci.sqlType = types[SYBREAL].sqlType;
+                ci.precision   = types[SYBREAL].precision;
+                ci.jdbcType    = java.sql.Types.REAL;
+                ci.sqlType     = types[SYBREAL].sqlType;
             }
         } else if (type == SYBINTN) {
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBINT8].displaySize;
-                ci.precision = types[SYBINT8].precision;
-                ci.jdbcType = java.sql.Types.BIGINT;
-                ci.sqlType = types[SYBINT8].sqlType;
+                ci.precision   = types[SYBINT8].precision;
+                ci.jdbcType    = java.sql.Types.BIGINT;
+                ci.sqlType     = types[SYBINT8].sqlType;
             } else if (ci.bufferSize == 4) {
                 ci.displaySize = types[SYBINT4].displaySize;
-                ci.precision = types[SYBINT4].precision;
+                ci.precision   = types[SYBINT4].precision;
             } else if (ci.bufferSize == 2) {
                 ci.displaySize = types[SYBINT2].displaySize;
-                ci.precision = types[SYBINT2].precision;
-                ci.jdbcType = java.sql.Types.SMALLINT;
-                ci.sqlType = types[SYBINT2].sqlType;
+                ci.precision   = types[SYBINT2].precision;
+                ci.jdbcType    = java.sql.Types.SMALLINT;
+                ci.sqlType     = types[SYBINT2].sqlType;
             } else {
                 ci.displaySize = types[SYBINT1].displaySize;
-                ci.precision = types[SYBINT1].precision;
-                ci.jdbcType = java.sql.Types.TINYINT;
-                ci.sqlType = types[SYBINT1].sqlType;
+                ci.precision   = types[SYBINT1].precision;
+                ci.jdbcType    = java.sql.Types.TINYINT;
+                ci.sqlType     = types[SYBINT1].sqlType;
             }
         } else if (type == SYBMONEYN) {
 
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBMONEY].displaySize;
-                ci.precision = types[SYBMONEY].precision;
+                ci.precision   = types[SYBMONEY].precision;
             } else {
                 ci.displaySize = types[SYBMONEY4].displaySize;
-                ci.precision = types[SYBMONEY4].precision;
-                ci.sqlType = types[SYBMONEY4].sqlType;
+                ci.precision   = types[SYBMONEY4].precision;
+                ci.sqlType     = types[SYBMONEY4].sqlType;
             }
         }
 
@@ -384,16 +397,68 @@ public class TdsData {
 
         // Read in scale and precision for decimal types
         if (type == SYBDECIMAL || type == SYBNUMERIC) {
-            ci.precision = in.read();
-            ci.scale = in.read();
+            ci.precision   = in.read();
+            ci.scale       = in.read();
             ci.displaySize = ((ci.scale > 0) ? 2 : 1) + ci.precision;
-            bytesRead += 2;
-            ci.sqlType = types[type].sqlType;
+            bytesRead     += 2;
+            ci.sqlType     = types[type].sqlType;
         }
 
         // For numeric types add 'identity' for auto inc data type
         if (ci.isIdentity) {
             ci.sqlType += " identity";
+        }
+
+        // Fine tune Sybase data types
+        if (isTds5) {
+            if (ci.tdsType == SYBLONGBINARY) {
+                switch (ci.userType) {
+                    case  3: // BINARY
+                        ci.sqlType     = "binary";
+                        ci.displaySize = ci.bufferSize * 2;
+                        ci.jdbcType    = java.sql.Types.BINARY;
+                        break;
+                    case  4: // VARBINARY
+                        ci.sqlType     = "varbinary";
+                        ci.displaySize = ci.bufferSize * 2;
+                        ci.jdbcType    = java.sql.Types.VARBINARY;
+                        break;
+                    case 34: // UNICHAR
+                        ci.sqlType     = "unichar";
+                        ci.displaySize = ci.bufferSize / 2;
+                        ci.jdbcType    = java.sql.Types.CHAR;
+                        break;
+                    case 35: // UNIVARCHAR
+                        ci.sqlType     = "univarchar";
+                        ci.displaySize = ci.bufferSize / 2;
+                        ci.jdbcType    = java.sql.Types.VARCHAR;
+                        break;
+                }
+            } else
+            if (ci.tdsType == XSYBCHAR) {
+                switch (ci.userType) {
+                    case  1: // CHAR
+                       ci.sqlType      = "char";
+                        ci.displaySize = ci.bufferSize;
+                        ci.jdbcType    = java.sql.Types.CHAR;
+                        break;
+                    case  2: // VARCHAR
+                        ci.sqlType     = "varchar";
+                        ci.displaySize = ci.bufferSize;
+                        ci.jdbcType    = java.sql.Types.VARCHAR;
+                        break;
+                    case 24: // NCHAR
+                        ci.sqlType     = "nchar";
+                        ci.displaySize = ci.bufferSize;
+                        ci.jdbcType    = java.sql.Types.CHAR;
+                        break;
+                    case 25: // NVARCHAR
+                        ci.sqlType     = "nvarchar";
+                        ci.displaySize = ci.bufferSize;
+                        ci.jdbcType    = java.sql.Types.VARCHAR;
+                        break;
+                }
+            }
         }
 
         return bytesRead;
@@ -502,10 +567,22 @@ public class TdsData {
 
             case XSYBCHAR:
             case XSYBVARCHAR:
-                len = in.readShort();
-
-                if (len != -1) {
-                    return in.readAsciiString(len);
+                if (in.getTdsVersion() == Driver.TDS50) {
+                    // This is a Sybase wide table String
+                    len = in.readInt();
+                    if (len > 0) {
+                        String tmp = in.readAsciiString(len);
+                        if (tmp.equals(" ") && !ci.sqlType.equals("char")) {
+                            tmp = "";
+                        }
+                        return tmp;
+                    }
+                } else {
+                    // This is a TDS 7+ long string
+                    len = in.readShort();
+                    if (len != -1) {
+                        return in.readAsciiString(len);
+                    }
                 }
 
                 break;
@@ -548,6 +625,30 @@ public class TdsData {
 
                 break;
 
+            case SYBLONGBINARY:
+                len = in.readInt();
+                if (len != 0) {
+                    if (ci.sqlType.equals("unichar") ||
+                        ci.sqlType.equals("univarchar")) {
+                        char[] buf = new char[len / 2];
+                        in.read(buf);
+                        if ((len & 1) != 0) {
+                            // Bad length should be divisible by 2
+                            in.skip(1); // Deal with it anyway.
+                        }
+                        if (len == 2 && buf[0] == ' ') {
+                            return "";
+                        } else {
+                            return new String(buf);
+                        }
+                    } else {
+                        byte[] bytes = new byte[len];
+                        in.read(bytes);
+                        return bytes;
+                    }
+                }
+                break;
+
             case SYBMONEY4:
             case SYBMONEY:
             case SYBMONEYN:
@@ -557,6 +658,39 @@ public class TdsData {
             case SYBDATETIMN:
             case SYBDATETIME:
                 return getDatetimeValue(in, ci.tdsType);
+
+            case SYBDATEN:
+            case SYBDATE:
+                len = (ci.tdsType == SYBDATEN)? in.read(): 4;
+                if (len == 4) {
+                    int daysSince1900 = in.readInt();
+                    synchronized (cal) {
+                        sybDateToCalendar(daysSince1900, cal);
+                        return new java.sql.Date(cal.getTime().getTime());
+                    }
+                } else {
+                    // Invalid length or 0 for null
+                    in.skip(len);
+                }
+                break;
+
+            case SYBTIMEN:
+            case SYBTIME:
+                len = (ci.tdsType == SYBTIMEN)? in.read(): 4;
+                if (len == 4) {
+                    synchronized (cal) {
+                        int time = in.readInt();
+                        sybTimeToCalendar(time, cal);
+                        cal.set(Calendar.YEAR, 1970);
+                        cal.set(Calendar.MONTH, 0);
+                        cal.set(Calendar.DAY_OF_MONTH, 1);
+                        return new java.sql.Time(cal.getTime().getTime());
+                    }
+                } else {
+                    // Invalid length or 0 for null
+                    in.skip(len);
+                }
+                break;
 
             case SYBBIT:
                 return (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
@@ -739,12 +873,45 @@ public class TdsData {
                     len = pi.length;
                 }
                 if (connection.getTdsVersion() < Driver.TDS70) {
+                    if (len > 0
+                        && connection.getSybaseInfo(TdsCore.SYB_UNICODE)
+                        && connection.isUseUnicode()) {
+                        // Sybase can send values as unicode if conversion to the
+                        // server charset fails.
+                        // One option to determine if conversion will fail is to use
+                        // the CharSetEncoder class but this is only available from
+                        // JDK 1.4.
+                        // For now we will call a local method to see if the string
+                        // should be sent as unicode.
+                        // This behaviour can be disabled by setting the connection
+                        // property sendParametersAsUnicode=false.
+                        // TODO: Find a better way of testing for convertable charset.
+                        try {
+                            String charset = connection.getCharSet();
+                            String tmp     = pi.getString(charset);
+                            if (!canEncode(tmp, charset)) {
+                                // Conversion fails need to send as unicode.
+                                pi.sqlType = "univarchar("+tmp.length()+")";
+                                pi.tdsType = SYBLONGBINARY;
+                                pi.length  = tmp.length();
+                                break;
+                            }
+                        } catch (IOException e) {
+                            throw new SQLException(
+                                    Messages.get("error.generic.ioerror", e.getMessage()), "HY000");
+                        }
+                    }
                     if (len < 256) {
                         pi.tdsType = SYBVARCHAR;
                         pi.sqlType = "varchar(255)";
                     } else {
-                        pi.tdsType = SYBTEXT;
-                        pi.sqlType = "text";
+                        if (connection.getSybaseInfo(TdsCore.SYB_LONGDATA)) {
+                            pi.tdsType = XSYBCHAR;
+                            pi.sqlType = "varchar(" + len + ")";
+                        } else {
+                            pi.tdsType = SYBTEXT;
+                            pi.sqlType = "text";
+                        }
                     }
                 } else {
                     if (pi.isUnicode && len < 4001) {
@@ -779,10 +946,10 @@ public class TdsData {
 
             case JtdsStatement.BOOLEAN:
             case java.sql.Types.BIT:
-                if (connection.getTdsVersion() < Driver.TDS70) {
-                    pi.tdsType = SYBBIT;
-                } else {
+                if (connection.getSybaseInfo(TdsCore.SYB_BITNULL)) {
                     pi.tdsType = SYBBITN;
+                } else {
+                    pi.tdsType = SYBBIT;
                 }
 
                 pi.sqlType = "bit";
@@ -796,7 +963,23 @@ public class TdsData {
                 break;
 
             case java.sql.Types.DATE:
+                if (connection.getSybaseInfo(TdsCore.SYB_DATETIME)) {
+                    pi.tdsType = SYBDATEN;
+                    pi.sqlType = "date";
+                } else {
+                    pi.tdsType = SYBDATETIMN;
+                    pi.sqlType = "datetime";
+                }
+                break;
             case java.sql.Types.TIME:
+                if (connection.getSybaseInfo(TdsCore.SYB_DATETIME)) {
+                    pi.tdsType = SYBTIMEN;
+                    pi.sqlType = "time";
+                } else {
+                    pi.tdsType = SYBDATETIMN;
+                    pi.sqlType = "datetime";
+                }
+                break;
             case java.sql.Types.TIMESTAMP:
                 pi.tdsType = SYBDATETIMN;
                 pi.sqlType = "datetime";
@@ -817,8 +1000,13 @@ public class TdsData {
                         pi.tdsType = SYBVARBINARY;
                         pi.sqlType = "varbinary(255)";
                     } else {
-                        pi.tdsType = SYBIMAGE;
-                        pi.sqlType = "image";
+                        if (connection.getSybaseInfo(TdsCore.SYB_LONGDATA)) {
+                            pi.tdsType = SYBLONGBINARY;
+                            pi.sqlType = "varbinary(" + len + ")";
+                        } else {
+                            pi.tdsType = SYBIMAGE;
+                            pi.sqlType = "image";
+                        }
                     }
                 } else {
                     if (len < 8001) {
@@ -931,10 +1119,16 @@ public class TdsData {
             case SYBINTN:
             case SYBFLTN:
             case SYBDATETIMN:
+            case SYBDATEN:
+            case SYBTIMEN:
                 size += 1;
                 break;
             case SYBDECIMAL:
                 size += 3;
+                break;
+            case XSYBCHAR:
+            case SYBLONGBINARY:
+                size += 4;
                 break;
             case SYBBIT:
                 break;
@@ -987,6 +1181,12 @@ public class TdsData {
             case SYBVARBINARY:
                 out.write((byte) 255);
                 break;
+            case XSYBCHAR:
+                out.write((int)0x7FFFFFFF);
+                break;
+            case SYBLONGBINARY:
+                out.write((int)0x7FFFFFFF);
+                break;
             case SYBBIT:
                 break;
             case SYBINTN:
@@ -995,6 +1195,10 @@ public class TdsData {
             case SYBFLTN:
             case SYBDATETIMN:
                 out.write((byte) 8);
+                break;
+            case SYBDATEN:
+            case SYBTIMEN:
+                out.write((byte)4);
                 break;
             case SYBDECIMAL:
                 out.write((byte) 17);
@@ -1071,6 +1275,37 @@ public class TdsData {
 
                 break;
 
+            case XSYBCHAR:
+                if (pi.value == null) {
+                    out.write((byte) 0);
+                } else {
+                    byte buf[] = pi.getBytes(charset);
+
+                    if (buf.length == 0) {
+                        buf = new byte[1];
+                        buf[0] = ' ';
+                    }
+                    out.write((int) buf.length);
+                    out.write(buf);
+                }
+                break;
+
+            case SYBLONGBINARY:
+                if (pi.value == null) {
+                    out.write((int) 0);
+                } else {
+                    if (pi.sqlType.startsWith("univarchar")){
+                        String tmp = pi.getString(charset);
+                        out.write((int)tmp.length() * 2);
+                        out.write(tmp.toCharArray(), 0, tmp.length());
+                    } else {
+                        byte buf[] = pi.getBytes(charset);
+                        out.write((int) buf.length);
+                        out.write(buf);
+                    }
+                }
+                break;
+
             case SYBINTN:
                 if (pi.value == null) {
                     out.write((byte) 0);
@@ -1094,6 +1329,34 @@ public class TdsData {
             case SYBDATETIMN:
                 putDateTimeValue(out, pi.value);
                 break;
+
+            case SYBDATEN:
+                if (pi.value == null) {
+                    out.write((byte)0);
+                } else {
+                    synchronized (cal) {
+                        out.write((byte) 4);
+                        cal.setTime((java.util.Date) pi.value);
+                        int daysSince1900 = calendarToSybDate(cal.get(Calendar.YEAR),
+                                                              cal.get(Calendar.MONTH) + 1,
+                                                              cal.get(Calendar.DAY_OF_MONTH));
+                        out.write((int) daysSince1900);
+                    }
+                }
+                break;
+
+           case SYBTIMEN:
+               if (pi.value == null) {
+                   out.write((byte)0);
+               } else {
+                   synchronized (cal) {
+                       out.write((byte) 4);
+                       int time = calendarToSybTime(cal, pi.value);
+                       cal.setTime((java.util.Date) pi.value);
+                       out.write((int) time);
+                   }
+               }
+               break;
 
             case SYBBIT:
                 if (pi.value == null) {
@@ -1594,7 +1857,7 @@ public class TdsData {
      *           END
      * </pre>
      */
-    private static void sybaseToCalendar(int julianDate, GregorianCalendar cal) {
+    private static void sybDateToCalendar(int julianDate, GregorianCalendar cal) {
         int l = julianDate + 68569 + 2415021;
         int n = 4 * l / 146097;
         l = l - (146097 * n + 3) / 4;
@@ -1608,6 +1871,26 @@ public class TdsData {
         cal.set(Calendar.YEAR, i);
         cal.set(Calendar.MONTH, j-1);
         cal.set(Calendar.DAY_OF_MONTH, k);
+    }
+
+    /**
+     * Convert a Sybase time from midnight in 300th seconds to
+     * a java calendar object.
+     * @param time The Sybase time value.
+     * @param cal The Calendar to be updated.
+     */
+    private static void sybTimeToCalendar(int time, GregorianCalendar cal) {
+        int hours = time / 1080000;
+        cal.set(Calendar.HOUR_OF_DAY, hours);
+        time = time - hours * 1080000;
+        int minutes = time / 18000;
+        cal.set(Calendar.MINUTE, minutes);
+        time = time - (minutes * 18000);
+        int seconds = time / 300;
+        cal.set(Calendar.SECOND, seconds);
+        time = time - seconds * 300;
+        time = (int) Math.round(time * 1000 / 300f);
+        cal.set(Calendar.MILLISECOND, time);
     }
 
     private static GregorianCalendar cal = new GregorianCalendar();
@@ -1629,7 +1912,6 @@ public class TdsData {
         int time;
         int hours;
         int minutes;
-        int seconds;
 
         synchronized (cal) {
             if (type == SYBDATETIMN) {
@@ -1651,19 +1933,9 @@ public class TdsData {
                     // Negative days indicate dates earlier than 1900.
                     // The full range is 1753-01-01 to 9999-12-31.
                     daysSince1900 = in.readInt();
-                    sybaseToCalendar(daysSince1900, cal);
+                    sybDateToCalendar(daysSince1900, cal);
                     time = in.readInt();
-                    hours = time / 1080000;
-                    cal.set(Calendar.HOUR_OF_DAY, hours);
-                    time = time - hours * 1080000;
-                    minutes = time / 18000;
-                    cal.set(Calendar.MINUTE, minutes);
-                    time = time - (minutes * 18000);
-                    seconds = time / 300;
-                    cal.set(Calendar.SECOND, seconds);
-                    time = time - seconds * 300;
-                    time = (int) Math.round(time * 1000 / 300f);
-                    cal.set(Calendar.MILLISECOND, time);
+                    sybTimeToCalendar(time, cal);
 //
 //                  getTimeInMillis() is protected in java vm 1.3 :-(
 //                  return new Timestamp(cal.getTimeInMillis());
@@ -1676,7 +1948,7 @@ public class TdsData {
                     // midnight.
                     // The full range is 1900-01-01 to 2079-06-06.
                     daysSince1900 = ((int) in.readShort()) & 0xFFFF;
-                    sybaseToCalendar(daysSince1900, cal);
+                    sybDateToCalendar(daysSince1900, cal);
                     minutes = in.readShort();
                     hours = minutes / 60;
                     cal.set(Calendar.HOUR_OF_DAY, hours);
@@ -1723,12 +1995,48 @@ public class TdsData {
      * @param day The day in month 1-31.
      * @return The julian date adjusted for Sybase epoch of 1900.
      */
-    private static int calendarToSybase(int year, int month, int day) {
+    private static int calendarToSybDate(int year, int month, int day) {
 
         return day - 32075 + 1461 * (year + 4800 + (month - 14) / 12) /
         4 + 367 * (month - 2 - (month - 14) / 12 * 12) /
         12 - 3 * ((year + 4900 + (month -14) / 12) / 100) /
         4 - 2415021;
+    }
+
+    /**
+     * Convert a java Date type to integer 300th seconds since
+     * midnight.
+     * <p>
+     * NB. If rounding causes the time to wrap then the day field in the
+     * Calendar object will be incremented by one.
+     * @param cal The Calendar object to update.
+     * @param value The java Date object to convert.
+     * @return Number of 300th seconds from Midnight.
+     */
+    private static int calendarToSybTime(GregorianCalendar cal, Object value)
+    {
+        cal.setTime((java.util.Date) value);
+
+        if (!Driver.JDBC3 && value instanceof java.sql.Timestamp) {
+            // Not Running under 1.4 so need to add milliseconds
+            cal.set(Calendar.MILLISECOND,
+                    ((java.sql.Timestamp)value).getNanos() / 1000000);
+        }
+
+        int time = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
+        time += cal.get(Calendar.MINUTE) * 18000;
+        time += cal.get(Calendar.SECOND) * 300;
+
+        if (value instanceof java.sql.Timestamp) {
+            time += Math.round(cal.get(Calendar.MILLISECOND) * 300f / 1000);
+        }
+        if (time > 25919999) {
+            // Time field has overflowed need to increment days
+            // Sybase does not allow invalid time component
+            time = 0;
+            cal.add(Calendar.DATE, 1);
+        }
+        return time;
     }
 
     /**
@@ -1751,34 +2059,14 @@ public class TdsData {
 
         synchronized (cal) {
             out.write((byte) 8);
-            cal.setTime((java.util.Date) value);
-
-            if (!Driver.JDBC3 && value instanceof java.sql.Timestamp) {
-                // Not Running under 1.4 so need to add milliseconds
-                cal.set(Calendar.MILLISECOND,
-                        ((java.sql.Timestamp)value).getNanos() / 1000000);
-            }
-
-            time = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
-            time += cal.get(Calendar.MINUTE) * 18000;
-            time += cal.get(Calendar.SECOND) * 300;
-
-            if (value instanceof java.sql.Timestamp) {
-                time += Math.round(cal.get(Calendar.MILLISECOND) * 300f / 1000);
-            }
-            if (time > 25919999) {
-                // Time field has overflowed need to increment days
-                // Sybase does not allow invalid time component
-                time = 0;
-                cal.add(Calendar.DATE, 1);
-            }
+            time = calendarToSybTime(cal, value);
 
             if (value instanceof java.sql.Time) {
                 daysSince1900 = 0;
             } else {
-                daysSince1900 = calendarToSybase(cal.get(Calendar.YEAR),
-                                                 cal.get(Calendar.MONTH) + 1,
-                                                 cal.get(Calendar.DAY_OF_MONTH));
+                daysSince1900 = calendarToSybDate(cal.get(Calendar.YEAR),
+                                                  cal.get(Calendar.MONTH) + 1,
+                                                  cal.get(Calendar.DAY_OF_MONTH));
             }
 
             out.write((int) daysSince1900);
@@ -1976,5 +2264,25 @@ public class TdsData {
         } else {
             return Driver.TDS42;
         }
+    }
+
+    /**
+     * Establish if a String can be converted to a byte based character set.
+     * <p>
+     * For now just check if ASCII. This is not fool proof but is quick.
+     *
+     * @param value The String to test.
+     * @param charset The server character set in force.
+     * @return <code>boolean</code> true if string can be converted.
+     */
+    private static boolean canEncode(String value, String charset)
+    {
+        char[] buf = value.toCharArray();
+        for (int i = 0; i < buf.length; i++) {
+            if (buf[i] > 127) {
+                return false; // Non ASCII
+            }
+        }
+        return true;
     }
 }

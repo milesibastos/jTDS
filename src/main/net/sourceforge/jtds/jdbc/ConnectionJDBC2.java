@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.31 2004-09-15 11:36:20 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.32 2004-09-16 13:53:45 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -202,6 +202,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean lastUpdateCount = false;
     /** Login timeout value in seconds or 0. */
     private int loginTimeout = 0;
+    /** Sybase capability mask.*/
+    private int sybaseInfo = 0;
 
     /**
      * Default constructor.
@@ -791,6 +793,24 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     protected boolean isUseUnicode() {
         return this.useUnicode;
+    }
+
+    /**
+     * Retrieve the Sybase capability data.
+     *
+     * @return Capability bit mask as an <code>int</code>.
+     */
+    protected boolean getSybaseInfo(int flag) {
+        return (this.sybaseInfo & flag) != 0;
+    }
+
+    /**
+     * Set the Sybase capability data.
+     *
+     * @param mask The capability bit mask.
+     */
+    protected void setSybaseInfo(int mask) {
+        this.sybaseInfo = mask;
     }
 
     /**

@@ -123,17 +123,14 @@ public abstract class TestBase extends TestCase {
     }
 
     protected void makeTestTables(Statement stmt) throws SQLException {
-        stmt = con.createStatement();
         String sql = "CREATE TABLE #test ("
                      + " f_int INT,"
                      + " f_varchar VARCHAR(255))";
 
         stmt.execute(sql);
-        stmt.close();
     }
 
     public void makeObjects(Statement stmt, int count) throws SQLException {
-        stmt = con.createStatement();
         stmt.execute("TRUNCATE TABLE #test");
 
         for (int i = 0; i < count; i++) {
@@ -141,8 +138,6 @@ public abstract class TestBase extends TestCase {
                          + " VALUES (" + i + ", 'Row " + i + "')";
             stmt.execute(sql);
         }
-
-        stmt.close();
     }
 
     public void compareInputStreams(InputStream is1, InputStream is2) throws IOException {

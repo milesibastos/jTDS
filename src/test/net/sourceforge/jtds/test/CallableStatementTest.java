@@ -39,57 +39,41 @@ public class CallableStatementTest extends TestBase {
     public void testCallableStatement1() throws Exception {
         CallableStatement cstmt = con.prepareCall("sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementCall1() throws Exception {
         CallableStatement cstmt = con.prepareCall("{call sp_who}");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementCall2() throws Exception {
         CallableStatement cstmt = con.prepareCall("{CALL sp_who}");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementCall3() throws Exception {
         CallableStatement cstmt = con.prepareCall("{cAlL sp_who}");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     /**
@@ -105,15 +89,11 @@ public class CallableStatementTest extends TestBase {
 
             CallableStatement cstmt = con.prepareCall("{call \"test space\"}");
 
-            makeTestTables(cstmt);
-            makeObjects(cstmt, 8);
-
             ResultSet rs = cstmt.executeQuery();
-
             dump(rs);
 
-            cstmt.close();
             rs.close();
+            cstmt.close();
         } finally {
             stmt = con.createStatement();
             stmt.execute("drop procedure \"test space\"");
@@ -124,99 +104,71 @@ public class CallableStatementTest extends TestBase {
     public void testCallableStatementExec1() throws Exception {
         CallableStatement cstmt = con.prepareCall("exec sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec2() throws Exception {
         CallableStatement cstmt = con.prepareCall("EXEC sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec3() throws Exception {
         CallableStatement cstmt = con.prepareCall("execute sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec4() throws Exception {
         CallableStatement cstmt = con.prepareCall("EXECUTE sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec5() throws Exception {
         CallableStatement cstmt = con.prepareCall("eXeC sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec6() throws Exception {
         CallableStatement cstmt = con.prepareCall("ExEcUtE sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec7() throws Exception {
         CallableStatement cstmt = con.prepareCall("execute \"master\"..sp_who");
 
-        makeTestTables(cstmt);
-        makeObjects(cstmt, 8);
-
         ResultSet rs = cstmt.executeQuery();
-
         dump(rs);
 
-        cstmt.close();
         rs.close();
+        cstmt.close();
     }
 
     public void testCallableStatementExec8() throws Exception {
@@ -229,15 +181,11 @@ public class CallableStatementTest extends TestBase {
 
             CallableStatement cstmt = con.prepareCall("execute _test");
 
-            makeTestTables(cstmt);
-            makeObjects(cstmt, 8);
-
             ResultSet rs = cstmt.executeQuery();
-
             dump(rs);
 
-            cstmt.close();
             rs.close();
+            cstmt.close();
         } finally {
             stmt = con.createStatement();
             stmt.execute("drop procedure _test");

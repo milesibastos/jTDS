@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.38 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.39 2004-09-16 13:53:45 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -69,6 +69,8 @@ public class TdsCore {
         byte[] nonce;
         /** The dynamicID from the last TDS_DYNAMIC token. */
         String dynamicId;
+        /** The TDS token that preceded the dynamic parameter data. */
+        int previousToken;
         /** The dynamic parameters from the last TDS_DYNAMIC token. */
         ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
@@ -121,6 +123,7 @@ public class TdsCore {
             return token == TDS_COLFMT_TOKEN
                    || token == TDS7_RESULT_TOKEN
                    || token == TDS_RESULT_TOKEN
+                   || token == TDS5_WIDE_RESULT
                    || token == TDS_COLINFO_TOKEN
                    || token == TDS_ROW_TOKEN;
         }
@@ -181,6 +184,8 @@ public class TdsCore {
     private static final byte TDS5_PARAMFMT2_TOKEN  = (byte) 32;   // 0x20
     /** TDS 5.0 Language token. */
     private static final byte TDS_LANG_TOKEN        = (byte) 33;   // 0x21
+    /** TSD 5.0 Wide result set token. */
+    private static final byte TDS5_WIDE_RESULT      = (byte) 97;   // 0x61
     /** TDS 5.0 Close token. */
     private static final byte TDS_CLOSE_TOKEN       = (byte) 113;  // 0x71
     /** TDS Procedure call return status token. */
@@ -295,6 +300,20 @@ public class TdsCore {
     public static final int PREPEXEC = 4;
 
     //
+    // Sybase capability flags
+    //
+    /** Sybase char and binary > 255.*/
+    static final int SYB_LONGDATA    = 1;
+    /** Sybase date and time data types.*/
+    static final int SYB_DATETIME    = 2;
+    /** Sybase nullable bit type.*/
+    static final int SYB_BITNULL     = 4;
+    /** Sybase extended column meta data.*/
+    static final int SYB_EXTCOLINFO  = 8;
+    /** Sybase univarchar etc. */
+    static final int SYB_UNICODE     = 16;
+
+    //
     // Class variables
     //
     /** Name of the client host (it can take quite a while to find it out if DNS is configured incorrectly). */
@@ -404,14 +423,14 @@ public class TdsCore {
                 ColInfo ci = currentToken.dynamParamInfo[i];
                 ParamInfo pi = new ParamInfo();
 
-                pi.tdsType = ci.tdsType;
-                pi.scale = ci.scale;
+                pi.tdsType   = ci.tdsType;
+                pi.scale     = ci.scale;
                 pi.precision = ci.precision;
-                pi.name = ci.realName;
-                pi.isOutput = false;
-                pi.jdbcType = ci.jdbcType;
-                pi.sqlType = ci.sqlType;
-                params[i] = pi;
+                pi.name      = ci.realName;
+                pi.isOutput  = false;
+                pi.jdbcType  = ci.jdbcType;
+                pi.sqlType   = ci.sqlType;
+                params[i]    = pi;
             }
 
             return params;
@@ -513,12 +532,17 @@ public class TdsCore {
         //
         // Cursor opens are followed by TDS_TAB_INFO and TDS_COL_INFO
         // Process these now so that the column descriptors are updated.
+        // Sybase wide result set headers are followed by a TDS_CONTROL_TOKEN
+        // skip that as well.
         //
         if (currentToken.isResultSet()) {
+            byte saveToken = currentToken.token;
             try {
                 byte x = (byte) in.peek();
 
-                while (x == TDS_TABNAME_TOKEN || x == TDS_COLINFO_TOKEN) {
+                while (   x == TDS_TABNAME_TOKEN
+                       || x == TDS_COLINFO_TOKEN
+                       || x == TDS_CONTROL_TOKEN) {
                     nextToken();
                     x = (byte)in.peek();
                 }
@@ -531,6 +555,7 @@ public class TdsCore {
                                 "error.generic.ioerror", e.getMessage()),
                                     "08S01"), e);
             }
+            currentToken.token = saveToken;
         }
 
         messages.checkErrors();
@@ -1047,7 +1072,7 @@ public class TdsCore {
 
         if (getMoreResults()) {
             if (getNextRow()) {
-            	// FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
+                // FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
                 results = rowData[0].getValue();
             }
         }
@@ -1213,13 +1238,13 @@ public class TdsCore {
      * @throws IOException
      */
     private void send50LoginPkt(final String serverName,
-                              final String user,
-                              final String password,
-                              final String charset,
-                              final String appName,
-                              final String progName,
-                              final String language,
-                              final int packetSize)
+                                final String user,
+                                final String password,
+                                final String charset,
+                                final String appName,
+                                final String progName,
+                                final String language,
+                                final int packetSize)
         throws IOException {
         final byte[] empty = new byte[0];
 
@@ -1281,8 +1306,12 @@ public class TdsCore {
         out.write(empty, 0, 4);
         // Send capability request
         byte capString[] = {
-            0x01,0x07,0x03,0x6D,0x7F,(byte)0xFF,(byte)0xFF,(byte)0xFF,
-            (byte)0xFE,0x02,0x07,0x00,0x00,0x0A,0x68,0x00,0x00,0x00
+        // Request capabilities
+            (byte)0x01,(byte)0x0A,(byte)0x03,(byte)0x84,(byte)0x0E,(byte)0xEF,
+            (byte)0x65,(byte)0x7F,(byte)0xFF,(byte)0xFF,(byte)0xFF,(byte)0xD6,
+        // Response capabilities
+            (byte)0x02,(byte)0x0A,(byte)0x00,(byte)0x02,(byte)0x00,(byte)0x07,
+            (byte)0x9E,(byte)0x06,(byte)0x48,(byte)0x00,(byte)0x00,(byte)0x00
         };
         out.write(TDS_CAP_TOKEN);
         out.write((short)capString.length);
@@ -1307,15 +1336,15 @@ public class TdsCore {
      * @throws IOException
      */
     private void sendMSLoginPkt(final String serverName,
-                        final String database,
-                        final String user,
-                        final String password,
-                        final String domain,
-                        final String appName,
-                        final String progName,
-                        final String language,
-                        final String macAddress,
-                        final int netPacketSize)
+                                final String database,
+                                final String user,
+                                final String password,
+                                final String domain,
+                                final String appName,
+                                final String progName,
+                                final String language,
+                                final String macAddress,
+                                final int netPacketSize)
         throws IOException {
         final byte[] empty = new byte[0];
         final String clientName = getHostName();
@@ -1576,8 +1605,14 @@ public class TdsCore {
         try {
             currentToken.token = (byte)in.read();
             switch (currentToken.token) {
+                case TDS5_PARAMFMT2_TOKEN:
+                    tds5ParamFmt2Token();
+                    break;
                 case TDS_LANG_TOKEN:
                     tdsInvalidToken();
+                    break;
+                case TDS5_WIDE_RESULT:
+                    tds5WideResultToken();
                     break;
                 case TDS_CLOSE_TOKEN:
                     tdsInvalidToken();
@@ -1697,6 +1732,110 @@ public class TdsCore {
         throw new ProtocolException("Unsupported TDS token: 0x" +
                             Integer.toHexString(currentToken.token & 0xFF));
     }
+
+    /**
+     * Process TDS 5 Sybase 12+ Dynamic results parameter descriptor.
+     * <p>When returning output parameters this token will be followed
+     * by a TDS5_PARAMS_TOKEN with the actual data.
+     * @throws IOException
+     * @throws ProtocolException
+     */
+    private void tds5ParamFmt2Token() throws IOException, ProtocolException {
+        in.readInt(); // Packet length
+        int paramCnt = in.readShort();
+        ColInfo[] params = new ColInfo[paramCnt];
+        for (int i = 0; i < paramCnt; i++) {
+            //
+            // Get the parameter details using the
+            // ColInfo class as the server format is the same.
+            //
+            ColInfo col = new ColInfo();
+            int colNameLen = in.read();
+            col.realName = in.readString(colNameLen);
+            int column_flags = in.readInt();   /*  Flags */
+            col.isCaseSensitive = false;
+            col.nullable    = ((column_flags & 0x20) != 0)?
+                                        ResultSetMetaData.columnNullable:
+                                        ResultSetMetaData.columnNoNulls;
+            col.isWriteable = (column_flags & 0x10) != 0;
+            col.isIdentity  = (column_flags & 0x40) != 0;
+            col.isKey       = (column_flags & 0x02) != 0;
+            col.isHidden    = (column_flags & 0x01) != 0;
+
+            col.userType    = in.readInt();
+            TdsData.readType(in, col);
+            // Skip locale information
+            in.skip(1);
+            params[i] = col;
+        }
+        currentToken.previousToken  = TDS5_PARAMFMT2_TOKEN;
+        currentToken.dynamParamInfo = params;
+        currentToken.dynamParamData = new ColData[paramCnt];
+    }
+
+    /**
+     * Process Sybase 12+ wide result token which provides enhanced
+     * column meta data.
+     *
+     * @throws IOException
+     */
+     private void tds5WideResultToken()
+         throws IOException, ProtocolException
+     {
+         in.readInt(); // Packet length
+         int colCnt   = in.readShort();
+         this.columns = new ColInfo[colCnt];
+         this.rowData = new ColData[colCnt];
+         this.tables  = null;
+
+         for (int colNum = 0; colNum < colCnt; ++colNum) {
+             ColInfo col = new ColInfo();
+             //
+             // Get the alias name
+             //
+             int nameLen = in.read();
+             col.name  = in.readString(nameLen);
+             //
+             // Get the catalog name
+             //
+             nameLen = in.read();
+             col.catalog = in.readString(nameLen);
+             //
+             // Get the schema name
+             //
+             nameLen = in.read();
+             col.schema = in.readString(nameLen);
+             //
+             // Get the table name
+             //
+             nameLen = in.read();
+             col.tableName = in.readString(nameLen);
+             //
+             // Get the column name
+             //
+             nameLen = in.read();
+             col.realName  = in.readString(nameLen);
+             if (col.name == null || col.name.length() == 0) {
+                 col.name = col.realName;
+             }
+             int column_flags = in.readInt();   /*  Flags */
+             col.isCaseSensitive = false;
+             col.nullable    = ((column_flags & 0x20) != 0)?
+                                    ResultSetMetaData.columnNullable:
+                                         ResultSetMetaData.columnNoNulls;
+             col.isWriteable = (column_flags & 0x10) != 0;
+             col.isIdentity  = (column_flags & 0x40) != 0;
+             col.isKey       = (column_flags & 0x02) != 0;
+             col.isHidden    = (column_flags & 0x01) != 0;
+
+             col.userType    = in.readInt();
+             TdsData.readType(in, col);
+             // Skip locale information
+             in.skip(1);
+             columns[colNum] = col;
+         }
+         endOfResults = false;
+     }
 
     /**
      * Process stored procedure return status token.
@@ -1878,18 +2017,18 @@ public class TdsCore {
                 table = new TableMetaData();
                 bytesRead++;
                 switch (in.read()) {
-                	case 3: nameLen = in.readShort();
-                			bytesRead += nameLen * 2 + 2;
-                			table.catalog = in.readString(nameLen);
-                	case 2: nameLen = in.readShort();
-        					bytesRead += nameLen * 2 + 2;
-        					table.schema = in.readString(nameLen);
-                	case 1: nameLen = in.readShort();
-        					bytesRead += nameLen * 2 + 2;
-        					table.name = in.readString(nameLen);
-        			case 0: break;
-        		    default:
-        		        throw new ProtocolException("Invalid table TAB_NAME_TOKEN");
+                    case 3: nameLen = in.readShort();
+                            bytesRead += nameLen * 2 + 2;
+                            table.catalog = in.readString(nameLen);
+                    case 2: nameLen = in.readShort();
+                            bytesRead += nameLen * 2 + 2;
+                            table.schema = in.readString(nameLen);
+                    case 1: nameLen = in.readShort();
+                            bytesRead += nameLen * 2 + 2;
+                            table.name = in.readString(nameLen);
+                    case 0: break;
+                    default:
+                        throw new ProtocolException("Invalid table TAB_NAME_TOKEN");
                 }
             } else {
                 if (tdsVersion >= Driver.TDS70) {
@@ -2071,6 +2210,8 @@ public class TdsCore {
                                     parameters[nextParam].jdbcType,
                                     connection.getCharSet());
                 parameters[nextParam].collation = col.collation;
+            } else {
+                parameters[nextParam].value = null;
             }
         } else {
             // Look for next output parameter in list
@@ -2083,6 +2224,8 @@ public class TdsCore {
                                                 parameters[nextParam].jdbcType,
                                                 connection.getCharSet());
                             parameters[nextParam].collation = col.collation;
+                        } else {
+                            parameters[nextParam].value = null;
                         }
 
                         break;
@@ -2139,7 +2282,7 @@ public class TdsCore {
         connection.setDBServerInfo(product, major, minor, build);
 
         if (tdsVersion == Driver.TDS50 && ack != 5) {
-            // Login ejected by server create SQLException
+            // Login rejected by server create SQLException
             messages.addDiagnostic(4002, 0, 14,
                                     "Login failed", "", "", 0);
             currentToken.token = TDS_ERROR_TOKEN;
@@ -2174,38 +2317,105 @@ public class TdsCore {
 
     /**
      * Process TDS 5.0 Params Token.
-     * This seems to be data returned in parameter format after a TDS Dynamic
-     * packet or as extended error information.
+     * Stored procedure output parameters or data returned in parameter format
+     * after a TDS Dynamic packet or as extended error information.
+     * <p>The type of the preceding token is inspected to determine if this packet
+     * contains output parameter result data. A TDS5_PARAMFMT2_TOKEN is sent before
+     * this one in Sybase 12 to introduce output parameter results.
+     * A TDS5_PARAMFMT_TOKEN is sent before this one to introduce extended error
+     * information.
      *
      * @throws IOException
      */
-    private void tds5ParamsToken() throws IOException, ProtocolException {
+    private void tds5ParamsToken() throws IOException, ProtocolException, SQLException {
         if (currentToken.dynamParamInfo == null) {
             throw new ProtocolException(
-              "TDS 5 Param results token (0xD7) not preceded by param format (0xEC).");
+              "TDS 5 Param results token (0xD7) not preceded by param format (0xEC or 0X20).");
         }
 
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
                 new ColData(TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false), tdsVersion);
+            if (parameters != null && currentToken.previousToken == TDS5_PARAMFMT2_TOKEN) {
+                // Sybase 12+ this token used to set output parameter results
+                while (++nextParam < parameters.length) {
+                    if (parameters[nextParam].isOutput) {
+                        Object value = currentToken.dynamParamData[i].getValue();
+                        if (value != null) {
+                            parameters[nextParam].value =
+                                Support.convert(connection, value,
+                                                parameters[nextParam].jdbcType,
+                                                connection.getCharSet());
+                        } else {
+                            parameters[nextParam].value = null;
+                        }
+                        break;
+                    }
+                }
+            }
         }
     }
 
     /**
      * Process a TDS 5.0 capability token.
-     * <p>Sent after login to describe the servers capabilities.
+     * <p>
+     * Sent after login to describe the server's capabilities.
      *
      * @throws IOException
      */
     private void tdsCapabilityToken()
-        throws IOException
+        throws IOException, ProtocolException
     {
-        int pktLen = in.readShort(); // Packet length
-        // Sybase < 12 can return wrong size here
-        // TODO use capability info
-        if (pktLen != 18)
-            pktLen = 18; // May be suspect
-        in.skip(pktLen);
+        in.readShort(); // Packet length
+        if (in.read() != 1) {
+            throw new ProtocolException("TDS_CAPABILITY: expected request string");
+        }
+        int capLen = in.read();
+        if (capLen != 10) {
+            throw new ProtocolException("TDS_CAPABILITY: byte count not 10");
+        }
+        byte capRequest[] = new byte[10];
+        in.read(capRequest);
+        if (in.read() != 2) {
+            throw new ProtocolException("TDS_CAPABILITY: expected response string");
+        }
+        capLen = in.read();
+        if (capLen != 10) {
+            throw new ProtocolException("TDS_CAPABILITY: byte count not 10");
+        }
+        byte capResponse[] = new byte[10];
+        in.read(capResponse);
+        //
+        // jTDS sends   01 0A 03 84 0E EF 65 7F FF FF FF D6
+        // Sybase 11.92 01 0A 00 00 00 23 61 41 CF FF FF C6
+        // Sybase 12.52 01 0A 03 84 0A E3 61 41 FF FF FF C6
+        //
+        // JTDS sends   02 0A 00 02 00 07 9E 06 48 00 00 00
+        // Sybase 11.92 02 0A 00 00 00 00 00 06 00 00 00 00
+        // Sybase 12.52 02 0A 00 00 00 00 00 06 00 00 00 00
+        //
+        //
+        // Now set the correct attributes for this connection.
+        // See the CT_LIB documentation for details on the bit
+        // positions.
+        //
+        int capMask = 0;
+        if ((capRequest[6] & 0x30) == 0x30) {
+            capMask |= SYB_LONGDATA;
+        }
+        if ((capRequest[0] & 0x03) == 0x03) {
+            capMask |= SYB_DATETIME;
+        }
+        if ((capRequest[2] & 0x02) == 0x02) {
+            capMask |= SYB_EXTCOLINFO;
+        }
+        if ((capRequest[3] & 0x04) == 0x04) {
+            capMask |= SYB_BITNULL;
+        }
+        if ((capRequest[1] & 0x80) == 0x80) {
+            capMask |= SYB_UNICODE;
+        }
+        connection.setSybaseInfo(capMask);
     }
 
     /**
@@ -2379,7 +2589,10 @@ public class TdsCore {
     }
 
     /**
-     * Process TDS 5 Dynamic results paramater descriptors.
+     * Process TDS 5 Dynamic results parameter descriptors.
+     * <p>
+     * With Sybase 12+ this has been superseded by the TDS5_PARAMFMT2_TOKEN
+     * except when used to return extended error information.
      *
      * @throws IOException
      * @throws ProtocolException
@@ -2422,6 +2635,7 @@ public class TdsCore {
             in.skip(1);
             params[i] = col;
         }
+        currentToken.previousToken  = TDS5_PARAMFMT_TOKEN;
         currentToken.dynamParamInfo = params;
         currentToken.dynamParamData = new ColData[paramCnt];
     }
@@ -2620,8 +2834,11 @@ public class TdsCore {
                               ParamInfo[] parameters,
                               boolean noMetaData)
         throws IOException, SQLException {
-        boolean haveParams = parameters != null;
+        boolean haveParams    = parameters != null;
         boolean useParamNames = false;
+        currentToken.previousToken  = 0;
+        currentToken.dynamParamInfo = null;
+        currentToken.dynamParamData = null;
 
         // Sybase does not allow text or image parameters
         for (int i = 0; haveParams && i < parameters.length; i++) {
@@ -2893,7 +3110,7 @@ public class TdsCore {
             Integer shortcut;
 
             if (tdsVersion >= Driver.TDS80
-            	&& (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
+                    && (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
                 // Use the shortcut form of procedure name for TDS8
                 out.write((short) -1);
                 out.write((short) shortcut.shortValue());

@@ -1,5 +1,6 @@
 package freetds;
 
+import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import java.sql.*;
 
@@ -22,7 +23,16 @@ public class PerformanceTest extends TestBase {
     public void testCursorScrollODBC()
         throws Exception
     {
-        connectODBC();
+        try {
+            connectODBC();
+        } catch (AssertionFailedError e) {
+            if ("Connection properties not found (conf/odbc-connection.properties).".equals(e.getMessage())) {
+                System.err.println("Skipping ODBC tests.");
+                return;
+            } else {
+                throw e;
+            }
+        }
         runCursorScroll( "ODBC", con );
     }
 
@@ -109,3 +119,4 @@ public class PerformanceTest extends TestBase {
         junit.textui.TestRunner.run( PerformanceTest.class );
     }
 }
+

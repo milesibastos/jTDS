@@ -2,28 +2,40 @@ jTDS Ultra quick start
 ======================
 
 This software is based on the FreeTDS project that can be found at
-http://www.freetds.org/ Much kudos goes to the developers of that
-software. More kudos will be included in this file once everything
-settles down.
+http://www.freetds.org/
+
+Much kudos goes to the developers of that software. More kudos will be included
+in this file once everything settles down.
 
 Status
 ======
 
-Alpha
+Alpha (towards Beta)
 
-Pretty stable for basic usage. Unstable, breakable if used concurrently.
+Stable for concurrent usage, as long as it's not on the same
+Statement/ResultSet. It might also work on the same Statement, there is some
+synchronization there, but it's not recommended (yet). An untested DataSource
+implementation is also provided.
 
-Having said that, I am using it in commercial products based on the Java
-servlet technology (quite serious stuff).
+Meta data information is almost complete (both ResultSetMetaData and
+DatabaseMetaData), but there's still work to be done there.
+
+I am using it in commercial products (web apps based on the servlet technology
+-- quite serious stuff) and it has been tested with SQuirreL SQL Client
+(http://squirrel-sql.sourceforge.net/) and Db-Visualizer
+(http://www.minq.se/products/dbvis/index.html).
+
+DataDino (http://www.datadino.com) comes with jTDS as its JDBC driver for
+Microsoft SQL Server (for the moment, it's only in the 1.1beta).
 
 Supports
 ========
 
-Read only scrollable recordsets and cursors. Multiple (parallel)
-statements per connection.
+Read only scrollable recordsets and cursors. Multiple (parallel) statements per
+connection.
 
-Requires JDBC 2.0 (JDK 1.3 recommended). Maybe JDBC 3.0 will be
-available sometimes in the future.
+Requires JDBC 2.0 (JDK 1.3 recommended). Maybe JDBC 3.0 will be available
+sometime in the future.
 
 Quick Start
 ===========
@@ -49,10 +61,10 @@ URL Format
 
 The URL format for jTDS is:
 
-jdbc:freetds:sqlserver://<hostname>[:<port]/<dbname>[;<property>=<value>[;...]] 
+jdbc:freetds:sqlserver://<hostname>[:<port]/<dbname>[;<property>=<value>[;...]]
 
 For Sybase (although, as far as I know jTDS was never tested with Sybase)
-replace 'sqlserver' with 'sybase'. 
+replace 'sqlserver' with 'sybase'.
 
 As for the properties, you can specify them in the URL, as shown above or
 by using DriverManager.getConnection(String URL, Properties props). The
@@ -64,23 +76,25 @@ Maybe this will change in the future. So, if you want to use SQL Server
 7.0's features, you will have to specify 'TDS'='7.0' (either way -- URL
 or Properties).
 
-TO-DO
+To Do
 =====
 
 1. Update for scrollable recordsets.
 2. More metadata.
 3. Connection pooling
 4. JDBC 3.0 compliance
-5. Change package names
+5. Change package names (I think this is going to happen pretty soon)
 
-CONTACTS
+Contacts
 ========
+
+Sourceforge home page:    http://jtds.sourceforge.net
 Sourceforge project page: http://sourceforge.net/projects/jtds/
 
-Chris Stevenson chris@ssabsa.sa.gov.au
 Alin Sinpalean  alin_sinpalean@acm.org
+Chris Stevenson chris@ssabsa.sa.gov.au
 
-LICENSE
+License
 =======
 
 // Copyright 1998, 1999 CDS Networks, Inc., Medford Oregon
@@ -112,4 +126,3 @@ LICENSE
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
-

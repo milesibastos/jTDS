@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.23 2004-12-03 14:42:34 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.24 2005-01-14 06:02:24 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -73,6 +73,7 @@ public class JtdsDataSource
     protected String progName;
     protected String xaEmulation;
     protected String logFile;
+    protected String ssl;
 
     protected String description;
 
@@ -109,6 +110,7 @@ public class JtdsDataSource
         progName = props.getProperty(Messages.get(Driver.PROGNAME));
         xaEmulation = props.getProperty(Messages.get(Driver.XAEMULATION));
         logFile = props.getProperty(Messages.get(Driver.LOGFILE));
+        ssl = props.getProperty(Messages.get(Driver.SSL));
     }
 
     /**
@@ -202,6 +204,7 @@ public class JtdsDataSource
         props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
         props.setProperty(Messages.get(Driver.APPNAME), appName);
         props.setProperty(Messages.get(Driver.PROGNAME), progName);
+        props.setProperty(Messages.get(Driver.SSL), ssl);
 
         java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
 
@@ -240,6 +243,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
         ref.add(new StringRefAddr(Messages.get(Driver.PROGNAME), progName));
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
+        ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
 
         return ref;
     }
@@ -492,5 +496,13 @@ public class JtdsDataSource
 
     public String getLogFile() {
         return logFile;
+    }
+
+    public void setSsl(String ssl) {
+        this.ssl = ssl;
+    }
+
+    public String getSsl() {
+        return ssl;
     }
 }

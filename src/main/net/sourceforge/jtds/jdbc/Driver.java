@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.45 2005-01-04 17:12:53 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.46 2005-01-14 06:02:23 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -85,6 +85,7 @@ public class Driver implements java.sql.Driver {
     public static final String LANGUAGE      = "prop.language";
     public static final String LASTUPDATECOUNT = "prop.lastupdatecount";
     public static final String LOBBUFFER     = "prop.lobbuffer";
+    public static final String LOGFILE       = "prop.logfile";
     public static final String LOGINTIMEOUT  = "prop.logintimeout";
     public static final String MACADDRESS    = "prop.macaddress";
     public static final String MAXSTATEMENTS = "prop.maxstatements";
@@ -96,13 +97,12 @@ public class Driver implements java.sql.Driver {
     public static final String PROGNAME      = "prop.progname";
     public static final String SERVERNAME    = "prop.servername";
     public static final String SERVERTYPE    = "prop.servertype";
-    public static final String TDS           = "prop.tds";
+    public static final String SSL           = "prop.ssl";
     public static final String TCPNODELAY    = "prop.tcpnodelay";
+    public static final String TDS           = "prop.tds";
     public static final String USER          = "prop.user";
     public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";
     public static final String XAEMULATION   = "prop.xaemulation";
-    public static final String LOGFILE       = "prop.logfile";
-    public static final String SSL           = "prop.ssl";
 
     static {
         try {

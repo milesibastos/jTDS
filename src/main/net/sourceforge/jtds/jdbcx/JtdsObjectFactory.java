@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.12 2004-12-06 12:10:32 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.13 2005-01-14 06:02:24 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -67,6 +67,7 @@ public class JtdsObjectFactory implements ObjectFactory {
             ds.setTcpNoDelay("true".equals(ref.get(Messages.get(Driver.TCPNODELAY)).getContent()));
             ds.setXaEmulation("true".equals(ref.get(Messages.get(Driver.XAEMULATION)).getContent()));
             ds.setLogFile((String) ref.get(Messages.get(Driver.LOGFILE)).getContent());
+            ds.setSsl((String) ref.get(Messages.get(Driver.SSL)).getContent());
 
             return ds;
         }

@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ package net.sourceforge.jtds.jdbc;
  * Exception class used to report errors in the TDS protocol.
  *
  * @author Mike Hutchinson
- * @version $Id: ProtocolException.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: ProtocolException.java,v 1.2 2004-08-24 17:45:03 bheineman Exp $
  */
 public class ProtocolException extends Exception {
     /**

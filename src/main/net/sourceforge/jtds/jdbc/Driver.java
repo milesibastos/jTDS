@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.34 2004-08-14 16:43:27 bheineman Exp $
+ * @version $Id: Driver.java,v 1.35 2004-08-24 17:45:03 bheineman Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";

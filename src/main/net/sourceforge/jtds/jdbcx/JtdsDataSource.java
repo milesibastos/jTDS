@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.*;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.11 2004-08-10 15:07:42 bheineman Exp $
+ * @version $Id: JtdsDataSource.java,v 1.12 2004-08-24 17:45:07 bheineman Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 

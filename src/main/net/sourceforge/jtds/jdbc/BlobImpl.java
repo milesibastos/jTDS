@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.17 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: BlobImpl.java,v 1.18 2004-08-24 17:45:01 bheineman Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];

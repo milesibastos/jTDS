@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.4 2004-08-10 14:57:44 bheineman Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.5 2004-08-24 17:45:02 bheineman Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**

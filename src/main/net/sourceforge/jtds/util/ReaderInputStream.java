@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ import java.io.*;
  * Provides the opposite functionality of InputStreamReader.
  *
  * @author Brian Heineman
- * @version $Id: ReaderInputStream.java,v 1.1 2004-07-01 21:14:46 bheineman Exp $
+ * @version $Id: ReaderInputStream.java,v 1.2 2004-08-24 17:45:07 bheineman Exp $
  */
 public class ReaderInputStream extends InputStream {
     protected Reader _reader;
@@ -149,8 +149,11 @@ public class ReaderInputStream extends InputStream {
     }
     
     public synchronized void close() throws IOException {
-        _reader.close();
-        _reader = null;
+        if (_reader != null) {
+            _reader.close();
+            _reader = null;
+        }
+        
         _encoding = null;
     }
 }

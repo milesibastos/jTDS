@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.6 2004-07-30 01:05:20 ddkilzer Exp $
+ * @version $Id: RequestStream.java,v 1.7 2004-08-24 17:45:02 bheineman Exp $
  */
 public class RequestStream {
     /** The shared network socket. */

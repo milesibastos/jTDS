@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.19 2004-08-21 18:36:10 bheineman Exp $
+* @version $Id: AbstractDataSource.java,v 1.20 2004-08-24 17:45:07 bheineman Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {

@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ package net.sourceforge.jtds.jdbc;
  * describes the location of text and image column data.
  *
  * @author Mike Hutchinson
- * @version $Id: TextPtr.java,v 1.2 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: TextPtr.java,v 1.3 2004-08-24 17:45:03 bheineman Exp $
  */
 public class TextPtr {
     /** The 16 byte Text Pointer. */

@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a statement with minimal overhead.
  *
- * @version $Id: StatementProxy.java,v 1.3 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: StatementProxy.java,v 1.4 2004-08-24 17:45:08 bheineman Exp $
  */
 public class StatementProxy implements Statement {
     private ConnectionProxy _connection;

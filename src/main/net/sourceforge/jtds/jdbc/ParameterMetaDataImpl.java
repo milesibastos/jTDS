@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import java.sql.*;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ParameterMetaDataImpl.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: ParameterMetaDataImpl.java,v 1.4 2004-08-24 17:45:01 bheineman Exp $
  */
 public class ParameterMetaDataImpl implements ParameterMetaData {
     private ParamInfo[] parameterList;

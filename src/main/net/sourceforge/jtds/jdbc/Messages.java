@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
  * 
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.5 2004-08-07 04:46:54 ddkilzer Exp $
+ * @version $Id: Messages.java,v 1.6 2004-08-24 17:45:03 bheineman Exp $
  */
 public final class Messages {
 

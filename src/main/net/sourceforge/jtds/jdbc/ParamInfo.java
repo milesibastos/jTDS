@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.2 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: ParamInfo.java,v 1.3 2004-08-24 17:45:01 bheineman Exp $
  */
 class ParamInfo {
     /** Internal TDS data type */

@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import java.sql.SQLException;
  * READTEXT command for image, text and ntext columns.
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsInputStream.java,v 1.4 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: JtdsInputStream.java,v 1.5 2004-08-24 17:45:01 bheineman Exp $
  */
 public class JtdsInputStream extends InputStream {
     private TdsCore tds;

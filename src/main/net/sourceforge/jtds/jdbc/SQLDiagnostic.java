@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.3 2004-08-03 17:51:06 ddkilzer Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.4 2004-08-24 17:45:02 bheineman Exp $
  */
 class SQLDiagnostic {
     /**

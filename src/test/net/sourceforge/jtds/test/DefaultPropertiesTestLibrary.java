@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.9 2004-08-16 18:43:05 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.10 2004-08-24 17:45:07 bheineman Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 

@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ import java.util.HashMap;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.5 2004-08-07 03:20:40 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.6 2004-08-24 17:45:07 bheineman Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 

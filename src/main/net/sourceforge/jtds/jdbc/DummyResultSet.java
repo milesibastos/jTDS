@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import java.sql.SQLException;
  * empty result sets eg in DatabaseMetaData.
  *
  * @author Mike Hutchinson.
- * @version $Id: DummyResultSet.java,v 1.1 2004-06-27 17:00:51 bheineman Exp $
+ * @version $Id: DummyResultSet.java,v 1.2 2004-08-24 17:45:03 bheineman Exp $
  */
 public class DummyResultSet extends JtdsResultSet {
     /** Single row of data to return in this result set. */

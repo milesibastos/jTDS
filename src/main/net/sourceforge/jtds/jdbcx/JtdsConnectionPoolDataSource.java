@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ import javax.sql.*;
 *
 * @author Brian Heineman
 * @since  jTDS 0.9
-* @version $Id: JtdsConnectionPoolDataSource.java,v 1.1 2004-07-15 22:02:15 bheineman Exp $
+* @version $Id: JtdsConnectionPoolDataSource.java,v 1.2 2004-08-24 17:45:07 bheineman Exp $
 */
 public class JtdsConnectionPoolDataSource extends JtdsDataSource
 implements ConnectionPoolDataSource {

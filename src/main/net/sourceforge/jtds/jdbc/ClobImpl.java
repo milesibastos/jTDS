@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.18 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: ClobImpl.java,v 1.19 2004-08-24 17:45:02 bheineman Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";

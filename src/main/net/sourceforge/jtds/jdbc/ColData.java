@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ package net.sourceforge.jtds.jdbc;
  * This class encapsulates a column data value.
  *
  * @author Mike Hutchinson
- * @version $Id: ColData.java,v 1.4 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: ColData.java,v 1.5 2004-08-24 17:45:02 bheineman Exp $
  */
 public class ColData {
     /** The column value or null */

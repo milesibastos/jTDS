@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.6 2004-07-15 22:02:15 bheineman Exp $
+ * @version $Id: Logger.java,v 1.7 2004-08-24 17:45:07 bheineman Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */

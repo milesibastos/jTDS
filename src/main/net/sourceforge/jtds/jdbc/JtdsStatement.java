@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.11 2004-08-21 18:09:05 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.12 2004-08-24 17:45:03 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*

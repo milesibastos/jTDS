@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.8 2004-08-08 03:50:26 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.9 2004-08-24 17:45:07 bheineman Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,

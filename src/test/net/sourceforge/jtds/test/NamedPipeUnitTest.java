@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  * Unit tests for the {@link SharedNamedPipe} class.
  * 
  * @author David D. Kilzer
- * @version $Id: NamedPipeUnitTest.java,v 1.5 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: NamedPipeUnitTest.java,v 1.6 2004-08-24 17:45:07 bheineman Exp $
  */
 public class NamedPipeUnitTest extends UnitTestBase {
 

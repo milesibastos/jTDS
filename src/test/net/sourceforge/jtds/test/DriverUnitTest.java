@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.12 2004-08-07 02:20:14 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.13 2004-08-24 17:45:07 bheineman Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 

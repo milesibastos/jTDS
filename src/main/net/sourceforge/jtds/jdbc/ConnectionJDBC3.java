@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.4 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.5 2004-08-24 17:45:02 bheineman Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */

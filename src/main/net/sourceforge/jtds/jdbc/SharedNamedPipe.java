@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.10 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.11 2004-08-24 17:45:02 bheineman Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
 

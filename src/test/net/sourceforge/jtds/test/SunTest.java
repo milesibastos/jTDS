@@ -1,3 +1,20 @@
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
+// Copyright (C) 2004 The jTDS Project
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
 package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
@@ -21,9 +38,7 @@ import java.sql.SQLException;
  * @version 1.0
  */
 public class SunTest extends DatabaseTestCase {
-
     public static Test suite() {
-
         return new TestSuite(SunTest.class);
     }
 
@@ -34,10 +49,10 @@ public class SunTest extends DatabaseTestCase {
     /**
      * Test for SUN bug [ PrepStmt1.getMetaData() ] 
      * Driver loops if select contains commas.
+     * 
      * @throws Exception
      */
-    public void testGetMetaData() throws Exception
-    {
+    public void testGetMetaData() throws Exception {
         PreparedStatement pstmt = con.prepareStatement("SELECT name, id, type FROM sysobjects WHERE type = 'U'");
         ResultSetMetaData rsmd = pstmt.getMetaData();
         assertEquals("name", rsmd.getColumnName(1));
@@ -53,8 +68,7 @@ public class SunTest extends DatabaseTestCase {
      * </ol>
      * @throws Exception
      */
-    public void testDateTime() throws Exception
-    {
+    public void testDateTime() throws Exception {
         final String dateStr = "1983-01-31";
         final String timeStr = "12:59:59";
         final String tsStr   = "1983-01-31 23:59:59.333";
@@ -103,11 +117,11 @@ public class SunTest extends DatabaseTestCase {
 
     /**
      * Generic test for errors caused by promotion out parameters of Float to Double by driver.
-     * eg [ callStmt4.testGetObject34 ] Class cast exception Float. 
+     * eg [ callStmt4.testGetObject34 ] Class cast exception Float.
+     *  
      * @throws Exception
      */    
-    public void testCharToReal() throws Exception
-    {
+    public void testCharToReal() throws Exception {
         final String minStr = "3.4E38";
         final String maxStr = "1.18E-38";
         
@@ -134,10 +148,10 @@ public class SunTest extends DatabaseTestCase {
 
     /**
      * Generic test for SUN bugs: bigint null parameter values sent as integer size.
+     * 
      * @throws Exception
      */
-    public void testCharToLong() throws Exception
-    {
+    public void testCharToLong() throws Exception {
         final String minStr = "9223372036854775807";
         final String maxStr = "-9223372036854775808";
         
@@ -164,19 +178,21 @@ public class SunTest extends DatabaseTestCase {
     /**
      * Test for SUN bug [ dbMeta8.testGetProcedures ]
      * The wrong column names are returned by getProcedures().
+     * 
      * @throws Exception
      */
-    public void testGetProcedures() throws Exception
-    {   
-        String names[]={"PROCEDURE_CAT","PROCEDURE_SCHEM","PROCEDURE_NAME","","","","REMARKS","PROCEDURE_TYPE"}; 
+    public void testGetProcedures() throws Exception {   
+        String names[] = {"PROCEDURE_CAT","PROCEDURE_SCHEM","PROCEDURE_NAME","","","","REMARKS","PROCEDURE_TYPE"}; 
         DatabaseMetaData dbmd = con.getMetaData();
         ResultSet rs = dbmd.getProcedures(null, null, "%");
         ResultSetMetaData rsmd = rs.getMetaData();
+        
         for (int i = 0; i < names.length; i++) {
             if (names[i].length() > 0) {
                 assertEquals(names[i], rsmd.getColumnName(i+1));
             }
-        }  
+        }
+        
         rs.close();
     }
     
@@ -184,10 +200,10 @@ public class SunTest extends DatabaseTestCase {
      * Generic test for SUN bug where Float was promoted to Double 
      * by driver leading to ClassCastExceptions in the tests.
      * Example [ prepStmt4.testSetObject16 ]
+     * 
      * @throws Exception
      */
-    public void testGetFloatObject() throws Exception
-    {
+    public void testGetFloatObject() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #GETF (val REAL)");
         stmt.execute("INSERT INTO #GETF (val) VALUES (1.7E10)");
@@ -202,10 +218,10 @@ public class SunTest extends DatabaseTestCase {
     /**
      * Test for SUN bug [ resultSet1.testSetFetchSize02 ]
      * attempt to set non zero fetch size rejected.
+     * 
      * @throws Exception
      */
-    public void testSetFetchSize() throws Exception
-    {   
+    public void testSetFetchSize() throws Exception {   
         CallableStatement cstmt = con.prepareCall("{call sp_who}");
         ResultSet rs = cstmt.executeQuery();
         rs.setFetchSize(5);
@@ -217,39 +233,39 @@ public class SunTest extends DatabaseTestCase {
     /**
      * Test for SUN bug [ stmt2.testSetFetchDirection04 ]
      * fetch direction constant not validated.
+     * 
      * @throws Exception
      */
-    public void testSetFetchDirectiion() throws Exception
-    {
+    public void testSetFetchDirectiion() throws Exception {
         Statement stmt = con.createStatement();
-        try
-        {
+        
+        try {
             stmt.setFetchDirection(-1);
             fail("setFecthDirection does not validate parameter");
-        }
-        catch (SQLException sqe)
-        {
+        } catch (SQLException sqe) {
         }
     }    
 
     /**
      * Test for bug [ 1012307 ] PreparedStatement.setObject(java.util.Date) not working.
      * The driver should throw an exception if the object is not of a valid
-     * type according to table 
+     * type according to table
+     * 
      * @throws Exception
      */
-    public void testSetDateObject() throws Exception
-    {
+    public void testSetDateObject() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #SETD (val DATETIME)");
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #SETD (val) VALUES (?)");
         long tval = 60907507200000L; //1999-12-31
+        
         try {
             pstmt.setObject(1, new java.util.Date(tval));
             fail("No exception for setObject(java.util.Date)");
         } catch (SQLException e) {
             // OK unsupported object type trapped
         }
+        
         pstmt.close();
         stmt.close();
     }
@@ -257,9 +273,9 @@ public class SunTest extends DatabaseTestCase {
     /**
      * Test for bug [ 1012301 ] 0.9-rc1: Prepared statement execution error.
      *
+     * @throws Exception
      */                
-    public void testPrepStmtError() throws Exception
-    {
+    public void testPrepStmtError() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #PERR (val VARCHAR(255))\r\n" +
                      "INSERT INTO #PERR (val) VALUES('Test String')");
@@ -275,10 +291,10 @@ public class SunTest extends DatabaseTestCase {
     
     /**
      * Test for bug [ 1011650 ] 0.9-rc1: comments get parsed
-     *
+     * 
+     * @throws Exception
      */                
-    public void testSqlComments() throws Exception
-    {
+    public void testSqlComments() throws Exception {
         String testSql = "/* This is a test of the comment {fn test()} parser */\r\n" +
                          "SELECT * FROM XXXX -- In line comment {d 1999-01-01}\r\n"+
                          "INSERT INTO B VALUES({d 1999-01-01}) -- Unterminated in line comment";
@@ -290,10 +306,10 @@ public class SunTest extends DatabaseTestCase {
 
     /**
      * Test for bug [ 1008126 ] Metadata getTimeDateFunctions() wrong
+     * 
      * @throws Exception
      */
-    public void testDateTimeFn() throws Exception
-    {
+    public void testDateTimeFn() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #DTFN (ttime SMALLDATETIME, tdate SMALLDATETIME, ftime SMALLDATETIME, fdate SMALLDATETIME, tnow DATETIME)");
         stmt.execute("INSERT INTO #DTFN (ttime, tdate, ftime, fdate, tnow) VALUES (getdate(), getdate(), {fn curtime()}, {fn curdate()}, {fn now()})");
@@ -338,10 +354,10 @@ public class SunTest extends DatabaseTestCase {
     
     /**
      * Test for scalar string functions.
+     * 
      * @throws Exception
      */
-    public void testStringFn() throws Exception
-    {
+    public void testStringFn() throws Exception {
         Statement stmt = con.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT {fn ascii('X')}, "+
                                                 "{fn char(88)}," + 
@@ -387,10 +403,10 @@ public class SunTest extends DatabaseTestCase {
 
     /**
      * Test nested escapes
+     * 
      * @throws Exception
      */
-    public void testNestedEscapes() throws Exception
-    {
+    public void testNestedEscapes() throws Exception {
         String sql = "SELECT {fn convert(varchar, {fn month({fn now()})})} WHERE X";
         assertEquals("SELECT convert(varchar, datepart(month,getdate())) WHERE X", con.nativeSQL(sql));
         sql = "{?=call testproc(?, {fn now()})}";

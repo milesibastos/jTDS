@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ package net.sourceforge.jtds.jdbc;
  * This class encapsulates the MS SQL2000 UniqueIdentifer data type.
  *
  * @author Mike Hutchinson.
- * @version $Id: UniqueIdentifier.java,v 1.1 2004-06-27 17:00:55 bheineman Exp $
+ * @version $Id: UniqueIdentifier.java,v 1.2 2004-08-24 17:45:02 bheineman Exp $
  */
 public class UniqueIdentifier {
     private byte[] bytes;

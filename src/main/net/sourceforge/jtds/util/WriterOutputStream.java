@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ import java.io.*;
 * Provides the opposite functionality of OutputStreamWriter.
 *
 * @author Brian Heineman
-* @version $Id: WriterOutputStream.java,v 1.2 2004-07-08 00:21:00 bheineman Exp $
+* @version $Id: WriterOutputStream.java,v 1.3 2004-08-24 17:45:07 bheineman Exp $
 */
 public class WriterOutputStream extends OutputStream {
     protected Writer _writer;
@@ -91,8 +91,11 @@ public class WriterOutputStream extends OutputStream {
     }
     
     public synchronized void close() throws IOException {
-        _writer.close();
-        _writer = null;
+        if (writer != null) {
+            _writer.close();
+            _writer = null;
+        }
+        
         _encoding = null;
     }
 }

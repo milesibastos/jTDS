@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
  * Base class for unit tests which do not connect to a database.
  * 
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.7 2004-08-07 04:46:59 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.8 2004-08-24 17:45:07 bheineman Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 

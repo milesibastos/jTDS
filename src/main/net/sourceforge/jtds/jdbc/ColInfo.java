@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@ package net.sourceforge.jtds.jdbc;
  *      As the class is package private this seems reasonable.
  *
  * @author Mike Hutchinson
- * @version $Id: ColInfo.java,v 1.1 2004-06-27 17:00:50 bheineman Exp $
+ * @version $Id: ColInfo.java,v 1.2 2004-08-24 17:45:02 bheineman Exp $
  */
 public class ColInfo {
     /** Internal TDS data type */

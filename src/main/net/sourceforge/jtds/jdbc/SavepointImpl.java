@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ import java.sql.SQLException;
  * Savepoint implementation class.
  *
  * @author Brian Heineman
- * @version $Id: SavepointImpl.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: SavepointImpl.java,v 1.4 2004-08-24 17:45:01 bheineman Exp $
  */
 class SavepointImpl implements Savepoint {
     private int id;

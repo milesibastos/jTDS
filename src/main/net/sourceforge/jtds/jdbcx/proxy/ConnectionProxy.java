@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ import net.sourceforge.jtds.jdbcx.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: ConnectionProxy.java,v 1.4 2004-08-24 17:45:08 bheineman Exp $
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;

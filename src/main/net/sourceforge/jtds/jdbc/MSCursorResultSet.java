@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.13 2004-08-22 15:44:11 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.14 2004-08-24 17:45:01 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*

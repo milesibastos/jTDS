@@ -1,4 +1,4 @@
-// jTDS JDBC Driver for Microsoft SQL Server
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
 // Copyright (C) 2004 The jTDS Project
 //
 // This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse. 
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.5 2004-08-22 15:37:21 bheineman Exp $
+ * @version $Id: SQLParser.java,v 1.6 2004-08-24 17:45:02 bheineman Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */

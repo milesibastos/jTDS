@@ -861,4 +861,30 @@ public class SAfeTest extends DatabaseTestCase {
         rs.close();
         stmt.close();
     }
+
+    /**
+     * Test for bug [939206] TdsException: can't sent this BigDecimal
+     */
+    public void testBigDecimal1() throws Exception {
+        BigDecimal bigDecimal = new BigDecimal("1E+28");
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testBigDecimal1 (data decimal(38,10))");
+        stmt.close();
+        
+        PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal1 (data) values (?)");
+        pstmt.setBigDecimal(1, bigDecimal);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+        
+        pstmt = con.prepareStatement("select data from #testBigDecimal1");
+        ResultSet rs = pstmt.executeQuery();
+        
+        assertTrue(rs.next());        
+        assertTrue(bigDecimal.equals(rs.getBigDecimal(1).setScale(bigDecimal.scale())));
+        assertTrue(!rs.next());
+        
+        pstmt.close();
+        rs.close();
+    }
 }

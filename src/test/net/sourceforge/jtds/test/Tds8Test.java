@@ -103,7 +103,7 @@ public class Tds8Test extends DatabaseTestCase {
         assertEquals("data", rsmd.getColumnName(2));
         assertEquals(2, rsmd.getScale(3));
     }
-
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(Tds8Test.class);
     }

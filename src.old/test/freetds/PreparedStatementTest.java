@@ -13,7 +13,7 @@ import java.sql.*;
  */
 
 public class PreparedStatementTest
-extends BaseTest
+extends TestBase
 {
 
     public PreparedStatementTest( String name )

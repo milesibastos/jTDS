@@ -12,7 +12,7 @@ import java.sql.*;
  * @version 1.0
  */
 
-public class PerformanceTest extends BaseTest {
+public class PerformanceTest extends TestBase {
 
     public PerformanceTest(String name)
     {

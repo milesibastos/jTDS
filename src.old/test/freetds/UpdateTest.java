@@ -12,7 +12,7 @@ import junit.framework.TestCase;
  */
 
 public class UpdateTest
-         extends BaseTest {
+         extends TestBase {
 
     public UpdateTest(String name)
     {

@@ -1,77 +1,69 @@
-<project name="jtds" default="compile" basedir=".">
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="." default="compile" name="jtds">
+
+
+    <path id="libs">
+        <fileset dir="lib" includes="*.jar" />
+    </path>
 
   <target name="init">
 
     <tstamp/>
 
-    <property name="build" value="build" />
-    <property name="src"  value="src" />
-    <property name="dist"  value="dist" />
-    <property name="test"  value="test" />
+    <property name="build" value="build"/>
+    <property name="src" value="src"/>
+    <property name="dist" value="dist"/>
+    <property name="test" value="test"/>
 
-    <property name="version" value="0.1.1" />
-    <property name="year" value="2001" />
-
-  </target>
-
-  <target name="clean" depends="init">
-    <deltree dir="${build}" />
-    <deltree dir="${dist}" />
-  </target>
-
-  <target name="prepare" depends="init">
-    <mkdir dir="${build}" />
-    <mkdir dir="${build}/classes" />
-  </target>
-
-  <target name="compile" depends="prepare">
-    <mkdir dir="${build}/src" />
-    <copydir src="${src}/main"
-           dest="${build}/src"
-           includes="**/*.java"
-    />
-    <copydir src="${src}/test"
-           dest="${build}/src"
-           includes="**/*.java"
-    />
-    <javac srcdir="${build}/src" destdir="${build}/classes"/>
+    <property name="version" value="0.1.1"/>
+    <property name="year" value="2001"/>
 
   </target>
 
-  <target name="javadoc" depends="prepare">
+  <target depends="init" name="clean">
+    <deltree dir="${build}"/>
+    <deltree dir="${dist}"/>
+  </target>
 
-    <mkdir dir="${build}/doc" />
+  <target depends="init" name="prepare">
+    <mkdir dir="${build}"/>
+    <mkdir dir="${build}/classes"/>
+  </target>
 
-    <javadoc packagenames="com.*,freetds"
-           sourcepath="${build}/src"
-           destdir="${build}/doc"
-           author="true"
-           version="true"
-           use="true"
-           windowtitle="${ant.project.name} API"
-           doctitle="jTDS API Documentation"
-           bottom="Released under the LGPL">
+  <target depends="prepare" name="compile">
+    <mkdir dir="${build}/src"/>
+    <copydir dest="${build}/src" includes="**/*.java" src="${src}/main"/>
+    <copydir dest="${build}/src" includes="**/*.java" src="${src}/test"/>
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs"/>
+
+  </target>
+
+  <target depends="prepare" name="javadoc">
+
+    <mkdir dir="${build}/doc"/>
+
+    <javadoc author="true" bottom="Released under the LGPL" destdir="${build}/doc" doctitle="jTDS API Documentation" packagenames="com.*,freetds" sourcepath="${build}/src" use="true" version="true" windowtitle="${ant.project.name} API">
     </javadoc>
 
   </target>
 
-  <target name="test" depends="compile">
+  <target depends="compile" name="test">
 
-    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" />
+    <taskdef classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" name="junit"/>
 
-    <junit printsummary="yes" fork="yes" haltonfailure="no">
+    <junit fork="yes" haltonfailure="no" printsummary="yes">
 
         <classpath>
-            <pathelement path="build/classes" />
-            <pathelement path="${java.class.path}" />
+            <pathelement path="build/classes"/>
+            <pathelement path="${java.class.path}"/>
         </classpath>
 
-      <formatter type="plain" />
+      <formatter type="plain"/>
 
       <batchtest>
         <fileset dir="${build}/src">
-          <include name="**/*Test.java" />
-          <exclude name="**/AllTests.java" />
+          <include name="**/*Test.java"/>
+          <exclude name="**/AllTests.java"/>
         </fileset>
       </batchtest>
 
@@ -79,32 +71,18 @@
 
   </target>
 
-  <target name="dist" depends="clean,compile,javadoc">
-    <mkdir dir="${dist}" />
+  <target depends="clean,compile,javadoc" name="dist">
+    <mkdir dir="${dist}"/>
     <!-- Runtime jar only -->
-    <jar jarfile="${dist}/${ant.project.name}-${version}.jar"
-        basedir="${build}/classes"
-        excludes="**Test/*"
-        includes="**/*"
-    />
+    <jar basedir="${build}/classes" excludes="**Test/*" includes="**/*" jarfile="${dist}/${ant.project.name}-${version}.jar"/>
     <!-- Full dist -->
-    <mkdir dir="${dist}/doc" />
-    <copydir src="${build}/doc"
-           dest="${dist}/tmp/doc"
-           includes="**/*"
-    />
+    <mkdir dir="${dist}/doc"/>
+    <copydir dest="${dist}/tmp/doc" includes="**/*" src="${build}/doc"/>
     <mkdir dir="${dist}/tmp"/>
-    <copydir src="."
-        dest="${dist}/tmp"
-        includes="README,*.bat,*.xml,*.jpx,*.library,src/**/*,lib/**/*,conf/**/*"
-    />
-    <zip zipfile="${dist}/${ant.project.name}-${version}-src.zip"
-        basedir="${dist}/tmp"
-        includes="**/*"
-    />
-    <deltree dir="${dist}/tmp" />
+    <copydir dest="${dist}/tmp" includes="README,*.bat,*.xml,*.jpx,*.library,src/**/*,lib/**/*,conf/**/*" src="."/>
+    <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
+    <deltree dir="${dist}/tmp"/>
   </target>
 
+    
 </project>
-
-

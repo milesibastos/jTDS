@@ -11,7 +11,7 @@ import junit.framework.TestCase;
  *@version    1.0
  */
 
-public class ScrollableStatementTest extends BaseTest {
+public class ScrollableStatementTest extends TestBase {
 
     public ScrollableStatementTest( String name )
     {

@@ -6,17 +6,17 @@ import java.util.*;
 import junit.framework.TestCase;
 
 /**
- *  Title: Description: Copyright: Copyright (c) 2001 Company:
+ *  Some simple tests just to make sure everything is working properly
  *
  *@author
  *@created    9 August 2001
  *@version    1.0
  */
 
-public class BaseTest extends TestBase {
+public class SanityTest extends TestBase {
 
 
-    public BaseTest( String name )
+    public SanityTest( String name )
     {
         super( name );
     }
@@ -29,7 +29,7 @@ public class BaseTest extends TestBase {
     {
         Statement stmt = con.createStatement();
         makeTestTables( stmt );
-        makeObjects( stmt, 100 );
+        makeObjects( stmt, 5 );
         stmt.close();
     }
 
@@ -41,7 +41,7 @@ public class BaseTest extends TestBase {
     {
         Statement stmt = con.createStatement();
         makeTestTables( stmt );
-        makeObjects( stmt, 100 );
+        makeObjects( stmt, 5 );
 
         ResultSet rs;
 
@@ -69,39 +69,13 @@ public class BaseTest extends TestBase {
 
     }
 
-    protected void makeTestTables( Statement stmt )
-        throws SQLException
-    {
-        String sql = "CREATE TABLE #test ("
-            + " f_int INT,"
-            + " f_varchar VARCHAR(255) )";
-
-        stmt.execute( sql );
-
-    }
-
-    public void makeObjects( Statement stmt, int count )
-        throws SQLException
-    {
-        stmt.execute( "TRUNCATE TABLE #test" );
-        for (int i=0; i<count; i++ ) {
-            String sql = "INSERT INTO #test(f_int, f_varchar)"
-                + " VALUES (" + i + ", 'Row " + i + "')";
-            stmt.execute(sql);
-        }
-    }
-
-    public static void main(String[] args)
-    {
-        junit.textui.TestRunner.run( BaseTest.class );
-    }
     public void testCursorRSCreate()
         throws Exception
     {
         Statement stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 
         makeTestTables( stmt );
-        makeObjects( stmt, 100 );
+        makeObjects( stmt, 5 );
 
         ResultSet rs = stmt.executeQuery( "Select * from #test" );
 
@@ -111,7 +85,7 @@ public class BaseTest extends TestBase {
         rs.last();
         dumpRow( rs );
 
-        rs.absolute( 27 );
+        rs.absolute( 4 );
         dumpRow( rs );
 
         rs.close();
@@ -125,7 +99,7 @@ public class BaseTest extends TestBase {
         Statement stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 
         makeTestTables( stmt );
-        makeObjects( stmt, 100 );
+        makeObjects( stmt, 5 );
 
         ResultSet rs = stmt.executeQuery( "Select * from #test" );
 
@@ -134,6 +108,11 @@ public class BaseTest extends TestBase {
 
         rs.close();
         stmt.close();
+    }
+
+    public static void main(String[] args)
+    {
+        junit.textui.TestRunner.run( SanityTest.class );
     }
 
 }

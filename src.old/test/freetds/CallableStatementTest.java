@@ -13,7 +13,7 @@ import junit.framework.TestCase;
  */
 
 public class CallableStatementTest
-extends BaseTest
+extends TestBase
 {
 
     public CallableStatementTest( String name )

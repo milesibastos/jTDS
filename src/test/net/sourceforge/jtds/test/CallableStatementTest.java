@@ -367,27 +367,46 @@ public class CallableStatementTest extends TestBase {
      */
     public void testCallableRegisterOutParameter2() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("create procedure rop2 @bool bit, @whatever varchar(1) OUTPUT as\r\n "
+        stmt.execute("create procedure #rop2 @bool bit, @whatever varchar(1) OUTPUT as\r\n "
                      + "begin\r\n"
                      + "set @whatever = null\r\n"
                      + "end");
         stmt.close();
         
+        CallableStatement cstmt = con.prepareCall("{call #rop2(?,?)}");
+
+        cstmt.setNull(1, Types.BOOLEAN);
+        cstmt.registerOutParameter(2, Types.VARCHAR);
+        cstmt.execute();
+
+        assertTrue(cstmt.getString(2) == null);
+        assertTrue(cstmt.wasNull());
+        cstmt.close();
+    }
+
+    /**
+     * Test for bug [991640] java.sql.Date error and RAISERROR problem
+     */
+    public void testCallableError1() throws Exception {
+        String text = "test message";
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure #ce1 as\r\n "
+                     + "begin\r\n"
+                     + "RAISERROR('" + text + "', 16, 1 )\r\n"
+                     + "end");
+        stmt.close();
+        
+        CallableStatement cstmt = con.prepareCall("{call #ce1}");
+
         try {
-            CallableStatement cstmt = con.prepareCall("{call rop2(?,?)}");
-
-            cstmt.setNull(1, Types.BOOLEAN);
-            cstmt.registerOutParameter(2, Types.VARCHAR);
             cstmt.execute();
-
-            assertTrue(cstmt.getString(2) == null);
-            assertTrue(cstmt.wasNull());
-            cstmt.close();
-        } finally {
-            stmt = con.createStatement();
-            stmt.execute("drop procedure rop2");
-            stmt.close();
+            assertTrue(false);
+        } catch (SQLException e) {
+            assertTrue(e.getMessage().equals(text));
         }
+        
+        cstmt.close();
     }
     
     public static void main(String[] args) {

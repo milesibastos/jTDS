@@ -37,11 +37,10 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.12 2004-07-08 15:26:39 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.13 2004-07-08 22:23:22 bheineman Exp $
  */
 public class ClobImpl implements Clob {
-//	private static final int MAXIMUM_SIZE = 32768;
-	private static final int MAXIMUM_SIZE = 32;
+	private static final int MAXIMUM_SIZE = 32768;
 	private static final String EMPTY_CLOB = "";
 	
     private String _clob;

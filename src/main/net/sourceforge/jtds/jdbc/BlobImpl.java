@@ -28,11 +28,10 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.12 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.13 2004-07-08 22:23:22 bheineman Exp $
  */
 public class BlobImpl implements Blob {
-//	private static final int MAXIMUM_SIZE = 32768;
-	private static final int MAXIMUM_SIZE = 32;
+	private static final int MAXIMUM_SIZE = 32768;
 	private static final byte[] EMPTY_BLOB = new byte[0];
 
 	private byte[] _blob;

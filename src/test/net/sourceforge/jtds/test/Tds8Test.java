@@ -2,6 +2,7 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import net.sourceforge.jtds.jdbc.Support;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -20,12 +21,11 @@ import java.sql.Types;
 public class Tds8Test extends DatabaseTestCase {
 
     public static Test suite() {
-        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
+        if (!props.getProperty(Support.getMessage("prop.tds"), "7.0").equals("8.0")) {
             return new TestSuite();
         }
         return new TestSuite(Tds8Test.class);
     }
-
 
     public Tds8Test(String name) {
         super(name);

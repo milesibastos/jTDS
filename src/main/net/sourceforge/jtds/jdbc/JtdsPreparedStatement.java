@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.33 2004-12-20 15:51:17 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.34 2004-12-20 16:49:11 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -98,8 +98,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
         super(connection, resultSetType, concurrency);
 
-        this.returnKeys = returnKeys;
-
         // Parse the SQL looking for escapes and parameters
         if (this instanceof JtdsCallableStatement) {
             sql = normalizeCall(sql);
@@ -129,6 +127,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             } else {
                 this.sql += " SELECT @@IDENTITY AS ID";
             }
+            this.returnKeys = true;
+        } else {
+            this.returnKeys = false;
         }
 
         parameters = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);

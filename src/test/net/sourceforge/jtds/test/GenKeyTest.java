@@ -115,7 +115,9 @@ public class GenKeyTest extends TestBase {
                     + "INSERT INTO jtdsTestTrigger2 (data) VALUES (1)");
             stmt.close();
 
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO jtdsTestTrigger1 (data) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement pstmt = con.prepareStatement(
+                    "INSERT INTO jtdsTestTrigger1 (data) VALUES (?)",
+                    Statement.RETURN_GENERATED_KEYS);
 
             for (int i = 0; i < 10; i++) {
                 pstmt.setInt(1, i);
@@ -141,12 +143,48 @@ public class GenKeyTest extends TestBase {
     /**
      * Test empty result set returned when no keys available.
      */
-    public void testNoKeys() throws Exception
-    {
+    public void testNoKeys() throws Exception {
         Statement stmt = con.createStatement();
         ResultSet rs = stmt.getGeneratedKeys();
         assertEquals("ID", rs.getMetaData().getColumnName(1));
         assertFalse(rs.next());
+    }
+
+    /**
+     * Test that SELECT statements work correctly with
+     * <code>PreparedStatement</code>s created with
+     * <code>RETURN_GENERATED_KEYS</code>.
+     */
+    public void testSelect() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #colors (id int, color varchar(255))");
+        stmt.executeUpdate("insert into #colors values (1, 'red')");
+        stmt.executeUpdate("insert into #colors values (1, 'green')");
+        stmt.executeUpdate("insert into #colors values (1, 'blue')");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "select * from #colors", Statement.RETURN_GENERATED_KEYS);
+
+        assertTrue(pstmt.execute());
+        ResultSet rs = pstmt.getResultSet();
+        assertEquals(2, rs.getMetaData().getColumnCount());
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+        rs.close();
+        assertFalse(pstmt.getMoreResults());
+        assertEquals(-1, pstmt.getUpdateCount());
+
+        rs = pstmt.executeQuery();
+        assertEquals(2, rs.getMetaData().getColumnCount());
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+        rs.close();
+        pstmt.close();
     }
 
     public static void main(String[] args) {

@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.25 2004-12-06 12:10:13 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.26 2005-02-28 16:52:07 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -316,10 +316,8 @@ public class BlobImpl implements Blob {
         } else {
             try {
                 InputStream inputStream = getBinaryStream();
-                File tmpFile = _blobFile;
 
                 _blob = new byte[0];
-                _blobFile = null;
                 _jtdsInputStream = null;
 
                 OutputStream outputStream = setBinaryStream(1);
@@ -333,10 +331,11 @@ public class BlobImpl implements Blob {
 
 		        outputStream.close();
 
-                // If the data came from a file; delete the original file to
+                // If the data came from a file; delete the file to
                 // free disk space
-                if (tmpFile != null) {
-                    tmpFile.delete();
+                if (_blobFile != null) {
+                    _blobFile.delete();
+                    _blobFile = null;
                 }
 	        } catch (IOException e) {
 	            throw new SQLException(Messages.get("error.generic.iowrite",

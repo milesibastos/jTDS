@@ -2866,6 +2866,35 @@ public class LOBTest extends TestBase {
         stmt.close();
     }
 
+    public void testClobCaching() throws Exception {
+        // Create a Clob large enough to need caching to disk
+        char[] in = new char[100000];
+        for (int i = 0; i < in.length; i++) {
+            // Store non-Cp1252 characters into it
+            in[i] = 0x2032;
+        }
+
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #testClobCaching (val ntext)");
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into #testClobCaching values (?)");
+        pstmt.setCharacterStream(1, new CharArrayReader(in), in.length);
+        pstmt.executeUpdate();
+        pstmt.close();
+
+        ResultSet rs = stmt.executeQuery("select * from #testClobCaching");
+        assertTrue(rs.next());
+        String out = rs.getString(1);
+        assertEquals(in.length, out.length());
+        for (int i = 0; i < in.length; i++) {
+            assertEquals((int) in[i], (int) out.charAt(i));
+        }
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
+    }
+
     /**
      * Test for incorrect handling of zero length streams (bug [1096086] Zero
      * length streams generate null values).

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.30 2005-01-17 14:28:24 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.31 2005-02-28 16:52:07 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -209,7 +209,9 @@ public class ClobImpl implements Clob {
             if (_clob != null) {
                 return new StringReader(_clob);
             } else if (_clobFile != null) {
-                return new BufferedReader(new FileReader(_clobFile));
+                return new BufferedReader(
+                        new InputStreamReader( new FileInputStream(_clobFile),
+                                "ISO-10646-UCS-2"));
             }
 
             _jtdsReader.reset();
@@ -266,7 +268,7 @@ public class ClobImpl implements Clob {
     	if (_clob != null) {
             return _clob.length();
     	} else if (_clobFile != null) {
-    		return _clobFile.length();
+    		return _clobFile.length() / 2;
         }
 
         return _jtdsReader.getLength();
@@ -392,10 +394,8 @@ public class ClobImpl implements Clob {
         } else {
 	        try {
 	        	Reader reader = getCharacterStream();
-                File tmpFile = _clobFile;
 
                 _clob = "";
-                _clobFile = null;
                 _jtdsReader = null;
 
 	        	Writer writer = setCharacterStream(1);
@@ -409,10 +409,11 @@ public class ClobImpl implements Clob {
 
 	        	writer.close();
 
-                // If the data came from a file; delete the original file to
+                // If the data came from a file; delete the file to
                 // free disk space
-                if (tmpFile != null) {
-                    tmpFile.delete();
+                if (_clobFile != null) {
+                    _clobFile.delete();
+                    _clobFile = null;
                 }
 	        } catch (IOException e) {
 	            throw new SQLException(Messages.get("error.generic.iowrite",
@@ -538,7 +539,9 @@ public class ClobImpl implements Clob {
                 _clobFile = File.createTempFile("jtds", ".tmp");
                 _clobFile.deleteOnExit();
 
-                wtr = new BufferedWriter(new FileWriter(_clobFile));
+                wtr = new BufferedWriter(
+                        new OutputStreamWriter(new FileOutputStream(_clobFile),
+                                "ISO-10646-UCS-2"));
             } catch (SecurityException e) {
                 // Unable to write to disk
                 securityFailure = true;
@@ -670,7 +673,7 @@ public class ClobImpl implements Clob {
 
         ClobFileWriter(long curPos) throws IOException {
             raf = new RandomAccessFile(_clobFile, "rw");
-            raf.seek(curPos);
+            raf.seek(curPos * 2);
         }
 
         public void write(int c) throws IOException {
@@ -694,7 +697,7 @@ public class ClobImpl implements Clob {
                 return;
             }
 
-            byte[] data = new String(cbuf, off, len).getBytes();
+            byte[] data = new String(cbuf, off, len).getBytes("ISO-10646-UCS-2");
 
             raf.write(data, 0, data.length);
         }

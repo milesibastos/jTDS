@@ -1308,16 +1308,42 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testFnEscapeNesting() throws Exception {
         Statement stmt = con.createStatement();
+        stmt.executeUpdate(
+                "create table #testFnEscapeNesting (col1 int null, col2 int)");
+        stmt.executeUpdate("insert into #testFnEscapeNesting (col1, col2) "
+                + "values (null, 1)");
+        stmt.executeUpdate("insert into #testFnEscapeNesting (col1, col2) "
+                + "values (1, 2)");
+
         ResultSet rs = stmt.executeQuery(
-                "select {fn ifnull({fn max(id)}, 0)} from sysobjects");
+                "select {fn ifnull({fn max(col2)}, 0)} "
+                + "from #testFnEscapeNesting");
         assertNotNull(rs);
         assertTrue(rs.next());
-        assertNotNull(rs.getObject(1));
+        assertEquals(2, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        rs = stmt.executeQuery("select {fn ifnull((select col1 "
+                + "from #testFnEscapeNesting where col2 = 1), 0) }");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(0, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+
         rs = stmt.executeQuery(
-                "select {fn ifnull((select id from sysobjects where id = 1), 0) }");
+                "select {fn ifnull(sum({fn ifnull(col1, 4)}), max(col2))} "
+                + "from #testFnEscapeNesting "
+                + "group by col2 order by col2");
         assertNotNull(rs);
         assertTrue(rs.next());
-        assertNotNull(rs.getObject(1));
+        assertEquals(4, rs.getInt(1));
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+
         stmt.close();
     }
 

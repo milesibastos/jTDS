@@ -2,6 +2,25 @@
 Changes from jTDS 0.4
 =======================
 
+10/18/2002 - Alin Sinpalean
+
+ o Bugfix in PacketResultSet.getLong(): CHAR values were not trimmed before
+   being parsed.
+ o Bugfix in Tds.writeDecimalValue(): if an Object which was not a subclass of
+   Number was supplied (particularly a Boolean) writeDecimalValue crashed.
+ o Bugfix in EscapeProcessor: escapes (all of them) were only recognized in
+   lower case; also outer join escapes were parsed incorrectly (the last letter
+   was cut off).
+ o Bugfix in PreparedStatement_base: procedures were first added to the tds
+   procedure cache and the proceduresOfTra collection and only then submitted
+   to the DB server, which meant that if the submission failed further attempts
+   to use the same (form of) statement would fail with 'procedure not found'
+   which was a bit confusing.
+ o Bugfix in PacketRowResult.getBoolean(): CHAR/VARCHAR/TEXT values were not
+   correctly converted to boolean values. I'm not sure it's correct now either,
+   but it works with the JDBCCTS. :o) Currently anything different from "0" is
+   considered true.
+
 10/17/2002 - Alin Sinpalean
 
  o Oooops! There were a lot of problems with my implementation from yesterday.

@@ -33,60 +33,44 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
 import java.math.BigDecimal;
-import java.util.StringTokenizer;
-import java.util.Vector;
-import java.util.Calendar;
+import java.sql.*;
 import java.util.Map;
 
 /**
- *  <P>
+ * A SQL statement is pre-compiled and stored in a PreparedStatement object.
+ * This object can then be used to efficiently execute this statement multiple
+ * times.
+ * <p>
+ * <B>Note:</B> The setXXX methods for setting IN parameter values must specify
+ * types that are compatible with the defined SQL type of the input parameter.
+ * For instance, if the IN parameter has SQL type Integer then setInt should be
+ * used.
+ * <p>
+ * If arbitrary parameter type conversions are required then the setObject
+ * method should be used with a target SQL type.
  *
- *  A SQL statement is pre-compiled and stored in a PreparedStatement object.
- *  This object can then be used to efficiently execute this statement multiple
- *  times. <P>
- *
- *  <B>Note:</B> The setXXX methods for setting IN parameter values must specify
- *  types that are compatible with the defined SQL type of the input parameter.
- *  For instance, if the IN parameter has SQL type Integer then setInt should be
- *  used. <p>
- *
- *  If arbitrary parameter type conversions are required then the setObject
- *  method should be used with a target SQL type.
- *
- *@author     Craig Spannring
- *@author     The FreeTDS project
- *@version    $Id: PreparedStatement_base.java,v 1.8 2001/09/24 08:45:10
- *      aschoerk Exp $
- *@see        Connection#prepareStatement
- *@see        ResultSet
+ * @author     Craig Spannring
+ * @author     The FreeTDS project
+ * @author     Alin Sinpalean
+ * @version    $Id: PreparedStatement_base.java,v 1.3 2002-10-18 15:21:07 alin_sinpalean Exp $
+ * @see        Connection#prepareStatement
+ * @see        ResultSet
  */
-public class PreparedStatement_base
-         extends TdsStatement
-         implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.2 2002-10-16 17:37:58 alin_sinpalean Exp $";
+public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
+{
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.3 2002-10-18 15:21:07 alin_sinpalean Exp $";
 
     String rawQueryString = null;
-    // Vector               procedureCache     = null;  put it in tds
     ParameterListItem[] parameterList = null;
     static Map typemap = null;
 
-    public PreparedStatement_base(
-            TdsConnection conn_,
-            String sql )
-             throws SQLException
+    public PreparedStatement_base(TdsConnection conn_, String sql) throws SQLException
     {
         this( conn_, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
     }
 
-
-    public PreparedStatement_base(
-            TdsConnection conn_,
-            String sql,
-            int type,
-            int concurrency )
-             throws SQLException
+    public PreparedStatement_base(TdsConnection conn_, String sql, int type, int concurrency ) throws SQLException
     {
         super( conn_, type, concurrency );
 
@@ -96,30 +80,24 @@ public class PreparedStatement_base
         int numberOfParameters = ParameterUtils.countParameters( rawQueryString );
 
         parameterList = new ParameterListItem[numberOfParameters];
-        for ( i = 0; i < numberOfParameters; i++ ) {
+
+        for ( i = 0; i < numberOfParameters; i++ )
             parameterList[i] = new ParameterListItem();
-        }
-
-        // procedureCache = new Vector();
     }
-
 
     protected void NotImplemented() throws java.sql.SQLException
     {
         throw new SQLException( "Not Implemented" );
     }
 
-
     /**
-     *  <P>
+     * In general, parameter values remain in force for repeated use of a
+     * Statement. Setting a parameter value automatically clears its previous
+     * value. However, in some cases it is useful to immediately release the
+     * resources used by the current parameter values; this can be done by
+     * calling clearParameters.
      *
-     *  In general, parameter values remain in force for repeated use of a
-     *  Statement. Setting a parameter value automatically clears its previous
-     *  value. However, in some cases it is useful to immediately release the
-     *  resources used by the current parameter values; this can be done by
-     *  calling clearParameters.
-     *
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void clearParameters() throws SQLException
     {
@@ -129,20 +107,11 @@ public class PreparedStatement_base
         }
     }
 
-
-    /* Cache connected to tds
-   public void dropAllProcedures()
-   {
-      procedureCache = null;
-      procedureCache = new Vector();
-   }
-    */
     public boolean execute() throws SQLException
     {
         Tds tds = getTds(false);
         return execute( tds );
     }
-
 
     /**
      *  Some prepared statements return multiple results; the execute method
@@ -174,29 +143,27 @@ public class PreparedStatement_base
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet( parameterList );
 
-        // Find a stored procedure that is compatible with this set of
-        // parameters if one exists.
+        // Find a stored procedure that is compatible with this set of parameters if one exists.
         procedure = findCompatibleStoredProcedure( tds, rawQueryString );
         // now look in tds
 
-        // if we don't have a suitable match then create a new
-        // temporary stored procedure
-        if ( procedure == null ) {
-            // create the stored procedure
-            procedure = new Procedure( rawQueryString,
-                    tds.getUniqueProcedureName(),
-                    parameterList, tds );
+        // if we don't have a suitable match then create a new temporary stored procedure
+        if( procedure == null )
+        {
+            // Create the stored procedure
+            procedure = new Procedure( rawQueryString, tds.getUniqueProcedureName(), parameterList, tds );
 
-            // store it in the procedureCache
-            // procedureCache.addElement(procedure);
+            // SAfe Submit it to the SQL Server before adding it to the cache or procedures of transaction list.
+            //      Otherwise, if submitProcedure fails (e.g. because of a syntax error) it will be in our procedure
+            //      cache, but not on the server.
+            submitProcedure( tds, procedure );
+
             // store it in the procedureCache
             tds.procedureCache.put( rawQueryString, procedure );
-            // MJH Only record the proc name if in manual commit mode
+
+            // MJH Only record the proc name in proceduresOfTra if in manual commit mode
             if( !getConnection().getAutoCommit() ) // MJH
                 tds.proceduresOfTra.add( procedure );
-
-            // create it on the SQLServer.
-            submitProcedure( tds, procedure );
         }
 
         result = internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
@@ -205,15 +172,9 @@ public class PreparedStatement_base
         return result;
     }
 
-
     private Procedure findCompatibleStoredProcedure( Tds tds, String rawQueryString )
-             throws SQLException
     {
-        Procedure procedure = null;
-        int i;
-
-        procedure = ( Procedure ) tds.procedureCache.get( rawQueryString );
-        return procedure;
+        return (Procedure)tds.procedureCache.get(rawQueryString);
     }
 
     private void submitProcedure( Tds tds, Procedure proc )
@@ -223,13 +184,11 @@ public class PreparedStatement_base
         tds.submitProcedure( sql, warningChain );
     }
 
-
     /**
-     *  A prepared SQL query is executed and its ResultSet is returned.
+     * A prepared SQL query is executed and its ResultSet is returned.
      *
-     *@return                   a ResultSet that contains the data produced by
-     *      the query; never null
-     *@exception  SQLException  if a database-access error occurs.
+     * @return  a ResultSet that contains the data produced by the query; never null
+     * @exception  SQLException  if a database-access error occurs.
      */
     public java.sql.ResultSet executeQuery() throws SQLException
     {
@@ -383,8 +342,8 @@ public class PreparedStatement_base
      *  Set a parameter to a Java byte value. The driver converts this to a SQL
      *  TINYINT value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  index    the first parameter is 1, the second is 2, ...
+     *@param  x        the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setByte( int index, byte x ) throws SQLException
@@ -420,7 +379,7 @@ public class PreparedStatement_base
      *  SQL DATE value when it sends it to the database.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  value             the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setDate( int parameterIndex, java.sql.Date value )
@@ -435,7 +394,7 @@ public class PreparedStatement_base
      *  SQL DOUBLE value when it sends it to the database.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  value             the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setDouble( int parameterIndex, double value ) throws SQLException
@@ -449,7 +408,7 @@ public class PreparedStatement_base
      *  FLOAT value when it sends it to the database.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  value             the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setFloat( int parameterIndex, float value ) throws SQLException
@@ -462,8 +421,8 @@ public class PreparedStatement_base
      *  Set a parameter to a Java int value. The driver converts this to a SQL
      *  INTEGER value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  index    the first parameter is 1, the second is 2, ...
+     *@param  value    the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setInt( int index, int value ) throws SQLException
@@ -477,7 +436,7 @@ public class PreparedStatement_base
      *  BIGINT value when it sends it to the database.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  value             the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setLong( int parameterIndex, long value ) throws SQLException
@@ -496,8 +455,8 @@ public class PreparedStatement_base
      *
      *  <B>Note:</B> You must specify the parameter's SQL type.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  sqlType           SQL type code defined by java.sql.Types
+     *@param  index    the first parameter is 1, the second is 2, ...
+     *@param  type     SQL type code defined by java.sql.Types
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setNull( int index, int type ) throws SQLException
@@ -733,8 +692,8 @@ public class PreparedStatement_base
      *  Set a parameter to a Java short value. The driver converts this to a SQL
      *  SMALLINT value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  index    the first parameter is 1, the second is 2, ...
+     *@param  value    the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setShort( int index, short value ) throws SQLException
@@ -749,8 +708,8 @@ public class PreparedStatement_base
      *  relative to the driver's limits on VARCHARs) when it sends it to the
      *  database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  index    the first parameter is 1, the second is 2, ...
+     *@param  str      the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setString( int index, String str ) throws SQLException
@@ -764,7 +723,7 @@ public class PreparedStatement_base
      *  SQL TIME value when it sends it to the database.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  value             the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setTime( int parameterIndex, java.sql.Time value )
@@ -778,8 +737,8 @@ public class PreparedStatement_base
      *  Set a parameter to a java.sql.Timestamp value. The driver converts this
      *  to a SQL TIMESTAMP value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
+     *@param  index    the first parameter is 1, the second is 2, ...
+     *@param  value    the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
     public void setTimestamp( int index, java.sql.Timestamp value )
@@ -839,13 +798,11 @@ public class PreparedStatement_base
      *  object or your own subclass that implements the standard interface.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the java reader which contains the UNICODE data
+     *@param  reader            the java reader which contains the UNICODE data
      *@param  length            the number of characters in the stream
      *@exception  SQLException  if a database access error occurs
      */
-    public void setCharacterStream( int parameterIndex,
-            java.io.Reader reader,
-            int length ) throws java.sql.SQLException
+    public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length) throws java.sql.SQLException
     {
         NotImplemented();
     }
@@ -1000,7 +957,7 @@ public class PreparedStatement_base
      *  set a null parameter of any JDBC type. If the parameter does not have a
      *  user-named or REF type, the given typeName is ignored.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
+     *@param  paramIndex        the first parameter is 1, the second is 2, ...
      *@param  sqlType           a value from java.sql.Types
      *@param  typeName          the fully-qualified name of an SQL user-named
      *      type, ignored if the parameter is not a user-named type or REF

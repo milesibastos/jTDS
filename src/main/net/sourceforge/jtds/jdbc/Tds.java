@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -3294,15 +3294,14 @@ public class Tds implements TdsDefinitions {
         else {
           BigDecimal bd;
 
-          if (o instanceof BigDecimal) {
+          if( o instanceof BigDecimal )
             bd = (BigDecimal)o;
-          }
+          else if( o instanceof Number )
+            bd = new BigDecimal(((Number)o).doubleValue());
+          else if( o instanceof Boolean )
+            bd = new BigDecimal(((Boolean)o).booleanValue() ? 1 : 0);
           else
-          if (o instanceof Number) {
-           bd = new BigDecimal(((Number)o).doubleValue());
-          }
-          else
-            throw new TdsException("Invalid decimal value");
+            bd = new BigDecimal(o.toString());
           boolean repeat = false;
           byte scale;
           byte signum = (byte)(bd.signum() < 0 ? 0 : 1);

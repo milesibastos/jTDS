@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -391,11 +391,11 @@ public class PacketRowResult extends PacketResult {
                     case java.sql.Types.LONGVARCHAR:
                     {
                         try {
-                            Long i = new Long( ( String ) obj );
+                            Long i = new Long(obj.toString().trim());
                             result = i.longValue();
                         }
                         catch ( NumberFormatException e ) {
-                            throw new SQLException( e.getMessage() );
+                            throw new SQLException("NumberFormatException: ["+e.getMessage()+"]");
                         }
                         break;
                     }
@@ -566,9 +566,9 @@ public class PacketRowResult extends PacketResult {
                         // Tds.getRow() for this to happen.
                         throw new SQLException( "Internal error" );
                     }
-                    char ch = ( ( ( String ) obj ) + "n" ).charAt( 0 );
 
-                    result = ( ch == 'Y' ) || ( ch == 'y' ) || ( ch == 't' ) || ( ch == 'T' );
+                    // SAfe I guess this is how it should be done.
+                    result = !"0".equals(obj.toString().trim());
                     break;
                 }
                 default:

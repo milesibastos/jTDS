@@ -36,9 +36,16 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
 
     String   input;
+    private static final String ESCAPE_PREFIX_DATE = "d ";
+    private static final String ESCAPE_PREFIX_TIME = "t ";
+    private static final String ESCAPE_PREFIX_TIMESTAMP = "ts ";
+    private static final String ESCAPE_PREFIX_OUTER_JOIN = "oj ";
+    private static final String ESCAPE_PREFIX_FUNCTION = "fn ";
+    private static final String ESCAPE_PREFIX_CALL = "call ";
+    private static final String ESCAPE_PREFIX_ESCAPE_CHAR = "escape ";
 
     public EscapeProcessor(String sql)
     {
@@ -255,9 +262,9 @@ abstract public class EscapeProcessor
         // XXX Is it always okay to trim leading and trailing blanks?
         str = str.trim();
 
-        if( str.startsWith("fn ") )
+        if( startsWithIgnoreCase(str, ESCAPE_PREFIX_FUNCTION) )
         {
-            str = str.substring(3);
+            str = str.substring(ESCAPE_PREFIX_FUNCTION.length());
             result = expandCommonFunction(str);
 
             if( result == null )
@@ -266,8 +273,8 @@ abstract public class EscapeProcessor
             if( result == null )
                 result = str;
         }
-        else if( str.startsWith("call ") ||
-            (str.startsWith("?=") && str.substring(2).trim().startsWith("call ")) )
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_CALL) ||
+            (str.startsWith("?=") && startsWithIgnoreCase(str.substring(2).trim(), ESCAPE_PREFIX_CALL)) )
         {
             boolean returnsVal = str.startsWith("?=");
             str = str.substring(str.indexOf("call")+4).trim();
@@ -282,14 +289,14 @@ abstract public class EscapeProcessor
             else
                 result = "exec "+(returnsVal ? "?=" : "")+str;
         }
-        else if( str.startsWith("d ") )
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_DATE) )
             result = getDate(str);
-        else if( str.startsWith("t ") )
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_TIME) )
             result = getTime(str);
-        else if( str.startsWith("ts ") )
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_TIMESTAMP) )
             result = getTimestamp(str);
-        else if( str.startsWith("oj ") )
-            result = str.substring(3, str.length()-1).trim();
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_OUTER_JOIN) )
+            result = str.substring(ESCAPE_PREFIX_OUTER_JOIN.length()).trim();
         else
             throw new SQLException("Unrecognized escape sequence: " + escapeSequence);
 
@@ -404,7 +411,7 @@ abstract public class EscapeProcessor
                         // escape character.  Any other escape is handled in
                         // the expandEscape method()
 
-                        if( escape.startsWith("escape ") )
+                        if( startsWithIgnoreCase(escape, ESCAPE_PREFIX_ESCAPE_CHAR) )
                         {
                             char c;
 
@@ -475,7 +482,7 @@ abstract public class EscapeProcessor
         str = str.substring(1, str.length()-1);
         str = str.trim();
 
-        if( !str.startsWith("escape") )
+        if( !str.substring(0, 6).equalsIgnoreCase("escape") )
             throw new SQLException("Internal Error");
 
         str = str.substring(6);
@@ -484,5 +491,17 @@ abstract public class EscapeProcessor
             throw new SQLException("Malformed escape clause: |" + original_str + "|");
 
         return str.charAt(1);
+    }
+
+    public static boolean startsWithIgnoreCase(String s, String prefix)
+    {
+        if( s.length() < prefix.length() )
+            return false;
+
+        for( int i=prefix.length()-1; i>=0; i-- )
+            if( Character.toLowerCase(s.charAt(i)) != Character.toLowerCase(prefix.charAt(i)) )
+                return false;
+
+        return true;
     }
 }

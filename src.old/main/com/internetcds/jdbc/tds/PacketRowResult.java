@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.6 2002-07-16 13:05:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.7 2002-08-05 15:35:59 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -414,8 +414,8 @@ public class PacketRowResult extends PacketResult {
                     }
                     case java.sql.Types.BIT:
                     {
-                        // XXX according to JDBC spec we need to handle these
-                        // for now just fall through
+                        result = ((Boolean)obj).booleanValue() ? 1 : 0;
+                        break;
                     }
                     default:
                     {

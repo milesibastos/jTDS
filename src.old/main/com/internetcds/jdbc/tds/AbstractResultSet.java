@@ -428,7 +428,16 @@ public abstract class AbstractResultSet
             return null;
         }
         else if (tmp instanceof byte[]) {
-            return new String((byte[]) tmp);
+            byte[] b = (byte[])tmp;
+            StringBuffer buf = new StringBuffer(2*b.length);
+            for( int i=0; i<b.length; i++ )
+            {
+                int v = b[i]/16;
+                buf.append((char)(v<10 ? '0'+v : 'A'+v-10));
+                v = b[i]%16;
+                buf.append((char)(v<10 ? '0'+v : 'A'+v-10));
+            }
+            return buf.toString();
         }
         else {
             return tmp.toString();

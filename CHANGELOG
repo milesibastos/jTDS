@@ -1,6 +1,11 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/03/2004 - Brian Heineman
+ o Updated binary data support so that data set via a stream or Blob is not
+   cached entirely in memory before being sent to the server.  No more than
+   1KB of data read from the stream or Blob is buffered in memory at any time.
+
 04/02/2004 - Brian Heineman
  o Updated Tds.cvtJdbcTypeToNativeType to treat java.sql.Clob as SYBTEXT
    instead of SYBCHAR.

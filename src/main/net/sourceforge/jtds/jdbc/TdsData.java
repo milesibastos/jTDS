@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.13 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.14 2004-07-29 00:14:54 ddkilzer Exp $
  */
 public class TdsData {
     /**
@@ -255,7 +255,7 @@ public class TdsData {
      */
     static int readType(ResponseStream in, ColInfo ci)
     throws IOException, ProtocolException {
-        boolean isTds8 = in.getTdsVersion() >= TdsCore.TDS80;
+        boolean isTds8 = in.getTdsVersion() >= Driver.TDS80;
         int bytesRead = 1;
         // Get the TDS data type code
         int type = in.read();
@@ -287,7 +287,7 @@ public class TdsData {
             int lenName = in.readShort();
 
             ci.tableName = in.readString(lenName);
-            bytesRead += 6 + ((in.getTdsVersion() >= TdsCore.TDS70) ? lenName * 2 : lenName);
+            bytesRead += 6 + ((in.getTdsVersion() >= Driver.TDS70) ? lenName * 2 : lenName);
         } else if (ci.bufferSize == -2) {
             // longvarchar longvarbinary
             ci.bufferSize = in.readShort();
@@ -485,7 +485,7 @@ public class TdsData {
             case SYBVARCHAR:
                 len = in.read();
 
-                if (len == 1 && in.getTdsVersion() < TdsCore.TDS70) {
+                if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
                     // In TDS 4/5 zero length strings are stored as a single space
                     // to distinguish them from nulls.
                     String value = in.readAsciiString(len);
@@ -619,7 +619,7 @@ public class TdsData {
                     byte[] bytes = new byte[len];
                     BigInteger bi;
 
-                    if (in.getServerType() == TdsCore.SYBASE) {
+                    if (in.getServerType() == Driver.SYBASE) {
                         // Sybase order is MSB first!
                         for (int i = 0; i < len; i++) {
                             bytes[i] = (byte) in.read();
@@ -744,7 +744,7 @@ public class TdsData {
                 } else {
                     len = pi.length;
                 }
-                if (connection.getTdsVersion() < TdsCore.TDS70) {
+                if (connection.getTdsVersion() < Driver.TDS70) {
                     if (len < 256) {
                         pi.tdsType = SYBVARCHAR;
                         pi.sqlType = "varchar(255)";
@@ -785,7 +785,7 @@ public class TdsData {
 
             case JtdsStatement.BOOLEAN:
             case java.sql.Types.BIT:
-                if (connection.getTdsVersion() < TdsCore.TDS70) {
+                if (connection.getTdsVersion() < Driver.TDS70) {
                     pi.tdsType = SYBBIT;
                 } else {
                     pi.tdsType = SYBBITN;
@@ -818,7 +818,7 @@ public class TdsData {
                     len = pi.length;
                 }
 
-                if (connection.getTdsVersion() < TdsCore.TDS70) {
+                if (connection.getTdsVersion() < Driver.TDS70) {
                     if (len < 256) {
                         pi.tdsType = SYBVARBINARY;
                         pi.sqlType = "varbinary(255)";
@@ -844,7 +844,7 @@ public class TdsData {
                 break;
 
             case java.sql.Types.BIGINT:
-                if (connection.getTdsVersion() >= TdsCore.TDS80) {
+                if (connection.getTdsVersion() >= Driver.TDS80) {
                     pi.tdsType = SYBINTN;
                     pi.sqlType = "bigint";
                 } else {
@@ -1169,7 +1169,7 @@ public class TdsData {
         int len;
         String tmp;
         byte[] buf;
-        boolean isTds8 = out.getTdsVersion() >= TdsCore.TDS80;
+        boolean isTds8 = out.getTdsVersion() >= Driver.TDS80;
 
         if (isTds8 && pi.collation == null) {
             pi.collation = collation;
@@ -1224,7 +1224,7 @@ public class TdsData {
                     buf = pi.getBytes(charset);
 
                     if (buf.length > 255) {
-                        if (buf.length < 8001 && out.getTdsVersion() >= TdsCore.TDS70) {
+                        if (buf.length < 8001 && out.getTdsVersion() >= Driver.TDS70) {
                             out.write((byte) XSYBVARCHAR);
                             out.write((short) 8000);
 
@@ -1284,7 +1284,7 @@ public class TdsData {
                 } else {
                     len = pi.length;
 
-                    if (len == 0 && out.getTdsVersion() < TdsCore.TDS70) {
+                    if (len == 0 && out.getTdsVersion() < Driver.TDS70) {
                         pi.value = " ";
                         len = 1;
                     }

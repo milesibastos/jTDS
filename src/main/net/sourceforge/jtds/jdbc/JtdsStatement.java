@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.7 2004-07-14 15:13:38 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.8 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -242,7 +242,7 @@ public class JtdsStatement implements java.sql.Statement {
         if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
             || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
             try {
-                if (connection.getServerType() == TdsCore.SQLSERVER) {
+                if (connection.getServerType() == Driver.SQLSERVER) {
                     JtdsResultSet rs =
                         new MSCursorResultSet(this,
                                               sql,
@@ -313,7 +313,7 @@ public class JtdsStatement implements java.sql.Statement {
             && sql.substring(0, 6).toLowerCase().equals("select")
             && !returnKeys) {
             try {
-                 if (connection.getServerType() == TdsCore.SQLSERVER) {
+                 if (connection.getServerType() == Driver.SQLSERVER) {
                      JtdsResultSet rs =
                          new MSCursorResultSet(this,
                                                sql,
@@ -703,7 +703,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         if (returnKeys) {
-            if (connection.getServerType() == TdsCore.SQLSERVER
+            if (connection.getServerType() == Driver.SQLSERVER
                 && connection.getDatabaseMajorVersion() >= 8) {
                 sql += " SELECT SCOPE_IDENTITY() AS ID";
             } else {
@@ -749,7 +749,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         if (returnKeys) {
-            if (connection.getServerType() == TdsCore.SQLSERVER
+            if (connection.getServerType() == Driver.SQLSERVER
                 && connection.getDatabaseMajorVersion() >= 8) {
                 sql += " SELECT SCOPE_IDENTITY() AS ID";
             } else {

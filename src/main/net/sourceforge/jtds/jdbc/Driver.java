@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.20 2004-07-27 01:21:56 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.21 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -48,6 +48,18 @@ public class Driver implements java.sql.Driver {
     static final int MINOR_VERSION = 9;
     public static final boolean JDBC3 =
             "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
+    /** TDS 4.2 protocol. */
+    public static final int TDS42 = 1;
+    /** TDS 5.0 protocol. */
+    public static final int TDS50 = 2;
+    /** TDS 7.0 protocol. */
+    public static final int TDS70 = 3;
+    /** TDS 8.0 protocol. */
+    public static final int TDS80 = 4;
+    /** Microsoft SQL Server. */
+    public static final int SQLSERVER = 1;
+    /** Sybase ASE. */
+    public static final int SYBASE = 2;
 
     static {
         try {
@@ -147,8 +159,8 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.servertype");
                 dpi[i].required = true;
                 dpi[i].choices = new String[] {
-                    String.valueOf(TdsCore.SQLSERVER),
-                    String.valueOf(TdsCore.SYBASE)
+                    String.valueOf(SQLSERVER),
+                    String.valueOf(SYBASE)
                 };
 
                 if (dpi[i].value == null) {
@@ -161,7 +173,7 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.portnumber");
 
                 if (dpi[i].value == null) {
-                    if (String.valueOf(TdsCore.SYBASE).equalsIgnoreCase(
+                    if (String.valueOf(SYBASE).equalsIgnoreCase(
                             String.valueOf(info.get(Support.getMessage("prop.servertype"))))) {
                         dpi[i].value = Integer.toString(TdsCore.DEFAULT_SYBASE_PORT);
                     } else {
@@ -290,10 +302,10 @@ public class Driver implements java.sql.Driver {
 
         if (type.equals("sqlserver")) {
             props.setProperty(Support.getMessage("prop.servertype"),
-                              String.valueOf(TdsCore.SQLSERVER));
+                              String.valueOf(SQLSERVER));
         } else if (type.equals("sybase")) {
             props.setProperty(Support.getMessage("prop.servertype"),
-                              String.valueOf(TdsCore.SYBASE));
+                              String.valueOf(SYBASE));
             port = 7100;
         } else {
             return null; // Bad server type

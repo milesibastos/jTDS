@@ -21,13 +21,14 @@ import java.sql.*;
 import java.util.*;
 
 import net.sourceforge.jtds.jdbc.*;
+import net.sourceforge.jtds.jdbc.Driver;
 
 /**
  * A plain <code>DataSource</code> implementation.
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.4 2004-07-27 01:22:05 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.5 2004-07-29 00:15:05 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 
@@ -83,7 +84,7 @@ public class JtdsDataSource extends AbstractDataSource {
         
         java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
         
-        String url = "jdbc:jtds:" + ((serverType == TdsCore.SQLSERVER) ? "sqlserver:" : "sybase:");
+        String url = "jdbc:jtds:" + ((serverType == Driver.SQLSERVER) ? "sqlserver:" : "sybase:");
         
         return driver.connect(url, props);
     }

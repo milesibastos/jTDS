@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.15 2004-07-22 17:09:57 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.16 2004-07-29 00:14:52 ddkilzer Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -146,7 +146,7 @@ public class ClobImpl implements Clob {
     	        	writer.close();
             	}
                 
-                if (in.getTdsVersion() < TdsCore.TDS70
+                if (in.getTdsVersion() < Driver.TDS70
                         && length() == 1
                         && getSubString(1, 1).equals(" ")) {
                         // In TDS 4/5 zero length strings are stored as a single space

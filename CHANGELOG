@@ -1,6 +1,10 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/28/2004 - David Kilzer
+ o Moved TdsCore.TDS42, TDS50, TDS70, TDS80, SQLSERVER and SYBASE constants
+   to Driver class per suggestion by Mike Hutchinson.
+
 07/27/2004 - David Kilzer
  o Renamed SharedNamedPipeTest to NamedPipeUnitTest to better reflect its
    usage.

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.10 2004-07-27 03:05:33 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.11 2004-07-29 00:14:54 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -140,18 +140,6 @@ public class TdsCore {
     //
     // Package private constants
     //
-    /** TDS 4.2 protocol. */
-    public static final int TDS42 = 1;
-    /** TDS 5.0 protocol. */
-    public static final int TDS50 = 2;
-    /** TDS 7.0 protocol. */
-    public static final int TDS70 = 3;
-    /** TDS 8.0 protocol. */
-    public static final int TDS80 = 4;
-    /** Microsoft SQL Server. */
-    public static final int SQLSERVER = 1;
-    /** Sybase ASE. */
-    public static final int SYBASE = 2;
     /** Default Microosoft port. */
     static final int DEFAULT_SQLSERVER_PORT = 1433;
     /** Default Sybase port. */
@@ -446,11 +434,11 @@ public class TdsCore {
                final int packetSize)
         throws SQLException {
         try {
-            if (tdsVersion >= TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 sendMSLoginPkt(serverName, database, user, password,
                                 domain, appName, libName, language,
                                 macAddress, packetSize);
-            } else if (tdsVersion == TDS50) {
+            } else if (tdsVersion == Driver.TDS50) {
                 send50LoginPkt(serverName, user, password,
                                 charset, appName, libName,
                                 language, packetSize);
@@ -690,7 +678,7 @@ public class TdsCore {
      */
     void closeConnection() {
         try {
-            if (tdsVersion == TDS50) {
+            if (tdsVersion == Driver.TDS50) {
                 out.setPacketType(SYBQUERY_PKT);
                 out.write((byte)TDS_CLOSE_TOKEN);
                 out.write((byte)0);
@@ -805,14 +793,14 @@ public class TdsCore {
 
         try {
             switch (tdsVersion) {
-                case TDS42:
+                case Driver.TDS42:
                     executeSQL42(sql, procName, parameters, noMetaData);
                     break;
-                case TDS50:
+                case Driver.TDS50:
                     executeSQL50(sql, procName, parameters, noMetaData);
                     break;
-                case TDS70:
-                case TDS80:
+                case Driver.TDS70:
+                case Driver.TDS80:
                     executeSQL70(sql, procName, parameters, noMetaData);
                     break;
                 default:
@@ -1308,7 +1296,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         out.setPacketType(MSLOGIN_PKT);
         out.write((int)packSize);
         // TDS version
-        if (tdsVersion == TdsCore.TDS70) {
+        if (tdsVersion == Driver.TDS70) {
             out.write((int)0x70000000);
         } else {
             out.write((int)0x71000001);
@@ -1784,7 +1772,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             ColInfo col = columns[numColumns];
             int bufLength;
             int dispSize = -1;
-            if (serverType == SQLSERVER) {
+            if (serverType == Driver.SQLSERVER) {
                 col.userType = in.readShort();
                 int flags    = in.readShort();
                 col.nullable = ((flags & 0x01) != 0)?
@@ -1830,9 +1818,9 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         String tabName;
         ArrayList tableList = new ArrayList();
 
-        if (tdsVersion >= TDS70) {
+        if (tdsVersion >= Driver.TDS70) {
             while (bytesRead < pktLen) {
-                if (tdsVersion == TDS80) {
+                if (tdsVersion == Driver.TDS80) {
                     // Not sure what this is used for
                     int flag = in.read(); bytesRead++;
                 }
@@ -1917,7 +1905,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                     final int nameLen = in.read();
                     bytesRead += 1;
                     final String colName = in.readString(nameLen);
-                    bytesRead += (tdsVersion >= TDS70)? nameLen * 2: nameLen;
+                    bytesRead += (tdsVersion >= Driver.TDS70)? nameLen * 2: nameLen;
                     col.name = colName;
                 }
             }
@@ -1952,14 +1940,14 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         int severity = in.read();
         int msgLen = in.readShort();
         String message = in.readString(msgLen);
-        sizeSoFar += 2 + ((tdsVersion >= TDS70)? msgLen * 2: msgLen);
+        sizeSoFar += 2 + ((tdsVersion >= Driver.TDS70)? msgLen * 2: msgLen);
         final int srvNameLen = in.read();
         String server = in.readString(srvNameLen);
-        sizeSoFar += 1 + ((tdsVersion >= TDS70)? srvNameLen * 2: srvNameLen);
+        sizeSoFar += 1 + ((tdsVersion >= Driver.TDS70)? srvNameLen * 2: srvNameLen);
 
         final int procNameLen = in.read();
         String procName = in.readString(procNameLen);
-        sizeSoFar += 1 + ((tdsVersion >= TDS70)? procNameLen * 2: procNameLen);
+        sizeSoFar += 1 + ((tdsVersion >= Driver.TDS70)? procNameLen * 2: procNameLen);
 
         int line = in.readShort();
         sizeSoFar += 2;
@@ -2000,7 +1988,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         TdsData.readType(in, col);
         Object value = TdsData.readData(connection, in, col, false);
 
-        if (tdsVersion >= TdsCore.TDS80 &&
+        if (tdsVersion >= Driver.TDS80 &&
             returnParam != null &&
             !returnParam.isSet )
         {
@@ -2035,7 +2023,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         int major, minor, build = 0;
         int pktLen = in.readShort(); // Packet length
         int ack = 1;
-        if (tdsVersion >= TdsCore.TDS70) {
+        if (tdsVersion >= Driver.TDS70) {
             in.skip(5);
             final int nameLen = in.read();
             product = in.readString(nameLen);
@@ -2065,7 +2053,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         connection.setDBServerInfo(product, major, minor, build);
 
-        if (tdsVersion == TDS50 && ack != 5) {
+        if (tdsVersion == Driver.TDS50 && ack != 5) {
             // Login ejected by server create SQLException
             messages.addDiagnostic(4002, 0, 14,
                                     "Login failed", "", "", 0);
@@ -2173,7 +2161,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                 {
                     final int clen = in.read();
                     final String charset = in.readString(clen);
-                    if (tdsVersion >= TDS70) {
+                    if (tdsVersion >= Driver.TDS70) {
                         in.skip(len - 2 - clen * 2);
                     } else {
                         in.skip(len - 2 - clen);
@@ -2187,7 +2175,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                         final int blocksize;
                         final int clen = in.read();
                         blocksize = Integer.parseInt(in.readString(clen));
-                        if (tdsVersion >= TDS70) {
+                        if (tdsVersion >= Driver.TDS70) {
                             in.skip(len - 2 - clen * 2);
                         } else {
                             in.skip(len - 2 - clen);
@@ -2453,7 +2441,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             endOfResponse = true;
         }
 
-        if (serverType == SQLSERVER) {
+        if (serverType == Driver.SQLSERVER) {
             //
             // MS SQL Server provides additional information we
             // can use to return special row counts for DDL etc.
@@ -2745,7 +2733,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             out.setPacketType(RPC_PKT);
             Integer shortcut;
 
-            if (tdsVersion == TdsCore.TDS80
+            if (tdsVersion == Driver.TDS80
             	&& (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
                 // Use the shortcut form of procedure name for TDS8
                 out.write((short) -1);

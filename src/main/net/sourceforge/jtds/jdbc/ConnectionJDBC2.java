@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.11 2004-07-27 20:20:06 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.12 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -280,7 +280,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 timer.stopTimer();
             }
 
-            if (tdsVersion < TdsCore.TDS70 && databaseName.length() > 0) {
+            if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
                 // Need to select the default database
                 setCatalog(databaseName);
             }
@@ -308,7 +308,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         // Discover the maximum decimal precision normal 28 for MS SQL < 2000
-        if (serverType == TdsCore.SQLSERVER) {
+        if (serverType == Driver.SQLSERVER) {
             Statement stmt = this.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT @@MAX_PRECISION");
 
@@ -325,7 +325,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         //
         String sql;
 
-        if (serverType == TdsCore.SYBASE) {
+        if (serverType == Driver.SYBASE) {
             sql = "SET QUOTED_IDENTIFIER ON SET TEXTSIZE 2147483647 ";
         } else {
             sql = "SET QUOTED_IDENTIFIER ON SET TEXTSIZE 2147483647 ";
@@ -450,8 +450,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             return null; // User selected not to use procs
         }
 
-        if (serverType == TdsCore.SYBASE) {
-            if (tdsVersion != TdsCore.TDS50) {
+        if (serverType == Driver.SYBASE) {
+            if (tdsVersion != Driver.TDS50) {
                 return null; // No longer support stored procs with 4.2
             }
 
@@ -472,7 +472,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             TdsData.getNativeType(this, params[i]);
 
-            if (serverType == TdsCore.SYBASE) {
+            if (serverType == Driver.SYBASE) {
                 if (params[i].sqlType.equals("text")
                     || params[i].sqlType.equals("image")) {
                     return null; // Sybase does not support text/image params
@@ -488,7 +488,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         //
         // Append parameter data types to key (not needed for sybase).
         //
-        for (int i = 0; i < params.length && serverType != TdsCore.SYBASE; i++) {
+        for (int i = 0; i < params.length && serverType != Driver.SYBASE; i++) {
             key.append(params[i].sqlType);
         }
 
@@ -498,7 +498,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         ProcEntry proc = getCachedProcedure(key.toString());
 
         if (proc != null) {
-            if (serverType == TdsCore.SYBASE) {
+            if (serverType == Driver.SYBASE) {
                 pstmt.setColMetaData(proc.colMetaData);
                 pstmt.setParamMetaData(proc.paramMetaData);
             }
@@ -512,7 +512,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         proc = new ProcEntry();
         proc.name = getProcName();
 
-        if (serverType == TdsCore.SQLSERVER) {
+        if (serverType == Driver.SQLSERVER) {
             if (!baseTds.microsoftPrepare(sql, proc.name, params)) {
                 return null;
             }
@@ -685,16 +685,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         String tmp = info.getProperty(Support.getMessage("prop.tds"),
-                                      (serverType == TdsCore.SQLSERVER)? "7.0": "5.0");
+                                      (serverType == Driver.SQLSERVER)? "7.0": "5.0");
 
         if (tmp.equals("4.2")) {
-            tdsVersion = TdsCore.TDS42;
+            tdsVersion = Driver.TDS42;
         } else if (tmp.equals("5.0")) {
-            tdsVersion = TdsCore.TDS50;
+            tdsVersion = Driver.TDS50;
         } else if (tmp.equals("7.0")) {
-            tdsVersion = TdsCore.TDS70;
+            tdsVersion = Driver.TDS70;
         } else if (tmp.equals("8.0")) {
-            tdsVersion = TdsCore.TDS80;
+            tdsVersion = Driver.TDS80;
         } else {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",
@@ -711,7 +711,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         if (packetSize < TdsCore.MIN_PKT_SIZE) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 // Default of 0 means let the server specify packet size
                 packetSize = (packetSize == 0) ? 0 : TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
             } else {
@@ -844,7 +844,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         this.databaseMajorVersion = databaseMajorVersion;
         this.databaseMinorVersion = databaseMinorVersion;
 
-        if (tdsVersion >= TdsCore.TDS70) {
+        if (tdsVersion >= Driver.TDS70) {
             StringBuffer buf = new StringBuffer(10);
 
             if (databaseMajorVersion < 10) {
@@ -1126,7 +1126,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             for (int i = 0; i < procInTran.size(); i++) {
                 String key = (String) procInTran.get(i);
 
-                if (key != null && tdsVersion != TdsCore.TDS50) {
+                if (key != null && tdsVersion != Driver.TDS50) {
                     procedures.remove(key);
                 }
             }
@@ -1209,7 +1209,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         String sql;
 
-        if (serverType == TdsCore.SYBASE) {
+        if (serverType == Driver.SYBASE) {
             if (autoCommit) {
                 sql = "SET CHAINED OFF";
             } else {
@@ -1251,7 +1251,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                                      catalog, "setCatalog"), "3D000");
         }
 
-        String sql = tdsVersion >= TdsCore.TDS70 ?
+        String sql = tdsVersion >= Driver.TDS70 ?
                      ("use [" + catalog + ']') : "use " + catalog;
         baseTds.submitSQL(sql);
     }

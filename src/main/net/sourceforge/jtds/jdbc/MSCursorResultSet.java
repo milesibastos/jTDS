@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.4 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.5 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -220,7 +220,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                 break;
         }
 
-        if (tds.getTdsVersion() == TdsCore.TDS42
+        if (tds.getTdsVersion() == Driver.TDS42
             && procedureParams != null && procedureParams.length > 0) {
             // SQL 6.5 does not support stored procs (with params) in the sp_cursor call
             procName = null;

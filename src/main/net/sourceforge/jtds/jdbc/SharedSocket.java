@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.6 2004-07-27 20:20:06 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.7 2004-07-29 00:14:54 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -923,7 +923,7 @@ class SharedSocket {
         cancel[3] = 8;
         cancel[4] = 0;
         cancel[5] = 0;
-        cancel[6] = (getTdsVersion() >= TdsCore.TDS70) ? (byte) 1 : 0;
+        cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
         cancel[7] = 0;
         getOut().write(cancel, 0, 8);
         

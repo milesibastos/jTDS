@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.1 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.2 2004-07-29 00:14:53 ddkilzer Exp $
  */
 class SQLDiagnostic {
     /**
@@ -359,7 +359,7 @@ class SQLDiagnostic {
                        String procName,
                        int line) {
         if (serverity > 10) {
-            if (serverType == TdsCore.SQLSERVER && number == 8152) {
+            if (serverType == Driver.SQLSERVER && number == 8152) {
                 DataTruncation e = new DataTruncation(-1, false, false, -1, -1);
                 addException(e);
             } else {
@@ -433,7 +433,7 @@ class SQLDiagnostic {
     private static String getStateCode(final int number,
                                        final int serverType,
                                        final String defState) {
-        final HashMap stateTable = (serverType == TdsCore.SYBASE) ? sybStates : mssqlStates;
+        final HashMap stateTable = (serverType == Driver.SYBASE) ? sybStates : mssqlStates;
         final String state = (String) stateTable.get(new Integer(number));
 
         if (state != null) {

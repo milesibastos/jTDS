@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.4 2004-07-27 15:35:15 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.5 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -58,7 +58,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         this.connection = connection;
         tdsVersion = connection.getTdsVersion();
 
-        if (tdsVersion >= TdsCore.TDS70) {
+        if (tdsVersion >= Driver.TDS70) {
             sysnameLength = 128;
         }
     }
@@ -172,7 +172,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
@@ -286,7 +286,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_column_privileges ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_column_privileges ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_column_privileges ?, ?, ?, ?";
@@ -371,7 +371,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_columns ?, ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_columns ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_columns ?, ?, ?, ?, ?";
@@ -494,13 +494,13 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_fkeys ?, ?, ?, ?, ?, ?";
 
         if (primaryCatalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + primaryCatalog + "]..sp_fkeys ?, ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + primaryCatalog + "..sp_fkeys ?, ?, ?, ?, ?, ?";
             }
         } else if (foreignCatalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + foreignCatalog + "]..sp_fkeys ?, ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + foreignCatalog + "..sp_fkeys ?, ?, ?, ?, ?, ?";
@@ -850,7 +850,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_statistics ?, ?, ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_statistics ?, ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_statistics ?, ?, ?, ?, ?, ?";
@@ -945,7 +945,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // XXX Need to check for Sybase
 
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion >= TdsCore.TDS70) ? 0 : 16;
+        return (tdsVersion >= Driver.TDS70) ? 0 : 16;
     }
 
     /**
@@ -972,7 +972,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // XXX Need to check for Sybase
 
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion >= TdsCore.TDS70) ? 0 : 16;
+        return (tdsVersion >= Driver.TDS70) ? 0 : 16;
     }
 
     /**
@@ -998,7 +998,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // XXX How do we find this out for Sybase?
 
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion >= TdsCore.TDS70) ? 1024 : 250;
+        return (tdsVersion >= Driver.TDS70) ? 1024 : 250;
     }
 
     /**
@@ -1065,7 +1065,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // per SQL Server Books Online "Administrator's Companion",
         // Part 1, Chapter 1.
-        return (tdsVersion >= TdsCore.TDS70) ? 8060 : 1962;
+        return (tdsVersion >= Driver.TDS70) ? 8060 : 1962;
     }
 
     /**
@@ -1125,7 +1125,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // XXX Need to check for Sybase
 
         // per "Programming ODBC for SQLServer" Appendix A
-        return (tdsVersion >= TdsCore.TDS70) ? 256 : 16;
+        return (tdsVersion >= Driver.TDS70) ? 256 : 16;
     }
 
     /**
@@ -1179,7 +1179,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_pkeys ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_pkeys ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_pkeys ?, ?, ?";
@@ -1270,7 +1270,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_sproc_columns ?, ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_sproc_columns ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_sproc_columns ?, ?, ?, ?, ?";
@@ -1338,7 +1338,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_stored_procedures ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_stored_procedures ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_stored_procedures ?, ?, ?";
@@ -1388,7 +1388,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         //
         // MJH - isLogin column only in MSSQL >= 7.0
         //
-        if (this.tdsVersion >= TdsCore.TDS70) {
+        if (this.tdsVersion >= Driver.TDS70) {
             sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE islogin=1";
         } else {
             sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE uid>0";
@@ -1507,7 +1507,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_table_privileges ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_table_privileges ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_table_privileges ?, ?, ?";
@@ -1570,7 +1570,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_tables ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_tables ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_tables ?, ?, ?, ?";
@@ -1811,7 +1811,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             s = connection.createStatement();
 
             // MJH Sybase does not support system_user
-            if (connection.getServerType() == TdsCore.SYBASE) {
+            if (connection.getServerType() == Driver.SYBASE) {
                 rs = s.executeQuery("select suser_name()");
             } else {
                 rs = s.executeQuery("select system_user");
@@ -1870,7 +1870,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?, ?";
 
         if (catalog != null) {
-            if (tdsVersion >= TdsCore.TDS70) {
+            if (tdsVersion >= Driver.TDS70) {
                 query = "exec [" + catalog + "]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
             } else {
                 query = "exec " + catalog + "..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
@@ -2294,7 +2294,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
     throws SQLException {
         // XXX Need to check for Sybase
-        return connection.getServerType() == TdsCore.SQLSERVER;
+        return connection.getServerType() == Driver.SQLSERVER;
     }
 
     /**
@@ -2306,7 +2306,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean supportsDataManipulationTransactionsOnly()
     throws SQLException {
         // XXX Need to check for Sybase
-        return connection.getServerType()!= TdsCore.SQLSERVER;
+        return connection.getServerType()!= Driver.SQLSERVER;
     }
 
     /**

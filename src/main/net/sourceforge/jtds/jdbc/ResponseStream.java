@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.4 2004-07-27 03:05:33 ddkilzer Exp $
+ * @version $Id: ResponseStream.java,v 1.5 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -196,7 +196,7 @@ public class ResponseStream {
      * @throws IOException
      */
     String readString(int len) throws IOException {
-        if (tdsVersion >= TdsCore.TDS70) {
+        if (tdsVersion >= Driver.TDS70) {
             char[] chars = (len > charBuffer.length) ? new char[len] : charBuffer;
 
             for (int i = 0; i < len; i++) {

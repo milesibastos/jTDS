@@ -22,8 +22,7 @@ import java.sql.*;
 import javax.naming.*;
 import javax.sql.DataSource;
 
-import net.sourceforge.jtds.jdbc.Support;
-import net.sourceforge.jtds.jdbc.TdsCore;
+import net.sourceforge.jtds.jdbc.*;
 import net.sourceforge.jtds.util.*;
 
 /**
@@ -31,7 +30,7 @@ import net.sourceforge.jtds.util.*;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.5 2004-07-27 01:29:26 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.6 2004-07-29 00:14:56 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -43,7 +42,7 @@ implements DataSource, Referenceable, Serializable {
     protected String password = "";
     protected String description;
     protected String tds = "7.0";
-    protected int serverType = TdsCore.SQLSERVER;
+    protected int serverType = net.sourceforge.jtds.jdbc.Driver.SQLSERVER;
     protected String charset = "";
     protected String language = "";
     protected String domain = "";

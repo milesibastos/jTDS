@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.6 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.7 2004-07-29 00:14:53 ddkilzer Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -119,7 +119,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         if (returnKeys && sql.substring(0, 6).equalsIgnoreCase("INSERT")) {
-            if (connection.getServerType() == TdsCore.SQLSERVER
+            if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
                 this.sql += " SELECT SCOPE_IDENTITY() AS ID";
             } else {
@@ -576,7 +576,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         //
         // NB. This is usable only with the JDBC3 version of the interface.
         //
-        if (connection.getServerType() == TdsCore.SYBASE
+        if (connection.getServerType() == Driver.SYBASE
             && this instanceof JtdsPreparedStatement) {
             // Sybase does return the parameter types for prepared sql.
             connection.prepareSQL(this, sql, new ParamInfo[0], false);
@@ -617,7 +617,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public ResultSetMetaData getMetaData() throws SQLException {
         if (colMetaData == null) {
-            if (connection.getServerType() == TdsCore.SYBASE) {
+            if (connection.getServerType() == Driver.SYBASE) {
                 // Sybase can provide meta data as a by product of preparing the call.
                 connection.prepareSQL(this, sql, new ParamInfo[0], false);
 

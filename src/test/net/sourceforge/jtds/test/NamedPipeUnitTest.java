@@ -20,6 +20,7 @@ package net.sourceforge.jtds.test;
 import junit.framework.TestCase;
 import net.sourceforge.jtds.jdbc.SharedNamedPipe;
 import net.sourceforge.jtds.jdbc.TdsCore;
+import net.sourceforge.jtds.jdbc.Driver;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
@@ -30,25 +31,25 @@ public class NamedPipeUnitTest extends TestCase {
 
 
     public void testCalculateBufferSize_TDS42() {
-        int length = invoke_calculateBufferSize(TdsCore.TDS42, 0);
+        int length = invoke_calculateBufferSize(Driver.TDS42, 0);
         assertEquals(TdsCore.MIN_PKT_SIZE, length);
     }
 
 
     public void testCalculateBufferSize_TDS50() {
-        int length = invoke_calculateBufferSize(TdsCore.TDS50, 0);
+        int length = invoke_calculateBufferSize(Driver.TDS50, 0);
         assertEquals(TdsCore.MIN_PKT_SIZE, length);
     }
 
 
     public void testCalculateBufferSize_TDS70() {
-        int length = invoke_calculateBufferSize(TdsCore.TDS70, 0);
+        int length = invoke_calculateBufferSize(Driver.TDS70, 0);
         assertEquals(TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70, length);
     }
 
 
     public void testCalculateBufferSize_TDS80() {
-        int length = invoke_calculateBufferSize(TdsCore.TDS80, 0);
+        int length = invoke_calculateBufferSize(Driver.TDS80, 0);
         assertEquals(TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70, length);
     }
 

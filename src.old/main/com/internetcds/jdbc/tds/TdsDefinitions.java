@@ -38,114 +38,114 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.9 2002-08-28 07:44:24 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.10 2002-08-30 10:27:18 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.9 2002-08-28 07:44:24 alin_sinpalean Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.10 2002-08-30 10:27:18 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
    //
-   public static final int SQLSERVER = 1;
-   public static final int SYBASE    = 2;
+   int SQLSERVER = 1;
+   int SYBASE    = 2;
 
    //
    // Versions of the TDS protocol.  Keep the values in order so code
    // can recognize versions at or after a specified version.
    //
-   public static final int TDS42     = 42;
-   public static final int TDS50     = 50;
-   public static final int TDS70     = 70;
+   int TDS42     = 42;
+   int TDS50     = 50;
+   int TDS70     = 70;
 
    //
    // Sub packet types
    //
-   static final byte TDS_LANG_TOKEN      = (byte)33;   // 0x21 ? TDS 5.0 only
-   static final byte TDS_CLOSE_TOKEN     = (byte)113;  // 0x71 ? TDS 5.0 only? ct_close()
-   static final byte TDS_RET_STAT_TOKEN  = (byte)121;  // 0x79 RETURNSTATUS
-   static final byte TDS_PROCID          = (byte)124;  // 0x7C TDS_PROCID
-   static final byte TDS7_RESULT_TOKEN   = (byte)129;  // 0x81 COLMETADATA TDS 7.0 only
-   static final byte TDS_COL_NAME_TOKEN  = (byte)160;  // 0xA0 TDS 4.2 only
-   static final byte TDS_COL_INFO_TOKEN  = (byte)161;  // 0xA1 TDS 4.2 only
-   static final byte TDS_TABNAME         = (byte)164;  // 0xA4 TABNAME
-   static final byte TDS_UNKNOWN_0xA5    = (byte)165;  // 0xA5 COLINFO
-   static final byte TDS_UNKNOWN_0xA7    = (byte)167;  // 0xA7
-   static final byte TDS_UNKNOWN_0xA8    = (byte)168;  // 0xA8
-   static final byte TDS_ORDER           = (byte)169;  // 0xA9 ORDER
-   static final byte TDS_ERR_TOKEN       = (byte)170;  // 0xAA ERROR
-   static final byte TDS_MSG_TOKEN       = (byte)171;  // 0xAB INFO
-   static final byte TDS_PARAM_TOKEN     = (byte)172;  // 0xAC
-   static final byte TDS_LOGIN_ACK_TOKEN = (byte)173;  // 0xAD LOGINACK
-   static final byte TDS_CONTROL         = (byte)174;  // 0xAE TDS_CONTROL
-   static final byte TDS_ROW_TOKEN       = (byte)209;  // 0xD1 ROW
-   static final byte TDS_CMP_ROW_TOKEN   = (byte)211;  // 0xD3 ALTROW Compute Result Row
-   static final byte TDS_CAP_TOKEN       = (byte)226;  // 0xE2
-   static final byte TDS_ENV_CHG_TOKEN   = (byte)227;  // 0xE3 ENVCHANGE
-   static final byte TDS_MSG50_TOKEN     = (byte)229;  // 0xE5
-   static final byte TDS_RESULT_TOKEN    = (byte)238;  // 0xEE
-   static final byte TDS_END_TOKEN       = (byte)253;  // 0xFD DONE
-   static final byte TDS_DONEPROC        = (byte)254;  // 0xFE DONEPROC
-   static final byte TDS_DONEINPROC      = (byte)255;  // 0xFF DONEINPROC
+   byte TDS_LANG_TOKEN      = (byte)33;   // 0x21 ? TDS 5.0 only
+   byte TDS_CLOSE_TOKEN     = (byte)113;  // 0x71 ? TDS 5.0 only? ct_close()
+   byte TDS_RET_STAT_TOKEN  = (byte)121;  // 0x79 RETURNSTATUS
+   byte TDS_PROCID          = (byte)124;  // 0x7C TDS_PROCID
+   byte TDS7_RESULT_TOKEN   = (byte)129;  // 0x81 COLMETADATA TDS 7.0 only
+   byte TDS_COL_NAME_TOKEN  = (byte)160;  // 0xA0 TDS 4.2 only
+   byte TDS_COL_INFO_TOKEN  = (byte)161;  // 0xA1 TDS 4.2 only
+   byte TDS_TABNAME         = (byte)164;  // 0xA4 TABNAME
+   byte TDS_UNKNOWN_0xA5    = (byte)165;  // 0xA5 COLINFO
+   byte TDS_UNKNOWN_0xA7    = (byte)167;  // 0xA7
+   byte TDS_UNKNOWN_0xA8    = (byte)168;  // 0xA8
+   byte TDS_ORDER           = (byte)169;  // 0xA9 ORDER
+   byte TDS_ERR_TOKEN       = (byte)170;  // 0xAA ERROR
+   byte TDS_MSG_TOKEN       = (byte)171;  // 0xAB INFO
+   byte TDS_PARAM_TOKEN     = (byte)172;  // 0xAC
+   byte TDS_LOGIN_ACK_TOKEN = (byte)173;  // 0xAD LOGINACK
+   byte TDS_CONTROL         = (byte)174;  // 0xAE TDS_CONTROL
+   byte TDS_ROW_TOKEN       = (byte)209;  // 0xD1 ROW
+   byte TDS_CMP_ROW_TOKEN   = (byte)211;  // 0xD3 ALTROW Compute Result Row
+   byte TDS_CAP_TOKEN       = (byte)226;  // 0xE2
+   byte TDS_ENV_CHG_TOKEN   = (byte)227;  // 0xE3 ENVCHANGE
+   byte TDS_MSG50_TOKEN     = (byte)229;  // 0xE5
+   byte TDS_RESULT_TOKEN    = (byte)238;  // 0xEE
+   byte TDS_END_TOKEN       = (byte)253;  // 0xFD DONE
+   byte TDS_DONEPROC        = (byte)254;  // 0xFE DONEPROC
+   byte TDS_DONEINPROC      = (byte)255;  // 0xFF DONEINPROC
    // end of sub packet types
 
-   static final byte TDS_ENV_DATABASE  = (byte)1;
-   static final byte TDS_ENV_CHARSET   = (byte)3;
-   static final byte TDS_ENV_BLOCKSIZE = (byte)4;
+   byte TDS_ENV_DATABASE  = (byte)1;
+   byte TDS_ENV_CHARSET   = (byte)3;
+   byte TDS_ENV_BLOCKSIZE = (byte)4;
 
 
    //
    // Native Column types
    //
-   static final byte SYBVOID        =  31;   // 0x1F
-   static final byte SYBIMAGE       =  34;   // 0x22
-   static final byte SYBTEXT        =  35;   // 0x23
-   static final byte SYBUNIQUEID    =  36;   // 0x24 - uniqueidentifier
-   static final byte SYBVARBINARY   =  37;   // 0x25
-   static final byte SYBINTN        =  38;   // 0x26
-   static final byte SYBVARCHAR     =  39;   // 0x27
-   static final byte SYBBINARY      =  45;   // 0x2D
-   static final byte SYBCHAR        =  47;   // 0x2F
-   static final byte SYBINT1        =  48;   // 0x30
-   static final byte SYBBIT         =  50;   // 0x32
-   static final byte SYBINT2        =  52;   // 0x34
-   static final byte SYBINT4        =  56;   // 0x38
-   static final byte SYBDATETIME4   =  58;   // 0x3A
-   static final byte SYBREAL        =  59;   // 0x3B
-   static final byte SYBMONEY       =  60;   // 0x3C (does not allow nulls?)
-   static final byte SYBDATETIME    =  61;   // 0x3D
-   static final byte SYBFLT8        =  62;   // 0x3E
-   static final byte SYBNTEXT       =  99;   // 0x63
-   static final byte SYBNVARCHAR    = 103;   // 0x67
-   static final byte SYBBITN        = 104;   // 0x68
-   static final byte SYBDECIMAL     = 106;   // 0x6A
-   static final byte SYBNUMERIC     = 108;   // 0x6C
-   static final byte SYBFLTN        = 109;   // 0x6D
-   static final byte SYBMONEYN      = 110;   // 0x6E
-   static final byte SYBDATETIMN    = 111;   // 0x6F
-   static final byte SYBMONEY4      = 112;   // 0x70
-   static final byte SYBNCHAR       = -17;   // 0xEF
+   byte SYBVOID        =  31;   // 0x1F
+   byte SYBIMAGE       =  34;   // 0x22
+   byte SYBTEXT        =  35;   // 0x23
+   byte SYBUNIQUEID    =  36;   // 0x24 - uniqueidentifier
+   byte SYBVARBINARY   =  37;   // 0x25
+   byte SYBINTN        =  38;   // 0x26
+   byte SYBVARCHAR     =  39;   // 0x27
+   byte SYBBINARY      =  45;   // 0x2D
+   byte SYBCHAR        =  47;   // 0x2F
+   byte SYBINT1        =  48;   // 0x30
+   byte SYBBIT         =  50;   // 0x32
+   byte SYBINT2        =  52;   // 0x34
+   byte SYBINT4        =  56;   // 0x38
+   byte SYBDATETIME4   =  58;   // 0x3A
+   byte SYBREAL        =  59;   // 0x3B
+   byte SYBMONEY       =  60;   // 0x3C (does not allow nulls?)
+   byte SYBDATETIME    =  61;   // 0x3D
+   byte SYBFLT8        =  62;   // 0x3E
+   byte SYBNTEXT       =  99;   // 0x63
+   byte SYBNVARCHAR    = 103;   // 0x67
+   byte SYBBITN        = 104;   // 0x68
+   byte SYBDECIMAL     = 106;   // 0x6A
+   byte SYBNUMERIC     = 108;   // 0x6C
+   byte SYBFLTN        = 109;   // 0x6D
+   byte SYBMONEYN      = 110;   // 0x6E
+   byte SYBDATETIMN    = 111;   // 0x6F
+   byte SYBMONEY4      = 112;   // 0x70
+   byte SYBNCHAR       = -17;   // 0xEF
 
    // according to srv.h here are some additional types
-   static final byte SYBBIGVARBINARY = (byte)0xA5;
-   static final byte SYBBIGVARCHAR   = (byte)0xA7;
-   static final byte SYBBIGBINARY    = (byte)0xAD;
-   static final byte SYBBIGCHAR      = (byte)0xAF;
+   byte SYBBIGVARBINARY = (byte)0xA5;
+   byte SYBBIGVARCHAR   = (byte)0xA7;
+   byte SYBBIGBINARY    = (byte)0xAD;
+   byte SYBBIGCHAR      = (byte)0xAF;
 
    // XXX should SYBMONEY4 be 122 instead of 112?
-   static final byte SYBSMALLMONEY  = 122;   // 0x7A
+   byte SYBSMALLMONEY  = 122;   // 0x7A
    // end of column types
 
-   public static final String PROP_HOST       = "HOST",
-                              PROP_SERVERTYPE = "SERVERTYPE",
-                              PROP_PORT       = "PORT",
-                              PROP_DBNAME     = "DBNAME",
-                              PROP_USER       = "USER",
-                              PROP_PASSWORD   = "PASSWORD",
-                              PROP_APPNAME    = "APPNAME",
-                              PROP_SERVERNAME = "SERVERNAME",
-                              PROP_PROGNAME   = "PROGNAME",
-                              PROP_TDS        = "TDS";
+   String PROP_HOST       = "HOST",
+          PROP_SERVERTYPE = "SERVERTYPE",
+          PROP_PORT       = "PORT",
+          PROP_DBNAME     = "DBNAME",
+          PROP_USER       = "USER",
+          PROP_PASSWORD   = "PASSWORD",
+          PROP_APPNAME    = "APPNAME",
+          PROP_SERVERNAME = "SERVERNAME",
+          PROP_PROGNAME   = "PROGNAME",
+          PROP_TDS        = "TDS";
 }

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -2839,7 +2839,7 @@ public class Tds implements TdsDefinitions {
             scale = -1;
             precision = -1;
 
-            int sizeOfColumn = -1;
+            int bufLength=-1, dispSize=-1;
 
             byte flagData[] = new byte[4];
             for (int i = 0; i < 4; i++) {
@@ -2848,7 +2848,7 @@ public class Tds implements TdsDefinitions {
             }
             boolean nullable = (flagData[2] & 0x01) > 0;
             boolean caseSensitive = (flagData[2] & 0x02) > 0;
-            boolean writeable = (flagData[2] & 0x0C) > 0;
+            boolean writable = (flagData[2] & 0x0C) > 0;
             boolean autoIncrement = (flagData[2] & 0x10) > 0;
             String tableName = "";
 
@@ -2871,12 +2871,12 @@ public class Tds implements TdsDefinitions {
                 tableName = encoder.getString(comm.getBytes(tableNameLen));
                 bytesRead += tableNameLen;
 
-                sizeOfColumn = 2 << 31 - 1;
+                bufLength = 2 << 31 - 1;
             }
             else if (columnType == SYBDECIMAL
                      || columnType == SYBNUMERIC) {
                 int tmp;
-                sizeOfColumn = comm.getByte();
+                bufLength = comm.getByte();
                 bytesRead++;
                 precision = comm.getByte();
                 // Total number of digits
@@ -2886,29 +2886,17 @@ public class Tds implements TdsDefinitions {
                 bytesRead++;
             }
             else if (isFixedSizeColumn(columnType)) {
-                sizeOfColumn = lookupColumnSize(columnType);
+                bufLength = lookupBufferSize(columnType);
             }
             else {
-                sizeOfColumn = ((int) comm.getByte() & 0xff);
+                bufLength = ((int) comm.getByte() & 0xff);
                 bytesRead++;
             }
             numColumns++;
 
-            if (scale != -1) {
-                columns.setScale(numColumns, scale);
-            }
-            if (precision != -1) {
-                columns.setPrecision(numColumns, precision);
-            }
-            columns.setTableName(numColumns, tableName);
-            columns.setNativeType(numColumns, columnType);
-            columns.setDisplaySize(numColumns, sizeOfColumn);
-            columns.setNullable(numColumns, (nullable
-                     ? ResultSetMetaData.columnNullable
-                     : ResultSetMetaData.columnNoNulls));
-            columns.setAutoIncrement(numColumns, autoIncrement);
-            columns.setReadOnly(numColumns, !writeable);
-            columns.setCaseSensitive(numColumns, caseSensitive);
+            populateColumn(columns.getColumn(numColumns), columnType, null,
+                dispSize, bufLength, nullable, autoIncrement, writable,
+                caseSensitive, tableName, precision, scale);
         }
 
         // Don't know what the rest is except that the
@@ -3059,7 +3047,61 @@ public class Tds implements TdsDefinitions {
      *@exception  com.internetcds.jdbc.tds.TdsException  Thrown if the given
      *      type either doesn't exist or is a variable sized data type.
      */
-    private int lookupColumnSize(byte nativeColumnType)
+    private int lookupBufferSize(byte nativeColumnType)
+             throws com.internetcds.jdbc.tds.TdsException
+    {
+        switch (nativeColumnType) {
+            case SYBINT1:
+            {
+                return 1;
+            }
+            case SYBINT2:
+            {
+                return 2;
+            }
+            case SYBINT4:
+            {
+                return 4;
+            }
+            case SYBREAL:
+            {
+                return 4;
+            }
+            case SYBFLT8:
+            {
+                return 8;
+            }
+            case SYBDATETIME:
+            {
+                return 8;
+            }
+            case SYBDATETIME4:
+            {
+                return 4;
+            }
+            case SYBBIT:
+            {
+                return 1;
+            }
+            case SYBMONEY:
+            {
+                return 8;
+            }
+            case SYBMONEY4:
+            case SYBSMALLMONEY:
+            {
+                return 4;
+            }
+            default:
+            {
+                throw new TdsException("Not fixed size column "
+                         + nativeColumnType);
+            }
+        }
+    }
+
+
+    private int lookupDisplaySize(byte nativeColumnType)
              throws com.internetcds.jdbc.tds.TdsException
     {
         switch (nativeColumnType) {
@@ -3077,11 +3119,11 @@ public class Tds implements TdsDefinitions {
             }
             case SYBREAL:
             {
-                return 0;
+                return 14;
             }
             case SYBFLT8:
             {
-                return 0;
+                return 24;
             }
             case SYBDATETIME:
             {
@@ -3620,7 +3662,7 @@ public class Tds implements TdsDefinitions {
              throws java.io.IOException, com.internetcds.jdbc.tds.TdsException
     {
         int numColumns = comm.getTdsShort();
-        Columns columns = new Columns();
+        Columns columns = new Columns(numColumns);
 
         for (int colNum = 1; colNum <= numColumns; ++colNum) {
 
@@ -3657,28 +3699,25 @@ public class Tds implements TdsDefinitions {
             }
 
             // Determine the column size.
-            int colSize;
+            int dispSize=-1, bufLength;
             String tableName = "";
             if (isBlobType(columnType)) {
 
                 // Text and image columns have 4-byte size fields.
-                colSize = comm.getTdsInt();
+                bufLength = comm.getTdsInt();
 
                 // Get table name.
                 tableName = comm.getString(comm.getTdsShort());
             }
-
             // Fixed types have no size field in the packet.
             else if (isFixedSizeColumn((byte) columnType)) {
-                colSize = lookupColumnSize((byte) columnType);
+                bufLength = lookupBufferSize((byte) columnType);
             }
-
             else if (isLargeType(xColType)) {
-                colSize = comm.getTdsShort();
+                bufLength = comm.getTdsShort();
             }
-
             else {
-                colSize = comm.getByte();
+                bufLength = comm.getByte();
             }
 
             // Get precision, scale for decimal types.
@@ -3697,26 +3736,159 @@ public class Tds implements TdsDefinitions {
             String columnName = comm.getString(colNameLen);
 
             // Populate the Column object.
-            columns.setNativeType(colNum, columnType);
-            columns.setName(colNum, columnName);
-            columns.setLabel(colNum, columnName);
-            columns.setDisplaySize(colNum, colSize);
-            columns.setNullable(colNum, (nullable
-                     ? ResultSetMetaData.columnNullable
-                     : ResultSetMetaData.columnNoNulls));
-            columns.setAutoIncrement(colNum, autoIncrement);
-            columns.setReadOnly(colNum, !writable);
-            columns.setCaseSensitive(colNum, caseSensitive);
-            columns.setTableName(colNum, tableName);
-            if (precision != -1) {
-                columns.setPrecision(colNum, precision);
-            }
-            if (scale != -1) {
-                columns.setScale(colNum, scale);
-            }
+            populateColumn(columns.getColumn(colNum), columnType, columnName,
+                dispSize, bufLength, nullable, autoIncrement, writable,
+                caseSensitive, tableName, precision, scale);
         }
 
         return new PacketColumnNamesResult(columns);
+    }
+
+
+    private void populateColumn(Column col, int columnType, String columnName,
+        int dispSize, int bufLength, boolean nullable, boolean autoIncrement,
+        boolean writable, boolean caseSensitive, String tableName,
+        int precision, int scale)
+    {
+        if( columnName != null )
+        {
+            col.setName(columnName);
+            col.setLabel(columnName);
+        }
+
+        col.setType(columnType);
+        col.setBufferSize(bufLength);
+        col.setNullable(nullable
+            ? ResultSetMetaData.columnNullable
+            : ResultSetMetaData.columnNoNulls);
+        col.setAutoIncrement(autoIncrement);
+        col.setReadOnly(!writable);
+        col.setCaseSensitive(caseSensitive);
+
+        // Set table name (and catalog and schema, if available)
+        if( tableName != null )
+        {
+            int pos = tableName.indexOf('.');
+
+            if( pos >=0 )
+            // The table name also contains a catalog/schema
+            {
+                int p2 = tableName.indexOf('.', pos+1);
+                col.setCatalog(tableName.substring(0, pos));
+                col.setSchema(tableName.substring(pos+1, p2));
+                col.setTableName(tableName.substring(p2+1));
+            }
+            else
+                col.setTableName(tableName);
+        }
+
+        // Set scale
+        switch( columnType )
+        {
+            case SYBMONEY:
+            case SYBMONEYN:
+            case SYBMONEY4:
+            case SYBSMALLMONEY:
+                col.setScale(4);
+                break;
+            case SYBDATETIME:
+                col.setScale(3);
+                break;
+            case SYBDATETIMN:
+                if( bufLength == 8 )
+                    col.setScale(3);
+                else
+                    col.setScale(0);
+                break;
+            default:
+                col.setScale(scale<0 ? 0 : scale);
+        }
+
+        // Set precision and display size
+        switch( columnType )
+        {
+            case SYBBINARY:
+            case SYBIMAGE:
+            case SYBVARBINARY:
+                dispSize = 2 * (precision = bufLength);
+                break;
+            case SYBCHAR:
+            case SYBTEXT:
+            case SYBVARCHAR:
+                dispSize = precision = bufLength;
+                break;
+            case SYBNCHAR:
+            case SYBNTEXT:
+            case SYBNVARCHAR:
+                dispSize = precision = bufLength>>1;
+                break;
+            case SYBBIT:
+                dispSize = precision = 1;
+                break;
+            case SYBUNIQUEID:
+                dispSize = precision = 36;
+                break;
+            case SYBDATETIME:
+                dispSize = precision = 23;
+                break;
+            case SYBDATETIME4:
+                dispSize = 3 + (precision = 16);
+                break;
+            case SYBDATETIMN:
+                if( bufLength == 8 )
+                    dispSize = precision = 23;
+                else
+                    dispSize = 3 + (precision = 16);
+                break;
+            case SYBDECIMAL:
+            case SYBNUMERIC:
+                dispSize = (bufLength==scale ? 3 : 2) + precision;
+                break;
+            case SYBFLT8:
+                dispSize = 9 + (precision = 15);
+                break;
+            case SYBREAL:
+                dispSize = 7 + (precision = 7);
+                break;
+            case SYBFLTN:
+                if( bufLength == 8 )
+                    dispSize = 9 + (precision = 15);
+                else
+                    dispSize = 7 + (precision = 7);
+                break;
+            case SYBINT4:
+                dispSize = 1 + (precision = 10);
+                break;
+            case SYBINT2:
+                dispSize = 1 + (precision = 5);
+                break;
+            case SYBINT1:
+                dispSize = 1 + (precision = 2);
+                break;
+            case SYBINTN:
+                if( bufLength == 4 )
+                    dispSize = 1 + (precision = 10);
+                else if( bufLength == 2 )
+                    dispSize = 1 + (precision = 5);
+                else
+                    dispSize = 1 + (precision = 2);
+                break;
+            case SYBMONEY:
+                dispSize = 2 + (precision = 19);
+                break;
+            case SYBMONEY4:
+            case SYBSMALLMONEY:
+                dispSize = 2 + (precision = 10);
+                break;
+            case SYBMONEYN:
+                if( bufLength == 8 )
+                    dispSize = 2 + (precision = 19);
+                else
+                    dispSize = 2 + (precision = 10);
+                break;
+        }
+        col.setDisplaySize(dispSize);
+        col.setPrecision(precision);
     }
 
 
@@ -3916,11 +4088,22 @@ public class Tds implements TdsDefinitions {
                 result = java.sql.Types.NUMERIC;
                 break;
             case SYBFLT8:
-                result = java.sql.Types.DOUBLE;
+                result = java.sql.Types.FLOAT;
                 break;
             case SYBFLTN:
-                result = java.sql.Types.DOUBLE;
+            {
+                switch (size) {
+                    case 4:
+                        result = java.sql.Types.REAL;
+                        break;
+                    case 8:
+                        result = java.sql.Types.FLOAT;
+                        break;
+                    default:
+                        throw new TdsException("Bad size of SYBFLTN");
+                }
                 break;
+            }
             case SYBINT1:
                 result = java.sql.Types.TINYINT;
                 break;
@@ -3948,17 +4131,18 @@ public class Tds implements TdsDefinitions {
                 break;
             }
             // XXX Should money types by NUMERIC or OTHER?
+            // SAfe JDBC-ODBC bridge returns DECIMAL
             case SYBSMALLMONEY:
-                result = java.sql.Types.NUMERIC;
+                result = java.sql.Types.DECIMAL;
                 break;
             case SYBMONEY4:
-                result = java.sql.Types.NUMERIC;
+                result = java.sql.Types.DECIMAL;
                 break;
             case SYBMONEY:
-                result = java.sql.Types.NUMERIC;
+                result = java.sql.Types.DECIMAL;
                 break;
             case SYBMONEYN:
-                result = java.sql.Types.NUMERIC;
+                result = java.sql.Types.DECIMAL;
                 break;
 //         case SYBNUMERIC:      result = java.sql.Types.NUMERIC;     break;
             case SYBREAL:

@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.6 2002-08-28 07:44:24 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.7 2002-08-30 10:27:18 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.6 2002-08-28 07:44:24 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.7 2002-08-30 10:27:18 alin_sinpalean Exp $";
 
 
    /**
@@ -89,7 +89,8 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getCatalogName(int column) throws SQLException
    {
-      return "";
+      String res = columnsInfo.getCatalog(column);
+      return res==null ? "" : res;
    }
 
 
@@ -154,7 +155,16 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public int getColumnType(int column) throws SQLException
    {
-        return columnsInfo.getJdbcType( column );
+      switch( columnsInfo.getNativeType(column) )
+      {
+         case Tds.SYBNCHAR:
+         case Tds.SYBNTEXT:
+         case Tds.SYBNVARCHAR:
+         case Tds.SYBUNIQUEID:
+            return Types.OTHER;
+         default:
+            return columnsInfo.getJdbcType(column);
+      }
    }
 
 
@@ -167,40 +177,83 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getColumnTypeName(int column) throws SQLException
    {
-      String result = null;
+      if( columnsInfo.isAutoIncrement(column).booleanValue() )
+         return getCleanTypeName(column)+" identity";
+      return getCleanTypeName(column);
+   }
 
+
+   /**
+    * Get the native data type name (i.e. without 'identity').
+    */
+   private String getCleanTypeName(int column) throws SQLException
+   {
       switch (columnsInfo.getNativeType(column))
       {
-         case Tds.SYBVOID: {result = "void"; break;}
-         case Tds.SYBIMAGE: {result = "image"; break;}
-         case Tds.SYBTEXT: {result = "text"; break;}
-         case Tds.SYBUNIQUEID: {result = "uniqueidentifier"; break;}
-         case Tds.SYBVARBINARY: {result = "varbinary"; break;}
-         case Tds.SYBINTN: {result = "INTN"; break;}
-         case Tds.SYBVARCHAR: {result = "varchar"; break;}
-         case Tds.SYBBINARY: {result = "binary"; break;}
-         case Tds.SYBCHAR: {result = "char"; break;}
-         case Tds.SYBINT1: {result = "tinyint"; break;}
-         case Tds.SYBBIT: {result = "bit"; break;}
-         case Tds.SYBINT2: {result = "smallint"; break;}
-         case Tds.SYBINT4: {result = "int"; break;}
-         case Tds.SYBDATETIME4: {result = "smalldatetime"; break;}
-         case Tds.SYBREAL: {result = "real"; break;}
-         case Tds.SYBMONEY: {result = "money"; break;}
-         case Tds.SYBDATETIME: {result = "datetime"; break;}
-         case Tds.SYBFLT8: {result = "float"; break;}
-         case Tds.SYBDECIMAL: {result = "decimal"; break;}
-         case Tds.SYBNUMERIC: {result = "numeric"; break;}
-         case Tds.SYBFLTN: {result = "FLTN"; break;}
-         case Tds.SYBMONEYN: {result = "MONEYN"; break;}
-         case Tds.SYBDATETIMN: {result = "DATETIMN"; break;}
-         case Tds.SYBMONEY4: {result = "smallmoney"; break;}
-         default:
+         case Tds.SYBVOID: return "void";
+         case Tds.SYBIMAGE: return "image";
+         case Tds.SYBTEXT: return "text";
+         case Tds.SYBUNIQUEID: return "uniqueidentifier";
+         case Tds.SYBVARBINARY: return "varbinary";
+         case Tds.SYBVARCHAR: return "varchar";
+         case Tds.SYBBINARY: return "binary";
+         case Tds.SYBCHAR: return "char";
+         case Tds.SYBINT1: return "tinyint";
+         case Tds.SYBBIT: return "bit";
+         case Tds.SYBINT2: return "smallint";
+         case Tds.SYBINT4: return "int";
+         case Tds.SYBDATETIME4: return "smalldatetime";
+         case Tds.SYBREAL: return "real";
+         case Tds.SYBMONEY: return "money";
+         case Tds.SYBDATETIME: return "datetime";
+         case Tds.SYBFLT8: return "float";
+         case Tds.SYBDECIMAL: return "decimal";
+         case Tds.SYBNUMERIC: return "numeric";
+         case Tds.SYBMONEY4: return "smallmoney";
+         case Tds.SYBNCHAR: return "nchar";
+         case Tds.SYBNTEXT: return "ntext";
+         case Tds.SYBNVARCHAR: return "nvarchar";
+         case Tds.SYBSMALLMONEY: return "smallmoney";
+         case Tds.SYBINTN:
          {
-            throw new SQLException("Unknown native type for column " + column);
+            switch( columnsInfo.getBufferSize(column) )
+            {
+                case 1: return "tinyint";
+                case 2: return "smallint";
+                case 4: return "int";
+            }
+            break;
+         }
+         case Tds.SYBFLTN:
+         {
+            switch( columnsInfo.getBufferSize(column) )
+            {
+                case 4: return "real";
+                case 8: return "float";
+            }
+            break;
+         }
+         case Tds.SYBMONEYN:
+         {
+            switch( columnsInfo.getBufferSize(column) )
+            {
+                case 4: return "smallmoney";
+                case 8: return "money";
+            }
+            break;
+         }
+         case Tds.SYBDATETIMN:
+         {
+            switch( columnsInfo.getBufferSize(column) )
+            {
+                case 4: return "smalldatetime";
+                case 8: return "datetime";
+            }
+            break;
          }
       }
-      return result;
+
+      throw new SQLException("Unknown native type for column " + column);
    }
 
 
@@ -226,7 +279,8 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public int getScale(int column) throws SQLException
    {
-      return columnsInfo.getScale(column);
+      int res = columnsInfo.getScale(column);
+      return res<0 ? 0 : res;
    }
 
 
@@ -239,7 +293,8 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getSchemaName(int column) throws SQLException
    {
-      return "";
+      String res = columnsInfo.getSchema(column);
+      return res==null ? "" : res;
    }
 
 
@@ -293,9 +348,10 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    {
       switch (columnsInfo.getNativeType(column))
       {
+         case Tds.SYBMONEY:
          case Tds.SYBMONEYN:
-         case Tds.SYBDATETIMN:
          case Tds.SYBMONEY4:
+         case Tds.SYBSMALLMONEY:
          {
             return true;
          }
@@ -402,7 +458,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
             return false;
 
          case Tds.SYBINTN:
-            return columnsInfo.getPrecision(column) > 1;
+            return columnsInfo.getBufferSize(column) > 1;
 
          default:
             throw new SQLException("Unknown column type.");

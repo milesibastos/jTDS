@@ -39,12 +39,15 @@ import java.sql.ResultSetMetaData;
 
 public class Column
 {
-   public static final String cvsVersion = "$Id: Column.java,v 1.3 2002-08-20 13:26:10 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: Column.java,v 1.4 2002-08-30 10:27:18 alin_sinpalean Exp $";
 
+   private String  catalog       = null;
+   private String  schema        = null;
    private String  name          = null;
    private String  label         = null;
    private String  tableName     = null;
    private int     displaySize   = -1;
+   private int     bufferSize    = -1;
    private int     type          = -1;
    private int     precision     = -1;
    private int     scale         = -1;
@@ -54,6 +57,26 @@ public class Column
    private int     nullable      = java.sql.ResultSetMetaData.columnNullableUnknown;
 
    public Column() {}
+
+   public void setCatalog(String value)
+   {
+      catalog = value;
+   }
+
+   public String getCatalog()
+   {
+      return catalog;
+   }
+
+   public void setSchema(String value)
+   {
+      schema = value;
+   }
+
+   public String getSchema()
+   {
+      return schema;
+   }
 
    public void setName(String value)
    {
@@ -73,6 +96,16 @@ public class Column
    public int getDisplaySize()
    {
       return displaySize;
+   }
+
+   public void setBufferSize(int value)
+   {
+      bufferSize = value;
+   }
+
+   public int getBufferSize()
+   {
+      return bufferSize;
    }
 
    public void setLabel(String value)

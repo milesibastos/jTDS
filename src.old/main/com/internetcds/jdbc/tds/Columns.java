@@ -60,21 +60,35 @@ public class Columns {
     /**
      *@todo    Description of the Field
      */
-    public final static String cvsVersion = "$Id: Columns.java,v 1.5 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.6 2002-08-30 10:27:18 alin_sinpalean Exp $";
 
 
     public Columns()
     {
-        columns = new Vector();
+        this(10);
     }
 
+    public Columns(int size)
+    {
+        columns = new Vector(size);
+    }
+
+
+    public void setCatalog(int columnNumber, String value)
+    {
+        resize(columnNumber);
+        ((Column) (columns.elementAt(columnNumber - 1))).setCatalog(value);
+    }
+
+    public void setSchema(int columnNumber, String value)
+    {
+        resize(columnNumber);
+        ((Column) (columns.elementAt(columnNumber - 1))).setSchema(value);
+    }
 
     public void setName(int columnNumber, String value)
     {
         resize(columnNumber);
-        if (columns.elementAt(columnNumber - 1) == null) {
-            columns.setElementAt(new Column(), columnNumber - 1);
-        }
         ((Column) (columns.elementAt(columnNumber - 1))).setName(value);
     }
 
@@ -83,6 +97,13 @@ public class Columns {
     {
         resize(columnNumber);
         ((Column) (columns.elementAt(columnNumber - 1))).setDisplaySize(value);
+    }
+
+
+    public void setBufferSize(int columnNumber, int value)
+    {
+        resize(columnNumber);
+        ((Column) (columns.elementAt(columnNumber - 1))).setBufferSize(value);
     }
 
 
@@ -155,6 +176,12 @@ public class Columns {
         ((Column) columns.elementAt(columnNumber - 1)).setTableName(tableName);
     }
 
+    public Column getColumn(int columnNumber)
+    {
+        resize(columnNumber);
+        return (Column)columns.elementAt(columnNumber - 1);
+    }
+
     /**
      *@return    The ColumnCount value
      */
@@ -173,6 +200,16 @@ public class Columns {
         fakeColCount = count;
     }
 
+    public String getCatalog(int columnNumber)
+    {
+        return ((Column) columns.elementAt(columnNumber - 1)).getCatalog();
+    }
+
+    public String getSchema(int columnNumber)
+    {
+        return ((Column) columns.elementAt(columnNumber - 1)).getSchema();
+    }
+
     public String getName(int columnNumber)
     {
         return ((Column) columns.elementAt(columnNumber - 1)).getName();
@@ -182,6 +219,12 @@ public class Columns {
     public int getDisplaySize(int columnNumber)
     {
         return ((Column) columns.elementAt(columnNumber - 1)).getDisplaySize();
+    }
+
+
+    public int getBufferSize(int columnNumber)
+    {
+        return ((Column) columns.elementAt(columnNumber - 1)).getBufferSize();
     }
 
 
@@ -203,7 +246,7 @@ public class Columns {
              throws SQLException
     {
         try {
-            return Tds.cvtNativeTypeToJdbcType(getNativeType(index), getDisplaySize(index));
+            return Tds.cvtNativeTypeToJdbcType(getNativeType(index), getBufferSize(index));
         }
         catch (TdsException e) {
             e.printStackTrace();
@@ -272,6 +315,16 @@ public class Columns {
 
         for( int i=1; i<=columnCount; i++ )
         {
+//            if( this.getCatalog(i) == null )
+//                this.setCatalog(i, other.getCatalog(i));
+//            else if( other.getCatalog(i) != null )
+//                throw new TdsException("Trying to merge two non-null columns");
+//
+//            if( this.getSchema(i) == null )
+//                this.setSchema(i, other.getSchema(i));
+//            else if( other.getSchema(i) != null )
+//                throw new TdsException("Trying to merge two non-null columns");
+
             if( this.getName(i) == null )
                 this.setName(i, other.getName(i));
             else if( other.getName(i) != null )
@@ -290,6 +343,11 @@ public class Columns {
             if( this.getDisplaySize(i) == -1 )
                 this.setDisplaySize(i, other.getDisplaySize(i));
             else if( other.getDisplaySize(i) != -1 )
+                throw new TdsException("Trying to merge two non-null columns");
+
+            if( this.getBufferSize(i) == -1 )
+                this.setBufferSize(i, other.getBufferSize(i));
+            else if( other.getBufferSize(i) != -1 )
                 throw new TdsException("Trying to merge two non-null columns");
 
             if( this.getNativeType(i) == -1)

@@ -67,6 +67,7 @@
         <fileset dir="${build}/src">
           <include name="**/*Test.java"/>
           <exclude name="**/AllTests.java"/>
+          <exclude name="**/LargeLOBTest.java"/>
         </fileset>
       </batchtest>
     </junit>

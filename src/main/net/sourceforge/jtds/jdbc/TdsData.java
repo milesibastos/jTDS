@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.9 2004-07-15 04:20:52 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.10 2004-07-17 20:13:10 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -163,6 +163,11 @@ public class TdsData {
      * Array of TDS data type descriptors.
      */
     private final static TypeInfo types[] = new TypeInfo[256];
+
+    /**
+     * Used to optimize TDS 4/5 empty string values.
+     */
+    private static final java.sql.Clob EMPTY_CLOB = new ClobImpl("");
 
     /**
      * Static block to initialise TDS data type descriptors.
@@ -461,7 +466,23 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new ClobImpl(in, false, readTextMode);
+                    if (in.getTdsVersion() < TdsCore.TDS70) {
+                        ClobImpl value = new ClobImpl(in, false, readTextMode);
+
+                        // In TDS 4/5 zero length strings are stored as a single space
+                        // to distinguish them from nulls.
+                        try {
+                            if (value.length() == 1 && value.getSubString(1,1).equals(" ")) {
+                                return EMPTY_CLOB;
+                            }
+                        } catch (SQLException e) {
+                            // Should not occur in practice
+                        }
+
+                        return value;
+                    }
+
+                    return new ClobImpl(in, false, readTextMode);
                 }
                 
                 break;
@@ -479,6 +500,14 @@ public class TdsData {
             case SYBVARCHAR:
                 len = in.read();
 
+                if (len == 1 && in.getTdsVersion() < TdsCore.TDS70) {
+                    // In TDS 4/5 zero length strings are stored as a single space
+                    // to distinguish them from nulls.
+                    String value = in.readAsciiString(len);
+
+                    return (value.equals(" ")) ? "" : value;
+                }
+                
                 if (len > 0) {
                     return in.readAsciiString(len);
                 }
@@ -1074,23 +1103,21 @@ public class TdsData {
             case SYBDECIMAL:
                 BigDecimal value = null;
                 int scale = pi.scale;
-
-                if (pi.value != null) {
-                    if (pi.value instanceof Long) {
-                        value = new BigDecimal(((Long) pi.value).longValue());
-                        scale = 0;
-                    } else {
-                        value = (BigDecimal)pi.value;
-                    }
-
+                if (pi.jdbcType == java.sql.Types.BIGINT) {
+                    scale = 0;                
+                } else {
                     if (scale < 0) {
-                        value = value.setScale(10, BigDecimal.ROUND_HALF_UP);
                         scale = 10;
                     }
                 }
 
-                if (scale < 0) {
-                    scale = 0;
+                if (pi.value != null) {
+                    if (pi.value instanceof Long) {
+                        value = new BigDecimal(((Long) pi.value).longValue());
+                    } else {
+                        value = (BigDecimal) pi.value;
+                    }
+                    value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
                 }
 
                 out.write(value, scale);
@@ -1496,24 +1523,13 @@ public class TdsData {
                         scale = 0;
                     } else {
                         value = (BigDecimal) pi.value;
+                        scale = value.scale();
                     }
-
+                } else {
                     if (scale < 0) {
-                        value = value.setScale(10, BigDecimal.ROUND_HALF_UP);
-                        scale = 10;
+                        scale = 0;
                     }
                 }
-
-                if (scale < 0) {
-                    scale = 0;
-                }
-
-                byte prec = (byte) out.getMaxPrecision();
-                byte maxLen = (prec <= 28) ? (byte) 13 : (byte) 17;
-
-                out.write((byte) maxLen);
-                out.write((byte) prec);
-                out.write((byte) scale);
                 out.write(value, scale);
                 break;
 
@@ -1532,7 +1548,7 @@ public class TdsData {
      */
     private TdsData() {
     }
-
+    
     /**
      * Convert a Julian date from the Sybase epoch of 1900-01-01
      * to a Calendar object.

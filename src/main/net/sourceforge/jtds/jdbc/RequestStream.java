@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.2 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: RequestStream.java,v 1.3 2004-07-17 20:13:10 bheineman Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -448,6 +448,7 @@ public class RequestStream {
      * Write a BigDecimal value to the output stream.
      *
      * @param value The BigDecimal value to write.
+     * @param scale The decimal scale for the value.
      * @throws IOException
      */
     void write(BigDecimal value, int scale) throws IOException {
@@ -455,8 +456,15 @@ public class RequestStream {
         final byte maxLen = (prec <= 28) ? (byte) 13 : (byte) 17;
 
         if (value == null) {
+            if (serverType == TdsCore.SQLSERVER) {
+                write((byte) maxLen);
+                write((byte) prec);
+                write((byte) scale);
+            }
+
             write((byte) 0);
         } else {
+
             if (value.scale() > prec) {
                 value = value.setScale(prec, BigDecimal.ROUND_HALF_UP);
             }
@@ -471,12 +479,13 @@ public class RequestStream {
                 mantisse = bi.abs().toByteArray();
                 len = (byte) (mantisse.length + 1);
 
-                if (len > maxLen) {   // diminish scale as long as len is to much
+                if (len > maxLen) {   
+                    // diminish scale as long as length is to much.
+                    // NB. Wont work for Sybase as we have already sent scale.
                     final int dif = len - maxLen;
-                    
                     scale -= dif * 2;
                     
-                    if (scale < 0) {
+                    if (scale < 0 || serverType == TdsCore.SYBASE) {
                         throw new IOException("BigDecimal to big to send");
                     }
                     
@@ -488,17 +497,23 @@ public class RequestStream {
                 break;
             } while (true);
 
-            write((byte)len);
-
             if (serverType == TdsCore.SYBASE) {
+                write((byte)len);
                 // Sybase TDS5 stores MSB first opposite sign!
+                // length, prec, scale already sent in parameter descriptor.
                 write((byte) ((signum == 0)? 1: 0));
 
                 for (int i = 0; i < mantisse.length; i++) {
                     write((byte) mantisse[i]);
                 }
             } else {
-                write((byte)signum);
+                // For SQL server we can write the length, prec and scale bytes out now.
+                write((byte) maxLen);
+                write((byte) prec);
+                write((byte) scale);
+
+                write((byte) len);
+                write((byte) signum);
                 for (int i = mantisse.length - 1; i >= 0; i--) {
                     write((byte) mantisse[i]);
                 }

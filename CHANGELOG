@@ -1,6 +1,11 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/17/2004 - Brian Heineman
+ o Applied patch in bug [992971], which corrects bug [992976] Zero length
+   string error on Sybase and MSQL 6.5 (Thanks to Mike Hutchinson for the
+   patch); made a minor change to reduce memory allocation.
+
 07/15/2004 - Brian Heineman
  o Refactored JtdsDataSource implementation into AbstractDataSource,
    JtdsDataSource and JtdsConnectionPoolDataSource.

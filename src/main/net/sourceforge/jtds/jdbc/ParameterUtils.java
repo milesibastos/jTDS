@@ -33,11 +33,9 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
-import java.util.StringTokenizer;
-import java.math.BigDecimal;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.6 2004-02-14 01:02:46 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.7 2004-02-17 19:03:25 alin_sinpalean Exp $";
 
     /**
      * Check that all items in parameterList have been given a value
@@ -66,25 +64,32 @@ public class ParameterUtils {
      * a stored procedure.  The formal parameters will later be used
      * when the stored procedure is submitted for creation on the server.
      *
-     * @param rawQueryString   (in-only)
-     * @param parameterList    (update)
+     * @param rawQueryString   (in-only) the original SQL with '?' placehoders
+     * @param parameterList    (update) the parameter list to update
+     * @param tds              <code>Tds</code> the procedure will be executed
+     *                         on
+     * @param assignNames      if <code>true</code>, names are assigned to
+     *                         parameters (for <code>PreparedStatement</code>s)
      */
     public static void createParameterMapping(String rawQueryString,
                                               ParameterListItem[] parameterList,
-                                              Tds tds)
+                                              Tds tds,
+                                              boolean assignNames)
     throws SQLException {
-        String nextFormal;
         int nextParameterNumber = 0;
         int tdsVer = tds.getTdsVer();
         EncodingHelper encoder = tds.getEncoder();
 
         for (int i = 0; i < parameterList.length; i++) {
-            do {
-                nextParameterNumber++;
-                nextFormal = "P" + nextParameterNumber;
-            } while (-1 != rawQueryString.indexOf(nextFormal));
+            if (assignNames) {
+                String nextFormal;
+                do {
+                    nextParameterNumber++;
+                    nextFormal = "P" + nextParameterNumber;
+                } while (-1 != rawQueryString.indexOf(nextFormal));
 
-            parameterList[i].formalName = nextFormal;
+                parameterList[i].formalName = '@' + nextFormal;
+            }
 
             switch (parameterList[i].type) {
                 case java.sql.Types.VARCHAR:

@@ -43,7 +43,7 @@ import java.sql.*;
 import java.util.StringTokenizer;
 
 public class Procedure {
-    public static final String cvsVersion = "$Id: Procedure.java,v 1.7 2004-02-14 00:04:11 bheineman Exp $";
+    public static final String cvsVersion = "$Id: Procedure.java,v 1.8 2004-02-17 19:03:25 alin_sinpalean Exp $";
 
     // next number to return from the getUniqueId() method
     private static long  id = 1;
@@ -97,7 +97,6 @@ public class Procedure {
 
             if (!inString) {
                 if (ch == '?') {
-                    procedureString.append('@');
                     procedureString.append(_parameterList[nextParameterIndex].formalName);
                     nextParameterIndex++;
                 } else {
@@ -148,7 +147,6 @@ public class Procedure {
                     result.append(", ");
                 }
 
-                result.append('@');
                 result.append(parameterList[i].formalName);
                 result.append(' ');
                 result.append(parameterList[i].formalType);

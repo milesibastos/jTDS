@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.30 2004-02-14 00:04:11 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.31 2004-02-17 19:03:25 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.30 2004-02-14 00:04:11 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.31 2004-02-17 19:03:25 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -451,9 +451,7 @@ public class Tds implements TdsDefinitions {
             else {
                 final byte[] nameBytes = encoder.getBytes(procedureName);
                 comm.appendByte((byte) nameBytes.length);
-                comm.appendBytes(nameBytes,
-                        nameBytes.length,
-                        (byte) 0);
+                comm.appendBytes(nameBytes);
             }
             // SAfe If this is set to 512 it means "don't return column
             //      information" (useful for scrollable statements, to reduce
@@ -467,7 +465,22 @@ public class Tds implements TdsDefinitions {
                 //      shouldn't) it will solve a lot of problems.
                 byte nativeType = cvtJdbcTypeToNativeType(formalParameterList[i].type);
 
-                comm.appendByte((byte) 0);
+                if (formalParameterList[i].formalName == null) {
+                    comm.appendByte((byte) 0);
+                } else {
+                    // Send parameter name
+                    final String name = formalParameterList[i].formalName;
+
+                    comm.appendByte((byte) name.length());
+                    if (tdsVer == Tds.TDS70) {
+                        comm.appendChars(name);
+                    }
+                    else {
+                        final byte[] nameBytes = encoder.getBytes(name);
+                        comm.appendBytes(nameBytes);
+                    }
+                }
+
                 if (actualParameterList[i].isOutput) {
                     comm.appendByte((byte) 1);
 
@@ -513,7 +526,7 @@ public class Tds implements TdsDefinitions {
                         if (formalParameterList[i].formalType != null
                                 && formalParameterList[i].formalType.startsWith("n")) {
                             /*
-                             * This is a Unicode column, save to assume TDS 7.0
+                             * This is a Unicode column, safe to assume TDS 7.0
                              */
 
                             if (max > 4000) {
@@ -539,7 +552,6 @@ public class Tds implements TdsDefinitions {
                                     comm.appendChars(val);
                                 }
                             }
-
                         } else {
                             /*
                              * Either VARCHAR or TEXT, TEXT can not happen
@@ -2874,7 +2886,6 @@ public class Tds implements TdsDefinitions {
 
     private void sendSybImage(final byte[] value)
             throws java.io.IOException {
-        int i;
         final int length = (value == null ? 0 : value.length);
 
         // send the lenght of this piece of data

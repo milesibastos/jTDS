@@ -165,7 +165,6 @@ public class AsTest extends DatabaseTestCase {
     }
 
     public void testBatch1() throws Exception {
-        Logger.setActive(true);
         Statement stmt = con.createStatement();
         String sqlwithcount1 =
                 "  set nocount off " +

@@ -148,6 +148,7 @@ public class SAfeTest extends DatabaseTestCase
 
     // MT-unsafe!!!
     volatile int started, done;
+    volatile boolean failed;
 
     /**
      * Test <code>CursorResultSet</code> concurrency. Create a number of threads that execute concurrent queries using
@@ -168,6 +169,7 @@ public class SAfeTest extends DatabaseTestCase
         Thread threads[] = new Thread[threadCount];
 
         started = done = 0;
+        failed = false;
 
         for( int i=0; i<threadCount; i++ )
         {
@@ -180,6 +182,9 @@ public class SAfeTest extends DatabaseTestCase
                     try
                     {
                         rs = stmt.executeQuery("SELECT * FROM #SAfe0003");
+
+                        assertEquals(null, rs.getWarnings());
+                        assertEquals(null, stmt.getWarnings());
 
                         // Synchronize all threads
                         synchronized( o2 )
@@ -203,6 +208,9 @@ public class SAfeTest extends DatabaseTestCase
                     catch( SQLException e )
                     {
                         e.printStackTrace();
+                        synchronized (o1) {
+                            failed = true;
+                        }
                         fail("An SQL Exception occured: "+e);
                     }
                     finally
@@ -265,6 +273,7 @@ public class SAfeTest extends DatabaseTestCase
         stmt.close();
 
         assertTrue(passed);
+        assertTrue(!failed);
     }
 
     /**

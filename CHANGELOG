@@ -1,6 +1,13 @@
 Changes from jTDS 0.6
 ========================
 
+02/17/2004 - Alin Sinpalean
+ o Seems like yesterday I didn't commit part of the files. So here they are.
+ o Fixed the ArrayIndexOutOfBoundsException thrown by TdsConnection.freeTds
+   bug.
+ o Updated the README and added a features.html file containing the feature
+   matrix of jTDS.
+
 02/16/2004 - Alin Sinpalean
  o Implemented updateRow and insertRow in CursorResultSet. Updateable
    ResultSets are now fully supported.

@@ -54,13 +54,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.20 2004-02-14 01:02:46 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.21 2004-02-17 19:03:25 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.20 2004-02-14 01:02:46 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.21 2004-02-17 19:03:25 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -138,11 +138,12 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet(parameterList);
 
+        // Map parameters to native types and assign them generated names
+        ParameterUtils.createParameterMapping(
+                rawQueryString, parameterList, tds, true);
+
         // MJH
         // Create a unique signature for this the procedure by including parameters
-        ParameterUtils.createParameterMapping(rawQueryString,
-                                              parameterList,
-                                              tds);
         StringBuffer signature = new StringBuffer();
         signature.append(rawQueryString);
 

@@ -519,8 +519,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                             new SQLException(ex.getMessage()));
                 }
 
-                lastOutParam = -1;
-                retVal = null;
                 stmt.outParamHandler = null;
             }
         }
@@ -659,8 +657,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                             new SQLException(ex.getMessage()));
                 }
 
-                lastOutParam = -1;
-                retVal = null;
                 stmt.outParamHandler = null;
             }
         }
@@ -714,8 +710,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                             new SQLException(ex.getMessage()));
                 }
 
-                lastOutParam = -1;
-                retVal = null;
                 stmt.outParamHandler = null;
             }
         }
@@ -854,8 +848,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                             new SQLException(ex.getMessage()));
                 }
 
-                lastOutParam = -1;
-                retVal = null;
                 stmt.outParamHandler = null;
             }
         }

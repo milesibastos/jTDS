@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2004-02-11 19:10:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2004-02-17 19:03:25 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -85,7 +85,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.14 2004-02-11 19:10:25 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.15 2004-02-17 19:03:25 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2004-02-11 19:10:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2004-02-17 19:03:25 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -709,8 +709,10 @@ public class TdsConnection implements Connection
                     throw new TdsException("Internal Error. Couldn't get Tds instance.");
 
                 if (mainTds) {
-                    Object o = tdsPool.remove(i);
-                    tdsPool.insertElementAt(o, 0);
+                    if (i != 0) {
+                        Object o = tdsPool.remove(i);
+                        tdsPool.insertElementAt(o, 0);
+                    }
                     haveMainTds = true;
                     i = 0;
                 }
@@ -758,32 +760,30 @@ public class TdsConnection implements Connection
 
     /**
      * Return a <code>Tds</code> instance back to the <code>Tds</code> pool for reuse.
-     * <p>
-     * Note: This is not synchronized because it's only supposed to be called by synchronized methods.
      *
      * @param  tds               Description of Parameter
      * @exception  TdsException  Description of Exception
      * @see                      #allocateTds
      */
-    void freeTds(Tds tds) throws TdsException {
+    synchronized void freeTds(Tds tds) throws TdsException {
         int i;
-        TdsInstance inst;
+        TdsInstance inst = null;
 
-        i = tdsPool.size();
-        do {
-            inst = (TdsInstance) tdsPool.elementAt(--i);
-        } while (i > 0 && tds != inst.tds);
+        for (i = tdsPool.size() - 1; i >= 0; i-- ) {
+            inst = (TdsInstance) tdsPool.elementAt(i);
+            if (tds == inst.tds) {
+                break;
+            }
+        }
 
         if (i >= 0 && inst.inUse) {
             inst.inUse = false;
-
-            // XXX Should also send a cancel to the server and throw out any data that has already been sent.
-
-            // SAfe Not so sure about that. I think that if you cancel the execution of multiple statements sent at the
-            //      same time, the last ones will simply not be executed. We don't want that. If the user explicitly
-            //      cancels thir execution, it's his business. We could, however, consume the data.
         } else {
-            throw new TdsException("Tried to free a tds that wasn't in use.");
+            // Only throw the exception if the connection is not closed
+            if (!isClosed) {
+                throw new TdsException(
+                        "Tried to free a tds that wasn't in use.");
+            }
         }
     }
 

@@ -14,14 +14,14 @@ public class LOBTest extends TestBase {
         super(name);
     }
 
-    public void testBlobGet() throws Exception {
+    public void testBlobGet1() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobget (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobget1 (data IMAGE)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobget (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobget1 (data) VALUES (?)");
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
@@ -30,7 +30,7 @@ public class LOBTest extends TestBase {
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobget");
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobget1");
 
         assertTrue(rs.next());
 
@@ -54,7 +54,7 @@ public class LOBTest extends TestBase {
         assertTrue(blob.length() == data.length);
 
         // Test Blob.getBytes()
-        byte[] tmpData2 = blob.getBytes((long) 1, (int) blob.length());
+        byte[] tmpData2 = blob.getBytes(1L, (int) blob.length());
 
         assertTrue(Arrays.equals(data, tmpData2));
 
@@ -71,11 +71,48 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
+    public void testBlobGet2() throws Exception {
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobget2 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobget2 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBinaryStream()
+        pstmt.setBinaryStream(1, new ByteArrayInputStream(data), data.length);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobget2");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getObject() - Blob
+        Object result = rs.getObject(1);
+
+        assertTrue(result instanceof Blob);
+
+        Blob blob = (Blob) result;
+
+        assertTrue(data.length == blob.length());
+
+        // Test Blob.getBytes()
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
     public void testBlobSet1() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset1 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset1 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset1 (data) VALUES (?)");
@@ -103,7 +140,7 @@ public class LOBTest extends TestBase {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset2 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset2 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset2 (data) VALUES (?)");
@@ -128,7 +165,7 @@ public class LOBTest extends TestBase {
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
 
-        assertTrue(Arrays.equals(data, blob.getBytes((long) 1, (int) blob.length())));
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
         assertTrue(!rs.next());
 
@@ -160,7 +197,7 @@ public class LOBTest extends TestBase {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset3 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset3 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset3 (data) VALUES (?)");
@@ -188,7 +225,7 @@ public class LOBTest extends TestBase {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset4 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset4 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset4 (data) VALUES (?)");
@@ -213,7 +250,7 @@ public class LOBTest extends TestBase {
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
 
-        assertTrue(Arrays.equals(data, blob.getBytes((long) 1, (int) blob.length())));
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
         assertTrue(!rs.next());
 
@@ -245,7 +282,7 @@ public class LOBTest extends TestBase {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset5 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset5 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset5 (data) VALUES (?)");
@@ -273,7 +310,7 @@ public class LOBTest extends TestBase {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset6 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset6 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset6 (data) VALUES (?)");
@@ -301,7 +338,7 @@ public class LOBTest extends TestBase {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobset7 (data BINARY(8000))");
+        stmt.execute("CREATE TABLE #blobset7 (data IMAGE)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset7 (data) VALUES (?)");
@@ -326,7 +363,7 @@ public class LOBTest extends TestBase {
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
 
-        assertTrue(Arrays.equals(data, blob.getBytes((long) 1, (int) blob.length())));
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
         assertTrue(!rs.next());
 
@@ -354,14 +391,14 @@ public class LOBTest extends TestBase {
         rs2.close();
     }
 
-    public void testClobGet() throws Exception {
+    public void testClobGet1() throws Exception {
         String data = getClobTestData();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobget (data TEXT)");
+        stmt.execute("CREATE TABLE #clobget1 (data TEXT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobget (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobget1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
         assertTrue(pstmt.executeUpdate() == 1);
@@ -369,7 +406,7 @@ public class LOBTest extends TestBase {
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobget");
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobget1");
 
         assertTrue(rs.next());
 
@@ -409,7 +446,7 @@ public class LOBTest extends TestBase {
         assertTrue(clob.length() == data.length());
 
         // Test Clob.getSubString()
-        assertTrue(data.equals(clob.getSubString((long) 1, (int) clob.length())));
+        assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
         // Test Clob.getAsciiStream()
         InputStream is3 = clob.getAsciiStream();
@@ -426,6 +463,43 @@ public class LOBTest extends TestBase {
         assertTrue(rdr2.read(rdrTmpData2) == data.length());
         assertTrue(rdr2.read() == -1);
         assertTrue(data.equals(new String(rdrTmpData2)));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobGet2() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobget2 (data TEXT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobget2 (data) VALUES (?)");
+
+        // Test PreparedStatement.setCharacterStream()
+        pstmt.setCharacterStream(1, new StringReader(data), data.length());
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobget2");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getObject() - Clob
+        Object result = rs.getObject(1);
+
+        assertTrue(result instanceof Clob);
+
+        Clob clob = (Clob) result;
+
+        assertTrue(data.length() == clob.length());
+
+        // Test Clob.getSubString()
+        assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
         assertTrue(!rs.next());
         stmt2.close();
@@ -520,7 +594,7 @@ public class LOBTest extends TestBase {
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
 
-        assertTrue(data.equals(clob.getSubString((long) 1, (int) clob.length())));
+        assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
         assertTrue(!rs.next());
 
@@ -636,7 +710,7 @@ public class LOBTest extends TestBase {
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
 
-        assertTrue(data.equals(clob.getSubString((long) 1, (int) clob.length())));
+        assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
         assertTrue(!rs.next());
 
@@ -724,7 +798,7 @@ public class LOBTest extends TestBase {
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
 
-        assertTrue(data.equals(clob.getSubString((long) 1, (int) clob.length())));
+        assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
 
         assertTrue(!rs.next());
 

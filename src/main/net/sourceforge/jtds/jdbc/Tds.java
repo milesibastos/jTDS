@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.43 2004-03-25 20:23:50 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.44 2004-03-27 04:48:52 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.43 2004-03-25 20:23:50 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.44 2004-03-27 04:48:52 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -3301,14 +3301,13 @@ public class Tds implements TdsDefinitions {
             return java.sql.Types.REAL;
 
         case SYBTEXT:
-            return java.sql.Types.LONGVARCHAR;
+            return java.sql.Types.CLOB;
 
         case SYBNTEXT:
-            return java.sql.Types.LONGVARCHAR;
+            return java.sql.Types.CLOB;
 
         case SYBIMAGE:
-            // should be : result = java.sql.Types.LONGVARBINARY;
-            return java.sql.Types.VARBINARY;   // work around XXXX
+            return java.sql.Types.BLOB;
 
         case SYBVARBINARY:
             return java.sql.Types.VARBINARY;

@@ -8,6 +8,11 @@ Changes from jTDS 0.7.1
    with a different date - 06/15/1940 0:00:00). Turns out I couldn't reproduce
    it.
 
+03/26/2004 - Brian Heineman
+ o Added ResultSet.getObject() support for IMAGE, TEXT and NTEXT fields to return
+   Blob and Clob objects.  Added tests for new functionality.
+ o Added Blob and Clob support to ResultSetMetaData.getColumnClassName().
+
 03/25/2004 - Alin Sinpalean
  o Fixed bug #922802 (TdsStatement.executeBatch() throws exception if no
    statements added). Indeed other drivers work just fine with empty batches and

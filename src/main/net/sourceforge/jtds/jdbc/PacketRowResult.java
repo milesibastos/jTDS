@@ -52,7 +52,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.6 2004-02-19 00:14:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.7 2004-03-27 04:48:52 bheineman Exp $";
 
     public PacketRowResult(Context context) {
         super(TdsDefinitions.TDS_ROW);
@@ -228,6 +228,11 @@ public class PacketRowResult extends PacketResult {
                 else
                     return tmp.toString();
 
+            case java.sql.Types.CLOB:
+                if (tmp instanceof Clob)
+                    return tmp;
+                else
+                    return new ClobImpl(tmp.toString());
             case java.sql.Types.TINYINT:
             case java.sql.Types.SMALLINT:
             case java.sql.Types.INTEGER:
@@ -291,6 +296,7 @@ public class PacketRowResult extends PacketResult {
 
             case java.sql.Types.BINARY:
             case java.sql.Types.VARBINARY:
+            case java.sql.Types.LONGVARBINARY:
                 return getBytes(columnIndex);
 
             case java.sql.Types.DECIMAL:
@@ -304,8 +310,12 @@ public class PacketRowResult extends PacketResult {
                                            + tmp.getClass().getName());
                 }
 
-            case java.sql.Types.LONGVARBINARY:
-                throw new SQLException("Not implemented");
+            case java.sql.Types.BLOB:
+                if (tmp instanceof Blob) {
+                    return tmp;
+                } else {
+                    return new BlobImpl(getBytes(columnIndex));
+                }
 
             case java.sql.Types.NULL:
                 throw new SQLException("Not implemented");

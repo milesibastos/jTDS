@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.2 2004-12-17 15:20:22 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.3 2004-12-17 18:01:53 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -84,13 +84,60 @@ public class SharedLocalNamedPipe extends SharedSocket {
             super.close();
 
             getOut().close();
+            setOut(null);
             getIn().close();
+            setIn(null);
 
-            if (pipe  != null) {
+            if (pipe != null) {
                 pipe.close();
             }
         } finally {
             pipe = null;
         }
+    }
+
+    /**
+     * Force close the socket causing any pending reads/writes to fail.
+     * <p>
+     * Used by the login timer to abort a login attempt.
+     */
+    void forceClose() {
+        try {
+            getOut().close();
+        }
+        catch (Exception e) {
+            // Ignore
+        }
+        finally {
+            setOut(null);
+        }
+
+        try {
+            getIn().close();
+        }
+        catch (Exception e) {
+            // Ignore
+        }
+        finally {
+            setIn(null);
+        }
+
+        try {
+            if (pipe != null) {
+                pipe.close();
+            }
+        } catch (IOException ex) {
+        } finally {
+            pipe = null;
+        }
+    }
+
+    /**
+     * Set the socket timeout.
+     *
+     * @param timeout the timeout value in milliseconds
+     */
+    protected void setTimeout(int timeout) {
+        // FIXME - implement timeout functionality
     }
 }

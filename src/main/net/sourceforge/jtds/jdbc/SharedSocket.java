@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.19 2004-12-16 17:39:21 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.20 2004-12-17 18:01:53 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -565,6 +565,7 @@ class SharedSocket {
 
                 // Now we can safely send this packet too
                 getOut().write(buffer, 0, getPktLen(buffer, 2));
+                getOut().flush();
 
                 if (buffer[1] != 0) {
                     // This is the response owner now
@@ -655,6 +656,7 @@ class SharedSocket {
                     getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
                     tmpBuf = dequeueOutput(vsock);
                 }
+                getOut().flush();
 
                 responseOwner = streamId;
             }

@@ -2,6 +2,14 @@
 Changes from jTDS 0.4
 =======================
 
+11/01/2002 - Alin Sinpalean
+
+ o Seems like SQL Server 6.5 does not support the extended Transact-SQL syntax
+   for cursor declaration (at least not everything that's documented for SQL
+   Server 7.0). So I make a choice based on the TDS version and use the
+   extended syntax for 7.0+ and the SQL-92 syntax for older versions (and
+   Sybase). I guess it's ok this way. :o)
+
 10/29/2002 - Alin Sinpalean
 
  o Fixed CursorResultSet.next(): position was not incremented/decremented

@@ -379,29 +379,52 @@ public class CursorResultSet extends AbstractResultSet
         cursorName = getNewCursorName();
         StringBuffer query = new StringBuffer(sql.length()+50);
 
-        query.append("DECLARE ").append(cursorName).append(" CURSOR ");
-
-        if( stmt.getResultSetType()==ResultSet.TYPE_FORWARD_ONLY &&
-            stmt.getResultSetConcurrency()==ResultSet.CONCUR_READ_ONLY )
+        // SAfe It seems we can only use the Transact-SQL extended syntax with SQL Server 7.0+, so we will have to use
+        //      the SQL-92 syntax for older versions (see https://sourceforge.net/forum/message.php?msg_id=1738464).
+        if( conn.getTdsVer() >= Tds.TDS70 )
         {
-            query.append("FAST_FORWARD ");
+            // Transact-SQL Extended Syntax
+            query.append("DECLARE ").append(cursorName).append(" CURSOR ");
+
+            if( stmt.getResultSetType()==ResultSet.TYPE_FORWARD_ONLY &&
+                stmt.getResultSetConcurrency()==ResultSet.CONCUR_READ_ONLY )
+            {
+                query.append("FAST_FORWARD ");
+            }
+            else
+            {
+                if( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY )
+                    query.append("FORWARD_ONLY ");
+                else if( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE )
+                    query.append("SCROLL STATIC ");
+                else if( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_SENSITIVE )
+                    query.append("SCROLL KEYSET ");
+
+                if( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY )
+                    query.append("READ_ONLY ");
+                else
+                    query.append("OPTIMISTIC ");
+            }
+
+            query.append("FOR ").append(sql);
         }
         else
         {
-            if( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY )
-                query.append("FORWARD_ONLY ");
-            else if( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE )
-                query.append("SCROLL STATIC ");
-            else if( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_SENSITIVE )
-                query.append("SCROLL KEYSET ");
+            // Standard SQL-92 syntax
+            query.append("DECLARE ").append(cursorName);
+
+            if( stmt.getResultSetType() != ResultSet.TYPE_SCROLL_SENSITIVE )
+                query.append(" INSENSITIVE");
+            if( stmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY )
+                query.append(" SCROLL");
+
+            query.append(" CURSOR FOR ").append(sql).append(" FOR ");
 
             if( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY )
-                query.append("READ_ONLY ");
+                query.append("READ ONLY");
             else
-                query.append("OPTIMISTIC ");
+                query.append("UPDATE");
         }
-
-        query.append("FOR ").append(sql);
 
         // SAfe We have to synchronize this, in order to avoid mixing up our
         //      actions with another CursorResultSet's and eating up its

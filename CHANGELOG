@@ -2,6 +2,10 @@ Changes from jTDS 0.9.1
 =======================
 
 01/04/2005 - Alin Sinpalean
+ o Applied patch [1089891] Adding SSL, from Rob Worsnop. Wasn't able to test
+   whether SSL really works (because I was not able to configure SQL Server to
+   handle it) but with a few minor changes at least the old functionality is
+   not affected.
  o Applied patch [1095057] Positioned updates and improved Sybase cursors.
  o Applied Mike's fix to bug [1094621] Decimal conversion error.
  o Some performance improvements.

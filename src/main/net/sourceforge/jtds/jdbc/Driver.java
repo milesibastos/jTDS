@@ -27,6 +27,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import net.sourceforge.jtds.ssl.Ssl;
+
 /**
  * jTDS implementation of the java.sql.Driver interface.
  * <p>
@@ -43,7 +45,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.44 2004-12-08 09:31:08 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.45 2005-01-04 17:12:53 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -100,6 +102,7 @@ public class Driver implements java.sql.Driver {
     public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";
     public static final String XAEMULATION   = "prop.xaemulation";
     public static final String LOGFILE       = "prop.logfile";
+    public static final String SSL           = "prop.ssl";
 
     static {
         try {
@@ -265,6 +268,14 @@ public class Driver implements java.sql.Driver {
             DefaultProperties.TDS_VERSION_80,
         };
         choicesMap.put(Messages.get(Driver.TDS), tdsChoices);
+
+        final String[] sslChoices = new String[]{
+            Ssl.SSL_OFF,
+            Ssl.SSL_REQUEST,
+            Ssl.SSL_REQUIRE,
+            Ssl.SSL_AUTHENTICATE
+        };
+        choicesMap.put(Messages.get(Driver.SSL), sslChoices);
 
         return choicesMap;
     }

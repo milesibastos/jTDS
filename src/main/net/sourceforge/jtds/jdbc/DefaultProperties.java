@@ -21,7 +21,7 @@ import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;
 
-
+import net.sourceforge.jtds.ssl.Ssl;
 
 /**
  * Container for default property constants.
@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.15 2004-12-03 14:42:34 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.16 2005-01-04 17:12:53 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -117,6 +117,9 @@ public final class DefaultProperties {
     /** Default <code>tds</code> property for TDS 8.0. */
     public static final String TDS_VERSION_80 = "8.0";
 
+    /** Default <code>ssl</code> property. */
+    public static final String SSL = Ssl.SSL_OFF;
+
     /** Default TDS version based on server type */
     private static final HashMap tdsDefaults;
     /** Default port number based on server type */
@@ -180,6 +183,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.TCPNODELAY, TCP_NODELAY);
         addDefaultPropertyIfNotSet(props, Driver.XAEMULATION, XAEMULATION);
         addDefaultPropertyIfNotSet(props, Driver.LOGFILE, LOGFILE);
+        addDefaultPropertyIfNotSet(props, Driver.SSL, SSL);
 
         return props;
     }

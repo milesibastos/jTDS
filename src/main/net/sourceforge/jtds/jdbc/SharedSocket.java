@@ -17,12 +17,23 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.*;
-import java.net.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import net.sourceforge.jtds.util.*;
+import net.sourceforge.jtds.ssl.SocketFactories;
+import net.sourceforge.jtds.ssl.Ssl;
+import net.sourceforge.jtds.util.Logger;
 
 /**
  * This class mananges the physical connection to the SQL Server and
@@ -52,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.21 2004-12-20 15:51:17 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.22 2005-01-04 17:12:53 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -200,11 +211,11 @@ class SharedSocket {
      * @throws IOException if socket open fails
      */
     SharedSocket(String host, int port, int tdsVersion, int serverType,
-    		boolean tcpNoDelay)
+    		boolean tcpNoDelay, String ssl, String instance)
             throws IOException, UnknownHostException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
-        this.socket = new Socket(host, port);
+        this.socket = createSocket(host, port, ssl, instance);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(tcpNoDelay);
@@ -788,7 +799,7 @@ class SharedSocket {
      * Retrieves the virtual socket with the given id.
      *
      * @param streamId id of the virtual socket to retrieve
-     */ 
+     */
     private VirtualSocket lookup(int streamId) {
         if (streamId < 0 || streamId > socketTable.size()) {
             throw new IllegalArgumentException("Invalid parameter stream ID "
@@ -864,5 +875,23 @@ class SharedSocket {
      */
     protected void setOut(DataOutputStream out) {
         this.out = out;
+    }
+
+    /**
+     * Returns the socket factory appropriate for the security settings.
+     *
+     * @param ssl      the security setting
+     * @param instance the DB instance name; needed if SSL is on
+     * @return a <code>SocketFactory</code> instance
+     */
+    private static Socket createSocket(String host, int port, String ssl,
+                                       String instance)
+            throws UnknownHostException, IOException {
+        if (ssl.equals(Ssl.SSL_OFF)){
+            return new Socket(host, port);
+        } else {
+            return SocketFactories.getSocketFactory(ssl, instance)
+                    .createSocket(host, port);
+        }
     }
 }

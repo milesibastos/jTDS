@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.60 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.61 2005-01-04 17:12:52 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -250,6 +250,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean xaEmulation = true;
     /** Mutual exclusion lock to control access to connection. */
     private Semaphore mutex = new Semaphore(1);
+    /** SSL setting */
+    private String ssl;
 
     /**
      * Default constructor.
@@ -311,7 +313,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 }
             } else {
                 // Use plain TCP/IP socket
-                socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType, tcpNoDelay);
+                socket = new SharedSocket(serverName, portNumber, tdsVersion,
+                        serverType, tcpNoDelay, ssl, instanceName);
             }
 
             // Don't call loadCharset if serverCharset not specified; discover
@@ -770,6 +773,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (tdsVersion < Driver.TDS70 && prepareSql == TdsCore.PREPARE) {
             prepareSql = TdsCore.EXECUTE_SQL;
         }
+
+        ssl = info.getProperty(Messages.get(Driver.SSL));
     }
 
     /**

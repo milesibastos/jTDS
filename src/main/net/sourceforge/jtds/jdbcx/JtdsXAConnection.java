@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.Support;
 /**
  * jTDS implementation of the <code>XAConnection</code> interface.
  *
- * @version $Id: JtdsXAConnection.java,v 1.1 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: JtdsXAConnection.java,v 1.2 2004-11-15 14:45:57 alin_sinpalean Exp $
  */
 public class JtdsXAConnection extends PooledConnection implements XAConnection {
     /** The XAResource used by the transaction manager to control this connection.*/
@@ -69,7 +69,7 @@ public class JtdsXAConnection extends PooledConnection implements XAConnection {
 
     public synchronized void close() throws SQLException {
         try {
-            Support.xa_close(_connection, xaConnectionId);
+            Support.xa_close(connection, xaConnectionId);
         } catch (SQLException e) {
             // Ignore close errors
         }

@@ -27,16 +27,15 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.8 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: PooledConnection.java,v 1.9 2004-11-15 14:45:57 alin_sinpalean Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
-    private final ArrayList _listeners = new ArrayList();
-    private ConnectionProxy _connectionProxy = null;
+    private final ArrayList listeners = new ArrayList();
 
-    protected Connection _connection;
+    protected Connection connection;
 
     public PooledConnection(Connection connection) {
-        _connection = connection;
+        this.connection = connection;
     }
 
     /**
@@ -46,7 +45,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @see #removeConnectionEventListener
      */
     public synchronized void addConnectionEventListener(ConnectionEventListener listener) {
-        _listeners.add(listener);
+        listeners.add(listener);
     }
 
     /**
@@ -55,9 +54,8 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @throws SQLException if an error occurs
      */
     public synchronized void close() throws SQLException {
-        _connection.close();
-        _connection = null; // Garbage collect the connection
-        fireConnectionEvent(false, null);
+        connection.close();
+        connection = null; // Garbage collect the connection
     }
 
     /**
@@ -69,9 +67,9 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @param sqlException the SQLException to pass to the listeners
      */
     public synchronized void fireConnectionEvent(boolean closed, SQLException sqlException) {
-        if (_listeners.size() > 0) {
+        if (listeners.size() > 0) {
             ConnectionEvent connectionEvent = new ConnectionEvent(this, sqlException);
-            Iterator iterator = _listeners.iterator();
+            Iterator iterator = listeners.iterator();
 
             while (iterator.hasNext()) {
                 ConnectionEventListener listener = (ConnectionEventListener) iterator.next();
@@ -79,6 +77,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
                 if (closed) {
                     listener.connectionClosed(connectionEvent);
                 } else {
+                    // TODO Only notify listener if the error is fatal
                     listener.connectionErrorOccurred(connectionEvent);
                 }
             }
@@ -91,7 +90,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @throws SQLException if an error occurs
      */
     public synchronized Connection getConnection() throws SQLException {
-        if (_connection == null) {
+        if (connection == null) {
             fireConnectionEvent(false,
                 new SQLException(Messages.get("error.jdbcx.conclosed"),
                                  "08003"));
@@ -99,15 +98,9 @@ public class PooledConnection implements javax.sql.PooledConnection {
             return null;
         }
 
-        if (_connectionProxy != null) {
-            _connectionProxy.close();
-        }
-
-        // Sould the SQLException be captured here for safety in the future even though
+        // Should the SQLException be captured here for safety in the future even though
         // no SQLException is being thrown by the ConnectionProxy at the moment???
-        _connectionProxy = new ConnectionProxy(this, _connection);
-
-        return _connectionProxy;
+        return new ConnectionProxy(this, connection);
     }
 
     /**
@@ -117,6 +110,6 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @see #fireConnectionEvent
      */
     public synchronized void removeConnectionEventListener(ConnectionEventListener listener) {
-        _listeners.remove(listener);
+        listeners.remove(listener);
     }
 }

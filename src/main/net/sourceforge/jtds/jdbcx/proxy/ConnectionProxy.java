@@ -29,7 +29,7 @@ import net.sourceforge.jtds.jdbcx.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.4 2004-08-24 17:45:08 bheineman Exp $
+ * @version $Id: ConnectionProxy.java,v 1.5 2004-11-15 14:45:48 alin_sinpalean Exp $
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;
@@ -64,10 +64,8 @@ public class ConnectionProxy implements Connection {
     /**
      * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
      */
-    public void close() throws SQLException {
+    public void close() {
         if (_closed) {
             return;
         }
@@ -686,6 +684,13 @@ public class ConnectionProxy implements Connection {
         _pooledConnection.fireConnectionEvent(false, sqlException);
 
         throw sqlException;
+    }
+
+    /**
+     * Closes the proxy, releasing the connection.
+     */
+    public void finalize() {
+        close();
     }
 }
 

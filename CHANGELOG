@@ -1,6 +1,11 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/21/2004 - Alin Sinpalean
+ o Applied Mike's SqlMessage patch to generate SQL state values based on native
+   error codes, changed the implementation (from sorted array to HashMap) and
+   added a lot of new mappings.
+
 03/20/2004 - Brian Heineman
  o Corrected bug [919594] Clob support; added setObject support for both
    java.sql.Blob and java.sql.Clob.  Added initial Blob and Clob functional

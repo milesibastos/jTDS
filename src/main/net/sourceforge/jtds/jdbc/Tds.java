@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.41 2004-03-21 01:54:59 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.42 2004-03-21 19:24:11 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.41 2004-03-21 01:54:59 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.42 2004-03-21 19:24:11 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -2088,7 +2088,7 @@ public class Tds implements TdsDefinitions {
      */
     private PacketMsgResult processMsg(final byte packetSubType)
             throws java.io.IOException, TdsException {
-        final SqlMessage msg = new SqlMessage();
+        final SqlMessage msg = new SqlMessage(serverType);
         final EncodingHelper encoder = conn.getEncoder();
 
         getSubPacketLength(); // Packet length

@@ -29,6 +29,8 @@ public class TdsObjectFactory implements ObjectFactory
             ds.setTdsVersion((String)ref.get("tdsVersion").getContent());
             ds.setServerType(Integer.parseInt((String)ref.get("serverType")
                 .getContent()));
+            ds.setDomain((String)ref.get("domain").getContent());
+            ds.setInstance((String)ref.get("instance").getContent());
 
             return ds;
         }

@@ -1,6 +1,19 @@
 Changes from jTDS 0.5
 =======================
 
+01/20/2003 - Alin Sinpalean
+
+ o jTDS feels completely strange after such a long while. I honestly hope the
+   time will come when I'll be able to go back to real development... :(
+ o Fixed bug #662295: Tds.writeDateTimeValue() adds nanoseconds twice under JDK
+   1.4.1. The Timestamp.getTime() method adds in the nanos, then
+   writeDateTimeValue() adds them again (line 3232) (Patrick Johnson -
+   pjohnson73). Also some rounding problems when transforming from milliseconds
+   to jiffies. The fix checks if the value returned by getTime() is an integral
+   number of seconds and only in this case adds the nanoseconds (otherwise they
+   were already added by getTime()). For the rounding problem .33 milliseconds
+   are added to the value before converting it to jiffies. Seems to work fine.
+
 12/18/2002 - Alin Sinpalean
 
  o Long time, no jTDS! Hope I'll have some more time to look after jTDS now

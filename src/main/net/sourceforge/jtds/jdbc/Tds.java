@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -3229,7 +3229,14 @@ public class Tds implements TdsDefinitions {
          if (value_in instanceof java.sql.Timestamp)
          {
             Timestamp value = (Timestamp)value_in;
-            ms = value.getTime() + (value.getNanos()/nsPerMs);
+            ms = value.getTime();
+
+            // SAfe If the value contains only an integral number of seconds, add the nanoseconds,
+            //      otherwise they have probably already been added. This seems to be a problem with
+            //      J2SE 1.4 and later, which override the java.util.Date.getTime() implementation
+            //      and add the nanos there (although the javadoc comment hasn't changed).
+            if( ms%1000 == 0 )
+                ms += (value.getNanos()/nsPerMs);
          }
          else
             ms = ((java.util.Date)value_in).getTime();
@@ -3262,7 +3269,9 @@ public class Tds implements TdsDefinitions {
          }
          else
          {
-            int jiffies = (int)((msIntoCurrentDay * 300) / 1000);
+            // SAfe Rounding problem: without the +100, 'Jan 4 2003 2:22:39:803' would get passed as
+            //                        'Jan 4 2003 2:22:39:800'. Should we use +500 instead?
+            int jiffies = (int)((msIntoCurrentDay*300 + 100) / 1000);
 
             comm.appendByte((byte)8);
             comm.appendByte((byte)8);

@@ -33,7 +33,7 @@
 package net.sourceforge.jtds.jdbc;
 
 public class TdsUtil {
-    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.4 2004-04-16 21:14:12 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.5 2004-04-17 03:46:09 bheineman Exp $";
 
     private static char hex[] =
             {
@@ -157,7 +157,7 @@ public class TdsUtil {
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
         java.io.PrintStream ps = new java.io.PrintStream(baos);
 
-        ps.print("\n\n");
+        ps.print("\n");
         exception.printStackTrace(ps);
 
         return baos.toString();

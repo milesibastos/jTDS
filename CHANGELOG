@@ -6,6 +6,7 @@ Changes from jTDS 0.8.1
    JtdsDataSource and JtdsConnectionPoolDataSource.
  o Updated FAQ documentation to reflect current driver and data source class
    names.
+ o Added test for bug [930305] getGeneratedKeys() does not work with triggers
 
 07/14/2004 - Brian Heineman
  o Updated ResultSetMetaData.getColumnType(int) always return Types.BIT for BIT

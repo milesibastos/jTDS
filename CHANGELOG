@@ -1,6 +1,11 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/01/2004 - Brian Heineman
+ o Updated ResultSet.updateObject() to work properly with Blob and Clob values.
+ o Corrected ClasCastException when Blob or Clob values were used with cursor
+   result sets.
+
 03/31/2004 - Alin Sinpalean
  o Added a test for bug #926620 (Too long value for VARCHAR field) and fixed it
    by adding a test in Tds.executeProcedureInternal().

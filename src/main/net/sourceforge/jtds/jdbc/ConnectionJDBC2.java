@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.18 2004-08-04 15:23:30 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.19 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -230,7 +230,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             if (serverPort == -1) {
                 throw new SQLException(
-                                      Support.getMessage("error.msinfo.badinst", serverName, instanceName),
+                                      Messages.get("error.msinfo.badinst", serverName, instanceName),
                                       "08003");
             }
         }
@@ -287,19 +287,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         } catch (UnknownHostException e) {
             throw Support.linkException(
                                        new SQLException(
-                                                       Support.getMessage(
+                                                       Messages.get(
                                                                          "error.connection.badhost", e.getMessage()),
                                                        "08S03"), e);
         } catch (IOException e) {
             throw Support.linkException(
                                        new SQLException(
-                                                       Support.getMessage(
+                                                       Messages.get(
                                                                          "error.connection.ioerror", e.getMessage()),
                                                        "08S01"), e);
         } catch (SQLException e) {
             if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
                 throw new SQLException(
-                                      Support.getMessage(
+                                      Messages.get(
                                                         "error.connection.timeout"),
                                       "08S01");
             }
@@ -465,7 +465,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         //
         for (int i = 0; i < params.length; i++) {
             if (!params[i].isSet) {
-                throw new SQLException(Support.getMessage("error.prepare.paramnotset",
+                throw new SQLException(Messages.get("error.prepare.paramnotset",
                                                           Integer.toString(i+1)),
                                        "07000");
             }
@@ -644,41 +644,41 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     protected void unpackProperties(Properties info)
     throws SQLException {
-        serverName = info.getProperty(Support.getMessage("prop.servername"));
+        serverName = info.getProperty(Messages.get("prop.servername"));
 
         try {
             serverPort  = Integer.parseInt(
-                                          info.getProperty(Support.getMessage("prop.portnumber"),
+                                          info.getProperty(Messages.get("prop.portnumber"),
                                                            String.valueOf(DefaultProperties.PORT_NUMBER_SQLSERVER)));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.portnumber")), "08001");
+                                  Messages.get("error.connection.badprop",
+                                                     Messages.get("prop.portnumber")), "08001");
         }
 
         try {
             serverType  = Integer.parseInt(
-                                          info.getProperty(Support.getMessage("prop.servertype")));
+                                          info.getProperty(Messages.get("prop.servertype")));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.servertype")), "08001");
+                                  Messages.get("error.connection.badprop",
+                                                     Messages.get("prop.servertype")), "08001");
         }
 
-        databaseName = info.getProperty(Support.getMessage("prop.databasename"),"");
-        instanceName = info.getProperty(Support.getMessage("prop.instance"),"");
-        domainName = info.getProperty(Support.getMessage("prop.domain"),"");
-        user = info.getProperty(Support.getMessage("prop.user"));
-        password = info.getProperty(Support.getMessage("prop.password"));
-        macAddress = info.getProperty(Support.getMessage("prop.macaddress"), "");
-        appName = info.getProperty(Support.getMessage("prop.appname"), DefaultProperties.APP_NAME);
-        progName = info.getProperty(Support.getMessage("prop.progname"), DefaultProperties.PROG_NAME);
-        serverCharset = info.getProperty(Support.getMessage("prop.charset"));
-        language = info.getProperty(Support.getMessage("prop.language"), "us_english");
-        prepareSql = info.getProperty(Support.getMessage("prop.preparesql"), "true").equalsIgnoreCase("true");
-        lastUpdateCount = info.getProperty(Support.getMessage("prop.lastupdatecount"), "true").equalsIgnoreCase("true");
-        useUnicode = info.getProperty(Support.getMessage("prop.useunicode"), "true").equalsIgnoreCase("true");
-        namedPipe = info.getProperty(Support.getMessage("prop.namedpipe"), "false").equalsIgnoreCase("true");
+        databaseName = info.getProperty(Messages.get("prop.databasename"),"");
+        instanceName = info.getProperty(Messages.get("prop.instance"),"");
+        domainName = info.getProperty(Messages.get("prop.domain"),"");
+        user = info.getProperty(Messages.get("prop.user"));
+        password = info.getProperty(Messages.get("prop.password"));
+        macAddress = info.getProperty(Messages.get("prop.macaddress"), "");
+        appName = info.getProperty(Messages.get("prop.appname"), DefaultProperties.APP_NAME);
+        progName = info.getProperty(Messages.get("prop.progname"), DefaultProperties.PROG_NAME);
+        serverCharset = info.getProperty(Messages.get("prop.charset"));
+        language = info.getProperty(Messages.get("prop.language"), "us_english");
+        prepareSql = info.getProperty(Messages.get("prop.preparesql"), "true").equalsIgnoreCase("true");
+        lastUpdateCount = info.getProperty(Messages.get("prop.lastupdatecount"), "true").equalsIgnoreCase("true");
+        useUnicode = info.getProperty(Messages.get("prop.useunicode"), "true").equalsIgnoreCase("true");
+        namedPipe = info.getProperty(Messages.get("prop.namedpipe"), "false").equalsIgnoreCase("true");
         charsetSpecified = (serverCharset != null && serverCharset.length() > 0);
 
         if (!charsetSpecified) {
@@ -686,7 +686,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         String tmp = info.getProperty(
-                Support.getMessage("prop.tds"),
+                Messages.get("prop.tds"),
                 (serverType == Driver.SQLSERVER ? DefaultProperties.TDS_VERSION_70 : DefaultProperties.TDS_VERSION_50));
 
         if (tmp.equals(DefaultProperties.TDS_VERSION_42)) {
@@ -699,17 +699,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             tdsVersion = Driver.TDS80;
         } else {
             throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.tds")), "08001");
+                                  Messages.get("error.connection.badprop",
+                                                     Messages.get("prop.tds")), "08001");
         }
 
         try {
             packetSize  = Integer.parseInt(
-                                          info.getProperty(Support.getMessage("prop.packetsize"), "0"));
+                                          info.getProperty(Messages.get("prop.packetsize"), "0"));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.packetsize")), "08001");
+                                  Messages.get("error.connection.badprop",
+                                                     Messages.get("prop.packetsize")), "08001");
         }
 
         if (packetSize < TdsCore.MIN_PKT_SIZE) {
@@ -730,21 +730,21 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         try {
             loginTimeout = Integer.parseInt(
-                                            info.getProperty(Support.getMessage("prop.logintimeout"), "0"));
+                                            info.getProperty(Messages.get("prop.logintimeout"), "0"));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.logintimeout")), "08001");
+                                  Messages.get("error.connection.badprop",
+                                                     Messages.get("prop.logintimeout")), "08001");
         }
         
         try {
             lobBuffer = Long.parseLong(
-                                       info.getProperty(Support.getMessage("prop.lobbuffer"),
+                                       info.getProperty(Messages.get("prop.lobbuffer"),
                                                         String.valueOf(DefaultProperties.LOB_BUFFER_SIZE)));
         } catch (NumberFormatException e) {
             throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.lobbuffer")), "08001");
+                                  Messages.get("error.connection.badprop",
+                                                     Messages.get("prop.lobbuffer")), "08001");
         }
         
     }
@@ -819,7 +819,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     protected void setDatabase(final String newDb, final String oldDb)
     throws SQLException {
         if (currentDatabase != null && !oldDb.equalsIgnoreCase(currentDatabase)) {
-            throw new SQLException(Support.getMessage("error.connection.dbmismatch",
+            throw new SQLException(Messages.get("error.connection.dbmismatch",
                                                       oldDb, databaseName),
                                    "HY096");
         }
@@ -958,7 +958,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     void checkOpen() throws SQLException {
         if (closed) {
             throw new SQLException(
-                                  Support.getMessage("error.generic.closed", "Connection"), "HY010");
+                                  Messages.get("error.generic.closed", "Connection"), "HY010");
         }
     }
 
@@ -970,7 +970,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     void notImplemented(String method) throws SQLException {
         throw new SQLException(
-                              Support.getMessage("error.generic.notimp", method), "HYC00");
+                              Messages.get("error.generic.notimp", method), "HYC00");
     }
 
     /**
@@ -1162,11 +1162,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             case JtdsResultSet.HOLD_CURSORS_OVER_COMMIT:
                 break;
             case JtdsResultSet.CLOSE_CURSORS_AT_COMMIT:
-                throw new SQLException(Support.getMessage("error.generic.optvalue",
+                throw new SQLException(Messages.get("error.generic.optvalue",
                                                           "CLOSE_CURSORS_AT_COMMIT",
                                                           "setHoldability"), "HY092");
             default:
-                throw new SQLException(Support.getMessage("error.generic.badoption",
+                throw new SQLException(Messages.get("error.generic.badoption",
                                                           Integer.toString(holdability),
                                                           "setHoldability"), "HY092");
         }
@@ -1190,11 +1190,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 sql += "SERIALIZABLE";
                 break;
             case java.sql.Connection.TRANSACTION_NONE:
-                throw new SQLException(Support.getMessage("error.generic.optvalue",
+                throw new SQLException(Messages.get("error.generic.optvalue",
                                                           "TRANSACTION_NONE",
                                                           "setTransactionIsolation"), "HY024");
             default:
-                throw new SQLException(Support.getMessage("error.generic.badoption",
+                throw new SQLException(Messages.get("error.generic.badoption",
                                                           Integer.toString(level),
                                                           "setTransactionIsolation"), "HY092");
         }
@@ -1250,7 +1250,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (catalog.length() > 32 || catalog.length() < 1) {
             throw new SQLException(
-                                  Support.getMessage("error.generic.badparam",
+                                  Messages.get("error.generic.badparam",
                                                      catalog, "setCatalog"), "3D000");
         }
 
@@ -1327,7 +1327,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         String[] result = new SQLParser(sql, new ArrayList()).parse();
@@ -1348,7 +1348,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         JtdsCallableStatement stmt = new JtdsCallableStatement(this,
@@ -1385,14 +1385,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         boolean returnKeys;
 
         if (autoGeneratedKeys != JtdsStatement.RETURN_GENERATED_KEYS &&
             autoGeneratedKeys != JtdsStatement.NO_GENERATED_KEYS) {
-            throw new SQLException(Support.getMessage("error.generic.badoption",
+            throw new SQLException(Messages.get("error.generic.badoption",
                                                       Integer.toString(autoGeneratedKeys),
                                                       "executeUpate"),
                                    "HY092");
@@ -1415,7 +1415,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         JtdsPreparedStatement stmt = new JtdsPreparedStatement(this,
@@ -1444,10 +1444,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     throws SQLException {
         if (columnIndexes == null) {
             throw new SQLException(
-                                  Support.getMessage("error.generic.nullparam", "prepareStatement"),"HY092");
+                                  Messages.get("error.generic.nullparam", "prepareStatement"),"HY092");
         } else if (columnIndexes.length != 1) {
             throw new SQLException(
-                                  Support.getMessage("error.generic.needcolindex", "prepareStatement"),"HY092");
+                                  Messages.get("error.generic.needcolindex", "prepareStatement"),"HY092");
         }
 
         return prepareStatement(sql, JtdsStatement.RETURN_GENERATED_KEYS);
@@ -1464,10 +1464,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     throws SQLException {
         if (columnNames == null) {
             throw new SQLException(
-                                  Support.getMessage("error.generic.nullparam", "prepareStatement"),"HY092");
+                                  Messages.get("error.generic.nullparam", "prepareStatement"),"HY092");
         } else if (columnNames.length != 1) {
             throw new SQLException(
-                                  Support.getMessage("error.generic.needcolname", "prepareStatement"),"HY092");
+                                  Messages.get("error.generic.needcolname", "prepareStatement"),"HY092");
         }
 
         return prepareStatement(sql, JtdsStatement.RETURN_GENERATED_KEYS);

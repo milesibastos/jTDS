@@ -34,8 +34,8 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Extract abstract base class SharedIpc from {@link SharedSocket} and this class.
  * @todo Implement connection timeouts for named pipes.
  * 
- * @author David D. Kilzer.
- * @version $Id: SharedNamedPipe.java,v 1.9 2004-08-04 15:23:30 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: SharedNamedPipe.java,v 1.10 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
 

@@ -46,7 +46,7 @@ import java.net.*;
  * </pre>
  *
  * @author Matt Brinkley
- * @version $Id: MSSqlServerInfo.java,v 1.4 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: MSSqlServerInfo.java,v 1.5 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class MSSqlServerInfo {
     private int m_numRetries = 3;
@@ -82,7 +82,7 @@ public class MSSqlServerInfo {
         }
 
         throw new SQLException(
-                              Support.getMessage("error.msinfo.badinfo", host), "HY000");
+                              Messages.get("error.msinfo.badinfo", host), "HY000");
     }
 
     /**
@@ -138,7 +138,7 @@ public class MSSqlServerInfo {
                         return Integer.parseInt(curPort);
                     } catch (NumberFormatException e) {
                         throw new SQLException(
-                                              Support.getMessage("error.msinfo.badport", instanceName),
+                                              Messages.get("error.msinfo.badport", instanceName),
                                               "HY000");
                     }
                 }

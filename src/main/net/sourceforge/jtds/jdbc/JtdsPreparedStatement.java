@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.8 2004-08-02 02:27:05 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.9 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -106,7 +106,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         String parsedSql[] = new SQLParser(sql, params).parse();
 
         if (parsedSql[0].length() == 0) {
-            throw new SQLException(Support.getMessage("error.prepare.nosql"), "07000");
+            throw new SQLException(Messages.get("error.prepare.nosql"), "07000");
         }
 
         this.sql = parsedSql[0];
@@ -180,7 +180,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     protected void checkOpen() throws SQLException {
         if (closed) {
             throw new SQLException(
-                    Support.getMessage("error.generic.closed", "PreparedStatement"), "HY010");
+                    Messages.get("error.generic.closed", "PreparedStatement"), "HY010");
         }
     }
 
@@ -192,7 +192,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     protected void notSupported(String method) throws SQLException {
         throw new SQLException(
-                Support.getMessage("error.generic.notsup", method), "HYC00");
+                Messages.get("error.generic.notsup", method), "HYC00");
     }
 
     /**
@@ -230,7 +230,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         checkOpen();
 
         if (parameterIndex < 1 || parameterIndex > parameters.length) {
-            throw new SQLException(Support.getMessage("error.prepare.paramindex",
+            throw new SQLException(Messages.get("error.prepare.paramindex",
                                                       Integer.toString(parameterIndex)),
                                                       "07009");
         }
@@ -289,7 +289,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         ParamInfo pi = getParameter(parameterIndex);
 
         if (Support.getJdbcTypeName(targetSqlType).equals("ERROR")) {
-            throw new SQLException(Support.getMessage("error.generic.badtype",
+            throw new SQLException(Messages.get("error.generic.badtype",
                                 Integer.toString(targetSqlType)), "HY092");
         }
 
@@ -488,7 +488,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                }
                setString(parameterIndex, new String(tmp, 0, pos));
             } catch (java.io.IOException e) {
-                throw new SQLException(Support.getMessage("error.generic.ioerror",
+                throw new SQLException(Messages.get("error.generic.ioerror",
                                                            e.getMessage()), "HY000");
             }
         }
@@ -515,7 +515,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
         throws SQLException {
         if (scale < 0 || scale > 28) {
-            throw new SQLException(Support.getMessage("error.generic.badscale"), "HY092");
+            throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
         }
         setObjectBase(parameterIndex, x, targetSqlType, scale);
     }
@@ -547,7 +547,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             long length = x.length();
 
             if (length > Integer.MAX_VALUE) {
-                throw new SQLException(Support.getMessage("error.resultset.longblob"), "24000");
+                throw new SQLException(Messages.get("error.resultset.longblob"), "24000");
             }
 
             setBinaryStream(parameterIndex, x.getBinaryStream(), (int) x.length());
@@ -561,7 +561,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             long length = x.length();
 
             if (length > Integer.MAX_VALUE) {
-                throw new SQLException(Support.getMessage("error.resultset.longclob"), "24000");
+                throw new SQLException(Messages.get("error.resultset.longclob"), "24000");
             }
 
             setCharacterStream(parameterIndex, x.getCharacterStream(), (int) x.length());

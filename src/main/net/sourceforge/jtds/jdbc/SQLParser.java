@@ -40,7 +40,7 @@ import java.sql.SQLException;
  * result the validation done here is limited.
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.1 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: SQLParser.java,v 1.2 2004-08-05 01:45:22 ddkilzer Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -193,7 +193,7 @@ class SQLParser {
         throws SQLException
     {
         if (in[s] != c)
-            throw new SQLException(Support.getMessage("error.parsesql.mustbe",
+            throw new SQLException(Messages.get("error.parsesql.mustbe",
                                                       String.valueOf(s),
                                                       String.valueOf(c)),
                                    "22019");
@@ -335,7 +335,7 @@ class SQLParser {
     {
 
         if (!getDateTimeField(timeMask))
-            throw new SQLException(Support.getMessage("error.parsesql.syntax",
+            throw new SQLException(Messages.get("error.parsesql.syntax",
                                                       "time",
                                                       String.valueOf(s)),
                                    "22019");
@@ -354,7 +354,7 @@ class SQLParser {
     throws SQLException
     {
         if (!getDateTimeField(dateMask))
-            throw new SQLException(Support.getMessage("error.parsesql.syntax",
+            throw new SQLException(Messages.get("error.parsesql.syntax",
                                                       "date",
                                                       String.valueOf(s)),
                                    "22019");
@@ -374,7 +374,7 @@ class SQLParser {
     throws SQLException
     {
         if (!getDateTimeField(timestampMask))
-            throw new SQLException(Support.getMessage("error.parsesql.syntax",
+            throw new SQLException(Messages.get("error.parsesql.syntax",
                                                       "timestamp",
                                                       String.valueOf(s)),
                                    "22019");
@@ -496,7 +496,7 @@ class SQLParser {
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();
             } else {
-                throw new SQLException(Support.getMessage("error.parsesql.syntax",
+                throw new SQLException(Messages.get("error.parsesql.syntax",
                                                           "call",
                                                           String.valueOf(s)),
                                        "22019");
@@ -525,7 +525,7 @@ class SQLParser {
             if (esc.equalsIgnoreCase("escape")) {
                 likeEscape();
             } else {
-                throw new SQLException(Support.getMessage("error.parsesql.badesc",
+                throw new SQLException(Messages.get("error.parsesql.badesc",
                                                           esc,
                                                           String.valueOf(s)),
                                        "22019");
@@ -574,7 +574,7 @@ class SQLParser {
             return result;
         } catch (IndexOutOfBoundsException e) {
             // Should only come here if string is invalid in some way.
-            throw new SQLException(Support.getMessage("error.parsesql.missing",
+            throw new SQLException(Messages.get("error.parsesql.missing",
                                                       String.valueOf(terminator)),
                                    "22025");
         }

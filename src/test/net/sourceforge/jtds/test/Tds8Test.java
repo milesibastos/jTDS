@@ -4,6 +4,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
+import net.sourceforge.jtds.jdbc.Messages;
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -23,7 +24,7 @@ public class Tds8Test extends DatabaseTestCase {
 
     public static Test suite() {
 
-        if (!props.getProperty(Support.getMessage("prop.tds"), DefaultProperties.TDS_VERSION_70).equals(
+        if (!props.getProperty(Messages.get("prop.tds"), DefaultProperties.TDS_VERSION_70).equals(
                 DefaultProperties.TDS_VERSION_80)) {
 
             return new TestSuite();

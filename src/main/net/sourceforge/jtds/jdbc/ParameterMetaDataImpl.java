@@ -28,7 +28,7 @@ import java.sql.*;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ParameterMetaDataImpl.java,v 1.2 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: ParameterMetaDataImpl.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class ParameterMetaDataImpl implements ParameterMetaData {
     private ParamInfo[] parameterList;
@@ -102,7 +102,7 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
     private ParamInfo getParameter(int param) throws SQLException {
         if (param < 1 || param > parameterList.length) {
             throw new SQLException(
-                    Support.getMessage("error.prepare.paramindex",
+                    Messages.get("error.prepare.paramindex",
                                         Integer.toString(param)), "07009");
         }
 

@@ -21,13 +21,14 @@ import java.util.Hashtable;
 import javax.naming.*;
 import javax.naming.spi.*;
 import net.sourceforge.jtds.jdbc.Support;
+import net.sourceforge.jtds.jdbc.Messages;
 
 /**
  * Description
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.3 2004-07-25 15:30:26 bheineman Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -40,24 +41,24 @@ public class JtdsObjectFactory implements ObjectFactory {
         if (ref.getClassName().equals(JtdsDataSource.class.getName())) {
             JtdsDataSource ds = new JtdsDataSource();
 
-            ds.setServerName((String) ref.get(Support.getMessage("prop.servername")).getContent());
-            ds.setPortNumber(Integer.parseInt((String) ref.get(Support.getMessage("prop.portnumber")).getContent()));
-            ds.setDatabaseName((String) ref.get(Support.getMessage("prop.databasename")).getContent());
-            ds.setUser((String) ref.get(Support.getMessage("prop.user")).getContent());
-            ds.setPassword((String) ref.get(Support.getMessage("prop.password")).getContent());
-            ds.setCharset((String) ref.get(Support.getMessage("prop.charset")).getContent());
-            ds.setLanguage((String) ref.get(Support.getMessage("prop.language")).getContent());
-            ds.setTds((String) ref.get(Support.getMessage("prop.tds")).getContent());
-            ds.setServerType(Integer.parseInt((String) ref.get(Support.getMessage("prop.servertype")).getContent()));
-            ds.setDomain((String) ref.get(Support.getMessage("prop.domain")).getContent());
-            ds.setInstance((String) ref.get(Support.getMessage("prop.instance")).getContent());
-            ds.setLastUpdateCount("true".equals(ref.get(Support.getMessage("prop.lastupdatecount")).getContent()));
-            ds.setSendStringParametersAsUnicode("true".equals(ref.get(Support.getMessage("prop.useunicode")).getContent()));
-            ds.setNamedPipe("true".equals(ref.get(Support.getMessage("prop.namedpipe")).getContent()));
-            ds.setMacAddress((String) ref.get(Support.getMessage("prop.macaddress")).getContent());
-            ds.setPacketSize(Integer.parseInt((String) ref.get(Support.getMessage("prop.packetsize")).getContent()));
-            ds.setPrepareSql("true".equals(ref.get(Support.getMessage("prop.preparesql")).getContent()));
-            ds.setLobBuffer(Long.parseLong((String) ref.get(Support.getMessage("prop.lobbuffer")).getContent()));
+            ds.setServerName((String) ref.get(Messages.get("prop.servername")).getContent());
+            ds.setPortNumber(Integer.parseInt((String) ref.get(Messages.get("prop.portnumber")).getContent()));
+            ds.setDatabaseName((String) ref.get(Messages.get("prop.databasename")).getContent());
+            ds.setUser((String) ref.get(Messages.get("prop.user")).getContent());
+            ds.setPassword((String) ref.get(Messages.get("prop.password")).getContent());
+            ds.setCharset((String) ref.get(Messages.get("prop.charset")).getContent());
+            ds.setLanguage((String) ref.get(Messages.get("prop.language")).getContent());
+            ds.setTds((String) ref.get(Messages.get("prop.tds")).getContent());
+            ds.setServerType(Integer.parseInt((String) ref.get(Messages.get("prop.servertype")).getContent()));
+            ds.setDomain((String) ref.get(Messages.get("prop.domain")).getContent());
+            ds.setInstance((String) ref.get(Messages.get("prop.instance")).getContent());
+            ds.setLastUpdateCount("true".equals(ref.get(Messages.get("prop.lastupdatecount")).getContent()));
+            ds.setSendStringParametersAsUnicode("true".equals(ref.get(Messages.get("prop.useunicode")).getContent()));
+            ds.setNamedPipe("true".equals(ref.get(Messages.get("prop.namedpipe")).getContent()));
+            ds.setMacAddress((String) ref.get(Messages.get("prop.macaddress")).getContent());
+            ds.setPacketSize(Integer.parseInt((String) ref.get(Messages.get("prop.packetsize")).getContent()));
+            ds.setPrepareSql("true".equals(ref.get(Messages.get("prop.preparesql")).getContent()));
+            ds.setLobBuffer(Long.parseLong((String) ref.get(Messages.get("prop.lobbuffer")).getContent()));
 
             return ds;
         }

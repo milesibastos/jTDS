@@ -26,8 +26,8 @@ import net.sourceforge.jtds.jdbc.TdsCore;
 /**
  * Unit tests for the {@link SharedNamedPipe} class.
  * 
- * @author David D. Kilzer.
- * @version $Id: NamedPipeUnitTest.java,v 1.4 2004-07-30 02:34:51 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: NamedPipeUnitTest.java,v 1.5 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public class NamedPipeUnitTest extends UnitTestBase {
 

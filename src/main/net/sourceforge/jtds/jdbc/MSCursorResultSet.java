@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.7 2004-08-04 21:01:55 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.8 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -143,7 +143,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
-            throw new SQLException(Support.getMessage("error.resultset.norow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
         if (onInsertRow) {
@@ -162,13 +162,13 @@ public class MSCursorResultSet extends JtdsResultSet {
      */
     protected ColData getColumn(int index) throws SQLException {
         if (index < 1 || index > columnCount) {
-            throw new SQLException(Support.getMessage("error.resultset.colindex",
+            throw new SQLException(Messages.get("error.resultset.colindex",
                                                       Integer.toString(index)),
                                    "07009");
         }
 
         if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
-            throw new SQLException(Support.getMessage("error.resultset.norow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
         ColData data = (onInsertRow) ? insertRow[index - 1] : currentRow[index - 1];
@@ -344,7 +344,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             this.columnCount = getColumnCount(columns);
         } else {
             statement.getMessages().addException(new SQLException(
-                                                                 Support.getMessage("error.statement.noresult"), "24000"));
+                                                                 Messages.get("error.statement.noresult"), "24000"));
         }
 
         tds.clearResponseQueue();
@@ -373,7 +373,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 
                     default:
                         statement.getMessages().addWarning(new SQLWarning(
-                                                                         Support.getMessage("warning.cursortye",
+                                                                         Messages.get("warning.cursortye",
                                                                                             Integer.toString(actualScroll)), "01000"));
                 }
             }
@@ -391,18 +391,18 @@ public class MSCursorResultSet extends JtdsResultSet {
 
                     default:
                         statement.getMessages().addWarning(new SQLWarning(
-                                                                         Support.getMessage("warning.concurtype",
+                                                                         Messages.get("warning.concurtype",
                                                                                             Integer.toString(actualCc)), "01000"));
                 }
             }
 
             // SAfe This warning goes to the Statement, not the ResultSet
             statement.addWarning(new SQLWarning(
-                                               Support.getMessage("warning.cursordowngraded"), "01000"));
+                                               Messages.get("warning.cursordowngraded"), "01000"));
         }
 
         if ((retVal == null) || (retVal.intValue() != 0)) {
-            throw new SQLException(Support.getMessage("error.resultset.openfail"), "24000");
+            throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
         }
     }
 
@@ -510,7 +510,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             param = new ParamInfo[3];
         } else {
             if (row == null) {
-                throw new SQLException(Support.getMessage("error.resultset.update"), "24000");
+                throw new SQLException(Messages.get("error.resultset.update"), "24000");
             }
             // 4 parameters plus one for each column for insert/update
             param = new ParamInfo[4 + columnCount];
@@ -564,7 +564,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                     crtCol++;
                 } else {
                     if (opType == CURSOR_OP_INSERT && row[i].getValue() != null)
-                        throw new SQLException(Support.getMessage("error.resultset.insert",
+                        throw new SQLException(Messages.get("error.resultset.insert",
                                                                   Integer.toString(i+1),
                                                                   columns[i].name), "24000");
                 }
@@ -648,7 +648,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkUpdateable();
 
         if (onInsertRow) {
-            throw new SQLException(Support.getMessage("error.resultset.insrow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
         refreshRow();
@@ -672,11 +672,11 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkUpdateable();
 
         if (currentRow == null) {
-            throw new SQLException(Support.getMessage("error.resultset.norow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
         if (onInsertRow) {
-            throw new SQLException(Support.getMessage("error.resultset.insrow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
         cursor(CURSOR_OP_DELETE, null);
@@ -688,7 +688,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkUpdateable();
 
         if (!onInsertRow) {
-            throw new SQLException(Support.getMessage("error.resultset.notinsrow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.notinsrow"), "24000");
         }
 
         cursor(CURSOR_OP_INSERT, insertRow);
@@ -719,7 +719,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkUpdateable();
 
         if (onInsertRow) {
-            throw new SQLException(Support.getMessage("error.resultset.insrow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
         cursorFetch(FETCH_REPEAT, 1);
@@ -730,11 +730,11 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkUpdateable();
 
         if (currentRow == null) {
-            throw new SQLException(Support.getMessage("error.resultset.norow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
         if (onInsertRow) {
-            throw new SQLException(Support.getMessage("error.resultset.insrow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
         cursor(CURSOR_OP_UPDATE, currentRow);

@@ -30,6 +30,7 @@ import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.TdsCore;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
+import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -37,7 +38,7 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.13 2004-08-04 15:23:39 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.14 2004-08-05 01:45:23 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -67,33 +68,33 @@ implements DataSource, Referenceable, Serializable {
                                       JtdsObjectFactory.class.getName(),
                                       null);
 
-        ref.add(new StringRefAddr(Support.getMessage("prop.servername"), serverName));
-        ref.add(new StringRefAddr(Support.getMessage("prop.portnumber"),
+        ref.add(new StringRefAddr(Messages.get("prop.servername"), serverName));
+        ref.add(new StringRefAddr(Messages.get("prop.portnumber"),
                                   String.valueOf(portNumber)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.databasename"), databaseName));
-        ref.add(new StringRefAddr(Support.getMessage("prop.user"), user));
-        ref.add(new StringRefAddr(Support.getMessage("prop.password"), password));
-        ref.add(new StringRefAddr(Support.getMessage("prop.charset"), charset));
-        ref.add(new StringRefAddr(Support.getMessage("prop.language"), language));
-        ref.add(new StringRefAddr(Support.getMessage("prop.tds"), tds));
-        ref.add(new StringRefAddr(Support.getMessage("prop.servertype"),
+        ref.add(new StringRefAddr(Messages.get("prop.databasename"), databaseName));
+        ref.add(new StringRefAddr(Messages.get("prop.user"), user));
+        ref.add(new StringRefAddr(Messages.get("prop.password"), password));
+        ref.add(new StringRefAddr(Messages.get("prop.charset"), charset));
+        ref.add(new StringRefAddr(Messages.get("prop.language"), language));
+        ref.add(new StringRefAddr(Messages.get("prop.tds"), tds));
+        ref.add(new StringRefAddr(Messages.get("prop.servertype"),
                                   String.valueOf(serverType)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.domain"), domain));
-        ref.add(new StringRefAddr(Support.getMessage("prop.instance"), instance));
-        ref.add(new StringRefAddr(Support.getMessage("prop.lastupdatecount"),
+        ref.add(new StringRefAddr(Messages.get("prop.domain"), domain));
+        ref.add(new StringRefAddr(Messages.get("prop.instance"), instance));
+        ref.add(new StringRefAddr(Messages.get("prop.lastupdatecount"),
                                   String.valueOf(isLastUpdateCount())));
-        ref.add(new StringRefAddr(Support.getMessage("prop.logintimeout"),
+        ref.add(new StringRefAddr(Messages.get("prop.logintimeout"),
                                   String.valueOf(loginTimeout)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.useunicode"),
+        ref.add(new StringRefAddr(Messages.get("prop.useunicode"),
                                   String.valueOf(sendStringParametersAsUnicode)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.namedpipe"),
+        ref.add(new StringRefAddr(Messages.get("prop.namedpipe"),
                                   String.valueOf(namedPipe)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.macaddress"), macAddress));
-        ref.add(new StringRefAddr(Support.getMessage("prop.packetsize"),
+        ref.add(new StringRefAddr(Messages.get("prop.macaddress"), macAddress));
+        ref.add(new StringRefAddr(Messages.get("prop.packetsize"),
                                   String.valueOf(packetSize)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.preparesql"),
+        ref.add(new StringRefAddr(Messages.get("prop.preparesql"),
                                   String.valueOf(prepareSql)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.lobbuffer"),
+        ref.add(new StringRefAddr(Messages.get("prop.lobbuffer"),
                                   String.valueOf(lobBuffer)));
 
         return ref;

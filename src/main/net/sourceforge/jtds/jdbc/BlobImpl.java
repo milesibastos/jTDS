@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.16 2004-08-01 18:20:16 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.17 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -139,18 +139,18 @@ public class BlobImpl implements Blob {
 
             return _jtdsInputStream;
         } catch (IOException e) {
-            throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+            throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
     }
 
     public byte[] getBytes(long pos, int length) throws SQLException {
         if (pos < 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badpos"), "HY090");
         } else if (length < 0) {
-            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (pos - 1 + length > length()) {
-            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.lentoolong"), "HY090");
         }
 
         InputStream inputStream = getBinaryStream();
@@ -161,13 +161,13 @@ public class BlobImpl implements Blob {
             byte[] buffer = new byte[length];
 
             if (inputStream.read(buffer) != length) {
-                throw new SQLException(Support.getMessage("error.blobclob.readlen"), "HY000");
+                throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
             }
 
             return buffer;
         } catch (IOException e) {
             throw new SQLException(
-                 Support.getMessage("error.generic.ioread", "byte", e.getMessage()),
+                 Messages.get("error.generic.ioread", "byte", e.getMessage()),
                                     "HY000");
         }
     }
@@ -191,7 +191,7 @@ public class BlobImpl implements Blob {
 
     public long position(Blob pattern, long start) throws SQLException {
         if (pattern == null) {
-            throw new SQLException(Support.getMessage("error.blob.badpattern"), "HY024");
+            throw new SQLException(Messages.get("error.blob.badpattern"), "HY024");
         }
 
         try {
@@ -229,7 +229,7 @@ public class BlobImpl implements Blob {
             }
         } catch (IOException e) {
             throw new SQLException(
-                Support.getMessage("error.generic.ioread", "String", e.getMessage()),
+                Messages.get("error.generic.ioread", "String", e.getMessage()),
                                    "HY000");
         }
 
@@ -240,9 +240,9 @@ public class BlobImpl implements Blob {
         long length = length();
 
         if (pos < 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badpos"), "HY090");
         } else if (pos > length && pos != 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badposlen"), "HY090");
         }
 
         return new BlobOutputStream(pos, length);
@@ -250,7 +250,7 @@ public class BlobImpl implements Blob {
 
     public int setBytes(long pos, byte[] bytes) throws SQLException {
         if (bytes == null) {
-            throw new SQLException(Support.getMessage("error.blob.bytesnull"), "HY024");
+            throw new SQLException(Messages.get("error.blob.bytesnull"), "HY024");
         }
 
         return setBytes(pos, bytes, 0, bytes.length);
@@ -264,7 +264,7 @@ public class BlobImpl implements Blob {
             outputStream.write(bytes, offset, len);
             outputStream.close();
         } catch (IOException e) {
-            throw new SQLException(Support.getMessage("error.generic.iowrite",
+            throw new SQLException(Messages.get("error.generic.iowrite",
             		                                  "bytes",
 													  e.getMessage()),
                                    "HY000");
@@ -282,9 +282,9 @@ public class BlobImpl implements Blob {
         long currentLength = length();
         
         if (len < 0) {
-            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (len > currentLength) {
-            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.lentoolong"), "HY090");
         }
 
         if (len == currentLength) {
@@ -324,7 +324,7 @@ public class BlobImpl implements Blob {
                     tmpFile.delete();
                 }
 	        } catch (IOException e) {
-	            throw new SQLException(Support.getMessage("error.generic.iowrite",
+	            throw new SQLException(Messages.get("error.generic.iowrite",
 	            		                                  "bytes",
 														  e.getMessage()),
 									   "HY000");
@@ -337,10 +337,10 @@ public class BlobImpl implements Blob {
             long skipped = inputStream.skip(skip);
 
             if (skipped != skip) {
-                throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
+                throw new SQLException(Messages.get("error.blobclob.badposlen"), "HY090");
             }
         } catch (IOException e) {
-            throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+            throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
     }
@@ -415,7 +415,7 @@ public class BlobImpl implements Blob {
 
                 updateOuputStream();
             } catch (IOException e) {
-                throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                        "HY000");
             }
         }
@@ -537,10 +537,10 @@ public class BlobImpl implements Blob {
                             throw new IOException("stream closed");
                         } else if (_blob == null) {
                             throw new IOException(
-                                    Support.getMessage("error.generic.iowrite", "byte", "_blob = NULL"));
+                                    Messages.get("error.generic.iowrite", "byte", "_blob = NULL"));
                         } else if (curPos > _blob.length) {
                             throw new IOException(
-                                    Support.getMessage("error.generic.iowrite", "byte", "_blob.length changed"));
+                                    Messages.get("error.generic.iowrite", "byte", "_blob.length changed"));
                         }
 
                         if (curPos + 1 > _blob.length) {

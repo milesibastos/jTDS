@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.17 2004-08-01 18:20:16 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.18 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -203,18 +203,18 @@ public class ClobImpl implements Clob {
             
             return _jtdsReader;
         } catch (IOException e) {
-            throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+            throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
     }
     
     public String getSubString(long pos, int length) throws SQLException {
         if (pos < 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badpos"), "HY090");
         } else if (length < 0) {
-            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (pos - 1 + length > length()) {
-            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.lentoolong"), "HY090");
         }
 
         Reader reader = getCharacterStream();
@@ -225,13 +225,13 @@ public class ClobImpl implements Clob {
             char[] buffer = new char[length];
             
             if (reader.read(buffer) != length) {
-                throw new SQLException(Support.getMessage("error.blobclob.readlen"), "HY000");
+                throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
             }
             
             return new String(buffer);
         } catch (IOException ioe) {
             throw new SQLException(
-                 Support.getMessage("error.generic.ioread", "String", ioe.getMessage()),
+                 Messages.get("error.generic.ioread", "String", ioe.getMessage()),
                                     "HY000");
         }
     }
@@ -255,7 +255,7 @@ public class ClobImpl implements Clob {
     
     public long position(Clob searchStr, long start) throws SQLException {
         if (searchStr == null) {
-            throw new SQLException(Support.getMessage("error.clob.searchnull"), "HY024");
+            throw new SQLException(Messages.get("error.clob.searchnull"), "HY024");
         }
 
         try {
@@ -293,7 +293,7 @@ public class ClobImpl implements Clob {
             }
         } catch (IOException e) {
             throw new SQLException(
-                Support.getMessage("error.generic.ioread", "String", e.getMessage()),
+                Messages.get("error.generic.ioread", "String", e.getMessage()),
                                    "HY000");
         }
 
@@ -308,9 +308,9 @@ public class ClobImpl implements Clob {
         long length = length();
         
         if (pos < 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
+            throw new SQLException(Messages.get("error.blobclob.badpos"), "HY024");
         } else if (pos > length && pos != 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY024");
+            throw new SQLException(Messages.get("error.blobclob.badposlen"), "HY024");
         }
 
         return new ClobWriter(pos, length);
@@ -318,7 +318,7 @@ public class ClobImpl implements Clob {
 
     public int setString(long pos, String str) throws SQLException {
         if (str == null) {
-            throw new SQLException(Support.getMessage("error.clob.strnull"), "HY090");
+            throw new SQLException(Messages.get("error.clob.strnull"), "HY090");
         }
 
         return setString(pos, str, 0, str.length());
@@ -333,7 +333,7 @@ public class ClobImpl implements Clob {
             writer.close();
         } catch (IOException e) {
             throw new SQLException(
-                Support.getMessage("error.generic.iowrite", "String", e.getMessage()),
+                Messages.get("error.generic.iowrite", "String", e.getMessage()),
                             "HY000");
         }
 
@@ -349,9 +349,9 @@ public class ClobImpl implements Clob {
         long currentLength = length();
         
         if (len < 0) {
-            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (len > currentLength) {
-            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
+            throw new SQLException(Messages.get("error.blobclob.lentoolong"), "HY090");
         }
 
         if (len == currentLength) {
@@ -391,7 +391,7 @@ public class ClobImpl implements Clob {
                     tmpFile.delete();
                 }
 	        } catch (IOException e) {
-	            throw new SQLException(Support.getMessage("error.generic.iowrite",
+	            throw new SQLException(Messages.get("error.generic.iowrite",
 	            		                                  "String",
 														  e.getMessage()),
 	                                   "HY000");
@@ -404,10 +404,10 @@ public class ClobImpl implements Clob {
             long skipped = reader.skip(skip);
 
             if (skipped != skip) {
-                throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
+                throw new SQLException(Messages.get("error.blobclob.badposlen"), "HY090");
             }
         } catch (IOException e) {
-            throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+            throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
     }
@@ -482,7 +482,7 @@ public class ClobImpl implements Clob {
 
                 updateWriter();
             } catch (IOException e) {
-                throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                        "HY000");
             }
         }

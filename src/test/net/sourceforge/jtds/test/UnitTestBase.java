@@ -26,8 +26,8 @@ import java.lang.reflect.Constructor;
 /**
  * Base class for unit tests which do not connect to a database.
  * 
- * @author David D. Kilzer.
- * @version $Id: UnitTestBase.java,v 1.3 2004-08-03 19:12:00 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: UnitTestBase.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 

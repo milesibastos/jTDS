@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.16 2004-08-04 02:10:44 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.17 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -341,7 +341,7 @@ public class TdsCore {
     private void checkOpen() throws SQLException {
         if (isClosed) {
             throw new SQLException(
-                Support.getMessage("error.generic.closed", "Connection"),
+                Messages.get("error.generic.closed", "Connection"),
                     "HY010");
         }
     }
@@ -459,7 +459,7 @@ public class TdsCore {
         } catch (IOException ioe) {
             throw Support.linkException(
                 new SQLException(
-                       Support.getMessage(
+                       Messages.get(
                                 "error.generic.ioerror", ioe.getMessage()),
                                     "08S01"), ioe);
         }
@@ -500,7 +500,7 @@ public class TdsCore {
 
                 throw Support.linkException(
                     new SQLException(
-                           Support.getMessage(
+                           Messages.get(
                                 "error.generic.ioerror", e.getMessage()),
                                     "08S01"), e);
             }
@@ -616,7 +616,7 @@ public class TdsCore {
 
                 throw Support.linkException(
                     new SQLException(
-                           Support.getMessage(
+                           Messages.get(
                                     "error.generic.ioerror", e.getMessage()),
                                         "08S01"), e);
             }
@@ -658,7 +658,7 @@ public class TdsCore {
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
-                       Support.getMessage(
+                       Messages.get(
                                 "error.generic.ioerror", e.getMessage()),
                                     "08S01"), e);
         }
@@ -716,7 +716,7 @@ public class TdsCore {
                connection.setClosed();
                throw Support.linkException(
                    new SQLException(
-                          Support.getMessage(
+                          Messages.get(
                                    "error.generic.ioerror", ioe.getMessage()),
                                        "08S01"), ioe);
            } finally {
@@ -788,7 +788,7 @@ public class TdsCore {
         if (parameters != null) {
             for (int i = 0; i < parameters.length; i++){
                 if (!parameters[i].isSet && !parameters[i].isOutput){
-                    throw new SQLException(Support.getMessage("error.prepare.paramnotset",
+                    throw new SQLException(Messages.get("error.prepare.paramnotset",
                                                               Integer.toString(i + 1)),
                                            "07000");
                 }
@@ -822,7 +822,7 @@ public class TdsCore {
 
             throw Support.linkException(
                 new SQLException(
-                       Support.getMessage(
+                       Messages.get(
                                 "error.generic.ioerror", ioe.getMessage()),
                                     "08S01"), ioe);
         }
@@ -929,7 +929,7 @@ public class TdsCore {
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
-                       Support.getMessage(
+                       Messages.get(
                                 "error.generic.ioerror", ioe.getMessage()),
                                     "08S01"), ioe);
         } catch (SQLException e) {
@@ -961,12 +961,12 @@ public class TdsCore {
         throws SQLException {
         if (colName == null || colName.length() == 0
             || tabName == null || tabName.length() == 0) {
-            throw new SQLException(Support.getMessage("error.tdscore.badtext"), "HY000");
+            throw new SQLException(Messages.get("error.tdscore.badtext"), "HY000");
         }
 
         if (textPtr == null) {
             throw new SQLException(
-                Support.getMessage("error.tdscore.notextptr", tabName + "." + colName),
+                Messages.get("error.tdscore.notextptr", tabName + "." + colName),
                                      "HY000");
         }
 
@@ -1020,7 +1020,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
     int dataLength(String tabName, String colName) throws SQLException {
         if (colName == null || colName.length() == 0
             || tabName == null || tabName.length() == 0) {
-            throw new SQLException(Support.getMessage("error.tdscore.badtext"), "HY000");
+            throw new SQLException(Messages.get("error.tdscore.badtext"), "HY000");
         }
 
         Object results = null;
@@ -1043,7 +1043,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         if (!(results instanceof Number)) {
             throw new SQLException(
-                Support.getMessage("error.tdscore.badlen", tabName + "." + colName),
+                Messages.get("error.tdscore.badlen", tabName + "." + colName),
                 "HY000");
         }
 
@@ -1623,7 +1623,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
-                       Support.getMessage(
+                       Messages.get(
                                 "error.generic.ioerror", ioe.getMessage()),
                                     "08S01"), ioe);
         } catch (ProtocolException pe) {
@@ -1631,7 +1631,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
-                       Support.getMessage(
+                       Messages.get(
                                 "error.generic.tdserror", pe.getMessage()),
                                     "08S01"), pe);
         }
@@ -2550,11 +2550,11 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                     // Call to store proc nothing we can do
                     if (parameters[i].sqlType.equals("text")) {
                         throw new SQLException(
-                                        Support.getMessage("error.chartoolong"), "HY000");
+                                        Messages.get("error.chartoolong"), "HY000");
                     }
 
                     throw new SQLException(
-                                     Support.getMessage("error.bintoolong"), "HY000");
+                                     Messages.get("error.bintoolong"), "HY000");
                 }
 
                 // prepared statement substitute parameters into SQL
@@ -2790,7 +2790,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                 connection.setRowCount(rowCount);
             } catch (IOException ioe) {
                 throw new SQLException(
-                            Support.getMessage("error.generic.ioerror",
+                            Messages.get("error.generic.ioerror",
                                                     ioe.getMessage()), "08S01");
             }
         }
@@ -2810,7 +2810,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             // Query timed out
             endOfResponse = true;
             throw new SQLException(
-                    Support.getMessage("error.generic.timeout"), "HYT00");
+                    Messages.get("error.generic.timeout"), "HYT00");
         } finally {
             in.setTimeout(0);
         }

@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.2 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**
@@ -89,7 +89,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             }
         }
 
-        throw new SQLException(Support.getMessage("error.callable.noparam", name), "07000");
+        throw new SQLException(Messages.get("error.callable.noparam", name), "07000");
     }
 
     /**
@@ -100,7 +100,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     protected void checkOpen() throws SQLException {
         if (closed) {
             throw new SQLException(
-                    Support.getMessage("error.generic.closed", "CallableStatement"), "HY010");
+                    Messages.get("error.generic.closed", "CallableStatement"), "HY010");
         }
     }
 
@@ -301,7 +301,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         try {
             return new java.net.URL(url);
         } catch (MalformedURLException e) {
-            throw new SQLException(Support.getMessage("error.resultset.badurl", url), "22000");
+            throw new SQLException(Messages.get("error.resultset.badurl", url), "22000");
         }
     }
 

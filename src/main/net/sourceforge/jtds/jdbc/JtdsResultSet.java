@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.7 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.8 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -248,13 +248,13 @@ public class JtdsResultSet implements ResultSet {
         checkOpen();
 
         if (index < 1 || index > columnCount) {
-            throw new SQLException(Support.getMessage("error.resultset.colindex",
+            throw new SQLException(Messages.get("error.resultset.colindex",
                                                       Integer.toString(index)),
                                                        "07009");
         }
 
         if (currentRow == null) {
-            throw new SQLException(Support.getMessage("error.resultset.norow"), "24000");
+            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
         ColData data = currentRow[index - 1];
@@ -271,12 +271,12 @@ public class JtdsResultSet implements ResultSet {
      */
     protected void checkOpen() throws SQLException {
         if (closed) {
-            throw new SQLException(Support.getMessage("error.generic.closed", "ResultSet"),
+            throw new SQLException(Messages.get("error.generic.closed", "ResultSet"),
                                         "HY010");
         }
 
         if (cancelled) {
-            throw new SQLException(Support.getMessage("error.generic.cancelled", "ResultSet"),
+            throw new SQLException(Messages.get("error.generic.cancelled", "ResultSet"),
                                         "HY010");
         }
     }
@@ -288,7 +288,7 @@ public class JtdsResultSet implements ResultSet {
      */
     protected void checkScrollable() throws SQLException {
         if (resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
-            throw new SQLException(Support.getMessage("error.resultset.fwdonly"), "24000");
+            throw new SQLException(Messages.get("error.resultset.fwdonly"), "24000");
         }
     }
 
@@ -299,7 +299,7 @@ public class JtdsResultSet implements ResultSet {
      */
     protected void checkUpdateable() throws SQLException {
         if (concurrency != ResultSet.CONCUR_UPDATABLE) {
-            throw new SQLException(Support.getMessage("error.resultset.readonly"), "24000");
+            throw new SQLException(Messages.get("error.resultset.readonly"), "24000");
         }
     }
 
@@ -310,7 +310,7 @@ public class JtdsResultSet implements ResultSet {
      * @throws SQLException
      */
     protected void notImplemented(String method) throws SQLException {
-        throw new SQLException(Support.getMessage("error.generic.notimp", method), "HYC00");
+        throw new SQLException(Messages.get("error.generic.notimp", method), "HYC00");
     }
 
     /**
@@ -591,7 +591,7 @@ public class JtdsResultSet implements ResultSet {
         case FETCH_UNKNOWN:
         case FETCH_REVERSE:
             if (this.resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
-                throw new SQLException(Support.getMessage("error.resultset.fwdonly"), "24000");
+                throw new SQLException(Messages.get("error.resultset.fwdonly"), "24000");
             }
             // Fall through
 
@@ -600,7 +600,7 @@ public class JtdsResultSet implements ResultSet {
             break;
 
         default:
-            throw new SQLException(Support.getMessage("error.generic.badoption",
+            throw new SQLException(Messages.get("error.generic.badoption",
                                    Integer.toString(direction),
                                    "setFetchDirection"), "24000");
         }
@@ -610,7 +610,7 @@ public class JtdsResultSet implements ResultSet {
         checkOpen();
 
         if (size < 0 || statement != null && size > statement.getFetchSize()) {
-            throw new SQLException(Support.getMessage("error.generic.badparam",
+            throw new SQLException(Messages.get("error.generic.badparam",
                                          Integer.toString(size), "setFetchSize"),
                                             "HY092");
         }
@@ -757,7 +757,7 @@ public class JtdsResultSet implements ResultSet {
             && ci.jdbcType != java.sql.Types.VARBINARY
             && ci.jdbcType != java.sql.Types.LONGVARBINARY) {
             throw new SQLException(
-                            Support.getMessage("error.convert.badtypes",
+                            Messages.get("error.convert.badtypes",
                                 "Binary Stream",
                                     Support.getJdbcTypeName(ci.jdbcType)), "22005");
 
@@ -794,7 +794,7 @@ public class JtdsResultSet implements ResultSet {
             && ci.jdbcType != java.sql.Types.VARCHAR
             && ci.jdbcType != java.sql.Types.LONGVARCHAR) {
             throw new SQLException(
-                            Support.getMessage("error.convert.badtypes",
+                            Messages.get("error.convert.badtypes",
                                 "Character Stream",
                                     Support.getJdbcTypeName(ci.jdbcType)), "22005");
 
@@ -831,7 +831,7 @@ public class JtdsResultSet implements ResultSet {
         checkUpdateable();
 
         if (scale < 0 || scale > 28) {
-            throw new SQLException(Support.getMessage("error.generic.badscale"), "HY092");
+            throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
         }
 
         if (x instanceof BigDecimal) {
@@ -846,7 +846,7 @@ public class JtdsResultSet implements ResultSet {
 
     public String getCursorName() throws SQLException {
         checkOpen();
-        throw new SQLException(Support.getMessage("error.resultset.noposupdate"), "24000");
+        throw new SQLException(Messages.get("error.resultset.noposupdate"), "24000");
     }
 
     public String getString(int columnIndex) throws SQLException {
@@ -891,7 +891,7 @@ public class JtdsResultSet implements ResultSet {
         }
 
         throw new SQLException(
-            Support.getMessage("error.resultset.colname", columnName), "07009");
+            Messages.get("error.resultset.colname", columnName), "07009");
     }
 
     public int getInt(String columnName) throws SQLException {
@@ -979,7 +979,7 @@ public class JtdsResultSet implements ResultSet {
         try {
             return new java.net.URL(url);
         } catch (MalformedURLException e) {
-            throw new SQLException(Support.getMessage("error.resultset.badurl", url), "22000");
+            throw new SQLException(Messages.get("error.resultset.badurl", url), "22000");
         }
     }
 

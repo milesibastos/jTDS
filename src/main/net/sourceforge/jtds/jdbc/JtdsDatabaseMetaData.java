@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.6 2004-07-29 20:11:21 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.7 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1806,7 +1806,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             }
 
             if (!rs.next()) {
-                throw new SQLException(Support.getMessage("error.dbmeta.nouser"), "HY000");
+                throw new SQLException(Messages.get("error.dbmeta.nouser"), "HY000");
             }
 
             result = rs.getString(1);

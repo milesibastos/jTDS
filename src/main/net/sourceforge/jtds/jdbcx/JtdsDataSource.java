@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.5 2004-07-29 00:15:05 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.6 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 
@@ -60,27 +60,27 @@ public class JtdsDataSource extends AbstractDataSource {
     throws SQLException {
         Properties props = new Properties();
 
-        props.setProperty(Support.getMessage("prop.servername"), serverName);
-        props.setProperty(Support.getMessage("prop.servertype"), String.valueOf(serverType));
-        props.setProperty(Support.getMessage("prop.portnumber"), String.valueOf(portNumber));
-        props.setProperty(Support.getMessage("prop.databasename"), databaseName);
-        props.setProperty(Support.getMessage("prop.tds"), tds);
-        props.setProperty(Support.getMessage("prop.charset"), charset);
-        props.setProperty(Support.getMessage("prop.language"), language);
-        props.setProperty(Support.getMessage("prop.domain"), domain);
-        props.setProperty(Support.getMessage("prop.instance"), instance);
-        props.setProperty(Support.getMessage("prop.lastupdatecount"),
+        props.setProperty(Messages.get("prop.servername"), serverName);
+        props.setProperty(Messages.get("prop.servertype"), String.valueOf(serverType));
+        props.setProperty(Messages.get("prop.portnumber"), String.valueOf(portNumber));
+        props.setProperty(Messages.get("prop.databasename"), databaseName);
+        props.setProperty(Messages.get("prop.tds"), tds);
+        props.setProperty(Messages.get("prop.charset"), charset);
+        props.setProperty(Messages.get("prop.language"), language);
+        props.setProperty(Messages.get("prop.domain"), domain);
+        props.setProperty(Messages.get("prop.instance"), instance);
+        props.setProperty(Messages.get("prop.lastupdatecount"),
                           String.valueOf(isLastUpdateCount()));
-        props.setProperty(Support.getMessage("prop.useunicode"),
+        props.setProperty(Messages.get("prop.useunicode"),
                           String.valueOf(sendStringParametersAsUnicode));
-        props.setProperty(Support.getMessage("prop.namedpipe"),
+        props.setProperty(Messages.get("prop.namedpipe"),
                           String.valueOf(namedPipe));
-        props.setProperty(Support.getMessage("prop.macaddress"), macAddress);
-        props.setProperty(Support.getMessage("prop.preparesql"), String.valueOf(prepareSql));
-        props.setProperty(Support.getMessage("prop.packetsize"), String.valueOf(packetSize));
-        props.setProperty(Support.getMessage("prop.user"), user);
-        props.setProperty(Support.getMessage("prop.password"), password);
-        props.setProperty(Support.getMessage("prop.logintimeout"), Integer.toString(loginTimeout));
+        props.setProperty(Messages.get("prop.macaddress"), macAddress);
+        props.setProperty(Messages.get("prop.preparesql"), String.valueOf(prepareSql));
+        props.setProperty(Messages.get("prop.packetsize"), String.valueOf(packetSize));
+        props.setProperty(Messages.get("prop.user"), user);
+        props.setProperty(Messages.get("prop.password"), password);
+        props.setProperty(Messages.get("prop.logintimeout"), Integer.toString(loginTimeout));
         
         java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
         

@@ -29,7 +29,7 @@ import net.sourceforge.jtds.jdbcx.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.2 2004-07-25 14:57:20 bheineman Exp $
+ * @version $Id: ConnectionProxy.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;
@@ -675,7 +675,7 @@ public class ConnectionProxy implements Connection {
      */
     private void validateConnection() throws SQLException {
         if (_closed) {
-            throw new SQLException(Support.getMessage("error.conproxy.noconn"), "HY010");
+            throw new SQLException(Messages.get("error.conproxy.noconn"), "HY010");
         }
     }
 

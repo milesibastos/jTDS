@@ -22,6 +22,7 @@ import junit.framework.TestCase;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Support;
+import net.sourceforge.jtds.jdbc.Messages;
 import java.util.Properties;
 
 
@@ -42,8 +43,8 @@ import java.util.Properties;
  *     overridden.)</li>
  * </ol>
  * 
- * @author David D. Kilzer.
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.3 2004-08-04 15:23:39 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -278,7 +279,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
             String url, String tdsVersion, String key, String fieldName, String expected) {
 
         Properties properties = new Properties();
-        properties.setProperty(Support.getMessage("prop.tds"), tdsVersion);
+        properties.setProperty(Messages.get("prop.tds"), tdsVersion);
         getTester().assertDefaultProperty("Default property incorrect", url, properties, fieldName, key, expected);
     }
 

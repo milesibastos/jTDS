@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.28 2004-08-04 15:23:30 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.29 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -98,11 +98,11 @@ public class Driver implements java.sql.Driver {
         Properties props = parseURL(url, info);
 
         if (props == null) {
-            throw new SQLException(Support.getMessage("error.driver.badurl", url), "08001");
+            throw new SQLException(Messages.get("error.driver.badurl", url), "08001");
         }
 
-        if (props.getProperty(Support.getMessage("prop.logintimeout")) == null) {
-            props.setProperty(Support.getMessage("prop.logintimeout"), Integer.toString(DriverManager.getLoginTimeout()));
+        if (props.getProperty(Messages.get("prop.logintimeout")) == null) {
+            props.setProperty(Messages.get("prop.logintimeout"), Integer.toString(DriverManager.getLoginTimeout()));
         }
 
         if (JDBC3) {
@@ -115,34 +115,34 @@ public class Driver implements java.sql.Driver {
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties props)
             throws SQLException {
         DriverPropertyInfo[] dpi = new DriverPropertyInfo[] {
-            new DriverPropertyInfo(Support.getMessage("prop.servertype"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.servername"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.portnumber"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.databasename"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.user"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.password"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.charset"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.tds"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.domain"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.instance"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.language"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.lastupdatecount"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.logintimeout"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.useunicode"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.namedpipe"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.macaddress"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.packetsize"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.preparesql"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.lobbuffer"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.appname"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.progname"), null),
+            new DriverPropertyInfo(Messages.get("prop.servertype"), null),
+            new DriverPropertyInfo(Messages.get("prop.servername"), null),
+            new DriverPropertyInfo(Messages.get("prop.portnumber"), null),
+            new DriverPropertyInfo(Messages.get("prop.databasename"), null),
+            new DriverPropertyInfo(Messages.get("prop.user"), null),
+            new DriverPropertyInfo(Messages.get("prop.password"), null),
+            new DriverPropertyInfo(Messages.get("prop.charset"), null),
+            new DriverPropertyInfo(Messages.get("prop.tds"), null),
+            new DriverPropertyInfo(Messages.get("prop.domain"), null),
+            new DriverPropertyInfo(Messages.get("prop.instance"), null),
+            new DriverPropertyInfo(Messages.get("prop.language"), null),
+            new DriverPropertyInfo(Messages.get("prop.lastupdatecount"), null),
+            new DriverPropertyInfo(Messages.get("prop.logintimeout"), null),
+            new DriverPropertyInfo(Messages.get("prop.useunicode"), null),
+            new DriverPropertyInfo(Messages.get("prop.namedpipe"), null),
+            new DriverPropertyInfo(Messages.get("prop.macaddress"), null),
+            new DriverPropertyInfo(Messages.get("prop.packetsize"), null),
+            new DriverPropertyInfo(Messages.get("prop.preparesql"), null),
+            new DriverPropertyInfo(Messages.get("prop.lobbuffer"), null),
+            new DriverPropertyInfo(Messages.get("prop.appname"), null),
+            new DriverPropertyInfo(Messages.get("prop.progname"), null),
         };
 
         Properties info = parseURL(url, (props == null ? new Properties() : props));
 
         if (info == null) {
             throw new SQLException(
-                        Support.getMessage("error.driver.badurl", url), "08001");
+                        Messages.get("error.driver.badurl", url), "08001");
         }
 
         for (int i = 0; i < dpi.length; i++) {
@@ -153,64 +153,64 @@ public class Driver implements java.sql.Driver {
                 dpi[i].value = value;
             }
 
-            if (name.equals(Support.getMessage("prop.servertype"))) {
-                dpi[i].description = Support.getMessage("prop.desc.servertype");
+            if (name.equals(Messages.get("prop.servertype"))) {
+                dpi[i].description = Messages.get("prop.desc.servertype");
                 dpi[i].required = true;
                 dpi[i].choices = new String[] {
                     String.valueOf(SQLSERVER),
                     String.valueOf(SYBASE)
                 };
-            } else if (name.equals(Support.getMessage("prop.servername"))) {
-                dpi[i].description = Support.getMessage("prop.desc.servername");
+            } else if (name.equals(Messages.get("prop.servername"))) {
+                dpi[i].description = Messages.get("prop.desc.servername");
                 dpi[i].required = true;
-            } else if (name.equals(Support.getMessage("prop.portnumber"))) {
-                dpi[i].description = Support.getMessage("prop.desc.portnumber");
-            } else if (name.equals(Support.getMessage("prop.databasename"))) {
-                dpi[i].description = Support.getMessage("prop.desc.databasename");
-            } else if (name.equals(Support.getMessage("prop.user"))) {
-                dpi[i].description = Support.getMessage("prop.desc.user");
-            } else if (name.equals(Support.getMessage("prop.password"))) {
-                dpi[i].description = Support.getMessage("prop.desc.password");
-            } else if (name.equals(Support.getMessage("prop.charset"))) {
-                dpi[i].description = Support.getMessage("prop.desc.charset");
-            } else if (name.equals(Support.getMessage("prop.language"))) {
-                dpi[i].description = Support.getMessage("prop.desc.language");
-            } else if (name.equals(Support.getMessage("prop.tds"))) {
-                dpi[i].description = Support.getMessage("prop.desc.tds");
+            } else if (name.equals(Messages.get("prop.portnumber"))) {
+                dpi[i].description = Messages.get("prop.desc.portnumber");
+            } else if (name.equals(Messages.get("prop.databasename"))) {
+                dpi[i].description = Messages.get("prop.desc.databasename");
+            } else if (name.equals(Messages.get("prop.user"))) {
+                dpi[i].description = Messages.get("prop.desc.user");
+            } else if (name.equals(Messages.get("prop.password"))) {
+                dpi[i].description = Messages.get("prop.desc.password");
+            } else if (name.equals(Messages.get("prop.charset"))) {
+                dpi[i].description = Messages.get("prop.desc.charset");
+            } else if (name.equals(Messages.get("prop.language"))) {
+                dpi[i].description = Messages.get("prop.desc.language");
+            } else if (name.equals(Messages.get("prop.tds"))) {
+                dpi[i].description = Messages.get("prop.desc.tds");
                 dpi[i].choices = new String[] {
                     DefaultProperties.TDS_VERSION_42,
                     DefaultProperties.TDS_VERSION_50,
                     DefaultProperties.TDS_VERSION_70,
                     DefaultProperties.TDS_VERSION_80,
                 };
-            } else if (name.equals(Support.getMessage("prop.domain"))) {
-                dpi[i].description = Support.getMessage("prop.desc.domain");
-            } else if (name.equals(Support.getMessage("prop.instance"))) {
-                dpi[i].description = Support.getMessage("prop.desc.instance");
-            } else if (name.equals(Support.getMessage("prop.lastupdatecount"))) {
-                dpi[i].description = Support.getMessage("prop.desc.lastupdatecount");
+            } else if (name.equals(Messages.get("prop.domain"))) {
+                dpi[i].description = Messages.get("prop.desc.domain");
+            } else if (name.equals(Messages.get("prop.instance"))) {
+                dpi[i].description = Messages.get("prop.desc.instance");
+            } else if (name.equals(Messages.get("prop.lastupdatecount"))) {
+                dpi[i].description = Messages.get("prop.desc.lastupdatecount");
                 dpi[i].choices = new String[] {"true", "false"};
-            } else if (name.equals(Support.getMessage("prop.logintimeout"))) {
-                dpi[i].description = Support.getMessage("prop.desc.logintimeout");
-            } else if (name.equals(Support.getMessage("prop.useunicode"))) {
-                dpi[i].description = Support.getMessage("prop.desc.useunicode");
+            } else if (name.equals(Messages.get("prop.logintimeout"))) {
+                dpi[i].description = Messages.get("prop.desc.logintimeout");
+            } else if (name.equals(Messages.get("prop.useunicode"))) {
+                dpi[i].description = Messages.get("prop.desc.useunicode");
                 dpi[i].choices = new String[] {"true","false"};
-            } else if (name.equals(Support.getMessage("prop.namedpipe"))) {
-                dpi[i].description = Support.getMessage("prop.desc.namedpipe");
+            } else if (name.equals(Messages.get("prop.namedpipe"))) {
+                dpi[i].description = Messages.get("prop.desc.namedpipe");
                 dpi[i].choices = new String[] {"true","false"};
-            } else if (name.equals(Support.getMessage("prop.macaddress"))) {
-                dpi[i].description = Support.getMessage("prop.desc.macaddress");
-            } else if (name.equals(Support.getMessage("prop.packetsize"))) {
-                dpi[i].description = Support.getMessage("prop.desc.packetsize");
-            } else if (name.equals(Support.getMessage("prop.preparesql"))) {
-                dpi[i].description = Support.getMessage("prop.desc.preparesql");
+            } else if (name.equals(Messages.get("prop.macaddress"))) {
+                dpi[i].description = Messages.get("prop.desc.macaddress");
+            } else if (name.equals(Messages.get("prop.packetsize"))) {
+                dpi[i].description = Messages.get("prop.desc.packetsize");
+            } else if (name.equals(Messages.get("prop.preparesql"))) {
+                dpi[i].description = Messages.get("prop.desc.preparesql");
                 dpi[i].choices = new String[] {"true", "false"};
-            } else if (name.equals(Support.getMessage("prop.lobbuffer"))) {
-                dpi[i].description = Support.getMessage("prop.desc.lobbuffer");
-            } else if (name.equals(Support.getMessage("prop.appname"))) {
-                dpi[i].description = Support.getMessage("prop.desc.appname");
-            } else if (name.equals(Support.getMessage("prop.progname"))) {
-                dpi[i].description = Support.getMessage("prop.desc.progname");
+            } else if (name.equals(Messages.get("prop.lobbuffer"))) {
+                dpi[i].description = Messages.get("prop.desc.lobbuffer");
+            } else if (name.equals(Messages.get("prop.appname"))) {
+                dpi[i].description = Messages.get("prop.desc.appname");
+            } else if (name.equals(Messages.get("prop.progname"))) {
+                dpi[i].description = Messages.get("prop.desc.progname");
             }
         }
 
@@ -256,10 +256,10 @@ public class Driver implements java.sql.Driver {
         String type = token.toString().toLowerCase();
 
         if (type.equals("sqlserver")) {
-            props.setProperty(Support.getMessage("prop.servertype"),
+            props.setProperty(Messages.get("prop.servertype"),
                               String.valueOf(SQLSERVER));
         } else if (type.equals("sybase")) {
-            props.setProperty(Support.getMessage("prop.servertype"),
+            props.setProperty(Messages.get("prop.servertype"),
                               String.valueOf(SYBASE));
         } else {
             return null; // Bad server type
@@ -275,18 +275,18 @@ public class Driver implements java.sql.Driver {
         String host = token.toString();
 
         if (host.length() == 0 &&
-            props.getProperty(Support.getMessage("prop.servername")) == null) {
+            props.getProperty(Messages.get("prop.servername")) == null) {
             return null; // Server name missing
         }
 
-        props.setProperty(Support.getMessage("prop.servername"), host);
+        props.setProperty(Messages.get("prop.servername"), host);
 
         if (url.charAt(pos - 1) == ':' && pos < url.length()) {
             pos = nextToken(url, pos, token); // Get port number
 
             try {
                 int port = Integer.parseInt(token.toString());
-                props.setProperty(Support.getMessage("prop.portnumber"), Integer.toString(port));
+                props.setProperty(Messages.get("prop.portnumber"), Integer.toString(port));
             } catch(NumberFormatException e) {
                 return null; // Bad port number
             }
@@ -294,7 +294,7 @@ public class Driver implements java.sql.Driver {
 
         if (url.charAt(pos - 1) == '/' && pos < url.length()) {
             pos = nextToken(url, pos, token); // Get database name
-            props.setProperty(Support.getMessage("prop.databasename"), token.toString());
+            props.setProperty(Messages.get("prop.databasename"), token.toString());
         }
 
         //

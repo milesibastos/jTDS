@@ -37,8 +37,8 @@ import java.util.HashMap;
  * <li>Update {@link #addDefaultProperties(java.util.Properties)} to set the default.</li>
  * </ol>
  * 
- * @author David D. Kilzer.
- * @version $Id: DefaultProperties.java,v 1.2 2004-08-05 00:00:36 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: DefaultProperties.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -99,7 +99,7 @@ public final class DefaultProperties {
      */ 
     public static Properties addDefaultProperties(final Properties props) {
 
-        final String serverType = props.getProperty(Support.getMessage("prop.servertype"));
+        final String serverType = props.getProperty(Messages.get("prop.servertype"));
         if (serverType == null) {
             return null;
         }
@@ -147,7 +147,7 @@ public final class DefaultProperties {
     private static void addDefaultPropertyIfNotSet(
             final Properties props, final String key, final String defaultValue) {
 
-        final String messageKey = Support.getMessage(key);
+        final String messageKey = Messages.get(key);
         if (props.getProperty(messageKey) == null) {
             props.setProperty(messageKey, defaultValue);
         }
@@ -169,12 +169,12 @@ public final class DefaultProperties {
     private static void addDefaultPropertyIfNotSet(
             final Properties props, final String key, final String defaultKey, final Map defaults) {
 
-        final String defaultKeyValue = props.getProperty(Support.getMessage(defaultKey));
+        final String defaultKeyValue = props.getProperty(Messages.get(defaultKey));
         if (defaultKeyValue == null) {
             return;
         }
 
-        final String messageKey = Support.getMessage(key);
+        final String messageKey = Messages.get(key);
         if (props.getProperty(messageKey) == null) {
             final Object defaultValue = defaults.get(defaultKeyValue);
             if (defaultValue != null) {

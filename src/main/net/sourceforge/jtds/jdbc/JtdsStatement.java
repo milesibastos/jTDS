@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.8 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: JtdsStatement.java,v 1.9 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -155,7 +155,7 @@ public class JtdsStatement implements java.sql.Statement {
     protected void checkOpen() throws SQLException {
         if (closed || connection.isClosed()) {
             throw new SQLException(
-                    Support.getMessage("error.generic.closed", "Statement"), "HY010");
+                    Messages.get("error.generic.closed", "Statement"), "HY010");
         }
     }
 
@@ -167,7 +167,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     void notImplemented(String method) throws SQLException {
         throw new SQLException(
-                Support.getMessage("error.generic.notimp", method), "HYC00");
+                Messages.get("error.generic.notimp", method), "HYC00");
     }
 
     /**
@@ -200,7 +200,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     protected int executeBatchOther(Object value) throws SQLException {
         throw new SQLException(
-                Support.getMessage("error.statement.badbatch",
+                Messages.get("error.statement.badbatch",
                         value.toString()), "HYC00");
     }
 
@@ -280,7 +280,7 @@ public class JtdsStatement implements java.sql.Statement {
             currentResult = rs;
         } else {
                 throw new SQLException(
-                            Support.getMessage("error.statement.noresult"), "24000");
+                            Messages.get("error.statement.noresult"), "24000");
         }
 
         return currentResult;
@@ -372,7 +372,7 @@ public class JtdsStatement implements java.sql.Statement {
                     } else {
                         if (tds.getMoreResults()) {
                             throw new SQLException(
-                               Support.getMessage("error.statement.nocount"), "07000");
+                               Messages.get("error.statement.nocount"), "07000");
                         }
                     }
 
@@ -547,7 +547,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (rows < 0) {
             throw new SQLException(
-                Support.getMessage("error.generic.optltzero", "setFetchSize"),
+                Messages.get("error.generic.optltzero", "setFetchSize"),
                     "HY092");
         }
 
@@ -559,7 +559,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (max < 0) {
             throw new SQLException(
-                Support.getMessage("error.generic.optltzero", "setMaxFieldSize"),
+                Messages.get("error.generic.optltzero", "setMaxFieldSize"),
                     "HY092");
         }
 
@@ -576,7 +576,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (max < 0) {
             throw new SQLException(
-                Support.getMessage("error.generic.optltzero", "setMaxRows"),
+                Messages.get("error.generic.optltzero", "setMaxRows"),
                     "HY092");
         }
 
@@ -588,7 +588,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (seconds < 0) {
             throw new SQLException(
-                Support.getMessage("error.generic.optltzero", "setQueryTimeout"),
+                Messages.get("error.generic.optltzero", "setQueryTimeout"),
                     "HY092");
         }
 
@@ -604,12 +604,12 @@ public class JtdsStatement implements java.sql.Statement {
                 closeCurrentResultSet();
                 break;
             case KEEP_CURRENT_RESULT:
-                throw new SQLException(Support.getMessage("error.generic.optvalue",
+                throw new SQLException(Messages.get("error.generic.optvalue",
                                                           "KEEP_CURRENT_RESULT",
                                                           "getMoreResults"),
                                        "HYC00");
             default:
-                throw new SQLException(Support.getMessage("error.generic.badoption",
+                throw new SQLException(Messages.get("error.generic.badoption",
                                                           Integer.toString(current),
                                                           "getMoreResults"),
                                        "HY092");
@@ -674,7 +674,7 @@ public class JtdsStatement implements java.sql.Statement {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         closeCurrentResultSet();
@@ -686,7 +686,7 @@ public class JtdsStatement implements java.sql.Statement {
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
-                    Support.getMessage("error.statement.badsql"), "07000");
+                    Messages.get("error.statement.badsql"), "07000");
             }
 
             sql = tmp[0];
@@ -696,7 +696,7 @@ public class JtdsStatement implements java.sql.Statement {
         } else if (autoGeneratedKeys == NO_GENERATED_KEYS) {
             returnKeys = false;
         } else {
-            throw new SQLException(Support.getMessage("error.generic.badoption",
+            throw new SQLException(Messages.get("error.generic.badoption",
                                                       Integer.toString(autoGeneratedKeys),
                                                       "executeUpate"),
                                    "HY092");
@@ -720,7 +720,7 @@ public class JtdsStatement implements java.sql.Statement {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         boolean returnKeys;
@@ -731,7 +731,7 @@ public class JtdsStatement implements java.sql.Statement {
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
-                    Support.getMessage("error.statement.badsql"), "07000");
+                    Messages.get("error.statement.badsql"), "07000");
             }
 
             sql = tmp[0];
@@ -742,7 +742,7 @@ public class JtdsStatement implements java.sql.Statement {
         } else if (autoGeneratedKeys == NO_GENERATED_KEYS) {
             returnKeys = false;
         } else {
-            throw new SQLException(Support.getMessage("error.generic.badoption",
+            throw new SQLException(Messages.get("error.generic.badoption",
                                                       Integer.toString(autoGeneratedKeys),
                                                       "executeUpate"),
                                    "HY092");
@@ -765,10 +765,10 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (columnIndexes == null) {
             throw new SQLException(
-                Support.getMessage("error.generic.nullparam", "executeUpdate"),"HY092");
+                Messages.get("error.generic.nullparam", "executeUpdate"),"HY092");
         } else if (columnIndexes.length != 1) {
             throw new SQLException(
-                Support.getMessage("error.generic.needcolindex", "executeUpdate"),"HY092");
+                Messages.get("error.generic.needcolindex", "executeUpdate"),"HY092");
         }
 
         return executeUpdate(sql, RETURN_GENERATED_KEYS);
@@ -779,10 +779,10 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (columnIndexes == null) {
             throw new SQLException(
-                Support.getMessage("error.generic.nullparam", "execute"),"HY092");
+                Messages.get("error.generic.nullparam", "execute"),"HY092");
         } else if (columnIndexes.length != 1) {
             throw new SQLException(
-                Support.getMessage("error.generic.needcolindex", "execute"),"HY092");
+                Messages.get("error.generic.needcolindex", "execute"),"HY092");
         }
 
         return execute(sql, RETURN_GENERATED_KEYS);
@@ -829,10 +829,10 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (columnNames == null) {
             throw new SQLException(
-                Support.getMessage("error.generic.nullparam", "executeUpdate"),"HY092");
+                Messages.get("error.generic.nullparam", "executeUpdate"),"HY092");
         } else if (columnNames.length != 1) {
             throw new SQLException(
-                Support.getMessage("error.generic.needcolname", "executeUpdate"),"HY092");
+                Messages.get("error.generic.needcolname", "executeUpdate"),"HY092");
         }
 
         return executeUpdate(sql, RETURN_GENERATED_KEYS);
@@ -841,10 +841,10 @@ public class JtdsStatement implements java.sql.Statement {
     public boolean execute(String sql, String[] columnNames) throws SQLException {
         if (columnNames == null) {
             throw new SQLException(
-                Support.getMessage("error.generic.nullparam", "execute"),"HY092");
+                Messages.get("error.generic.nullparam", "execute"),"HY092");
         } else if (columnNames.length != 1) {
             throw new SQLException(
-                Support.getMessage("error.generic.needcolname", "execute"),"HY092");
+                Messages.get("error.generic.needcolname", "execute"),"HY092");
         }
 
         return execute(sql, RETURN_GENERATED_KEYS);
@@ -854,7 +854,7 @@ public class JtdsStatement implements java.sql.Statement {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
-            throw new SQLException(Support.getMessage("error.generic.nosql"), "HY000");
+            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
         if (escapeProcessing) {
@@ -863,7 +863,7 @@ public class JtdsStatement implements java.sql.Statement {
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
-                    Support.getMessage("error.statement.badsql"), "07000");
+                    Messages.get("error.statement.badsql"), "07000");
             }
 
             sql = tmp[0];

@@ -26,7 +26,7 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 
 /**
  *
- * @version $Id: PooledConnection.java,v 1.5 2004-07-23 12:19:08 bheineman Exp $
+ * @version $Id: PooledConnection.java,v 1.6 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private final ArrayList _listeners = new ArrayList();
@@ -91,7 +91,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
     public synchronized Connection getConnection() throws SQLException {
         if (_connection == null) {
             fireConnectionEvent(false,
-                new SQLException(Support.getMessage("error.jdbcx.conclosed"),
+                new SQLException(Messages.get("error.jdbcx.conclosed"),
                                  "08003"));
 
             return null;

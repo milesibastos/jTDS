@@ -19,6 +19,7 @@ package net.sourceforge.jtds.test;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Support;
+import net.sourceforge.jtds.jdbc.Messages;
 import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;
@@ -28,8 +29,8 @@ import java.util.HashMap;
 /**
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  * 
- * @author David D. Kilzer.
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.1 2004-08-05 00:00:37 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.2 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
@@ -56,7 +57,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
                 DefaultProperties.class, "addDefaultPropertyIfNotSet",
                 new Class[]{Properties.class, String.class, String.class},
                 new Object[]{properties, key, defaultValue});
-        assertEquals(defaultValue, properties.get(Support.getMessage(key)));
+        assertEquals(defaultValue, properties.get(Messages.get(key)));
     }
 
 
@@ -70,11 +71,11 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
         final String key = "prop.databasename";
         final String presetValue = "barbaz";
         final String defaultValue = "foobar";
-        properties.setProperty(Support.getMessage(key), presetValue);
+        properties.setProperty(Messages.get(key), presetValue);
         invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
                            new Class[]{Properties.class, String.class, String.class},
                            new Object[]{properties, key, defaultValue});
-        assertEquals(presetValue, properties.get(Support.getMessage(key)));
+        assertEquals(presetValue, properties.get(Messages.get(key)));
     }
 
 
@@ -104,7 +105,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
         final Properties properties = new Properties();
         final String defaultKey = "prop.servertype";
         final String defaultKeyValue = "foobar";
-        properties.put(Support.getMessage(defaultKey), defaultKeyValue);
+        properties.put(Messages.get(defaultKey), defaultKeyValue);
         final String key = "prop.portnumber";
         final String defaultValue = "2004";
         final HashMap defaults = new HashMap();
@@ -112,7 +113,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
         invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
                            new Class[]{Properties.class, String.class, String.class, Map.class},
                            new Object[]{properties, key, defaultKey, defaults});
-        assertEquals(defaultValue, properties.get(Support.getMessage(key)));
+        assertEquals(defaultValue, properties.get(Messages.get(key)));
     }
 
 
@@ -125,17 +126,17 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
         final Properties properties = new Properties();
         final String defaultKey = "prop.servertype";
         final String defaultKeyValue = "foobar";
-        properties.put(Support.getMessage(defaultKey), defaultKeyValue);
+        properties.put(Messages.get(defaultKey), defaultKeyValue);
         final String key = "prop.portnumber";
         final String presetValue = "2020";
-        properties.put(Support.getMessage(key), presetValue);
+        properties.put(Messages.get(key), presetValue);
         final String defaultValue = "2004";
         final HashMap defaults = new HashMap();
         defaults.put(defaultKeyValue, defaultValue);
         invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
                            new Class[]{Properties.class, String.class, String.class, Map.class},
                            new Object[]{properties, key, defaultKey, defaults});
-        assertEquals(presetValue, properties.get(Support.getMessage(key)));
+        assertEquals(presetValue, properties.get(Messages.get(key)));
     }
 
 }

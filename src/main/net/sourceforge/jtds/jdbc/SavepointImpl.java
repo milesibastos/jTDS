@@ -24,7 +24,7 @@ import java.sql.SQLException;
  * Savepoint implementation class.
  *
  * @author Brian Heineman
- * @version $Id: SavepointImpl.java,v 1.2 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: SavepointImpl.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
  */
 class SavepointImpl implements Savepoint {
     private int id;
@@ -52,7 +52,7 @@ class SavepointImpl implements Savepoint {
 
     public int getSavepointId() throws SQLException {
         if (name != null) {
-            throw new SQLException(Support.getMessage("error.savepoint.named"), "HY024");
+            throw new SQLException(Messages.get("error.savepoint.named"), "HY024");
         }
 
         return id;
@@ -60,7 +60,7 @@ class SavepointImpl implements Savepoint {
 
     public String getSavepointName() throws SQLException {
         if (name == null) {
-            throw new SQLException(Support.getMessage("error.savepoint.unnamed"), "HY024");
+            throw new SQLException(Messages.get("error.savepoint.unnamed"), "HY024");
         }
 
         return name;

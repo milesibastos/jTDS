@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.7 2004-08-04 02:16:30 bheineman Exp $
+ * @version $Id: Support.java,v 1.8 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -103,50 +103,6 @@ public class Support {
      * Static utility Calendar object.
      */
     private static final GregorianCalendar cal = new GregorianCalendar();
-
-    /**
-     * Default name for resource bundle containing the messages
-     */
-    private static final String defaultResource = "net.sourceforge.jtds.jdbc.Messages";
-
-    /**
-     * Get runtime message using supplied key.
-     *
-     * @param key The key of the message in Messages.properties
-     * @return The selected message as a <code>String</code>.
-     */
-    public static String getMessage(String key) {
-        return getMessageText(key, null);
-    }
-
-    /**
-     * Get runtime message using supplied key and substitute parameter
-     * into message.
-     *
-     * @param key The key of the message in Messages.properties
-     * @param param1 The object to insert into message.
-     * @return The selected message as a <code>String</code>.
-     */
-    static String getMessage(String key, Object param1) {
-        Object args[] = {param1};
-
-        return getMessageText(key, args);
-    }
-
-    /**
-     * Get runtime message using supplied key and substitute parameters
-     * into message.
-     *
-     * @param key The key of the message in Messages.properties
-     * @param param1 The object to insert into message.
-     * @param param2 The object to insert into message.
-     * @return The selected message as a <code>String</code>.
-     */
-    static String getMessage(String key, Object param1, Object param2) {
-        Object args[] = {param1, param2};
-
-        return getMessageText(key, args);
-    }
 
     /**
      * Convert a byte[] object to a hex string.
@@ -207,7 +163,7 @@ public class Support {
             if (scale < 0) {
                 // Can't do it number just too big
                 throw new SQLException(
-                                      getMessage("error.normalize.numtoobig",
+                                      Messages.get("error.normalize.numtoobig",
                                                  String.valueOf(maxPrecision)), "22000");
             }
 
@@ -565,17 +521,17 @@ public class Support {
 
                 default:
                     throw new SQLException(
-                                          getMessage("error.convert.badtypeconst",
+                                          Messages.get("error.convert.badtypeconst",
                                                      getJdbcTypeName(jdbcType)), "HY004");
             }
 
             throw new SQLException(
-                                  getMessage("error.convert.badtypes",
+                                  Messages.get("error.convert.badtypes",
                                              getJdbcTypeName(getJdbcType(x)),
                                              getJdbcTypeName(jdbcType)), "22005");
         } catch (NumberFormatException nfe) {
             throw new SQLException(
-                                  getMessage("error.convert.badnumber",
+                                  Messages.get("error.convert.badnumber",
                                              getJdbcTypeName(jdbcType)), "22000");
         }
     }
@@ -886,7 +842,7 @@ public class Support {
 
         for (int i = 0; i < list.length; i++) {
             if (!list[i].isRetVal && !list[i].isSet && !list[i].isOutput) {
-                throw new SQLException(Support.getMessage("error.prepare.paramnotset",
+                throw new SQLException(Messages.get("error.prepare.paramnotset",
                                                           Integer.toString(i+1)),
                                        "07000");
             }
@@ -901,7 +857,7 @@ public class Support {
                         value = list[i].getBytes("US-ASCII");
                     }
                 } catch (java.io.IOException e) {
-                    throw new SQLException(Support.getMessage("error.generic.ioerror",
+                    throw new SQLException(Messages.get("error.generic.ioerror",
                                                               e.getMessage()),
                                            "HY000");
                 }
@@ -989,31 +945,4 @@ public class Support {
         // Prevent an instance of this class being created.
     }
 
-    /**
-     * Get runtime error using supplied key and substitute parameters
-     * into message.
-     *
-     * @param key The key of the error message in Messages.properties
-     * @param arguments The objects to insert into the message.
-     * @return The selected error message as a <code>String</code>.
-     */
-    private static String getMessageText(String key, Object[] arguments) {
-        //
-        // ResourceBundle does caching so performance should be OK.
-        //
-        ResourceBundle rb = ResourceBundle.getBundle(defaultResource);
-
-        String formatString;
-
-        try {
-            formatString = rb.getString(key);
-        } catch (java.util.MissingResourceException mre) {
-            throw new RuntimeException("no message resource found for message property "
-                                       + key);
-        }
-
-        MessageFormat formatter = new MessageFormat(formatString);
-
-        return formatter.format(arguments);
-    }
 }

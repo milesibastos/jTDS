@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.3 2004-06-29 17:16:25 bheineman Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.4 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -98,14 +98,14 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         if (savepoints == null) {
             throw new SQLException(
-                Support.getMessage("error.connection.badsavep"), "25000");
+                Messages.get("error.connection.badsavep"), "25000");
         }
 
         int index = savepoints.indexOf(savepoint);
 
         if (index == -1) {
             throw new SQLException(
-                Support.getMessage("error.connection.badsavep"), "25000");
+                Messages.get("error.connection.badsavep"), "25000");
         }
 
         Object tmpSavepoint = savepoints.remove(index);
@@ -120,17 +120,17 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         if (savepoints == null) {
             throw new SQLException(
-                Support.getMessage("error.connection.badsavep"), "25000");
+                Messages.get("error.connection.badsavep"), "25000");
         }
 
         int index = savepoints.indexOf(savepoint);
 
         if (index == -1) {
             throw new SQLException(
-                Support.getMessage("error.connection.badsavep"), "25000");
+                Messages.get("error.connection.badsavep"), "25000");
         } else if (getAutoCommit()) {
             throw new SQLException(
-                Support.getMessage("error.connection.savenorollback"), "25000");
+                Messages.get("error.connection.savenorollback"), "25000");
         }
 
         Statement statement = null;
@@ -170,7 +170,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         if (getAutoCommit()) {
             throw new SQLException(
-                Support.getMessage("error.connection.savenoset"), "25000");
+                Messages.get("error.connection.savenoset"), "25000");
         }
 
         SavepointImpl savepoint = new SavepointImpl(getNextSavepointId());
@@ -185,10 +185,10 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         if (getAutoCommit()) {
             throw new SQLException(
-                Support.getMessage("error.connection.savenoset"), "25000");
+                Messages.get("error.connection.savenoset"), "25000");
         } else if (name == null) {
             throw new SQLException(
-                Support.getMessage("error.connection.savenullname", "savepoint"),
+                Messages.get("error.connection.savenullname", "savepoint"),
                 "25000");
         }
 

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.15 2004-08-02 02:27:05 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.16 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class TdsData {
     /**
@@ -762,7 +762,7 @@ public class TdsData {
                     } else {
                         if (pi.isOutput) {
                             throw new SQLException(
-                                                  Support.getMessage("error.textoutparam"), "HY000");
+                                                  Messages.get("error.textoutparam"), "HY000");
                         }
 
                         if (pi.isUnicode) {
@@ -833,7 +833,7 @@ public class TdsData {
                     } else {
                         if (pi.isOutput) {
                             throw new SQLException(
-                                                  Support.getMessage("error.textoutparam"), "HY000");
+                                                  Messages.get("error.textoutparam"), "HY000");
                         }
 
                         pi.tdsType = SYBIMAGE;
@@ -892,7 +892,7 @@ public class TdsData {
                 break;
 
             default:
-                throw new SQLException(Support.getMessage(
+                throw new SQLException(Messages.get(
                                                          "error.baddatatype",
                                                          Integer.toString(pi.jdbcType)), "HY000");
         }
@@ -1049,7 +1049,7 @@ public class TdsData {
 
                     if (buf.length > 255) {
                         throw new SQLException(
-                                              Support.getMessage("error.generic.truncmbcs"), "HY000");
+                                              Messages.get("error.generic.truncmbcs"), "HY000");
                     }
 
                     out.write((byte) buf.length);

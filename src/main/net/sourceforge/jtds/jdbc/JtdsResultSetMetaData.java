@@ -31,7 +31,7 @@ import java.sql.SQLException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSetMetaData.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: JtdsResultSetMetaData.java,v 1.2 2004-08-05 01:45:22 ddkilzer Exp $
  */
 public class JtdsResultSetMetaData implements ResultSetMetaData {
     private ColInfo[] columns;
@@ -58,7 +58,7 @@ public class JtdsResultSetMetaData implements ResultSetMetaData {
     ColInfo getColumn(int column) throws SQLException {
         if (column < 0 || column > columnCount) {
             throw new SQLException(
-                    Support.getMessage("error.resultset.colindex",
+                    Messages.get("error.resultset.colindex",
                             Integer.toString(columnCount)), "07009");
         }
 

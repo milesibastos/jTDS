@@ -26,8 +26,8 @@ import java.util.Properties;
  * <p/>
  * Implements the Command pattern.
  * 
- * @author David D. Kilzer.
- * @version $Id: DefaultPropertiesTester.java,v 1.1 2004-08-04 01:58:40 ddkilzer Exp $
+ * @author David D. Kilzer
+ * @version $Id: DefaultPropertiesTester.java,v 1.2 2004-08-05 01:45:23 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTester {
 

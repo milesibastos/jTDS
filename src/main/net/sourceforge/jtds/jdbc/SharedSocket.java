@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.4 2004-07-25 15:30:26 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.5 2004-07-26 18:45:26 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -357,42 +357,6 @@ class SharedSocket {
      */
     static int getMinMemPkts() {
         return SharedSocket.minMemPkts;
-    }
-
-    /**
-     * Get the local host address from the underlying socket.
-     * 
-     * @return The local host as a <code>InetAddress</code>.
-     */
-    InetAddress getLocalAddress() {
-        return (socket != null) ? socket.getLocalAddress() : null;
-    }
-
-    /**
-     * Get the local port from the underlying socket.
-     * 
-     * @return The <code>int</code> value of the local port.
-     */
-    int getLocalPort() {
-        return (socket != null) ? socket.getLocalPort() : 0;
-    }
-
-    /**
-     * Get the remote port from the underlying socket.
-     * 
-     * @return The <code>int</code> value of the remote port.
-     */
-    int getPort() {
-        return (socket != null) ? socket.getPort() : 0;
-    }
-
-    /**
-     * Get the remote host address from the underlying socket.
-     * 
-     * @return The remote host as a <code>InetAddress</code>.
-     */
-    InetAddress getInetAddress() {
-        return (socket != null) ? socket.getInetAddress() : null;
     }
 
     /**

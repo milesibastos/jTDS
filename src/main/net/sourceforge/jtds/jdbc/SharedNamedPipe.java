@@ -21,7 +21,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import jcifs.smb.NtlmPasswordAuthentication;
@@ -36,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer.
- * @version $Id: SharedNamedPipe.java,v 1.1 2004-07-25 15:30:26 bheineman Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.2 2004-07-26 18:45:26 bheineman Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
     /**
@@ -88,47 +87,6 @@ public class SharedNamedPipe extends SharedSocket {
         this.out = new DataOutputStream(pipe.getNamedPipeOutputStream());
         this.in = new DataInputStream(new BufferedInputStream(pipe.getNamedPipeInputStream(), packetSize));
     }
-
-
-    /**
-     * Get the local host address from the underlying socket.
-     *
-     * @return The local host as a <code>InetAddress</code>.
-     */
-    InetAddress getLocalAddress() {
-        return null; // fixme
-    }
-
-
-    /**
-     * Get the local port from the underlying socket.
-     *
-     * @return The <code>int</code> value of the local port.
-     */
-    int getLocalPort() {
-        return 0; // fixme
-    }
-
-
-    /**
-     * Get the remote port from the underlying socket.
-     *
-     * @return The <code>int</code> value of the remote port.
-     */
-    int getPort() {
-        return 0; // fixme
-    }
-
-
-    /**
-     * Get the remote host address from the underlying socket.
-     *
-     * @return The remote host as a <code>InetAddress</code>.
-     */
-    InetAddress getInetAddress() {
-        return null; // fixme
-    }
-
 
     /**
      * Get the connected status of this socket.

@@ -1,6 +1,15 @@
 Changes from jTDS 0.3
 =====================
 
+09/06/2002 - Alin Sinpalean
+
+ o Modifications to the EncodingHelper and Tds for a better encoder management
+   and changed the default encoding to Cp1252 (when SQL Server responds with
+   'iso_1' - that's inexact, SQL Server is, in fact, using Cp1252).
+ o Tds.discardResultSet fix: if an error or warning was returned immediately
+   after a ResultSet that was not read completely, but discarded, jTDS crashed
+   because it only expected TDS_DONE* tokens.
+
 09/05/2002 - Alin Sinpalean
 
  o Added jdbc3_0-ext.jar to the lib folder, containing the .class files for

@@ -8,10 +8,10 @@ import java.util.Hashtable;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  *
- * @version  $Id: EncodingHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version  $Id: EncodingHelper.java,v 1.3 2002-09-06 13:55:37 alin_sinpalean Exp $
  */
 public class EncodingHelper {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.3 2002-09-06 13:55:37 alin_sinpalean Exp $";
 
     /**
      * The name of the encoding.
@@ -58,10 +58,10 @@ public class EncodingHelper {
 
     /**
      * Translate part of the byte[] from the server's encoding to a
-     * Unicode String.  
+     * Unicode String.
      *
      * The subarray starting at index off and extending to off+len-1
-     * is translated.  
+     * is translated.
      */
     public String getString(byte[] value, int off, int len) {
         try {
@@ -98,15 +98,32 @@ public class EncodingHelper {
     /**
      * Return the helper object for the given encoding.
      */
-    public static EncodingHelper getHelper(String encodingName) {
-        if (!initialized) {
-            synchronized (com.internetcds.jdbc.tds.EncodingHelper.class) {
-                if (!initialized) {
+    public static EncodingHelper getHelper(String encodingName)
+    {
+        if( !initialized )
+        {
+            synchronized (com.internetcds.jdbc.tds.EncodingHelper.class)
+            {
+                if( !initialized )
                     initialize();
-                }
             }
         }
-        return (EncodingHelper)knownEncodings.get(encodingName);
+
+        EncodingHelper res = (EncodingHelper)knownEncodings.get(encodingName);
+        if( res == null )
+            try
+            {
+                // This will throw an UnsupportedEncodingException if the encodingName is wrong
+                new String(convArray, encodingName);
+                res = new EncodingHelper(encodingName, false);
+                knownEncodings.put(encodingName, res);
+            }
+            catch( UnsupportedEncodingException ex )
+            {
+                res = (EncodingHelper)knownEncodings.get("iso_1");
+            }
+
+        return res;
     }
 
     /**
@@ -121,59 +138,27 @@ public class EncodingHelper {
      * Simple boolean to ensure we initialize once and only once.
      */
     private static boolean initialized;
-    
+
     /**
      * Initialize the static variables.
      *
      * <p>Will be called from the static block below, but some VMs
-     * (notably Microsoft's) won't run this.  
+     * (notably Microsoft's) won't run this.
      */
-    private synchronized static void initialize() {
+    private synchronized static void initialize()
+    {
         convArray = new byte[256];
-        for (int i=0; i<256; i++) {
+        for (int i=0; i<256; i++)
             convArray[i] = (byte)i;
-        }
 
         knownEncodings = new Hashtable();
-        EncodingHelper e = new EncodingHelper("ISO8859_1", false);
-        knownEncodings.put("iso_1", e);
-        knownEncodings.put("cp1252", e);
-
-        try {
-            // simple test for the presence of i18n.jar
-            "a".getBytes("Cp437");
-
-            knownEncodings.put("cp437", new EncodingHelper("Cp437", false));
-            knownEncodings.put("cp850", new EncodingHelper("Cp850", false));
-            knownEncodings.put("cp1250", new EncodingHelper("Cp1250", false));
-            knownEncodings.put("cp1251", new EncodingHelper("Cp1251", false));
-            knownEncodings.put("cp1253", new EncodingHelper("Cp1253", false));
-            knownEncodings.put("cp1254", new EncodingHelper("Cp1254", false));
-            knownEncodings.put("cp1255", new EncodingHelper("Cp1255", false));
-            knownEncodings.put("cp1256", new EncodingHelper("Cp1256", false));
-            knownEncodings.put("cp1257", new EncodingHelper("Cp1257", false));
-            
-            /*
-             * XXX are the CpXXX different from MSXXX? Used MS to be save.
-             */
-            //thai
-            knownEncodings.put("cp874", new EncodingHelper("MS874", true)); 
-            //japanese
-            knownEncodings.put("cp932", new EncodingHelper("MS932", true)); 
-            //simplified chinese
-            knownEncodings.put("cp932", new EncodingHelper("MS932", true)); 
-            //korean
-            knownEncodings.put("cp949", new EncodingHelper("MS949", true));
-            //traditional chinese        
-            knownEncodings.put("cp950", new EncodingHelper("MS950", true)); 
-        } catch (UnsupportedEncodingException uee) {
-            // i18n.jar not present, only ISO-8859-1 is available
-        }
-
+        // SAfe: SQL Server returns iso_1, but it's actually Cp1252
+        knownEncodings.put("iso_1", new EncodingHelper("Cp1252", false));
         initialized = true;
     }
 
-    static {
+    static
+    {
         initialize();
     }
 }

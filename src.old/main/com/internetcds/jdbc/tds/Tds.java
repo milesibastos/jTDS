@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.27 2002-09-06 13:55:37 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -237,7 +237,9 @@ public class Tds implements TdsDefinitions {
         sock.setTcpNoDelay(true);
         comm = new TdsComm(sock, tdsVer);
 
-        setCharset(props_.getProperty("CHARSET"));
+        String cs = props_.getProperty("CHARSET");
+        cs = cs==null ? props_.getProperty("charset") : cs;
+        setCharset(cs);
 
         autoCommit = connection.getAutoCommit();
         transactionIsolationLevel = connection.getTransactionIsolation();
@@ -1075,7 +1077,7 @@ public class Tds implements TdsDefinitions {
         }
 
         // RMK 2000-06-08 Don't choke on additional result sets.
-        else if (!isResultSet()) {
+        else if (!isResultSet() && !isErrorPacket() && !isMessagePacket()) {
             throw new TdsConfused("Was expecting an end of results token.  "
                      + "Found a 0x"
                      + Integer.toHexString(comm.peek() & 0xff));
@@ -1517,16 +1519,11 @@ public class Tds implements TdsDefinitions {
                 // nop
             }
 
-        if (charset == null || charset.length() > 30) {
+        if (charset == null || charset.length() > 30)
             charset = "iso_1";
-        }
 
         if (!charset.equals(this.charset)) {
             encoder = EncodingHelper.getHelper(charset);
-            if (encoder == null) {
-                charset = "iso_1";
-                encoder = EncodingHelper.getHelper(charset);
-            }
             this.charset = charset;
         }
     }

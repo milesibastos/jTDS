@@ -1,6 +1,11 @@
 Changes from jTDS 1.0
 =======================
 
+02/02/2005 - Alin Sinpalean
+ o Applied a modified version of patch [1107090] Revised query timeout logic,
+   submitted by Mike. Timeouts should now have millisecond precision, using a
+   single timer thread per VM.
+
 02/01/2005 - Alin Sinpalean
  o Updated FAQ to include information about local named pipes.
  o Modified SQLParser to only extract table names when requested to, because it

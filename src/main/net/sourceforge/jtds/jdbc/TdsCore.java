@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.65 2005-01-24 09:07:08 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.66 2005-02-01 23:27:57 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -152,45 +152,6 @@ public class TdsCore {
         String name;
     }
 
-    /**
-     * Simple timer class used to implement query timeouts.
-     * <p>When the timer expires a cancel packet is sent causing
-     * the server to abort the request.
-     */
-    private static class QueryTimer extends Thread {
-        private int timeout;
-        private TdsCore tds;
-        private boolean exitNow;
-        private boolean cancelled;
-
-        QueryTimer(TdsCore tds, int timeout) {
-            this.timeout = timeout;
-            this.tds     = tds;
-        }
-
-        public void run() {
-            while (!exitNow) {
-                try {
-                    sleep(timeout * 1000);
-                    cancelled = true;
-                    tds.cancel();
-                    return;
-                } catch (java.lang.InterruptedException e) {
-                    // nop
-                }
-            }
-        }
-
-        void stopTimer() {
-            exitNow = true;
-            this.interrupt();
-        }
-
-        boolean wasCancelled()
-        {
-            return this.cancelled;
-        }
-    }
     //
     // Package private constants
     //
@@ -1042,18 +1003,7 @@ public class TdsCore {
             spSql.append(" as ");
             spSql.append(Support.substituteParamMarkers(sql, params));
 
-            try {
-                submitSQL(spSql.toString());
-            } catch (SQLException e) {
-                if ("08S01".equals(e.getSQLState())) {
-                    // Serious error, rethrow
-                    throw e;
-                }
-
-                // This exception probably caused by failure to prepare
-                // Return false;
-                return null;
-            }
+            submitSQL(spSql.toString());
 
             return procName;
         } else if (prepareSql == PREPARE) {
@@ -3607,23 +3557,23 @@ public class TdsCore {
      * @param timeOut The time out period in seconds or 0.
      */
     private void wait(int timeOut) throws IOException, SQLException {
-        QueryTimer timer = null;
-
+        Object timer = null;
         try {
             if (timeOut > 0) {
-                // Start a login timer
-                timer = new QueryTimer(this, timeOut);
-                timer.start();
+                // Start a query timeout timer
+                timer = TimerThread.getInstance().setTimer(timeOut * 1000,
+                        new TimerThread.TimerListener() {
+                            public void timerExpired() {
+                                TdsCore.this.cancel();
+                            }
+                        });
             }
             in.peek();
         } finally {
             if (timer != null) {
-                // Cancel QueryTimer
-                timer.stopTimer();
-                if (timer.wasCancelled()) {
-                    // Query timed out
+                if (!TimerThread.getInstance().cancelTimer(timer)) {
                     throw new SQLException(
-                            Messages.get("error.generic.timeout"), "HYT00");
+                          Messages.get("error.generic.timeout"), "HYT00");
                 }
             }
         }

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.63 2005-01-28 10:16:56 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.64 2005-02-01 23:27:56 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -77,39 +77,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         public final String toString() {
         	return name;
-        }
-    }
-
-    /**
-     * Simple timer class used to implement login timeouts.
-     * <p>When the timer expires the network socket is closed
-     * crashing any pending network I/O. Not elegant but it works!
-     */
-    private static class LoginTimer extends Thread {
-        private SharedSocket socket;
-        private int timeout;
-        private boolean exitNow = false;
-
-        LoginTimer(SharedSocket socket, int timeout) {
-            this.socket  = socket;
-            this.timeout = timeout;
-        }
-
-        public void run() {
-            while (!exitNow) {
-                try {
-                    sleep(timeout * 1000);
-                    socket.forceClose();
-                    return;
-                } catch (java.lang.InterruptedException e) {
-                    // nop
-                }
-            }
-        }
-
-        void stopTimer() {
-            exitNow = true;
-            this.interrupt();
         }
     }
 
@@ -330,12 +297,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             // Create TDS protocol object
             //
             baseTds = new TdsCore(this, messages);
-            LoginTimer timer = null;
+            Object timer = null;
 
             if (loginTimeout > 0) {
                 // Start a login timer
-                timer = new LoginTimer(socket, loginTimeout);
-                timer.start();
+                timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
+                        new TimerThread.TimerListener() {
+                            public void timerExpired() {
+                                socket.forceClose();
+                            }
+                        });
             }
 
             //
@@ -355,7 +326,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             if (timer != null) {
                 // Cancel loginTimer
-                timer.stopTimer();
+                TimerThread.getInstance().cancelTimer(timer);
             }
 
             // Update the tdsVersion with the value in baseTds. baseTds sets

@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.3 2004-12-17 18:01:53 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.4 2005-02-01 23:27:56 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -43,6 +43,7 @@ public class SharedLocalNamedPipe extends SharedSocket {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
 
+        // TODO Make this work with named instances
         File file = new File("\\\\.\\pipe\\sql\\query");
         RandomAccessFile pipe = new RandomAccessFile(file, "rw");
         OutputStream fos = new FileOutputStream(pipe.getFD());

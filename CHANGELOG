@@ -2,6 +2,8 @@ Changes from jTDS 0.9.1
 =======================
 
 01/24/2005 - Mike Hutchinson
+ o Fixed bug [1107105] Sybase updateable cursor error (a null pointer exception 
+   is thrown in CachedResultSet during an update).
  o Amended the logic for downgrading the preparesql property values in
    ConnectionJDBC2 as it was possible to select invalid options for Sybase and
    SQL 6.5.

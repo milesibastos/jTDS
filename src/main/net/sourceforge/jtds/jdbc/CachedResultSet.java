@@ -49,7 +49,7 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.8 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.9 2005-01-24 09:13:36 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -1048,7 +1048,8 @@ public class CachedResultSet extends JtdsResultSet {
              }
          }
          //
-         if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE)
+         if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE ||
+             resultSetType == ResultSet.TYPE_FORWARD_ONLY && cursorName == null)
          {
              //
              // Now insert copy of row into result set buffer
@@ -1218,7 +1219,7 @@ public class CachedResultSet extends JtdsResultSet {
          //
          // Update state of cached row data
          //
-         if (keysChanged && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
+         if (keysChanged && resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
              // Leave hole at current position and add updated row to end of set
              rowData.add(currentRow);
              rowsInResult = rowData.size();

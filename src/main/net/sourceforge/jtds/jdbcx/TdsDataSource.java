@@ -80,9 +80,9 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
      * @return a new pooled database connection
      * @throws SQLException if an error occurs
      */
-    public synchronized javax.sql.PooledConnection getPooledConnection()
+    public javax.sql.PooledConnection getPooledConnection()
     throws SQLException {
-        return new net.sourceforge.jtds.jdbcx.PooledConnection(getConnection());
+        return getPooledConnection(_user, _password);
     }
 
     /**

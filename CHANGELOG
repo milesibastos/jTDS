@@ -5,6 +5,9 @@ Changes from jTDS 0.8.1
  o De-uglified the Driver.getPropertyInfo() method.  The code reads much
    cleaner now.
  o Revised insert/update/delete-new-property mini-howto in DefaultProperties.
+ o Created overloaded DefaultProperties.getServerType() methods to convert
+   server type from String to Integer and Integer to String.  Implemented in
+   Driver and JtdsDataSource classes.
 
 08/06/2004 - Brian Heineman
  o Update the usage of the prepareSql parameter.  This parameter is now used to

@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.6 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.7 2004-08-07 00:07:35 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 
@@ -84,7 +84,7 @@ public class JtdsDataSource extends AbstractDataSource {
         
         java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
         
-        String url = "jdbc:jtds:" + ((serverType == Driver.SQLSERVER) ? "sqlserver:" : "sybase:");
+        String url = "jdbc:jtds:" + DefaultProperties.getServerType(serverType) + ":";
         
         return driver.connect(url, props);
     }

@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.5 2004-08-06 23:10:15 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.6 2004-08-07 00:07:30 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -191,6 +191,40 @@ public final class DefaultProperties {
                 props.setProperty(messageKey, String.valueOf(defaultValue));
             }
         }
+    }
+
+
+    /**
+     * Converts an integer server type to its string representation.
+     * 
+     * @param serverType The server type as an integer.
+     * @return The server type as a string if known, or <code>null</code> if unknown.
+     */
+    public static String getServerType(int serverType) {
+        if (serverType == Driver.SQLSERVER) {
+            return SERVER_TYPE_SQLSERVER;
+        }
+        else if (serverType == Driver.SYBASE) {
+            return SERVER_TYPE_SYBASE;
+        }
+        return null;
+    }
+
+
+    /**
+     * Converts a string server type to its integer representation.
+     * 
+     * @param serverType The server type as a string.
+     * @return The server type as an integer if known, or <code>null</code> if unknown.
+     */
+    public static Integer getServerType(String serverType) {
+        if (DefaultProperties.SERVER_TYPE_SQLSERVER.equals(serverType)) {
+            return new Integer(Driver.SQLSERVER);
+        }
+        else if (DefaultProperties.SERVER_TYPE_SYBASE.equals(serverType)) {
+            return new Integer(Driver.SYBASE);
+        }
+        return null;
     }
 
 }

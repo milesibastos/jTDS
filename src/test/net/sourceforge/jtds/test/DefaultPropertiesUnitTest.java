@@ -19,6 +19,7 @@ package net.sourceforge.jtds.test;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.Driver;
 import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;
@@ -29,7 +30,7 @@ import java.util.HashMap;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.3 2004-08-05 16:25:27 bheineman Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.4 2004-08-07 00:07:35 ddkilzer Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
@@ -136,6 +137,58 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
                            new Class[]{Properties.class, String.class, String.class, Map.class},
                            new Object[]{properties, key, defaultKey, defaults});
         assertEquals(presetValue, properties.get(Messages.get(key)));
+    }
+
+
+    public void test_getServerType_intToString_Null() {
+        final String message = "Did not return null for unknown server type ";
+        final int[] testValues = new int[]{ -99, -1, 0, 3, 99 };
+        for (int i = 0; i < testValues.length; i++) {
+            assertNull(
+                    message + String.valueOf(testValues[i]),
+                    DefaultProperties.getServerType(testValues[i]));
+        }
+    }
+
+
+    public void test_getServerType_intToString_SQLSERVER() {
+        assertEquals(
+                "Server type for SQL Server did not map correctly",
+                DefaultProperties.SERVER_TYPE_SQLSERVER,
+                DefaultProperties.getServerType(Driver.SQLSERVER));
+    }
+
+
+    public void test_getServerType_intToString_SYBASE() {
+        assertEquals("Server type for Sybase did not map correctly",
+                     DefaultProperties.SERVER_TYPE_SYBASE,
+                     DefaultProperties.getServerType(Driver.SYBASE));
+    }
+
+
+    public void test_getServerType_StringToInteger_Null() {
+        final String message = "Did not return null for unknown server type: ";
+        final String[] testValues = new String[]{ null, "", "SQLServer", "Sybase", "sibase", "sq1server" };
+        for (int i = 0; i < testValues.length; i++) {
+            assertNull(
+                    message + String.valueOf(testValues[i]),
+                    DefaultProperties.getServerType(testValues[i]));
+        }
+    }
+
+
+    public void test_getServerType_StringToInteger_SQLSERVER() {
+        assertEquals(
+                "Server type for SQL Server did not map correctly",
+                new Integer(Driver.SQLSERVER),
+                DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SQLSERVER));
+    }
+
+
+    public void test_getServerType_StringToInteger_SYBASE() {
+        assertEquals("Server type for Sybase did not map correctly",
+                     new Integer(Driver.SYBASE),
+                     DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SYBASE));
     }
 
 }

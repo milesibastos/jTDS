@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.31 2004-08-06 23:10:16 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.32 2004-08-07 00:07:31 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -254,15 +254,11 @@ public class Driver implements java.sql.Driver {
         pos = nextToken(url, pos, token); // Get server type
         String type = token.toString().toLowerCase();
 
-        if (type.equals("sqlserver")) {
-            props.setProperty(Messages.get("prop.servertype"),
-                              String.valueOf(SQLSERVER));
-        } else if (type.equals("sybase")) {
-            props.setProperty(Messages.get("prop.servertype"),
-                              String.valueOf(SYBASE));
-        } else {
+        Integer serverType = DefaultProperties.getServerType(type);
+        if (serverType == null) {
             return null; // Bad server type
         }
+        props.setProperty(Messages.get("prop.servertype"), String.valueOf(serverType));
 
         pos = nextToken(url, pos, token); // Null token between : and //
 

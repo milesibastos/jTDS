@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.sql.Timestamp;
 import java.sql.SQLException;
+import java.sql.Connection;
 import java.util.GregorianCalendar;
 
 /**
@@ -46,7 +47,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.35 2004-11-29 16:33:56 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.36 2004-11-29 17:41:18 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -574,7 +575,7 @@ public class TdsData {
      * fixed size integers, or a count field precedes the actual data.
      * The size of the count field varies with the data type.
      *
-     * @param callerReference an object reference to the caller of this method;
+     * @param connection an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
      * @param in The server ResponseStream.
@@ -584,7 +585,7 @@ public class TdsData {
      * @throws IOException
      * @throws ProtocolException
      */
-    static Object readData(Object callerReference, ResponseStream in, ColInfo ci, boolean readTextMode)
+    static Object readData(ConnectionJDBC2 connection, ResponseStream in, ColInfo ci, boolean readTextMode)
             throws IOException, ProtocolException {
         int len;
 
@@ -619,7 +620,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new BlobImpl(callerReference, in);
+                	return new BlobImpl(connection, in);
                 }
 
                 break;
@@ -628,7 +629,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    return new ClobImpl(callerReference, in, false, readTextMode, ci.charsetInfo);
+                    return new ClobImpl(connection, in, false, readTextMode, ci.charsetInfo);
                 }
 
                 break;
@@ -637,7 +638,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new ClobImpl(callerReference, in, true, readTextMode, null);
+                	return new ClobImpl(connection, in, true, readTextMode, null);
                 }
 
                 break;
@@ -648,7 +649,8 @@ public class TdsData {
 
                 if (len > 0) {
                     // FIXME Use collation for reading
-                    String value = in.readNonUnicodeString(len, ci.charsetInfo);
+                    String value = in.readNonUnicodeString(len,
+                            ci.charsetInfo == null ? connection.getCharsetInfo() : ci.charsetInfo);
 
                     if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
                         // In TDS 4/5 zero length strings are stored as a single space
@@ -687,7 +689,8 @@ public class TdsData {
                     len = in.readShort();
                     if (len != -1) {
                         // FIXME Use collation for reading
-                        return in.readNonUnicodeString(len, ci.charsetInfo);
+                        return in.readNonUnicodeString(len,
+                                ci.charsetInfo == null ? connection.getCharsetInfo() : ci.charsetInfo);
                     }
                 }
 
@@ -1544,8 +1547,12 @@ public class TdsData {
         byte[] buf;
         boolean isTds8 = out.getTdsVersion() >= Driver.TDS80;
 
-        if (isTds8 && pi.collation == null) {
-            pi.collation = collation;
+        if (isTds8) {
+            if (pi.collation == null) {
+                pi.collation = collation;
+            }
+        }
+        if (pi.charsetInfo == null) {
             pi.charsetInfo = charsetInfo;
         }
 

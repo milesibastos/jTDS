@@ -2,7 +2,9 @@ Changes from jTDS 0.9
 =========================
 
 11/29/2004 - Alin Sinpalean
- o Applied Mike's bugfix for [1074096] Incorrect data type determine on dataset
+ o Fixed some NPEs caused by the new per column collation support.
+ o Applied Mike's fix for [1074356] TDS 4/5 Login fails with latest CVS code.
+ o Applied Mike's fix for [1074096] Incorrect data type determine on dataset
    meta data.
  o Implemented support for reading character data using per column collations
    for SQL Server 2000.

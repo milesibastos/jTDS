@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.9 2004-11-29 06:43:08 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.10 2004-11-29 17:41:18 alin_sinpalean Exp $
  */
 class ParamInfo implements Cloneable {
     /** Flag as an input parameter. */
@@ -220,7 +220,7 @@ class ParamInfo implements Cloneable {
 
         if (value instanceof Reader) {
             String tmp = loadFromReader((Reader) value, length);
-            value = tmp.getBytes();
+            value = Support.encodeString(charset, tmp);
             return (byte[]) value;
         }
 

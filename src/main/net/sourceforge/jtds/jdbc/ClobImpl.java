@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.26 2004-11-29 06:43:08 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.27 2004-11-29 17:41:14 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -95,6 +95,11 @@ public class ClobImpl implements Clob {
         }
 
         _connection = Support.getConnection(callerReference);
+
+        // If the column doesn't have a specific character set, use the default
+        if (charsetInfo == null) {
+            charsetInfo = _connection.getCharsetInfo();
+        }
 
         TextPtr tp = new TextPtr();
 

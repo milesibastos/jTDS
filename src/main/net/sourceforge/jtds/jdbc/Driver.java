@@ -44,11 +44,11 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.3 2004-01-30 22:52:18 bheineman Exp $
+ * @version    $Id: Driver.java,v 1.4 2004-01-31 00:00:15 bheineman Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.3 2004-01-30 22:52:18 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.4 2004-01-31 00:00:15 bheineman Exp $";
 
     private final static String DEFAULT_SQL_SERVER_PORT = "1433";
     private final static String DEFAULT_SYBASE_PORT = "7100";
@@ -114,12 +114,101 @@ public class Driver implements java.sql.Driver {
         return DriverVersion.getDriverMinorVersion();
     }
 
-    /** @todo Implement this method. */
-    public DriverPropertyInfo[] getPropertyInfo(String Url, Properties Info)
+    /**
+     * Returns an array of driver properties.
+     */
+    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
     throws SQLException {
-        DriverPropertyInfo[] result = new DriverPropertyInfo[0];
+        DriverPropertyInfo[] dpi = new DriverPropertyInfo[] {
+            new DriverPropertyInfo(Tds.PROP_SERVERTYPE, null),
+            new DriverPropertyInfo(Tds.PROP_HOST, null),
+            new DriverPropertyInfo(Tds.PROP_PORT, null),
+            new DriverPropertyInfo(Tds.PROP_DBNAME, null),
+            new DriverPropertyInfo(Tds.PROP_USER, null),
+            new DriverPropertyInfo(Tds.PROP_PASSWORD, null),
+            new DriverPropertyInfo(Tds.PROP_TDS, null),
+            new DriverPropertyInfo(Tds.PROP_DOMAIN, null),
+            new DriverPropertyInfo(Tds.PROP_INSTANCE, null),
+            new DriverPropertyInfo(Tds.PROP_USEUNICODE, null)
+        };
 
-        return result;
+        if (info == null) {
+            info = new Properties();
+        } else {
+            info = processProperties(info);
+        }
+
+        // Populate the properties.
+        parseUrl(url, info);
+
+        for (int i = 0; i < dpi.length; i++) {
+            String name = dpi[i].name;
+            Object tmpValue = info.get(name);
+
+            if (tmpValue != null) {
+                dpi[i].value = tmpValue.toString();
+            }
+
+            if (name.equals(Tds.PROP_SERVERTYPE)) {
+                dpi[i].description = "The type of database.";
+                dpi[i].required = true;
+                dpi[i].choices = new String[] {
+                    String.valueOf(Tds.SQLSERVER),
+                    String.valueOf(Tds.SYBASE)
+                };
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = dpi[i].choices[0]; // Tds.SQLSERVER
+                }
+            } else if (name.equals(Tds.PROP_HOST)) {
+                dpi[i].description = "The database hostname.";
+                dpi[i].required = true;
+            } else if (name.equals(Tds.PROP_PORT)) {
+                dpi[i].description = "The database port.";
+
+                if (dpi[i].value == null) {
+                    if (String.valueOf(Tds.SYBASE).equalsIgnoreCase(String.valueOf(info.get(Tds.PROP_SERVERTYPE)))) {
+                        dpi[i].value = DEFAULT_SYBASE_PORT;
+                    } else {
+                        dpi[i].value = DEFAULT_SQL_SERVER_PORT;
+                    }
+                }
+            } else if (name.equals(Tds.PROP_DBNAME)) {
+                dpi[i].description = "The database name.";
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = "master";
+                }
+            } else if (name.equals(Tds.PROP_USER)) {
+                dpi[i].description = "The database user.";
+            } else if (name.equals(Tds.PROP_PASSWORD)) {
+                dpi[i].description = "The database password.";
+            } else if (name.equals(Tds.PROP_TDS)) {
+                dpi[i].description = "The database protocol.";
+                dpi[i].choices = new String[] {
+                    String.valueOf(Tds.TDS42),
+                    String.valueOf(Tds.TDS50),
+                    String.valueOf(Tds.TDS70)
+                };
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = dpi[i].choices[2]; // Tds.TDS70
+                }
+            } else if (name.equals(Tds.PROP_DOMAIN)) {
+                dpi[i].description = "The domain used for authentication.";
+            } else if (name.equals(Tds.PROP_INSTANCE)) {
+                dpi[i].description = "The database instance.";
+            } else if (name.equals(Tds.PROP_USEUNICODE)) {
+                dpi[i].description = "If strings should be sent as unicode values.";
+                dpi[i].choices = new String[] {"true","false"};
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = dpi[i].choices[0]; // true
+                }
+            }
+        }
+
+        return dpi;
     }
 
     /**
@@ -185,6 +274,11 @@ public class Driver implements java.sql.Driver {
             }
         }
 
+        // Set here to improve getPropertyInfo() support
+        if (result != null) {
+            result.put(Tds.PROP_SERVERTYPE, String.valueOf(serverType));
+        }
+
         tmpUrl = tmpUrl.substring(endPos + 2);
 
         int portStart = tmpUrl.indexOf(':');
@@ -210,6 +304,11 @@ public class Driver implements java.sql.Driver {
         String port;
         String database;
 
+        // Set here to improve getPropertyInfo() support
+        if (result != null) {
+            result.put(Tds.PROP_HOST, host);
+        }
+
         // Determine if a port is specified
         if (portStart == -1) {
             port = (serverType == Tds.SYBASE) ? DEFAULT_SYBASE_PORT : DEFAULT_SQL_SERVER_PORT;
@@ -234,6 +333,11 @@ public class Driver implements java.sql.Driver {
             port = tmpUrl.substring(portStart + 1, endPos);
         }
 
+        // Set here to improve getPropertyInfo() support
+        if (result != null) {
+            result.put(Tds.PROP_PORT, port);
+        }
+
         // Determine if a database is specified
         if (databaseStart == -1) {
             database = "";
@@ -252,6 +356,11 @@ public class Driver implements java.sql.Driver {
             }
 
             database = tmpUrl.substring(databaseStart + 1, endPos);
+        }
+
+        // Set here to improve getPropertyInfo() support
+        if (result != null) {
+            result.put(Tds.PROP_DBNAME, database);
         }
 
         // Process all attributes that may be specified.
@@ -285,13 +394,6 @@ public class Driver implements java.sql.Driver {
                 result.put(tmpUrl.substring(pos, assignment).toUpperCase(),
                            tmpUrl.substring(assignment + 1, endPos));
             }
-        }
-
-        if (result != null) {
-            result.put(Tds.PROP_HOST, host);
-            result.put(Tds.PROP_SERVERTYPE, String.valueOf(serverType));
-            result.put(Tds.PROP_PORT, port);
-            result.put(Tds.PROP_DBNAME, database);
         }
 
         return true;

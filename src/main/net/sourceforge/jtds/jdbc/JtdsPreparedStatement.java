@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.17 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.18 2004-10-08 13:08:23 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -263,6 +263,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setObjectBase(int parameterIndex, Object x, int targetSqlType, int scale)
             throws SQLException {
+        checkOpen();
+
         int length = 0;
 
         if (targetSqlType == java.sql.Types.CLOB) {
@@ -595,6 +597,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public ParameterMetaData getParameterMetaData() throws SQLException {
+        checkOpen();
+
         //
         // NB. This is usable only with the JDBC3 version of the interface.
         //
@@ -638,6 +642,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public ResultSetMetaData getMetaData() throws SQLException {
+        checkOpen();
+
         if (colMetaData == null) {
             if (connection.getServerType() == Driver.SYBASE) {
                 // Sybase can provide meta data as a by product of preparing the call.

@@ -1,6 +1,11 @@
 Changes from jTDS 0.9
 =========================
 
+10/08/2004 - Alin Sinpalean
+ o Added checkClosed() calls to JtdsPreparedStatement.setObjectBase(),
+   getParameterMetaData() and getMetaData(), which were all using the
+   connection object and could cause NPEs if the statement was closed.
+
 10/07/2004 - Alin Sinpalean
  o Applied patch [1040214] "Changes to allow use of default charset", with a
    number of minor modifications, including always throwing an SQLException if

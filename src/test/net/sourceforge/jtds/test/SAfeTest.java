@@ -525,4 +525,33 @@ public class SAfeTest extends DatabaseTestCase
 
         cs.close();
     }
+
+    /**
+     * Test <code>ResultSet.updateRow()</code> on updateable result sets.
+     */
+    public void testUpdateRow0011() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #SAfe0011(value VARCHAR(255) PRIMARY KEY)");
+        stmt.close();
+
+        PreparedStatement insStmt = con.prepareStatement(
+                "INSERT INTO #SAfe0011(value) values (?)");
+        insStmt.setString(1, "Row 1");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.setString(1, "Row 2");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                                   ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0011 ORDER BY 1");
+        assertEquals(null, stmt.getWarnings());
+        assertEquals(null, rs.getWarnings());
+        assertTrue(rs.last());
+        rs.updateString(1, "Row X");
+        rs.updateRow();
+        rs.refreshRow();
+        assertEquals("Row X", rs.getString(1));
+        rs.close();
+    }
 }

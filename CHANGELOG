@@ -1,6 +1,16 @@
 Changes from jTDS 0.6
 ========================
 
+02/12/2004 - Alin Sinpalean
+ o Fixed a nasty regression introduced by the new DECIMAL/NUMERIC code (null
+   BigDecimals would cause an invalid packet, with scale -1).
+ o Moved the driver class to the connection.properties file, instead of having
+   it hardcoded in TestBase.
+ o Updated a number of tests and added a test for updating a ResultSet (of
+   course, it doesn't pass yet).
+ o Added all the constants defined in the 1.4 Statement to TdsStatement, to make
+   it compile with 1.3.
+
 02/11/2004 - Alin Sinpalean
  o Implemented CursorResultSet.deleteRow() and wrote a unit test for it.
  o Added processing for TDS_TABNAME and TDS_COLINFO packets. Table names are now
@@ -40,12 +50,6 @@ Changes from jTDS 0.6
  o CursorResultSet.relative() now works according to the spec (i.e. same as
    next/previous), even if the cursor is positioned before the first row or
    after the last one.
-   
-02/10/2004 - Brian Heineman
- o Corrected bug in Statement.executeBatch() where batch values were not being
-   cleared after execution.
- o Numerous (minor) optimizations to underlying Tds communication logic:
-   reduced memory allocations and assignments; reduced cost of control logic.
 
 02/10/2004 - Brian Heineman
  o Corrected bug in Statement.executeBatch() where batch values were not being

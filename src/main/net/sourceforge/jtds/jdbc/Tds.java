@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.28 2004-02-11 19:10:25 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.29 2004-02-12 23:07:57 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.28 2004-02-11 19:10:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.29 2004-02-12 23:07:57 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -1172,8 +1172,8 @@ public class Tds implements TdsDefinitions {
         case TDS_DONE:
         case TDS_DONEPROC:
         case TDS_DONEINPROC:
-            final PacketResult result = processEndToken(packetSubType);
-            moreResults = ((PacketEndTokenResult) result).moreResults();
+            final PacketEndTokenResult result = processEndToken(packetSubType);
+            moreResults = result.moreResults();
             return result;
 
         case TDS_COL_NAME_TOKEN:
@@ -2849,7 +2849,7 @@ public class Tds implements TdsDefinitions {
             comm.appendByte(prec);
 
             if (o == null) {
-                comm.appendByte((byte) reqScale);
+                comm.appendByte((byte) ((reqScale == -1) ? 0 : reqScale));
                 comm.appendByte((byte) 0);
             } else {
                 BigDecimal bd;
@@ -2943,8 +2943,8 @@ public class Tds implements TdsDefinitions {
         comm.appendTdsInt(length);
 
         // send the data
-        for (i = 0; i < length; i++) {
-            comm.appendByte(value[i]);
+        if (value != null) {
+            comm.appendBytes(value);
         }
     }
 

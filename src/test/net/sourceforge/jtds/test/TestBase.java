@@ -42,10 +42,10 @@ public class TestBase extends TestCase {
     public Connection getConnection()
              throws Exception
     {
-        Class.forName( "net.sourceforge.jtds.jdbc.Driver" );
         String fileName = "conf/connection.properties";
 
         props = loadProperties( fileName );
+        Class.forName(props.getProperty("driver"));
         String url = props.getProperty( "url" );
         Connection con = DriverManager.getConnection( url, props );
         showWarnings( con.getWarnings() );

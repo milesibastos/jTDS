@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.19 2004-02-11 19:10:25 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.20 2004-02-12 23:07:57 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -54,12 +54,18 @@ import java.util.ArrayList;
 public class TdsStatement implements java.sql.Statement
 {
     /**
-     * NOTE: This value is carried over from Statement.RETURN_GENERATED_KEYS (which was
-     * introduced in 1.4) in order for the driver to compile with 1.3.
+     * NOTE: These values are carried over from the new Statement constants
+     * introduced in 1.4 in order for the driver to compile with 1.3.
      */
     public static final int RETURN_GENERATED_KEYS = 1;
+    public static final int NO_GENERATED_KEYS = 2;
+    public static final int SUCCESS_NO_INFO = -2;
+    public static final int EXECUTE_FAILED = -3;
+    public static final int CLOSE_CURRENT_RESULT = 1;
+    public static final int KEEP_CURRENT_RESULT = 2;
+    public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.19 2004-02-11 19:10:25 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.20 2004-02-12 23:07:57 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -872,7 +878,7 @@ public class TdsStatement implements java.sql.Statement
 
             System.arraycopy(updateCounts, 0, tmpUpdateCounts, 0, i + 1);
 
-            tmpUpdateCounts[i] = Statement.EXECUTE_FAILED;
+            tmpUpdateCounts[i] = EXECUTE_FAILED;
             throw new BatchUpdateException(e.getMessage(), tmpUpdateCounts);
         } finally {
             clearBatch();

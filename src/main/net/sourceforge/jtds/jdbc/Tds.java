@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.16 2003-12-22 00:33:06 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.17 2004-01-15 23:00:52 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.16 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.17 2004-01-15 23:00:52 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -197,10 +197,10 @@ public class Tds implements TdsDefinitions
         String instanceName = props_.getProperty(PROP_INSTANCE, "");
         if( instanceName.length() > 0 )
         {
-            MSSqlServerInfo info = new MSSqlServerInfo(serverName);
+            MSSqlServerInfo info = new MSSqlServerInfo(host);
             port = info.getPortForInstance(instanceName);
             if( port == -1 )
-                throw new SQLException( "Server " + serverName + " has no instance named " + instanceName);
+                throw new SQLException( "Server " + host + " has no instance named " + instanceName);
         }
 
         // XXX This driver doesn't properly support TDS 5.0, AFAIK.
@@ -2708,7 +2708,8 @@ public class Tds implements TdsDefinitions
                 }
             }
 
-            String query = "use [" + database + ']';
+            String query = tdsVer==TDS70 ?
+                ("use [" + database + ']') : "use " + database;
             executeQuery(query, null, null, 0);
 
             // Get the reply to the change database request.
@@ -3337,15 +3338,15 @@ public class Tds implements TdsDefinitions
       comm.appendByte(SYBDECIMAL);
       if (o == null) {
         comm.appendByte((byte)0);
-        comm.appendByte((byte)28);
-        comm.appendByte((byte)12);
+        comm.appendByte((byte)38);
+        comm.appendByte((byte)10);
         comm.appendByte((byte)0);
       }
       else {
         if (o instanceof Long) {
           long value = ((Long)o).longValue();
           comm.appendByte((byte)9);
-          comm.appendByte((byte)28);
+          comm.appendByte((byte)38);
           comm.appendByte((byte)0);
           comm.appendByte((byte)9);
           if (value >= 0L) {
@@ -3382,8 +3383,8 @@ public class Tds implements TdsDefinitions
             BigInteger bi = bd.unscaledValue();
             mantisse = bi.abs().toByteArray();
             len = (byte)(mantisse.length + 1);
-            if (len > 13) {   // diminish scale as long as len is to much
-              int dif = len - 13;
+            if (len > 17) {   // diminish scale as long as len is to much
+              int dif = len - 17;
               scale -= dif * 2;
               if (scale < 0)
                 throw new TdsException("can´t sent this BigDecimal");
@@ -3393,7 +3394,7 @@ public class Tds implements TdsDefinitions
             else break;
           }
           while (repeat);
-          byte prec = 28;
+          byte prec = 38;
           comm.appendByte(len);
           comm.appendByte(prec);
           comm.appendByte(scale);
@@ -4470,20 +4471,20 @@ public class Tds implements TdsDefinitions
             switch (transactionIsolationLevel)
             {
                 case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                    sql.append(" read uncommitted");
+                    sql.append("read uncommitted");
                     break;
 
                 case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                    sql.append(" read committed");
+                    sql.append("read committed");
                     break;
 
                 case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                    sql.append(" repeatable read");
+                    sql.append("repeatable read");
                     break;
 
                 case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                    throw new SQLException("SQLServer does not support " +
-                            "TRANSACTION_SERIALIZABLE");
+                    sql.append("serializable");
+                    break;
 
                 case java.sql.Connection.TRANSACTION_NONE:
                 default:
@@ -4622,7 +4623,7 @@ public class Tds implements TdsDefinitions
         return new PacketAuthTokenResult(nonce);
     }
 
-        private void sendNtlmChallengeResponse(PacketAuthTokenResult authToken)
+    private void sendNtlmChallengeResponse(PacketAuthTokenResult authToken)
         throws TdsException, java.io.IOException
     {
         try

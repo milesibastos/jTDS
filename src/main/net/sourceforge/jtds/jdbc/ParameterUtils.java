@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 public class ParameterUtils
 {
-   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.2 2004-01-15 23:00:52 alin_sinpalean Exp $";
 
 
    /**
@@ -47,6 +47,7 @@ public class ParameterUtils
     *
     * @return number of parameter placeholders in sql statement.
     * @exception SQLException thrown if there is a problem parsing statment.
+    * @todo   Find a faster implementation; use the same code for Procedure().
     */
    public static int countParameters(String sql)
       throws java.sql.SQLException
@@ -55,15 +56,15 @@ public class ParameterUtils
       // This is method is implemented as a very simple finite state machine.
       //
 
-      int               result = 0;
+      int result = 0;
 
-      if (sql == null)
-      {
+      if( sql == null )
          throw new SQLException("No statement");
-      }
       else
       {
-         StringTokenizer   st = new StringTokenizer(sql, "'?\\", true);
+         // SAfe Seems like '\' (backslash) doesn't actually work as
+         //      an escape character, so we'll just ignore it
+         StringTokenizer   st = new StringTokenizer(sql, "'?", true);
          final int         normal   = 1;
          final int         inString = 2;
          final int         inEscape = 3;
@@ -76,46 +77,29 @@ public class ParameterUtils
             switch (state)
             {
                case normal:
-               {
                   if (current.equals("?"))
-                  {
                      result++;
-                  }
                   else if (current.equals("'"))
-                  {
                      state = inString;
-                  }
-                  else
-                  {
-                     // nop
-                  }
+
                   break;
-               }
+
                case inString:
-               {
                   if (current.equals("'"))
-                  {
                      state = normal;
-                  }
-                  else if (current.equals("\\"))
-                  {
-                     state = inEscape;
-                  }
-                  else
-                  {
-                     // nop
-                  }
+                  // SAfe Seems like '\' (backslash) doesn't actually work as
+                  //      an escape character, so we'll just ignore it
+                  // else if (current.equals("\\"))
+                  //    state = inEscape;
+
                   break;
-               }
+
                case inEscape:
-               {
                   state = inString;
                   break;
-               }
+
                default:
-               {
                   throw new SQLException("Internal error.  Bad State " + state);
-               }
             }
          }
       }
@@ -292,7 +276,7 @@ public class ParameterUtils
                break;
             }
             case java.sql.Types.BIGINT: {
-               parameterList[i].formalType = "decimal(28,10)";
+               parameterList[i].formalType = "decimal(38,10)";
                break;
             }
             case java.sql.Types.SMALLINT:
@@ -308,7 +292,7 @@ public class ParameterUtils
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
             {
-               parameterList[i].formalType = "decimal(28,10)";
+               parameterList[i].formalType = "decimal(38,10)";
                break;
             }
             case java.sql.Types.BINARY:
@@ -327,4 +311,3 @@ public class ParameterUtils
       }
    }
 }
-

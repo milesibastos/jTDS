@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.8 2004-01-15 23:00:52 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.8 2004-01-15 23:00:52 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -782,25 +782,43 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
 
     /**
-     *  JDBC 2.0 Sets the designated parameter to the given <code>Reader</code>
-     *  object, which is the given number of characters long. When a very large
-     *  UNICODE value is input to a LONGVARCHAR parameter, it may be more
-     *  practical to send it via a java.io.Reader. JDBC will read the data from
-     *  the stream as needed, until it reaches end-of-file. The JDBC driver will
-     *  do any necessary conversion from UNICODE to the database char format.
-     *  <P>
+     * JDBC 2.0 Sets the designated parameter to the given <code>Reader</code>
+     * object, which is the given number of characters long. When a very large
+     * UNICODE value is input to a LONGVARCHAR parameter, it may be more
+     * practical to send it via a java.io.Reader. JDBC will read the data from
+     * the stream as needed, until it reaches end-of-file. The JDBC driver will
+     * do any necessary conversion from UNICODE to the database char format.
+     * <P>
      *
-     *  <B>Note:</B> This stream object can either be a standard Java stream
-     *  object or your own subclass that implements the standard interface.
+     * <B>Note:</B> This stream object can either be a standard Java stream
+     * object or your own subclass that implements the standard interface.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  reader            the java reader which contains the UNICODE data
-     *@param  length            the number of characters in the stream
-     *@exception  SQLException  if a database access error occurs
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  reader            the java reader which contains the UNICODE data
+     * @param  length            the number of characters in the stream
+     * @exception  SQLException  if a database access error occurs
      */
-    public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length) throws java.sql.SQLException
+    public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length)
+        throws java.sql.SQLException
     {
-        NotImplemented();
+        if( reader==null || length<0 )
+            setString(parameterIndex, null);
+
+        StringBuffer value = new StringBuffer(length);
+        char[] buffer = new char[1024];
+        int bytes;
+
+        try
+        {
+            while( (bytes = reader.read(buffer, 0, buffer.length)) != -1 )
+                value.append(buffer, 0, bytes);
+        }
+        catch( java.io.IOException e )
+        {
+            throw new SQLException("Error reading stream: " + e.getMessage());
+        }
+
+        setParam(parameterIndex, value, java.sql.Types.LONGVARCHAR, value.length());
     }
 
 

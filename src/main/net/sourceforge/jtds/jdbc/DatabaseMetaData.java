@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.14 2004-01-30 20:28:56 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.15 2004-02-02 19:07:33 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.14 2004-01-30 20:28:56 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.15 2004-02-02 19:07:33 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -590,8 +590,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * @exception  SQLException  if a database-access error occurs.
      * @see                      Connection
      */
-    public int getDefaultTransactionIsolation() throws SQLException
-    {
+    public int getDefaultTransactionIsolation() throws SQLException {
         // XXX need to check this for Sybase
         return Connection.TRANSACTION_READ_COMMITTED;
     }
@@ -601,9 +600,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      *
      * @return    JDBC driver major version
      */
-    public int getDriverMajorVersion()
-    {
-        return DriverVersion.getDriverMajorVersion();
+    public int getDriverMajorVersion() {
+        return Driver.MAJOR_VERSION;
     }
 
     /**
@@ -611,9 +609,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      *
      * @return    JDBC driver minor version number
      */
-    public int getDriverMinorVersion()
-    {
-        return DriverVersion.getDriverMinorVersion();
+    public int getDriverMinorVersion() {
+        return Driver.MINOR_VERSION;
     }
 
     /**
@@ -622,8 +619,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * @return                   JDBC driver name
      * @exception  SQLException  if a database-access error occurs.
      */
-    public String getDriverName() throws SQLException
-    {
+    public String getDriverName() throws SQLException {
         return "jTDS Type 4 JDBC Driver for MS SQL Server";
     }
 
@@ -633,8 +629,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * @return                   JDBC driver version
      * @exception  SQLException  if a database-access error occurs.
      */
-    public String getDriverVersion() throws SQLException
-    {
+    public String getDriverVersion() throws SQLException {
         return getDriverMajorVersion() + "." + getDriverMinorVersion();
     }
 

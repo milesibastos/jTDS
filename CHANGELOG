@@ -1,6 +1,11 @@
 Changes from jTDS 0.9
 =========================
 
+10/21/2004 - Brian Heineman
+ o Initial work to support controlled statement caching.  A latching mechanism
+   is available to ensure two separate statements with the same SQL do not cause
+   a cached statement to be removed prematurely.
+
 10/20/2004 - Alin Sinpalean
  o Corrected a bug that was causing Charsets.properties not to be loaded under
    Db-Visualizer (and in any case when the file could not be loaded via the

@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.lang.ref.WeakReference;
 import javax.transaction.xa.XAException;
 
+import net.sourceforge.jtds.jdbc.cache.*;
 import net.sourceforge.jtds.jdbcx.JtdsXid;
 import net.sourceforge.jtds.util.*;
 
@@ -60,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.40 2004-10-20 17:21:58 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.41 2004-10-22 04:31:40 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -73,6 +74,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         private ColInfo[] colMetaData;
         /** The parameter meta data (Sybase only). */
         private ParamInfo[] paramMetaData;
+        
+        public final String toString() {
+        	return name;
+        }
     }
 
     /**
@@ -197,8 +202,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int maxPrecision = 38; // Sybase default
     /** Stored procedure unique ID number. */
     private int spSequenceNo = 1;
-    /** Procedure cache.*/
-    private HashMap procedures = new HashMap();
+    /** Statement cache.*/
+    private StatementCache statementCache = new DefaultStatementCache(500);
     /** Procedures in this transaction. */
     private ArrayList procInTran = new ArrayList();
     /** Indicates current charset is wide. */
@@ -490,16 +495,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Find a stored procedure in the cache.
-     *
-     * @param key The signature of the procedure.
-     * @return The procedure name as a <code>String</code> or null.
-     */
-    ProcEntry getCachedProcedure(String key) {
-        return(ProcEntry) procedures.get(key);
-    }
-
-    /**
      * Try to convert the SQL statement into a stored procedure.
      *
      * @param sql The SQL statement to prepare.
@@ -507,7 +502,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The SQL procedure name as a <code>String</code> or
      * null if the SQL cannot be prepared.
      */
-    synchronized String prepareSQL(JtdsPreparedStatement pstmt,
+    String prepareSQL(JtdsPreparedStatement pstmt,
                                    String sql,
                                    ParamInfo[] params,
                                    boolean returnKeys)
@@ -547,22 +542,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
         }
 
-        StringBuffer key = new StringBuffer(sql.length() + 64);
-
-        key.append(getCatalog()); // Not sure if this is required for sybase
-        key.append(sql);
-
-        //
-        // Append parameter data types to key (not needed for sybase).
-        //
-        for (int i = 0; i < params.length && serverType != Driver.SYBASE; i++) {
-            key.append(params[i].sqlType);
-        }
+        String key = Support.getStatementKey(sql, params, serverType, getCatalog());
 
         //
         // See if we have already built this one
         //
-        ProcEntry proc = getCachedProcedure(key.toString());
+        ProcEntry proc = (ProcEntry) statementCache.get(key);
 
         if (proc != null) {
             if (serverType == Driver.SYBASE) {
@@ -601,7 +586,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         // OK we have built a proc so add it to the cache.
-        addCachedProcedure(key.toString(), proc);
+        addCachedProcedure(key, proc);
 
         // Give the user the name
         return proc.name;
@@ -614,7 +599,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param proc The stored procedure descriptor.
      */
     void addCachedProcedure(String key, ProcEntry proc) {
-        procedures.put(key, proc);
+        statementCache.put(key, proc);
 
         if (!autoCommit) {
             procInTran.add(key);
@@ -627,11 +612,20 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param key The signature of the procedure to remove from the cache.
      */
     void removeCachedProcedure(String key) {
-        procedures.remove(key);
+        statementCache.remove(key);
 
         if (!autoCommit) {
             procInTran.remove(key);
         }
+    }
+    
+    /**
+     * Returns the statement cache reference.
+     * 
+     * @return the statement cache reference.
+     */
+    StatementCache getStatementCache() {
+    	return statementCache;
     }
 
     /**
@@ -1349,12 +1343,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
 
-        synchronized (procedures) {
+        synchronized (statementCache) {
             for (int i = 0; i < procInTran.size(); i++) {
                 String key = (String) procInTran.get(i);
 
                 if (key != null && tdsVersion != Driver.TDS50) {
-                    procedures.remove(key);
+                    statementCache.remove(key);
                 }
             }
 

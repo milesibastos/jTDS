@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.19 2004-10-20 12:58:25 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.20 2004-10-22 04:31:40 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -371,6 +371,43 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
     }
 
+    /**
+     * Close the prepare statement and clear any free statement handles form the cache.
+     */
+    public void close() throws SQLException {
+        if (!closed) {
+            try {
+            	Object[] handles = connection.getStatementCache().getObsoleteHandles(procName);
+
+            	if (handles != null) {
+            		StringBuffer cleanupSql = new StringBuffer(handles.length * 15);
+            		
+            		for (int i = 0; i < handles.length; i++) {
+            			String handle = (String) handles[i];
+            			
+            			if (i != 0) {
+            				cleanupSql.append('\n');
+            			}
+
+            			// FIXME - Add support for sp_cursorunprepare
+            			if (TdsCore.isPreparedProcedureName(handle)) {
+            				cleanupSql.append("DROP PROC ");
+            				cleanupSql.append(handle);
+            			} else {
+            				cleanupSql.append("EXEC sp_unprepare ");
+            				cleanupSql.append(handle);
+            			}
+            		}
+            		
+                    tds.executeSQL(cleanupSql.toString(), null, null, true, 0, -1);
+                    tds.clearResponseQueue();
+            	}
+            } finally {
+            	super.close();
+            }
+        }
+    }
+    
 // -------------------- java.sql.PreparedStatement methods follow -----------------
 
     public int executeUpdate() throws SQLException {

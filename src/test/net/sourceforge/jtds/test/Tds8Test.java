@@ -28,8 +28,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
-import java.sql.DriverManager;
-import java.io.PrintWriter;
 
 
 

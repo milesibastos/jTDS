@@ -50,7 +50,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.26 2004-10-20 17:21:58 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.27 2004-10-22 04:31:41 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -937,6 +937,31 @@ public class Support {
         }
     }
 
+    /**
+     * Generates a unique statement key for a given SQL statement.
+     * 
+     * @param sql the sql statment to generate the key for
+     * @param params the statement parameters
+     * @param serverType the type of server to generate the key for
+     * @param catalog the catalog is required for uniqueness on Microsoft SQL Server
+     * @return
+     */
+    static String getStatementKey(String sql, ParamInfo[] params, int serverType, String catalog) {
+        StringBuffer key = new StringBuffer(sql.length() + 64);
+
+        key.append(catalog); // Not sure if this is required for sybase
+        key.append(sql);
+
+        //
+        // Append parameter data types to key (not needed for sybase).
+        //
+        for (int i = 0; i < params.length && serverType != Driver.SYBASE; i++) {
+            key.append(params[i].sqlType);
+        }
+        
+    	return key.toString();
+    }
+    
     /**
      * Constructs a parameter definition string for use with
      * sp_executesql, sp_prepare, sp_prepexec, sp_cursoropen,

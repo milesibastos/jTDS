@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.23 2004-05-04 02:57:09 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.24 2004-05-07 04:38:07 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.23 2004-05-04 02:57:09 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.24 2004-05-07 04:38:07 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -2344,6 +2344,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
             //      TEXT/NTEXT (and UNIQUEIDENTIFIER, but that's not a standard
             //      type).
             case Types.BIT:
+            case ParameterUtils.BOOLEAN:
             case Types.TINYINT:
             case Types.SMALLINT:
             case Types.INTEGER:

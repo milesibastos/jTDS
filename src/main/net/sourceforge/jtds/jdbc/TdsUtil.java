@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
 import java.sql.*;
 
 public class TdsUtil {
-    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.6 2004-05-02 22:45:21 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.7 2004-05-07 04:38:08 bheineman Exp $";
 
     private static char hex[] =
             {
@@ -47,6 +47,7 @@ public class TdsUtil {
     static public String javaSqlTypeToString(int type) {
         switch (type) {
         case java.sql.Types.BIT:
+        case java.sql.Types.BOOLEAN:
             return "BIT";
         case java.sql.Types.TINYINT:
             return "TINYINT";

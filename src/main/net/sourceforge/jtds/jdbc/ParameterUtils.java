@@ -38,7 +38,10 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.17 2004-05-02 23:13:41 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.18 2004-05-07 04:38:08 bheineman Exp $";
+
+    public static final int BOOLEAN = 16;
+    public static final int DATALINK = 70;
 
     /**
      * Used to normalize date and time values.
@@ -208,6 +211,7 @@ public class ParameterUtils {
                     break;
                 }
                 case Types.BIT:
+                case ParameterUtils.BOOLEAN:
                 {
                     parameterList[i].formalType = "bit";
                     break;
@@ -477,7 +481,7 @@ public class ParameterUtils {
                 throw new SQLException("Cannot convert " + value.getClass().getName()
                                        + " to Timestamp.");
             case Types.BIT:
-//          case Types.BOOLEAN (16): - Added in 1.4!  Add support for this constant!
+            case ParameterUtils.BOOLEAN:
                 if (value instanceof Boolean) {
                     return value;
                 } else if (value instanceof Number) {
@@ -508,7 +512,13 @@ public class ParameterUtils {
                     // Why not just have an else statment that returns true instead of checking for specific values?
                     // (true being defined as !false); the logic has been updated to reflect this...
                 return Boolean.TRUE;
+            case Types.ARRAY:
+            case ParameterUtils.DATALINK:
+            case Types.DISTINCT:
+            case Types.JAVA_OBJECT:
             case Types.OTHER:
+            case Types.REF:
+            case Types.STRUCT:
                 throw new SQLException("Not implemented");
             default:
                 throw new SQLException("Unsupported datatype " + sqlType);

@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.6 2004-03-27 05:26:14 bheineman Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.7 2004-05-07 04:38:08 bheineman Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.6 2004-03-27 05:26:14 bheineman Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.7 2004-05-07 04:38:08 bheineman Exp $";
 
    /**
     * Does not allow NULL values.
@@ -470,6 +470,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    public String getColumnClassName(int column) throws SQLException {
        switch (columnsInfo.getJdbcType(column)) {
        case Types.BIT:
+       case ParameterUtils.BOOLEAN:
            return "java.lang.Boolean";
 
        case Types.TINYINT:

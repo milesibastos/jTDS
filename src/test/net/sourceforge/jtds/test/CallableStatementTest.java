@@ -255,7 +255,10 @@ public class CallableStatementTest extends TestBase {
 
         ResultSet rs = cstmt.getResultSet();
 
-        assertTrue(rs != null);
+        if (rs == null) {
+            fail("Null ResultSet returned");
+            return;
+        }
 
         dump(rs);
 
@@ -292,7 +295,7 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
-     * Test for bug [938632] String index out of bounds error in 0.8rc1
+     * Test for bug [938632] String index out of bounds error in 0.8rc1.
      */
     public void testCallableStatementParsing2() throws Exception {
         try {
@@ -314,20 +317,37 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
-     * Test for bug [1006845] Stored procedure with 18 parameters
+     * Test for bug [1006845] Stored procedure with 18 parameters.
      */
     public void testCallableStatementParsing3() throws Exception {
         CallableStatement cstmt = con.prepareCall("{Call Test(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)}");
+        cstmt.close();
     }
 
     /**
-     * Test for reature request [956800] setNull(): Not implemented
+     * Test for incorrect exception thrown/no exception thrown when invalid
+     * call escape is used.
+     *
+     * See https://sourceforge.net/forum/forum.php?thread_id=1144619&forum_id=104389
+     * for more detail.
+     */
+    public void testCallableStatementParsing4() throws SQLException {
+        try {
+            con.prepareCall("{call ? = sp_create_employee (?, ?, ?, ?, ?, ?)}");
+            fail("Was expecting an invalid escape sequence error");
+        } catch (SQLException ex) {
+            assertEquals("22025", ex.getSQLState());
+        }
+    }
+
+    /**
+     * Test for reature request [956800] setNull(): Not implemented.
      */
     public void testCallableSetNull1() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #callablesetnull1 (data CHAR(1) NULL)");
         stmt.close();
-    	
+
         try {
             stmt = con.createStatement();
             stmt.execute("create procedure callableSetNull1 @data char(1) "

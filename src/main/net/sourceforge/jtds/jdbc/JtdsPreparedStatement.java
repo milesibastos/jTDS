@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.14 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.15 2004-09-16 09:12:15 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -120,7 +120,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             }
         }
         sqlWord = parsedSql[2];
-        
+
         if (returnKeys && sqlWord.equals("insert")) {
             if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
@@ -128,8 +128,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             } else {
                 this.sql += " SELECT @@IDENTITY AS ID";
             }
-        } else {
-            returnKeys = false;
         }
 
         parameters = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
@@ -167,7 +165,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             }
 
             sql = sql.substring(1).trim();
-            
+
             // OK now reconstruct as JDBC escaped call
             return "{?=call " + sql + "}";
         }

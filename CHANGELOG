@@ -1,6 +1,11 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/16/2004 - Alin Sinpalean
+ o Corrected a bug that was causing no exception to be thrown when an invalid
+   call escape syntax ("{call ?=...") was used.
+ o Cleaned up some warnings signalled by my IDE again.
+
 09/13/2004 - Alin Sinpalean
  o Corrected bug [1027304] DatabaseMetaData.getSchemas() returns 1 column (need
    2); for JDBC 3.0 getSchemas() now also returns a NULL TABLE_CATALOG column.

@@ -36,15 +36,15 @@ import java.sql.SQLException;
  * <li>Call      {?=call proc [arg, arg...]}
  * or        {call proc [arg, arg...]}
  * </ol>
- * Notes: 
+ * Notes:
  * <ol>
  * <li>This code is designed to be as efficient as possible and as
  * result the validation done here is limited.
- * <li>SQL comments are parsed correctly thanks to code supplied by 
- * Joel Fouse. 
+ * <li>SQL comments are parsed correctly thanks to code supplied by
+ * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.7 2004-08-28 15:29:32 bheineman Exp $
+ * @version $Id: SQLParser.java,v 1.8 2004-09-16 09:12:16 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -67,10 +67,10 @@ class SQLParser {
     private String keyWord;
     /** Server type  SQL Server or Sybase */
     private int serverType;
-    
+
     /**
      * Construct a new Parser object to process the supplied SQL.
-     * 
+     *
      * @param sql The SQL statement to parse.
      * @param paramList The Parameter list array to populate.
      */
@@ -87,7 +87,7 @@ class SQLParser {
 
     /**
      * Insert a String literal in the output buffer.
-     * 
+     *
      * @param txt The text to insert.
      */
     private void copyLiteral(String txt) {
@@ -110,26 +110,26 @@ class SQLParser {
     private void copyString() {
         char saveTc = terminator;
         char tc = in[s];
-        
+
         if (tc == '[') {
             tc = ']';
         }
-        
+
         terminator = tc;
-        
+
         do {
             out[d++] = in[s++];
-            
+
             while (in[s] != tc) {
                 out[d++] = in[s++];
             }
-            
+
             out[d++] = in[s++];
         } while (s < len && in[s] == tc);
-        
+
         terminator = saveTc;
     }
-    
+
     /**
      * Copy over possible SQL keyword eg 'SELECT'
      */
@@ -137,54 +137,54 @@ class SQLParser {
         int start = d;
 
         while (s < len && Character.isJavaIdentifierPart(in[s])) {
-            out[d++] = in[s++];   
+            out[d++] = in[s++];
         }
 
         return String.valueOf(out, start, d - start).toLowerCase();
     }
-    
+
     /**
      * Build a new parameter item.
-     * 
+     *
      * @param name Optional parameter name or null.
      * @param pos The parameter marker position in the output buffer.
      */
     private void copyParam(String name, int pos) {
         ParamInfo pi = new ParamInfo(pos);
         pi.name = name;
-        
+
         if (pos >= 0) {
             out[d++] = in[s++];
         } else {
             pi.isRetVal = true;
             s++;
         }
-        
+
         params.add(pi);
     }
 
     /**
      * Copy an embedded stored procedure identifier over to the output buffer.
-     * 
+     *
      * @return The identifier as a <code>String</code>.
      */
-    private String copyProcName() {
+    private String copyProcName() throws SQLException {
         int start = d;
-        
+
         do {
             if (in[s] == '"' || in[s] == '[') {
                 copyString();
             } else {
                 char c = in[s++];
-                
+
                 while (Character.isJavaIdentifierPart(c) || c == '#') {
                     out[d++] = c;
                     c = in[s++];
                 }
-                
+
                 s--;
             }
-            
+
             if (in[s] == '.') {
                 while (in[s] == '.') {
                     out[d++] = in[s++];
@@ -193,31 +193,39 @@ class SQLParser {
                 break;
             }
         } while (true);
+
+        if (d == start) {
+            // Procedure name expected but found something else
+            throw new SQLException(
+                    Messages.get("error.parsesql.syntax", "call", String.valueOf(s)),
+                    "22025");
+        }
+
         return new String(out, start, d-start);
     }
 
     /**
      * Copy an embedded parameter name to the output buffer.
-     * 
+     *
      * @return The identifier as a <code>String</code>.
      */
     private String copyParamName() {
         int start = d;
         char c = in[s++];
-        
+
         while (Character.isJavaIdentifierPart(c) || c == '@') {
            out[d++] = c;
            c = in[s++];
         }
-        
+
         s--;
-        
+
         return new String(out, start, d - start);
     }
 
     /**
      * Check that the next character is as expected.
-     * 
+     *
      * @param c The expected character.
      * @param copy True if found character should be copied.
      * @throws SQLException if expected characeter not found.
@@ -225,12 +233,11 @@ class SQLParser {
     private void mustbe(char c, boolean copy)
         throws SQLException {
         if (in[s] != c) {
-            throw new SQLException(Messages.get("error.parsesql.mustbe",
-                                                      String.valueOf(s),
-                                                      String.valueOf(c)),
-                                   "22019");
+            throw new SQLException(
+                    Messages.get("error.parsesql.mustbe", String.valueOf(s), String.valueOf(c)),
+                    "22019");
         }
-        
+
         if (copy) {
             out[d++] = in[s++];
         } else {
@@ -279,7 +286,7 @@ class SQLParser {
 
     /**
      * Process the JDBC {call procedure [(&#63;,&#63;,&#63;)]} type escape.
-     * 
+     *
      * @throws SQLException
      */
     private void callEscape() throws SQLException {
@@ -289,27 +296,27 @@ class SQLParser {
         // Process procedure name
         procName = copyProcName();
         skipWhiteSpace();
-        
+
         if (in[s] == '(') { // Optional ( )
             s++; skipWhiteSpace();
             terminator = ')';
         } else {
             terminator = '}';
         }
-        
+
         out[d++] = ' ';
-        
+
         // Process any parameters
         while (in[s] != terminator) {
             String name = null;
-            
+
             if (in[s] == '@') {
                 // Named parameter
                 name = copyParamName();
                 skipWhiteSpace();
                 mustbe('=', true);
                 skipWhiteSpace();
-                
+
                 if (in[s] == '?') {
                     copyParam(name, d);
                 } else {
@@ -322,7 +329,7 @@ class SQLParser {
                 // Literal parameter can't call as RPC
                 procName = "";
             }
-            
+
             // Now find terminator or comma
             while (in[s] != terminator && in[s] != ',') {
                 if (in[s] == '{') {
@@ -333,24 +340,24 @@ class SQLParser {
                     out[d++] = in[s++];
                 }
             }
-            
+
             if (in[s] == ',') {
                 out[d++] = in[s++];
             }
-            
+
             skipWhiteSpace();
         }
-        
+
         if (terminator == ')') {
             s++; // Elide
         }
-        
+
         terminator = '}';
     }
 
     /**
      * Utility routine to validate date and time escapes.
-     * 
+     *
      * @param mask The validation mask
      * @return True if the escape was valid and processed OK.
      */
@@ -360,13 +367,13 @@ class SQLParser {
         terminator = (in[s] == '\'' || in[s] == '"')? in[s++]: '}';
         skipWhiteSpace();
         int ptr = 0;
-        
+
         while (ptr < mask.length) {
             char c = in[s++];
             if (c == ' ' && out[d-1] == ' ') {
                 continue; // Eliminate multiple spaces
             }
-            
+
             if (mask[ptr] == '#') {
                 if (!Character.isDigit(c)) {
                     return false;
@@ -374,20 +381,20 @@ class SQLParser {
             } else if (mask[ptr] != c) {
                 return false;
             }
-            
+
             if (c != '-') {
                 out[d++] = c;
             }
-            
+
             ptr++;
         }
-        
+
         if (mask.length == 19) { // Timestamp
             int digits = 0;
-            
+
             if (in[s] == '.') {
                 out[d++] = in[s++];
-                
+
                 while (Character.isDigit(in[s])) {
                     if (digits < 3) {
                         out[d++] = in[s++];
@@ -399,25 +406,25 @@ class SQLParser {
             } else {
                 out[d++] = '.';
             }
-            
+
             for (; digits < 3; digits++) {
                 out[d++] = '0';
             }
         }
-        
+
         skipWhiteSpace();
-        
+
         if (in[s] != terminator) {
             return false;
         }
-        
+
         if (terminator != '}') {
             s++; // Skip terminator
         }
-        
+
         skipWhiteSpace();
         out[d++] = '\'';
-        
+
         return true;
     }
 
@@ -428,16 +435,15 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {t 'HH:MM:SS'}.
-     * 
+     *
      * @throws SQLException
      */
     private void timeEscape() throws SQLException {
 
         if (!getDateTimeField(timeMask)) {
-            throw new SQLException(Messages.get("error.parsesql.syntax",
-                                                      "time",
-                                                      String.valueOf(s)),
-                                   "22019");
+            throw new SQLException(
+                    Messages.get("error.parsesql.syntax", "time", String.valueOf(s)),
+                    "22019");
         }
     }
 
@@ -448,15 +454,14 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {d 'CCCC-MM-DD'}.
-     * 
+     *
      * @throws SQLException
      */
     private void dateEscape() throws SQLException {
         if (!getDateTimeField(dateMask)) {
-            throw new SQLException(Messages.get("error.parsesql.syntax",
-                                                      "date",
-                                                      String.valueOf(s)),
-                                   "22019");
+            throw new SQLException(
+                    Messages.get("error.parsesql.syntax", "date", String.valueOf(s)),
+                    "22019");
         }
     }
 
@@ -468,28 +473,27 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {ts 'CCCC-MM-DD HH:MM:SS[.NNN]'}.
-     * 
+     *
      * @throws SQLException
      */
     private void timestampEscape() throws SQLException {
         if (!getDateTimeField(timestampMask)) {
-            throw new SQLException(Messages.get("error.parsesql.syntax",
-                                                      "timestamp",
-                                                      String.valueOf(s)),
-                                   "22019");
+            throw new SQLException(
+                    Messages.get("error.parsesql.syntax", "timestamp", String.valueOf(s)),
+                    "22019");
         }
     }
 
     /**
      * Process the JDBC escape {oj left outer join etc}.
-     * 
+     *
      * @throws SQLException
      */
-    private void outerJoinEscape() 
+    private void outerJoinEscape()
         throws SQLException {
         while (in[s] != '}') {
             final char c = in[s];
-            
+
             switch (c) {
                 case '\'':
                 case '"':
@@ -514,7 +518,7 @@ class SQLParser {
     private static HashMap msFnMap = new HashMap();
     /** Map of jdbc to server data types for convert */
     private static HashMap cvMap = new HashMap();
-    
+
     static {
         // Microsoft only functions
         msFnMap.put("length", "len($)");
@@ -535,12 +539,12 @@ class SQLParser {
         fnMap.put("concat",   "($)");
         fnMap.put("curdate",  "convert(datetime, convert(varchar, getdate(), 112))");
         fnMap.put("curtime",  "convert(datetime, convert(varchar, getdate(), 108))");
-        fnMap.put("dayname",  "datename(weekday,$)");   
-        fnMap.put("dayofmonth",  "datepart(day,$)");   
-        fnMap.put("dayofweek",  "datepart(weekday,$)");   
-        fnMap.put("dayofyear",  "datepart(dayofyear,$)");   
-        fnMap.put("hour",       "datepart(hour,$)");   
-        fnMap.put("minute",       "datepart(minute,$)");   
+        fnMap.put("dayname",  "datename(weekday,$)");
+        fnMap.put("dayofmonth",  "datepart(day,$)");
+        fnMap.put("dayofweek",  "datepart(weekday,$)");
+        fnMap.put("dayofyear",  "datepart(dayofyear,$)");
+        fnMap.put("hour",       "datepart(hour,$)");
+        fnMap.put("minute",       "datepart(minute,$)");
         fnMap.put("second",       "datepart(second,$)");
         fnMap.put("year",       "datepart(year,$)");
         fnMap.put("quarter",       "datepart(quarter,$)");
@@ -557,12 +561,12 @@ class SQLParser {
         cvMap.put("longvarbinary", "image");
         cvMap.put("longvarchar", "text");
         cvMap.put("time", "datetime");
-        cvMap.put("timestamp", "timestamp");        
+        cvMap.put("timestamp", "timestamp");
     }
 
     /**
      * Process the JDBC escape {fn function()}.
-     * 
+     *
      * @throws SQLException
      */
     private void functionEscape() throws SQLException {
@@ -575,7 +579,7 @@ class SQLParser {
         while (Character.isLetterOrDigit(in[s])) {
             nameBuf.append(in[s++]);
         }
-        
+
         String name = nameBuf.toString().toLowerCase();
         //
         // Now collect arguments
@@ -587,7 +591,7 @@ class SQLParser {
         terminator = ')';
         while (in[s] != ')') {
             final char c = in[s];
-            
+
             switch (c) {
                 case '\'':
                 case '"':
@@ -692,25 +696,25 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {escape 'X'}.
-     * 
+     *
      * @throws SQLException
      */
     private void likeEscape() throws SQLException {
         copyLiteral("escape ");
         skipWhiteSpace();
-        
+
         if (in[s] == '\'' || in[s] == '"') {
             copyString();
         } else {
             mustbe('\'', true);
         }
-        
+
         skipWhiteSpace();
     }
 
     /**
      * Process the JDBC escape sequences.
-     * 
+     *
      * @throws SQLException
      */
     private void escape() throws SQLException {
@@ -719,19 +723,19 @@ class SQLParser {
         String esc = "";
         s++;
         skipWhiteSpace();
-        
+
         if (in[s] == '?') {
             copyParam("@return_status", -1);
             skipWhiteSpace();
             mustbe('=', false);
             skipWhiteSpace();
-            
+
             while (Character.isLetter(in[s])) {
                 esc = esc + in[s++];
             }
-            
+
             skipWhiteSpace();
-            
+
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();
             } else {
@@ -744,9 +748,9 @@ class SQLParser {
             while (Character.isLetter(in[s])) {
                 esc = esc + in[s++];
             }
-            
+
             skipWhiteSpace();
-            
+
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();
             } else if (esc.equalsIgnoreCase("t")) {
@@ -762,17 +766,16 @@ class SQLParser {
             } else if (esc.equalsIgnoreCase("escape")) {
                 likeEscape();
             } else {
-                throw new SQLException(Messages.get("error.parsesql.badesc",
-                                                          esc,
-                                                          String.valueOf(s)),
-                                       "22019");
+                throw new SQLException(
+                        Messages.get("error.parsesql.badesc", esc, String.valueOf(s)),
+                        "22019");
             }
         }
-        
+
         mustbe('}', false);
         terminator = tc;
     }
-    
+
     /**
      * Parse the SQL statement processing JDBC escapes and parameter markers.
      *
@@ -784,10 +787,10 @@ class SQLParser {
      */
     String[] parse(boolean truncate) throws SQLException {
         try {
-            // 
+            //
             while (s < len) {
                 final char c = in[s];
-                
+
                 switch (c) {
                     case '{':
                         escape();
@@ -840,20 +843,20 @@ class SQLParser {
                         break;
                 }
             }
-            
+
             String result[] = new String[3];
-            
+
             // return sql and procname
             result[0] = new String(out, 0, d);
             result[1] = procName;
             result[2] = (keyWord == null)? "": keyWord;
-            
+
             return result;
         } catch (IndexOutOfBoundsException e) {
             // Should only come here if string is invalid in some way.
-            throw new SQLException(Messages.get("error.parsesql.missing",
-                                                      String.valueOf(terminator)),
-                                   "22025");
+            throw new SQLException(
+                    Messages.get("error.parsesql.missing", String.valueOf(terminator)),
+                    "22025");
         }
     }
 }

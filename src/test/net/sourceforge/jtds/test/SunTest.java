@@ -44,9 +44,9 @@ public class SunTest extends DatabaseTestCase {
     }
 
     /**
-     * Test for SUN bug [ PrepStmt1.getMetaData() ] 
+     * Test for SUN bug [ PrepStmt1.getMetaData() ]
      * Driver loops if select contains commas.
-     * 
+     *
      * @throws Exception
      */
     public void testGetMetaData() throws Exception {
@@ -54,9 +54,9 @@ public class SunTest extends DatabaseTestCase {
         ResultSetMetaData rsmd = pstmt.getMetaData();
         assertEquals("name", rsmd.getColumnName(1));
     }
-    
+
     /**
-     * Generic Tests for SUN bugs such as 
+     * Generic Tests for SUN bugs such as
      * <ol>
      * <li>Can't convert  VARCHAR to Timestamp
      * <li>Can't convert  VARCHAR to Time
@@ -69,7 +69,7 @@ public class SunTest extends DatabaseTestCase {
         final String dateStr = "1983-01-31";
         final String timeStr = "12:59:59";
         final String tsStr   = "1983-01-31 23:59:59.333";
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROC #CTOT_PROC @tdate DATETIME OUTPUT, @ttime DATETIME OUTPUT, @tts DATETIME OUTPUT AS " +
                      "BEGIN SELECT @tdate=tdate, @ttime=ttime, @tts=tts FROM #CTOT END");
@@ -115,13 +115,13 @@ public class SunTest extends DatabaseTestCase {
     /**
      * Generic test for errors caused by promotion out parameters of Float to Double by driver.
      * eg [ callStmt4.testGetObject34 ] Class cast exception Float.
-     *  
+     *
      * @throws Exception
-     */    
+     */
     public void testCharToReal() throws Exception {
         final String minStr = "3.4E38";
         final String maxStr = "1.18E-38";
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROC #CTOR_PROC @minval REAL OUTPUT, @maxval REAL OUTPUT AS " +
                      "BEGIN SELECT @minval=min_val, @maxval=max_val FROM #CTOR END");
@@ -145,13 +145,13 @@ public class SunTest extends DatabaseTestCase {
 
     /**
      * Generic test for SUN bugs: bigint null parameter values sent as integer size.
-     * 
+     *
      * @throws Exception
      */
     public void testCharToLong() throws Exception {
         final String minStr = "9223372036854775807";
         final String maxStr = "-9223372036854775808";
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROC #CTOL_PROC @minval BIGINT OUTPUT, @maxval BIGINT OUTPUT AS " +
                      "BEGIN SELECT @minval=min_val, @maxval=max_val FROM #CTOL END");
@@ -171,33 +171,33 @@ public class SunTest extends DatabaseTestCase {
         assertEquals(minStr, cstmt.getString(1));
         assertEquals(maxStr, cstmt.getString(2));
     }
-    
+
     /**
      * Test for SUN bug [ dbMeta8.testGetProcedures ]
      * The wrong column names are returned by getProcedures().
-     * 
+     *
      * @throws Exception
      */
-    public void testGetProcedures() throws Exception {   
-        String names[] = {"PROCEDURE_CAT","PROCEDURE_SCHEM","PROCEDURE_NAME","","","","REMARKS","PROCEDURE_TYPE"}; 
+    public void testGetProcedures() throws Exception {
+        String names[] = {"PROCEDURE_CAT","PROCEDURE_SCHEM","PROCEDURE_NAME","","","","REMARKS","PROCEDURE_TYPE"};
         DatabaseMetaData dbmd = con.getMetaData();
         ResultSet rs = dbmd.getProcedures(null, null, "%");
         ResultSetMetaData rsmd = rs.getMetaData();
-        
+
         for (int i = 0; i < names.length; i++) {
             if (names[i].length() > 0) {
                 assertEquals(names[i], rsmd.getColumnName(i+1));
             }
         }
-        
+
         rs.close();
     }
-    
+
     /**
-     * Generic test for SUN bug where Float was promoted to Double 
+     * Generic test for SUN bug where Float was promoted to Double
      * by driver leading to ClassCastExceptions in the tests.
      * Example [ prepStmt4.testSetObject16 ]
-     * 
+     *
      * @throws Exception
      */
     public void testGetFloatObject() throws Exception {
@@ -207,18 +207,18 @@ public class SunTest extends DatabaseTestCase {
         assertEquals(1,stmt.getUpdateCount());
         ResultSet rs = stmt.executeQuery("SELECT * FROM #GETF");
         assertTrue(rs.next());
-        Float f = (Float)rs.getObject(1);
+        assertTrue(rs.getObject(1) instanceof Float);
         rs.close();
         stmt.close();
     }
-    
+
     /**
      * Test for SUN bug [ resultSet1.testSetFetchSize02 ]
      * attempt to set non zero fetch size rejected.
-     * 
+     *
      * @throws Exception
      */
-    public void testSetFetchSize() throws Exception {   
+    public void testSetFetchSize() throws Exception {
         CallableStatement cstmt = con.prepareCall("{call sp_who}");
         ResultSet rs = cstmt.executeQuery();
         rs.setFetchSize(5);
@@ -226,28 +226,28 @@ public class SunTest extends DatabaseTestCase {
         rs.close();
         cstmt.close();
     }
-    
+
     /**
      * Test for SUN bug [ stmt2.testSetFetchDirection04 ]
      * fetch direction constant not validated.
-     * 
+     *
      * @throws Exception
      */
     public void testSetFetchDirectiion() throws Exception {
         Statement stmt = con.createStatement();
-        
+
         try {
             stmt.setFetchDirection(-1);
             fail("setFecthDirection does not validate parameter");
         } catch (SQLException sqe) {
         }
-    }    
+    }
 
     /**
      * Test for bug [ 1012307 ] PreparedStatement.setObject(java.util.Date) not working.
      * The driver should throw an exception if the object is not of a valid
      * type according to table
-     * 
+     *
      * @throws Exception
      */
     public void testSetDateObject() throws Exception {
@@ -255,23 +255,23 @@ public class SunTest extends DatabaseTestCase {
         stmt.execute("CREATE TABLE #SETD (val DATETIME)");
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #SETD (val) VALUES (?)");
         long tval = 60907507200000L; //1999-12-31
-        
+
         try {
             pstmt.setObject(1, new java.util.Date(tval));
             fail("No exception for setObject(java.util.Date)");
         } catch (SQLException e) {
             // OK unsupported object type trapped
         }
-        
+
         pstmt.close();
         stmt.close();
     }
-    
+
     /**
      * Test for bug [ 1012301 ] 0.9-rc1: Prepared statement execution error.
      *
      * @throws Exception
-     */                
+     */
     public void testPrepStmtError() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #PERR (val VARCHAR(255))\r\n" +
@@ -285,12 +285,12 @@ public class SunTest extends DatabaseTestCase {
         pstmt.close();
         stmt.close();
     }
-    
+
     /**
      * Test for bug [ 1011650 ] 0.9-rc1: comments get parsed
-     * 
+     *
      * @throws Exception
-     */                
+     */
     public void testSqlComments() throws Exception {
         String testSql = "/* This is a test of the comment {fn test()} parser */\r\n" +
                          "SELECT * FROM XXXX -- In line comment {d 1999-01-01}\r\n"+
@@ -303,7 +303,7 @@ public class SunTest extends DatabaseTestCase {
 
     /**
      * Test for bug [ 1008126 ] Metadata getTimeDateFunctions() wrong
-     * 
+     *
      * @throws Exception
      */
     public void testDateTimeFn() throws Exception {
@@ -313,10 +313,10 @@ public class SunTest extends DatabaseTestCase {
         assertEquals(1, stmt.getUpdateCount());
         ResultSet rs = stmt.executeQuery("SELECT * FROM #DTFN");
         assertTrue(rs.next());
-        assertEquals("curdate()",rs.getDate(2),rs.getDate(4));    
+        assertEquals("curdate()",rs.getDate(2),rs.getDate(4));
         assertEquals("curtime()",rs.getTime(1),rs.getTime(3));
         assertEquals("now()",rs.getDate(1),rs.getDate(5));
-        rs = stmt.executeQuery("SELECT {fn dayname('2004-08-21')}, " + 
+        rs = stmt.executeQuery("SELECT {fn dayname('2004-08-21')}, " +
                                        "{fn dayofmonth('2004-08-21')}, " +
                                        "{fn dayofweek('2004-08-21')}," +
                                        "{fn dayofyear('2004-08-21')}," +
@@ -348,22 +348,22 @@ public class SunTest extends DatabaseTestCase {
         assertEquals("timestampadd", java.sql.Date.valueOf("2004-09-21"), rs.getDate(14));
         stmt.close();
     }
-    
+
     /**
      * Test for scalar string functions.
-     * 
+     *
      * @throws Exception
      */
     public void testStringFn() throws Exception {
         Statement stmt = con.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT {fn ascii('X')}, "+
-                                                "{fn char(88)}," + 
-                                                "{fn concat('X','B')}," + 
-                                                "{fn difference('X','B')}," + 
-                                                "{fn insert('XXX',2,1, 'Y')}," + 
-                                                "{fn lcase('XXX')}," + 
-                                                "{fn length('XXX')}," + 
-                                                "{fn ltrim(' XXX')}," + 
+                                                "{fn char(88)}," +
+                                                "{fn concat('X','B')}," +
+                                                "{fn difference('X','B')}," +
+                                                "{fn insert('XXX',2,1, 'Y')}," +
+                                                "{fn lcase('XXX')}," +
+                                                "{fn length('XXX')}," +
+                                                "{fn ltrim(' XXX')}," +
                                                 "{fn repeat('X', 3)}," +
                                                 "{fn replace('XXXYYYXXX', 'YYY', 'FRED')}," +
                                                 "{fn right('XXX', 1)}," +
@@ -371,9 +371,9 @@ public class SunTest extends DatabaseTestCase {
                                                 "{fn soundex('FRED')}," +
                                                 "'X' + {fn space(1)} + 'X'," +
                                                 "{fn substring('FRED', 2, 1)}," +
-                                                "{fn ucase('xxx')}," + 
-                                                "{fn locate('fred', 'xxxfredyyy')}," + 
-                                                "{fn left('FRED', 1)}" + 
+                                                "{fn ucase('xxx')}," +
+                                                "{fn locate('fred', 'xxxfredyyy')}," +
+                                                "{fn left('FRED', 1)}" +
                                                 "");
         assertTrue(rs.next());
         assertEquals("ascii", 88, rs.getInt(1));
@@ -394,13 +394,13 @@ public class SunTest extends DatabaseTestCase {
         assertEquals("ucase", "XXX", rs.getString(16));
         assertEquals("locate", 4, rs.getInt(17));
         assertEquals("left", "F", rs.getString(18));
-        
+
         stmt.close();
     }
 
     /**
      * Test nested escapes
-     * 
+     *
      * @throws Exception
      */
     public void testNestedEscapes() throws Exception {

@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.16 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.17 2004-09-16 09:12:16 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -351,13 +351,13 @@ public class JtdsStatement implements java.sql.Statement {
             while (!tds.isEndOfResponse()) {
                 if (tds.getMoreResults()) {
                     // This had better be the generated key
+                    // FIXME We could use SELECT @@IDENTITY AS jTDS_SOMETHING and check the column name to make sure
                     if (tds.getNextRow()) {
                         genKeyResultSet = new
                             DummyResultSet(this,
                                            tds.getColumns(),
                                            tds.getRowData());
                     }
-                    returnKeys = false;
                 } else {
                     if (tds.isUpdateCount()) {
                         updateCount = tds.getUpdateCount();
@@ -520,7 +520,11 @@ public class JtdsStatement implements java.sql.Statement {
     public synchronized int[] executeBatch() throws SQLException {
         checkOpen();
 
-        int size = (batchValues == null) ? 0 : batchValues.size();
+        if (batchValues == null) {
+            return new int[0];
+        }
+
+        int size = batchValues.size();
         int[] updateCounts = new int[size];
         int i = 0;
 

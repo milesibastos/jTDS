@@ -5,6 +5,8 @@ Changes from jTDS 1.0.2
  o Implemented feature [1145697] Better handling of OutOfMemoryError. On an
    OutOfMemoryError, TdsCore.nextToken() now consumes the rest of the server
    response to ensure no protocol confusion will occur.
+ o Implemented feature [1144733] Make jtds.jar display version no. Now
+   "java -jar jtds-1.x.jar" will display the jTDS version to standard output.
 
 02/23/2005 - David Kilzer
  o Fix comment in ConnectionJDBC2(String, Properties) constructor.

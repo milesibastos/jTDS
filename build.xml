@@ -88,7 +88,8 @@
             <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
             <attribute name="Specification-Title" value="JDBC"/>
             <attribute name="Specification-Version" value="3.0"/>
-            <attribute name="Class-Path" value="jcifs.jar" />
+            <attribute name="Class-Path" value="jcifs.jar"/>
+            <attribute name="Main-Class" value="net.sourceforge.jtds.jdbc.Driver"/>
         </manifest>
     </jar>
 

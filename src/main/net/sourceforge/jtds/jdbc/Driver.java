@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.49 2005-02-23 00:44:57 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.50 2005-02-23 21:02:28 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -430,5 +430,9 @@ public class Driver implements java.sql.Driver {
         }
 
         return pos;
+    }
+
+    public static void main(String[] args) {
+        System.out.println("jTDS " + getVersion());
     }
 }

@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.5 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.6 2004-08-04 02:10:44 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -461,10 +461,16 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         tds.executeSQL(null, "sp_cursorfetch", param, true, statement.getQueryTimeout(), 0);
 
-        while (!tds.getMoreResults() && !tds.isEndOfResponse()) ;
-
+        while (!tds.getMoreResults() && !tds.isEndOfResponse());
+        
         if (tds.isResultSet()) {
-            if (tds.getNextRow(false)) {
+            if (tds.isRowData()) {
+                // With TDS 7 the data row (if any) is sent without any 
+                // preceding resultset header.
+                this.currentRow = copyRow(tds.getRowData());
+            } else if (tds.getNextRow(false)) {
+                // With TDS 8 there is a dummy result set header first 
+                // then the data. This case also used if meta data not supressed.
                 this.currentRow = copyRow(tds.getRowData());
             } else {
                 this.currentRow = null;
@@ -581,7 +587,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             }
         }
 
-        Integer retVal = null;
+        retVal = null;
 
         tds.executeSQL(null, "sp_cursor", param, false, statement.getQueryTimeout(), 0);
         tds.clearResponseQueue();

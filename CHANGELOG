@@ -1,6 +1,10 @@
 Changes from jTDS 0.8.1
 =========================
 
+08/03/2004 - Brian Heineman
+ o Applied patch in bug [1002811] Poor performance of cursor result sets;
+   (thanks to Mike Hutchinson for the fix).
+
 08/03/2004 - David Kilzer
  o Swapped descriptions of appName and progName in FAQ.
  o Renamed internal libName variable to progName to match external property.

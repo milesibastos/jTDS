@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.15 2004-08-04 01:58:39 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.16 2004-08-04 02:10:44 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -60,21 +60,21 @@ public class TdsCore {
      */
     private static class TdsToken {
         /** The current TDS token byte. */
-        private byte token;
+        byte token;
         /** The status field from a DONE packet. */
-        private byte status;
+        byte status;
         /** The operation field from a DONE packet. */
-        private byte operation;
+        byte operation;
         /** The update count from a DONE packet. */
-        private int updateCount;
+        int updateCount;
         /** The nonce from an NTLM challenge packet. */
-        private byte[] nonce;
+        byte[] nonce;
         /** The dynamicID from the last TDS_DYNAMIC token. */
-        private String dynamicId;
+        String dynamicId;
         /** The dynamic parameters from the last TDS_DYNAMIC token. */
-        private ColInfo[] dynamParamInfo;
+        ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
-        private ColData[] dynamParamData;
+        ColData[] dynamParamData;
 
         /**
          * Retrieve the update count status.
@@ -123,7 +123,8 @@ public class TdsCore {
             return token == TDS_COLFMT_TOKEN
                    || token == TDS7_RESULT_TOKEN
                    || token == TDS_RESULT_TOKEN
-                   || token == TDS_COLINFO_TOKEN;
+                   || token == TDS_COLINFO_TOKEN
+                   || token == TDS_ROW_TOKEN;
         }
 
         /**
@@ -131,7 +132,7 @@ public class TdsCore {
          *
          * @return <code>boolean</code> true if the current token is a result row.
          */
-        public boolean isRowdata() {
+        public boolean isRowData() {
             return token == TDS_ROW_TOKEN;
         }
 
@@ -518,6 +519,15 @@ public class TdsCore {
     boolean isResultSet() {
         return currentToken.isResultSet();
     }
+    
+    /**
+     * Retrieve the status of the next result item.
+     *
+     * @return <code>boolean</code> true if the next item is row data.
+     */
+    boolean isRowData() {
+        return currentToken.isRowData();
+    }
 
     /**
      * Retrieve the status of the next result item.
@@ -577,11 +587,11 @@ public class TdsCore {
         nextToken();
 
         // Will either be first or next data row or end.
-        while (!currentToken.isRowdata() && !currentToken.isEndToken()) {
+        while (!currentToken.isRowData() && !currentToken.isEndToken()) {
             nextToken(); // Could be messages
         }
 
-        boolean isResultSet = currentToken.isRowdata();
+        boolean isResultSet = currentToken.isRowData();
 
         if (readAhead && !endOfResponse) {
             // This will ensure that called procedure return parameters
@@ -1047,8 +1057,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * by a byte sized length.
      */
     private void putLoginString(String txt, int len)
-        throws IOException
-    {
+        throws IOException {
         byte[] tmp = Support.encodeString(connection.getCharSet(), txt);
         out.write(tmp, 0, len);
         out.write((byte) (tmp.length < len ? tmp.length : len));
@@ -1074,10 +1083,8 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                                 final String appName,
                                 final String progName,
                                 final String language,
-                                final int    packetSize)
-        throws IOException
-    {
-        final byte pad = (byte) 0;
+                                final int packetSize)
+        throws IOException {
         final byte[] empty = new byte[0];
 
         out.setPacketType(LOGIN_PKT);
@@ -1162,10 +1169,8 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                               final String appName,
                               final String progName,
                               final String language,
-                              final int    packetSize)
-        throws IOException
-    {
-        final byte pad = (byte) 0;
+                              final int packetSize)
+        throws IOException {
         final byte[] empty = new byte[0];
 
         out.setPacketType(LOGIN_PKT);
@@ -1260,10 +1265,8 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                         final String progName,
                         final String language,
                         final String macAddress,
-                        final int    netPacketSize)
-        throws IOException
-    {
-        final byte pad = (byte) 0;
+                        final int netPacketSize)
+        throws IOException {
         final byte[] empty = new byte[0];
         final String clientName = getHostName();
 
@@ -1679,7 +1682,17 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @throws ProtocolException
      */
     private void tds7ResultToken() throws IOException, ProtocolException {
+        endOfResults = false;
+
         int colCnt = in.readShort();
+
+        if (colCnt < 0) {
+            // Short packet returned by TDS8 when the column meta data is
+            // supressed on cursor fetch etc.
+            // NB. With TDS7 no result set packet is returned at all.
+            return;
+        }
+
         this.columns = new ColInfo[colCnt];
         this.rowData = new ColData[colCnt];
         this.tables = null;
@@ -1706,8 +1719,6 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
             this.columns[i] = col;
         }
-
-        endOfResults = false;
     }
 
     /**
@@ -1750,10 +1761,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @throws ProtocolException
      */
     private void tds4ColFormatToken()
-        throws IOException, ProtocolException
-    {
-        int precision;
-        int scale;
+        throws IOException, ProtocolException {
 
         final int pktLen = in.readShort();
 
@@ -1763,39 +1771,41 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             if (numColumns > columns.length) {
                 throw new ProtocolException("Too many columns in TDS_COL_FMT packet");
             }
-            scale = -1;
-            precision = -1;
             ColInfo col = columns[numColumns];
-            int bufLength;
-            int dispSize = -1;
+
             if (serverType == Driver.SQLSERVER) {
                 col.userType = in.readShort();
-                int flags    = in.readShort();
+
+                int flags = in.readShort();
+
                 col.nullable = ((flags & 0x01) != 0)?
                                     ResultSetMetaData.columnNullable:
                                        ResultSetMetaData.columnNoNulls;
                 col.isCaseSensitive = (flags & 0x02) != 0;
-                col.isWriteable     = (flags & 0x0C) != 0;
-                col.isIdentity      = (flags & 0x10) != 0;
+                col.isWriteable = (flags & 0x0C) != 0;
+                col.isIdentity = (flags & 0x10) != 0;
             } else {
                 // Sybase does not send column flags
                 col.isCaseSensitive = false;
-                col.isWriteable     = true;
+                col.isWriteable = true;
+
                 if (col.nullable == ResultSetMetaData.columnNoNulls) {
                     col.nullable = ResultSetMetaData.columnNullableUnknown;
                 }
+
                 col.userType = in.readInt();
             }
             bytesRead += 4;
-            String tableName = "";
 
             bytesRead += TdsData.readType(in, col);
 
             numColumns++;
         }
+
         if (numColumns != columns.length) {
             throw new ProtocolException("Too few columns in TDS_COL_FMT packet");
         }
+
         endOfResults = false;
     }
 
@@ -1805,9 +1815,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      *
      * @throws IOException
      */
-    private void tdsTableNameToken()
-        throws IOException
-    {
+    private void tdsTableNameToken() throws IOException {
         final int pktLen = in.readShort();
         int bytesRead = 0;
 
@@ -1817,9 +1825,10 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         if (tdsVersion >= Driver.TDS70) {
             while (bytesRead < pktLen) {
                 if (tdsVersion == Driver.TDS80) {
-                    // Not sure what this is used for
-                    int flag = in.read(); bytesRead++;
+                    in.read();  // Not sure what this flag is used for
+                    bytesRead++;
                 }
+
                 int nameLen = in.readShort();
                 bytesRead += 2;
                 tabName = in.readString(nameLen);
@@ -1829,13 +1838,15 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         } else {
             while (bytesRead < pktLen) {
                 int nameLen = in.read();
+
                 bytesRead++;
                 tabName = in.readString(nameLen);
                 bytesRead += nameLen;
                 tableList.add(tabName);
             }
         }
-        this.tables = (String[])tableList.toArray(new String[tableList.size()]);
+
+        this.tables = (String[]) tableList.toArray(new String[tableList.size()]);
     }
 
     /**
@@ -1974,20 +1985,18 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @throws ProtocolException
      */
     private void tdsOutputParamToken()
-        throws IOException, ProtocolException
-    {
-        int pktLen = in.readShort(); // Packet length
-        String colName = in.readString(in.read());
+        throws IOException, ProtocolException {
+        in.readShort(); // Packet length
+        in.readString(in.read()); // Column Name
         in.skip(5);
 
         ColInfo col = new ColInfo();
         TdsData.readType(in, col);
         Object value = TdsData.readData(connection, in, col, false);
 
-        if (tdsVersion >= Driver.TDS80 &&
-            returnParam != null &&
-            !returnParam.isSet )
-        {
+        if (tdsVersion >= Driver.TDS80
+            && returnParam != null
+            && !returnParam.isSet) {
             // TDS 8 Allows function return values of types other than int
                 parameters[nextParam].jdbcType  = col.jdbcType;
                 parameters[nextParam].value     = value;
@@ -1997,8 +2006,8 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             if (parameters != null) {
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {
-                        parameters[nextParam].jdbcType  = col.jdbcType;
-                        parameters[nextParam].value     = value;
+                        parameters[nextParam].jdbcType = col.jdbcType;
+                        parameters[nextParam].value = value;
                         parameters[nextParam].collation = col.collation;
                         break;
                     }
@@ -2012,13 +2021,12 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      *
      * @throws IOException
      */
-    private void tdsLoginAckToken()
-        throws IOException
-    {
+    private void tdsLoginAckToken() throws IOException {
         String product;
         int major, minor, build = 0;
-        int pktLen = in.readShort(); // Packet length
+        in.readShort(); // Packet length
         int ack = 1;
+
         if (tdsVersion >= Driver.TDS70) {
             in.skip(5);
             final int nameLen = in.read();
@@ -2043,6 +2051,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             }
             in.skip(1);
         }
+
         if (product.length() > 1 && -1 != product.indexOf('\0')) {
             product = product.substring(0, product.indexOf('\0'));
         }
@@ -2079,6 +2088,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             rowData[i] =  new ColData(TdsData.readData(connection, in, columns[i], readTextMode), tdsVersion);
         }
 
+        endOfResults = false;
         readTextMode = false;
     }
 
@@ -2226,10 +2236,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      *
      * @throws IOException
      */
-    private void tds5ErrorToken()
-    throws IOException
-    {
-        boolean hasEED = false;
+    private void tds5ErrorToken() throws IOException {
         int pktLen = in.readShort(); // Packet length
         int sizeSoFar = 6;
         int number = in.readInt();
@@ -2238,8 +2245,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         // Discard text state
         int stateLen = in.read();
         in.readString(stateLen);
-        // True if extended error data follows
-        hasEED = in.read() == 1;
+        in.read(); // == 1 if extended error data follows
         // Discard status and transaction state
         in.readShort();
         sizeSoFar += 4 + stateLen;
@@ -2294,13 +2300,12 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Process TDS 5 Dynamic results paramater descriptors.
+     * 
      * @throws IOException
      * @throws ProtocolException
      */
-    private void tds5ParamFmtToken()
-        throws IOException, ProtocolException
-    {
-        int pktLen = in.readShort();
+    private void tds5ParamFmtToken() throws IOException, ProtocolException {
+        in.readShort(); // Packet length
         int paramCnt = in.readShort();
         ColInfo[] params = new ColInfo[paramCnt];
         for (int i = 0; i < paramCnt; i++) {
@@ -2378,10 +2383,8 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @throws IOException
      * @throws ProtocolException
      */
-    private void tds5ResultToken()
-        throws IOException, ProtocolException
-    {
-        int pktLen = in.readShort(); // Packet length
+    private void tds5ResultToken() throws IOException, ProtocolException {
+        in.readShort(); // Packet length
         int colCnt = in.readShort();
         this.columns = new ColInfo[colCnt];
         this.rowData = new ColData[colCnt];
@@ -2490,7 +2493,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
             out.write((byte) buf.length);
             out.write(buf);
-            out.write((short) (noMetaData ? 512 : 0));
+            out.write((short) (noMetaData ? 2 : 0));
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 if (parameters[i].name != null) {
@@ -2739,7 +2742,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                 out.write(procName);
             }
 
-            out.write((short) (noMetaData ? 512 : 0));
+            out.write((short) (noMetaData ? 2 : 0));
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 if (parameters[i].name != null) {

@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.util.Logger;
+import net.sourceforge.jtds.jdbc.Messages;
+
 import java.text.SimpleDateFormat;
 
 /**
@@ -60,8 +62,8 @@ public class SAfeTest extends DatabaseTestCase {
         };
 
         Statement stmt = con.createStatement();
-        boolean tds70orLater = props.getProperty("TDS") == null
-            || props.getProperty("TDS").charAt(0) >= '7';
+        boolean tds70orLater = props.getProperty(Messages.get("prop.tds")) == null
+            || props.getProperty(Messages.get("prop.tds")).charAt(0) >= '7';
         int typeCnt = tds70orLater ? types.length : 2;
 
         for (int i = 0; i < typeCnt; i++) {

@@ -17,7 +17,7 @@ import javax.naming.NamingException;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.6 2004-09-28 12:12:55 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.7 2004-10-22 11:24:51 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -197,8 +197,15 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          */
         public void testNoHost() {
             JtdsDataSource ds = new JtdsDataSource();
-            ds.setUser("x");
-            ds.setPassword("y");
+            ds.setUser(TestBase.props.getProperty(Messages.get("prop.user")));
+            ds.setPassword(TestBase.props.getProperty(Messages.get("prop.password")));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get("prop.databasename")));
+            try {
+                ds.setPortNumber(Integer.parseInt(
+                        TestBase.props.getProperty(Messages.get("prop.portnumber"), "1433")));
+            } catch (Exception ex) {
+                // Ignore
+            }
             try {
                 assertNotNull(ds.getConnection());
                 fail("What the?...");
@@ -217,7 +224,14 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          */
         public void testNoUser() {
             JtdsDataSource ds = new JtdsDataSource();
-            ds.setServerName("localhost");
+            ds.setServerName(TestBase.props.getProperty(Messages.get("prop.servername")));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get("prop.databasename")));
+            try {
+                ds.setPortNumber(Integer.parseInt(
+                        TestBase.props.getProperty(Messages.get("prop.portnumber"), "1433")));
+            } catch (Exception ex) {
+                // Ignore
+            }
             try {
                 assertNotNull(ds.getConnection());
                 fail("What the?...");
@@ -234,25 +248,30 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
         }
 
         /**
-         * Test connecting specifying "sa" as user. Should either succeed or
-         * get an SQL state of 28000 (invalid authorization specification) or
-         * 08S01 (bad host name).
+         * Test connecting with the settings in connection.properties.
+         * <p>
+         * Should also test bug [1051595] jtdsDataSource connects only to
+         * localhost.
          */
         public void testNormal() {
             JtdsDataSource ds = new JtdsDataSource();
-            ds.setServerName("localhost");
-            ds.setUser("sa");
-            ds.setPassword("");
+            ds.setServerName(TestBase.props.getProperty(Messages.get("prop.servername")));
+            ds.setUser(TestBase.props.getProperty(Messages.get("prop.user")));
+            ds.setPassword(TestBase.props.getProperty(Messages.get("prop.password")));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get("prop.databasename")));
+            try {
+                ds.setPortNumber(Integer.parseInt(
+                        TestBase.props.getProperty(Messages.get("prop.portnumber"), "1433")));
+            } catch (Exception ex) {
+                // Ignore
+            }
             try {
                 Connection c = ds.getConnection();
                 assertNotNull(c);
                 c.close();
             } catch (SQLException ex) {
-                String sqlState = ex.getSQLState();
-                if (!"28000".equals(sqlState) && !"08S01".equals(sqlState)) {
-                    ex.printStackTrace();
-                    fail("Expecting SQL state 28000 or 08S01. Got " + ex.getSQLState());
-                }
+                ex.printStackTrace();
+                fail("SQLException caught: " + ex.getMessage() + " SQLState=" + ex.getSQLState());
             } catch (Throwable t) {
                 t.printStackTrace();
                 fail(t.getClass().getName() + " caught while testing JtdsDataSource.getConnection(): " + t);

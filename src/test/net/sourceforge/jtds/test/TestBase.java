@@ -17,8 +17,7 @@ import junit.framework.TestCase;
 public abstract class TestBase extends TestCase {
 
     private static final String CONNECTION_PROPERTIES = "conf/connection.properties";
-    private static final String ODBC_CONNECTION_PROPERTIES = "conf/odbc-connection.properties";
-    static Properties props = loadProperties(CONNECTION_PROPERTIES);
+    public static Properties props = loadProperties(CONNECTION_PROPERTIES);
     Connection con;
 
     public TestBase(String name) {
@@ -32,7 +31,6 @@ public abstract class TestBase extends TestCase {
     public void tearDown() throws Exception {
         disconnect();
     }
-
 
     public Connection getConnection() throws Exception {
         Class.forName(props.getProperty("driver"));

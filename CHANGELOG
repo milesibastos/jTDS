@@ -1,6 +1,12 @@
 Changes from jTDS 0.9
 =========================
 
+10/21/2004 - Alin Sinpalean
+ o JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.testNormal() now
+   uses the new properties in connection.properties to check if connecting
+   through a DataSource actually works (also tests bug [1051595] jtdsDataSource
+   connects only to localhost - could not reproduce).
+
 10/21/2004 - Brian Heineman
  o Initial work to support controlled statement caching.  A latching mechanism
    is available to ensure two separate statements with the same SQL do not cause

@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.10 2002-09-09 12:14:32 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.11 2002-09-11 19:34:37 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,7 +110,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.10 2002-09-09 12:14:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.11 2002-09-11 19:34:37 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, Columns columns)
     {
@@ -141,6 +141,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public void setFetchDirection(int direction) throws SQLException
     {
+        checkClosed();
         if (getType() == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
             throw new SQLException(
                     "The result set type is TYPE_FORWARD_ONLY "
@@ -162,6 +163,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public synchronized void setFetchSize(int rows) throws SQLException
     {
+        checkClosed();
         int maxRows = stmt.getMaxRows();
 
         if( rows<0 || (maxRows>0 && rows>maxRows) )
@@ -209,6 +211,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
     public SQLWarning getWarnings() throws SQLException
     {
+        checkClosed();
         return warningChain.getWarnings();
     }
 
@@ -227,6 +230,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public synchronized boolean isBeforeFirst() throws SQLException
     {
+        checkClosed();
         return row==0 && haveMoreResults();
     }
 
@@ -241,6 +245,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public boolean isAfterLast() throws SQLException
     {
+        checkClosed();
         return hitEndOfData;
     }
 
@@ -255,6 +260,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public boolean isFirst() throws SQLException
     {
+        checkClosed();
         return row == 1;
     }
 
@@ -278,6 +284,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
     public int getRow() throws SQLException
     {
+        checkClosed();
         return row;
     }
 
@@ -288,6 +295,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
     public int getFetchSize() throws SQLException
     {
+        checkClosed();
         return fetchSize;
     }
 
@@ -303,6 +311,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
     public java.sql.Statement getStatement() throws SQLException
     {
+        checkClosed();
         return stmt;
     }
 
@@ -383,8 +392,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public synchronized boolean next() throws SQLException
     {
-        if( isClosed )
-            throw new SQLException("result set is closed");
+        checkClosed();
 
         if( haveMoreResults() )
         {
@@ -399,6 +407,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /** @todo fetchNextRow should not be public! Possible synchronization problem! */
     public PacketRowResult fetchNextRow() throws SQLException
     {
+        checkClosed();
+
         boolean wasCanceled = false;
         PacketRowResult row = null;
 
@@ -612,6 +622,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public boolean rowUpdated() throws SQLException
     {
+        checkClosed();
         return false;
     }
 
@@ -627,6 +638,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public boolean rowInserted() throws SQLException
     {
+        checkClosed();
         return false;
     }
 
@@ -643,6 +655,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     public boolean rowDeleted() throws SQLException
     {
+        checkClosed();
         return false;
     }
 
@@ -704,6 +717,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     public void refreshRow() throws SQLException
     {
         //No effect
+        checkClosed();
     }
 
     /**
@@ -719,6 +733,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     public void cancelRowUpdates() throws SQLException
     {
         //No effect
+        checkClosed();
     }
 
     /**
@@ -757,6 +772,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
     public synchronized PacketRowResult currentRow() throws SQLException
     {
+        checkClosed();
         if( rowIndex < 0 )
             throw new SQLException("No current row in the ResultSet");
         else if( rowIndex >= rowCount )
@@ -834,6 +850,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     synchronized void fetchIntoCache() throws SQLException
     {
+        checkClosed();
+
         if( rowCount == 0 )
             internalFetchRows();
 
@@ -865,5 +883,11 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             if( !hitEndOfData )
                 reallocCache();
         }
+    }
+
+    private void checkClosed() throws SQLException
+    {
+        if( isClosed )
+            throw new SQLException("Invalid state: ResultSet closed.");
     }
 }

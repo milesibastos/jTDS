@@ -1,6 +1,16 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/11/2002 - Alin Sinpalean
+
+ o Optimized TdsComm.getBytes() to use a fixed buffer and not allocate a new
+   one every time if not necessary (e.g. when reading in bytes that will be
+   turned into a String and no longer used). Performance is much better now,
+   although I didn't have the time to do a comparison.
+ o Added tests in all non-private methods of TdsResultSet to see check if it's
+   open or not (an SQLException is now thrown instead of the
+   NullPointerException that was usually thrown when the ResultSet was closed).
+
 09/10/2002 - Alin Sinpalean
 
  o EscapeProcessor now accepts all JDBC escape sequences (including stored

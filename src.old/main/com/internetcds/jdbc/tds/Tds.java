@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.28 2002-09-09 12:14:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.29 2002-09-11 19:34:36 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1166,7 +1166,7 @@ public class Tds implements TdsDefinitions {
    {
       int packetLen = getSubPacketLength();
       String colname = comm.getString(comm.getByte() & 0xff);
-      comm.getBytes(5);
+      comm.skip(5);
 
       byte colType = comm.getByte();
 
@@ -1217,7 +1217,7 @@ public class Tds implements TdsDefinitions {
             int column_size = comm.getTdsShort();
             int len = comm.getTdsShort();
             // if (tdsVer == Tds.TDS70 && len == 0xffff)
-            element = comm.getBytes(len);
+            element = comm.getBytes(len, true);
             break;
          }
          case (byte)(SYBBIGVARCHAR):
@@ -1285,7 +1285,7 @@ public class Tds implements TdsDefinitions {
             int column_size = comm.getByte();
             int len = (comm.getByte() & 0xff);
             // if (tdsVer == Tds.TDS70 && len == 0xffff)
-            element = comm.getBytes(len);
+            element = comm.getBytes(len, true);
             break;
          }
          case SYBBITN:
@@ -1306,7 +1306,7 @@ public class Tds implements TdsDefinitions {
          case SYBUNIQUEID:
          {
             int len = comm.getByte() & 0xff;
-            element = len==0 ? null : TdsUtil.uniqueIdToString(comm.getBytes(len));
+            element = len==0 ? null : TdsUtil.uniqueIdToString(comm.getBytes(len, false));
             break;
          }
          default:
@@ -1933,7 +1933,7 @@ public class Tds implements TdsDefinitions {
               result = comm.getString(len / 2);
           }
           else {
-              result = encoder.getString(comm.getBytes(len));
+              result = encoder.getString(comm.getBytes(len, false), 0, len);
           }
 
           // SAfe 2002-08-23
@@ -1985,7 +1985,7 @@ public class Tds implements TdsDefinitions {
                     result = comm.getString(len / 2);
                 }
                 else {
-                    result = encoder.getString(comm.getBytes(len));
+                    result = encoder.getString(comm.getBytes(len, false), 0, len);
                 }
 
                 // SAfe 2002-08-23
@@ -2033,7 +2033,7 @@ public class Tds implements TdsDefinitions {
             //}
             //else
             if (len >= 0) {
-                result = comm.getBytes(len);
+                result = comm.getBytes(len, true);
             }
             else {
                 throw new TdsConfused("String with length<0");
@@ -2156,7 +2156,7 @@ public class Tds implements TdsDefinitions {
                         element = null;
                     }
                     else {
-                        element = comm.getBytes(len);
+                        element = comm.getBytes(len, true);
                     }
                     break;
                 }
@@ -2174,7 +2174,7 @@ public class Tds implements TdsDefinitions {
                 case SYBUNIQUEID:
                 {
                     int len = comm.getByte() & 0xff;
-                    element = len==0 ? null : TdsUtil.uniqueIdToString(comm.getBytes(len));
+                    element = len==0 ? null : TdsUtil.uniqueIdToString(comm.getBytes(len, false));
                     break;
                 }
                 default:
@@ -2736,7 +2736,7 @@ public class Tds implements TdsDefinitions {
                 comm.skip(len - 2 - clen * 2);
               }
               else {
-                blocksize = encoder.getString(comm.getBytes(clen));
+                blocksize = encoder.getString(comm.getBytes(clen, false), 0, clen);
                 comm.skip(len - 2 - clen);
               }
             }
@@ -2750,7 +2750,7 @@ public class Tds implements TdsDefinitions {
                     comm.skip(len - 2 - clen * 2);
                 }
                 else {
-                    charset = encoder.getString(comm.getBytes(clen));
+                    charset = encoder.getString(comm.getBytes(clen, false), 0, clen);
                     comm.skip(len - 2 - clen);
                 }
                 setCharset(charset);
@@ -2795,7 +2795,7 @@ public class Tds implements TdsDefinitions {
         int i = 0;
         while (bytesRead < totalLen) {
             int colNameLen = comm.getByte();
-            String colName = encoder.getString(comm.getBytes(colNameLen));
+            String colName = encoder.getString(comm.getBytes(colNameLen, false), 0, colNameLen);
             bytesRead = bytesRead + 1 + colNameLen;
             i++;
             columns.setName(i, colName);
@@ -2864,7 +2864,7 @@ public class Tds implements TdsDefinitions {
 
                 int tableNameLen = comm.getTdsShort();
                 bytesRead += 2;
-                tableName = encoder.getString(comm.getBytes(tableNameLen));
+                tableName = encoder.getString(comm.getBytes(tableNameLen, false), 0, tableNameLen);
                 bytesRead += tableNameLen;
 
                 bufLength = 2 << 31 - 1;

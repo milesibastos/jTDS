@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.6 2002-08-23 09:37:07 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.7 2002-09-11 19:34:37 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -89,10 +89,17 @@ public class TdsComm implements TdsDefinitions {
      *@todo    Does this need to be synchronized?
      */
     byte tmpBuf[] = new byte[8];
+
+    /**
+     * Buffer that will be used to return byte[] values by getByte(int, boolean)
+     * to avoid allocating a new buffer each time if not necessary.
+     */
+    byte resBuffer[] = new byte[256];
+
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.6 2002-08-23 09:37:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.7 2002-09-11 19:34:37 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -585,12 +592,29 @@ public class TdsComm implements TdsDefinitions {
         return result;
     }
 
-
-    public byte[] getBytes(int len)
+    /**
+     * Reads and returns <code>len</code> bytes. If <code>exclusiveBuffer</code>
+     * is <code>true</code>, a new buffer of that size will be allocated.
+     * Otherwise, {@link resBuffer} will be used. Note that in this second case
+     * the returned buffer will very likely have a larger size than the
+     * number of bytes requested.
+     */
+    public byte[] getBytes(int len, boolean exclusiveBuffer)
         throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
-        byte result[] = new byte[len];
+        byte result[] = null;
         int i;
+
+        // Do not keep an internal result buffer larger than 16k.
+        // This would unnecessarily use up memory.
+        if( exclusiveBuffer || len>16384 )
+            result = new byte[len];
+        else
+        {
+            if( resBuffer.length < len )
+                resBuffer = new byte[len];
+            result = resBuffer;
+        }
 
         for( i=0; i<len; )
         {
@@ -638,7 +662,7 @@ public class TdsComm implements TdsDefinitions {
             return new String( chars );
         }
         else {
-            return new String( getBytes( len ) );
+            return new String( getBytes(len, false), 0, len );
         }
     }
 

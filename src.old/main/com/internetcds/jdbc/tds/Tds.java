@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $";
 
     public TimeoutHandler(TdsStatement stmt_, int timeout_)
     {
@@ -111,7 +111,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -176,7 +176,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.35 2002-09-19 21:30:29 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1107,28 +1107,14 @@ public class Tds implements TdsDefinitions {
             }
         }
 
-        if (comm.peek() == TDS_DONEINPROC) {
-            PacketResult tmp = processSubPacket();
-            if ( Logger.isActive() ) {
-                Logger.println( "Discarded TDS_DONEINPROC" );
-            }
-        }
-
-
-        // XXX Is there ever going to be a situation where the
-        // TDS_DONEINPROC is the real end of data?  If so then the
-        // next section of code will hang forever waiting for more data
-        // from the socket.
-        if (isEndOfResults() || isRetStat()) {
+        // SAfe Process everything up to the next TDS_DONE or TDS_DONEINPROC
+        //      packet (there must be one, so we won't check the end of the
+        //      stream.
+        while( !isEndOfResults() )
             processSubPacket();
-        }
 
-        // RMK 2000-06-08 Don't choke on additional result sets.
-        else if (!isResultSet() && !isErrorPacket() && !isMessagePacket()) {
-            throw new TdsConfused("Was expecting an end of results token.  "
-                     + "Found a 0x"
-                     + Integer.toHexString(comm.peek() & 0xff));
-        }
+        // SAfe Then, eat up any uninteresting packets.
+        goToNextResult(new SQLWarningChain());
     }
 
     public synchronized void discardResultSetOld( Context context )
@@ -1137,19 +1123,57 @@ public class Tds implements TdsDefinitions {
         discardResultSet( new PacketRowResult( context ) );
     }
 
-
     public synchronized byte peek()
              throws java.io.IOException, com.internetcds.jdbc.tds.TdsException
     {
         return comm.peek();
     }
 
+    /**
+     * Eats up all tokens until the next relevant token (TDS_COLMETADATA or
+     * TDS_DONE for regular Statements or TDS_COLMETADATA, TDS_DONE or
+     * TDS_DONEINPROC for PreparedStatements).
+     */
+    protected synchronized void goToNextResult(SQLWarningChain warningChain)
+        throws TdsException, java.io.IOException, SQLException
+    {
+        // SAfe Need to process messages, output parameters and return values
+        //      here, or even better, in the processXXX methods.
+        while( moreResults() )
+        {
+            byte next = peek();
+
+            // SAfe If the next packet is a rowcount or ResultSet, break
+            if( next==TDS_DONE || next==TDS_COLMETADATA || next==TDS_COL_NAME_TOKEN ||
+                (next==TDS_DONEINPROC && statement instanceof PreparedStatement &&
+                !(statement instanceof CallableStatement)) )
+            {
+                break;
+            }
+
+            PacketResult res = processSubPacket();
+
+            if( res instanceof PacketOutputParamResult && statement!=null &&
+                statement instanceof CallableStatement_base )
+            {
+                ((CallableStatement_base)statement).addOutputParam(
+                    ((PacketOutputParamResult)res).getValue() );
+            }
+            else if( res instanceof PacketEndTokenResult )
+            {
+                if( ((PacketEndTokenResult)res).wasCanceled() )
+                    warningChain.addException(
+                        new SQLException("Query was canceled or timed out."));
+            }
+            else if( res instanceof PacketMsgResult )
+                warningChain.addOrReturn( (PacketMsgResult)res );
+        }
+    }
 
     EncodingHelper getEncoder()
     {
         return encoder;
     }
-
 
     /**
      *  Accessor method to determine the TDS level used.

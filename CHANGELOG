@@ -1,6 +1,30 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/19/2002 - Alin Sinpalean
+
+ o Created a goToNextResult() method in Tds, that eats up all input until the
+   next relevant result (for a Statement or CallableStatement only ResultSets
+   and TDS_DONE packets, for PreparedStatements also TDS_DONEINPROC packets)
+   that is called in all the places where the processing of a result has just
+   finished (or at least I hope so). This way, Tds objects are no longer held
+   up by PreparedStatement executions, which also contain some end of procedure
+   execution information (a return value, maybe output parameters and a
+   TDS_DONEPROC packet).
+ o Tested jTDS with the J2EE Compliance Test Suite (actually only part of it,
+   because it's *very* slow) and after the fix mentioned above it doesn't hang
+   anymore (it hanged because the J2EE disabled autocommit mode and the first
+   time a DatabaseMetaData method was called -- one that uses PreparedStatement
+   -- the Tds remained allocated to that PreparedStatement, another one was
+   created and this second one deadlocked, waiting for the first one to commit
+   the transaction). There are a few issues, still (e.g. supportsConvert()),
+   but overall it seems to work! (It's also true that the CTS is completely
+   braindead -- does not check anything else except the fact that the methods
+   don't throw exceptions and return non-null ResultSets.)
+ o Implemented DatabaseMetaData.supportsConvert(int, int)! Wasn't as hard as I
+   thought it would be. :o)
+
+
 09/18/2002 - Alin Sinpalean
 
  o Rewrote (or should I say, 'partially deleted') Tds.sendTds70Login() based on

@@ -237,7 +237,7 @@ public class CursorResultSet extends AbstractResultSet {
             if( context == null )
                 context = rs.getContext();
 
-            current = rs.fetchNextRow();
+            current = rs.next() ? rs.currentRow() : null;
             warnings = rs.getWarnings();
             rs.close();
         }

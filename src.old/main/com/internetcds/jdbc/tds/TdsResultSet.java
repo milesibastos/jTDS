@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.14 2002-09-16 11:13:43 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.15 2002-09-19 21:30:29 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,7 +110,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.14 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.15 2002-09-19 21:30:29 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain)
         throws SQLException
@@ -404,7 +404,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     {
         Exception exception = null;
 
-        /** @todo SAfe: Maybe an exception should be thrown here */
         if( isClosed )
             return;
         isClosed = true;
@@ -467,11 +466,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     }
 
     /** @todo fetchNextRow should not be public! Possible synchronization problem! */
-    public PacketRowResult fetchNextRow() throws SQLException
+    private PacketRowResult fetchNextRow() throws SQLException
     {
         checkClosed();
 
-        boolean wasCanceled = false;
         PacketRowResult row = null;
 
         try
@@ -518,19 +516,11 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
                 row = (PacketRowResult)tds.processSubPacket(context);
             else if( tds.isEndOfResults() )
             {
-                wasCanceled = ((PacketEndTokenResult)
-                    tds.processSubPacket(context)).wasCanceled();
+                if( ((PacketEndTokenResult)tds.processSubPacket(context)).wasCanceled() )
+                    warningChain.addException(
+                        new SQLException("Query was canceled or timed out."));
 
-                if( stmt instanceof PreparedStatement )
-                {
-                    while( tds.moreResults() && tds.isRetStat() )
-                    {
-                        tds.processSubPacket(context);
-                        if( tds.peek() == Tds.TDS_DONEPROC )
-                            wasCanceled = ((PacketEndTokenResult)
-                                tds.processSubPacket(context)).wasCanceled();
-                    }
-                }
+                tds.goToNextResult(warningChain);
 
                 row = null;
                 hitEndOfData = true;
@@ -550,12 +540,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         catch( TdsException e )
         {
             stmt.releaseTds();
-            e.printStackTrace();
             throw new SQLException(e.getMessage());
         }
 
-        if( wasCanceled )
-            throw new SQLException("Query was canceled or timed out.");
+        warningChain.checkForExceptions();
 
         return row;
     }
@@ -848,10 +836,12 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     public synchronized PacketRowResult currentRow() throws SQLException
     {
         checkClosed();
+
         if( rowIndex < 0 )
             throw new SQLException("No current row in the ResultSet");
         else if( rowIndex >= rowCount )
             throw new SQLException("No more results in ResultSet");
+
         return rowCache[rowIndex];
     }
 

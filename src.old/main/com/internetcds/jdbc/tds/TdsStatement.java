@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.25 2002-09-18 16:27:09 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.26 2002-09-19 21:30:29 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.25 2002-09-18 16:27:09 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.26 2002-09-19 21:30:29 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -612,6 +612,10 @@ public class TdsStatement implements java.sql.Statement
                     PacketEndTokenResult end =
                         (PacketEndTokenResult)tds.processSubPacket();
                     updateCount = end.getRowCount();
+
+                    // SAfe Eat up all packets until the next result or the end
+                    tds.goToNextResult(warningChain);
+
                     if( allowTdsRelease )
                         releaseTds();
                     break;
@@ -621,6 +625,10 @@ public class TdsStatement implements java.sql.Statement
                 else if( tds.isEndOfResults() )
                 {
                     tds.processSubPacket();
+
+                    // SAfe Eat up all packets until the next result or the end
+                    tds.goToNextResult(warningChain);
+
                     if( !tds.moreResults() )
                     {
                         if( allowTdsRelease )

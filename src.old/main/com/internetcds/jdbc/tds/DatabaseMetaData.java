@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.18 2002-09-18 16:27:04 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.19 2002-09-19 21:30:29 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
@@ -86,7 +86,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.18 2002-09-18 16:27:04 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.19 2002-09-19 21:30:29 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -2478,10 +2478,56 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      *@return                   true if so
      *@exception  SQLException  if a database-access error occurs.
      */
-    public boolean supportsConvert( int fromType, int toType ) throws SQLException
+    public boolean supportsConvert(int fromType, int toType)
+        throws SQLException
     {
-        NotImplemented();
-        return false;
+        if( fromType == toType )
+            return true;
+
+        switch( fromType )
+        {
+            // SAfe Most types will convert to anything but IMAGE and
+            //      TEXT/NTEXT (and UNIQUEIDENTIFIER, but that's not a standard
+            //      type).
+            case Types.BIT:
+            case Types.TINYINT:
+            case Types.SMALLINT:
+            case Types.INTEGER:
+            case Types.BIGINT:
+            case Types.FLOAT:
+            case Types.REAL:
+            case Types.DOUBLE:
+            case Types.NUMERIC:
+            case Types.DECIMAL:
+            case Types.DATE:
+            case Types.TIME:
+            case Types.TIMESTAMP:
+                return toType!=Types.LONGVARCHAR && toType!=Types.LONGVARBINARY;
+
+            case Types.BINARY:
+            case Types.VARBINARY:
+                return toType!=Types.FLOAT && toType!=Types.REAL &&
+                       toType!=Types.DOUBLE && toType!=Types.LONGVARBINARY;
+
+            // IMAGE
+            case Types.LONGVARBINARY:
+                return toType==Types.BINARY || toType==Types.VARBINARY;
+
+            // TEXT and NTEXT
+            case Types.LONGVARCHAR:
+                return toType==Types.CHAR || toType==Types.VARCHAR;
+
+            // These types can be converted to anything
+            case Types.NULL:
+            case Types.CHAR:
+            case Types.VARCHAR:
+                return true;
+
+            // We can't tell for sure what will happen with other types, so...
+            case Types.OTHER:
+            default:
+                return false;
+        }
     }
 
 

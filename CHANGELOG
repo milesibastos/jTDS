@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/14/2005 - Alin Sinpalean
+ o Applied Mike's additional fix to bug [1158509] Various problems with
+   connect/login timeouts.
+
 03/12/2005 - Mike Hutchinson
  o Small change to ConnectionJDBC2 to ensure that the server character set is
    used if none is specified by the user.

@@ -31,6 +31,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import net.sourceforge.jtds.ssl.SocketFactories;
@@ -64,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.28 2005-03-09 17:38:01 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.29 2005-03-14 12:51:10 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -241,7 +242,7 @@ class SharedSocket {
      * @param tdsVersion the TDS protocol version
      * @param tcpNoDelay <code>true</code> to enable TCP_NODELAY on the
      *                   underlying socket; <code>false</code> to disable
-     * @param timeout    timeout for establishing connection, in milliseconds
+     * @param timeout    timeout for establishing connection, in seconds
      *                   (only used with Java 1.4+, no support in earlier
      *                   versions)
      * @throws IOException if socket open fails
@@ -271,9 +272,22 @@ class SharedSocket {
                 Method connect = Socket.class.getMethod("connect", new Class[]
                         {Class.forName("java.net.SocketAddress"), int.class});
                 connect.invoke(this.socket,
-                        new Object[] {address, new Integer(timeout)});
-            } catch (Exception ex) {
-                throw new IOException("Could not create socket: " + ex);
+                        new Object[] {address, new Integer(timeout * 1000)});
+            } catch (InvocationTargetException ite) {
+                // Reflection was OK but invocation of socket.connect()
+                // has failed. Try to report the underlying reason
+                Throwable cause = ite.getTargetException();
+                if (cause instanceof IOException) {
+                    // OK was an IOException or subclass so just throw it
+                    throw (IOException) cause;
+                }
+                // Something else so return invocation exception anyway
+                // (This should not normally occur)
+                throw new IOException("Could not create socket: " + cause);
+            } catch (Exception e) {
+                // Reflection has failed for some reason e.g. security so
+                // try to create a socket in the old way.
+                this.socket = new Socket(host, port);
             }
         } else {
             this.socket = new Socket(host, port);

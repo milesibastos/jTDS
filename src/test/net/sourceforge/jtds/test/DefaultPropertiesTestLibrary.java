@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.13 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.14 2005-03-18 11:46:53 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -303,6 +303,20 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String fieldName = "tcpNoDelay";
         String messageKey = Driver.TCPNODELAY;
         String expectedValue = String.valueOf(DefaultProperties.TCP_NODELAY);
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+
+    /**
+     * Test the <code>wsid</code> property.
+     */
+    public void test_wsid() {
+        String fieldName = "wsid";
+        String messageKey = Driver.WSID;
+        String expectedValue = DefaultProperties.WSID;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);

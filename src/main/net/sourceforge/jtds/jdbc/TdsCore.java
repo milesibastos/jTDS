@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.84 2005-03-12 22:39:29 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.85 2005-03-18 11:46:52 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -519,18 +519,19 @@ public class TdsCore {
     /**
      * Login to the SQL Server.
      *
-     * @param serverName The server host name.
-     * @param database The required database.
-     * @param user The user name.
-     * @param password The user password.
-     * @param domain The Windows NT domain (or null).
-     * @param charset The required server character set.
-     * @param appName The application name.
-     * @param progName The program name.
-     * @param language The language to use for server messages.
-     * @param macAddress The client network MAC address.
-     * @param packetSize The required network packet size.
-     * @throws SQLException
+     * @param serverName server host name
+     * @param database   required database
+     * @param user       user name
+     * @param password   user password
+     * @param domain     Windows NT domain (or null)
+     * @param charset    required server character set
+     * @param appName    application name
+     * @param progName   library name
+     * @param wsid       workstation ID
+     * @param language   language to use for server messages
+     * @param macAddress client network MAC address
+     * @param packetSize required network packet size
+     * @throws SQLException if an error occurs
      */
     void login(final String serverName,
                final String database,
@@ -540,22 +541,26 @@ public class TdsCore {
                final String charset,
                final String appName,
                final String progName,
+               String wsid,
                final String language,
                final String macAddress,
                final int packetSize)
         throws SQLException {
         try {
+            if (wsid.length() == 0) {
+                wsid = getHostName();
+            }
             if (tdsVersion >= Driver.TDS70) {
                 sendMSLoginPkt(serverName, database, user, password,
-                                domain, appName, progName, language,
+                                domain, appName, progName, wsid, language,
                                 macAddress, packetSize);
             } else if (tdsVersion == Driver.TDS50) {
                 send50LoginPkt(serverName, user, password,
-                                charset, appName, progName,
+                                charset, appName, progName, wsid,
                                 language, packetSize);
             } else {
                 send42LoginPkt(serverName, user, password,
-                                charset, appName, progName,
+                                charset, appName, progName, wsid,
                                 language, packetSize);
             }
             if (sslMode == SSL_ENCRYPT_LOGIN) {
@@ -1603,16 +1608,17 @@ public class TdsCore {
 
     /**
      * TDS 4.2 Login Packet.
-     * <P>
-     * @param serverName The server host name.
-     * @param user The user name.
-     * @param password The user password.
-     * @param charset The required server character set.
-     * @param appName The application name.
-     * @param progName The program name.
-     * @param language The server language for messages
-     * @param packetSize The required network packet size.
-     * @throws IOException
+     *
+     * @param serverName server host name
+     * @param user       user name
+     * @param password   user password
+     * @param charset    required server character set
+     * @param appName    application name
+     * @param progName   program name
+     * @param wsid       workstation ID
+     * @param language   server language for messages
+     * @param packetSize required network packet size
+     * @throws IOException if an I/O error occurs
      */
     private void send42LoginPkt(final String serverName,
                                 final String user,
@@ -1620,13 +1626,14 @@ public class TdsCore {
                                 final String charset,
                                 final String appName,
                                 final String progName,
+                                final String wsid,
                                 final String language,
                                 final int packetSize)
         throws IOException {
         final byte[] empty = new byte[0];
 
         out.setPacketType(LOGIN_PKT);
-        putLoginString(getHostName(), 30);  // Host name
+        putLoginString(wsid, 30);           // Host name
         putLoginString(user, 30);           // user name
         putLoginString(password, 30);       // password
         putLoginString("00000123", 30);     // hostproc (offset 93 0x5d)
@@ -1690,15 +1697,16 @@ public class TdsCore {
     /**
      * TDS 5.0 Login Packet.
      * <P>
-     * @param serverName The server host name.
-     * @param user The user name.
-     * @param password The user password.
-     * @param charset The required server character set.
-     * @param appName The application name.
-     * @param progName The program name.
-     * @param language The server language for messages
-     * @param packetSize The required network packet size.
-     * @throws IOException
+     * @param serverName server host name
+     * @param user       user name
+     * @param password   user password
+     * @param charset    required server character set
+     * @param appName    application name
+     * @param progName   library name
+     * @param wsid       workstation ID
+     * @param language   server language for messages
+     * @param packetSize required network packet size
+     * @throws IOException if an I/O error occurs
      */
     private void send50LoginPkt(final String serverName,
                                 final String user,
@@ -1706,13 +1714,14 @@ public class TdsCore {
                                 final String charset,
                                 final String appName,
                                 final String progName,
+                                final String wsid,
                                 final String language,
                                 final int packetSize)
         throws IOException {
         final byte[] empty = new byte[0];
 
         out.setPacketType(LOGIN_PKT);
-        putLoginString(getHostName(), 30);  // Host name
+        putLoginString(wsid, 30);           // Host name
         putLoginString(user, 30);           // user name
         putLoginString(password, 30);       // password
         putLoginString("00000123", 30);     // hostproc (offset 93 0x5d)
@@ -1804,6 +1813,7 @@ public class TdsCore {
      * @param domain        Windows NT domain (or <code>null</code>)
      * @param appName       application name
      * @param progName      program name
+     * @param wsid          workstation ID
      * @param language      server language for messages
      * @param macAddress    client network MAC address
      * @param netPacketSize TDS packet size to use
@@ -1816,12 +1826,12 @@ public class TdsCore {
                                 final String domain,
                                 final String appName,
                                 final String progName,
+                                final String wsid,
                                 final String language,
                                 final String macAddress,
                                 final int netPacketSize)
             throws IOException, SQLException {
         final byte[] empty = new byte[0];
-        final String clientName = getHostName();
         boolean ntlmAuth = false;
         byte[] ntlmMessage = null;
 
@@ -1853,7 +1863,7 @@ public class TdsCore {
 
         //mdb:begin-change
         short packSize = (short) (86 + 2 *
-                (clientName.length() +
+                (wsid.length() +
                 appName.length() +
                 serverName.length() +
                 progName.length() +
@@ -1913,8 +1923,8 @@ public class TdsCore {
 
         // Hostname
         out.write((short)curPos);
-        out.write((short) clientName.length());
-        curPos += clientName.length() * 2;
+        out.write((short) wsid.length());
+        curPos += wsid.length() * 2;
 
         //mdb: NTLM doesn't send username and password...
         if (!ntlmAuth) {
@@ -1974,7 +1984,7 @@ public class TdsCore {
         //"next position" (same as total packet size)
         out.write((int)packSize);
 
-        out.write(clientName);
+        out.write(wsid);
 
         // Pack up the login values.
         //mdb: for ntlm auth, uname and pwd aren't sent up...

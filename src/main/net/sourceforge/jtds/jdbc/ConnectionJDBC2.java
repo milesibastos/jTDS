@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.75 2005-03-12 22:39:18 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.76 2005-03-18 11:46:45 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -139,6 +139,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private String appName;
     /** The program name. */
     private String progName;
+    /** Workstation ID. */
+    private String wsid;
     /** The server message language. */
     private String language;
     /** The client MAC Address. */
@@ -339,6 +341,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                           serverCharset,
                           appName,
                           progName,
+                          wsid,
                           language,
                           macAddress,
                           packetSize);
@@ -730,6 +733,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         macAddress = info.getProperty(Messages.get(Driver.MACADDRESS));
         appName = info.getProperty(Messages.get(Driver.APPNAME));
         progName = info.getProperty(Messages.get(Driver.PROGNAME));
+        wsid = info.getProperty(Messages.get(Driver.WSID));
         serverCharset = info.getProperty(Messages.get(Driver.CHARSET));
         language = info.getProperty(Messages.get(Driver.LANGUAGE));
         lastUpdateCount = "true".equalsIgnoreCase(

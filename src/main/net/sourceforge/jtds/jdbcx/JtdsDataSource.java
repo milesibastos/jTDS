@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.27 2005-03-04 00:11:10 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.28 2005-03-18 11:46:52 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -71,6 +71,7 @@ public class JtdsDataSource
     protected String maxStatements;
     protected String appName;
     protected String progName;
+    protected String wsid;
     protected String xaEmulation;
     protected String logFile;
     protected String ssl;
@@ -222,6 +223,9 @@ public class JtdsDataSource
         if (progName != null) {
             props.setProperty(Messages.get(Driver.PROGNAME), progName);
         }
+        if (wsid != null) {
+            props.setProperty(Messages.get(Driver.WSID), wsid);
+        }
         if (ssl != null) {
             props.setProperty(Messages.get(Driver.SSL), ssl);
         }
@@ -279,6 +283,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.MAXSTATEMENTS), maxStatements));
         ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
         ref.add(new StringRefAddr(Messages.get(Driver.PROGNAME), progName));
+        ref.add(new StringRefAddr(Messages.get(Driver.WSID), wsid));
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
         ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
@@ -549,6 +554,14 @@ public class JtdsDataSource
 
     public String getProgName() {
         return progName;
+    }
+
+    public void setWsid(String wsid) {
+        this.wsid = wsid;
+    }
+
+    public String getWsid() {
+        return wsid;
     }
 
     public void setLogFile(String logFile) {

@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/17/2005 - Alin Sinpalean
+ o Implemented RFE [1165119] Computername in Connection-URL: added a WSID
+   parameter to the URL properties, to override the host name that is
+   determined automatically.
+
 03/14/2005 - Alin Sinpalean
  o Applied Mike's additional fix to bug [1158509] Various problems with
    connect/login timeouts.

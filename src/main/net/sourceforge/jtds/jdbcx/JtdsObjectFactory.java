@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.15 2005-03-04 00:11:11 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.16 2005-03-18 11:46:53 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -94,6 +94,7 @@ public class JtdsObjectFactory implements ObjectFactory {
             }
             ds.setAppName((String) ref.get(Messages.get(Driver.APPNAME)).getContent());
             ds.setProgName((String) ref.get(Messages.get(Driver.PROGNAME)).getContent());
+            ds.setWsid((String) ref.get(Messages.get(Driver.WSID)).getContent());
             final Object tcpNoDelay = ref.get(Messages.get(Driver.TCPNODELAY)).getContent();
             if (tcpNoDelay != null) {
                 ds.setTcpNoDelay("true".equals(tcpNoDelay));

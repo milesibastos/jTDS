@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.18 2005-03-04 00:10:56 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.19 2005-03-18 11:46:52 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -102,6 +102,8 @@ public final class DefaultProperties {
     public static final String USE_UNICODE = "true";
     /** Default <code>user</code> property. */
     public static final String USER = "";
+    /** Default <code>wsid</code> property. */
+    public static final String WSID = "";
     /** Default <code>XaEmulation</code> property. */
     public static final String XAEMULATION = "true";
     /** Default <code>logfile</code> property. */
@@ -181,6 +183,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.DOMAIN, DOMAIN);
         addDefaultPropertyIfNotSet(props, Driver.APPNAME, APP_NAME);
         addDefaultPropertyIfNotSet(props, Driver.PROGNAME, PROG_NAME);
+        addDefaultPropertyIfNotSet(props, Driver.WSID, WSID);
         addDefaultPropertyIfNotSet(props, Driver.BATCHSIZE, Driver.SERVERTYPE, batchSizeDefaults);
         addDefaultPropertyIfNotSet(props, Driver.LASTUPDATECOUNT, LAST_UPDATE_COUNT);
         addDefaultPropertyIfNotSet(props, Driver.LOBBUFFER, LOB_BUFFER_SIZE);

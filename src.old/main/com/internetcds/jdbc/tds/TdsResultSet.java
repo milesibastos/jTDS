@@ -84,7 +84,7 @@ import java.io.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.5 2001-09-17 09:32:35 skizz Exp $
+ *@version    $Id: TdsResultSet.java,v 1.6 2001-09-18 08:38:08 aschoerk Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -109,7 +109,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.5 2001-09-17 09:32:35 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.6 2001-09-18 08:38:08 aschoerk Exp $";
 
     public Context getContext()
     {
@@ -411,10 +411,22 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
                     PacketDoneInProcResult tmp =
                             (PacketDoneInProcResult) tds.processSubPacket();
                 }
+                else if (tds.isParamResult())
+                {
+                   PacketResult tmp1 = (PacketResult)tds.processSubPacket();
+                   if (stmt != null
+                      && CallableStatement_base.class.isInstance(stmt))
+                   {
+                      ((CallableStatement_base)stmt).addOutputParam(
+                         ((PacketOutputParamResult)tmp1).getValue());
+                   }
+                }
+                /*
                 else if (tds.isTextUpdate()) {
                     PacketResult tmp1 =
                             (PacketResult) tds.processSubPacket();
                 }
+                 */
                 else if (tds.isMessagePacket() || tds.isErrorPacket()) {
                     PacketMsgResult tmp = (PacketMsgResult) tds.processSubPacket();
                     exception = warningChain.addOrReturn(tmp);

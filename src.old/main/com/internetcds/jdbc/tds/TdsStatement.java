@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.5 2001-09-17 06:46:48 aschoerk Exp $
+ * @version $Id: TdsStatement.java,v 1.6 2001-09-18 08:38:08 aschoerk Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.5 2001-09-17 06:46:48 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.6 2001-09-18 08:38:08 aschoerk Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -204,15 +204,15 @@ public class TdsStatement implements java.sql.Statement
       com.internetcds.jdbc.tds.TdsUnknownPacketSubType,
       com.internetcds.jdbc.tds.TdsException
    {
-      boolean       done;
+      boolean       done = !tds.moreResults();
       PacketResult  tmp;
 
-      do
+      while (!done)
       {
          tmp = tds.processSubPacket();
          done = (tmp instanceof PacketEndTokenResult)
             && (! ((PacketEndTokenResult)tmp).moreResults());
-      } while (! done);
+      };
    }
 
 
@@ -592,10 +592,22 @@ public class TdsStatement implements java.sql.Statement
                                       " expected EndOfResults, found 0x"
                                       + Integer.toHexString(actTds.peek()&0xff));
             }
+            /* curt´s version:
+            boolean done = false;
+            while (!done && tds.isEndOfResults())
+            {
+              PacketEndTokenResult end =
+                 (PacketEndTokenResult) actTds.processSubPacket();
+              updateCount = end.getRowCount();
+              done = !end.moreResults();
+            }
+            results = null;
+             */
             PacketEndTokenResult end =
-               (PacketEndTokenResult) actTds.processSubPacket();
+                 (PacketEndTokenResult) actTds.processSubPacket();
             updateCount = end.getRowCount();
             results = null;
+            
          }
          else
          {
@@ -680,11 +692,13 @@ public class TdsStatement implements java.sql.Statement
             {
                tds.processSubPacket();
             }
+            /*  isParamToken handled by processSubPacket
             else if (tds.isTextUpdate())
             {
                PacketResult tmp1 =
                   (PacketResult)tds.processSubPacket();
             }
+             */
             else if (tds.isMessagePacket() || tds.isErrorPacket())
             {
                PacketMsgResult  tmp = (PacketMsgResult)tds.processSubPacket();
@@ -708,7 +722,7 @@ public class TdsStatement implements java.sql.Statement
               result = false;
               break;
             }
-            else  // process whatever comes now
+            else  // process whatever comes now, isParamResult
               tds.processSubPacket();
             /*
             {

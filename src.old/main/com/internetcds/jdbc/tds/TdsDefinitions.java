@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.4 2001-09-17 09:32:35 skizz Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.5 2001-09-18 08:38:08 aschoerk Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.4 2001-09-17 09:32:35 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.5 2001-09-18 08:38:08 aschoerk Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -63,6 +63,8 @@ interface TdsDefinitions
    //
    // Sub packet types
    //
+   static final byte TDS_LANG_TOKEN      = (byte)33;   // 0x21    TDS 5.0 only
+   static final byte TDS_CLOSE_TOKEN     = (byte)113;  // 0x71    TDS 5.0 only? ct_close()
    static final byte TDS_RET_STAT_TOKEN  = (byte)0x79; // 121
    static final byte TDS_PROCID          = (byte)0x7C; // 124 TDS_PROCID
    static final byte TDS7_RESULT_TOKEN   = (byte)129;   // 0x81 TDS 7.0 only
@@ -75,7 +77,7 @@ interface TdsDefinitions
    static final byte TDS_ORDER           = (byte)169;  // 0xA9 TDS_ORDER
    static final byte TDS_ERR_TOKEN       = (byte)170;  // 0xAA
    static final byte TDS_MSG_TOKEN       = (byte)171;  // 0xAB
-   static final byte TDS_TEXT_UPD_TOKEN  = (byte)172;  // 0xAC write- updatetext
+   static final byte TDS_PARAM_TOKEN     = (byte)172;  // 0xAC 
    static final byte TDS_LOGIN_ACK_TOKEN = (byte)173;   // 0xAD
    static final byte TDS_CONTROL         = (byte)174;   // 0xAE TDS_CONTROL
    static final byte TDS_ROW_TOKEN       = (byte)209;   // 0xD1
@@ -125,6 +127,13 @@ interface TdsDefinitions
    static final byte SYBDATETIMN    = 111;   // 0x6F
    static final byte SYBMONEY4      = 112;   // 0x70
    static final byte SYBNCHAR       = -17;   // 0xEF
+   
+   // according to srv.h here are some additional types
+   static final byte SYBBIGVARBINARY = (byte)0xA5;
+   static final byte SYBBIGVARCHAR   = (byte)0xA7;
+   static final byte SYBBIGBINARY    = (byte)0xAD;
+   static final byte SYBBIGCHAR      = (byte)0xAF;
+   
    // XXX should SYBMONEY4 be 122 instead of 112?
    static final byte SYBSMALLMONEY  = 122;   // 0x7A
    // end of column types

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $
+ *@version    $Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $
+ *@version    $Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2001-09-17 09:32:35 skizz Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -304,6 +304,12 @@ public class Tds implements TdsDefinitions {
     }
     // peek()
 
+    synchronized public byte getByte()
+      throws java.io.IOException, com.internetcds.jdbc.tds.TdsException
+    {
+      return comm.getByte();
+    } // peek()
+
 
     /**
      *  Determine if the next subpacket is a result set. <p>
@@ -420,6 +426,23 @@ public class Tds implements TdsDefinitions {
     }
 
 
+     /**
+      * Determine if the next subpacket is an output parameter from a stored proc
+      * <p>
+      * This does not eat any input.
+      *
+      * @return true if the next piece of data to read is an output parameter
+      *
+      * @exception com.internetcds.jdbc.tds.TdsException
+      * @exception java.io.IOException
+      */
+     synchronized public boolean isParamResult()
+        throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
+     {
+        byte  type = comm.peek();
+        return type==TDS_PARAM_TOKEN;
+     }
+     
     /**
      *  Determine if the next subpacket is a text update packet <p>
      *
@@ -430,12 +453,14 @@ public class Tds implements TdsDefinitions {
      *@exception  com.internetcds.jdbc.tds.TdsException
      *@exception  java.io.IOException
      */
+     /* strange replaced by paramToken 
     public synchronized boolean isTextUpdate()
              throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
         byte type = comm.peek();
         return type == TDS_TEXT_UPD_TOKEN;
     }
+      */
 
 
     /**
@@ -697,6 +722,7 @@ public class Tds implements TdsDefinitions {
         // N1 + 7           N2          parameter 1 data
         // ...
       checkMaxRows(stmt);
+      int outparams = 0;
 
         int i;
 
@@ -726,8 +752,27 @@ public class Tds implements TdsDefinitions {
                 byte nativeType = cvtJdbcTypeToNativeType(formalParameterList[i].type);
 
                 comm.appendByte((byte) 0);
-                comm.appendByte((byte) 0);
+                if (actualParameterList[i].isOutput)
+                {
+                   comm.appendByte((byte)1);
+                   outparams++;
 
+                   if (nativeType == SYBBIT && actualParameterList[i].value == null)
+                   {
+                      actualParameterList[i].value = Boolean.FALSE;
+                   }
+                }
+                else
+                {
+                  comm.appendByte((byte) 0);
+                }
+
+                if (actualParameterList[i].value == null &&
+                   (nativeType == SYBINT1 || nativeType == SYBINT2 || nativeType == SYBINT4))
+                {
+                   nativeType = SYBINTN;
+                }
+                
                 switch (nativeType) {
                     case SYBCHAR:
                     {
@@ -741,7 +786,8 @@ public class Tds implements TdsDefinitions {
                         int len = val != null ? val.length() : 0;
                         int max = formalParameterList[i].maxLength;
 
-                        if (formalParameterList[i].formalType.startsWith("n")) {
+                        if (actualParameterList[i].formalType != null &&
+                             actualParameterList[i].formalType.startsWith("n")) {
                             /*
                              * This is a Unicode column, save to assume TDS 7.0
                              */
@@ -790,95 +836,59 @@ public class Tds implements TdsDefinitions {
                         break;
                     }
 
-                    case SYBINT4:
                     case SYBINTN:
-                    {
-                        if (nativeType == SYBINTN) {
-                            comm.appendByte(nativeType);
-                            // set the maximum length of the field,
-                            comm.appendByte((byte) 4);
+                      comm.appendByte(SYBINTN);
+                      comm.appendByte((byte)4); // maximum length of the field,
 
-                            // set the actual length, and the data
-                            if (actualParameterList[i].value == null) {
-                                comm.appendByte((byte) 0);
-//                        comm.appendTdsInt((byte)0);
-                            }
-                            else {
-                                comm.appendByte((byte) 4);
-                                comm.appendTdsInt(((Number) (actualParameterList[i].value)).intValue());
-                            }
-                        }
-                        else if (actualParameterList[i].value == null) {
-                            comm.appendByte(SYBINTN);
-                            comm.appendByte((byte) 4);
-                            comm.appendByte((byte) 0);
-                        }
-                        else {
-                            comm.appendByte(nativeType);
-                            comm.appendTdsInt(((Number) (actualParameterList[i].value)).intValue());
-                        }
-                        break;
-                    }
+                      if (actualParameterList[i].value == null)
+                      {
+                         comm.appendByte((byte)0); // actual length
+                      }
+                      else
+                      {
+                         comm.appendByte((byte)4); // actual length
+                         comm.appendTdsInt(((Number)(actualParameterList[i].value)).intValue());
+                      }
+                      break;
+
+                    case SYBINT4:
+                      comm.appendByte(SYBINT4);
+                      comm.appendTdsInt(((Number)(actualParameterList[i].value)).intValue());
+                      break;
+
+                    case SYBINT2:
+                      comm.appendByte(SYBINT2);
+                      comm.appendTdsShort(((Number)(actualParameterList[i].value)).shortValue());
+                      break;
+
+                    case SYBINT1:
+                      comm.appendByte(SYBINT1);
+                      comm.appendByte(((Number)(actualParameterList[i].value)).byteValue());
+                      break;
+
                     case SYBFLT8:
+                    case SYBFLTN:
                     {
-                        Number n = (Number) (actualParameterList[i].value);
-                        if (n == null) {
-                          comm.appendByte(SYBINTN);
-                          comm.appendByte((byte)4);
-                          comm.appendByte((byte)0);
-                        }
-                        else {
-                          comm.appendByte((byte)nativeType);
-                          Double d = new Double(n.doubleValue());
-                          comm.appendFlt8(d);
-                        }
-                        break;
+                      if (actualParameterList[i].value == null)
+                      {
+                         comm.appendByte((byte)SYBFLTN);
+                         comm.appendByte((byte)8);
+                         comm.appendByte((byte)0);
+                      }
+                      else
+                      {
+                         Number n = (Number)(actualParameterList[i].value);
+                         Double d = new Double(n.doubleValue());
+
+                         comm.appendByte((byte)SYBFLT8);
+                         comm.appendFlt8(d);
+                      }
+                      break;
                     }
                     case SYBDATETIMN:
                     {
-                        comm.appendByte((byte) nativeType);
-
-                        comm.appendByte((byte) 8);
-                        if (actualParameterList[i].value == null) {
-                            comm.appendByte((byte) 0);
-                        }
-                        else {
-                            Timestamp value;
-                            if (actualParameterList[i].value instanceof java.sql.Timestamp) {
-                                value = (Timestamp) actualParameterList[i].value;
-                            }
-                            else {
-                                value = new Timestamp(((java.util.Date) actualParameterList[i].value).getTime());
-                            }
-
-                            comm.appendByte((byte) 8);
-
-                            final int secondsPerDay = 24 * 60 * 60;
-                            final int msPerDay = secondsPerDay * 1000;
-                            final int nsPerMs = 1000 * 1000;
-                            // epochsDifference is the number of days between unix
-                            // epoch (1970 based) and the sybase epoch (1900 based)
-                            final int epochsDifference = 25567;
-
-                            long nanoseconds = value.getNanos();
-
-                            // ms is the number of milliseconds into unix epoch
-
-                            long ms = ((value.getTime() + (nanoseconds / nsPerMs))
-                                     + zoneOffset);
-                            ms += getDstOffset(ms);    // XXX: as previous version was -=
-                            long msIntoCurrentDay = ms % msPerDay;
-
-                            long daysIntoUnixEpoch = (ms - msIntoCurrentDay) / msPerDay;
-
-                            int jiffies = (int) ((msIntoCurrentDay * 300) / 1000);
-                            int daysIntoSybaseEpoch = (int) daysIntoUnixEpoch
-                                     + epochsDifference;
-
-                            comm.appendTdsInt(daysIntoSybaseEpoch);
-                            comm.appendTdsInt(jiffies);
-                        }
-                        break;
+                      writeDatetimeValue(actualParameterList[i].value, SYBDATETIMN);
+                      break;
                     }
                     case SYBIMAGE:
                     {
@@ -894,70 +904,69 @@ public class Tds implements TdsDefinitions {
                                 value));
                         break;
                     }
-                    case SYBDECIMAL:
-                    case SYBNUMERIC:
+                    case SYBBIT:
+                    case SYBBITN:
                     {
-                      Object o = actualParameterList[i].value;
-                      comm.appendByte((byte)SYBDECIMAL);
-                      if (o == null) {
-                        comm.appendByte((byte)0);
-                        comm.appendByte((byte)28);
-                        comm.appendByte((byte)0);
-                        comm.appendByte((byte)0);
-                      }
-                      else {
-                        if (actualParameterList[i].value instanceof Long) {
-                          long value = ((Long)o).longValue();
-                          comm.appendByte((byte)9);
-                          comm.appendByte((byte)28);
-                          comm.appendByte((byte)0);
-                          comm.appendByte((byte)9);
-                          if (value >= 0L) {
+                      if (actualParameterList[i].value == null)
+                      {
+                         comm.appendByte((byte)SYBBITN);
+                             comm.appendByte((byte)0);
+                          }
+                          else
+                          { 
+                         comm.appendByte((byte)SYBBIT);
+                         if (((Boolean)actualParameterList[i].value).equals(Boolean.TRUE))
                             comm.appendByte((byte)1);
-                          }
-                          else {
-                            comm.appendByte((byte)0);
-                            value = -value;
-                          }
-                          for (int valueidx = 0; valueidx<8; valueidx++) {
-                            // comm.appendByte((byte)(value & 0xFF));
-                            comm.appendByte((byte)(value & 0xFF));
-                            value >>>= 8;
-                          }
-                        }
-                        else {
-                          BigDecimal bd = (BigDecimal)o;
-                          byte scale = (byte)bd.scale();
-                          byte signum = (byte)(bd.signum() < 0 ? 0 : 1);
-                          BigInteger bi = bd.unscaledValue();
-                          long l = bi.longValue();
-                          byte[] mantisse = bi.abs().toByteArray();
-                          byte len = (byte)(mantisse.length + 1);
-                          byte prec = 28;
-                          comm.appendByte(len);
-                          comm.appendByte(prec);
-                          comm.appendByte(scale);
-                          comm.appendByte(len);
-                          comm.appendByte(signum);
-                          for (int mantidx = mantisse.length - 1; mantidx >= 0 ; mantidx--) {
-                            comm.appendByte(mantisse[mantidx]);
-                          }
-                        }
+                             else 
+                                comm.appendByte((byte)0);
+                          }    
+                      break;
+                    }
+                    case SYBNUMERIC:
+                    case SYBDECIMAL:
+                    {
+                      writeDecimalValue((byte)nativeType, actualParameterList[i].value, 0, -1);
+                      break;
+                    }
+                    case SYBBINARY:
+                    case SYBVARBINARY:
+                    {
+                      byte[] value = (byte[])actualParameterList[i].value;
+                      int maxLength = formalParameterList[i].maxLength;
+                      if (value == null)
+                      {
+                         comm.appendByte(SYBVARBINARY);
+                         comm.appendByte((byte)(maxLength));
+                         comm.appendByte((byte)0);
+                      }
+                      else
+                      {
+                         if (value.length > 255)
+                         {
+                            if (tdsVer != TDS70)
+                            {
+                               throw new java.io.IOException("Field too long");
+                            }
+                            comm.appendByte((byte) (SYBVARBINARY | 0x80));
+                            comm.appendTdsShort((short)(maxLength));
+                            comm.appendTdsShort((short)(value.length));
+                         }
+                         else
+                         {
+                            comm.appendByte(SYBVARBINARY);
+                            comm.appendByte((byte)(maxLength));
+                            comm.appendByte((byte)(value.length));
+                         }
+                         comm.appendBytes(value);
                       }
                       break;
                     }
                     case SYBVOID:
-                    case SYBVARBINARY:
                     case SYBVARCHAR:
-                    case SYBBINARY:
-                    case SYBINT1:
-                    case SYBBIT:
-                    case SYBINT2:
                     case SYBDATETIME4:
                     case SYBREAL:
                     case SYBMONEY:
                     case SYBDATETIME:
-                    case SYBFLTN:
                     case SYBMONEYN:
                     case SYBMONEY4:
                     default:
@@ -1132,6 +1141,171 @@ public class Tds implements TdsDefinitions {
 
 
 
+   /**
+    * Process an output parameter subpacket.
+    * <p>
+    * This routine assumes that the TDS_PARAM_TOKEN byte has already
+    * been read.
+    *
+    * @return
+    *
+    * @exception com.internetcds.jdbc.tds.TdsException
+    *
+    * @exception java.io.IOException
+    * Thrown if some sort of error occured reading bytes from the network.
+    */
+   private PacketOutputParamResult processOutputParam()
+      throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
+   {
+      int packetLen = getSubPacketLength();
+      String colname = comm.getString(comm.getByte() & 0xff);
+      comm.getBytes(5);
+
+      byte colType = comm.getByte();
+      
+      // TODO: Refactor to combine this code with that in getRow()
+      Object element;
+      switch (colType)
+      {
+         case SYBINTN:
+         {
+            int column_size = comm.getByte();
+            element = getIntValue(colType);
+            break;
+         }
+         case SYBINT1:
+         case SYBINT2:
+         case SYBINT4:
+         {
+            element = getIntValue(colType);
+            break;
+         }
+         case SYBIMAGE:
+         {
+            int column_size = comm.getByte();
+            element = getImageValue();
+            break;
+         }
+         case SYBTEXT:
+         {
+            int column_size = comm.getByte();
+            element = getTextValue(false);
+            break;
+         }
+         case SYBNTEXT:
+         {
+            int column_size = comm.getByte();
+            element = getTextValue(true);
+            break;
+         }
+         case SYBCHAR:
+         case SYBVARCHAR:
+         {
+            int column_size = comm.getByte();
+            element = getCharValue(false, true);
+            break;
+         }
+         case (byte)(0xa5):
+         {
+            int column_size = comm.getTdsShort();
+            element = getCharValue(false, false);
+            break;
+         }
+         case (byte)(0xa7):
+         {
+            int column_size = comm.getTdsShort();
+            element = getCharValue(false, false);
+            break;
+         }
+         case SYBNCHAR:
+         case SYBNVARCHAR:
+         {
+            int column_size = comm.getByte();
+            element = getCharValue(true, true);
+            break;
+         }
+         case SYBREAL:
+         {
+            element = readFloatN(4);
+            break;
+         }
+         case SYBFLT8:
+         {
+            element = readFloatN(8);
+            break;
+         }
+         case SYBFLTN:
+         {
+            int column_size = comm.getByte();
+            int actual_size = comm.getByte();
+            element = readFloatN(actual_size);
+            break;
+         }
+         case SYBSMALLMONEY:
+         case SYBMONEY:
+         case SYBMONEYN:
+         {
+            int column_size = comm.getByte();
+            element = getMoneyValue(colType);
+            break;
+         }
+         case SYBNUMERIC:
+         case SYBDECIMAL:
+         {
+            int column_size = comm.getByte();
+            int precision = comm.getByte();
+            int scale = comm.getByte();
+            element = getDecimalValue(scale);
+            break;
+         }
+         case SYBDATETIMN:
+         {
+            int column_size = comm.getByte();
+            element = getDatetimeValue(colType);
+            break;
+         }
+         case SYBDATETIME4:
+         case SYBDATETIME:
+         {
+            element = getDatetimeValue(colType);
+            break;
+         }
+         case SYBVARBINARY:
+         case SYBBINARY:
+         {
+            int column_size = comm.getByte();
+            int len = (comm.getByte() & 0xff);
+            // if (tdsVer == Tds.TDS70 && len == 0xffff)
+            element = comm.getBytes(len);
+            break;
+         }
+         case SYBBITN:
+         {
+            int column_size = comm.getByte();
+            if (comm.getByte() == 0)
+               element = null;
+            else
+               element = new Boolean((comm.getByte()!=0) ? true : false);
+            break;
+         }
+         case SYBBIT:
+         {
+            int column_size = comm.getByte();
+            element = new Boolean((column_size != 0) ? true : false);
+            break;
+         }
+         default:
+         {
+            element = null;
+            throw new TdsNotImplemented("Don't now how to handle " +
+                                        "column type 0x" +
+                                        Integer.toHexString(colType));
+         }
+      }
+
+      return new PacketOutputParamResult(element);
+   }
+
     /**
      *  Process a subpacket reply <p>
      *
@@ -1216,6 +1390,12 @@ public class Tds implements TdsDefinitions {
                 result = processMsg(packetSubType);
                 break;
             }
+            case TDS_PARAM_TOKEN:
+            {
+              result = processOutputParam();
+              break;
+            }
+            /* strange replaced by PARAM_TOKEN
             case TDS_TEXT_UPD_TOKEN:
             {
                 int len = getSubPacketLength();
@@ -1223,6 +1403,7 @@ public class Tds implements TdsDefinitions {
                 result = new PacketResult(TDS_TEXT_UPD_TOKEN);
                 break;
             }
+             */
             case TDS_LOGIN_ACK_TOKEN:
             {
                 result = processLoginAck();
@@ -1687,7 +1868,20 @@ public class Tds implements TdsDefinitions {
         }
 
         switch (len) {
-            case 4:
+/*  curt´s version 
+          case 4:
+            result = new Integer(comm.getTdsInt());
+            break;
+         
+         case 2:
+            result = new Short((short)comm.getTdsShort());
+            break;
+         
+         case 1: 
+            result = new Byte(comm.getByte());
+            break;
+*/
+          case 4:
             {
                 result = new Long(comm.getTdsInt());
                 break;
@@ -1721,34 +1915,35 @@ public class Tds implements TdsDefinitions {
     // getIntValue()
 
 
-    private Object getCharValue(boolean wideChars)
-             throws TdsException, java.io.IOException
-    {
-        Object result;
-        int len = tdsVer == Tds.TDS70 ? comm.getTdsShort() : comm.getByte() & 0xFF;
+   private Object getCharValue(boolean wideChars, boolean outputParam)
+      throws TdsException, java.io.IOException
+   {
+      Object result;
+      
+      boolean shortLen = (tdsVer == Tds.TDS70) && (wideChars || !outputParam);
+      int len = shortLen ? comm.getTdsShort() : (comm.getByte() & 0xFF);
+      if (len == 0 || tdsVer == Tds.TDS70 && len == 0xFFFF) {
+          result = null;
+      }
+      else if (len > 0) {
+          if (wideChars) {
+              result = comm.getString(len / 2);
+          }
+          else {
+              result = encoder.getString(comm.getBytes(len));
+          }
 
-        if (len == 0 || tdsVer == Tds.TDS70 && len == 0xFFFF) {
-            result = null;
-        }
-        else if (len > 0) {
-            if (wideChars) {
-                result = comm.getString(len / 2);
-            }
-            else {
-                result = encoder.getString(comm.getBytes(len));
-            }
-
-            if (result.equals(" ")) {
-                // In SQL trailing spaces are stripped from strings
-                // MS SQLServer denotes a zero length string
-                // as a single space.
-                result = "";
-            }
-        }
-        else {
-            throw new TdsConfused("String with length<0");
-        }
-        return result;
+          if (result.equals(" ")) {
+              // In SQL trailing spaces are stripped from strings
+              // MS SQLServer denotes a zero length string
+              // as a single space.
+              result = "";
+          }
+      }
+      else {
+          throw new TdsConfused("String with length<0");
+      }
+      return result;
     }
     // getCharValue()
 
@@ -1895,13 +2090,13 @@ public class Tds implements TdsDefinitions {
                 case SYBCHAR:
                 case SYBVARCHAR:
                 {
-                    element = getCharValue(false);
+                    element = getCharValue(false,false);
                     break;
                 }
                 case SYBNCHAR:
                 case SYBNVARCHAR:
                 {
-                    element = getCharValue(true);
+                    element = getCharValue(true,false);
                     break;
                 }
                 case SYBREAL:
@@ -2369,8 +2564,8 @@ public class Tds implements TdsDefinitions {
 
 
 //      if (database name has funny characters)
-            if (database.length() > 32) {
-                throw new SQLException("Name too long " + database);
+            if (database.length() > 32 || database.length() < 1) {
+                throw new SQLException("Name too long - " + database);
             }
 
             for (i = 0; i < database.length(); i++) {
@@ -2384,6 +2579,10 @@ public class Tds implements TdsDefinitions {
                     throw new SQLException("Bad database name- "
                              + database);
                 }
+            }
+            if ((database.charAt(0) >= '0') && (database.charAt(0) <= '9'))
+            {
+              database = "\"" + database + "\"";
             }
 
             String query = "use " + database;
@@ -2892,6 +3091,141 @@ public class Tds implements TdsDefinitions {
     }
 
 
+   private void writeDatetimeValue(Object value_in, int nativeType)
+      throws TdsException, java.io.IOException
+   {
+      comm.appendByte((byte)nativeType);
+      
+      comm.appendByte((byte)8);
+      if (value_in == null)
+      {
+         comm.appendByte((byte)0);
+      }
+      else
+      {
+         Timestamp value;
+         if (value_in instanceof java.sql.Timestamp)
+         {
+            value = (Timestamp)value_in;
+         }
+         else
+         {
+            value = new Timestamp(((java.util.Date)value_in).getTime());
+         }
+         
+         final int secondsPerDay = 24 * 60 * 60;
+         final int msPerDay      = secondsPerDay * 1000;
+         final int nsPerMs       = 1000 * 1000;
+         final int msPerMinute   = 1000 * 60;
+         // epochsDifference is the number of days between unix
+         // epoch (1970 based) and the sybase epoch (1900 based)
+         final int epochsDifference = 25567;
+
+         long   nanoseconds = value.getNanos();
+
+         // ms is the number of milliseconds into unix epoch
+
+         long   ms = ((value.getTime() + (nanoseconds / nsPerMs))
+                      + zoneOffset);
+                ms += getDstOffset(ms); 
+         long   msIntoCurrentDay  = ms % msPerDay;
+
+         long   daysIntoUnixEpoch = (ms-msIntoCurrentDay)/msPerDay;
+
+         int    jiffies = (int)((msIntoCurrentDay * 300) / 1000);
+         int    daysIntoSybaseEpoch = (int)daysIntoUnixEpoch
+            + epochsDifference;
+
+         // If the number of seconds and milliseconds are set to zero, then
+         // pass this as a smalldatetime parameter.  Otherwise, pass it as
+         // a datetime parameter
+
+         if ((msIntoCurrentDay % msPerMinute) == 0
+            && daysIntoSybaseEpoch < Short.MAX_VALUE)
+         {
+            comm.appendByte((byte)4);
+            comm.appendTdsShort((short)daysIntoSybaseEpoch);
+            comm.appendTdsShort((short)(msIntoCurrentDay / msPerMinute));
+         }
+         else
+         {
+            comm.appendByte((byte)8);
+            comm.appendTdsInt(daysIntoSybaseEpoch);
+            comm.appendTdsInt(jiffies);
+         }
+      }
+   }
+   
+   
+   private void writeDecimalValue(byte nativeType, Object value, int scale, int precision)
+      throws TdsException, java.io.IOException
+   {
+       BigDecimal d;
+       if (value == null || value instanceof BigDecimal)
+       {
+           d = (BigDecimal)value;
+       }
+       else if (value instanceof BigInteger)
+       {
+           d = new BigDecimal((BigInteger)value, 0);
+       }
+       else if (value instanceof Number)
+       {
+           d = new BigDecimal(((Number)value).doubleValue());
+       }
+       else
+       {
+           throw new TdsException("Invalid decimal value");
+       }
+
+       byte[] data;
+       int signum;
+       if (value == null)
+       {
+           data = null;
+           signum = 0;
+           if (precision == -1)
+           {
+               precision = 10;
+           }
+       }
+       else
+       {
+           BigInteger unscaled = d.movePointRight(scale).unscaledValue();
+           BigInteger absunscaled = unscaled.abs();
+           data = absunscaled.toByteArray();
+           if (data.length > 0x11)
+           {
+               throw new TdsException("Decimal value too large");
+           }
+           signum = unscaled.signum();
+           if (precision == -1)
+           {
+               precision = 10;
+           }
+           int bitLength = absunscaled.bitLength();
+           int maxLength = (int)(1.0 + (float)bitLength * 0.30103);
+           if (precision < maxLength)
+           {
+           	   precision = maxLength;
+           }
+       }
+       comm.appendByte(nativeType);
+       comm.appendByte((byte)0x11); // max length in bytes
+       comm.appendByte((byte)precision); // precision
+       comm.appendByte((byte)scale); // scale
+       if (value == null)
+       {
+           comm.appendByte((byte)0);
+       }
+       else
+       {
+           comm.appendByte((byte)(data.length + 1));
+           comm.appendByte(signum < 0 ? (byte)0 : (byte)1);
+           comm.appendBytes(data);
+       }
+   }
+
     private Object readFloatN(int len)
              throws TdsException, java.io.IOException
     {
@@ -3054,14 +3388,16 @@ public class Tds implements TdsDefinitions {
             converted = encoder.getBytes(value);
         }
 
-        if (converted.length > 255 && tdsVer != TDS70) {
-            throw new java.io.IOException("String too long for TDS version " + tdsVer);
-        }
 
         // set the type of the column
         // set the maximum length of the field
         // set the actual lenght of the field.
-        if (converted.length > 256) {
+        if (converted.length > 255) {
+            if (tdsVer != TDS70)
+            {
+               throw new java.io.IOException("String too long");
+            }
+
             comm.appendByte((byte) (SYBVARCHAR | 0x80));
             comm.appendTdsShort((short) (maxLength));
             comm.appendTdsShort((short) (converted.length));
@@ -3341,7 +3677,6 @@ public class Tds implements TdsDefinitions {
         // This function is thread safe.
         byte result = 0;
         switch (jdbcType) {
-          case java.sql.Types.BIT:    // XXX: as
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
             case java.sql.Types.LONGVARCHAR:
@@ -3349,9 +3684,24 @@ public class Tds implements TdsDefinitions {
                 result = SYBCHAR;
                 break;
             }
+            case java.sql.Types.TINYINT:
+            {
+                result = SYBINT1;
+                break;
+            }
+            case java.sql.Types.SMALLINT:
+            {
+                result = SYBINT2;
+                break;
+            }
             case java.sql.Types.INTEGER:
             {
                 result = SYBINT4;
+                break;
+            }
+            case java.sql.Types.BIT: 
+            {
+                result = SYBBIT;
                 break;
             }
             case java.sql.Types.FLOAT:
@@ -3367,7 +3717,17 @@ public class Tds implements TdsDefinitions {
                 result = SYBDATETIMN;
                 break;
             }
+            case java.sql.Types.BINARY:
+            {
+                result = SYBBINARY;
+                break;
+            }
             case java.sql.Types.VARBINARY:
+            {
+                result = SYBVARBINARY;
+                break;
+            }
+              
             case java.sql.Types.LONGVARBINARY:
             {
                 result = SYBIMAGE;
@@ -3379,6 +3739,10 @@ public class Tds implements TdsDefinitions {
               break;
             }
             case java.sql.Types.NUMERIC:
+            {
+              result = SYBNUMERIC;
+              break;
+            }
             case java.sql.Types.DECIMAL:
             {
               result = SYBDECIMAL;
@@ -3498,7 +3862,8 @@ public class Tds implements TdsDefinitions {
                 result = java.sql.Types.LONGVARCHAR;
                 break;
             case SYBIMAGE:
-                result = java.sql.Types.VARBINARY;
+                // should be : result = java.sql.Types.LONGVARBINARY;
+              result = java.sql.Types.VARBINARY;   // work around XXXX
                 break;
             case SYBVARBINARY:
                 result = java.sql.Types.VARBINARY;

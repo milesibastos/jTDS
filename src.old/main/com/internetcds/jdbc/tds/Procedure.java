@@ -40,7 +40,7 @@ import java.util.Vector;
 
 public class Procedure
 {
-   public static final String cvsVersion = "$Id: Procedure.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: Procedure.java,v 1.3 2001-09-18 08:38:07 aschoerk Exp $";
 
 
    ParameterListItem  parameterList[]    = null;
@@ -231,6 +231,10 @@ public class Procedure
             result =
                result + "@" + parameterList[i].formalName + " "
                + parameterList[i].formalType;
+            if (parameterList[i].isOutput)
+            {
+               result = result + " output";
+            }
          }
          result = result + ")";
       }

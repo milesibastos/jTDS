@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 public class ParameterUtils
 {
-   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.4 2001-09-18 08:38:07 aschoerk Exp $";
 
 
    /**
@@ -137,6 +137,11 @@ public class ParameterUtils
 
       for(i=0; okay && i<parameterList.length; i++)
       {
+         if (parameterList[i].isOutput)
+         {
+            // Allow output parameters to be "not set"
+            parameterList[i].isSet = true;
+         }
          okay = okay && parameterList[i].isSet;
          if (!okay)
          {
@@ -252,7 +257,6 @@ public class ParameterUtils
                parameterList[i].maxLength = Integer.MAX_VALUE;
                break;
             }
-            case java.sql.Types.SMALLINT:
             case java.sql.Types.INTEGER:
             {
                parameterList[i].formalType = "integer";
@@ -281,26 +285,34 @@ public class ParameterUtils
                parameterList[i].formalType = "image";
                break;
             }
+            case java.sql.Types.BIT:
+            {
+               parameterList[i].formalType = "bit";
+               break;
+            }            
             case java.sql.Types.BIGINT: {
                parameterList[i].formalType = "decimal(28,10)";
                break;
             }
-            case java.sql.Types.DECIMAL:
+            case java.sql.Types.SMALLINT:
+            {
+               parameterList[i].formalType = "smallint";
+               break;
+            }            
+            case java.sql.Types.TINYINT:
+            {
+               parameterList[i].formalType = "tinyint";
+               break;
+            }            
             case java.sql.Types.NUMERIC:
             {
                parameterList[i].formalType = "decimal(28,10)";
-               break;
-            }            
-            case java.sql.Types.BIT:
-            {
-               parameterList[i].formalType = "CHAR";
                break;
             }            
             case java.sql.Types.BINARY:
             case java.sql.Types.NULL:
             case java.sql.Types.OTHER:
             case java.sql.Types.TIME:
-            case java.sql.Types.TINYINT:
             {
                throw new SQLException("Not implemented (type is ("
                                       + TdsUtil.javaSqlTypeToString(parameterList[i].type) + ")");

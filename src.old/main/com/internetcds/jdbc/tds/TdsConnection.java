@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2001-09-18 08:38:08 aschoerk Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ *@version    $Id: TdsConnection.java,v 1.4 2001-09-18 08:38:08 aschoerk Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -122,7 +122,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2001-09-18 08:38:08 aschoerk Exp $";
 
 
 
@@ -391,7 +391,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
             // at some later time.  Therefore we shouldn't relinquish the
             // tds.
             Tds tds = this.allocateTds();
-            databaseMetaData = new com.internetcds.jdbc.tds.DatabaseMetaData(this, tds);
+            databaseMetaData = DatabaseMetaData.getInstance(this,tds);
         }
         return databaseMetaData;
 //       catch(java.net.UnknownHostException e)
@@ -472,7 +472,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     public void markAsClosed(java.sql.Statement stmt) throws TdsException
     {
         if (!allStatements.removeElement(stmt)) {
-            throw new TdsException("Statement was not known by the connection");
+            // throw new TdsException("Statement was not known by the connection");
         }
     }
 

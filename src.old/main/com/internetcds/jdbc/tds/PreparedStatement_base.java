@@ -38,7 +38,7 @@ import java.math.BigDecimal;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.Calendar;
-
+import java.util.Map;
 
 
 /**
@@ -56,7 +56,7 @@ import java.util.Calendar;
  *
  * @author Craig Spannring
  * @author The FreeTDS project
- * @version  $Id: PreparedStatement_base.java,v 1.5 2001-09-14 16:04:30 aschoerk Exp $
+ * @version  $Id: PreparedStatement_base.java,v 1.6 2001-09-18 08:38:07 aschoerk Exp $
  *
  * @see Connection#prepareStatement
  * @see ResultSet
@@ -65,12 +65,13 @@ public class PreparedStatement_base
    extends    TdsStatement
    implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.5 2001-09-14 16:04:30 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.6 2001-09-18 08:38:07 aschoerk Exp $";
 
 
    String               rawQueryString     = null;
    // Vector               procedureCache     = null;  put it in tds
    ParameterListItem[]  parameterList      = null;
+   static Map           typemap            = null;
 
    public PreparedStatement_base(
       TdsConnection conn_,
@@ -265,10 +266,26 @@ public class PreparedStatement_base
                      || ((PacketEndTokenResult)tmp).wasCanceled();
                   updateCount = ((PacketEndTokenResult)tmp).getRowCount();
                }
+               else if (tmp instanceof PacketOutputParamResult)
+               {
+                  if (CallableStatement_base.class.isInstance(this))
+                  {
+                     ((CallableStatement_base)this).addOutputParam(
+                        ((PacketOutputParamResult)tmp).getValue());
+                  }
+               }
                else if (tmp.getPacketType()
                         == TdsDefinitions.TDS_RET_STAT_TOKEN)
                {
                   // nop
+               }
+               else if (tmp instanceof PacketMsgResult)
+               {
+                  exception = warningChain.addOrReturn((PacketMsgResult)tmp);
+                  if (exception != null)
+                  {
+                     throw exception;
+                  }
                }
                else
                {
@@ -477,7 +494,7 @@ public class PreparedStatement_base
     */
    public void setBoolean(int parameterIndex, boolean x) throws SQLException
    {
-      setParam(parameterIndex, x ? "1" : "0", java.sql.Types.CHAR, 1);
+      setParam(parameterIndex, new Boolean(x), java.sql.Types.BIT, -1);
    }
 
 
@@ -531,11 +548,17 @@ public class PreparedStatement_base
    public void setDate(int parameterIndex, java.sql.Date value)
       throws SQLException
    {
-
+      if (value == null)
+      {
+         setParam(parameterIndex, null, java.sql.Types.DATE, -1);
+      }
+      else
+      {
       setParam(parameterIndex,
                new java.sql.Date(value.getYear(), value.getMonth(), value.getDate()),
                java.sql.Types.DATE,
                -1);
+      }      
    }
 
 
@@ -591,7 +614,14 @@ public class PreparedStatement_base
     */
    public void setLong(int parameterIndex, long value) throws SQLException
    {
-      setParam(parameterIndex, new Long(value), java.sql.Types.BIGINT, -1);
+      if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE)
+      {
+         setParam(parameterIndex, new Integer((int)value), java.sql.Types.INTEGER, -1);
+      }
+      else
+      {
+         setParam(parameterIndex, new Long(value), java.sql.Types.NUMERIC, 0);
+      }
    }
 
 
@@ -686,7 +716,7 @@ public class PreparedStatement_base
     * @param value   (in-only)
     * @param type    (in-only) JDBC type
     */
-   private void setParam(
+   protected void setParam(
       int    index,
       Object value,
       int    type,
@@ -715,6 +745,46 @@ public class PreparedStatement_base
       parameterList[index].maxLength = strLength;
    } // setParam()
 
+
+   protected static Map getTypemap()
+   {
+      if (typemap != null)
+         return typemap;
+      
+      Map map = new java.util.HashMap(15);
+      map.put(BigDecimal.class,         new Integer(java.sql.Types.NUMERIC));
+      map.put(Boolean.class,            new Integer(java.sql.Types.BIT));
+      map.put(Byte.class,               new Integer(java.sql.Types.TINYINT));
+      map.put(byte[].class,             new Integer(java.sql.Types.VARBINARY));
+      map.put(java.sql.Date.class,      new Integer(java.sql.Types.DATE));
+      map.put(Double.class,             new Integer(java.sql.Types.DOUBLE));
+      map.put(float.class,              new Integer(java.sql.Types.REAL));
+      map.put(Integer.class,            new Integer(java.sql.Types.INTEGER));
+      map.put(Long.class,               new Integer(java.sql.Types.NUMERIC));
+      map.put(Short.class,              new Integer(java.sql.Types.SMALLINT));
+      map.put(String.class,             new Integer(java.sql.Types.VARCHAR));
+      map.put(java.sql.Timestamp.class, new Integer(java.sql.Types.TIMESTAMP));
+
+      typemap = map;
+      return typemap;
+   }
+
+   protected static int getType(Object o) throws SQLException
+   {
+      if (o == null)
+      {
+         throw new SQLException("You must specify a type for a null parameter");
+      }
+
+      Map map = getTypemap();
+      Object ot = map.get(o.getClass());
+      if (ot == null)
+      {
+         throw new SQLException("Support for this type is not implemented");
+      }
+      return ((Integer)ot).intValue();
+   }
+   
 
    //----------------------------------------------------------------------
    // Advanced features:
@@ -762,7 +832,7 @@ public class PreparedStatement_base
          setLong(parameterIndex,((Integer)x).longValue());
          break;       
        default: 
-         throw new SQLException("Not implemented");
+      setParam(parameterIndex, x, targetSqlType, scale);
      }
    }
 
@@ -793,7 +863,7 @@ public class PreparedStatement_base
     */
    public void setString(int index, String str) throws SQLException
    {
-      int len  = str.length();
+      int len = (str == null ? -1 : str.length());
       if (len==0)
       {
          // In SQL trailing spaces aren't significant.  SQLServer uses

@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.4 2001-09-18 08:38:07 aschoerk Exp $";
 
 
     public PacketRowResult( Context context )
@@ -169,20 +169,55 @@ public class PacketRowResult extends PacketResult {
                         break;
                     }
                     case java.sql.Types.TINYINT:
+                    {
+                      if (! (tmp instanceof Number))
+                      {
+                         throw new SQLException("Internal error");
+                      }
+
+                      result = new Byte(((Number)tmp).byteValue());
+                      break;
+                    }
                     case java.sql.Types.SMALLINT:
+                    {
+                      if (! (tmp instanceof Number))
+                      {
+                         throw new SQLException("Internal error");
+                      }
+
+                      result = new Short(((Number)tmp).shortValue());
+                      break;
+                    }
                     case java.sql.Types.INTEGER:
+                    {
+                      if (! (tmp instanceof Number))
+                      {
+                         throw new SQLException("Internal error");
+                      }
+
+                      result = new Integer(((Number)tmp).intValue());
+                      break;
+                    }
                     case java.sql.Types.BIGINT:
                     {
-                        if ( tmp instanceof Long ) {
-                            return tmp;
-                        }
-                        else if ( tmp instanceof Number ) {
-                            return new Long( ((Number)tmp).longValue() );
-                        }
-                        throw new SQLException(
-                            "Could not convert Integer data from " + tmp.getClass().getName() );
+                      if (! (tmp instanceof Number))
+                      {
+                         throw new SQLException("Internal error");
+                      }
+
+                      result = new Long(((Number)tmp).longValue());
+                      break;
                     }
                     case java.sql.Types.REAL:
+                    {
+                      if (! (tmp instanceof Float))
+                      {
+                         throw new SQLException("Internal error");
+                      }
+
+                      result = (Float)tmp;
+                      break;
+                    }
                     case java.sql.Types.FLOAT:
                     case java.sql.Types.DOUBLE:
                     {

@@ -74,10 +74,12 @@ public class CallableStatement_base
    extends com.internetcds.jdbc.tds.PreparedStatement_base
    implements java.sql.CallableStatement
 {
-   public static final String cvsVersion = "$Id: CallableStatement_base.java,v 1.4 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: CallableStatement_base.java,v 1.5 2001-09-18 08:38:07 aschoerk Exp $";
 
 
    private String   procedureName = null;
+   private boolean  lastWasNull = false;
+   private int lastOutParam = -1;
 
 
    public CallableStatement_base(
@@ -90,6 +92,9 @@ public class CallableStatement_base
 
       procedureName = "";
       i = 0;
+      int pos = sql.indexOf("{call ");
+      if (pos >= 0)
+      	 i = pos + 6;
       while(i<sql.length()
             && (!
                 (Character.isLetterOrDigit(sql.charAt(i))
@@ -113,8 +118,34 @@ public class CallableStatement_base
       }
    }
 
+   /**
+    * read one element from the parameter list
+    *
+    * @param index   (in-only) index (first column is 1) of the parameter
+    * @param value   (in-only)
+    * @param type    (in-only) JDBC type
+    */
+   private Object getParam(
+      int    index)  
+      throws SQLException
+   {
+      if (index < 1)
+      {
+         throw new SQLException("Invalid Parameter index " 
+                                + index + ".  JDBC indexes start at 1.");
+      }
+      if (index > parameterList.length)
+      {
+         throw new SQLException("Invalid Parameter index " 
+                                + index + ".  This statement only has "
+                                + parameterList.length + " parameters");
+      }
 
-
+      // JDBC indexes start at 1, java array indexes start at 0 :-(
+      index--;
+      lastWasNull = (parameterList[index] == null);
+      return parameterList[index].value;
+   }
 
    /**
     * Get the value of a NUMERIC parameter as a java.math.BigDecimal object.
@@ -144,7 +175,19 @@ public class CallableStatement_base
     */
    public boolean getBoolean(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+        return false;
+      }	
+      try
+      {
+        return ((Boolean)value).booleanValue();
+      }
+      catch (Exception e)
+      {
+        throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -157,7 +200,19 @@ public class CallableStatement_base
     */
    public byte getByte(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+         return 0;
+      }	
+      try
+      {
+         return ((Number)value).byteValue();
+      }
+      catch (Exception e)
+      {
+         throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -170,7 +225,19 @@ public class CallableStatement_base
     */
    public byte[] getBytes(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+         return null;
+      }	
+      try
+      {
+         return (byte[])value;
+      }
+      catch (Exception e)
+      {
+         throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -196,7 +263,19 @@ public class CallableStatement_base
     */
    public double getDouble(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+         return 0;
+      }	
+      try
+      {
+         return ((Number)value).doubleValue();
+      }
+      catch (Exception e)
+      {
+         throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -209,7 +288,19 @@ public class CallableStatement_base
     */
    public float getFloat(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+         return 0;
+      }	
+      try
+      {
+         return ((Number)value).floatValue();
+      }
+      catch (Exception e)
+      {
+         throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -222,7 +313,19 @@ public class CallableStatement_base
     */
    public int getInt(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+         return 0;
+      }	
+      try
+      {
+         return ((Number)value).intValue();
+      }
+      catch (Exception e)
+      {
+         throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -235,7 +338,19 @@ public class CallableStatement_base
     */
    public long getLong(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+         return 0;
+      }	
+      try
+      {
+         return ((Number)value).longValue();
+      }
+      catch (Exception e)
+      {
+         throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -261,7 +376,7 @@ public class CallableStatement_base
     */
    public Object getObject(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      return getParam(parameterIndex);
    }
 
 
@@ -274,7 +389,19 @@ public class CallableStatement_base
     */
    public short getShort(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      if (value == null)
+      {
+        return 0;
+      }	
+      try
+      {
+        return ((Number)value).shortValue();
+      }
+      catch (Exception e)
+      {
+        throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -287,7 +414,15 @@ public class CallableStatement_base
     */
    public String getString(int parameterIndex) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      Object value = getParam(parameterIndex);
+      try
+      {
+        return (String)value;
+      }
+      catch (Exception e)
+      {
+        throw new SQLException("Unable to convert parameter");
+      }
    }
 
 
@@ -337,7 +472,7 @@ public class CallableStatement_base
    public void registerOutParameter(int parameterIndex, int sqlType)
       throws SQLException
    {
-      throw new SQLException("Not implemented");
+      registerOutParameter(parameterIndex, sqlType, -1);
    }
 
 
@@ -359,7 +494,8 @@ public class CallableStatement_base
    public void registerOutParameter(int parameterIndex, int sqlType, int scale)
       throws SQLException
    {
-      throw new SQLException("Not implemented");
+      setParam(parameterIndex, null, sqlType, scale);
+      parameterList[parameterIndex - 1].isOutput = true;
    }
 
 
@@ -376,7 +512,7 @@ public class CallableStatement_base
     */
    public boolean wasNull() throws SQLException
    {
-      throw new SQLException("Not implemented");
+      return lastWasNull;
    }
 
    public boolean execute()
@@ -386,6 +522,7 @@ public class CallableStatement_base
 
       closeResults();
       updateCount = -2;
+      lastOutParam = -1;
 
       // First make sure the caller has filled in all the parameters.
       ParameterUtils.verifyThatParametersAreSet(parameterList);
@@ -500,7 +637,18 @@ public class CallableStatement_base
       return null;
    }
 
-
+   protected void addOutputParam(Object value)
+   {
+      for (lastOutParam++; lastOutParam < parameterList.length; lastOutParam++)
+      {
+         if (parameterList[lastOutParam].isOutput)
+         {
+            parameterList[lastOutParam].value = value;
+	    return;
+         }
+      }
+      // ERROR: More parameters received than expected
+   }
 
    /**
     * JDBC 2.0

@@ -37,7 +37,7 @@ package com.internetcds.jdbc.tds;
 
 public class ParameterListItem implements Cloneable
 {
-   public static final String cvsVersion = "$Id: ParameterListItem.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: ParameterListItem.java,v 1.3 2001-09-18 08:38:07 aschoerk Exp $";
 
 
    //   public int      length     = -1;            
@@ -78,6 +78,12 @@ public class ParameterListItem implements Cloneable
    // of the setXXX() methods.
    public Object   value      = null;               
 
+   // True if the actual parameter is an input parameter
+   public boolean  isInput    = true;
+
+   // True if the actual parameter is an output parameter.  This value
+   // is set by one of the registerOutParam functions.
+   public boolean  isOutput   = false;
 
    /**
     * unset all information about the parameter.  
@@ -93,6 +99,8 @@ public class ParameterListItem implements Cloneable
       value      = null;               
       formalName = null;               
       formalType = null;               
+      isInput    = true;               
+      isOutput   = false;              
    }
 
    public Object clone()

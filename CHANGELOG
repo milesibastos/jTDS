@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/09/2005 - Alin Sinpalean
+ o Applied patch [1155902] Implement parameter meta data retrieval, by Oded
+   Arbel. Parameter mode was always returning parameterModeUnknown; now mode
+   is determined based on actual parameters.
+
 03/07/2005 - Alin Sinpalean
  o Partially fixed bug [1158509] Various problems with connect/login timeouts.
    FAQ was inexact (stated that loginTimeout was in milliseconds) and

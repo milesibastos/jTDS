@@ -20,15 +20,15 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 /**
- * jTDS implementation of ParameterMetaData.
- * <p>
- * For Sybase it is usually possible to obtain true
- * parameter data for prepared statements. For Microsoft just
- * return some reasonable defaults.
+ * jTDS implementation of <code>ParameterMetaData</code>.
+ * <p/>
+ * For Sybase it is usually possible to obtain true parameter data for prepared
+ * statements. For Microsoft just use information determined from the actual
+ * parameters if set or return some reasonable defaults otherwise.
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ParameterMetaDataImpl.java,v 1.4 2004-08-24 17:45:01 bheineman Exp $
+ * @version $Id: ParameterMetaDataImpl.java,v 1.5 2005-03-09 12:51:56 alin_sinpalean Exp $
  */
 public class ParameterMetaDataImpl implements ParameterMetaData {
     private ParamInfo[] parameterList;
@@ -94,9 +94,13 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
     }
 
     public int getParameterMode(int param) throws SQLException {
-        getParameter(param);
+        ParamInfo pi = getParameter(param);
 
-        return ParameterMetaData.parameterModeUnknown;
+        if (pi.isOutput) {
+             return pi.isSet ? parameterModeInOut : parameterModeOut;
+        }
+
+        return pi.isSet ? parameterModeIn : parameterModeUnknown;
     }
 
     private ParamInfo getParameter(int param) throws SQLException {

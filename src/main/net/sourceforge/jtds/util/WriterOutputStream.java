@@ -23,7 +23,7 @@ import java.io.*;
 * Provides the opposite functionality of OutputStreamWriter.
 *
 * @author Brian Heineman
-* @version $Id: WriterOutputStream.java,v 1.3 2004-08-24 17:45:07 bheineman Exp $
+* @version $Id: WriterOutputStream.java,v 1.4 2004-08-24 19:17:07 bheineman Exp $
 */
 public class WriterOutputStream extends OutputStream {
     protected Writer _writer;
@@ -91,7 +91,7 @@ public class WriterOutputStream extends OutputStream {
     }
     
     public synchronized void close() throws IOException {
-        if (writer != null) {
+        if (_writer != null) {
             _writer.close();
             _writer = null;
         }

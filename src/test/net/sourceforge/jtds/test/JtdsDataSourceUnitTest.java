@@ -10,6 +10,12 @@ import javax.naming.NamingException;
 
 
 
+/**
+ * Unit tests for the {@link JtdsDataSource} class.
+ * 
+ * @author David D. Kilzer
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.5 2004-08-16 18:43:05 ddkilzer Exp $
+ */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
     /**
@@ -92,6 +98,13 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {
 
+                            // Hack for JtdsDataSource.getTds()
+                            {
+                                if ("tdsVersion".equals(fieldName)) {
+                                    fieldName = "tds";
+                                }
+                            }
+
                             JtdsDataSource dataSource = new JtdsDataSource();
                             String actual = 
                                     String.valueOf(
@@ -100,14 +113,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
                                                     "get" + ucFirst(fieldName),
                                                     new Class[]{}, new Object[]{}));
                             assertEquals(message, expected, actual);
-                        }
-
-                        private String ucFirst(String s) {
-                            if (s == null || s.length() == 0) return s;
-                            if (s.length() == 1) {
-                                return s.toUpperCase();
-                            }
-                            return s.substring(0, 1).toUpperCase() + s.substring(1);
                         }
                     }
             );

@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.7 2004-08-07 03:20:38 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.8 2004-08-16 18:43:00 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -88,13 +88,13 @@ public final class DefaultProperties {
     /** Default <code>serverType</code> property for Sybase. */
     public static final String SERVER_TYPE_SYBASE = "sybase";
 
-    /** Default <code>tdsVersion</code> property for TDS 4.2. */
+    /** Default <code>tds</code> property for TDS 4.2. */
     public static final String TDS_VERSION_42 = "4.2";
-    /** Default <code>tdsVersion</code> property for TDS 5.0. */
+    /** Default <code>tds</code> property for TDS 5.0. */
     public static final String TDS_VERSION_50 = "5.0";
-    /** Default <code>tdsVersion</code> property for TDS 7.0. */
+    /** Default <code>tds</code> property for TDS 7.0. */
     public static final String TDS_VERSION_70 = "7.0";
-    /** Default <code>tdsVersion</code> property for TDS 8.0. */
+    /** Default <code>tds</code> property for TDS 8.0. */
     public static final String TDS_VERSION_80 = "8.0";
 
 

@@ -1,6 +1,11 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/16/2004 - David Kilzer
+ o New JtdsObjectFactoryUnitTest class used to test JtdsObjectFactory class.
+ o Pulled ucFirst() method out of JtdsDataSourceUnitTest class into
+   DefaultPropertiesTestLibrary class.
+
 08/16/2004 - Brian Heineman
  o Corrected bug [966274] Trusted Connections no longer work; (thanks to Mike
    Hutchinson for the patch and all the users who helped to find the problem).

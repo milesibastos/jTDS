@@ -869,6 +869,17 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     param[crtCol].formalName = '@' + cols.getName(i);
                     param[crtCol].maxLength = cols.getBufferSize(i);
                     param[crtCol].scale = cols.getScale(i);
+
+                    if (param[crtCol].value instanceof Blob) {
+                        Blob blob = (Blob) param[crtCol].value;
+
+                        param[crtCol].value = blob.getBytes(1, (int) blob.length());
+                    } else if (param[crtCol].value instanceof Clob) {
+                        Clob clob = (Clob) param[crtCol].value;
+
+                        param[crtCol].value = clob.getSubString(1, (int) clob.length());
+                    }
+
                     // This is only for Tds.executeProcedureInternal to
                     // know that it's a Unicode column
                     switch (cols.getNativeType(i)) {

@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.4 2004-02-05 19:00:31 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.5 2004-03-27 04:48:17 bheineman Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.4 2004-02-05 19:00:31 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.5 2004-03-27 04:48:17 bheineman Exp $";
 
    /**
     * Does not allow NULL values.
@@ -496,6 +496,9 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
        case Types.LONGVARCHAR:
            return "java.lang.String";
 
+       case Types.CLOB:
+           return "java.sql.Clob";
+
        case Types.DATE:
        case Types.TIME:
        case Types.TIMESTAMP:
@@ -506,12 +509,13 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
        case Types.LONGVARBINARY:
            return "byte[]";
 
+       case Types.BLOB:
+           return "java.sql.Blob";
+
        case Types.JAVA_OBJECT:
        case Types.DISTINCT:
        case Types.STRUCT:
        case Types.ARRAY:
-       case Types.BLOB:
-       case Types.CLOB:
        case Types.REF:
        default:
            // SAfe Or should this be null?

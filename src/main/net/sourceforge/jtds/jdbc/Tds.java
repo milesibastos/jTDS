@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.22 2004-01-30 04:44:40 bheineman Exp $
+ *@version    $Id: Tds.java,v 1.23 2004-01-30 18:01:55 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -100,15 +100,16 @@ public class Tds implements TdsDefinitions
     private String databaseProductName;
     private String databaseProductVersion;
     private int databaseMajorVersion;
+    private int databaseMinorVersion;
 
     private TdsConnection connection;
-    // @todo SAfe Remove this field
-    private TdsStatement statement;
+
+    /** Tds version we're using. */
+    private int tdsVer = Tds.TDS70;
+
     private String host;
-    private int serverType = -1;
-    // either Tds.SYBASE or Tds.SQLSERVER
-    private int port;
-    // Port numbers are _unsigned_ 16 bit, short is too small
+    private int serverType = -1; // either Tds.SYBASE or Tds.SQLSERVER
+    private int port;            // Port numbers are _unsigned_ 16 bit, short is too small
     private String database;
     private String user;
     private String password;
@@ -117,16 +118,23 @@ public class Tds implements TdsDefinitions
     private String progName;
     private String domain;   //mdb: used for NTLM authentication; if blank, then use sql auth.
 
+    /**
+     * If set, character parameters are sent as Unicode (NTEXT, NVARCHAR),
+     * otherwise they are sent using the default encoding.
+     */
+    private boolean useUnicode;
+
+    // Commented out as part of fix for bug 822544
+    /*
     private String procNameGeneratorName = null;
     private String procNameTableName = null;
+    */
 
     // SAfe Access to both of these fields is synchronized on procedureCache
     private HashMap   procedureCache = null;
     private ArrayList proceduresOfTra = null;
 
     private CancelController cancelController = null;
-
-    private SqlMessage lastServerMessage = null;
 
     private EncodingHelper encoder = null;
     private String charset = null;
@@ -136,22 +144,15 @@ public class Tds implements TdsDefinitions
      */
     private boolean charsetSpecified = false;
 
-    // Jens Jakobsen 1999-01-10
-    // Until TDS_END_TOKEN is reached we assume that there are outstanding
-    // UpdateCounts or ResultSets
+    /** True as long as there is incoming data available. */
     private boolean moreResults = true;
 
-    // Added 2000-06-07.  Used to control TDS version-specific behavior.
-    private int tdsVer = Tds.TDS70;
-
-    // RMK 2000-06-12.  Time zone offset on client (disregarding DST).
+    /** Time zone offset on client (disregarding DST). */
     private final int zoneOffset = Calendar.getInstance().get(Calendar.ZONE_OFFSET);
 
     private int maxRows = 0;
-    /**
-     *  Description of the Field
-     */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.22 2004-01-30 04:44:40 bheineman Exp $";
+
+    public final static String cvsVersion = "$Id: Tds.java,v 1.23 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -167,12 +168,6 @@ public class Tds implements TdsDefinitions
      * The context of the result set currently being parsed.
      */
     private Context currentContext;
-
-    /**
-     * If set character parameters are sent as Unicode (NTEXT, NVARCHAR),
-     * otherwise they are sent using the default encoding.
-     */
-    private boolean useUnicode;
 
     public Tds(
             TdsConnection connection_,
@@ -238,40 +233,25 @@ public class Tds implements TdsDefinitions
         autoCommit = connection.getAutoCommit();
         transactionIsolationLevel = connection.getTransactionIsolation();
 
-        if( !logon(props_.getProperty(PROP_DBNAME)) )
-            throw new SQLException("Logon failed.  " + lastServerMessage);
+        try {
+            logon(props_.getProperty(PROP_DBNAME));
+        } catch( SQLException ex ) {
+            throw new SQLException("Logon failed.  " + ex.getMessage(),
+                ex.getSQLState(),
+                ex.getErrorCode());
+        }
     }
 
     /**
-     * Set the <code>TdsStatement</code> currently using the Tds.
-     */
-    public void setStatement(TdsStatement s)
-    {
-        statement = s;
-    }
-
-    /**
-     * Get the <code>Statement</code> currently using the Tds.
-     */
-    public TdsStatement getStatement()
-    {
-        return statement;
-    }
-
-    /**
-     * Get the <code>Statement</code> currently using the Tds.
+     * The current working DB.
      */
     public String getDatabase()
     {
         return database;
     }
 
-    /*
-     * cvtNativeTypeToJdbcType()
-     */
-
     /**
-     * Return the type of server that we attempted to connect to.
+     * The type of server that we connect to.
      *
      * @return    TdsDefinitions.SYBASE or TdsDefinitions.SQLSERVER
      */
@@ -318,7 +298,7 @@ public class Tds implements TdsDefinitions
             if (!rs.next()) {
                 throw new SQLException("Couldn't get stored proc name [NEWID()]");
             }
-            
+
             String result = rs.getString(1);
 
             stmt.close();
@@ -331,10 +311,10 @@ public class Tds implements TdsDefinitions
             // prefix the name with "jTDS" so that the procedures can be deleted easily
             // by a system administrator.
             return "jTDS" + result.substring(6, 8) + result.substring(9, 13)
-             + result.substring(14, 18) + result.substring(19, 23) + result.substring(24);
+                    + result.substring(14, 18) + result.substring(19, 23) + result.substring(24);
 
-// Commented out as part of fix for bug 822544
-/*
+            // Commented out as part of fix for bug 822544
+            /*
             if (null == procNameTableName) {
                 procNameTableName = database + "." + user
                          + ".jdbc_temp_stored_proc_names";
@@ -350,7 +330,7 @@ public class Tds implements TdsDefinitions
             createStoredProcedureNameTable();
 
             return generateUniqueProcName();
-*/            
+            */
         } else {
             return "#jdbc#" + UniqueId.getUniqueId();
         }
@@ -589,18 +569,6 @@ public class Tds implements TdsDefinitions
 
             changeSettings(sqlStatementToInitialize());
         }
-        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
-            wChain.addException(
-                new SQLException("Unknown response. " + e.getMessage()));
-        }
-        catch (java.io.IOException e) {
-            wChain.addException(
-                new SQLException("Network problem. " + e.getMessage()));
-        }
-        catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(
-                new SQLException(e.getMessage()));
-        }
         catch( SQLException ex )
         {
             wChain.addException(ex);
@@ -626,42 +594,80 @@ public class Tds implements TdsDefinitions
 
     /**
      * @param  sql               Description of Parameter
-     * @param  chain             Description of Parameter
+     * @param  wChain             Description of Parameter
      * @exception  SQLException  Description of Exception
      */
-    public synchronized void submitProcedure(String sql, SQLWarningChain chain) throws SQLException
+    public synchronized void submitProcedure(String sql, SQLWarningChain wChain)
+        throws SQLException
     {
-        PacketResult tmp = null;
+        PacketResult res = null;
 
         try {
-            executeQuery(sql, null, null, 0);
+            executeQuery(sql, null, wChain, 0);
 
-            boolean done;
-            do  // skip to end, why not ?
+            // Skip to end
+            do
             {
-               tmp = processSubPacket();
-               if( tmp instanceof PacketMsgResult )
-                   chain.addOrReturn((PacketMsgResult)tmp);
-               done = (tmp instanceof PacketEndTokenResult)
-                  && (! ((PacketEndTokenResult)tmp).moreResults());
-            } while (! done);
+               res = processSubPacket();
+               if( res instanceof PacketMsgResult )
+                   wChain.addOrReturn((PacketMsgResult)res);
+            } while( moreResults );
         }
         catch (java.io.IOException e) {
-            throw new SQLException("Network error" + e.getMessage());
+            wChain.addException(new SQLException(
+                    "Network problem. " + e.getMessage()));
         }
         catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
-            throw new SQLException(e.getMessage());
+            wChain.addException(new SQLException(
+                    "Unknown response. " + e.getMessage()));
         }
         catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            throw new SQLException(e.getMessage());
+            wChain.addException(new SQLException(e.toString()));
+        }
+    }
+
+    /**
+     * Execute a stored procedure on the SQLServer.<p>
+     *
+     * @param  procedureName
+     * @param  formalParameterList
+     * @param  actualParameterList
+     * @param  stmt
+     * @param  timeout
+     * @exception  java.sql.SQLException
+     */
+    public void executeProcedure(
+            String procedureName,
+            ParameterListItem[] formalParameterList,
+            ParameterListItem[] actualParameterList,
+            TdsStatement stmt,
+            SQLWarningChain wChain,
+            int timeout,
+            boolean noMetaData)
+            throws java.sql.SQLException
+    {
+        try {
+            executeProcedureInternal(procedureName, formalParameterList,
+                    actualParameterList, stmt, wChain, timeout, noMetaData);
+        }
+        catch (java.io.IOException e) {
+            wChain.addException(new SQLException(
+                    "Network problem. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+            wChain.addException(new SQLException(
+                    "Unknown response. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+            wChain.addException(new SQLException(e.toString()));
         }
 
-        chain.checkForExceptions();
+        wChain.checkForExceptions();
     }
 
 
     /**
-     *  Execute a stored procedure on the SQLServer.<p>
+     * Execute a stored procedure on the SQLServer.<p>
      *
      * @param  procedureName
      * @param  formalParameterList
@@ -671,24 +677,25 @@ public class Tds implements TdsDefinitions
      * @exception  java.sql.SQLException
      * @exception  net.sourceforge.jtds.jdbc.TdsException
      */
-    public synchronized void executeProcedure(
+    private synchronized void executeProcedureInternal(
             String procedureName,
             ParameterListItem[] formalParameterList,
             ParameterListItem[] actualParameterList,
             TdsStatement stmt,
             SQLWarningChain wChain,
-            int timeout)
+            int timeout,
+            boolean noMetaData)
              throws java.sql.SQLException, net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
     {
         // SAfe We need to check if all cancel requests were processed and wait
         //      for any outstanding cancel. It could happen that we sent the
         //      CANCEL after the server sent us all the data, so the answer is
         //      going to come in a packet of its own.
-        if( cancelController.outstandingCancels() > 0 )
+        while( cancelController.outstandingCancels() > 0 )
         {
+            waitForDataOrTimeout(wChain, timeout);
+            // @todo Make sure the statement/resultset are not left in an inconsistent state.
             processSubPacket();
-            if( cancelController.outstandingCancels() > 0 )
-                throw new SQLException("Something went completely wrong. A cancel request was lost.");
         }
 
         // A stored procedure has a packet type of 0x03 in the header packet.
@@ -739,7 +746,7 @@ public class Tds implements TdsDefinitions
             // SAfe I think if this is set to 2 it means "don't return column
             //      information" (useful for scrollable statements, to reduce
             //      the amount of data passed around).
-            comm.appendShort((byte) 0);
+            comm.appendShort((short) (noMetaData ? 512 : 0));
 
             // Now handle the parameters
             for( i=0; i<formalParameterList.length; i++ ) {
@@ -1024,36 +1031,58 @@ public class Tds implements TdsDefinitions
             this.maxRows = maxRows;
         }
     }
+
     /**
-     *  send a query to the SQLServer for execution. <p>
+     * Send a query to the SQLServer for execution.
      *
-     *
-     *
-     *@param  sql                                        sql statement to
-     *      execute.
-     *@param  stmt
-     *@param  timeout
-     *@exception  java.io.IOException
-     *@exception  java.sql.SQLException                  Description of
-     *      Exception
-     *@exception  TdsException                           Description of
-     *      Exception
+     * @param  sql    sql statement to execute.
+     * @param  stmt
+     * @param  timeout
+     * @exception  java.sql.SQLException
      */
-    public synchronized void executeQuery(String sql, TdsStatement stmt, SQLWarningChain wChain, int timeout)
+    public void executeQuery(String sql, TdsStatement stmt,
+                             SQLWarningChain wChain, int timeout)
+            throws SQLException {
+        try {
+            executeQueryInternal(sql, stmt, wChain, timeout);
+        }
+        catch (java.io.IOException e) {
+            wChain.addException(new SQLException(
+                    "Network problem. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+            wChain.addException(new SQLException(
+                    "Unknown response. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+            wChain.addException(new SQLException(e.toString()));
+        }
+
+        wChain.checkForExceptions();
+    }
+
+    /**
+     * Send a query to the SQLServer for execution.
+     *
+     * @param  sql    sql statement to execute.
+     * @param  stmt
+     * @param  timeout
+     * @exception  java.io.IOException
+     * @exception  java.sql.SQLException
+     * @exception  TdsException
+     */
+    private synchronized void executeQueryInternal(String sql, TdsStatement stmt, SQLWarningChain wChain, int timeout)
         throws java.io.IOException, java.sql.SQLException, TdsException
     {
         // SAfe We need to check if all cancel requests were processed and wait
         //      for any outstanding cancel. It could happen that we sent the
         //      CANCEL after the server sent us all the data, so the answer is
         //      going to come in a packet of its own.
-        if( cancelController.outstandingCancels() > 0 )
+        while( cancelController.outstandingCancels() > 0 )
         {
             waitForDataOrTimeout(wChain, timeout);
-            // @todo Cycle until we have a cancel confirmation. Also, make sure
-            //       the statement/resultset are not left in a wrong state.
+            // @todo Make sure the statement/resultset are not left in an inconsistent state.
             processSubPacket();
-            if( cancelController.outstandingCancels() > 0 )
-                throw new SQLException("Something went completely wrong. A cancel request was lost.");
         }
 
         checkMaxRows(stmt);
@@ -1085,45 +1114,6 @@ public class Tds implements TdsDefinitions
         }
     }
 
-
-    /**
-     * Skip over and discard any remaining data from a result set.
-     *
-     * @param  row  Description of Parameter
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-    public synchronized void discardResultSet(PacketRowResult row, TdsStatement stmt)
-             throws SQLException, java.io.IOException, TdsException
-    {
-        if( !moreResults )
-            return;
-
-        while ( isResultRow()) {
-            comm.skip(1);
-            if ( row != null ) {
-                loadRow( row );
-            }
-            if ( Logger.isActive() ) {
-                Logger.println( "Discarded row." );
-            }
-        }
-
-        // SAfe Process everything up to the next TDS_DONE or TDS_DONEINPROC
-        //      packet (there must be one, so we won't check the end of the
-        //      stream.
-        while( !isEndOfResults() )
-            processSubPacket();
-
-        // SAfe Then, eat up any uninteresting packets.
-        goToNextResult(new SQLWarningChain(), stmt);
-    }
-
-    public synchronized void discardResultSet(TdsStatement stmt)
-             throws SQLException, java.io.IOException, TdsException
-    {
-        discardResultSet(new PacketRowResult(currentContext), stmt);
-    }
 
     public synchronized byte peek()
              throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException
@@ -1157,21 +1147,18 @@ public class Tds implements TdsDefinitions
 
             PacketResult res = processSubPacket();
 
-            if( res instanceof PacketOutputParamResult && isCallableStmt )
-            {
-                ((CallableStatement_base)stmt).addOutputParam(
-                    ((PacketOutputParamResult)res).getValue() );
-            }
+            if( res instanceof PacketMsgResult )
+                warningChain.addOrReturn( (PacketMsgResult)res );
+            else if( res instanceof PacketOutputParamResult )
+                stmt.handleParamResult( (PacketOutputParamResult)res );
+            else if( res instanceof PacketRetStatResult )
+                stmt.handleRetStat((PacketRetStatResult)res);
             else if( res instanceof PacketEndTokenResult )
             {
                 if( ((PacketEndTokenResult)res).wasCanceled() )
                     warningChain.addException(
-                        new SQLException("Query was canceled or timed out."));
+                        new SQLException("Query was cancelled or timed out."));
             }
-            else if( res instanceof PacketMsgResult )
-                warningChain.addOrReturn( (PacketMsgResult)res );
-            else if( res instanceof PacketRetStatResult )
-                stmt.handleRetStat((PacketRetStatResult)res);
         }
     }
 
@@ -1215,13 +1202,22 @@ public class Tds implements TdsDefinitions
     /**
      * Return the major version that this database server program identifies itself with.
      *
-     * @return    The databaseMajorVersion value
+     * @return    the <code>databaseMajorVersion</code> value
      */
     int getDatabaseMajorVersion()
     {
         return databaseMajorVersion;
     }
 
+    /**
+     * Return the minor version that this database server program identifies itself with.
+     *
+     * @return    the <code>databaseMinorVersion</code> value
+     */
+    int getDatabaseMinorVersion()
+    {
+        return databaseMinorVersion;
+    }
 
 
    /**
@@ -1397,26 +1393,21 @@ public class Tds implements TdsDefinitions
    }
 
     /**
-     *  Process a subpacket reply.<p>
+     * Process a subpacket reply.<p>
      *
-     *  <b>Note-</b> All subpackets must be processed through here. This is the
-     *  only routine has the proper locking to support the cancel method in the
-     *  Statement class. <br>
+     * <b>Note-</b> All subpackets must be processed through here. This is the
+     * only routine has the proper locking to support the cancel method in the
+     * Statement class. <br>
      *
-     *
-     *@return                                            packet subtype the was
-     *      processed.
-     *@exception  TdsUnknownPacketSubType                Description of
-     *      Exception
-     *@exception  java.io.IOException                    Description of
-     *      Exception
-     *@exception  net.sourceforge.jtds.jdbc.TdsException  Description of
-     *      Exception
+     * @return packet that was processed.
+     * @exception  TdsUnknownPacketSubType
+     * @exception  java.io.IOException
+     * @exception  TdsException
      */
     PacketResult processSubPacket()
              throws TdsUnknownPacketSubType,
             java.io.IOException,
-            net.sourceforge.jtds.jdbc.TdsException,
+            TdsException,
             SQLException
     {
         return processSubPacket(currentContext);
@@ -1424,25 +1415,19 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     *  Process a subpacket reply.<p>
+     * Process a subpacket reply.<p>
      *
-     *  <b>Note-</b> All subpackets must be processed through here. Only this
-     *  routine has the proper locking to support the cancel method in the
-     *  Statement class. <br>
+     * <b>Note-</b> All subpackets must be processed through here. Only this
+     * routine has the proper locking to support the cancel method in the
+     * Statement class. <br>
      *
-     *
-     *@param  context                                    Description of
-     *      Parameter
-     *@return                                            packet subtype the was
-     *      processed.
-     *@exception  TdsUnknownPacketSubType                Description of
-     *      Exception
-     *@exception  java.io.IOException                    Description of
-     *      Exception
-     *@exception  net.sourceforge.jtds.jdbc.TdsException  Description of
-     *      Exception
+     * @param  context
+     * @return packet that was processed.
+     * @exception  TdsUnknownPacketSubType
+     * @exception  java.io.IOException
+     * @exception  TdsException
      */
-    synchronized PacketResult processSubPacket(Context context)
+    private synchronized PacketResult processSubPacket(Context context)
              throws TdsUnknownPacketSubType,
             SQLException,
             java.io.IOException,
@@ -2328,18 +2313,16 @@ public class Tds implements TdsDefinitions
      *  here...no clue --</PRE> This routine will basically eat all of the data
      *  returned from the SQLServer.
      *
-     * @return     Description of the Returned Value
      * @exception  TdsUnknownPacketSubType
      * @exception  net.sourceforge.jtds.jdbc.TdsException
      * @exception  java.io.IOException
      * @exception  java.sql.SQLException
      */
-    private boolean logon(String _database)
+    private void logon(String _database)
              throws java.sql.SQLException,
             TdsUnknownPacketSubType, java.io.IOException,
             net.sourceforge.jtds.jdbc.TdsException
     {
-        boolean isOkay = true;
         byte pad = (byte) 0;
         byte[] empty = new byte[0];
 
@@ -2507,33 +2490,27 @@ public class Tds implements TdsDefinitions
             comm.packetType = 0;
         }
 
+        SQLWarningChain wChain = new SQLWarningChain();
 
         // Get the reply to the logon packet.
-        PacketResult result;
+        while( moreResults ) {
+            PacketResult res = processSubPacket();
 
-        while (!((result = processSubPacket()) instanceof PacketEndTokenResult)) {
-            if (result instanceof PacketErrorResult) {
-                isOkay = false;
+            if( res instanceof PacketMsgResult ) {
+                wChain.addOrReturn((PacketMsgResult)res);
             }
             // XXX Should really process some more types of packets.
 
             //mdb: handle ntlm challenge by sending a response...
-            if( result instanceof PacketAuthTokenResult )
-            {
-                sendNtlmChallengeResponse((PacketAuthTokenResult)result);
+            if( res instanceof PacketAuthTokenResult ) {
+                sendNtlmChallengeResponse((PacketAuthTokenResult)res);
             }
         }
+        wChain.checkForExceptions();
 
-        if (isOkay) {
-            // XXX Should we move this to the Connection class?
-            SQLWarningChain wChain = new SQLWarningChain();
-            initSettings(_database, wChain);
-            wChain.checkForExceptions();
-        }
-
-        // XXX Possible bug.  What happend if this is cancelled before the logon
-        // takes place?  Should isOkay be false?
-        return isOkay;
+        // XXX Should we move this to the Connection class?
+        initSettings(_database, wChain);
+        wChain.checkForExceptions();
     }
 
 
@@ -2559,7 +2536,7 @@ public class Tds implements TdsDefinitions
 
         //mdb:begin-change
         short packSize = (short)( 86 + 2 *
-               (clientName.length() +
+                (clientName.length() +
                 appName.length() +
                 serverName.length() +
                 libName.length() +
@@ -2603,30 +2580,24 @@ public class Tds implements TdsDefinitions
         comm.appendTdsShort((short) clientName.length());
         curPos += clientName.length() * 2;
 
-        // Username
-        //mdb: ntlm doesn't send username...
+        //mdb: NTLM doesn't send username and password...
         if( ! ntlmAuth )
         {
+            // Username
             comm.appendTdsShort(curPos);
             comm.appendTdsShort((short) user.length());
             curPos += user.length() * 2;
-        }
-        else
-        {
-            comm.appendTdsShort(curPos);
-            comm.appendTdsShort((short) 0);
-        }
 
-        // Password
-        //mdb: ntlm doesn't send username...
-        if( ! ntlmAuth )
-        {
+            // Password
             comm.appendTdsShort(curPos);
             comm.appendTdsShort((short) password.length());
             curPos += password.length() * 2;
         }
         else
         {
+            comm.appendTdsShort(curPos);
+            comm.appendTdsShort((short) 0);
+
             comm.appendTdsShort(curPos);
             comm.appendTdsShort((short) 0);
         }
@@ -2719,59 +2690,40 @@ public class Tds implements TdsDefinitions
      * Select a new database to use.
      *
      * @param  database                   Name of the database to use.
-     * @exception  java.sql.SQLException  Description of Exception
      */
     protected synchronized void changeDB(String database, SQLWarningChain wChain)
-             throws java.sql.SQLException
     {
+        int i;
+
+        // XXX Check to make sure the database name
+        // doesn't have funny characters.
+
+        if (database.length() > 32 || database.length() < 1) {
+            wChain.addException(
+                new SQLException("Name too long - " + database));
+        }
+
+        for (i = 0; i < database.length(); i++) {
+            char ch;
+            ch = database.charAt(i);
+            if (!
+                    ((ch == '_' && i != 0)
+                     || (ch >= 'a' && ch <= 'z')
+                     || (ch >= 'A' && ch <= 'Z')
+                     || (ch >= '0' && ch <= '9'))) {
+                         wChain.addException(
+                             new SQLException("Bad database name- " + database));
+            }
+        }
+
+        String query = tdsVer==TDS70 ?
+            ("use [" + database + ']') : "use " + database;
+
         try {
-            PacketResult result;
-            int i;
-
-            // XXX Check to make sure the database name
-            // doesn't have funny characters.
-
-            if (database.length() > 32 || database.length() < 1) {
-                wChain.addException(
-                    new SQLException("Name too long - " + database));
-            }
-
-            for (i = 0; i < database.length(); i++) {
-                char ch;
-                ch = database.charAt(i);
-                if (!
-                        ((ch == '_' && i != 0)
-                         || (ch >= 'a' && ch <= 'z')
-                         || (ch >= 'A' && ch <= 'Z')
-                         || (ch >= '0' && ch <= '9'))) {
-                             wChain.addException(
-                                 new SQLException("Bad database name- " + database));
-                }
-            }
-
-            String query = tdsVer==TDS70 ?
-                ("use [" + database + ']') : "use " + database;
-            executeQuery(query, null, null, 0);
-
-            // Get the reply to the change database request.
-            while (!((result = processSubPacket())
-                     instanceof PacketEndTokenResult)) {
-                if (result instanceof PacketMsgResult) {
-                    wChain.addOrReturn((PacketMsgResult)result);
-                }
-                // XXX Should really process some more types of packets.
-            }
-        }
-        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
-            wChain.addException(
-                new SQLException("Unknown response. " + e.getMessage()));
-        }
-        catch (java.io.IOException e) {
-            wChain.addException(
-                 new SQLException("Network problem. " + e.getMessage()));
-        }
-        catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(new SQLException(e.toString()));
+            submitProcedure(query, wChain);
+        } catch( SQLException ex ) {
+            // SAfe Have to do this because submitProcedure
+            wChain.addException(ex);
         }
     }
 
@@ -2821,7 +2773,6 @@ public class Tds implements TdsDefinitions
         }
 
         msg.line = comm.getTdsShort();
-        lastServerMessage = msg;
 
         if (packetSubType == TDS_ERROR) {
             return new PacketErrorResult(packetSubType, msg);
@@ -3085,7 +3036,6 @@ public class Tds implements TdsDefinitions
     // processTabName()
 
 
-
     /**
      *  Process an end subpacket. <p>
      *
@@ -3126,46 +3076,6 @@ public class Tds implements TdsDefinitions
 
         // XXX Problem handling cancels that were sent after the server
         //     send the endToken packet
-        return result;
-    }
-
-
-    private PacketDoneInProcResult processDoneInProc(
-            byte packetType)
-             throws SQLException, TdsException, java.io.IOException
-    {
-        byte status = comm.getByte();
-        comm.skip(3);
-        int rowCount = comm.getTdsInt();
-
-        PacketDoneInProcResult result = new PacketDoneInProcResult(packetType,
-                status,
-                rowCount);
-
-        if (!result.moreResults()) {
-            throw new TdsException("What? No more results with a DONEINPROC!");
-        }
-
-        if (result.moreResults() && peek() == TdsDefinitions.TDS_DONEINPROC) {
-            result = (PacketDoneInProcResult) processSubPacket();
-        }
-
-        while( result.moreResults() && (peek()==TdsDefinitions.TDS_PROCID || peek()==TdsDefinitions.TDS_RETURNSTATUS) )
-        {
-            if( peek() == TDS_PROCID )
-                processSubPacket();
-            else if( peek() == TDS_RETURNSTATUS )
-            {
-                PacketRetStatResult tmp = (PacketRetStatResult)processSubPacket();
-                result.setRetStat(tmp.getRetStat());
-            }
-        }
-        // XXX If we executed something that returns multiple result
-        // sets then we don't want to clear the query in progress flag.
-        // See the CancelController class for details.
-        cancelController.finishQuery(result.wasCanceled(),
-                result.moreResults());
-
         return result;
     }
 
@@ -3428,8 +3338,8 @@ public class Tds implements TdsDefinitions
               int dif = len - 17;
               scale -= dif * 2;
               if (scale < 0)
-                throw new TdsException("can´t sent this BigDecimal");
-              bd = bd.setScale(scale,BigDecimal.ROUND_HALF_UP);
+                throw new TdsException("can't sent this BigDecimal");
+              bd = bd.setScale(scale, BigDecimal.ROUND_HALF_UP);
               repeat = true;
             }
             else break;
@@ -3552,8 +3462,8 @@ public class Tds implements TdsDefinitions
     }
     // getRow()
 
-// Commented out as part of fix for bug 822544
-/*
+    // Commented out as part of fix for bug 822544
+    /*
     private boolean createStoredProcedureNameTable()
     {
         boolean result = false;
@@ -3601,9 +3511,9 @@ public class Tds implements TdsDefinitions
                          + "";
 
                 stmt.execute(sql);
-                stmt.execute("exec sp_procxmode "
-                             + procNameGeneratorName
-                             + ", 'anymode' ");
+                stmt.execute("exec sp_procxmode " +
+                        procNameGeneratorName +
+                        ", 'anymode' ");
             }
             catch (java.sql.SQLException e) {
                 // don't care
@@ -3638,7 +3548,7 @@ public class Tds implements TdsDefinitions
         }
         return rs.getString(1);
     }
-*/
+    */
 
     /*
      * executeProcedure()
@@ -3728,7 +3638,7 @@ public class Tds implements TdsDefinitions
             int nameLen = comm.getByte();
             databaseProductName = comm.getString(nameLen, encoder);
             databaseProductVersion = ("0" + (databaseMajorVersion=comm.getByte()) + ".0"
-                     + comm.getByte() + ".0"
+                     + (databaseMinorVersion=comm.getByte()) + ".0"
                      + ((256 * ((int)comm.getByte()+1)) + comm.getByte()));
         }
         else
@@ -3737,7 +3647,8 @@ public class Tds implements TdsDefinitions
             short nameLen = comm.getByte();
             databaseProductName = comm.getString(nameLen, encoder);
             comm.skip(1);
-            databaseProductVersion = ("" + (databaseMajorVersion=comm.getByte()) + "." + comm.getByte());
+            databaseProductVersion = ("" + (databaseMajorVersion=comm.getByte()) +
+                "." + (databaseMinorVersion=comm.getByte()));
             comm.skip(1);
         }
 
@@ -4037,7 +3948,6 @@ public class Tds implements TdsDefinitions
         col.setPrecision(precision);
     }
 
-
     private void waitForDataOrTimeout(SQLWarningChain wChain, int timeout) throws java.io.IOException, TdsException
     {
         // SAfe No synchronization needed, this is only used internally so it's
@@ -4062,11 +3972,12 @@ public class Tds implements TdsDefinitions
     }
 
     /**
-     *  Convert a JDBC java.sql.Types identifier to a SQLServer type identifier
+     * Convert a JDBC java.sql.Types identifier to a SQLServer type identifier.
      *
-     *@param  jdbcType               JDBC type to convert. Should be one of the constants from java.sql.Types.
-     *@return                        The corresponding SQLServer type identifier.
-     *@exception  TdsNotImplemented  Description of Exception
+     * @param  jdbcType JDBC type to convert. Should be one of the constants
+     *                  from java.sql.Types.
+     * @return          The corresponding SQLServer type identifier.
+     * @exception  TdsNotImplemented
      */
     public static byte cvtJdbcTypeToNativeType(int jdbcType)
              throws TdsNotImplemented
@@ -4361,8 +4272,7 @@ public class Tds implements TdsDefinitions
         // MJH Move commit code from TdsStatement to Tds as this
         // object represents the connection which the server uses
         // to control the session.
-        String sql = "IF @@TRANCOUNT>0 COMMIT TRAN";
-        submitProcedure(sql, new SQLWarningChain());
+        submitProcedure("IF @@TRANCOUNT>0 COMMIT TRAN", new SQLWarningChain());
 
         synchronized( procedureCache )
         {
@@ -4421,16 +4331,10 @@ public class Tds implements TdsDefinitions
     //      a Tds-managed Context. :o)
     synchronized void skipToEnd() throws java.sql.SQLException
     {
-        PacketResult tmp;
-
         try
         {
             while( moreResults )
-            {
-                tmp = processSubPacket();
-                moreResults = !(tmp instanceof PacketEndTokenResult)
-                    || ((PacketEndTokenResult)tmp).moreResults();
-            }
+                processSubPacket();
         }
         catch( Exception ex )
         {
@@ -4444,9 +4348,9 @@ public class Tds implements TdsDefinitions
     private String sqlStatementToInitialize() throws SQLException {
         StringBuffer statement = new StringBuffer(100);
 
-        if (serverType == Tds.SYBASE) {
+        if( serverType == Tds.SYBASE ) {
             statement.append("set quoted_identifier on set textsize 50000 ");
-        } else if (tdsVer == TDS70) {
+        } else if( tdsVer == TDS70 ) {
             // Patch 861821: Seems like there is some kind of initial limitation to
             // the size of the written data to 4000 characters (???)
             // Yes - SQL Server 2000 Developer Edition defaults to 4k...
@@ -4567,29 +4471,14 @@ public class Tds implements TdsDefinitions
             }
     }
 
-    private boolean changeSettings(String query)
-        throws TdsUnknownPacketSubType, TdsException, java.io.IOException, SQLException
+    private void changeSettings(String query) throws SQLException
     {
-        boolean isOkay = true;
-        PacketResult result;
-
         if( query.length() == 0 )
-            return true;
+            return;
 
-        executeQuery(query, null, null, 0);
-
-        boolean done = false;
-        while (!done) {
-            result = processSubPacket();
-            done = (result instanceof PacketEndTokenResult) &&
-                    !((PacketEndTokenResult) result).moreResults();
-            if (result instanceof PacketErrorResult) {
-                isOkay = false;
-            }
-            // XXX Should really process some more types of packets.
-        }
-
-        return isOkay;
+        SQLWarningChain wChain = new SQLWarningChain();
+        submitProcedure(query, wChain);
+        wChain.checkForExceptions();
     }
 
     /**
@@ -4736,5 +4625,107 @@ public class Tds implements TdsDefinitions
     public boolean useUnicode()
     {
         return useUnicode;
+    }
+
+    synchronized void startResultSet(SQLWarningChain wChain)
+    {
+        try
+        {
+            while( !isResultRow() && !isEndOfResults() )
+            {
+                PacketResult res = processSubPacket();
+                if( res instanceof PacketMsgResult )
+                    wChain.addOrReturn((PacketMsgResult)res);
+            }
+        }
+        catch (java.io.IOException e) {
+            wChain.addException(new SQLException("Network problem. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+            wChain.addException(new SQLException("Unknown response. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+            wChain.addException(new SQLException(e.toString()));
+        }
+        catch (SQLException e) {
+            wChain.addException(e);
+        }
+    }
+
+    synchronized PacketRowResult fetchRow(TdsStatement stmt,
+                                          SQLWarningChain wChain,
+                                          Context context)
+        throws SQLException
+    {
+        PacketResult res = null;
+
+        try
+        {
+            // Keep eating garbage and warnings until we reach the next result
+            while( true )
+            {
+                res = processSubPacket(context);
+
+                switch( res.getPacketType() )
+                {
+                    case TDS_ROW:
+                        return (PacketRowResult)res;
+
+                    case TDS_COL_NAME_TOKEN:
+                    case TDS_COLMETADATA:
+                        // SAfe This shouldn't really happen
+                        wChain.addException(
+                            new SQLException("Unexpected packet type."));
+                        break;
+
+                    case TDS_DONE:
+                    case TDS_DONEINPROC:
+                    case TDS_DONEPROC:
+                        if( ((PacketEndTokenResult)res).wasCanceled() )
+                            wChain.addException(
+                                new SQLException("Query was cancelled or timed out."));
+                        goToNextResult(wChain, stmt);
+                        return null;
+
+                    case TDS_PROCID:
+                        // SAfe Find out what this packet means
+                        break;
+
+                    case TDS_RETURNSTATUS:
+                        stmt.handleRetStat((PacketRetStatResult)res);
+                        break;
+
+                    case TDS_PARAM:
+                        stmt.handleParamResult((PacketOutputParamResult)res);
+                        break;
+
+                    case TDS_INFO:
+                    case TDS_ERROR:
+                        wChain.addOrReturn((PacketMsgResult)res);
+                        break;
+
+                    default:
+                        wChain.addException(new SQLException(
+                            "Protocol confusion. Got a 0x"
+                            + Integer.toHexString((res.getPacketType() & 0xff))
+                            + " packet"));
+                        break;
+                }
+            }
+        }
+        catch (java.io.IOException e) {
+            wChain.addException(new SQLException("Network problem. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+            wChain.addException(new SQLException("Unknown response. " + e.getMessage()));
+        }
+        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+            wChain.addException(new SQLException(e.toString()));
+        }
+        catch (SQLException e) {
+            wChain.addException(e);
+        }
+
+        return null;
     }
 }

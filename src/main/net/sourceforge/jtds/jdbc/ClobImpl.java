@@ -49,7 +49,7 @@ import java.sql.SQLException;
  * An in-memory representation of character data.
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.2 2004-01-28 22:01:25 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.3 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     private String _clob;
 
@@ -145,8 +145,10 @@ public class ClobImpl implements Clob {
                             write(clob, 0, (int) pos);
                         } catch (UnsupportedEncodingException e) {
                             // This should never happen...
-                            throw new SQLException("Unexpected encoding exception: "
-                                                   + e.getMessage());
+                            // @todo Do something about this exception; it doesn't compile
+                            //       under 1.3.
+                            // throw new SQLException("Unexpected encoding exception: "
+                            //                        + e.getMessage());
                         }
                     }
 
@@ -179,7 +181,7 @@ public class ClobImpl implements Clob {
                     {write(_clob, 0, (int) pos);}
 
                     public void flush() {
-                        String clob = toString();
+                        String clob = this.toString();
 
                         if (clob.length() < _clob.length()) {
                             _clob = clob + _clob.substring(clob.length());

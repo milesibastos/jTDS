@@ -64,12 +64,12 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
     implements java.sql.CallableStatement
 {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -199,14 +199,18 @@ public class CallableStatement_base extends PreparedStatement_base
     }
 
     // called by TdsStatement.moreResults
-    protected void handleRetStat(PacketRetStatResult packet)
+    protected boolean handleRetStat(PacketRetStatResult packet)
     {
-        retVal = new Integer(packet.getRetStat());
+        if( !super.handleRetStat(packet) )
+            retVal = new Integer(packet.getRetStat());
+        return true;
     }
 
-    protected void handleParamResult(PacketOutputParamResult packet) throws SQLException
+    protected boolean handleParamResult(PacketOutputParamResult packet) throws SQLException
     {
-        addOutputParam(packet.value);
+        if( !super.handleParamResult(packet) )
+            addOutputParam(packet.value);
+        return true;
     }
 
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException

@@ -77,7 +77,7 @@ import java.sql.*;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    17 March 2001
- * @version    $Id: TdsResultSet.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version    $Id: TdsResultSet.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $
  * @see        Statement#executeQuery
  * @see        Statement#getResultSet
  * @see        ResultSetMetaData @
@@ -98,7 +98,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     int rowCount = 0;
     PacketRowResult[] rowCache = null;
 
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
@@ -120,56 +120,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      */
     private void startResultSet(Tds tds, SQLWarningChain stmtWarningChain) throws SQLException
     {
-        try
-        {
-            while( !tds.isResultRow() && !tds.isEndOfResults() )
-            {
-                PacketResult tmp = tds.processSubPacket();
-
-                if( tmp instanceof PacketColumnNamesResult )
-                    context = tds.getContext(); // new Context(names, tds.getEncoder());
-                else if( tmp instanceof PacketColumnInfoResult )
-                {
-                    // SAfe Do nothing, column info is merged with column names
-                    //      inside Tds.
-                }
-                else if( tmp instanceof PacketMsgResult )
-                    stmtWarningChain.addOrReturn((PacketMsgResult)tmp);
-                else if( tmp instanceof PacketColumnOrderResult )
-                {
-                    // XXX ORDER BY columns
-                }
-                else if( tmp instanceof PacketTabNameResult )
-                {
-                    // XXX Names of tables from which we got the results
-                }
-                else if( tmp instanceof PacketControlResult )
-                {
-                    // XXX Controlrow information
-                }
-                else if( tmp instanceof PacketUnknown )
-                {
-                    // XXX Need to add to the warning chain
-                }
-                else
-                {
-                    stmtWarningChain.addException(new SQLException("Trying to get a ResultSet. Found a "
-                        + tmp.getClass().getName()));
-                    break;
-                }
-            }
-
-            stmtWarningChain.checkForExceptions();
-        }
-        catch( net.sourceforge.jtds.jdbc.TdsException e )
-        {
-            stmtWarningChain.addException(new SQLException(e.getMessage()));
-        }
-        catch( java.io.IOException e)
-        {
-            stmtWarningChain.addException(new SQLException(e.getMessage()));
-        }
-
+        tds.startResultSet(stmtWarningChain);
+        context = tds.getContext();
         stmtWarningChain.checkForExceptions();
     }
 
@@ -395,7 +347,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         {
             try
             {
-                tds.discardResultSet(stmt);
+                tds.goToNextResult(warningChain, stmt);
                 hitEndOfData = true;
                 if( allowTdsRelease )
                     stmt.releaseTds();
@@ -467,84 +419,27 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         //      while we're processing
         synchronized( tds )
         {
-            try
+            clearWarnings();
+
+            // SAfe This could happen if Tds.skipToEnd() has been called in
+            //      the meantime
+            if( !tds.moreResults() )
             {
-                clearWarnings();
-
-                // SAfe This could happen if Tds.skipToEnd() was called in the
-                //      meantime
-                if( !tds.moreResults() )
-                {
-                    hitEndOfData = true;
-                    return null;
-                }
-
-                // @todo SAfe Rewrite all the code below to no longer peek at the
-                //       packet type, as it always processes it afterwards, anyway
-
-                // Keep eating garbage and warnings until we reach the next result
-                while( !tds.isResultSet() &&
-                       !tds.isEndOfResults() &&
-                       !tds.isResultRow())
-                {
-                    // RMK 2000-06-08: don't choke on RET_STAT package.
-                    if( tds.isProcId() || tds.isRetStat() )
-                        tds.processSubPacket();
-                    else if( tds.isParamResult() )
-                    {
-                        PacketResult tmp1 = tds.processSubPacket();
-
-                        if( stmt!=null && stmt instanceof CallableStatement_base )
-                            ((CallableStatement_base)stmt).addOutputParam(
-                                ((PacketOutputParamResult)tmp1).getValue());
-                    }
-                    else if( tds.isMessagePacket() || tds.isErrorPacket() )
-                        warningChain.addOrReturn(
-                            (PacketMsgResult)tds.processSubPacket());
-                    else
-                        throw new SQLException("Protocol confusion. "
-                            + "Got a 0x"
-                            + Integer.toHexString((tds.peek() & 0xff))
-                            + " packet");
-                }
-
-                // SAfe Only releases the tds if no more packets are outstanding.
-                stmt.releaseTds();
-                warningChain.checkForExceptions();
-
-                if( tds.isResultRow() )
-                    row = (PacketRowResult)tds.processSubPacket();
-                else if( tds.isEndOfResults() )
-                {
-                    if( ((PacketEndTokenResult)tds.processSubPacket()).wasCanceled() )
-                        warningChain.addException(
-                            new SQLException("Query was canceled or timed out."));
-
-                    tds.goToNextResult(warningChain, stmt);
-
-                    row = null;
-                    hitEndOfData = true;
-                    stmt.releaseTds();
-                }
-                else if( !tds.isResultSet() )
-                    throw new SQLException("Protocol confusion. "
-                        + "Got a 0x"
-                        + Integer.toHexString((tds.peek() & 0xff))
-                        + " packet");
+                hitEndOfData = true;
+                return null;
             }
-            catch( java.io.IOException e )
-            {
-                stmt.releaseTds();
-                throw new SQLException(e.getMessage());
-            }
-            catch( TdsException e )
-            {
-                stmt.releaseTds();
-                throw new SQLException(e.getMessage());
-            }
+
+            row = tds.fetchRow(stmt, warningChain, context);
+
+            // SAfe Only releases the tds if no more packets are outstanding.
+            stmt.releaseTds();
+            warningChain.checkForExceptions();
+
+            // SAfe This only happens if the last packet was a TDS_DONE or
+            //      TDS_DONEINPROC
+            if( row == null )
+                hitEndOfData = true;
         }
-
-        warningChain.checkForExceptions();
 
         return row;
     }

@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2004-01-29 18:44:22 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.8 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.7 2004-01-29 18:44:22 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.8 2004-01-30 18:01:55 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2004-01-29 18:44:22 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.8 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -498,8 +498,8 @@ public class TdsConnection implements Connection
      * statement that the driver would have sent.
      *
      * @param sql a SQL statement that may contain one or more '?' parameter
-     *        placeholders
-     * @return the native form of this statement
+     *            placeholders
+     * @return    the native form of this statement
      * @throws SQLException if a database access error occurs
      */
     public String nativeSQL(String sql) throws SQLException {
@@ -787,7 +787,6 @@ public class TdsConnection implements Connection
         if( i >= 0 && inst.inUse )
         {
             inst.inUse = false;
-            inst.tds.setStatement(null);
 
             // XXX Should also send a cancel to the server and throw out any data that has already been sent.
 

@@ -210,13 +210,13 @@ public class SAfeTest extends DatabaseTestCase
                     {
                         if( rs != null )
                             try{ rs.close(); } catch( SQLException e ) {}
-                    }
 
-                    // Notify that we're done
-                    synchronized( o1 )
-                    {
-                        done++;
-                        o1.notify();
+                        // Notify that we're done
+                        synchronized( o1 )
+                        {
+                            done++;
+                            o1.notify();
+                        }
                     }
                 }
             };

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.10 2004-01-29 23:30:32 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.11 2004-01-30 18:01:55 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.10 2004-01-29 23:30:32 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.11 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -74,6 +74,8 @@ public class TdsStatement implements java.sql.Statement
     private int concurrency = ResultSet.CONCUR_READ_ONLY;
 
     private boolean isClosed = false;
+
+    public OutputParamHandler outParamHandler;
 
     public TdsStatement(TdsConnection con, int type, int concurrency)
         throws SQLException
@@ -182,17 +184,11 @@ public class TdsStatement implements java.sql.Statement
         // crash or return results from the previous query.
         skipToEnd();
 
-        try {
-            if (escapeProcessing) {
-                sql = EscapeProcessor.nativeSQL(sql);;
-            }
-
-            tds.executeQuery(sql, this, wChain, timeout);
-        } catch(java.io.IOException e) {
-            throw new SQLException("Network error: " + e.getMessage());
-        } catch(net.sourceforge.jtds.jdbc.TdsException e) {
-            throw new SQLException("TDS error: " + e.getMessage());
+        if (escapeProcessing) {
+            sql = EscapeProcessor.nativeSQL(sql);
         }
+
+        tds.executeQuery(sql, this, wChain, timeout);
 
         // SAfe We must do this to ensure we throw SQLExceptions on timed out
         //      statements
@@ -215,16 +211,10 @@ public class TdsStatement implements java.sql.Statement
         //      sure they don't interfere with the the current ones.
         skipToEnd();
 
-        try {
-            // execute the stored procedure.
-            tds.executeProcedure(name, formalParameterList, actualParameterList, this, wChain, getQueryTimeout());
-
-            return getMoreResults(tds, warningChain, true);
-        } catch (TdsException e) {
-            throw new SQLException(e.toString());
-        } catch (java.io.IOException e) {
-            throw new SQLException(e.toString());
-        }
+        // execute the stored procedure.
+        tds.executeProcedure(name, formalParameterList, actualParameterList,
+                             this, wChain, getQueryTimeout(), false);
+        return getMoreResults(tds, wChain, true);
     }
 
     /**
@@ -562,7 +552,6 @@ public class TdsStatement implements java.sql.Statement
         if( actTds == null )
         {
             actTds=connection.allocateTds(mainTds);
-            actTds.setStatement(this);
             return actTds;
         }
         else
@@ -609,19 +598,20 @@ public class TdsStatement implements java.sql.Statement
         return getMoreResults(actTds, warningChain, true);
     }
 
-    public boolean getMoreResults(int current) throws SQLException
-    {
+    public boolean getMoreResults(int current) throws SQLException {
         NotImplemented();
         return false;
     }
 
-    void handleRetStat(PacketRetStatResult packet)
+    boolean handleRetStat(PacketRetStatResult packet)
     {
+        return outParamHandler!=null && outParamHandler.handleRetStat(packet);
     }
 
-    void handleParamResult(PacketOutputParamResult packet)
+    boolean handleParamResult(PacketOutputParamResult packet)
         throws SQLException
     {
+        return outParamHandler!=null && outParamHandler.handleParamResult(packet);
     }
 
     synchronized boolean getMoreResults(Tds tds, SQLWarningChain wChain, boolean allowTdsRelease)
@@ -639,81 +629,40 @@ public class TdsStatement implements java.sql.Statement
         //      Tds.skipToEnd while we're processing the results
         synchronized( tds )
         {
-            if( !tds.moreResults() )
-            {
-                if( allowTdsRelease )
-                    releaseTds();
-                return false;
-            }
-
             try
             {
-                // @todo SAfe Rewrite all the code below to no longer peek at the
-                //       packet type, as it always processes it afterwards, anyway
+                tds.goToNextResult(wChain, this);
 
-                // Keep eating garbage and warnings until we reach the next result
-                while( true )
+                if( !tds.moreResults() )
                 {
-                    if( tds.isResultSet() )
-                    {
-                        results = new TdsResultSet(tds, this, wChain, fetchSize);
-                        break;
-                    }
-                    // SAfe: Only TDS_DONE should return row counts for Statements
-                    // TDS_DONEINPROC should return row counts for PreparedStatements
-                    else if( tds.peek()==Tds.TDS_DONE ||
-                        (this instanceof PreparedStatement &&
-                        !(this instanceof CallableStatement) &&
-                        tds.peek()==Tds.TDS_DONEINPROC) )
-                    {
-                        PacketEndTokenResult end =
-                            (PacketEndTokenResult)tds.processSubPacket();
-                        updateCount = end.getRowCount();
+                    if( allowTdsRelease )
+                        releaseTds();
+                    return false;
+                }
 
-                        // SAfe Eat up all packets until the next result or the end
-                        tds.goToNextResult(wChain, this);
+                // SAfe We found a ResultSet
+                if( tds.isResultSet() )
+                {
+                    results = new TdsResultSet(tds, this, wChain, fetchSize);
+                    return true;
+                }
 
-                        if( allowTdsRelease )
-                            releaseTds();
-                        break;
-                    }
-                    // SAfe: TDS_DONEPROC and TDS_DONEINPROC should *NOT* return
-                    //       rowcounts otherwise
-                    else if( tds.isEndOfResults() )
-                    {
-                        tds.processSubPacket();
+                // SAfe It's a row count. Only TDS_DONE for Statements and
+                //      TDS_DONEINPROC for PreparedStatements are row counts
+                PacketEndTokenResult end =
+                    (PacketEndTokenResult)tds.processSubPacket();
+                updateCount = end.getRowCount();
 
-                        // SAfe Eat up all packets until the next result or the end
-                        tds.goToNextResult(wChain, this);
+                // SAfe Eat up all packets until the next result or the end
+                tds.goToNextResult(wChain, this);
 
-                        if( !tds.moreResults() )
-                        {
-                            if( allowTdsRelease )
-                                releaseTds();
-                            break; // No more results but no update count either
-                        }
-                    }
-                    else if( tds.isMessagePacket() || tds.isErrorPacket() )
-                        wChain.addOrReturn((PacketMsgResult)tds.processSubPacket());
-                    else if (tds.isRetStat())
-                        handleRetStat((PacketRetStatResult)tds.processSubPacket());
-                    else if( tds.isParamResult() )
-                        handleParamResult((PacketOutputParamResult)tds.processSubPacket());
-                    else if( tds.isEnvChange() )
-                        // Process the environment change.
-                        tds.processSubPacket();
-                    else if( tds.isProcId() )
-                        tds.processSubPacket();
-                    else
-                        throw new SQLException("Protocol confusion. Got a 0x"
-                            + Integer.toHexString((tds.peek() & 0xff)) + " packet.");
-                } // end while
+                if( allowTdsRelease )
+                    releaseTds();
 
                 wChain.checkForExceptions();
 
-                return results != null;
+                return false;
             }
-
             catch( Exception ex )
             {
                 releaseTds();
@@ -906,50 +855,42 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("Statement already closed.");
     }
 
-    public boolean execute(String str, int param) throws java.sql.SQLException
-    {
+    public boolean execute(String str, int param) throws java.sql.SQLException {
         NotImplemented();
         return false;
     }
 
-    public boolean execute(String str, String[] str1) throws java.sql.SQLException
-    {
+    public boolean execute(String str, String[] str1) throws java.sql.SQLException {
         NotImplemented();
         return false;
     }
 
-    public boolean execute(String str, int[] values) throws java.sql.SQLException
-    {
+    public boolean execute(String str, int[] values) throws java.sql.SQLException {
         NotImplemented();
         return false;
     }
 
-    public int executeUpdate(String str, String[] str1) throws java.sql.SQLException
-    {
+    public int executeUpdate(String str, String[] str1) throws java.sql.SQLException {
         NotImplemented();
         return Integer.MIN_VALUE;
     }
 
-    public int executeUpdate(String str, int[] values) throws java.sql.SQLException
-    {
+    public int executeUpdate(String str, int[] values) throws java.sql.SQLException {
         NotImplemented();
         return Integer.MIN_VALUE;
     }
 
-    public int executeUpdate(String str, int param) throws java.sql.SQLException
-    {
+    public int executeUpdate(String str, int param) throws java.sql.SQLException {
         NotImplemented();
         return Integer.MIN_VALUE;
     }
 
-    public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException
-    {
+    public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException {
         NotImplemented();
         return null;
     }
 
-    public int getResultSetHoldability() throws java.sql.SQLException
-    {
+    public int getResultSetHoldability() throws java.sql.SQLException {
         NotImplemented();
         return Integer.MIN_VALUE;
     }

@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.11 2004-01-29 23:28:19 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.12 2004-01-30 18:01:55 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.11 2004-01-29 23:28:19 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.12 2004-01-30 18:01:55 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -172,7 +172,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
 
         return internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
-                                   warningChain);
+            warningChain);
     }
 
     private Procedure findCompatibleStoredProcedure( Tds tds, String rawQueryString )
@@ -185,6 +185,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     {
         String sql = proc.getPreparedSqlString();
         tds.submitProcedure( sql, warningChain );
+        warningChain.checkForExceptions();
     }
 
     /**

@@ -150,34 +150,56 @@ public abstract class TestBase extends TestCase {
             if (is1 == null && is2 == null) {
                 return;
             } else if (is1 == null) {
-                assertTrue("is1 == null && is2 != null", false);
+                fail("is1 == null && is2 != null");
                 return;
             } else if (is2 == null) {
-                assertTrue("is1 != null && is2 == null", false);
+                fail("is1 != null && is2 == null");
                 return;
             }
 
             long count = 0;
-            int value1;
-            int value2;
+            int res1 = 0, res2 = 0;
+            byte buf1[] = new byte[1024], buf2[] = new byte[1024];
 
-            while ((value1 = is1.read()) != -1) {
-                value2 = is2.read();
-
-                if (value2 == -1) {
-                    assertTrue("stream 2 EOF at: " + count, false);
+            while (res1 != 0 || (res1 = is1.read(buf1)) != -1) {
+                if (res2 == 0) {
+                    res2 = is2.read(buf2);
                 }
 
-                assertTrue("stream 1 value [" + value1
-                        + "] differs from stream 2 value ["
-                        + value2 + "] at: " + count,
-                        (value1 == value2));
+                if (res2 == -1) {
+                    fail("stream 2 EOF at: " + count);
+                }
 
-                count++;
+                int min = Math.min(res1, res2);
+                for (int i = 0; i < min; i++) {
+                    // Do the check first rather than using assertTrue()
+                    // assertTrue() would create a String at each iteration
+                    if (buf1[i] != buf2[i]) {
+                        fail("stream 1 value [" + buf1[i]
+                                + "] differs from stream 2 value ["
+                                + buf2[i] + "] at: " + (count + i));
+                    }
+                }
+
+                count += min;
+
+                if (res1 != min) {
+                    System.arraycopy(buf1, min, buf1, 0, res1 - min);
+                    res1 -= min;
+                } else {
+                    res1 = 0;
+                }
+
+                if (res2 != min) {
+                    System.arraycopy(buf2, min, buf2, 0, res2 - min);
+                    res2 -= min;
+                } else {
+                    res2 = 0;
+                }
             }
 
             if (is2.read() != -1) {
-                assertTrue("stream 1 EOF at: " + count, false);
+                fail("stream 1 EOF at: " + count);
             }
         } finally {
             if (is1 != null) {
@@ -195,34 +217,56 @@ public abstract class TestBase extends TestCase {
             if (r1 == null && r2 == null) {
                 return;
             } else if (r1 == null) {
-                assertTrue("r1 == null && r2 != null", false);
+                fail("r1 == null && r2 != null");
                 return;
             } else if (r2 == null) {
-                assertTrue("r1 != null && r2 == null", false);
+                fail("r1 != null && r2 == null");
                 return;
             }
 
             long count = 0;
-            int value1;
-            int value2;
+            int res1 = 0, res2 = 0;
+            char buf1[] = new char[1024], buf2[] = new char[1024];
 
-            while ((value1 = r1.read()) != -1) {
-                value2 = r2.read();
-
-                if (value2 == -1) {
-                    assertTrue("reader 2 EOF at: " + count, false);
+            while (res1 != 0 || (res1 = r1.read(buf1)) != -1) {
+                if (res2 == 0) {
+                    res2 = r2.read(buf2);
                 }
 
-                assertTrue("reader 1 value [" + value1
-                        + "] differs from reader 2 value ["
-                        + value2 + "] at: " + count,
-                        (value1 == value2));
+                if (res2 == -1) {
+                    fail("reader 2 EOF at: " + count);
+                }
 
-                count++;
+                int min = Math.min(res1, res2);
+                for (int i = 0; i < min; i++) {
+                    // Do the check first rather than using assertTrue()
+                    // assertTrue() would create a String at each iteration
+                    if (buf1[i] != buf2[i]) {
+                        fail("stream 1 value [" + buf1[i]
+                                + "] differs from stream 2 value ["
+                                + buf2[i] + "] at: " + (count + i));
+                    }
+                }
+
+                count += min;
+
+                if (res1 != min) {
+                    System.arraycopy(buf1, min, buf1, 0, res1 - min);
+                    res1 -= min;
+                } else {
+                    res1 = 0;
+                }
+
+                if (res2 != min) {
+                    System.arraycopy(buf2, min, buf2, 0, res2 - min);
+                    res2 -= min;
+                } else {
+                    res2 = 0;
+                }
             }
 
             if (r2.read() != -1) {
-                assertTrue("reader 1 EOF at: " + count, false);
+                fail("reader 1 EOF at: " + count);
             }
         } finally {
             if (r1 != null) {

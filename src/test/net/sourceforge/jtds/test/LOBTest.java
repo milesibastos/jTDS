@@ -433,6 +433,40 @@ public class LOBTest extends TestBase {
         rs2.close();
     }
 
+    /**
+     * Test inserting from an <code>InputStream</code> that doesn't fill the
+     * buffer on <code>read()</code>.
+     * <p>
+     * For bug #1008816 - "More data in stream ..." error when inserting an image.
+     *
+     * @throws Exception if an error condition occurs
+     */
+    public void testBlobSet8() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobset8 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobset8 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBinaryStream()
+        pstmt.setBinaryStream(1, new RealInputStream(), RealInputStream.LENGTH);
+        assertEquals(pstmt.executeUpdate(), 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobset8");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        compareInputStreams(new RealInputStream(), rs.getBinaryStream(1));
+
+        assertFalse(rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
     public void testBlobUpdate1() throws Exception {
         byte[] data = getBlobTestData();
 
@@ -2788,6 +2822,45 @@ public class LOBTest extends TestBase {
 
     private String getNewClobTestData() {
         return newClobData;
+    }
+
+    /**
+     * Implements an <code>InputStream</code> that only returns a limited
+     * number of bytes on read (less than the requested number of bytes).
+     * <p>
+     * Used for testing <code>Blob</code> insert behavior.
+     */
+    class RealInputStream extends InputStream {
+        /**
+         * Length of the stream.
+         */
+        static final int LENGTH = 10000;
+
+        /**
+         * Current position in the stream.
+         */
+        private int pos = 0;
+
+        public int read() {
+            if (++pos > LENGTH) {
+                return -1;
+            }
+            return pos % 256;
+        }
+
+        public int read(byte[] b) {
+            return read(b, 0, b.length);
+        }
+
+        public int read(byte[] b, int off, int len) {
+            int res = read();
+            if (res == -1) {
+                return -1;
+            } else {
+                b[off] = (byte) res;
+                return 1;
+            }
+        }
     }
 
     public static void main(String[] args) {

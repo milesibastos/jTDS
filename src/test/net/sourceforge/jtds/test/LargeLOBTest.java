@@ -56,14 +56,21 @@ public class LargeLOBTest extends TestBase {
      */
     public void testLargeBlob1() throws Exception {
     	File data = File.createTempFile("blob", ".tmp");
+        data.deleteOnExit();
+
     	FileOutputStream fos = new FileOutputStream(data);
     	BufferedOutputStream bos = new BufferedOutputStream(fos);
 
-    	data.deleteOnExit();
+        byte buf[] = new byte[256];
 
-    	for (long i = 0; i < LOB_LENGTH; i++) {
-    		bos.write((byte) i % 255);
+        for (int i = 0; i < 256; i++) {
+            buf[i] = (byte) i;
+        }
+
+    	for (int i = 0; i < LOB_LENGTH; i += buf.length) {
+    		bos.write(buf);
     	}
+        bos.write(buf, 0, LOB_LENGTH % buf.length);
 
     	bos.close();
 

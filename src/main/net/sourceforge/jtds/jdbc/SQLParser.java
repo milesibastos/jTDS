@@ -40,23 +40,23 @@ import java.sql.SQLException;
  * result the validation done here is limited.
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.2 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: SQLParser.java,v 1.3 2004-08-11 19:20:34 bheineman Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
     private char[] in;
     /** Current position in input buffer. */
-    private int    s;
+    private int s;
     /** Length of input buffer. */
-    private int    len;
+    private int len;
     /** Output buffer to contain parsed SQL. */
     private char[] out;
     /** Current position in output buffer. */
-    private int    d;
+    private int d;
     /** Parameter list to be populated. */
     private ArrayList params;
     /** Current expected terminator character. */
-    private char   terminator;
+    private char terminator;
     /** Procedure name in call escape. */
     private String procName;
     /** Current character. */
@@ -68,14 +68,14 @@ class SQLParser {
 
     /**
      * Construct a new Parser object to process the supplied SQL.
+     * 
      * @param sql The SQL statement to parse.
      * @param paramList The Parameter list array to populate.
      */
-    SQLParser(String sql, ArrayList paramList)
-    {
+    SQLParser(String sql, ArrayList paramList) {
         in = sql.toCharArray();
         len = in.length;
-        out = new char[len+16];
+        out = new char[len + 16];
         s = 0;
         d = 0;
         params = paramList;
@@ -84,10 +84,10 @@ class SQLParser {
 
     /**
      * Construct a new Parser object to parse tokens in the supplied SQL.
+     * 
      * @param sql The SQL statement to parse.
      */
-    SQLParser(String sql)
-    {
+    SQLParser(String sql) {
         in = sql.toCharArray();
         len = in.length;
         s = 0;
@@ -97,69 +97,87 @@ class SQLParser {
 
     /**
      * Insert a String literal in the output buffer.
+     * 
      * @param txt The text to insert.
      */
-    private void copyLiteral(String txt)
-    {
-        for (int i = 0; i < txt.length(); i++)
+    private void copyLiteral(String txt) {
+        for (int i = 0; i < txt.length(); i++) {
             out[d++] = txt.charAt(i);
+        }
     }
 
     /**
      * Copy over an embedded string literal unchanged.
      */
-    private void copyString()
-    {
+    private void copyString() {
         char saveTc = terminator;
         char tc = in[s];
-        if (tc == '[') tc = ']';
+        
+        if (tc == '[') {
+            tc = ']';
+        }
+        
         terminator = tc;
+        
         do {
             out[d++] = in[s++];
-            while (in[s] != tc) out[d++] = in[s++];
+            
+            while (in[s] != tc) {
+                out[d++] = in[s++];
+            }
+            
             out[d++] = in[s++];
         } while (s < len && in[s] == tc);
+        
         terminator = saveTc;
     }
 
     /**
      * Build a new parameter item.
+     * 
      * @param name Optional parameter name or null.
      * @param pos The parameter marker position in the output buffer.
      */
-    private void copyParam(String name, int pos)
-    {
+    private void copyParam(String name, int pos) {
         ParamInfo pi = new ParamInfo(pos);
         pi.name = name;
+        
         if (pos >= 0) {
             out[d++] = in[s++];
         } else {
             pi.isRetVal = true;
             s++;
         }
-        params.add(pi);       }
+        
+        params.add(pi);
+    }
 
     /**
      * Copy an embedded stored procedure identifier over to the output buffer.
+     * 
      * @return The identifier as a <code>String</code>.
      */
-    private String copyProcName()
-    {
+    private String copyProcName() {
         int start = d;
+        
         do {
             if (in[s] == '"' || in[s] == '[') {
                 copyString();
             } else {
                 char c = in[s++];
+                
                 while (Character.isJavaIdentifierPart(c) || c == '#') {
                     out[d++] = c;
                     c = in[s++];
                 }
+                
                 s--;
             }
+            
             if (in[s] == '.') {
-                while (in[s] == '.')
+                while (in[s] == '.') {
                     out[d++] = in[s++];
+                }
             } else  {
                 break;
             }
@@ -169,155 +187,191 @@ class SQLParser {
 
     /**
      * Copy an embedded parameter name to the output buffer.
+     * 
      * @return The identifier as a <code>String</code>.
      */
-    private String copyParamName()
-    {
+    private String copyParamName() {
         int start = d;
         char c = in[s++];
+        
         while (Character.isJavaIdentifierPart(c) || c == '@') {
            out[d++] = c;
            c = in[s++];
         }
+        
         s--;
-        return new String(out, start, d-start);
+        
+        return new String(out, start, d - start);
     }
 
     /**
      * Check that the next character is as expected.
+     * 
      * @param c The expected character.
      * @param copy True if found character should be copied.
      * @throws SQLException if expected characeter not found.
      */
     private void mustbe(char c, boolean copy)
-        throws SQLException
-    {
-        if (in[s] != c)
+        throws SQLException {
+        if (in[s] != c) {
             throw new SQLException(Messages.get("error.parsesql.mustbe",
                                                       String.valueOf(s),
                                                       String.valueOf(c)),
                                    "22019");
-        if (copy)
+        }
+        
+        if (copy) {
             out[d++] = in[s++];
-        else
+        } else {
             s++;
+        }
     }
 
     /**
      * Skip embedded white space.
      */
-    private void skipWhiteSpace()
-    {
-        while (Character.isWhitespace(in[s])) s++;
+    private void skipWhiteSpace() {
+        while (Character.isWhitespace(in[s])) {
+            s++;
+        }
     }
 
     /**
      * Process the JDBC {call procedure [(&#63;,&#63;,&#63;)]} type escape.
+     * 
      * @throws SQLException
      */
-    private void callEscape()
-        throws SQLException
-    {
+    private void callEscape() throws SQLException {
         // Insert EXECUTE into SQL so that proc can be called as normal SQL
         copyLiteral("EXECUTE ");
         // Process procedure name
         procName = copyProcName();
         skipWhiteSpace();
+        
         if (in[s] == '(') { // Optional ( )
             s++; skipWhiteSpace();
             terminator = ')';
         } else {
             terminator = '}';
         }
+        
+        out[d++] = ' ';
+        
         // Process any parameters
         while (in[s] != terminator) {
-            out[d++] = ' ';
             String name = null;
+            
             if (in[s] == '@') {
                 // Named parameter
                 name = copyParamName();
                 skipWhiteSpace();
                 mustbe('=', true);
                 skipWhiteSpace();
-                if (in[s] == '?')
+                
+                if (in[s] == '?') {
                     copyParam(name, d);
-                else {
+                } else {
                     // Named param has literal value can't call as RPC
                     procName = "";
                 }
-            } else
-            if (in[s] == '?') {
+            } else if (in[s] == '?') {
                 copyParam(name, d);
             } else {
                 // Literal parameter can't call as RPC
                 procName = "";
             }
+            
             // Now find terminator or comma
             while (in[s] != terminator && in[s] != ',') {
-                if (in[s] == '\'' || in[s] == '[' || in[s] == '"')
+                if (in[s] == '\'' || in[s] == '[' || in[s] == '"') {
                     copyString();
-                else
+                } else {
                     out[d++] = in[s++];
+                }
             }
+            
             if (in[s] == ',') {
                 out[d++] = in[s++];
             }
+            
             skipWhiteSpace();
         }
-        if (terminator == ')')
+        
+        if (terminator == ')') {
             s++; // Elide
+        }
     }
 
     /**
      * Utility routine to validate date and time escapes.
+     * 
      * @param mask The validation mask
      * @return True if the escape was valid and processed OK.
      */
-    private boolean getDateTimeField(byte[] mask)
-    {
+    private boolean getDateTimeField(byte[] mask) {
         out[d++] = '\'';
         skipWhiteSpace();
         terminator = (in[s] == '\'' || in[s] == '"')? in[s++]: '}';
         skipWhiteSpace();
         int ptr = 0;
+        
         while (ptr < mask.length) {
             char c = in[s++];
-            if (c == ' ' && out[d-1] == ' ')
+            if (c == ' ' && out[d-1] == ' ') {
                 continue; // Eliminate multiple spaces
+            }
+            
             if (mask[ptr] == '#') {
-                if (!Character.isDigit(c))
+                if (!Character.isDigit(c)) {
                     return false;
-            } else
-            if (mask[ptr] != c)
+                }
+            } else if (mask[ptr] != c) {
                 return false;
-            if (c != '-')
+            }
+            
+            if (c != '-') {
                 out[d++] = c;
+            }
+            
             ptr++;
         }
+        
         if (mask.length == 19) { // Timestamp
             int digits = 0;
+            
             if (in[s] == '.') {
                 out[d++] = in[s++];
+                
                 while (Character.isDigit(in[s])) {
                     if (digits < 3) {
                         out[d++] = in[s++];
                         digits++;
-                    } else
+                    } else {
                         s++;
+                    }
                 }
             } else {
                 out[d++] = '.';
             }
-            for (; digits < 3; digits++)
+            
+            for (; digits < 3; digits++) {
                 out[d++] = '0';
+            }
         }
+        
         skipWhiteSpace();
-        if (in[s] != terminator)
+        
+        if (in[s] != terminator) {
             return false;
-        if (terminator != '}')
+        }
+        
+        if (terminator != '}') {
             s++; // Skip terminator
+        }
+        
         skipWhiteSpace();
         out[d++] = '\'';
+        
         return true;
     }
 
@@ -328,17 +382,17 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {t 'HH:MM:SS'}.
+     * 
      * @throws SQLException
      */
-    private void timeEscape()
-        throws SQLException
-    {
+    private void timeEscape() throws SQLException {
 
-        if (!getDateTimeField(timeMask))
+        if (!getDateTimeField(timeMask)) {
             throw new SQLException(Messages.get("error.parsesql.syntax",
                                                       "time",
                                                       String.valueOf(s)),
                                    "22019");
+        }
     }
 
     /** Syntax mask for date escape. */
@@ -348,16 +402,16 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {d 'CCCC-MM-DD'}.
+     * 
      * @throws SQLException
      */
-    private void dateEscape()
-    throws SQLException
-    {
-        if (!getDateTimeField(dateMask))
+    private void dateEscape() throws SQLException {
+        if (!getDateTimeField(dateMask)) {
             throw new SQLException(Messages.get("error.parsesql.syntax",
                                                       "date",
                                                       String.valueOf(s)),
                                    "22019");
+        }
     }
 
     /** Syntax mask for timestamp escape. */
@@ -368,26 +422,27 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {ts 'CCCC-MM-DD HH:MM:SS[.NNN]'}.
+     * 
      * @throws SQLException
      */
-    private void timestampEscape()
-    throws SQLException
-    {
-        if (!getDateTimeField(timestampMask))
+    private void timestampEscape() throws SQLException {
+        if (!getDateTimeField(timestampMask)) {
             throw new SQLException(Messages.get("error.parsesql.syntax",
                                                       "timestamp",
                                                       String.valueOf(s)),
                                    "22019");
+        }
     }
 
     /**
      * Process the JDBC escape {oj left outer join etc}.
+     * 
      * @throws SQLException
      */
-    private void outerJoinEscape()
-    {
+    private void outerJoinEscape() {
         while (in[s] != '}') {
             final char c = in[s];
+            
             switch (c) {
                 case '\'':
                 case '"':
@@ -422,22 +477,26 @@ class SQLParser {
 
     /**
      * Process the JDBC escape {fn function()}.
+     * 
      * @throws SQLException
      */
-    private void functionEscape()
-    throws SQLException
-    {
+    private void functionEscape() throws SQLException {
         skipWhiteSpace();
         StringBuffer nameBuf = new StringBuffer();
-        while (Character.isLetterOrDigit(in[s]))
+        
+        while (Character.isLetterOrDigit(in[s])) {
             nameBuf.append(in[s++]);
+        }
+        
         String name = nameBuf.toString().toLowerCase();
         String val = (String)fnMap.get(name);
         copyLiteral((val != null)? val: name);
         skipWhiteSpace();
         mustbe('(', true);
+        
         while (in[s] != ')') {
             final char c = in[s];
+            
             switch (c) {
                 case '\'':
                 case '"':
@@ -450,49 +509,58 @@ class SQLParser {
                     } else {
                         out[d++] = c; s++;
                     }
+                    
                     break;
                 default:
                     out[d++] = c; s++;
                     break;
             }
         }
+        
         mustbe(')', true);
     }
 
     /**
      * Process the JDBC escape {escape 'X'}.
+     * 
      * @throws SQLException
      */
-    private void likeEscape()
-    throws SQLException
-    {
+    private void likeEscape() throws SQLException {
         copyLiteral("escape ");
         skipWhiteSpace();
+        
         if (in[s] == '\'' || in[s] == '"') {
             copyString();
         } else {
             mustbe('\'', true);
         }
+        
         skipWhiteSpace();
     }
 
     /**
      * Process the JDBC escape sequences.
+     * 
      * @throws SQLException
      */
-    private void escape()
-    throws SQLException
-    {
+    private void escape() throws SQLException {
         terminator = '}';
         String esc = "";
-        s++; skipWhiteSpace();
+        s++;
+        skipWhiteSpace();
+        
         if (in[s] == '?') {
             copyParam("@return_status", -1);
             skipWhiteSpace();
             mustbe('=', false);
             skipWhiteSpace();
-            while (Character.isLetter(in[s])) esc = esc + in[s++];
+            
+            while (Character.isLetter(in[s])) {
+                esc = esc + in[s++];
+            }
+            
             skipWhiteSpace();
+            
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();
             } else {
@@ -502,27 +570,25 @@ class SQLParser {
                                        "22019");
             }
         } else {
-            while (Character.isLetter(in[s])) esc = esc + in[s++];
+            while (Character.isLetter(in[s])) {
+                esc = esc + in[s++];
+            }
+            
             skipWhiteSpace();
+            
             if (esc.equalsIgnoreCase("call")) {
                 callEscape();
-            } else
-            if (esc.equalsIgnoreCase("t")) {
+            } else if (esc.equalsIgnoreCase("t")) {
                 timeEscape();
-            } else
-            if (esc.equalsIgnoreCase("d")) {
+            } else if (esc.equalsIgnoreCase("d")) {
                 dateEscape();
-            } else
-            if (esc.equalsIgnoreCase("ts")) {
+            } else if (esc.equalsIgnoreCase("ts")) {
                 timestampEscape();
-            } else
-            if (esc.equalsIgnoreCase("oj")) {
+            } else if (esc.equalsIgnoreCase("oj")) {
                 outerJoinEscape();
-            } else
-            if (esc.equalsIgnoreCase("fn")) {
+            } else if (esc.equalsIgnoreCase("fn")) {
                 functionEscape();
-            } else
-            if (esc.equalsIgnoreCase("escape")) {
+            } else if (esc.equalsIgnoreCase("escape")) {
                 likeEscape();
             } else {
                 throw new SQLException(Messages.get("error.parsesql.badesc",
@@ -531,21 +597,22 @@ class SQLParser {
                                        "22019");
             }
         }
+        
         mustbe('}', false);
     }
 
     /**
      * Parse the SQL statement processing JDBC escapes and parameter markers.
+     * 
      * @return The processed SQL statement and any procedure name as elements
-     * 0 and 1 of the returned <code>String[]</code>.
+     *   0 and 1 of the returned <code>String[]</code>.
      * @throws SQLException
      */
-    String[] parse()
-    throws SQLException
-    {
+    String[] parse() throws SQLException {
         try {
             while (s < len) {
                 final char c = in[s];
+                
                 switch (c) {
                     case '{':
                         escape();
@@ -563,14 +630,19 @@ class SQLParser {
                         break;
                 }
             }
+            
             String result[] = new String[2];
             // Remove leading spaces.
             int start = 0;
-            while (start < out.length && out[start] == ' ')
+            
+            while (start < out.length && out[start] == ' ') {
                 start++;
+            }
+            
             // return sql and procname
             result[0] = new String(out, start, d-start);
             result[1] = procName;
+            
             return result;
         } catch (IndexOutOfBoundsException e) {
             // Should only come here if string is invalid in some way.
@@ -582,10 +654,10 @@ class SQLParser {
 
     /**
      * Retrieve the next character from the SQL statement.
+     * 
      * @return The next character as an <code>int</code>.
      */
-    private int nextCh()
-    {
+    private int nextCh() {
         ch = (s < len)? in[s++]: EOF;
         return ch;
     }
@@ -606,66 +678,102 @@ class SQLParser {
      * the SQL statement to locate the start of a where clause. It would be
      * easy to extend this code to do more sophisticated parsing perhaps to
      * locate table names in a 'select for update' cursor statement for example.
+     * 
      * @param token The StringBuffer to receive the token value.
      * @return The token type as a <code>int</code>.
      */
-    int nextToken(StringBuffer token)
-    {
+    int nextToken(StringBuffer token) {
         int sy = sy_end;
 
         token.setLength(0);
-        while (Character.isWhitespace(ch)) nextCh();
-        tokenStart = s-1;
+        
+        while (Character.isWhitespace(ch)) {
+            nextCh();
+        }
+        
+        tokenStart = s - 1;
+        
         switch (ch) {
             case '\'':
             case '"':
                 {
-                    char term = ch; nextCh();
+                    char term = ch;
+                    nextCh();
+                    
                     do {
                         while (ch != term && ch != EOF) {
-                            token.append(ch); nextCh();
+                            token.append(ch);
+                            nextCh();
                         }
-                        if (ch == EOF) break;
-                           nextCh();
-                        if (ch != term) break;
-                           token.append(ch); nextCh();
+                        
+                        if (ch == EOF) {
+                            break;
+                        }
+                        
+                        nextCh();
+                        
+                        if (ch != term) {
+                            break;
+                        }
+                        
+                        token.append(ch);
+                        nextCh();
                     } while (true);
-                    sy = (term == '"')? sy_ident: sy_string;
+                    
+                    sy = (term == '"') ? sy_ident : sy_string;
                 }
+                
                 break;
             case '[':
                 {
                     while (ch != ']' && ch != EOF) {
-                        token.append(ch); nextCh();
+                        token.append(ch);
+                        nextCh();
                     }
-                    if (ch == ']') nextCh();
+                    
+                    if (ch == ']') {
+                        nextCh();
+                    }
+                    
                     sy = sy_ident;
                 }
                 break;
             case '<':
                 {
-                    token.append(ch); nextCh();
+                    token.append(ch);
+                    nextCh();
+                    
                     if (ch == '>' || ch == '=') {
-                        token.append(ch); nextCh();
+                        token.append(ch);
+                        nextCh();
                     }
+                    
                     sy = sy_operator;
                 }
                 break;
             case '>':
                 {
-                    token.append(ch); nextCh();
+                    token.append(ch);
+                    nextCh();
+                    
                     if (ch == '=') {
-                        token.append(ch); nextCh();
+                        token.append(ch);
+                        nextCh();
                     }
+                    
                     sy = sy_operator;
                 }
                 break;
             case '!':
                 {
-                    token.append(ch); nextCh();
+                    token.append(ch);
+                    nextCh();
+                    
                     if (ch == '<' || ch == '>' || ch == '=') {
-                        token.append(ch); nextCh();
+                        token.append(ch);
+                        nextCh();
                     }
+                    
                     sy = sy_operator;
                 }
                 break;
@@ -680,7 +788,8 @@ class SQLParser {
             case '&':
             case '|':
                 {
-                    token.append(ch); nextCh();
+                    token.append(ch);
+                    nextCh();
                     sy = sy_operator;
                 }
                 break;
@@ -698,54 +807,73 @@ class SQLParser {
                 if (Character.isLetter(ch) || ch == '@' || ch == '#' || ch == '_') {
                     while (Character.isLetterOrDigit(ch)
                             || ch == '@' || ch == '#' || ch == '_' || ch == '$') {
-                        token.append(ch); nextCh();
+                        token.append(ch);
+                        nextCh();
                     }
+                    
                     // Need to do proper lookup here
                     String tst = token.toString().toLowerCase();
-                    if (tst.equals("select") ||
-                        tst.equals("from") ||
-                        tst.equals("where")) {
+                    
+                    if (tst.equals("select")
+                        || tst.equals("from")
+                        || tst.equals("where")) {
                         sy = sy_sqlword;
                     } else {
                         sy = sy_ident;
                     }
-                } else
-                if (Character.isDigit(ch)) {
-                    token.append(ch); nextCh();
+                } else if (Character.isDigit(ch)) {
+                    token.append(ch);
+                    nextCh();
+                    
                     if (Character.toLowerCase(ch) == 'x' && token.charAt(0) == '0'){
                         token.append(ch);
-                        while (Character.isDigit(ch) ||
-                            (Character.toLowerCase(ch) >= 'a' && Character.toLowerCase(ch) <= 'f')) {
-                                token.append(ch); nextCh();
+                        
+                        while (Character.isDigit(ch)
+                            || (Character.toLowerCase(ch) >= 'a' && Character.toLowerCase(ch) <= 'f')) {
+                                token.append(ch);
+                                nextCh();
                         }
+                        
                         sy = sy_binary;
                     } else {
                         while (Character.isDigit(ch)) {
-                            token.append(ch); nextCh();
+                            token.append(ch);
+                            nextCh();
                         }
+                        
                         if (ch == '.') {
-                            token.append(ch); nextCh();
+                            token.append(ch);
+                            nextCh();
+                            
                             while (Character.isDigit(ch)) {
                                 token.append(ch); nextCh();
                             }
                         }
+                        
                         if (Character.toLowerCase(ch) == 'e') {
-                            token.append(ch); nextCh();
+                            token.append(ch);
+                            nextCh();
+                            
                             if (ch == '-' || ch == '+') {
-                                token.append(ch); nextCh();
+                                token.append(ch);
+                                nextCh();
                             }
+                            
                             while (Character.isDigit(ch)) {
-                                token.append(ch); nextCh();
+                                token.append(ch);
+                                nextCh();
                             }
                         }
                         sy = sy_number;
                     }
                 } else {
-                    token.append(ch); nextCh();
+                    token.append(ch);
+                    nextCh();
                     sy = sy_misc;
                 }
                 break;
         }
+        
         return sy;
     }
 

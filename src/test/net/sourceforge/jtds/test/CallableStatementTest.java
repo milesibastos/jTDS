@@ -306,6 +306,33 @@ public class CallableStatementTest extends TestBase {
         }
     }
     
+    /**
+     * Test for bug [946171] null boolean in CallableStatement bug
+     */
+    public void testCallableRegisterOutParameter1() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure TEST_BOOL @bool bit, @whatever int OUTPUT as\r\n "
+                     + "begin\r\n"
+                     + "set @whatever = 1\r\n"
+                     + "end");
+        stmt.close();
+    	
+        try {
+            CallableStatement cstmt = con.prepareCall("{call TEST_BOOL(?,?)}");
+
+            cstmt.setNull(1, Types.BOOLEAN);
+            cstmt.registerOutParameter(2, Types.INTEGER);
+            cstmt.execute();
+
+            assertTrue(cstmt.getInt(2) == 1);
+            cstmt.close();
+        } finally {
+            stmt = con.createStatement();
+            stmt.execute("drop procedure TEST_BOOL");
+            stmt.close();
+        }
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

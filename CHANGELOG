@@ -15,6 +15,7 @@ Changes from jTDS 0.8
    enabled again once code is in place to control the in-memory buffering via
    a connection property and WRITETEXT support is added.
  o Added test for bug [939206] TdsException: can't sent this BigDecimal
+ o Added test for bug [946171] null boolean in CallableStatement bug
 
 07/01/2004 - Brian Heineman
  o Improved Blob and Clob support.  Writes done through a Blob or Clob are now

@@ -1,63 +1,55 @@
 package net.sourceforge.jtds.test;
 
+import java.math.*;
 import java.sql.*;
 
 /**
  * @version 1.0
  */
 
-public class PreparedStatementTest
-extends TestBase
-{
+public class PreparedStatementTest extends TestBase {
 
-    public PreparedStatementTest( String name )
-    {
+    public PreparedStatementTest(String name) {
         super(name);
     }
 
-    public void testPreparedStatement()
-        throws Exception
-    {
+    public void testPreparedStatement() throws Exception {
+        PreparedStatement pstmt = con.prepareStatement("SELECT * FROM #test");
 
-        PreparedStatement pstmt
-            = con.prepareStatement( "SELECT * FROM #test" );
-
-        makeTestTables( pstmt );
-        makeObjects( pstmt, 10 );
+        makeTestTables(pstmt);
+        makeObjects(pstmt, 10);
 
         ResultSet rs = pstmt.executeQuery();
 
-        dump( rs );
+        dump(rs);
 
         rs.close();
 
     }
 
-    public void testScrollablePreparedStatement()
-        throws Exception
-    {
+    public void testScrollablePreparedStatement() throws Exception {
         Statement stmt = con.createStatement();
-        makeTestTables( stmt );
-        makeObjects( stmt, 10 );
+        makeTestTables(stmt);
+        makeObjects(stmt, 10);
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement(
             "SELECT * FROM #test",
             ResultSet.TYPE_SCROLL_SENSITIVE,
-            ResultSet.CONCUR_READ_ONLY );
+            ResultSet.CONCUR_READ_ONLY);
 
         ResultSet rs = pstmt.executeQuery();
 
-        assertTrue( rs.isBeforeFirst() );
-        while ( rs.next() ) {}
-        assertTrue( rs.isAfterLast() );
+        assertTrue(rs.isBeforeFirst());
+        while (rs.next()) {}
+        assertTrue(rs.isAfterLast());
 
         //This currently fails because the PreparedStatement
         //Doesn't know it needs to create a cursored ResultSet.
         //Needs some refactoring!!
         // SAfe Not any longer. ;o)
-        while ( rs.previous() ) {}
-        assertTrue( rs.isBeforeFirst() );
+        while (rs.previous()) {}
+        assertTrue(rs.isBeforeFirst());
 
         rs.close();
 
@@ -178,6 +170,84 @@ extends TestBase
         } finally {
             connect();
         }
+    }
+
+    /**
+     * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
+     */
+    public void testPreparedStatementSetObject1() throws Exception {
+        BigDecimal data = new BigDecimal(3.7D);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #psso1 (data MONEY)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso1 (data) VALUES (?)");
+
+        pstmt.setObject(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+    
+        stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso1");
+
+        assertTrue(rs.next());
+        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertTrue(!rs.next());
+        rs.close();
+    }
+
+    /**
+     * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
+     */
+    public void testPreparedStatementSetObject2() throws Exception {
+        BigDecimal data = new BigDecimal(3.7D);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #psso2 (data MONEY)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso2 (data) VALUES (?)");
+
+        pstmt.setObject(1, data, Types.NUMERIC, 4);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+    
+        stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso2");
+
+        assertTrue(rs.next());
+        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertTrue(!rs.next());
+        rs.close();
+    }
+
+    /**
+     * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
+     */
+    public void testPreparedStatementSetObject3() throws Exception {
+        BigDecimal data = new BigDecimal(3.7D);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #psso3 (data MONEY)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso3 (data) VALUES (?)");
+
+        pstmt.setObject(1, data, Types.DECIMAL, 4);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+    
+        stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso3");
+
+        assertTrue(rs.next());
+        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertTrue(!rs.next());
+        rs.close();
     }
 
     public static void main(String[] args) {

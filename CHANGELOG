@@ -4,6 +4,8 @@ Changes from jTDS 0.8-rc1
 04/21/2004 - Brian Heineman
  o Corrected bug [938632] String index out of bounds error in 0.8rc1;
    added test to ensure functionality continues to work in the future.
+ o Added tests for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off
+   decimal places
 
 04/20/2004 - Brian Heineman
  o Updated DatabaseMetaData.supportsNamedParameters() to return true.

@@ -3,6 +3,10 @@ Changes from jTDS 0.9-rc1
 
 08/13/2004 - Brian Heineman
  o Added test for bug [1008208] 0.9-rc1 updateNull doesn't work
+ o Added initial support for prepareSql=4; sp_prepexec used in conjunction with
+   sp_execute.  Currently the statement handle is not retrieved and cached so
+   sp_prepexec is being called each time. Update the FAQ to indicate that
+   sp_prepexec functionality is experimental.
 
 08/13/2004 - David Kilzer
  o Applied patch to check if connection is null before calling

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.24 2004-08-07 17:48:54 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.25 2004-08-14 01:29:42 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -853,10 +853,10 @@ public class TdsCore {
      */
     String microsoftPrepare(String sql, ParamInfo[] params)
         throws SQLException {
-        StringBuffer spSql = new StringBuffer(sql.length() + 64);
         int prepareSql = connection.getPrepareSql();
 
         if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
+            StringBuffer spSql = new StringBuffer(sql.length() + 64);
             String procName = connection.getProcName();
 
             spSql.append("create proc ");
@@ -893,19 +893,6 @@ public class TdsCore {
 
             return procName;
         } else if (prepareSql == PREPARE) {
-            
-            // Build parameter descriptor            
-            for (int i = 0; i < params.length; i++) {
-                spSql.append("@P");
-                spSql.append(i);
-                spSql.append(' ');
-                spSql.append(params[i].sqlType);
-
-                if (i + 1 < params.length) {
-                    spSql.append(',');
-                }
-            }
-            
             ParamInfo prepParam[] = new ParamInfo[4];
             
             // Setup prepare handle param
@@ -918,7 +905,7 @@ public class TdsCore {
             prepParam[1] = new ParamInfo();
             prepParam[1].isSet = true;
             prepParam[1].jdbcType = Types.LONGVARCHAR;
-            prepParam[1].value = spSql.toString();
+            prepParam[1].value = Support.getParameterDefinitions(params);
             prepParam[1].isUnicode = true;
             
             // Setup sql statemement param
@@ -941,7 +928,6 @@ public class TdsCore {
             clearResponseQueue();
             
             // columns will now hold meta data for select statements
-            
             Integer prepareHandle = (Integer) prepParam[0].value;
             
             if (prepareHandle != null) {
@@ -2751,11 +2737,30 @@ public class TdsCore {
     }
 
     /**
+     * Returns <code>true</code> if the specified <code>procName</code>
+     * is a sp_prepare or sp_prepexec handle; returns <code>false</code>
+     * otherwise.
+     * 
+     * @param procName Stored procedure to execute or <code>null</code>.
+     * @return <code>true</code> if the specified <code>procName</code>
+     *   is a sp_prepare or sp_prepexec handle; <code>false</code>
+     *   otherwise.
+     */
+    public static boolean isPreparedProcedureName(final String procName) {
+        if (procName != null && procName.length() > 0
+                && Character.isDigit(procName.charAt(0))) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
      * Execute SQL using TDS 7.0 protocol.
      *
      * @param sql The SQL statement to execute.
-     * @param procName Stored procedure to execute or null.
-     * @param parameters Parameters for call or null.
+     * @param procName Stored procedure to execute or <code>null</code>.
+     * @param parameters Parameters for call or <code>null</code>.
      * @param noMetaData Suppress meta data for cursor calls.
      * @throws SQLException
      */
@@ -2771,7 +2776,7 @@ public class TdsCore {
             // Use sp_executesql approach
             procName = "sp_executesql";
 
-            ParamInfo params[] = new ParamInfo[parameters.length + 2];
+            ParamInfo[] params = new ParamInfo[parameters.length + 2];
 
             System.arraycopy(parameters, 0, params, 2, parameters.length);
 
@@ -2781,56 +2786,73 @@ public class TdsCore {
             params[0].isSet = true;
             params[0].isUnicode = true;
             params[0].value = Support.substituteParamMarkers(sql, parameters);
-
             TdsData.getNativeType(connection, params[0]);
-            StringBuffer paramDef = new StringBuffer(80);
-
-            for (int i = 0; i < parameters.length; i++) {
-                paramDef.append("@P");
-                paramDef.append(i);
-                paramDef.append(' ');
-                paramDef.append(parameters[i].sqlType);
-
-                if (i + 1 < parameters.length) {
-                    paramDef.append(',');
-                }
-            }
 
             params[1] = new ParamInfo();
             params[1].jdbcType = Types.VARCHAR;
             params[1].bufferSize = 4000;
             params[1].isSet = true;
             params[1].isUnicode = true;
-            params[1].value = paramDef.toString();
-
+            params[1].value = Support.getParameterDefinitions(parameters);
             TdsData.getNativeType(connection, params[1]);
 
             parameters = params;
-        } else if (procName != null && procName.length() > 0
-                && Character.isDigit(procName.charAt(0))
-                && (prepareSql == PREPARE || prepareSql == PREPEXEC)) {
-            
-            if (parameters == null) {
-                parameters = new ParamInfo[0];
+        } else if (prepareSql == PREPARE || prepareSql == PREPEXEC) {
+            if (isPreparedProcedureName(procName)) {
+                if (parameters == null) {
+                    parameters = new ParamInfo[0];
+                }
+                
+                ParamInfo params[] = new ParamInfo[parameters.length + 1];
+    
+                System.arraycopy(parameters, 0, params, 1, parameters.length);
+    
+                params[0] = new ParamInfo();
+                params[0].jdbcType = Types.INTEGER;
+                params[0].bufferSize = 4;
+                params[0].isSet = true;
+                params[0].isUnicode = false;
+                params[0].value = new Integer(procName);
+                TdsData.getNativeType(connection, params[0]);
+    
+                parameters = params;
+    
+                // Use sp_execute approach
+                procName = "sp_execute";
+            } else if (prepareSql == PREPEXEC && procName == null
+                    && parameters != null && parameters.length > 0) {
+                ParamInfo params[] = new ParamInfo[parameters.length + 3];
+                
+                System.arraycopy(parameters, 0, params, 3, parameters.length);
+                
+                // Setup prepare handle param
+                params[0] = new ParamInfo();
+                params[0].isSet = true;
+                params[0].jdbcType = Types.INTEGER;
+                params[0].isOutput = true;
+                TdsData.getNativeType(connection, params[0]);
+
+                // Setup parameter descriptor param
+                params[1] = new ParamInfo();
+                params[1].isSet = true;
+                params[1].jdbcType = Types.LONGVARCHAR;
+                params[1].value = Support.getParameterDefinitions(parameters);
+                params[1].isUnicode = true;
+                TdsData.getNativeType(connection, params[1]);
+                
+                // Setup sql statemement param
+                params[2] = new ParamInfo();
+                params[2].isSet = true;
+                params[2].jdbcType = Types.LONGVARCHAR;
+                params[2].value = Support.substituteParamMarkers(sql, parameters);
+                params[2].isUnicode = true;
+                TdsData.getNativeType(connection, params[2]);
+
+                parameters = params;
+                
+                // Use sp_execute approach
+                procName = "sp_prepexec";
             }
-            
-            ParamInfo params[] = new ParamInfo[parameters.length + 1];
-
-            System.arraycopy(parameters, 0, params, 1, parameters.length);
-
-            params[0] = new ParamInfo();
-            params[0].jdbcType = Types.INTEGER;
-            params[0].bufferSize = 4;
-            params[0].isSet = true;
-            params[0].isUnicode = false;
-            params[0].value = new Integer(procName);
-
-            TdsData.getNativeType(connection, params[0]);
-
-            parameters = params;
-
-            // Use sp_execute approach
-            procName = "sp_execute";
         }
 
         if (procName != null && procName.length() > 0) {

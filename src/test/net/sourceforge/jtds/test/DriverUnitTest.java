@@ -33,10 +33,10 @@ import java.util.Iterator;
 
 
 /**
- * Unit tests for the {@link net.sourceforge.jtds.jdbc.Driver} class.
+ * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.5 2004-08-05 16:25:27 bheineman Exp $
+ * @version $Id: DriverUnitTest.java,v 1.6 2004-08-05 23:49:15 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -76,8 +76,8 @@ public class DriverUnitTest extends UnitTestBase {
 
     /**
      * Tests that passing in a null properties argument to
-     * {@link net.sourceforge.jtds.jdbc.Driver#getPropertyInfo(java.lang.String, java.util.Properties)}
-     * causes the url to be parsed, which then throws a {@link java.sql.SQLException}.
+     * {@link Driver#getPropertyInfo(String, Properties)}
+     * causes the url to be parsed, which then throws a {@link SQLException}.
      */
     public void test_getPropertyInfo_ThrowsSQLExceptionWithNullProperties() {
         try {
@@ -92,8 +92,8 @@ public class DriverUnitTest extends UnitTestBase {
 
     /**
      * Tests that passing in a non-null properties argument to
-     * {@link net.sourceforge.jtds.jdbc.Driver#getPropertyInfo(java.lang.String, java.util.Properties)}
-     * causes the url to be parsed, which then throws a {@link java.sql.SQLException}.
+     * {@link Driver#getPropertyInfo(String, Properties)}
+     * causes the url to be parsed, which then throws a {@link SQLException}.
      */
     public void test_getPropertyInfo_ThrowsSQLExceptionWithNonNullProperties() {
         try {
@@ -106,6 +106,11 @@ public class DriverUnitTest extends UnitTestBase {
     }
 
 
+    /**
+     * Tests that the {@link DriverPropertyInfo} array returned from
+     * {@link Driver#getPropertyInfo(String, Properties)}
+     * matches the list of properties defined in <code>Messages.properties</code>.
+     */ 
     public void test_getPropertyInfo_MatchesMessagesProperties() {
 
         final Map driverPropertyInfoMap = new HashMap();
@@ -138,6 +143,13 @@ public class DriverUnitTest extends UnitTestBase {
     }
 
 
+    /**
+     * Retrieve the {@link DriverPropertyInfo} array from
+     * {@link Driver#getPropertyInfo(String, Properties)} and convert it
+     * into a {@link Map} using the <code>name</code> property for the keys.
+     * 
+     * @param driverPropertyInfoMap The map of {@link DriverPropertyInfo} objects to be populated.
+     */
     private void loadDriverPropertyInfoMap(final Map driverPropertyInfoMap) {
         final DriverPropertyInfo[] driverPropertyInfoArray = (DriverPropertyInfo[]) invokeInstanceMethod(
                 new Driver(), "getPropertyInfo",
@@ -150,6 +162,14 @@ public class DriverUnitTest extends UnitTestBase {
     }
 
 
+    /**
+     * Retrieve the list of property names and property descriptions from
+     * <code>Messages.properties</code> and populate them into
+     * {@link Map} objects.
+     * 
+     * @param propertyMap The map of property names to be populated.
+     * @param descriptionMap The map of property descriptions to be populated. 
+     */ 
     private void loadMessageProperties(Map propertyMap, Map descriptionMap) {
 
         final ResourceBundle bundle = (ResourceBundle) invokeStaticMethod(
@@ -169,7 +189,7 @@ public class DriverUnitTest extends UnitTestBase {
 
 
     /**
-     * Class use to test {@link Driver#parseURL(java.lang.String, java.util.Properties)}.
+     * Class use to test {@link Driver#parseURL(String, Properties)}.
      */ 
     public static class DefaultPropertiesTestLibrary_Driver_parseURL extends DefaultPropertiesTestLibrary {
 
@@ -214,7 +234,7 @@ public class DriverUnitTest extends UnitTestBase {
 
 
     /**
-     * Class use to test {@link Driver#getPropertyInfo(java.lang.String, java.util.Properties)}.
+     * Class use to test {@link Driver#getPropertyInfo(String, Properties)}.
      */ 
     public static class DefaultPropertiesTestLibrary_Driver_getPropertyInfo extends DefaultPropertiesTestLibrary {
 

@@ -27,14 +27,14 @@ import java.text.MessageFormat;
  * 
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.1 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: Messages.java,v 1.2 2004-08-05 23:49:11 ddkilzer Exp $
  */
 public final class Messages {
 
     /**
      * Default name for resource bundle containing the messages
      */
-    private static final String defaultResource = "net.sourceforge.jtds.jdbc.Messages";
+    private static final String DEFAULT_RESOURCE = "net.sourceforge.jtds.jdbc.Messages";
 
 
     /**
@@ -114,7 +114,7 @@ public final class Messages {
 
 
     /**
-     * Load the {@link #defaultResource} resource bundle.
+     * Load the {@link #DEFAULT_RESOURCE} resource bundle.
      * <p/>
      * ResourceBundle does caching so performance should be OK.
      * (Comment copied from {@link #get(String, Object[])}
@@ -123,7 +123,7 @@ public final class Messages {
      * @return The resource bundle.
      */
     private static ResourceBundle loadResourceBundle() {
-        return ResourceBundle.getBundle(defaultResource);
+        return ResourceBundle.getBundle(DEFAULT_RESOURCE);
     }
 
 }

@@ -18,11 +18,11 @@ Changes from jTDS 0.6
  o Completely reimplemented CursorResultSet, to use the sp_cursor stored
    procedures instead of standard SQL cursors. Cleaned up a lot packet
    processing: now it's mostly done inside Tds.
+ 
+01/30/2004 - Brian Heineman
  o Improved performance of Driver URL parsing by ~40%.  URL's are now
    case-insensitive and provide better validation of the expected format.
  o Reduced Driver memory footprint.
- 
-01/30/2004 - Brian Heineman
  o Corrected bug in {fn concat()} translation; Sun javadoc shows double quotes 
    but single quotes are expected.
  o Updated Sybase stored procedure name generation to "jTDS" + last 26

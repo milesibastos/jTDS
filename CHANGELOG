@@ -103,7 +103,6 @@ Changes from jTDS 0.8.1
    support for TDS 8.0 as well). See NEWCODE.TXT for additional information.
  o Corrected bug with Savepoint id assignment.
  o Improved performance of data conversions by reducing memory allocations.
- o Corrected bug [974036] Bug in 0.8rc1 DatabaseMetaData method getTableTypes()
 
 ===============================================================================
 07/08/2004 - jTDS 0.8.1 released

@@ -1,6 +1,12 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/10/2004 - Alin Sinpalean
+ o Corrected bug [1023984] Protocol error processing table meta data. Turns out
+   the TABNAME packet is only different for TDS versions 0x71000001 and up
+   (i.e. SQL Server versions 2000 SP1 and newer). Added an internalTdsVersion
+   field to SharedSocket, that should probably replace tdsVersion altogether.
+
 09/07/2004 - Brian Heineman
  o Corrected bug [1022968] Long SQL expression error; (thanks to Mike Hutchinson
    for the patch).

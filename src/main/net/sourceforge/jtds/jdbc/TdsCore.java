@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.36 2004-09-08 01:39:32 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.37 2004-09-10 16:22:53 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -763,7 +763,7 @@ public class TdsCore {
         setRowCount(maxRows);
         messages.clearWarnings();
         this.returnStatus = null;
-        // 
+        //
         // Normalize the parameters argument to simplify later checks
         //
         if (parameters != null && parameters.length == 0) {
@@ -776,7 +776,7 @@ public class TdsCore {
         if (procName != null && procName.length() == 0) {
             procName = null;
         }
-        
+
         if (parameters != null && parameters[0].isRetVal) {
             returnParam = parameters[0];
             returnParam.isSet = false;
@@ -1869,11 +1869,11 @@ public class TdsCore {
         while (bytesRead < pktLen) {
             int    nameLen;
             String tabName;
-            TableMetaData table = null;
-            if (tdsVersion == Driver.TDS80) {
-                // TDS8 supplies the database.owner.table as three 
+            TableMetaData table;
+            if (socket.getInternalTdsVersion() >= 0x71000001) {
+                // TDS8.0.0.1 supplies the database.owner.table as three
                 // separate components which allows us to have names
-                // with embedded periods. 
+                // with embedded periods.
                 // Can't think why anyone would want that!
                 table = new TableMetaData();
                 bytesRead++;
@@ -1887,12 +1887,12 @@ public class TdsCore {
                 	case 1: nameLen = in.readShort();
         					bytesRead += nameLen * 2 + 2;
         					table.name = in.readString(nameLen);
-        					break;
+        			case 0: break;
         		    default:
         		        throw new ProtocolException("Invalid table TAB_NAME_TOKEN");
                 }
-            } else { 
-                if (tdsVersion == Driver.TDS70) {
+            } else {
+                if (tdsVersion >= Driver.TDS70) {
                     nameLen = in.readShort();
                     bytesRead += nameLen * 2 + 2;
                     tabName  = in.readString(nameLen);
@@ -1901,7 +1901,7 @@ public class TdsCore {
                     nameLen = in.read();
                     bytesRead++;
                     if (nameLen == 0) {
-                        break; // Sybase uses a zero length name to terminate list
+                        break; // Sybase/SQL 6.5 use a zero length name to terminate list
                     }
                     tabName = in.readString(nameLen);
                     bytesRead += nameLen;
@@ -2104,7 +2104,10 @@ public class TdsCore {
         int ack = 1;
 
         if (tdsVersion >= Driver.TDS70) {
-            in.skip(5);
+            in.skip(1);
+            // TODO Update tdsVersion according to this. Maybe even replace tdsVersion altogether?
+            socket.setInternalTdsVersion(((int) in.read() << 24) | ((int) in.read() << 16)
+                    | ((int) in.read() << 8) | (int) in.read());
             final int nameLen = in.read();
             product = in.readString(nameLen);
             major = in.read();
@@ -2790,7 +2793,7 @@ public class TdsCore {
             // if there are no parameters.
             //
             // Should we downgrade TEMPORARY_STORED_PROCEDURES as well?
-            // No it may be a complex select with no parameters but costly to 
+            // No it may be a complex select with no parameters but costly to
             // evaluate for each execution.
             prepareSql = UNPREPARED;
         }
@@ -2859,7 +2862,7 @@ public class TdsCore {
 
                 params = new ParamInfo[2 + parameters.length];
                 System.arraycopy(parameters, 0, params, 2, parameters.length);
- 
+
                 params[0] = new ParamInfo();
                 params[0].jdbcType = Types.VARCHAR;
                 params[0].isSet = true;
@@ -2930,7 +2933,7 @@ public class TdsCore {
             out.write(sql);
             out.flush();
         }
-    } 
+    }
 
     /**
      * Set the server row count used to limit the number of rows in a result set.
@@ -2986,7 +2989,7 @@ public class TdsCore {
      */
     private static byte[] getMACAddress(String macString) {
         byte[] mac = new byte[6];
-        boolean ok = false; 
+        boolean ok = false;
 
         if (macString != null && macString.length() == 12) {
             try {

@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.7 2004-08-28 19:10:01 bheineman Exp $
+ * @version $Id: ResponseStream.java,v 1.8 2004-09-10 16:22:53 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -331,8 +331,7 @@ public class ResponseStream {
      * Close this response stream. The stream id is unlinked from
      * the underlying shared socket as well.
      *
-     * @return The result as a <code>short</code>.
-     * @throws IOException
+     * @throws IOException if an I/O error occurs
      */
     void close() throws IOException {
         isClosed = true;

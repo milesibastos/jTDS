@@ -25,6 +25,10 @@ Changes from jTDS 0.8.1
  o On ConnectionJDBC2 class: renamed private field serverPort to portNumber,
    added private default constructor for testing, and implemented use of
    DefaultProperties.getTdsVersion().
+ o INCOMPATIBLE INTERFACE CHANGE:  Renamed AbstractDataSource.getTds(),
+   setTds() and private tds field to getTdsVersion(), setTdsVersion() and
+   tdsVersion to match private field ConnectionJDBC2.  This also affects
+   JtdsDataSource.
 
 08/06/2004 - Brian Heineman
  o Update the usage of the prepareSql parameter.  This parameter is now used to

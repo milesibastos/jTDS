@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.7 2004-08-07 02:09:02 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.8 2004-08-07 03:39:50 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -102,7 +102,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      * Test the <code>tds</code> (version) property.
      */
     public void test_tds() {
-        String fieldName = "tds";
+        String fieldName = "tdsVersion";
         String messageKey = "prop.tds";
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, DefaultProperties.TDS_VERSION_70);
         if (!isOnlySqlServerTests()) {

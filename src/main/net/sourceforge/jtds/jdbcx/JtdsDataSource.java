@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.8 2004-08-07 01:32:14 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.9 2004-08-07 03:39:50 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 
@@ -64,7 +64,7 @@ public class JtdsDataSource extends AbstractDataSource {
         props.setProperty(Messages.get("prop.servertype"), String.valueOf(serverType));
         props.setProperty(Messages.get("prop.portnumber"), String.valueOf(portNumber));
         props.setProperty(Messages.get("prop.databasename"), databaseName);
-        props.setProperty(Messages.get("prop.tds"), tds);
+        props.setProperty(Messages.get("prop.tds"), tdsVersion);
         props.setProperty(Messages.get("prop.charset"), charset);
         props.setProperty(Messages.get("prop.language"), language);
         props.setProperty(Messages.get("prop.domain"), domain);

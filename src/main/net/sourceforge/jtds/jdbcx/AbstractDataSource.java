@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.16 2004-08-07 01:32:14 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.17 2004-08-07 03:39:50 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -47,7 +47,7 @@ implements DataSource, Referenceable, Serializable {
     protected String user;
     protected String password = "";
     protected String description;
-    protected String tds = DefaultProperties.TDS_VERSION_70;
+    protected String tdsVersion = DefaultProperties.TDS_VERSION_70;
     protected int serverType = Driver.SQLSERVER;
     protected String charset = "";
     protected String language = "";
@@ -76,7 +76,7 @@ implements DataSource, Referenceable, Serializable {
         ref.add(new StringRefAddr(Messages.get("prop.password"), password));
         ref.add(new StringRefAddr(Messages.get("prop.charset"), charset));
         ref.add(new StringRefAddr(Messages.get("prop.language"), language));
-        ref.add(new StringRefAddr(Messages.get("prop.tds"), tds));
+        ref.add(new StringRefAddr(Messages.get("prop.tds"), tdsVersion));
         ref.add(new StringRefAddr(Messages.get("prop.servertype"),
                                   String.valueOf(serverType)));
         ref.add(new StringRefAddr(Messages.get("prop.domain"), domain));
@@ -168,12 +168,12 @@ implements DataSource, Referenceable, Serializable {
         return user;
     }
   
-    public void setTds(String tds) {
-        this.tds = tds;
+    public void setTdsVersion(String tdsVersion) {
+        this.tdsVersion = tdsVersion;
     }
   
-    public String getTds() {
-        return tds;
+    public String getTdsVersion() {
+        return tdsVersion;
     }
   
     public void setServerType(int serverType) {

@@ -85,11 +85,8 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
                             // FIXME: Hack for ConnectionJDBC2
                             {
-                                Map fieldMap = new HashMap();
-                                fieldMap.put("tds", "tdsVersion");
-                                fieldMap.put("sendStringParametersAsUnicode", "useUnicode");
-                                if (fieldMap.containsKey(fieldName)) {
-                                    fieldName = (String) fieldMap.get(fieldName);
+                                if ("sendStringParametersAsUnicode".equals(fieldName)) {
+                                    fieldName = "useUnicode";
                                 }
                             }
 

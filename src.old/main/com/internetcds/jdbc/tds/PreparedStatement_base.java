@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.13 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -1194,4 +1194,16 @@ public class PreparedStatement_base
     {
         NotImplemented();
     }
+    
+    public java.sql.ParameterMetaData getParameterMetaData() throws java.sql.SQLException
+    {
+        NotImplemented();
+        return null;
+    }
+    
+    public void setURL(int param, java.net.URL url) throws java.sql.SQLException
+    {
+        NotImplemented();
+    }
+    
 }

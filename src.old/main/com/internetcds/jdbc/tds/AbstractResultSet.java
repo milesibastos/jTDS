@@ -1046,5 +1046,55 @@ public abstract class AbstractResultSet
 
 
     public abstract PacketRowResult currentRow() throws SQLException;
-
+    
+    public void updateRef(int param, java.sql.Ref ref) throws java.sql.SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+    
+    public void updateRef(String columnName, java.sql.Ref ref) throws java.sql.SQLException
+    {
+        updateRef(findColumn(columnName), ref);
+    }
+    
+    public void updateClob(int param, java.sql.Clob clob) throws java.sql.SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+    
+    public void updateClob(String columnName, java.sql.Clob clob) throws java.sql.SQLException
+    {
+        updateClob(findColumn(columnName), clob);
+    }
+    
+    public void updateBlob(String columnName, java.sql.Blob blob) throws java.sql.SQLException
+    {
+        updateBlob(findColumn(columnName), blob);
+    }
+    
+    public void updateBlob(int param, java.sql.Blob blob) throws java.sql.SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+    
+    public void updateArray(String columnName, java.sql.Array array) throws java.sql.SQLException
+    {
+        updateArray(findColumn(columnName), array);
+    }
+    
+    public void updateArray(int param, java.sql.Array array) throws java.sql.SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+    
+    public java.net.URL getURL(String columnName) throws java.sql.SQLException
+    {
+        return getURL(findColumn(columnName));
+    }
+    
+    public java.net.URL getURL(int param) throws java.sql.SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+    
 }

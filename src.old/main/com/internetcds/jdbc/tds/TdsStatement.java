@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.19 2002-08-28 08:38:54 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.20 2002-09-03 19:57:48 justinsb Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.19 2002-08-28 08:38:54 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.20 2002-09-03 19:57:48 justinsb Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -696,6 +696,11 @@ public class TdsStatement implements java.sql.Statement
      return getMoreResults(actTds);
    }
 
+    public boolean getMoreResults(int current) throws SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+
    public void handleRetStat(PacketRetStatResult packet) {
    }
 
@@ -1173,6 +1178,46 @@ public class TdsStatement implements java.sql.Statement
       }
    }
 
+   public boolean execute(String str, int param) throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public boolean execute(String str, String[] str1) throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public boolean execute(String str, int[] values) throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public int executeUpdate(String str, String[] str1) throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public int executeUpdate(String str, int[] values) throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public int executeUpdate(String str, int param) throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
+   public int getResultSetHoldability() throws java.sql.SQLException
+   {
+        throw new SQLException("Not Implemented");
+   }
+   
 }
 
 

@@ -1,6 +1,9 @@
 Changes from jTDS 0.3
 =====================
 
+09/03/2002 - Justin SB
+ o Added stubs to enable compilation with JDK 1.4 (no new functionality)
+
 08/30/2002 - Alin Sinpalean
 
  o TdsResultSetMetaData.get* fixed (Bug #598911). Still a couple of

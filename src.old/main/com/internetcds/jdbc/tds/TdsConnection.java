@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.13 2002-08-30 14:13:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.13 2002-08-30 14:13:51 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.13 2002-08-30 14:13:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2002-09-03 19:57:47 justinsb Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -829,4 +829,65 @@ public class TdsConnection implements ConnectionHelper, Connection
         if( exception != null )
             throw exception;
     }
+    
+    public java.sql.Statement createStatement(int param, int param1, int param2) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public int getHoldability() throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.CallableStatement prepareCall(String str, int param, int param2, int param3) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.PreparedStatement prepareStatement(String str, int param) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.PreparedStatement prepareStatement(String str, int[] values) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.PreparedStatement prepareStatement(String str, String[] str1) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.PreparedStatement prepareStatement(String str, int param, int param2, int param3) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void releaseSavepoint(java.sql.Savepoint savepoint) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void rollback(java.sql.Savepoint savepoint) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public void setHoldability(int param) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.Savepoint setSavepoint() throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
+    public java.sql.Savepoint setSavepoint(String str) throws java.sql.SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+    
 }

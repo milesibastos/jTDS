@@ -17,7 +17,10 @@
 //
 package net.sourceforge.jtds.test;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbc.Driver;
+import net.sourceforge.jtds.jdbc.Support;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -27,9 +30,41 @@ import java.util.Properties;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.Driver} class.
  * 
  * @author David D. Kilzer.
- * @version $Id: DriverUnitTest.java,v 1.1 2004-08-03 19:14:13 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.2 2004-08-04 01:58:40 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
+
+
+    /**
+     * Construct a test suite for this class.
+     * <p/>
+     * The test suite includes the tests in this class, and adds tests
+     * from {@link DefaultPropertiesTestLibrary} after creating an
+     * anonymous {@link DefaultPropertiesTester}.
+     * 
+     * @return Test suite to run.
+     */
+    public static Test suite() {
+
+        TestSuite testSuite = new TestSuite(DriverUnitTest.class);
+
+        DefaultPropertiesTester tester = new DefaultPropertiesTester() {
+            public void assertDefaultProperty(
+                    String message, String url, Properties properties, String fieldName, String key, String expected) {
+                Properties results =
+                        (Properties) invokeStaticMethod(
+                                Driver.class, "parseURL",
+                                new Class[]{String.class, Properties.class},
+                                new Object[]{url, properties});
+                assertEquals(message, expected, results.getProperty(Support.getMessage(key)));
+            }
+        };
+
+        testSuite.addTest(DefaultPropertiesTestLibrary.suite(tester, "test_parseURL_DefaultProperties"));
+
+        return testSuite;
+    }
+
 
     /**
      * Constructor.
@@ -46,7 +81,7 @@ public class DriverUnitTest extends UnitTestBase {
      * {@link net.sourceforge.jtds.jdbc.Driver#getPropertyInfo(java.lang.String, java.util.Properties)}
      * causes the url to be parsed, which then throws a {@link java.sql.SQLException}.
      */
-    public void testGetPropertyInfoThrowsSQLException_NullProperties() {
+    public void test_getPropertyInfo_ThrowsSQLExceptionWithNullProperties() {
         try {
             new Driver().getPropertyInfo("wxyz:", null);
             fail("Expected SQLException to be throw");
@@ -62,7 +97,7 @@ public class DriverUnitTest extends UnitTestBase {
      * {@link net.sourceforge.jtds.jdbc.Driver#getPropertyInfo(java.lang.String, java.util.Properties)}
      * causes the url to be parsed, which then throws a {@link java.sql.SQLException}.
      */
-    public void testGetPropertyInfoThrowsSQLException_NonNullProperties() {
+    public void test_getPropertyInfo_ThrowsSQLExceptionWithNonNullProperties() {
         try {
             new Driver().getPropertyInfo("wxyz:", new Properties());
             fail("Expected SQLException to be throw");

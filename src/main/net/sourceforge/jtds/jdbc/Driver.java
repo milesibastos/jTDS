@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.25 2004-08-03 19:14:12 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.26 2004-08-04 01:58:39 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -171,9 +171,9 @@ public class Driver implements java.sql.Driver {
                 if (dpi[i].value == null) {
                     if (String.valueOf(SYBASE).equalsIgnoreCase(
                             String.valueOf(info.get(Support.getMessage("prop.servertype"))))) {
-                        dpi[i].value = Integer.toString(TdsCore.DEFAULT_SYBASE_PORT);
+                        dpi[i].value = Integer.toString(Settings.DEFAULT_PORT_NUMBER_SYBASE);
                     } else {
-                        dpi[i].value = Integer.toString(TdsCore.DEFAULT_SQLSERVER_PORT);
+                        dpi[i].value = Integer.toString(Settings.DEFAULT_PORT_NUMBER_SQLSERVER);
                     }
                 }
             } else if (name.equals(Support.getMessage("prop.databasename"))) {
@@ -249,7 +249,7 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.lobbuffer");
     
                 if (dpi[i].value == null) {
-                    dpi[i].value = String.valueOf(TdsCore.DEFAULT_LOB_BUFFER_SIZE);
+                    dpi[i].value = String.valueOf(Settings.DEFAULT_LOB_BUFFER_SIZE);
                 }
             }
         }
@@ -278,7 +278,6 @@ public class Driver implements java.sql.Driver {
         }
 
         StringBuffer token = new StringBuffer(16);
-        int port = TdsCore.DEFAULT_SQLSERVER_PORT;
         int pos = 0;
 
         pos = nextToken(url, pos, token); // Skip jdbc
@@ -302,7 +301,6 @@ public class Driver implements java.sql.Driver {
         } else if (type.equals("sybase")) {
             props.setProperty(Support.getMessage("prop.servertype"),
                               String.valueOf(SYBASE));
-            port = TdsCore.DEFAULT_SYBASE_PORT;
         } else {
             return null; // Bad server type
         }
@@ -327,7 +325,7 @@ public class Driver implements java.sql.Driver {
             pos = nextToken(url, pos, token); // Get port number
 
             try {
-                port = Integer.parseInt(token.toString());
+                int port = Integer.parseInt(token.toString());
                 props.setProperty(Support.getMessage("prop.portnumber"), Integer.toString(port));
             } catch(NumberFormatException e) {
                 return null; // Bad port number
@@ -353,6 +351,11 @@ public class Driver implements java.sql.Driver {
                 props.setProperty(tmp.toUpperCase(), "");
             }
         }
+
+        //
+        // Set default properties
+        //
+        props = Settings.addDefaultProperties(props);
 
         return props;
     }

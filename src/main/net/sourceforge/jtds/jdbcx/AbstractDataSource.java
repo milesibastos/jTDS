@@ -29,6 +29,7 @@ import javax.naming.StringRefAddr;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.TdsCore;
+import net.sourceforge.jtds.jdbc.Settings;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -36,13 +37,13 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.10 2004-08-03 17:48:39 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.11 2004-08-04 01:58:40 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
     protected int loginTimeout = 0;
     protected String databaseName = "";
-    protected int portNumber = TdsCore.DEFAULT_SQLSERVER_PORT;
+    protected int portNumber = Settings.DEFAULT_PORT_NUMBER_SQLSERVER;
     protected String serverName;
     protected String user;
     protected String password = "";
@@ -59,7 +60,7 @@ implements DataSource, Referenceable, Serializable {
     protected String macAddress = "";
     protected int packetSize = 0;
     protected boolean prepareSql = true;
-    protected long lobBuffer = TdsCore.DEFAULT_LOB_BUFFER_SIZE;
+    protected long lobBuffer = Settings.DEFAULT_LOB_BUFFER_SIZE;
 
     public Reference getReference() throws NamingException {
         Reference ref = new Reference(getClass().getName(),

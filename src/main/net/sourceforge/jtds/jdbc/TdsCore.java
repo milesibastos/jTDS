@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.14 2004-08-03 17:09:39 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.15 2004-08-04 01:58:39 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -140,18 +140,12 @@ public class TdsCore {
     //
     // Package private constants
     //
-    /** Default Microosoft port. */
-    public static final int DEFAULT_SQLSERVER_PORT = 1433;
-    /** Default Sybase port. */
-    public static final int DEFAULT_SYBASE_PORT = 7100;
     /** Minimum network packet size. */
     public static final int MIN_PKT_SIZE = 512;
     /** Default minimum network packet size for TDS 7.0 and newer. */
     public static final int DEFAULT_MIN_PKT_SIZE_TDS70 = 4096;
     /** Maximum network packet size. */
     public static final int MAX_PKT_SIZE = 32768;
-    /** Default LOB buffer size. */
-    public static final int DEFAULT_LOB_BUFFER_SIZE = 32768;
     /** The size of the packet header. */
     static final int PKT_HDR_LEN = 8;
     /** TDS 4.2 or 7.0 Query packet. */

@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.15 2004-08-03 17:09:39 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.16 2004-08-04 01:58:39 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -649,7 +649,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         try {
             serverPort  = Integer.parseInt(
                                           info.getProperty(Support.getMessage("prop.portnumber"),
-                                                           String.valueOf(TdsCore.DEFAULT_SQLSERVER_PORT)));
+                                                           String.valueOf(Settings.DEFAULT_PORT_NUMBER_SQLSERVER)));
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",
@@ -671,8 +671,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         user = info.getProperty(Support.getMessage("prop.user"));
         password = info.getProperty(Support.getMessage("prop.password"));
         macAddress = info.getProperty(Support.getMessage("prop.macaddress"), "");
-        appName = info.getProperty(Support.getMessage("prop.appname"), "java.exe");
-        progName = info.getProperty(Support.getMessage("prop.progname"), "jTDS");
+        appName = info.getProperty(Support.getMessage("prop.appname"), Settings.DEFAULT_APP_NAME);
+        progName = info.getProperty(Support.getMessage("prop.progname"), Settings.DEFAULT_PROG_NAME);
         serverCharset = info.getProperty(Support.getMessage("prop.charset"));
         language = info.getProperty(Support.getMessage("prop.language"), "us_english");
         prepareSql = info.getProperty(Support.getMessage("prop.preparesql"), "true").equalsIgnoreCase("true");
@@ -739,7 +739,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         try {
             lobBuffer = Long.parseLong(
                                        info.getProperty(Support.getMessage("prop.lobbuffer"),
-                                                        String.valueOf(TdsCore.DEFAULT_LOB_BUFFER_SIZE)));
+                                                        String.valueOf(Settings.DEFAULT_LOB_BUFFER_SIZE)));
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",

@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.4 2005-02-01 23:27:56 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.5 2005-02-05 22:12:32 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -37,15 +37,22 @@ public class SharedLocalNamedPipe extends SharedSocket {
      *
      * @param tdsVersion the TDS protocol version
      * @param serverType the server type (SQL Server or Sybase)
+     * @param instance   the database instance name
      * @throws IOException if an I/O error occurs
      */
-    public SharedLocalNamedPipe(int tdsVersion, int serverType) throws IOException {
+    public SharedLocalNamedPipe(int tdsVersion, int serverType, String instance)
+            throws IOException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
 
-        // TODO Make this work with named instances
-        File file = new File("\\\\.\\pipe\\sql\\query");
-        RandomAccessFile pipe = new RandomAccessFile(file, "rw");
+        StringBuffer pipeName = new StringBuffer(64);
+        pipeName.append("\\\\.\\pipe\\");
+        if (instance != null && !instance.equals("")) {
+            pipeName.append("MSSQL$").append(instance).append("\\");
+        }
+        pipeName.append("sql\\query");
+
+        RandomAccessFile pipe = new RandomAccessFile(pipeName.toString(), "rw");
         OutputStream fos = new FileOutputStream(pipe.getFD());
         InputStream fis = new FileInputStream(pipe.getFD());
         setOut(new DataOutputStream(new BufferedOutputStream(fos, 4100)));

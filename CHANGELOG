@@ -2,10 +2,12 @@ Changes from jTDS 1.0.1
 =======================
 
 02/17/2005 - Alin Sinpalean
- o Corrected a problem related to cancel synchronization in TdsCore: a race 
+ o Corrected a problem related to cancel synchronization in TdsCore: a race
    condition occured between the cancelPending assignments that could cause
    the Connection to fail. Problem was reproducible using testCancel0003() in
    SAfeTest on a slow client.
+ o Corrected bug [1120168] jTDS 101 - TDS data type 0 invalid, caused by
+   incomplete column info filled in for dummy CachedResultSets.
 
 02/16/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1122357] INSERT is executed twice by scrollable

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.40 2005-01-24 09:07:08 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.41 2005-02-17 21:48:50 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -956,14 +956,55 @@ public class TdsData {
     }
 
     /**
+     * Fill in the TDS native type code and all other fields for a
+     * <code>ColInfo</code> instance with the JDBC type set.
+     *
+     * @param ci the <code>ColInfo</code> instance
+     */
+    static void fillInType(ColInfo ci)
+            throws SQLException {
+        switch (ci.jdbcType) {
+            case java.sql.Types.VARCHAR:
+                ci.tdsType = SYBVARCHAR;
+                ci.bufferSize = 8000;
+                ci.displaySize = 8000;
+                ci.precision = 8000;
+                break;
+            case java.sql.Types.INTEGER:
+                ci.tdsType = SYBINT4;
+                ci.bufferSize = 4;
+                ci.displaySize = 11;
+                ci.precision = 10;
+                break;
+            case java.sql.Types.SMALLINT:
+                ci.tdsType = SYBINT2;
+                ci.bufferSize = 2;
+                ci.displaySize = 6;
+                ci.precision = 5;
+                break;
+            case java.sql.Types.BIT:
+                ci.tdsType = SYBBIT;
+                ci.bufferSize = 1;
+                ci.displaySize = 1;
+                ci.precision = 1;
+                break;
+            default:
+                throw new SQLException(Messages.get(
+                        "error.baddatatype",
+                        Integer.toString(ci.jdbcType)), "HY000");
+        }
+        ci.sqlType = types[ci.tdsType].sqlType;
+        ci.scale = 0;
+    }
+
+    /**
      * Retrieve the TDS native type code for the parameter.
      *
-     * @param connection The connectionJDBC object.
-     * @param pi The parameter descriptor.
-     * @throws SQLException
+     * @param connection the connectionJDBC object
+     * @param pi         the parameter descriptor
      */
     static void getNativeType(ConnectionJDBC2 connection, ParamInfo pi)
-    throws SQLException {
+            throws SQLException {
         int len;
         int jdbcType = pi.jdbcType;
 
@@ -1193,8 +1234,8 @@ public class TdsData {
 
             default:
                 throw new SQLException(Messages.get(
-                                                         "error.baddatatype",
-                                                         Integer.toString(pi.jdbcType)), "HY000");
+                        "error.baddatatype",
+                        Integer.toString(pi.jdbcType)), "HY000");
         }
     }
 

@@ -49,7 +49,7 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.11 2005-02-16 22:15:29 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.12 2005-02-17 21:48:50 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -153,20 +153,12 @@ public class CachedResultSet extends JtdsResultSet {
             ci.name     = colName[i];
             ci.realName = colName[i];
             ci.jdbcType = colType[i];
-            switch (ci.jdbcType) {
-                case java.sql.Types.VARCHAR:
-                    ci.sqlType = "varchar";
-                    break;
-                case java.sql.Types.INTEGER:
-                    ci.sqlType = "int";
-                    break;
-                case java.sql.Types.SMALLINT:
-                    ci.sqlType = "smallint";
-                    break;
-                case java.sql.Types.BIT:
-                    ci.sqlType = "bit";
-                    break;
-            }
+            ci.isCaseSensitive = false;
+            ci.isIdentity = false;
+            ci.isWriteable = false;
+            ci.nullable = 2;
+            ci.scale = 0;
+            TdsData.fillInType(ci);
             columns[i] = ci;
         }
         this.columnCount   = getColumnCount(columns);

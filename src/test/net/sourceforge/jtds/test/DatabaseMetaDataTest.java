@@ -17,20 +17,12 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.11 2005-01-05 12:24:14 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.12 2005-02-17 21:49:00 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -431,6 +423,45 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         ResultSet rs = dmd.getTables(null, null, null, null);
 
         assertNotNull(rs);
+
+        rs.close();
+    }
+
+    /**
+     * Test for bug [1120168] jTDS 101 - TDS data type 0 invalid.
+     */
+    public void testGetColumnsMetaData() throws Exception {
+        DatabaseMetaData dmd = con.getMetaData();
+        ResultSet rs = dmd.getColumns(null, null, "Table doesn't exist", null);
+
+        assertNotNull(rs);
+
+        // Obtain the ResultSetMetaData for the dummy CachedResultSet
+        ResultSetMetaData rsmd = rs.getMetaData();
+
+        // Now call all methods and make sure they don't crash
+        // For some of them also make simple tests
+        assertNotNull(rsmd.getCatalogName(1));
+        assertNotNull(rsmd.getColumnClassName(1));
+        rsmd.getColumnCount();
+        assertTrue(0 != rsmd.getColumnDisplaySize(1));
+        assertNotNull(rsmd.getColumnLabel(1));
+        assertNotNull(rsmd.getColumnName(1));
+        rsmd.getColumnType(1);
+        assertNotNull(rsmd.getColumnTypeName(1));
+        rsmd.getPrecision(1);
+        rsmd.getScale(1);
+        assertNotNull(rsmd.getSchemaName(1));
+        assertNotNull(rsmd.getTableName(1));
+        rsmd.isAutoIncrement(1);
+        rsmd.isCaseSensitive(1);
+        rsmd.isCurrency(1);
+        rsmd.isDefinitelyWritable(1);
+        rsmd.isNullable(1);
+        rsmd.isReadOnly(1);
+        rsmd.isSearchable(1);
+        rsmd.isSigned(1);
+        rsmd.isWritable(1);
 
         rs.close();
     }

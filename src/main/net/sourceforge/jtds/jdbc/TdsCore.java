@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.75 2005-02-25 21:31:36 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.76 2005-02-25 23:21:41 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1871,7 +1871,7 @@ public class TdsCore {
         // 0x20: enable warning messages if USE <database> issued
         // 0x40: change to initial database must succeed
         // 0x80: enable warning messages if SET LANGUAGE issued
-        byte flags = 0x40;
+        byte flags = (byte) (0x20 | 0x40 | 0x80);
         out.write(flags);
 
         //mdb: this byte controls what kind of auth we do.

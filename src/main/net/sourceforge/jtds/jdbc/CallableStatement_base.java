@@ -35,6 +35,7 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 import java.math.BigDecimal;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 /**
  * CallableStatement is used to execute SQL stored procedures.
@@ -64,11 +65,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.22 2004-04-21 19:45:13 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.23 2004-05-02 04:08:08 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
-implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.22 2004-04-21 19:45:13 bheineman Exp $";
+implements CallableStatement {
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.23 2004-05-02 04:08:08 bheineman Exp $";
 
     private final static int ACCESS_UNKNOWN = 0;
     private final static int ACCESS_ORDINAL = 1;
@@ -244,7 +245,7 @@ implements java.sql.CallableStatement {
         }
     }
 
-    private Object getParam(int index) throws SQLException {
+    private Object getParam(int index, int sqlType) throws SQLException {
         // TODO We should check for access type, too. We can't do it in the
         //      current implementation but we should be able to if we move the
         //      whole conversion for getters and setters in a single place, say
@@ -276,7 +277,14 @@ implements java.sql.CallableStatement {
         --index;
         lastWasNull = (parameterList[index] == null);
 
-        return parameterList[index].value;
+        // If the type is unknown just return the value...
+        if (sqlType == Integer.MIN_VALUE) {
+            return parameterList[index].value;
+        }
+
+        return ParameterUtils.getObject(sqlType,
+                                        parameterList[index].value,
+                                        connection.getEncoder());
     }
 
     /**
@@ -323,153 +331,110 @@ implements java.sql.CallableStatement {
     }
 
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
-        NotImplemented();
-        return null;
-    }
+        BigDecimal result = getBigDecimal(parameterIndex);
 
-    public boolean getBoolean(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
-
-        if (value == null) {
-            return false;
-        }
-
-        try {
-            return ((Boolean) value).booleanValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
-    }
-
-    public byte getByte(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
-
-        if (value == null) {
-            return 0;
-        }
-
-        try {
-            return ((Number) value).byteValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
-    }
-
-    public byte[] getBytes(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
-
-        if (value == null) {
+        if (result == null) {
             return null;
         }
 
-        try {
-            return (byte[]) value;
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
+        return result.setScale(scale);
     }
 
-    public java.sql.Date getDate(int parameterIndex) throws SQLException {
-        NotImplemented();
-        return null;
+    public boolean getBoolean(int parameterIndex) throws SQLException {
+        Boolean result = (Boolean) getParam(parameterIndex, Types.BIT);
+
+        if (result == null) {
+            return false;
+        }
+
+        return result.booleanValue();
+    }
+
+    public byte getByte(int parameterIndex) throws SQLException {
+        Byte result = (Byte) getParam(parameterIndex, Types.TINYINT);
+
+        if (result == null) {
+            return 0;
+        }
+
+        return result.byteValue();
+    }
+
+    public byte[] getBytes(int parameterIndex) throws SQLException {
+        return (byte[]) getParam(parameterIndex, Types.BINARY);
+    }
+
+    public Date getDate(int parameterIndex) throws SQLException {
+        return (Date) getParam(parameterIndex, Types.DATE);
     }
 
     public double getDouble(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
+        Double result = (Double) getParam(parameterIndex, Types.DOUBLE);
 
-        if (value == null) {
+        if (result == null) {
             return 0;
         }
 
-        try {
-            return ((Number) value).doubleValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
+        return result.doubleValue();
     }
 
     public float getFloat(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
+        Float result = (Float) getParam(parameterIndex, Types.FLOAT);
 
-        if (value == null) {
+        if (result == null) {
             return 0;
         }
 
-        try {
-            return ((Number) value).floatValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
+        return result.floatValue();
+    }
+
+    public short getShort(int parameterIndex) throws SQLException {
+        Short result = (Short) getParam(parameterIndex, Types.SMALLINT);
+
+        if (result == null) {
+            return 0;
         }
+
+        return result.shortValue();
     }
 
     public int getInt(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
+        Integer result = (Integer) getParam(parameterIndex, Types.INTEGER);
 
-        if (value == null) {
+        if (result == null) {
             return 0;
         }
 
-        try {
-            return ((Number) value).intValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
+        return result.intValue();
     }
 
     public long getLong(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
+        Long result = (Long) getParam(parameterIndex, Types.BIGINT);
 
-        if (value == null) {
+        if (result == null) {
             return 0;
         }
 
-        try {
-            return ((Number) value).longValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
+        return result.longValue();
     }
 
     //----------------------------------------------------------------------
     // Advanced features:
 
     public Object getObject(int parameterIndex) throws SQLException {
-        return getParam(parameterIndex);
-    }
-
-    public short getShort(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
-
-        if (value == null) {
-            return 0;
-        }
-
-        try {
-            return ((Number) value).shortValue();
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
+        return getParam(parameterIndex, Integer.MIN_VALUE);
     }
 
     public String getString(int parameterIndex) throws SQLException {
-        Object value = getParam(parameterIndex);
-
-        try {
-            return (String) value;
-        } catch (Exception e) {
-            throw new SQLException("Unable to convert parameter");
-        }
+        return (String) getParam(parameterIndex, Types.CHAR);
     }
 
-    public java.sql.Time getTime(int parameterIndex) throws SQLException {
-        NotImplemented();
-        return null;
+    public Time getTime(int parameterIndex) throws SQLException {
+        return (Time) getParam(parameterIndex, Types.TIME);
     }
 
-    // TODO Implement these methods
-    public java.sql.Timestamp getTimestamp(int parameterIndex) throws SQLException {
-        NotImplemented();
-        return null;
+    public Timestamp getTimestamp(int parameterIndex) throws SQLException {
+        return (Timestamp) getParam(parameterIndex, Types.TIMESTAMP);
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
@@ -531,23 +496,52 @@ implements java.sql.CallableStatement {
     //--------------------------JDBC 2.0-----------------------------
 
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
-        NotImplemented();
-        return null;
+        return (BigDecimal) getParam(parameterIndex, Types.NUMERIC);
     }
 
-    public java.sql.Date getDate(int parameterIndex, Calendar cal) throws SQLException {
-        NotImplemented();
-        return null;
+    public Date getDate(int parameterIndex, Calendar calendar) throws SQLException {
+        Date date = getDate(parameterIndex);
+
+        if (date != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = date.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            date = new Date(newTime);
+        }
+
+        return date;
     }
 
-    public java.sql.Time getTime(int parameterIndex, Calendar cal) throws SQLException {
-        NotImplemented();
-        return null;
+    public Time getTime(int parameterIndex, Calendar calendar) throws SQLException {
+        Time time = getTime(parameterIndex);
+
+        if (time != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = time.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            time = new Time(newTime);
+        }
+
+        return time;
     }
 
-    public java.sql.Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException {
-        NotImplemented();
-        return null;
+    public Timestamp getTimestamp(int parameterIndex, Calendar calendar) throws SQLException {
+        Timestamp timestamp = getTimestamp(parameterIndex);
+
+        if (timestamp != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = timestamp.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            timestamp = new Timestamp(newTime);
+        }
+
+        return timestamp;
     }
 
     public void registerOutParameter(int paramIndex, int sqlType, String typeName)
@@ -555,27 +549,25 @@ implements java.sql.CallableStatement {
         NotImplemented();
     }
 
-    public Blob getBlob(int i) throws SQLException {
+    public Blob getBlob(int paramIndex) throws SQLException {
+        return (Blob) getParam(paramIndex, Types.BLOB);
+    }
+
+    public Clob getClob(int paramIndex) throws SQLException {
+        return (Clob) getParam(paramIndex, Types.BLOB);
+    }
+
+    public Object getObject(int paramIndex, java.util.Map map) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Clob getClob(int i) throws SQLException {
+    public Ref getRef(int paramIndex) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Object getObject(int i, java.util.Map map) throws SQLException {
-        NotImplemented();
-        return null;
-    }
-
-    public Ref getRef(int i) throws SQLException {
-        NotImplemented();
-        return null;
-    }
-
-    public Array getArray(int i) throws SQLException {
+    public Array getArray(int paramIndex) throws SQLException {
         NotImplemented();
         return null;
     }
@@ -656,7 +648,7 @@ implements java.sql.CallableStatement {
     	registerOutParameter(parameterName, sqlType, -1);
     }
 
-    public java.sql.Array getArray(String parameterName) throws SQLException {
+    public Array getArray(String parameterName) throws SQLException {
         return getArray(getParamNo(parameterName, true, false));
     }
 
@@ -665,7 +657,7 @@ implements java.sql.CallableStatement {
         return getBigDecimal(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Blob getBlob(String parameterName) throws SQLException {
+    public Blob getBlob(String parameterName) throws SQLException {
         return getBlob(getParamNo(parameterName, true, false));
     }
 
@@ -681,15 +673,15 @@ implements java.sql.CallableStatement {
         return getBytes(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Clob getClob(String parameterName) throws SQLException {
+    public Clob getClob(String parameterName) throws SQLException {
         return getClob(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Date getDate(String parameterName) throws SQLException {
+    public Date getDate(String parameterName) throws SQLException {
         return getDate(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Date getDate(String parameterName, java.util.Calendar cal)
+    public Date getDate(String parameterName, java.util.Calendar cal)
             throws SQLException {
         return getDate(getParamNo(parameterName, true, false), cal);
     }
@@ -719,7 +711,7 @@ implements java.sql.CallableStatement {
         return getObject(getParamNo(parameterName, true, false), map);
     }
 
-    public java.sql.Ref getRef(String parameterName) throws SQLException {
+    public Ref getRef(String parameterName) throws SQLException {
         return getRef(getParamNo(parameterName, true, false));
     }
 
@@ -731,21 +723,21 @@ implements java.sql.CallableStatement {
     	return getString(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Time getTime(String parameterName) throws SQLException {
+    public Time getTime(String parameterName) throws SQLException {
         return getTime(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Time getTime(String parameterName, java.util.Calendar cal)
+    public Time getTime(String parameterName, java.util.Calendar cal)
             throws SQLException {
         return getTime(getParamNo(parameterName, true, false), cal);
     }
 
-    public java.sql.Timestamp getTimestamp(String parameterName)
+    public Timestamp getTimestamp(String parameterName)
             throws SQLException {
         return getTimestamp(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Timestamp getTimestamp(String parameterName, java.util.Calendar cal)
+    public Timestamp getTimestamp(String parameterName, java.util.Calendar cal)
             throws SQLException {
         return getTimestamp(getParamNo(parameterName, true, false), cal);
     }
@@ -794,12 +786,12 @@ implements java.sql.CallableStatement {
         setCharacterStream(getParamNo(parameterName, false, true), x, length);
     }
 
-    public void setDate(String parameterName, java.sql.Date x)
+    public void setDate(String parameterName, Date x)
             throws SQLException {
         setDate(getParamNo(parameterName, false, true), x);
     }
 
-    public void setDate(String parameterName, java.sql.Date x, java.util.Calendar cal)
+    public void setDate(String parameterName, Date x, java.util.Calendar cal)
             throws SQLException {
         setDate(getParamNo(parameterName, false, true), x, cal);
     }
@@ -851,22 +843,22 @@ implements java.sql.CallableStatement {
         setString(getParamNo(parameterName, false, true), x);
     }
 
-    public void setTime(String parameterName, java.sql.Time x)
+    public void setTime(String parameterName, Time x)
             throws SQLException {
         setTime(getParamNo(parameterName, false, true), x);
     }
 
-    public void setTime(String parameterName, java.sql.Time x, java.util.Calendar cal)
+    public void setTime(String parameterName, Time x, java.util.Calendar cal)
             throws SQLException {
         setTime(getParamNo(parameterName, false, true), x, cal);
     }
 
-    public void setTimestamp(String parameterName, java.sql.Timestamp x)
+    public void setTimestamp(String parameterName, Timestamp x)
             throws SQLException {
         setTimestamp(getParamNo(parameterName, false, true), x);
     }
 
-    public void setTimestamp(String parameterName, java.sql.Timestamp x, java.util.Calendar cal)
+    public void setTimestamp(String parameterName, Timestamp x, java.util.Calendar cal)
             throws SQLException {
         setTimestamp(getParamNo(parameterName, false, true), x, cal);
     }

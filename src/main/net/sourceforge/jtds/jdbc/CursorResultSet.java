@@ -337,8 +337,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     private int getRowStat() throws SQLException {
-        return (int) current.getLong(
-                context.getColumnInfo().realColumnCount());
+        return ((Long) current.getObjectAs(
+                context.getColumnInfo().realColumnCount(), Types.BIGINT)).intValue();
     }
 
     public boolean rowInserted() throws SQLException {

@@ -55,7 +55,7 @@ public class PacketRowResultTest extends TestCase {
             Integer test = new Integer( 1 );
 
             row.setElementAt( 1, test );
-            assertEquals( 1, (int) row.getLong( 1 ) );
+            assertEquals(1, ((Long) row.getObjectAs(1, Types.BIGINT)).intValue());
         }
         catch ( Exception ex ) {
             ex.printStackTrace();

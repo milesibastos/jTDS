@@ -1,6 +1,21 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+05/01/2004 - Brian Heineman
+ o Consolidated logic for returning data from result sets and callable
+   statements.
+ o Added support for additional data conversions.
+ o Implemented CallableStatement.getBlob(int)
+ o Implemented CallableStatement.getClob(int)
+ o Implemented CallableStatement.getBigDecimal(int)
+ o Implemented CallableStatement.getBigDecimal(int,int)
+ o Implemented CallableStatement.getDate(int)
+ o Implemented CallableStatement.getDate(int,Calendar)
+ o Implemented CallableStatement.getTime(int)
+ o Implemented CallableStatement.getTime(int,Calendar)
+ o Implemented CallableStatement.getTimestamp(int)
+ o Implemented CallableStatement.getTimestamp(int,Calendar)
+
 04/30/2004 - Brian Heineman
  o Added test for bug [945507] closing statement after selecting a large
    IMAGE - Exception

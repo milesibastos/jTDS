@@ -32,10 +32,18 @@
 
 package net.sourceforge.jtds.jdbc;
 
+import java.math.BigDecimal;
 import java.sql.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.14 2004-03-31 21:40:37 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.15 2004-05-02 04:08:08 bheineman Exp $";
+
+    /**
+     * Used to normalize date and time values.
+     */
+    private static Calendar staticCalendar = new GregorianCalendar();
 
     /**
      * Check that all items in parameterList have been given a value
@@ -100,8 +108,8 @@ public class ParameterUtils {
             }
 
             switch (parameterList[i].type) {
-                case java.sql.Types.VARCHAR:
-                case java.sql.Types.CHAR:
+                case Types.VARCHAR:
+                case Types.CHAR:
                 {
                     String value = (String)parameterList[i].value;
 
@@ -146,8 +154,8 @@ public class ParameterUtils {
                     }
                     break;
                 }
-                case java.sql.Types.CLOB:
-                case java.sql.Types.LONGVARCHAR:
+                case Types.CLOB:
+                case Types.LONGVARCHAR:
                 {
                     if (tdsVer == Tds.TDS70) {
                         parameterList[i].formalType = "ntext";
@@ -158,37 +166,37 @@ public class ParameterUtils {
                     parameterList[i].maxLength = Integer.MAX_VALUE;
                     break;
                 }
-                case java.sql.Types.INTEGER:
+                case Types.INTEGER:
                 {
                     parameterList[i].formalType = "integer";
                     break;
                 }
-                case java.sql.Types.FLOAT:
-                case java.sql.Types.REAL:
+                case Types.FLOAT:
+                case Types.REAL:
                 {
                     parameterList[i].formalType = "real";
                     break;
                 }
-                case java.sql.Types.DOUBLE:
+                case Types.DOUBLE:
                 {
                     parameterList[i].formalType = "float";
                     break;
                 }
-                case java.sql.Types.TIMESTAMP:
-                case java.sql.Types.DATE:
-                case java.sql.Types.TIME:
+                case Types.TIMESTAMP:
+                case Types.DATE:
+                case Types.TIME:
                 {
                     parameterList[i].formalType = "datetime";
                     break;
                 }
-                case java.sql.Types.BLOB:
-                case java.sql.Types.LONGVARBINARY:
+                case Types.BLOB:
+                case Types.LONGVARBINARY:
                 {
                     parameterList[i].formalType = "image";
                     break;
                 }
-                case java.sql.Types.BINARY:
-                case java.sql.Types.VARBINARY:
+                case Types.BINARY:
+                case Types.VARBINARY:
                 {
                     if (tdsVer == Tds.TDS70) {
                         parameterList[i].formalType = "varbinary(8000)";
@@ -199,28 +207,28 @@ public class ParameterUtils {
                     }
                     break;
                 }
-                case java.sql.Types.BIT:
+                case Types.BIT:
                 {
                     parameterList[i].formalType = "bit";
                     break;
                 }
-                case java.sql.Types.BIGINT: {
+                case Types.BIGINT: {
                     parameterList[i].formalType = "decimal("
                             + tds.getConnection().getMaxPrecision() + ",0)";
                     break;
                 }
-                case java.sql.Types.SMALLINT:
+                case Types.SMALLINT:
                 {
                     parameterList[i].formalType = "smallint";
                     break;
                 }
-                case java.sql.Types.TINYINT:
+                case Types.TINYINT:
                 {
                     parameterList[i].formalType = "tinyint";
                     break;
                 }
-                case java.sql.Types.DECIMAL:
-                case java.sql.Types.NUMERIC:
+                case Types.DECIMAL:
+                case Types.NUMERIC:
                 {
                     int scale = parameterList[i].scale;
                     if (scale == -1) {
@@ -241,10 +249,10 @@ public class ParameterUtils {
                             + scale + ")";
                     break;
                 }
-                case java.sql.Types.NULL:
-                case java.sql.Types.OTHER:
+                case Types.NULL:
+                case Types.OTHER:
                 {
-                    throw new SQLException("Not implemented (type is java.sql.Types."
+                    throw new SQLException("Not implemented (type is Types."
                                            + TdsUtil.javaSqlTypeToString(parameterList[i].type)
                                            + ")", "HY004");
                 }
@@ -253,6 +261,260 @@ public class ParameterUtils {
                     throw new SQLException("Internal error.  Unrecognized type "
                                            + parameterList[i].type, "HY000");
                 }
+            }
+        }
+    }
+
+    public static Object getObject(int sqlType,
+                                   Object value,
+                                   EncodingHelper encodingHelper)
+    throws SQLException {
+        if (value == null || sqlType == Types.NULL) {
+            return null;
+        } else {
+            switch (sqlType) {
+            case Types.CHAR:
+            case Types.VARCHAR:
+            case Types.LONGVARCHAR:
+                if (value instanceof String) {
+                    return value;
+                } else if (value instanceof byte[]) {
+                    // Binary value, generate hex string
+                    byte[] b = (byte[]) value;
+                    StringBuffer buf = new StringBuffer(2 * b.length);
+
+                    for (int i = 0; i < b.length; i++) {
+                        int n = ((int) b[i]) & 0xFF;
+                        int v = n >> 4;
+
+                        buf.append((char) (v < 10 ? '0' + v : 'A' + v - 10));
+                        v = n & 0x0F;
+                        buf.append((char) (v < 10 ? '0' + v : 'A' + v - 10));
+                    }
+
+                    return buf.toString();
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? "1" : "0";
+                }
+
+                return value.toString();
+            case Types.CLOB:
+                if (value instanceof Clob) {
+                    return value;
+                }
+
+                return new ClobImpl(value.toString());
+            case Types.TINYINT:
+                if (value instanceof Byte) {
+                    return value;
+                } else if (value instanceof Number) {
+                    return new Byte(((Number) value).byteValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new Byte((byte) 1) : new Byte((byte) 0);
+                }
+
+                try {
+                    return new Byte(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to Byte: " + TdsUtil.getException(e));
+                }
+
+            case Types.SMALLINT:
+                if (value instanceof Short) {
+                    return value;
+                } else if (value instanceof Number) {
+                    return new Short(((Number) value).shortValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new Short((short) 1) : new Short((short) 0);
+                }
+
+                try {
+                    return new Short(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to Short: " + TdsUtil.getException(e));
+                }
+            case Types.INTEGER:
+                if (value instanceof Integer) {
+                    return value;
+                } else if (value instanceof Number) {
+                    return new Integer(((Number) value).intValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new Integer(1) : new Integer(0);
+                }
+
+                try {
+                    return new Integer(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to Integer: " + TdsUtil.getException(e));
+                }
+            case Types.BIGINT:
+                if (value instanceof Long) {
+                    return value;
+                } else if (value instanceof Number) {
+                    return new Long(((Number) value).longValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new Long(1) : new Long(0);
+                }
+
+                try {
+                    return new Long(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to Long: " + TdsUtil.getException(e));
+                }
+            case Types.REAL:
+                if (value instanceof Float) {
+                    return value;
+                } else if (value instanceof Number) {
+                    return new Float(((Number) value).doubleValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new Float(1) : new Float(0);
+                }
+
+
+                try {
+                    return new Float(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to Float: " + TdsUtil.getException(e));
+                }
+            case Types.FLOAT:
+            case Types.DOUBLE:
+                if (value instanceof Double) {
+                    return value;
+                } else if (value instanceof Number) {
+                    return new Double(((Number) value).doubleValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new Double(1) : new Double(0);
+                }
+
+                try {
+                    return new Double(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to Double: " + TdsUtil.getException(e));
+                }
+            case Types.DATE:
+                synchronized (staticCalendar) {
+                    if (value instanceof Date) {
+                        staticCalendar.setTime((Date) value);
+                    } else if (value instanceof java.util.Date) {
+                        staticCalendar.setTime(new Date(((java.util.Date) value).getTime()));
+                    } else {
+                        throw new SQLException("Cannot convert " + value.getClass().getName()
+                                               + " to Date.");
+                    }
+
+                    staticCalendar.set(Calendar.HOUR_OF_DAY, 0);
+                    staticCalendar.set(Calendar.MINUTE, 0);
+                    staticCalendar.set(Calendar.SECOND, 0);
+                    staticCalendar.set(Calendar.MILLISECOND, 0);
+
+                    return new Date(staticCalendar.getTime().getTime());
+                }
+            case Types.TIME:
+                synchronized(staticCalendar) {
+                    if (value instanceof Time) {
+                        staticCalendar.setTime((Time) value);
+                    } else if (value instanceof java.util.Date) {
+                        staticCalendar.setTime(new Time(((java.util.Date) value).getTime()));
+                    } else {
+                        throw new SQLException("Cannot convert " + value.getClass().getName()
+                                               + " to Time.");
+                    }
+
+                    staticCalendar.set(Calendar.ERA, GregorianCalendar.AD);
+                    staticCalendar.set(Calendar.YEAR, 1970);
+                    staticCalendar.set(Calendar.MONTH, 0);
+                    staticCalendar.set(Calendar.DAY_OF_MONTH, 1);
+                    return new Time(staticCalendar.getTime().getTime());
+                }
+            case Types.TIMESTAMP:
+                if (value instanceof Timestamp) {
+                    return value;
+                } else if (value instanceof java.util.Date) {
+                    return new Timestamp(((java.util.Date) value).getTime());
+                }
+
+                throw new SQLException("Cannot convert " + value.getClass().getName()
+                                       + " to Timestamp.");
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+                if (value instanceof byte[]) {
+                    return (byte[]) value;
+                }
+
+                // This was previously only possible with String instances...
+                return encodingHelper.getBytes(value.toString());
+            case Types.DECIMAL:
+            case Types.NUMERIC:
+                if (value instanceof BigDecimal) {
+                    return value;
+                } else if (value instanceof java.lang.Double) {
+                    return new BigDecimal(((Double) value).doubleValue());
+                } else if (value instanceof java.lang.Float) {
+                    return new BigDecimal(((Float) value).doubleValue());
+                } else if (value instanceof Number) {
+                    // This handles Byte, Short, Integer, and Long
+                    return BigDecimal.valueOf(((Number) value).longValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new BigDecimal(1) : new BigDecimal(0);
+                }
+
+                try {
+                    return new BigDecimal(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw new SQLException("Cannot convert " + value.getClass().getName()
+                                           + " to BigDecimal: " + TdsUtil.getException(e));
+                }
+            case Types.BLOB:
+                if (value instanceof Blob) {
+                    return value;
+                }
+
+                return new BlobImpl((byte[]) getObject(Types.BINARY, value, encodingHelper));
+            case Types.OTHER:
+                throw new SQLException("Not implemented");
+            case Types.BIT:
+//          case Types.BOOLEAN (16): - Added in 1.4!  Add support for this constant!
+                if (value instanceof Boolean) {
+                    return value;
+                } else if (value instanceof Number) {
+                    // Would somebody like to tell what a true/false has
+                    // to do with a double?
+                    // SAfe It looks like it has to work just like with BIT columns ('0' or 'false' for false and '1' or
+                    //      'true' for true).
+                    return ((Number) value).intValue() == 0 ? Boolean.FALSE : Boolean.TRUE;
+                }
+                String tmpValue = value.toString().trim();
+
+                if (tmpValue.equals("0") || tmpValue.equalsIgnoreCase("false")) {
+                    return Boolean.FALSE;
+                }
+//                    } else if (tmpValue.equals("1") || tmpValue.equalsIgnoreCase("true")) {
+                    // Okay, I'm really confused as to what you mean
+                    // by a character string being true or false.  What
+                    // is the boolean value for "Let the wookie win"?
+                    // But since the spec says I have to convert from
+                    // character to boolean data...
+
+                    // SAfe It looks like it has to work just like with BIT columns ('0' or 'false' for false and '1' or
+                    //      'true' for true).
+
+                    // SAfe Otherwise fall-through and throw an exception.
+
+                    // 05/01/2004
+                    // Why not just have an else statment that returns true instead of checking for specific values?
+                    // (true being defined as !false); the logic has been updated to reflect this...
+                return Boolean.TRUE;
+            default:
+                throw new SQLException("Unsupported datatype " + sqlType);
+//                throw new SQLException("Unknown datatype "
+//                                       + getColumnType(columnIndex));
             }
         }
     }

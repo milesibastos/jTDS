@@ -17,10 +17,10 @@ import java.util.TimeZone;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.14 2004-04-16 21:14:10 bheineman Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.15 2004-05-02 04:08:08 bheineman Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.14 2004-04-16 21:14:10 bheineman Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.15 2004-05-02 04:08:08 bheineman Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
     public static final long HOUR_CONSTANT = 3600000;
@@ -44,11 +44,6 @@ public abstract class AbstractResultSet implements ResultSet {
      * Used to format numeric values when scale is specified.
      */
     private static NumberFormat f = NumberFormat.getInstance();
-
-    /**
-     * Used to normalize date and time values.
-     */
-    private static Calendar staticCalendar = new GregorianCalendar();
 
     /**
      * Returns the <code>Context</code> of the <code>ResultSet</code> instance. A
@@ -96,7 +91,7 @@ public abstract class AbstractResultSet implements ResultSet {
         return getBytes(findColumn(columnName));
     }
 
-    public java.sql.Date getDate(String columnName) throws SQLException {
+    public Date getDate(String columnName) throws SQLException {
         return getDate(findColumn(columnName));
     }
 
@@ -128,11 +123,11 @@ public abstract class AbstractResultSet implements ResultSet {
         return getString(findColumn(columnName));
     }
 
-    public java.sql.Time getTime(String columnName) throws SQLException {
+    public Time getTime(String columnName) throws SQLException {
         return getTime(findColumn(columnName));
     }
 
-    public java.sql.Timestamp getTimestamp(String columnName) throws SQLException {
+    public Timestamp getTimestamp(String columnName) throws SQLException {
         return getTimestamp(findColumn(columnName));
     }
 
@@ -144,16 +139,16 @@ public abstract class AbstractResultSet implements ResultSet {
         return getRef(findColumn(colName));
     }
 
-    public java.sql.Timestamp getTimestamp(String columnName, Calendar cal) throws SQLException {
-        return getTimestamp(findColumn(columnName), cal);
+    public Timestamp getTimestamp(String columnName, Calendar calendar) throws SQLException {
+        return getTimestamp(findColumn(columnName), calendar);
     }
 
-    public java.sql.Date getDate(String columnName, Calendar cal) throws SQLException {
-        return getDate(findColumn(columnName), cal);
+    public Date getDate(String columnName, Calendar calendar) throws SQLException {
+        return getDate(findColumn(columnName), calendar);
     }
 
-    public java.sql.Time getTime(String columnName, Calendar cal) throws SQLException {
-        return getTime(findColumn(columnName), cal);
+    public Time getTime(String columnName, Calendar calendar) throws SQLException {
+        return getTime(findColumn(columnName), calendar);
     }
 
     public short getShort(int index) throws SQLException {
@@ -177,11 +172,11 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public float getFloat(int index) throws SQLException {
-        return(float)getDouble(index);
+        return (float) getDouble(index);
     }
 
     public int getInt(int index) throws SQLException {
-        return(int)getLong(index);
+        return (int) getLong(index);
     }
 
     public java.io.InputStream getAsciiStream(int index) throws SQLException {
@@ -200,7 +195,13 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public BigDecimal getBigDecimal(int index, int scale) throws SQLException {
-        return currentRow().getBigDecimal(index, scale);
+        BigDecimal result = getBigDecimal(index);
+
+        if (result == null) {
+            return null;
+        }
+
+        return result.setScale(scale);
     }
 
     public java.io.InputStream getBinaryStream(int index) throws SQLException {
@@ -214,41 +215,45 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public boolean getBoolean(int index) throws SQLException {
-        return currentRow().getBoolean(index);
+        Boolean result = (Boolean) currentRow().getObjectAs(index, Types.BIT);
+
+        if (result == null) {
+            return false;
+        }
+
+        return result.booleanValue();
     }
 
     public byte getByte(int index) throws SQLException {
-        return(byte) getLong(index);
+        return (byte) getLong(index);
     }
 
     public byte[] getBytes(int index) throws SQLException {
-        return currentRow().getBytes(index);
+        return (byte[]) currentRow().getObjectAs(index, Types.BINARY);
     }
 
-    public java.sql.Date getDate(int index) throws SQLException {
-        java.sql.Date result = null;
-        java.sql.Timestamp tmp = getTimestamp(index);
-
-        if (tmp != null) {
-            synchronized (staticCalendar) {
-                staticCalendar.setTime(tmp);
-                staticCalendar.set(Calendar.HOUR_OF_DAY, 0);
-                staticCalendar.set(Calendar.MINUTE, 0);
-                staticCalendar.set(Calendar.SECOND, 0);
-                staticCalendar.set(Calendar.MILLISECOND, 0);
-                result = new java.sql.Date(staticCalendar.getTime().getTime());
-            }
-        }
-
-        return result;
+    public Date getDate(int index) throws SQLException {
+        return (Date) currentRow().getObjectAs(index, Types.DATE);
     }
 
     public double getDouble(int index) throws SQLException {
-        return currentRow().getDouble(index);
+        Double result = (Double) currentRow().getObjectAs(index, Types.DOUBLE);
+
+        if (result == null) {
+            return 0;
+        }
+
+        return result.doubleValue();
     }
 
     public long getLong(int index) throws SQLException {
-        return currentRow().getLong(index);
+        Long result = (Long) currentRow().getObjectAs(index, Types.BIGINT);
+
+        if (result == null) {
+            return 0;
+        }
+
+        return result.longValue();
     }
 
     public Object getObject(int index) throws SQLException {
@@ -262,50 +267,11 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public String getString(int index) throws SQLException {
-        Object tmp = getObject(index);
-
-        if (tmp == null) {
-            return null;
-        }
-
-        // Binary value, generate hex string
-        if (tmp instanceof byte[]) {
-            byte[] b = (byte[]) tmp;
-            StringBuffer buf = new StringBuffer(2 * b.length);
-
-            for (int i = 0; i < b.length; i++) {
-                int n =((int) b[i]) & 0xFF;
-                int v = n >> 4;
-                buf.append((char) (v < 10 ? '0' + v : 'A' + v - 10));
-                v = n & 0x0F;
-                buf.append((char) (v < 10 ? '0' + v : 'A' + v - 10));
-            }
-            return buf.toString();
-        }
-
-        if (tmp instanceof Boolean) {
-            return((Boolean)tmp).booleanValue() ? "1" : "0";
-        }
-
-        return tmp.toString();
+        return (String) currentRow().getObjectAs(index, Types.CHAR);
     }
 
-    public java.sql.Time getTime(int index) throws SQLException {
-        java.sql.Time result = null;
-        java.sql.Timestamp tmp = getTimestamp(index);
-
-        if (tmp != null) {
-            synchronized(staticCalendar) {
-                staticCalendar.setTime(tmp);
-                staticCalendar.set(Calendar.ERA, GregorianCalendar.AD);
-                staticCalendar.set(Calendar.YEAR, 1970);
-                staticCalendar.set(Calendar.MONTH, 0);
-                staticCalendar.set(Calendar.DAY_OF_MONTH, 1);
-                result = new java.sql.Time(staticCalendar.getTime().getTime());
-            }
-        }
-
-        return result;
+    public Time getTime(int index) throws SQLException {
+        return (Time) currentRow().getObjectAs(index, Types.TIME);
     }
 
     public java.io.Reader getCharacterStream(int index) throws SQLException {
@@ -323,11 +289,11 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public BigDecimal getBigDecimal(int index) throws SQLException {
-        return currentRow().getBigDecimal(index);
+        return (BigDecimal) currentRow().getObjectAs(index, Types.NUMERIC);
     }
 
     public BigDecimal getBigDecimal(String columnName) throws SQLException {
-        return currentRow().getBigDecimal(findColumn(columnName));
+        return getBigDecimal(findColumn(columnName));
     }
 
     public Object getObject(int i, java.util.Map map) throws SQLException {
@@ -338,33 +304,21 @@ public abstract class AbstractResultSet implements ResultSet {
         throw new java.lang.UnsupportedOperationException("Not Implemented");
     }
 
-    public Blob getBlob(int i) throws SQLException {
-        byte[] value = getBytes(i);
-
-        if (value == null) {
-            return null;
-        } else {
-            return new BlobImpl(value);
-        }
+    public Blob getBlob(int index) throws SQLException {
+        return (Blob) currentRow().getObjectAs(index, Types.BLOB);
     }
 
-    public Clob getClob(int i) throws SQLException {
-        String value = getString(i);
-
-        if (value == null) {
-            return null;
-        } else {
-            return new ClobImpl(value);
-        }
+    public Clob getClob(int index) throws SQLException {
+        return (Clob) currentRow().getObjectAs(index, Types.CLOB);
     }
 
-    public Array getArray(int i) throws SQLException {
+    public Array getArray(int index) throws SQLException {
         throw new java.lang.UnsupportedOperationException("Not Implemented");
     }
 
-    public java.sql.Timestamp getTimestamp(int index, Calendar calendar)
+    public Timestamp getTimestamp(int index, Calendar calendar)
     throws SQLException {
-        java.sql.Timestamp timestamp = getTimestamp(index);
+        Timestamp timestamp = getTimestamp(index);
 
         if (timestamp != null && calendar != null) {
             TimeZone timeZone = TimeZone.getDefault();
@@ -372,14 +326,14 @@ public abstract class AbstractResultSet implements ResultSet {
 
             newTime -= timeZone.getRawOffset();
             newTime += calendar.getTimeZone().getRawOffset();
-            timestamp = new java.sql.Timestamp(newTime);
+            timestamp = new Timestamp(newTime);
         }
 
         return timestamp;
     }
 
-    public java.sql.Date getDate(int index, Calendar calendar) throws SQLException {
-        java.sql.Date date = getDate(index);
+    public Date getDate(int index, Calendar calendar) throws SQLException {
+        Date date = getDate(index);
 
         if (date != null && calendar != null) {
             TimeZone timeZone = TimeZone.getDefault();
@@ -387,15 +341,15 @@ public abstract class AbstractResultSet implements ResultSet {
 
             newTime -= timeZone.getRawOffset();
             newTime += calendar.getTimeZone().getRawOffset();
-            date = new java.sql.Date(newTime);
+            date = new Date(newTime);
         }
 
         return date;
     }
 
-    public java.sql.Time getTime(int index, Calendar calendar)
+    public Time getTime(int index, Calendar calendar)
     throws SQLException {
-        java.sql.Time time = getTime(index);
+        Time time = getTime(index);
 
         if (time != null && calendar != null) {
             TimeZone timeZone = TimeZone.getDefault();
@@ -403,14 +357,14 @@ public abstract class AbstractResultSet implements ResultSet {
 
             newTime -= timeZone.getRawOffset();
             newTime += calendar.getTimeZone().getRawOffset();
-            time = new java.sql.Time(newTime);
+            time = new Time(newTime);
         }
 
         return time;
     }
 
-    public java.sql.Timestamp getTimestamp(int index) throws SQLException {
-        return currentRow().getTimestamp(index);
+    public Timestamp getTimestamp(int index) throws SQLException {
+        return (Timestamp) currentRow().getObjectAs(index, Types.TIMESTAMP);
     }
 
     public java.io.InputStream getUnicodeStream(int index) throws SQLException {
@@ -490,15 +444,15 @@ public abstract class AbstractResultSet implements ResultSet {
         updateBytes(findColumn(columnName), x);
     }
 
-    public void updateDate(String columnName, java.sql.Date x) throws SQLException {
+    public void updateDate(String columnName, Date x) throws SQLException {
         updateDate(findColumn(columnName), x);
     }
 
-    public void updateTime(String columnName, java.sql.Time x) throws SQLException {
+    public void updateTime(String columnName, Time x) throws SQLException {
         updateTime(findColumn(columnName), x);
     }
 
-    public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
+    public void updateTimestamp(String columnName, Timestamp x) throws SQLException {
         updateTimestamp(findColumn(columnName), x);
     }
 
@@ -569,15 +523,15 @@ public abstract class AbstractResultSet implements ResultSet {
         updateObject(index, x);
     }
 
-    public void updateDate(int index, java.sql.Date x) throws SQLException {
+    public void updateDate(int index, Date x) throws SQLException {
         updateObject(index, x);
     }
 
-    public void updateTime(int index, java.sql.Time x) throws SQLException {
+    public void updateTime(int index, Time x) throws SQLException {
         updateObject(index, x);
     }
 
-    public void updateTimestamp(int index, java.sql.Timestamp x) throws SQLException {
+    public void updateTimestamp(int index, Timestamp x) throws SQLException {
         updateObject(index, x);
     }
 
@@ -675,15 +629,15 @@ public abstract class AbstractResultSet implements ResultSet {
         }
     }
 
-    public void updateRef(int param, java.sql.Ref ref) throws SQLException {
+    public void updateRef(int param, Ref ref) throws SQLException {
         throw new SQLException("Not Implemented");
     }
 
-    public void updateRef(String columnName, java.sql.Ref ref) throws SQLException {
+    public void updateRef(String columnName, Ref ref) throws SQLException {
         updateRef(findColumn(columnName), ref);
     }
 
-    public void updateClob(int param, java.sql.Clob clob) throws SQLException {
+    public void updateClob(int param, Clob clob) throws SQLException {
         if (clob == null) {
             updateCharacterStream(param, null, 0);
         } else {
@@ -691,15 +645,15 @@ public abstract class AbstractResultSet implements ResultSet {
         }
     }
 
-    public void updateClob(String columnName, java.sql.Clob clob) throws SQLException {
+    public void updateClob(String columnName, Clob clob) throws SQLException {
         updateClob(findColumn(columnName), clob);
     }
 
-    public void updateBlob(String columnName, java.sql.Blob blob) throws SQLException {
+    public void updateBlob(String columnName, Blob blob) throws SQLException {
         updateBlob(findColumn(columnName), blob);
     }
 
-    public void updateBlob(int param, java.sql.Blob blob) throws SQLException {
+    public void updateBlob(int param, Blob blob) throws SQLException {
         if (blob == null) {
             updateBinaryStream(param, null, 0);
         } else {
@@ -707,11 +661,11 @@ public abstract class AbstractResultSet implements ResultSet {
         }
     }
 
-    public void updateArray(String columnName, java.sql.Array array) throws SQLException {
+    public void updateArray(String columnName, Array array) throws SQLException {
         updateArray(findColumn(columnName), array);
     }
 
-    public void updateArray(int param, java.sql.Array array) throws SQLException {
+    public void updateArray(int param, Array array) throws SQLException {
         throw new SQLException("Not Implemented");
     }
 

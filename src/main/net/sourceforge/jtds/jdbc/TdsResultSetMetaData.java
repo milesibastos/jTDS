@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.4 2004-02-05 19:00:31 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.4 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
    /**
     * Does not allow NULL values.
@@ -467,55 +467,55 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     * column. This is the class name used for custom mapping.
     * @exception SQLException if a database access error occurs
     */
-   public String getColumnClassName(int column) throws SQLException
-   {
-      switch( columnsInfo.getJdbcType(column) )
-      {
-         case Types.BIT:
-            return "java.lang.Boolean";
+   public String getColumnClassName(int column) throws SQLException {
+       switch (columnsInfo.getJdbcType(column)) {
+       case Types.BIT:
+           return "java.lang.Boolean";
 
-         case Types.TINYINT:
-         case Types.SMALLINT:
-         case Types.INTEGER:
-            return "java.lang.Integer";
+       case Types.TINYINT:
+       case Types.SMALLINT:
+       case Types.INTEGER:
+           return "java.lang.Integer";
 
-         case Types.BIGINT:
-         case Types.NUMERIC:
-         case Types.DECIMAL:
-            return "java.math.BigDecimal";
+       case Types.BIGINT:
+           return "java.lang.Long";
 
-         case Types.FLOAT:
-         case Types.DOUBLE:
-            return "java.lang.Double";
+       case Types.NUMERIC:
+       case Types.DECIMAL:
+           return "java.math.BigDecimal";
 
-         case Types.REAL:
-            return "java.lang.Float";
+       case Types.FLOAT:
+       case Types.DOUBLE:
+           return "java.lang.Double";
 
-         case Types.CHAR:
-         case Types.VARCHAR:
-         case Types.LONGVARCHAR:
-            return "java.lang.String";
+       case Types.REAL:
+           return "java.lang.Float";
 
-         case Types.DATE:
-         case Types.TIME:
-         case Types.TIMESTAMP:
-            return "java.sql.Timestamp";
+       case Types.CHAR:
+       case Types.VARCHAR:
+       case Types.LONGVARCHAR:
+           return "java.lang.String";
 
-         case Types.BINARY:
-         case Types.VARBINARY:
-         case Types.LONGVARBINARY:
-            return "byte[]";
+       case Types.DATE:
+       case Types.TIME:
+       case Types.TIMESTAMP:
+           return "java.sql.Timestamp";
 
-         case Types.JAVA_OBJECT:
-         case Types.DISTINCT:
-         case Types.STRUCT:
-         case Types.ARRAY:
-         case Types.BLOB:
-         case Types.CLOB:
-         case Types.REF:
-         default:
-            // SAfe Or should this be null?
-            return "";
-      }
+       case Types.BINARY:
+       case Types.VARBINARY:
+       case Types.LONGVARBINARY:
+           return "byte[]";
+
+       case Types.JAVA_OBJECT:
+       case Types.DISTINCT:
+       case Types.STRUCT:
+       case Types.ARRAY:
+       case Types.BLOB:
+       case Types.CLOB:
+       case Types.REF:
+       default:
+           // SAfe Or should this be null?
+           return "";
+       }
    }
 }

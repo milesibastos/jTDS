@@ -44,11 +44,11 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.6 2004-02-02 19:42:51 bheineman Exp $
+ * @version    $Id: Driver.java,v 1.7 2004-02-05 19:00:31 alin_sinpalean Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.6 2004-02-02 19:42:51 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.7 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     static final int MAJOR_VERSION = 0;
     static final int MINOR_VERSION = 6;
@@ -73,7 +73,7 @@ public class Driver implements java.sql.Driver {
     /**
      * Returns <code>true</code> if this driver can connect to the url specified;
      * returns <code>false</code> otherwise.
-     * 
+     *
      * @param url the JDBC url to used to determine if a connection can be made
      */
     public boolean acceptsURL(String url) throws SQLException {
@@ -99,7 +99,7 @@ public class Driver implements java.sql.Driver {
 
     /**
      * Returns a new connection for the properties specified.
-     * 
+     *
      * @param properties the database properties used to establish a new connection
      * @return a new database connection
      */
@@ -135,7 +135,7 @@ public class Driver implements java.sql.Driver {
      * Returns an array of driver properties.
      */
     public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
-    throws SQLException {
+            throws SQLException {
         DriverPropertyInfo[] dpi = new DriverPropertyInfo[] {
             new DriverPropertyInfo(Tds.PROP_SERVERTYPE, null),
             new DriverPropertyInfo(Tds.PROP_HOST, null),
@@ -143,9 +143,11 @@ public class Driver implements java.sql.Driver {
             new DriverPropertyInfo(Tds.PROP_DBNAME, null),
             new DriverPropertyInfo(Tds.PROP_USER, null),
             new DriverPropertyInfo(Tds.PROP_PASSWORD, null),
+            new DriverPropertyInfo(Tds.PROP_CHARSET, null),
             new DriverPropertyInfo(Tds.PROP_TDS, null),
             new DriverPropertyInfo(Tds.PROP_DOMAIN, null),
             new DriverPropertyInfo(Tds.PROP_INSTANCE, null),
+            new DriverPropertyInfo(Tds.PROP_LAST_UPDATE_COUNT, null),
             new DriverPropertyInfo(Tds.PROP_USEUNICODE, null)
         };
 
@@ -156,18 +158,19 @@ public class Driver implements java.sql.Driver {
         }
 
         // Populate the properties.
-        parseUrl(url, info);
+        if( !parseUrl(url, info) )
+            throw new SQLException("Invalid URL supplied: " + url);
 
         for (int i = 0; i < dpi.length; i++) {
             String name = dpi[i].name;
-            Object tmpValue = info.get(name);
+            String value = info.getProperty(name);
 
-            if (tmpValue != null) {
-                dpi[i].value = tmpValue.toString();
+            if (value != null) {
+                dpi[i].value = value;
             }
 
             if (name.equals(Tds.PROP_SERVERTYPE)) {
-                dpi[i].description = "The type of database.";
+                dpi[i].description = "The type of database (1 is SQL Server, 2 is Sybase).";
                 dpi[i].required = true;
                 dpi[i].choices = new String[] {
                     String.valueOf(Tds.SQLSERVER),
@@ -200,6 +203,8 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = "The database user.";
             } else if (name.equals(Tds.PROP_PASSWORD)) {
                 dpi[i].description = "The database password.";
+            } else if (name.equals(Tds.PROP_CHARSET)) {
+                dpi[i].description = "Character set for non-Unicode character values.";
             } else if (name.equals(Tds.PROP_TDS)) {
                 dpi[i].description = "The database protocol.";
                 dpi[i].choices = new String[] {
@@ -215,6 +220,14 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = "The domain used for authentication.";
             } else if (name.equals(Tds.PROP_INSTANCE)) {
                 dpi[i].description = "The database instance.";
+            } else if (name.equals(Tds.PROP_LAST_UPDATE_COUNT)) {
+                dpi[i].description =
+                        "Return only the last update count on executeUpdate.";
+                dpi[i].choices = new String[] {"true","false"};
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = dpi[i].choices[1]; // false
+                }
             } else if (name.equals(Tds.PROP_USEUNICODE)) {
                 dpi[i].description = "If strings should be sent as unicode values.";
                 dpi[i].choices = new String[] {"true","false"};
@@ -241,7 +254,7 @@ public class Driver implements java.sql.Driver {
 
     /**
      * Parses the specified URL into <code>result</code>.
-     * 
+     *
      * @param url the url to parse
      * @param result reference used to write the results to
      * @return <code>true</code> if the url was valid; <code>false</code> otherwise
@@ -437,7 +450,7 @@ public class Driver implements java.sql.Driver {
 
     /**
      * Returns the string form of the object.
-     * 
+     *
      * Per [887120] DriverVersion.getDriverVersion(); this will return a short
      * version name.
      */

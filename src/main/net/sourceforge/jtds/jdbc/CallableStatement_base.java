@@ -64,12 +64,12 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.8 2004-02-05 19:00:30 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
     implements java.sql.CallableStatement
 {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.7 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.8 2004-02-05 19:00:30 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -164,10 +164,10 @@ public class CallableStatement_base extends PreparedStatement_base
             int index,
             Object value,
             int type,
-            int strLength )
+            int scale )
             throws SQLException
     {
-        super.setParam(haveRetVal ? index-1 : index, value, type, strLength);
+        super.setParam(haveRetVal ? index-1 : index, value, type, scale);
     }
 
     protected void addOutputParam(Object value) throws SQLException
@@ -391,27 +391,30 @@ public class CallableStatement_base extends PreparedStatement_base
         registerOutParameter(parameterIndex, sqlType, -1);
     }
 
-    public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException
-    {
+    public void registerOutParameter(int parameterIndex, int sqlType, int scale)
+            throws SQLException {
         // SAfe If there is a return value, decrement the parameter index or
         //      simply ignore the call if it's for the return value
-        if( haveRetVal )
-        {
-            if( parameterIndex == 1 )
-            {
+        if (haveRetVal) {
+            if (parameterIndex == 1) {
                 // If it's the return value, it can only be an integral value
                 // of some kind
-                if( sqlType!=Types.INTEGER && sqlType!=Types.NUMERIC && sqlType!=Types.BIGINT )
+                if (sqlType != Types.INTEGER && sqlType != Types.NUMERIC
+                        && sqlType != Types.DECIMAL && sqlType != Types.BIGINT) {
                     throw new SQLException("Procedure return value is integer.");
+                }
                 return;
             }
             parameterIndex -= 1;
         }
 
+        Object value = parameterList[parameterIndex-1].value;
         // Call directly the method from PreparedStatement_base, otherwise the
         // index will be decremented one more time.
         super.setParam(parameterIndex, null, sqlType, scale);
         parameterList[parameterIndex-1].isOutput = true;
+        // Restore the original value; setParam has set it to null.
+        parameterList[parameterIndex-1].value = value;
     }
 
     public boolean wasNull() throws SQLException
@@ -427,8 +430,15 @@ public class CallableStatement_base extends PreparedStatement_base
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet(parameterList);
 
+        Tds tds = getTds();
+        // Setup the parameter native types and maximum sizes
+        ParameterUtils.createParameterMapping(rawQueryString,
+                                              parameterList,
+                                              tds);
+
         // Execute the stored procedure
-        return internalExecuteCall(procedureName, parameterList, parameterList, getTds(false), warningChain);
+        return internalExecuteCall(procedureName, parameterList, parameterList,
+                                   tds, warningChain);
     }
 
     //--------------------------JDBC 2.0-----------------------------

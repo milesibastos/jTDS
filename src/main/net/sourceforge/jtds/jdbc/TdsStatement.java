@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.11 2004-01-30 18:01:55 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.12 2004-02-05 19:00:31 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.11 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.12 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -165,7 +165,7 @@ public class TdsStatement implements java.sql.Statement
     public final synchronized boolean internalExecute(String sql) throws SQLException
     {
         checkClosed();
-        return executeImpl(getTds(false), sql, warningChain);
+        return executeImpl(getTds(), sql, warningChain);
     }
 
     public final synchronized boolean internalExecute(String sql, Tds tds, SQLWarningChain wChain) throws SQLException
@@ -232,18 +232,27 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs
      */
 
-    public synchronized int executeUpdate(String sql) throws SQLException
-    {
+    public synchronized int executeUpdate(String sql) throws SQLException {
         checkClosed();
 
-        if( internalExecute(sql) )
-        {
+        if (internalExecute(sql)) {
             skipToEnd();
+            releaseTds();
             throw new SQLException("executeUpdate can't return a result set");
-        }
-        else
-        {
-            int res = getUpdateCount();
+        } else {
+            int res;
+            do {
+                res = getUpdateCount();
+                // If we found a ResultSet, there's a problem.
+                if( getMoreResults() ) {
+                    skipToEnd();
+                    releaseTds();
+                    throw new SQLException("executeUpdate can't return a result set");
+                }
+            } while ((getUpdateCount() != -1)
+                    && connection.returnLastUpdateCount());
+
+            releaseTds();
             // We should return 0 (at least that's what the javadoc above says)
             return res==-1 ? 0 : res;
         }
@@ -252,6 +261,8 @@ public class TdsStatement implements java.sql.Statement
     protected synchronized void closeResults(boolean allowTdsRelease)
         throws java.sql.SQLException
     {
+        updateCount = -1;
+
         if( results != null )
         {
             results.close(allowTdsRelease);
@@ -542,16 +553,11 @@ public class TdsStatement implements java.sql.Statement
         return internalExecute(sql);
     }
 
-    synchronized Tds getTds(boolean mainTds) throws SQLException
+    synchronized Tds getTds() throws SQLException
     {
-        // SAfe If the main Tds is requested, then simply return it
-        if( mainTds )
-            return connection.allocateTds(mainTds);
-
-        // SAfe Else, find one and assign it to this Statement
         if( actTds == null )
         {
-            actTds=connection.allocateTds(mainTds);
+            actTds=connection.allocateTds(false);
             return actTds;
         }
         else

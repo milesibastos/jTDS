@@ -34,9 +34,10 @@ package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
 import java.util.StringTokenizer;
+import java.math.BigDecimal;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.4 2004-01-29 19:46:23 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.5 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     /**
      * Count the number of parameters in a prepared sql statement.
@@ -118,9 +119,7 @@ public class ParameterUtils {
             do {
                 nextParameterNumber++;
                 nextFormal = "P" + nextParameterNumber;
-            }
-
-            while (-1 != rawQueryString.indexOf(nextFormal));
+            } while (-1 != rawQueryString.indexOf(nextFormal));
 
             parameterList[i].formalName = nextFormal;
 
@@ -217,7 +216,8 @@ public class ParameterUtils {
                     break;
                 }
                 case java.sql.Types.BIGINT: {
-                    parameterList[i].formalType = "decimal(38,10)";
+                    parameterList[i].formalType = "decimal("
+                            + tds.getConnection().getMaxPrecision() + ",0)";
                     break;
                 }
                 case java.sql.Types.SMALLINT:
@@ -233,7 +233,23 @@ public class ParameterUtils {
                 case java.sql.Types.DECIMAL:
                 case java.sql.Types.NUMERIC:
                 {
-                    parameterList[i].formalType = "decimal(38,10)";
+                    int scale = parameterList[i].scale;
+                    if (scale == -1) {
+                        // @todo Find a way to do this properly (i.e. what
+                        //       happens if the scale is larger than the
+                        //       precision, e.g. if the BigDecimal was created
+                        //       from a float/double - try AsTest)
+                        // if (parameterList[i].value instanceof BigDecimal) {
+                        //     scale = ((BigDecimal) parameterList[i].value).scale();
+                        //     System.out.println("scale = " + scale);
+                        //     new Exception().printStackTrace();
+                        // } else {
+                            scale = 10;
+                        // }
+                    }
+                    parameterList[i].formalType = "decimal("
+                            + tds.getConnection().getMaxPrecision() + ","
+                            + scale + ")";
                     break;
                 }
                 case java.sql.Types.BINARY:

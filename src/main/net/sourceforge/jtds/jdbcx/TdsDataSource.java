@@ -17,18 +17,20 @@ import net.sourceforge.jtds.jdbc.*;
  */
 public class TdsDataSource
 implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
-    private int _loginTimeout;
-    private String _databaseName = "";
-    private String _description;
-    private String _password = "";
-    private int _portNumber = 1433;
-    private String _serverName;
-    private String _user;
-    private String _tdsVersion = "7.0";
-    private int _serverType = Tds.SQLSERVER;
-    private String _domain = "";
-    private String _instance = "";
-    private boolean _sendStringParametersAsUnicode = true;
+    private int loginTimeout;
+    private String databaseName = "";
+    private int portNumber = 1433;
+    private String serverName;
+    private String user;
+    private String password = "";
+    private String description;
+    private String tdsVersion = "7.0";
+    private int serverType = Tds.SQLSERVER;
+    private String charset;
+    private String domain = "";
+    private String instance = "";
+    private boolean lastUpdateCount = false;
+    private boolean sendStringParametersAsUnicode = true;
 
     /**
      * Constructs a new datasource.
@@ -38,17 +40,17 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
 
     /**
      * Returns a new database connection.
-     * 
+     *
      * @return a new database connection
      * @throws SQLException if an error occurs
      */
     public Connection getConnection() throws SQLException {
-        return getConnection(_user, _password);
+        return getConnection(user, password);
     }
 
     /**
      * Returns a new database connection for the user and password specified.
-     * 
+     *
      * @param user the user name to connect with
      * @param password the password to connect with
      * @return a new database connection
@@ -58,15 +60,18 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
     throws SQLException {
         Properties props = new Properties();
 
-        props.setProperty(Tds.PROP_HOST, _serverName);
-        props.setProperty(Tds.PROP_SERVERTYPE, String.valueOf(_serverType));
-        props.setProperty(Tds.PROP_PORT, String.valueOf(_portNumber));
-        props.setProperty(Tds.PROP_DBNAME, _databaseName);
-        props.setProperty(Tds.PROP_TDS, _tdsVersion);
-        props.setProperty(Tds.PROP_DOMAIN, _domain);
-        props.setProperty(Tds.PROP_INSTANCE, _instance);
+        props.setProperty(Tds.PROP_HOST, serverName);
+        props.setProperty(Tds.PROP_SERVERTYPE, String.valueOf(serverType));
+        props.setProperty(Tds.PROP_PORT, String.valueOf(portNumber));
+        props.setProperty(Tds.PROP_DBNAME, databaseName);
+        props.setProperty(Tds.PROP_TDS, tdsVersion);
+        props.setProperty(Tds.PROP_CHARSET, charset);
+        props.setProperty(Tds.PROP_DOMAIN, domain);
+        props.setProperty(Tds.PROP_INSTANCE, instance);
+        props.setProperty(Tds.PROP_LAST_UPDATE_COUNT,
+                          String.valueOf(isLastUpdateCount()));
         props.setProperty(Tds.PROP_USEUNICODE,
-                          String.valueOf(_sendStringParametersAsUnicode));
+                          String.valueOf(sendStringParametersAsUnicode));
 
         props.setProperty(Tds.PROP_USER, user);
         props.setProperty(Tds.PROP_PASSWORD, password);
@@ -76,18 +81,18 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
 
     /**
      * Returns a new pooled database connection.
-     * 
+     *
      * @return a new pooled database connection
      * @throws SQLException if an error occurs
      */
     public javax.sql.PooledConnection getPooledConnection()
     throws SQLException {
-        return getPooledConnection(_user, _password);
+        return getPooledConnection(user, password);
     }
 
     /**
      * Returns a new pooled database connection for the user and password specified.
-     * 
+     *
      * @param user the user name to connect with
      * @param password the password to connect with
      * @return a new pooled database connection
@@ -108,11 +113,11 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
     }
 
     public void setLoginTimeout(int loginTimeout) throws SQLException {
-        _loginTimeout = loginTimeout;
+        this.loginTimeout = loginTimeout;
     }
 
     public int getLoginTimeout() throws SQLException {
-        return _loginTimeout;
+        return loginTimeout;
     }
 
     public Reference getReference() throws NamingException {
@@ -120,104 +125,124 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
                                       TdsObjectFactory.class.getName(),
                                       null);
 
-        ref.add(new StringRefAddr("serverName", _serverName));
-        ref.add(new StringRefAddr("portNumber", String.valueOf(_portNumber)));
-        ref.add(new StringRefAddr("databaseName", _databaseName));
-        ref.add(new StringRefAddr("user", _user));
-        ref.add(new StringRefAddr("password", _password));
-        ref.add(new StringRefAddr("tdsVersion", _tdsVersion));
-        ref.add(new StringRefAddr("serverType", String.valueOf(_serverType)));
-        ref.add(new StringRefAddr("domain", _domain));
-        ref.add(new StringRefAddr("instance", _instance));
+        ref.add(new StringRefAddr("serverName", serverName));
+        ref.add(new StringRefAddr("portNumber", String.valueOf(portNumber)));
+        ref.add(new StringRefAddr("databaseName", databaseName));
+        ref.add(new StringRefAddr("user", user));
+        ref.add(new StringRefAddr("password", password));
+        ref.add(new StringRefAddr("charset", charset));
+        ref.add(new StringRefAddr("tdsVersion", tdsVersion));
+        ref.add(new StringRefAddr("serverType", String.valueOf(serverType)));
+        ref.add(new StringRefAddr("domain", domain));
+        ref.add(new StringRefAddr("instance", instance));
+        ref.add(new StringRefAddr("lastUpdateCount",
+                                  String.valueOf(isLastUpdateCount())));
         ref.add(new StringRefAddr("sendStringParametersAsUnicode",
-                                  String.valueOf(_sendStringParametersAsUnicode)));
+                                  String.valueOf(sendStringParametersAsUnicode)));
 
         return ref;
     }
 
     public void setDatabaseName(String databaseName) {
-        _databaseName = databaseName;
+        this.databaseName = databaseName;
     }
 
     public String getDatabaseName() {
-        return _databaseName;
+        return databaseName;
     }
 
     public void setDescription(String description) {
-        _description = description;
+        this.description = description;
     }
+
     public String getDescription() {
-        return _description;
+        return description;
     }
 
     public void setPassword(String password) {
-        _password = password;
+        this.password = password;
     }
 
     public String getPassword() {
-        return _password;
+        return password;
     }
 
     public void setPortNumber(int portNumber) {
-        _portNumber = portNumber;
+        this.portNumber = portNumber;
     }
 
     public int getPortNumber() {
-        return _portNumber;
+        return portNumber;
     }
 
     public void setServerName(String serverName) {
-        _serverName = serverName;
+        this.serverName = serverName;
     }
 
     public String getServerName() {
-        return _serverName;
+        return serverName;
     }
 
     public void setUser(String user) {
-        _user = user;
+        this.user = user;
     }
 
     public String getUser() {
-        return _user;
+        return user;
     }
 
     public void setTdsVersion(String tdsVersion) {
-        _tdsVersion = tdsVersion;
+        this.tdsVersion = tdsVersion;
     }
 
     public String getTdsVersion() {
-        return _tdsVersion;
+        return tdsVersion;
     }
 
     public void setServerType(int serverType) {
-        _serverType = serverType;
+        this.serverType = serverType;
     }
     public int getServerType() {
-        return _serverType;
+        return serverType;
     }
 
     public String getDomain() {
-        return _domain;
+        return domain;
     }
 
     public void setDomain(String domain) {
-        _domain = domain;
+        this.domain = domain;
     }
 
     public String getInstance() {
-        return _instance;
+        return instance;
     }
 
     public void setInstance(String instance) {
-        _instance = instance;
+        this.instance = instance;
     }
 
     public boolean getSendStringParametersAsUnicode() {
-        return _sendStringParametersAsUnicode;
+        return sendStringParametersAsUnicode;
     }
 
     public void setSendStringParametersAsUnicode(boolean sendStringParametersAsUnicode) {
-        _sendStringParametersAsUnicode = sendStringParametersAsUnicode;
+        this.sendStringParametersAsUnicode = sendStringParametersAsUnicode;
+    }
+
+    public boolean isLastUpdateCount() {
+        return lastUpdateCount;
+    }
+
+    public void setLastUpdateCount(boolean lastUpdateCount) {
+        this.lastUpdateCount = lastUpdateCount;
+    }
+
+    public String getCharset() {
+        return charset;
+    }
+
+    public void setCharset(String charset) {
+        this.charset = charset;
     }
 }

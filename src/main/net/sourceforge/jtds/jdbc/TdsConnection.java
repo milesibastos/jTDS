@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.8 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.9 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.8 2004-01-30 18:01:55 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.9 2004-02-05 19:00:31 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -102,6 +102,7 @@ public class TdsConnection implements Connection
     private int tdsVer = -1;
     private String database = null;
     private Properties initialProps = null;
+    private byte maxPrecision = -1;
 
     private final Vector tdsPool = new Vector();
     private DatabaseMetaData databaseMetaData = null;
@@ -109,6 +110,7 @@ public class TdsConnection implements Connection
     private boolean autoCommit = true;
     private int transactionIsolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
     private boolean isClosed = false;
+    private boolean lastUpdateCount;
 
     private SQLWarningChain warningChain;
 
@@ -123,7 +125,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.8 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.9 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -134,8 +136,8 @@ public class TdsConnection implements Connection
      * @exception  TdsException  if a network protocol error occurs
      */
     public TdsConnection(Properties props_)
-        throws SQLException, TdsException
-    {
+            throws SQLException, TdsException {
+
         host = props_.getProperty(Tds.PROP_HOST);
         serverType = Integer.parseInt(props_.getProperty(Tds.PROP_SERVERTYPE));
         port = Integer.parseInt(props_.getProperty(Tds.PROP_PORT));
@@ -165,17 +167,37 @@ public class TdsConnection implements Connection
         Tds tmpTds = this.allocateTds(false);
         tdsVer = tmpTds.getTdsVer();
         database = tmpTds.getDatabase();
+        lastUpdateCount = tmpTds.lastUpdateCount();
         freeTds(tmpTds);
+
+        TdsStatement stmt = null;
+        try {
+            stmt = new TdsStatement(this);
+            ResultSet rs = stmt.executeQuery("SELECT @@MAX_PRECISION");
+            rs.next();
+            maxPrecision = rs.getByte(1);
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
     }
 
     /**
      * Returns the version of TDS used (one of the TdsDefinitions.TDS<i>XX</i>
      * constants).
      */
-    protected int getTdsVer() throws SQLException
-    {
+    protected int getTdsVer() throws SQLException {
         checkClosed();
         return tdsVer;
+    }
+
+    /**
+     * Returns the maximum precision of numeric and decimal values for this
+     * connection.
+     */
+    protected byte getMaxPrecision() {
+        return maxPrecision;
     }
 
     /**
@@ -414,6 +436,17 @@ public class TdsConnection implements Connection
     public java.util.Map getTypeMap() throws SQLException
     {
         return new java.util.HashMap();
+    }
+
+    /**
+     * Retrieves whether <code>executeUpdate()</code> should only return the
+     * last update count. This is useful in the case of triggers, which can
+     * generate additional (unexpected) update counts.
+     *
+     * @return the value of <code>lastUpdateCount</code>
+     */ 
+    public boolean returnLastUpdateCount() {
+        return lastUpdateCount;
     }
 
     /**

@@ -386,7 +386,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 param[1] = new ParameterListItem();
                 param[1].isSet = true;
                 param[1].type = Types.LONGVARCHAR;
-                param[1].maxLength = 8001;
+                param[1].maxLength = Integer.MAX_VALUE;
                 param[1].formalType = "ntext";
                 param[1].value = sql;
 

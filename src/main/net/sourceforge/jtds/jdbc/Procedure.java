@@ -43,7 +43,7 @@ import java.sql.*;
 import java.util.StringTokenizer;
 
 public class Procedure {
-    public static final String cvsVersion = "$Id: Procedure.java,v 1.5 2004-01-29 20:18:32 bheineman Exp $";
+    public static final String cvsVersion = "$Id: Procedure.java,v 1.6 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     private ParameterListItem _parameterList[]; // Intentionally not initialized
     private String _sqlProcedureName; // Intentionally not initialized
@@ -61,7 +61,8 @@ public class Procedure {
         _sqlProcedureName = sqlProcedureName;
 
         // Create actual to formal parameter mapping
-        ParameterUtils.createParameterMapping(rawQueryString, parameterListIn, tds);
+        // SAfe No need for this. It's already done by PreparedStatement_base.
+        // ParameterUtils.createParameterMapping(rawQueryString, parameterListIn, tds);
 
         // MJH - OK now clone parameter details minus data values.
         // copy back the formal types and check for LOBs

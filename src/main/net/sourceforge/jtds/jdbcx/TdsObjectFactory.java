@@ -26,11 +26,15 @@ public class TdsObjectFactory implements ObjectFactory {
             ds.setDatabaseName((String) ref.get("databaseName").getContent());
             ds.setUser((String) ref.get("user").getContent());
             ds.setPassword((String) ref.get("password").getContent());
+            ds.setCharset((String) ref.get("charset").getContent());
             ds.setTdsVersion((String) ref.get("tdsVersion").getContent());
             ds.setServerType(Integer.parseInt((String) ref.get("serverType").getContent()));
             ds.setDomain((String) ref.get("domain").getContent());
             ds.setInstance((String) ref.get("instance").getContent());
-            ds.setSendStringParametersAsUnicode("true".equals(ref.get("sendStringParametersAsUnicode").getContent()));
+            ds.setLastUpdateCount(
+                    "true".equals(ref.get("lastUpdateCount").getContent()));
+            ds.setSendStringParametersAsUnicode(
+                    "true".equals(ref.get("sendStringParametersAsUnicode").getContent()));
 
             return ds;
         }

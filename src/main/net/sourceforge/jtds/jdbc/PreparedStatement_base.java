@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.12 2004-01-30 18:01:55 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.13 2004-02-05 19:00:31 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.12 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.13 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -104,17 +104,17 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
     public boolean execute() throws SQLException
     {
-        Tds tds = getTds(false);
+        Tds tds = getTds();
         return execute( tds );
     }
 
     /**
-     *  Some prepared statements return multiple results; the execute method
-     *  handles these complex statements as well as the simpler form of
-     *  statements handled by executeQuery and executeUpdate.
+     * Some prepared statements return multiple results; the execute method
+     * handles these complex statements as well as the simpler form of
+     * statements handled by executeQuery and executeUpdate.
      *
-     *@exception  SQLException  if a database-access error occurs.
-     *@see                      Statement#execute
+     * @exception  SQLException  if a database-access error occurs.
+     * @see                      Statement#execute
      */
     public boolean execute( Tds tds ) throws SQLException
     {
@@ -128,18 +128,11 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         Procedure procedure = null;
 
-        // SAfe No need for this either. We'll have to consume all input, nut
-        //      just the last ResultSet (if one exists).
-//        closeResults(false);
-        // SAfe No need for this. getMoreResults sets it to -1 at start, anyway
-//        updateCount = -2;
-
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet( parameterList );
 
         // MJH
         // Create a unique signature for this the procedure by including parameters
-        //
         ParameterUtils.createParameterMapping(rawQueryString,
                                              parameterList,
                                              tds);
@@ -196,9 +189,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public java.sql.ResultSet executeQuery() throws SQLException
     {
-//        closeResults(false);
-
-        Tds tds = getTds(false);
+        Tds tds = getTds();
 
         if( !execute(tds) )
         {
@@ -210,33 +201,40 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         return results;
     }
 
-
     /**
-     *  Execute a SQL INSERT, UPDATE or DELETE statement. In addition, SQL
-     *  statements that return nothing such as SQL DDL statements can be
-     *  executed.
+     * Execute a SQL INSERT, UPDATE or DELETE statement. In addition, SQL
+     * statements that return nothing such as SQL DDL statements can be
+     * executed.
      *
-     *@return                   either the row count for INSERT, UPDATE or
+     * @return     either the row count for INSERT, UPDATE or
      *      DELETE; or 0 for SQL statements that return nothing
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public int executeUpdate() throws SQLException
     {
-//        closeResults(false);
-
-        Tds tds = getTds(false);
+        Tds tds = getTds();
         if ( execute( tds ) ) {
             tds.skipToEnd();
             releaseTds();
             throw new SQLException( "executeUpdate can't return a result set" );
         }
         else {
-            int res = getUpdateCount();
+            int res;
+            do {
+                res = getUpdateCount();
+                // If we found a ResultSet, there's a problem.
+                if( getMoreResults() ) {
+                    skipToEnd();
+                    releaseTds();
+                    throw new SQLException("executeUpdate can't return a result set");
+                }
+            } while ((getUpdateCount() != -1)
+                    && ((TdsConnection) getConnection()).returnLastUpdateCount());
+
             releaseTds();
-            return res;
+            return res==-1 ? 0 : res;
         }
     }
-
 
     /**
      * When a very large ASCII value is input to a LONGVARCHAR parameter, it
@@ -276,35 +274,32 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             }
     }
 
-
     /**
-     *  Set a parameter to a java.lang.BigDecimal value. The driver converts
-     *  this to a SQL NUMERIC value when it sends it to the database.
+     * Set a parameter to a java.lang.BigDecimal value. The driver converts
+     * this to a SQL NUMERIC value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setBigDecimal( int parameterIndex, BigDecimal x ) throws SQLException
     {
         setParam( parameterIndex, x, java.sql.Types.DECIMAL, -1 );
     }
 
-
     /**
-     *  When a very large binary value is input to a LONGVARBINARY parameter, it
-     *  may be more practical to send it via a java.io.InputStream. JDBC will
-     *  read the data from the stream as needed, until it reaches end-of-file.
-     *  <P>
+     * When a very large binary value is input to a LONGVARBINARY parameter, it
+     * may be more practical to send it via a java.io.InputStream. JDBC will
+     * read the data from the stream as needed, until it reaches end-of-file.
+     * <P>
+     * <B>Note:</B> This stream object can either be a standard Java stream
+     * object or your own subclass that implements the standard interface.
      *
-     *  <B>Note:</B> This stream object can either be a standard Java stream
-     *  object or your own subclass that implements the standard interface.
-     *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the java input stream which contains the binary
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the java input stream which contains the binary
      *      parameter value
-     *@param  length            the number of bytes in the stream
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  length            the number of bytes in the stream
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setBinaryStream( int parameterIndex,
             java.io.InputStream x,
@@ -341,44 +336,41 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         this.setBytes( parameterIndex, bs );
     }
 
-
     /**
-     *  Set a parameter to a Java boolean value. The driver converts this to a
-     *  SQL BIT value when it sends it to the database.
+     * Set a parameter to a Java boolean value. The driver converts this to a
+     * SQL BIT value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setBoolean( int parameterIndex, boolean x ) throws SQLException
     {
         setParam( parameterIndex, new Boolean( x ), java.sql.Types.BIT, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java byte value. The driver converts this to a SQL
-     *  TINYINT value when it sends it to the database.
+     * Set a parameter to a Java byte value. The driver converts this to a SQL
+     * TINYINT value when it sends it to the database.
      *
-     *@param  index    the first parameter is 1, the second is 2, ...
-     *@param  x        the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  index    the first parameter is 1, the second is 2, ...
+     * @param  x        the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setByte( int index, byte x ) throws SQLException
     {
         setParam( index, new Integer( x ), java.sql.Types.SMALLINT, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java array of bytes. The driver converts this to a
-     *  SQL VARBINARY or LONGVARBINARY (depending on the argument's size
-     *  relative to the driver's limits on VARBINARYs) when it sends it to the
-     *  database.
+     * Set a parameter to a Java array of bytes. The driver converts this to a
+     * SQL VARBINARY or LONGVARBINARY (depending on the argument's size
+     * relative to the driver's limits on VARBINARYs) when it sends it to the
+     * database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setBytes(int parameterIndex, byte x[]) throws SQLException
     {
@@ -391,108 +383,99 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             setParam( parameterIndex, x, java.sql.Types.LONGVARBINARY, -1 );
     }
 
-
     /**
-     *  Set a parameter to a java.sql.Date value. The driver converts this to a
-     *  SQL DATE value when it sends it to the database.
+     * Set a parameter to a java.sql.Date value. The driver converts this to a
+     * SQL DATE value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  value             the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  value             the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setDate( int parameterIndex, java.sql.Date value ) throws SQLException
     {
         setParam( parameterIndex, value, java.sql.Types.DATE, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java double value. The driver converts this to a
-     *  SQL DOUBLE value when it sends it to the database.
+     * Set a parameter to a Java double value. The driver converts this to a
+     * SQL DOUBLE value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  value             the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  value             the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setDouble( int parameterIndex, double value ) throws SQLException
     {
         setParam( parameterIndex, new Double( value ), java.sql.Types.DOUBLE, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java float value. The driver converts this to a SQL
-     *  FLOAT value when it sends it to the database.
+     * Set a parameter to a Java float value. The driver converts this to a SQL
+     * FLOAT value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  value             the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  value             the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setFloat( int parameterIndex, float value ) throws SQLException
     {
         setParam( parameterIndex, new Float( value ), java.sql.Types.REAL, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java int value. The driver converts this to a SQL
-     *  INTEGER value when it sends it to the database.
+     * Set a parameter to a Java int value. The driver converts this to a SQL
+     * INTEGER value when it sends it to the database.
      *
-     *@param  index    the first parameter is 1, the second is 2, ...
-     *@param  value    the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  index    the first parameter is 1, the second is 2, ...
+     * @param  value    the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setInt( int index, int value ) throws SQLException
     {
         setParam( index, new Integer( value ), java.sql.Types.INTEGER, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java long value. The driver converts this to a SQL
-     *  BIGINT value when it sends it to the database.
+     * Set a parameter to a Java long value. The driver converts this to a SQL
+     * BIGINT value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  value             the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  value             the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setLong( int parameterIndex, long value ) throws SQLException
     {
-        setParam( parameterIndex, new Long( value ), java.sql.Types.NUMERIC, 0 );
+        setParam(parameterIndex, new Long( value ), java.sql.Types.BIGINT, -1);
     }
 
-
     /**
-     *  Set a parameter to SQL NULL. <P>
+     * Set a parameter to SQL NULL. <P>
      *
-     *  <B>Note:</B> You must specify the parameter's SQL type.
+     * <B>Note:</B> You must specify the parameter's SQL type.
      *
-     *@param  index    the first parameter is 1, the second is 2, ...
-     *@param  type     SQL type code defined by java.sql.Types
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  index    the first parameter is 1, the second is 2, ...
+     * @param  type     SQL type code defined by java.sql.Types
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setNull( int index, int type ) throws SQLException
     {
         setParam( index, null, type, -1 );
     }
 
-
     /**
-     *  <p>
+     * Set the value of a parameter using an object; use the java.lang
+     * equivalent objects for integral values. <p>
      *
-     *  Set the value of a parameter using an object; use the java.lang
-     *  equivalent objects for integral values. <p>
+     * The JDBC specification specifies a standard mapping from Java Object
+     * types to SQL types. The given argument java object will be converted to
+     * the corresponding SQL type before being sent to the database. <p>
      *
-     *  The JDBC specification specifies a standard mapping from Java Object
-     *  types to SQL types. The given argument java object will be converted to
-     *  the corresponding SQL type before being sent to the database. <p>
+     * Note that this method may be used to pass datatabase specific abstract
+     * data types, by using a Driver specific Java type.
      *
-     *  Note that this method may be used to pass datatabase specific abstract
-     *  data types, by using a Driver specific Java type.
-     *
-     *@param  parameterIndex    The first parameter is 1, the second is 2, ...
-     *@param  x                 The object containing the input parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    The first parameter is 1, the second is 2, ...
+     * @param  x                 The object containing the input parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setObject(int parameterIndex, Object x) throws SQLException
     {
@@ -545,30 +528,28 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
     }
 
-
     /**
-     *  This method is like setObject above, but assumes a scale of zero.
+     * This method is like setObject above, but assumes a scale of zero.
      *
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setObject( int parameterIndex, Object x, int targetSqlType ) throws SQLException
     {
         setObject( parameterIndex, x, targetSqlType, 0 );
     }
 
-
     /**
-     *  initialize one element in the parameter list
+     * Initialize one element in the parameter list
      *
-     *@param  index  (in-only) index (first column is 1) of the parameter
-     *@param  value  (in-only)
-     *@param  type   (in-only) JDBC type
+     * @param  index  (in-only) index (first column is 1) of the parameter
+     * @param  value  (in-only)
+     * @param  type   (in-only) JDBC type
      */
     protected void setParam(
             int index,
             Object value,
             int type,
-            int strLength )
+            int scale )
              throws SQLException
     {
         if ( index < 1 ) {
@@ -588,10 +569,8 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         parameterList[index].isSet = true;
         parameterList[index].value = value;
 
-        parameterList[index].maxLength = strLength;
+        parameterList[index].scale = scale;
     }
-    // setParam()
-
 
     protected static Map getTypemap()
     {
@@ -608,7 +587,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         map.put( Double.class, new Integer( java.sql.Types.DOUBLE ) );
         map.put( float.class, new Integer( java.sql.Types.REAL ) );
         map.put( Integer.class, new Integer( java.sql.Types.INTEGER ) );
-        map.put( Long.class, new Integer( java.sql.Types.NUMERIC ) );
+        map.put( Long.class, new Integer( java.sql.Types.BIGINT ) );
         map.put( Short.class, new Integer( java.sql.Types.SMALLINT ) );
         map.put( String.class, new Integer( java.sql.Types.VARCHAR ) );
         map.put( java.sql.Timestamp.class, new Integer( java.sql.Types.TIMESTAMP ) );
@@ -616,7 +595,6 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         typemap = map;
         return typemap;
     }
-
 
     protected static int getType( Object o ) throws SQLException
     {
@@ -632,32 +610,29 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         return ( ( Integer ) ot ).intValue();
     }
 
-
     //----------------------------------------------------------------------
     // Advanced features:
 
     /**
-     *  <p>
+     * Set the value of a parameter using an object; use the java.lang
+     * equivalent objects for integral values. <p>
      *
-     *  Set the value of a parameter using an object; use the java.lang
-     *  equivalent objects for integral values. <p>
+     * The given Java object will be converted to the targetSqlType before
+     * being sent to the database. <p>
      *
-     *  The given Java object will be converted to the targetSqlType before
-     *  being sent to the database. <p>
+     * Note that this method may be used to pass datatabase- specific abstract
+     * data types. This is done by using a Driver- specific Java type and using
+     * a targetSqlType of java.sql.types.OTHER.
      *
-     *  Note that this method may be used to pass datatabase- specific abstract
-     *  data types. This is done by using a Driver- specific Java type and using
-     *  a targetSqlType of java.sql.types.OTHER.
-     *
-     *@param  parameterIndex    The first parameter is 1, the second is 2, ...
-     *@param  x                 The object containing the input parameter value
-     *@param  targetSqlType     The SQL type (as defined in java.sql.Types) to
+     * @param  parameterIndex    The first parameter is 1, the second is 2, ...
+     * @param  x                 The object containing the input parameter value
+     * @param  targetSqlType     The SQL type (as defined in java.sql.Types) to
      *      be sent to the database. The scale argument may further qualify this
      *      type.
-     *@param  scale             For java.sql.Types.DECIMAL or
+     * @param  scale             For java.sql.Types.DECIMAL or
      *      java.sql.Types.NUMERIC types this is the number of digits after the
      *      decimal. For all other types this value will be ignored,
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setObject( int parameterIndex, Object x, int targetSqlType, int scale )
              throws SQLException
@@ -670,19 +645,19 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             switch ( targetSqlType ) {
                 case java.sql.Types.CHAR:
                 case java.sql.Types.VARCHAR:
-                    setString( parameterIndex, ( String ) x );
+                    setString(parameterIndex, (String) x);
                     break;
                 case java.sql.Types.REAL:
-                    setFloat( parameterIndex, ( ( Float ) x ).floatValue() );
+                    setFloat(parameterIndex, ((Number) x).floatValue());
                     break;
                 case java.sql.Types.DOUBLE:
-                    setDouble( parameterIndex, ( ( Double ) x ).doubleValue() );
+                    setDouble( parameterIndex, ((Number) x).doubleValue() );
                     break;
                 case java.sql.Types.INTEGER:
-                    setInt( parameterIndex, ( ( Integer ) x ).intValue() );
+                    setInt( parameterIndex, ((Number) x).intValue() );
                     break;
                 case java.sql.Types.BIGINT:
-                    setLong( parameterIndex, ( ( Long ) x ).longValue() );
+                    setLong( parameterIndex, ((Number) x).longValue() );
                     break;
                 default:
                     setParam( parameterIndex, x, targetSqlType, scale );
@@ -690,44 +665,41 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
     }
 
-
     /**
-     *  Set a parameter to a Java short value. The driver converts this to a SQL
-     *  SMALLINT value when it sends it to the database.
+     * Set a parameter to a Java short value. The driver converts this to a SQL
+     * SMALLINT value when it sends it to the database.
      *
-     *@param  index    the first parameter is 1, the second is 2, ...
-     *@param  value    the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  index    the first parameter is 1, the second is 2, ...
+     * @param  value    the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setShort( int index, short value ) throws SQLException
     {
         setParam( index, new Integer( value ), java.sql.Types.SMALLINT, -1 );
     }
 
-
     /**
-     *  Set a parameter to a Java String value. The driver converts this to a
-     *  SQL VARCHAR or LONGVARCHAR value (depending on the arguments size
-     *  relative to the driver's limits on VARCHARs) when it sends it to the
-     *  database.
+     * Set a parameter to a Java String value. The driver converts this to a
+     * SQL VARCHAR or LONGVARCHAR value (depending on the arguments size
+     * relative to the driver's limits on VARCHARs) when it sends it to the
+     * database.
      *
-     *@param  index    the first parameter is 1, the second is 2, ...
-     *@param  str      the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  index    the first parameter is 1, the second is 2, ...
+     * @param  str      the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setString( int index, String str ) throws SQLException
     {
-        setParam(index, str, java.sql.Types.VARCHAR, str==null ? -1 : str.length());
+        setParam(index, str, java.sql.Types.VARCHAR, -1);
     }
 
-
     /**
-     *  Set a parameter to a java.sql.Time value. The driver converts this to a
-     *  SQL TIME value when it sends it to the database.
+     * Set a parameter to a java.sql.Time value. The driver converts this to a
+     * SQL TIME value when it sends it to the database.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  value             the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  value             the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setTime( int parameterIndex, java.sql.Time value )
         throws SQLException
@@ -735,21 +707,19 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         setParam( parameterIndex, value, java.sql.Types.TIME, -1 );
     }
 
-
     /**
-     *  Set a parameter to a java.sql.Timestamp value. The driver converts this
-     *  to a SQL TIMESTAMP value when it sends it to the database.
+     * Set a parameter to a java.sql.Timestamp value. The driver converts this
+     * to a SQL TIMESTAMP value when it sends it to the database.
      *
-     *@param  index    the first parameter is 1, the second is 2, ...
-     *@param  value    the parameter value
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  index    the first parameter is 1, the second is 2, ...
+     * @param  value    the parameter value
+     * @exception  SQLException  if a database-access error occurs.
      */
     public void setTimestamp( int index, java.sql.Timestamp value )
              throws SQLException
     {
         setParam( index, value, java.sql.Types.TIMESTAMP, -1 );
     }
-
 
     /**
      * When a very large UNICODE value is input to a LONGVARCHAR parameter, it
@@ -789,20 +759,18 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             }
     }
 
-
     //--------------------------JDBC 2.0-----------------------------
 
     /**
-     *  JDBC 2.0 Adds a set of parameters to the batch.
+     * JDBC 2.0 Adds a set of parameters to the batch.
      *
-     *@exception  SQLException  if a database access error occurs
-     *@see                      Statement#addBatch
+     * @exception  SQLException  if a database access error occurs
+     * @see                      Statement#addBatch
      */
     public void addBatch() throws java.sql.SQLException
     {
         NotImplemented();
     }
-
 
     /**
      * JDBC 2.0 Sets the designated parameter to the given <code>Reader</code>
@@ -841,22 +809,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             throw new SQLException("Error reading stream: " + e.getMessage());
         }
 
-        setParam(parameterIndex, value, java.sql.Types.LONGVARCHAR, value.length());
+        setParam(parameterIndex, value, java.sql.Types.LONGVARCHAR, -1);
     }
 
-
     /**
-     *  JDBC 2.0 Sets a REF(&lt;structured-type&gt;) parameter.
+     * JDBC 2.0 Sets a REF(&lt;structured-type&gt;) parameter.
      *
-     *@param  i                 the first parameter is 1, the second is 2, ...
-     *@param  x                 an object representing data of an SQL REF Type
-     *@exception  SQLException  if a database access error occurs
+     * @param  i                 the first parameter is 1, the second is 2, ...
+     * @param  x                 an object representing data of an SQL REF Type
+     * @exception  SQLException  if a database access error occurs
      */
     public void setRef( int i, java.sql.Ref x ) throws java.sql.SQLException
     {
         NotImplemented();
     }
-
 
     /**
      * JDBC 2.0 Sets a BLOB parameter.
@@ -881,7 +847,6 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
     }
 
-
     /**
      * JDBC 2.0 Sets a CLOB parameter.
      *
@@ -905,25 +870,23 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
     }
 
-
     /**
-     *  JDBC 2.0 Sets an Array parameter.
+     * JDBC 2.0 Sets an Array parameter.
      *
-     *@param  i                 the first parameter is 1, the second is 2, ...
-     *@param  x                 an object representing an SQL array
-     *@exception  SQLException  if a database access error occurs
+     * @param  i                 the first parameter is 1, the second is 2, ...
+     * @param  x                 an object representing an SQL array
+     * @exception  SQLException  if a database access error occurs
      */
     public void setArray( int i, java.sql.Array x ) throws java.sql.SQLException
     {
         NotImplemented();
     }
 
-
     /**
-     *  JDBC 2.0 Gets the number, types and properties of a ResultSet's columns.
+     * JDBC 2.0 Gets the number, types and properties of a ResultSet's columns.
      *
-     *@return                   the description of a ResultSet's columns
-     *@exception  SQLException  if a database access error occurs
+     * @return                   the description of a ResultSet's columns
+     * @exception  SQLException  if a database access error occurs
      */
     public java.sql.ResultSetMetaData getMetaData() throws java.sql.SQLException
     {
@@ -931,21 +894,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         return null;
     }
 
-
     /**
-     *  JDBC 2.0 Sets the designated parameter to a java.sql.Date value, using
-     *  the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
-     *  object to construct an SQL DATE, which the driver then sends to the
-     *  database. With a a <code>Calendar</code> object, the driver can
-     *  calculate the date taking into account a custom timezone and locale. If
-     *  no <code>Calendar</code> object is specified, the driver uses the
-     *  default timezone and locale.
+     * JDBC 2.0 Sets the designated parameter to a java.sql.Date value, using
+     * the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
+     * object to construct an SQL DATE, which the driver then sends to the
+     * database. With a a <code>Calendar</code> object, the driver can
+     * calculate the date taking into account a custom timezone and locale. If
+     * no <code>Calendar</code> object is specified, the driver uses the
+     * default timezone and locale.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
-     *@param  cal               the <code>Calendar</code> object the driver will
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the parameter value
+     * @param  cal               the <code>Calendar</code> object the driver will
      *      use to construct the date
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public void setDate( int parameterIndex, java.sql.Date x, java.util.Calendar cal )
              throws java.sql.SQLException
@@ -953,21 +915,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         NotImplemented();
     }
 
-
     /**
-     *  JDBC 2.0 Sets the designated parameter to a java.sql.Time value, using
-     *  the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
-     *  object to construct an SQL TIME, which the driver then sends to the
-     *  database. With a a <code>Calendar</code> object, the driver can
-     *  calculate the time taking into account a custom timezone and locale. If
-     *  no <code>Calendar</code> object is specified, the driver uses the
-     *  default timezone and locale.
+     * JDBC 2.0 Sets the designated parameter to a java.sql.Time value, using
+     * the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
+     * object to construct an SQL TIME, which the driver then sends to the
+     * database. With a a <code>Calendar</code> object, the driver can
+     * calculate the time taking into account a custom timezone and locale. If
+     * no <code>Calendar</code> object is specified, the driver uses the
+     * default timezone and locale.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
-     *@param  cal               the <code>Calendar</code> object the driver will
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the parameter value
+     * @param  cal               the <code>Calendar</code> object the driver will
      *      use to construct the time
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public void setTime( int parameterIndex, java.sql.Time x, java.util.Calendar cal )
              throws java.sql.SQLException
@@ -975,21 +936,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         NotImplemented();
     }
 
-
     /**
-     *  JDBC 2.0 Sets the designated parameter to a java.sql.Timestamp value,
-     *  using the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
-     *  object to construct an SQL TIMESTAMP, which the driver then sends to the
-     *  database. With a a <code>Calendar</code> object, the driver can
-     *  calculate the timestamp taking into account a custom timezone and
-     *  locale. If no <code>Calendar</code> object is specified, the driver uses
-     *  the default timezone and locale.
+     * JDBC 2.0 Sets the designated parameter to a java.sql.Timestamp value,
+     * using the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
+     * object to construct an SQL TIMESTAMP, which the driver then sends to the
+     * database. With a a <code>Calendar</code> object, the driver can
+     * calculate the timestamp taking into account a custom timezone and
+     * locale. If no <code>Calendar</code> object is specified, the driver uses
+     * the default timezone and locale.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the parameter value
-     *@param  cal               the <code>Calendar</code> object the driver will
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  x                 the parameter value
+     * @param  cal               the <code>Calendar</code> object the driver will
      *      use to construct the timestamp
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public void setTimestamp( int parameterIndex,
             java.sql.Timestamp x,
@@ -999,28 +959,27 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         NotImplemented();
     }
 
-
     /**
-     *  JDBC 2.0 Sets the designated parameter to SQL NULL. This version of
-     *  setNull should be used for user-named types and REF type parameters.
-     *  Examples of user-named types include: STRUCT, DISTINCT, JAVA_OBJECT, and
-     *  named array types. <P>
+     * JDBC 2.0 Sets the designated parameter to SQL NULL. This version of
+     * setNull should be used for user-named types and REF type parameters.
+     * Examples of user-named types include: STRUCT, DISTINCT, JAVA_OBJECT, and
+     * named array types. <P>
      *
-     *  <B>Note:</B> To be portable, applications must give the SQL type code
-     *  and the fully-qualified SQL type name when specifying a NULL
-     *  user-defined or REF parameter. In the case of a user-named type the name
-     *  is the type name of the parameter itself. For a REF parameter the name
-     *  is the type name of the referenced type. If a JDBC driver does not need
-     *  the type code or type name information, it may ignore it. Although it is
-     *  intended for user-named and Ref parameters, this method may be used to
-     *  set a null parameter of any JDBC type. If the parameter does not have a
-     *  user-named or REF type, the given typeName is ignored.
+     * <B>Note:</B> To be portable, applications must give the SQL type code
+     * and the fully-qualified SQL type name when specifying a NULL
+     * user-defined or REF parameter. In the case of a user-named type the name
+     * is the type name of the parameter itself. For a REF parameter the name
+     * is the type name of the referenced type. If a JDBC driver does not need
+     * the type code or type name information, it may ignore it. Although it is
+     * intended for user-named and Ref parameters, this method may be used to
+     * set a null parameter of any JDBC type. If the parameter does not have a
+     * user-named or REF type, the given typeName is ignored.
      *
-     *@param  paramIndex        the first parameter is 1, the second is 2, ...
-     *@param  sqlType           a value from java.sql.Types
-     *@param  typeName          the fully-qualified name of an SQL user-named
+     * @param  paramIndex        the first parameter is 1, the second is 2, ...
+     * @param  sqlType           a value from java.sql.Types
+     * @param  typeName          the fully-qualified name of an SQL user-named
      *      type, ignored if the parameter is not a user-named type or REF
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public void setNull( int paramIndex, int sqlType, String typeName )
              throws java.sql.SQLException

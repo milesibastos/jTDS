@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.4 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.5 2004-02-05 19:00:31 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -205,31 +205,32 @@ public class PacketRowResult extends PacketResult {
 //                        java.util.Calendar  cal = new java.util.GregorianCalendar();
 //                        cal.setTime(getTimestamp(columnIndex));
 //                        result = cal.getTime();
-                        return new Date( ( ( Timestamp ) tmp ).getTime() );
+                        return new Date(((Timestamp) tmp).getTime());
 
                     case java.sql.Types.TIME:
                         if( !( tmp instanceof Timestamp ) )
-                            throw new SQLException( "Internal error" );
-                        return new Time( ( ( Timestamp ) tmp ).getTime() );
+                            throw new SQLException("Internal error");
+                        return new Time(((Timestamp) tmp).getTime());
 
                     case java.sql.Types.TIMESTAMP:
                         if( !( tmp instanceof Timestamp ) )
-                            throw new SQLException( "Internal error" );
+                            throw new SQLException("Internal error");
                         return tmp;
 
                     case java.sql.Types.BINARY:
                     case java.sql.Types.VARBINARY:
-                        return getBytes( columnIndex );
+                        return getBytes(columnIndex);
 
                     case java.sql.Types.DECIMAL:
                     case java.sql.Types.NUMERIC:
-                        if( tmp instanceof BigDecimal )
+                        if (tmp instanceof BigDecimal) {
                             return tmp;
-                        else if( tmp instanceof Number )
-                            return new BigDecimal( ( ( Number ) tmp ).doubleValue() );
-                        else
-                            throw new SQLException( "Was expecting NUMERIC data.  Got"
-                                     + tmp.getClass().getName() );
+                        } else if(tmp instanceof Number) {
+                            return new BigDecimal(((Number) tmp).doubleValue());
+                        } else {
+                            throw new SQLException("Was expecting NUMERIC data.  Got"
+                                     + tmp.getClass().getName());
+                        }
 
                     case java.sql.Types.LONGVARCHAR:
                         if( tmp instanceof TdsAsciiInputStream )
@@ -382,6 +383,8 @@ public class PacketRowResult extends PacketResult {
                     case java.sql.Types.REAL:
                     case java.sql.Types.FLOAT:
                     case java.sql.Types.DOUBLE:
+                    case java.sql.Types.NUMERIC:
+                    case java.sql.Types.DECIMAL:
                     {
                         result = ((Number)obj).longValue();
                         break;
@@ -397,16 +400,6 @@ public class PacketRowResult extends PacketResult {
                         catch ( NumberFormatException e ) {
                             throw new SQLException("NumberFormatException: ["+e.getMessage()+"]");
                         }
-                        break;
-                    }
-                    case java.sql.Types.NUMERIC:
-                    {
-                        result = ( ( Number ) obj ).longValue();
-                        break;
-                    }
-                    case java.sql.Types.DECIMAL:
-                    {
-                        result = ( ( Number ) obj ).longValue();
                         break;
                     }
                     case java.sql.Types.BIT:

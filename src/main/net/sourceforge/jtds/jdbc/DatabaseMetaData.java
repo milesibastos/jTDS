@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.12 2004-01-27 23:11:51 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.13 2004-01-28 22:04:56 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.12 2004-01-27 23:11:51 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.13 2004-01-28 22:04:56 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -3144,25 +3144,43 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         }
     }
 
-    public java.sql.ResultSet getAttributes(String str, String str1, String str2, String str3) throws java.sql.SQLException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    public int getDatabaseMajorVersion() throws java.sql.SQLException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    public int getDatabaseMinorVersion() throws java.sql.SQLException
+    public java.sql.ResultSet getAttributes(String str, String str1, String str2, String str3) throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
     /**
+     * Returns the database major version.
+     */
+    public int getDatabaseMajorVersion() throws SQLException
+    {
+        return tds.getDatabaseMajorVersion();
+    }
+
+    /**
+     * Returns the database minor version.
+     */
+    public int getDatabaseMinorVersion() throws SQLException
+    {
+        String version = tds.getDatabaseProductVersion();
+        int pos = version.indexOf('.');
+
+        try {
+            if (pos == -1 || pos == version.length() - 1) {
+                return 0;
+            } else {
+                return Integer.valueOf(version.substring(pos + 1)).intValue();
+            }
+        } catch (NumberFormatException e) {
+            throw new SQLException("Unable to determine database minor version: "
+                                   + e.getMessage());
+        }
+    }
+
+    /**
      * Returns the JDBC major version.
      */
-    public int getJDBCMajorVersion() throws java.sql.SQLException
+    public int getJDBCMajorVersion() throws SQLException
     {
         return 2;
     }
@@ -3170,27 +3188,27 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Returns the JDBC minor version.
      */
-    public int getJDBCMinorVersion() throws java.sql.SQLException
+    public int getJDBCMinorVersion() throws SQLException
     {
-        return 0;
+        return 1;
     }
 
-    public int getResultSetHoldability() throws java.sql.SQLException
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    public int getSQLStateType() throws java.sql.SQLException
+    public int getResultSetHoldability() throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
-    public java.sql.ResultSet getSuperTables(String str, String str1, String str2) throws java.sql.SQLException
+    public int getSQLStateType() throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
-    public java.sql.ResultSet getSuperTypes(String str, String str1, String str2) throws java.sql.SQLException
+    public java.sql.ResultSet getSuperTables(String str, String str1, String str2) throws SQLException
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public java.sql.ResultSet getSuperTypes(String str, String str1, String str2) throws SQLException
     {
         throw new UnsupportedOperationException();
     }
@@ -3202,7 +3220,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * NOTE: Since SQL Server / Sybase do not support LOB locators as Oracle does (AFAIK);
      * this method always returns <code>true</code>.
      */
-    public boolean locatorsUpdateCopy() throws java.sql.SQLException
+    public boolean locatorsUpdateCopy() throws SQLException
     {
         return true;
     }
@@ -3211,32 +3229,32 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * Returns <code>true</code> if getting auto-generated keys is supported after a
      * statment is executed; returns <code>false</code> otherwise
      */
-    public boolean supportsGetGeneratedKeys() throws java.sql.SQLException
+    public boolean supportsGetGeneratedKeys() throws SQLException
     {
         return false;
     }
 
-    public boolean supportsMultipleOpenResults() throws java.sql.SQLException
+    public boolean supportsMultipleOpenResults() throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
-    public boolean supportsNamedParameters() throws java.sql.SQLException
+    public boolean supportsNamedParameters() throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
-    public boolean supportsResultSetHoldability(int param) throws java.sql.SQLException
+    public boolean supportsResultSetHoldability(int param) throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
-    public boolean supportsSavepoints() throws java.sql.SQLException
+    public boolean supportsSavepoints() throws SQLException
     {
         throw new UnsupportedOperationException();
     }
 
-    public boolean supportsStatementPooling() throws java.sql.SQLException
+    public boolean supportsStatementPooling() throws SQLException
     {
         throw new UnsupportedOperationException();
     }

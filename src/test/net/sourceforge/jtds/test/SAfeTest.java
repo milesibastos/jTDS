@@ -16,6 +16,8 @@ import net.sourceforge.jtds.jdbc.Messages;
 
 import java.text.SimpleDateFormat;
 import java.util.Vector;
+import java.io.PrintStream;
+import java.io.FileOutputStream;
 
 /**
  * @author  Alin Sinpalean
@@ -229,10 +231,11 @@ public class SAfeTest extends DatabaseTestCase {
      * not always work as expected, i.e. the cancel might be executed too early
      * or too late, but it won't fail in this situation.
      */
-    public void testCancel0003() throws SQLException {
+    public void testCancel0003() throws Exception {
         final Statement stmt = con.createStatement();
 
-        for (int i = 0; i < 10; i++) {
+        DriverManager.setLogStream(new PrintStream(new FileOutputStream("log.out")));
+        for (int i = 0; i < 100; i++) {
             Thread t = new Thread(new Runnable() {
                 public void run() {
                     try {
@@ -253,6 +256,9 @@ public class SAfeTest extends DatabaseTestCase {
                 // Can't fail here, the cancel() request might be out of order
             } catch (SQLException ex) {
                 // Request was canceled
+                if (!"S1008".equals(ex.getSQLState())) {
+                    ex.printStackTrace();
+                }
                 assertEquals("S1008", ex.getSQLState());
             }
 

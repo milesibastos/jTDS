@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.79 2005-02-27 17:02:19 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.80 2005-02-28 22:47:22 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -827,7 +827,7 @@ public class TdsCore {
             mutex = connection.getMutex();
             mutex.acquire();
             synchronized (cancelMonitor) {
-                if (!cancelPending) {
+                if (!cancelPending && !endOfResponse) {
                     cancelPending = socket.cancel(out.getStreamId());
                 }
             }
@@ -2229,6 +2229,7 @@ public class TdsCore {
             in.skipToEnd();
             endOfResponse = true;
             endOfResults = true;
+            cancelPending = false;
             throw err;
         }
     }

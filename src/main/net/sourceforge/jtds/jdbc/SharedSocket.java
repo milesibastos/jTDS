@@ -62,7 +62,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.26 2005-02-13 00:10:02 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.27 2005-02-28 22:47:22 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -205,6 +205,11 @@ class SharedSocket {
      * A cancel packet is pending.
      */
     private boolean cancelPending;
+    /**
+     * Synchronization monitor for {@link #cancelPending} and
+     * {@link #responseOwner}.
+     */
+    private Object cancelMonitor = new Object();
     /**
      * Buffer for TDS_DONE packets
      */
@@ -441,35 +446,41 @@ class SharedSocket {
      */
     boolean cancel(int streamId) {
         //
-        // Only send if response pending for the caller.
-        // Caller must have aquired connection mutex first.
-        // NB. This method will not work with local named pipes
-        // as this thread will be blocked in the write until the
-        // reading thread has returned from the read.
+        // Need to synchronize packet send to avoid race conditions on
+        // responsOwner and cancelPending
         //
-        if (responseOwner == streamId && !cancelPending) {
-            try {
-                //
-                // Send a cancel packet.
-                //
-                cancelPending = true;
-                byte[] cancel = new byte[TDS_HDR_LEN];
-                cancel[0] = TdsCore.CANCEL_PKT;
-                cancel[1] = 1;
-                cancel[2] = 0;
-                cancel[3] = 8;
-                cancel[4] = 0;
-                cancel[5] = 0;
-                cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
-                cancel[7] = 0;
-                getOut().write(cancel, 0, TDS_HDR_LEN);
-                getOut().flush();
-                if (Logger.isActive()) {
-                    Logger.logPacket(streamId, false, cancel);
+        synchronized (cancelMonitor) {
+            //
+            // Only send if response pending for the caller.
+            // Caller must have aquired connection mutex first.
+            // NB. This method will not work with local named pipes
+            // as this thread will be blocked in the write until the
+            // reading thread has returned from the read.
+            //
+            if (responseOwner == streamId && !cancelPending) {
+                try {
+                    //
+                    // Send a cancel packet.
+                    //
+                    cancelPending = true;
+                    byte[] cancel = new byte[TDS_HDR_LEN];
+                    cancel[0] = TdsCore.CANCEL_PKT;
+                    cancel[1] = 1;
+                    cancel[2] = 0;
+                    cancel[3] = 8;
+                    cancel[4] = 0;
+                    cancel[5] = 0;
+                    cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
+                    cancel[7] = 0;
+                    getOut().write(cancel, 0, TDS_HDR_LEN);
+                    getOut().flush();
+                    if (Logger.isActive()) {
+                        Logger.logPacket(streamId, false, cancel);
+                    }
+                    return true;
+                } catch (IOException e) {
+                    // Ignore error as network is probably dead anyway
                 }
-                return true;
-            } catch (IOException e) {
-                // Ignore error as network is probably dead anyway
             }
         }
         return false;
@@ -600,7 +611,6 @@ class SharedSocket {
                     }   // Any of our input is discarded.
 
                 } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
-                responseOwner = -1;
             }
             //
             // At this point we know that we are able to send the first
@@ -657,12 +667,7 @@ class SharedSocket {
             //
             // Simple case we are reading our input directly from the server
             //
-            buffer = readPacket(buffer);
-            if (buffer[1] != 0) {
-                // End of response connection now free
-                responseOwner = -1;
-            }
-            return buffer;
+            return readPacket(buffer);
         }
     }
 
@@ -832,47 +837,54 @@ class SharedSocket {
             buffer[1] = 1;
         }
 
-        //
-        // If a cancel request is outstanding check that the last TDS packet
-        // is a TDS_DONE with the "cancek ACK" flag set. If it isn't set the
-        // "more packets" flag; this will ensure that the stream keeps
-        // processing until the "cancel ACK" is processed.
-        //
-        if (cancelPending) {
+        synchronized (cancelMonitor) {
             //
-            // Move what we assume to be the TDS_DONE packet into doneBuffer
+            // If a cancel request is outstanding check that the last TDS packet
+            // is a TDS_DONE with the "cancek ACK" flag set. If it isn't set the
+            // "more packets" flag; this will ensure that the stream keeps
+            // processing until the "cancel ACK" is processed.
             //
-            if (len >= TDS_DONE_LEN + TDS_HDR_LEN) {
-                System.arraycopy(buffer, len - TDS_DONE_LEN, doneBuffer, 0,
-                        TDS_DONE_LEN);
-            } else {
-                // Packet too short so TDS_DONE record was split over
-                // two packets. Need to reassemble.
-                int frag = len - TDS_HDR_LEN;
-                System.arraycopy(doneBuffer, frag, doneBuffer, 0,
-                        TDS_DONE_LEN - frag);
-                System.arraycopy(buffer, TDS_HDR_LEN, doneBuffer,
-                        TDS_DONE_LEN - frag, frag);
-            }
-            //
-            // If this is the last packet and there is a cancel pending see
-            // if the last packet contains a TDS_DONE token with the cancel
-            // ACK set. If not reset the last packet flag so that the dedicated
-            // cancel packet is also read and processed.
-            //
-            if (buffer[1] == 1) {
-                if ((doneBuffer[0] & 0xFF) < TDS_DONE_TOKEN) {
-                    throw new IOException("Expecting a TDS_DONE or TDS_DONEPROC.");
-                }
-
-                if ((doneBuffer[1] & TdsCore.DONE_CANCEL) != 0) {
-                    // OK have a cancel ACK packet
-                    cancelPending = false;
+            if (cancelPending) {
+                //
+                // Move what we assume to be the TDS_DONE packet into doneBuffer
+                //
+                if (len >= TDS_DONE_LEN + TDS_HDR_LEN) {
+                    System.arraycopy(buffer, len - TDS_DONE_LEN, doneBuffer, 0,
+                            TDS_DONE_LEN);
                 } else {
-                    // Must be in next packet so
-                    // force client to read next packet
-                    buffer[1] = 0;
+                    // Packet too short so TDS_DONE record was split over
+                    // two packets. Need to reassemble.
+                    int frag = len - TDS_HDR_LEN;
+                    System.arraycopy(doneBuffer, frag, doneBuffer, 0,
+                            TDS_DONE_LEN - frag);
+                    System.arraycopy(buffer, TDS_HDR_LEN, doneBuffer,
+                            TDS_DONE_LEN - frag, frag);
                 }
+                //
+                // If this is the last packet and there is a cancel pending see
+                // if the last packet contains a TDS_DONE token with the cancel
+                // ACK set. If not reset the last packet flag so that the dedicated
+                // cancel packet is also read and processed.
+                //
+                if (buffer[1] == 1) {
+                    if ((doneBuffer[0] & 0xFF) < TDS_DONE_TOKEN) {
+                        throw new IOException("Expecting a TDS_DONE or TDS_DONEPROC.");
+                    }
+
+                    if ((doneBuffer[1] & TdsCore.DONE_CANCEL) != 0) {
+                        // OK have a cancel ACK packet
+                        cancelPending = false;
+                    } else {
+                        // Must be in next packet so
+                        // force client to read next packet
+                        buffer[1] = 0;
+                    }
+                }
+            }
+
+            if (buffer[1] != 0) {
+                // End of response; connection now free
+                responseOwner = -1;
             }
         }
 

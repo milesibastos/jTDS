@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.11 2004-02-13 23:50:54 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.12 2004-02-14 01:02:46 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.11 2004-02-13 23:50:54 bheineman Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.12 2004-02-14 01:02:46 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -93,11 +93,15 @@ implements java.sql.CallableStatement {
         super(conn_, type, concurrency);
 
         // Remove any extra whitespace for comparisons.
-        rawQueryString = conn_.nativeSQL(sql.trim());
+        sql = sql.trim();
 
-        int numberOfParameters = ParameterUtils.countParameters(rawQueryString);
-        int i = 0;
+        StringBuffer result = new StringBuffer(sql.length());
+        int numberOfParameters = EscapeProcessor.parameterNativeSQL(sql, result);
+
+        rawQueryString = result.toString();
+
         int length = rawQueryString.length();
+        int i = 0;
 
         // Skip non-whitespace characters.
         for (; i < length && !Character.isWhitespace(rawQueryString.charAt(i)); i++);

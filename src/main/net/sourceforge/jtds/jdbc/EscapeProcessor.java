@@ -35,8 +35,8 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 import java.util.HashMap;
 
-abstract public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.9 2004-01-30 20:43:17 bheineman Exp $";
+public class EscapeProcessor {
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.10 2004-02-14 01:02:46 bheineman Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -67,10 +67,18 @@ abstract public class EscapeProcessor {
         _functionMap.put("ucase", "upper");
     }
 
-    private String input;
+    /**
+     * Converts JDBC escape syntax to native SQL.
+     * 
+     * @param sql the sql string to be translated
+     * @return the translated sql string
+     */
+    public static String nativeSQL(String sql) throws SQLException {
+        StringBuffer result = new StringBuffer(sql.length());
 
-    public EscapeProcessor(String sql) {
-        input = sql;
+        parameterNativeSQL(sql, result);
+
+        return result.toString();
     }
 
     /**
@@ -94,13 +102,25 @@ abstract public class EscapeProcessor {
      * needs to be as close to zero as possible.
      * 
      * @param sql the sql string to be translated
-     * @return the translated sql string
+     * @param result the StringBuffer to write the results to
+     * @return the number of parameters specified
      */
-    public static String nativeSQL(String sql) throws SQLException {
+    public static int parameterNativeSQL(String sql, StringBuffer result)
+    throws SQLException {
         char[] chars = sql.toCharArray(); // avoid getfield opcode
-        StringBuffer result = new StringBuffer(chars.length);
         StringBuffer escape = null;
         int state = NORMAL;
+        int parameters = 0;
+
+        if (sql == null) {
+            throw new SQLException("No statement");
+        }
+
+        if (result == null) {
+            throw new SQLException("INTERNAL ERROR: result is null");
+        } else if (result.length() != 0) {
+            throw new SQLException("INTERNAL ERROR: result.length() != 0");
+        }
 
         for (int i = 0; i < chars.length; i++) {
             char ch = chars[i]; // avoid getfield opcode
@@ -117,7 +137,9 @@ abstract public class EscapeProcessor {
                 } else {
                     result.append(ch);
 
-                    if (ch == '\'') {
+                    if (ch == '?') {
+                        parameters++;
+                    } else if (ch == '\'') {
                         state = IN_STRING;
                     }
                 }
@@ -135,6 +157,10 @@ abstract public class EscapeProcessor {
                     translateEscape(escape.toString(), result);
                     state = NORMAL;
                 } else {
+                    if (ch == '?') {
+                        parameters++;
+                    }
+
                     escape.append(ch);
                 }
             }
@@ -144,7 +170,7 @@ abstract public class EscapeProcessor {
             throw new SQLException("Syntax error in SQL escape syntax");
         }
 
-        return result.toString();
+        return parameters;
     }
 
     /**

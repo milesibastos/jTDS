@@ -37,44 +37,7 @@ import java.util.StringTokenizer;
 import java.math.BigDecimal;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.5 2004-02-05 19:00:31 alin_sinpalean Exp $";
-
-    /**
-     * Count the number of parameters in a prepared sql statement.
-     *
-     * @return number of parameter placeholders in sql statement.
-     * @exception SQLException thrown if there is a problem parsing statment.
-     */
-    public static int countParameters(String sql) throws SQLException {
-        if (sql == null) {
-            throw new SQLException("No statement");
-        }
-
-        char[] chars = sql.toCharArray(); // avoid getfield opcode
-        boolean inString = false;
-        int result = 0;
-
-        for (int i = 0; i < chars.length; i++) {
-            char ch = chars[i]; // avoid getfield opcode
-
-            if (!inString) {
-                if (ch == '?') {
-                    result++;
-                } else if (ch == '\'') {
-                    inString = true;
-                }
-            } else {
-                // NOTE: This works even if a single quote is being used as an escape
-                // character since the next single quote found will force the state
-                // to be inString == true again.
-                if (ch == '\'') {
-                    inString = false;
-                }
-            }
-        }
-
-        return result;
-    }
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.6 2004-02-14 01:02:46 bheineman Exp $";
 
     /**
      * Check that all items in parameterList have been given a value

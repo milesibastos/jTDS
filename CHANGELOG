@@ -5,6 +5,11 @@ Changes from jTDS 0.6
  o Minor cleanup of CallableStatement and refactoring of PreparedStatement
    procedure logic.
  o Removed extraneous UniqueId class, the logic is now handled in Procedure.
+ o Improved performance of CallableStatement and PreparedStatement ~14% by
+   reducing the number of times SQL is parsed.  Degraded performance of
+   plain statements using escape processing and the Connection.nativeSQL call
+   by ~6%; for now, the consolidation of parsing logic outweighs the minor
+   degradation.
 
 02/12/2004 - Alin Sinpalean
  o Fixed a nasty regression introduced by the new DECIMAL/NUMERIC code (null

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.14 2004-07-29 00:14:54 ddkilzer Exp $
+ * @version $Id: TdsData.java,v 1.15 2004-08-02 02:27:05 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -1900,18 +1900,8 @@ public class TdsData {
             case SYBUNIQUE:
                 bytes = new byte[len];
                 in.read(bytes);
-                StringBuffer buf = new StringBuffer(36);
 
-                for (int i = 0; i < bytes.length; i++) {
-                    buf.append("0123456789ABCDEF".substring((bytes[i] >> 4) & 0x0F, 1));
-                    buf.append("0123456789ABCDEF".substring(bytes[i] & 0x0F, 1));
-
-                    if (i == 4 || i == 7 || i == 10 || i == 13) {
-                        buf.append('-');
-                    }
-                }
-
-                return buf.toString();
+                return new UniqueIdentifier(bytes);
 
             case SYBNUMERIC:
             case SYBDECIMAL:

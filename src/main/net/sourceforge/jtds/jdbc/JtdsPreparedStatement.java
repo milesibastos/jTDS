@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.7 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.8 2004-08-02 02:27:05 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -229,7 +229,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     protected ParamInfo getParameter(int parameterIndex) throws SQLException {
         checkOpen();
 
-        if (parameterIndex < 0 || parameterIndex > parameters.length) {
+        if (parameterIndex < 1 || parameterIndex > parameters.length) {
             throw new SQLException(Support.getMessage("error.prepare.paramindex",
                                                       Integer.toString(parameterIndex)),
                                                       "07009");

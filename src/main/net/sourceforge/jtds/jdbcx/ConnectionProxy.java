@@ -5,6 +5,8 @@ import java.util.Map;
 
 import javax.sql.*;
 
+import net.sourceforge.jtds.jdbc.TdsConnection;
+
 /**
  * This class would be better implemented as a java.lang.reflect.Proxy.  However, this
  * feature was not added until 1.3 and reflection performance was not improved until 1.4.
@@ -13,7 +15,7 @@ import javax.sql.*;
  */
 public class ConnectionProxy implements Connection {
     private net.sourceforge.jtds.jdbcx.PooledConnection _pooledConnection;
-    private Connection _connection;
+    private TdsConnection _connection;
     private boolean _closed = false;
 
     /**
@@ -22,7 +24,7 @@ public class ConnectionProxy implements Connection {
     public ConnectionProxy(net.sourceforge.jtds.jdbcx.PooledConnection pooledConnection,
                            Connection connection) {
         _pooledConnection = pooledConnection;
-        _connection = connection;
+        _connection = (TdsConnection) connection;
     }
 
     /**

@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.2
 =======================
 
+02/28/2005 - Alin Sinpalean
+ o Applied Mike's patch [1124854] SSO fixes - prevents error from crashing JVM.
+
 02/27/2005 - Alin Sinpalean
  o Enhanced update count caching implementation by always caching update counts
    up to the end of the response or beginning of the first ResultSet (whichever

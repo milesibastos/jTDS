@@ -28,8 +28,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,1,0
- PRODUCTVERSION 0,9,1,0
+ FILEVERSION 1,0,2,0
+ PRODUCTVERSION 1,0,2,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -44,17 +44,17 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "Code submitted by Magendran Sathaiah\0"
+            VALUE "Comments", "Based on code submitted by Magendran Sathaiah\0"
             VALUE "CompanyName", "The jTDS Project jtds.sourceforge.net\0"
             VALUE "FileDescription", "ntlmauth\0"
-            VALUE "FileVersion", "0, 9, 1, 0\0"
+            VALUE "FileVersion", "1, 0, 2, 0\0"
             VALUE "InternalName", "ntlmauth\0"
             VALUE "LegalCopyright", "Copyright © 2004 the jTDS project\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "ntlmauth.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "jTDS - SQL Server and Sybase JDBC driver\0"
-            VALUE "ProductVersion", "0, 9, 1, 0\0"
+            VALUE "ProductVersion", "1, 0, 2, 0\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -73,18 +73,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE DISCARDABLE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE DISCARDABLE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE DISCARDABLE
 BEGIN
     "\r\n"
     "\0"

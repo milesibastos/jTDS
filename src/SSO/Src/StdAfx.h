@@ -33,10 +33,6 @@
 #include <vector>
 #include <rpc.h>
 #include <rpcdce.h>
-#include "SspiDef.h"
-#include "SspiPackage.h"
-#include "SspiEx.h"
-#include "SspiClient.h"
 #include "ntlm_SSPIJNIClient.h"
 
 

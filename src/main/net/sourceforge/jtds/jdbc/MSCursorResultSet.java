@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.28 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.29 2004-11-17 16:58:39 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -701,7 +701,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         // If row is not null, we're dealing with an insert/update
         if (row != null) {
             // Setup table
-            param[3] = new ParamInfo(Types.VARCHAR, "", ParamInfo.INPUT);
+            param[3] = new ParamInfo(Types.VARCHAR, "", ParamInfo.UNICODE);
 
             int colCnt = columnCount;
             // Current column; we will only update/insert columns for which
@@ -712,18 +712,19 @@ public class MSCursorResultSet extends JtdsResultSet {
 
             for (int i = 0; i < colCnt; i++) {
                 ColInfo col = columns[i];
+                ColData colData = row[i];
 
-                if (row[i].isUpdated()) {
-                    if (!columns[i].isWriteable) {
+                if (colData.isUpdated()) {
+                    if (!col.isWriteable) {
                         // Column is read-only but was updated
                         throw new SQLException(Messages.get("error.resultset.insert",
-                                Integer.toString(i + 1), columns[i].realName), "24000");
+                                Integer.toString(i + 1), col.realName), "24000");
                     }
 
                     param[crtCol] = new ParamInfo(col,
-                            '@'+col.realName,
-                            row[i].getValue(),
-                            row[i].getLength());
+                            '@' + col.realName,
+                            colData.getValue(),
+                            colData.getLength());
                     crtCol++;
                 }
                 if (col.tableName != null) {
@@ -741,7 +742,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                     // expressions (this is where 'default' comes in).
                     param[crtCol] = new ParamInfo(Types.VARCHAR,
                             "insert " + tableName + " default values",
-                            ParamInfo.INPUT);
+                            ParamInfo.UNICODE);
                     crtCol++;
                 } else {
                     // No column to update so bail out!

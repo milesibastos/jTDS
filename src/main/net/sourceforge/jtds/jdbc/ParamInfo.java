@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.6 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.7 2004-11-17 16:58:39 alin_sinpalean Exp $
  */
 class ParamInfo {
     /** Flag as an input parameter. */
@@ -121,7 +121,6 @@ class ParamInfo {
         this.jdbcType  = ci.jdbcType;
         this.sqlType   = ci.sqlType;
         this.collation = ci.collation;
-        this.isOutput  = false;
         this.isSet     = true;
         this.value     = value;
         this.length    = length;

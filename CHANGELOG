@@ -2,6 +2,8 @@ Changes from jTDS 0.9
 =========================
 
 11/17/2004 - Alin Sinpalean
+ o Tiny performance tweaks.
+ o Added jta.jar to lib folder to ensure compilation works under Java 1.3.
  o Corrected a problem in ReaderOutputStream that was causing read(byte[]) to
    always return the size of the byte array even if less data was read.
  o Fixed a problem with absolute(-1) (the row position was incorrectly

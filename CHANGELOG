@@ -43,3 +43,7 @@ Changes from jTDS 0.2
    failed with a NullPointerException when trying to get the current row's
    context. Now the context is loaded in internalFetch -- not very elegant, but
    at least it works. ;o)
+
+08/14/2002 - Alin Sinpalean
+
+ o Added support for the UNIQUEIDENTIFIER datatype

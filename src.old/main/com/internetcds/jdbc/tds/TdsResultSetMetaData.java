@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.3 2002-08-14 11:44:21 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.3 2002-08-14 11:44:21 alin_sinpalean Exp $";
 
 
    /**
@@ -175,6 +175,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
          case Tds.SYBVOID: {result = "VOID"; break;}
          case Tds.SYBIMAGE: {result = "IMAGE"; break;}
          case Tds.SYBTEXT: {result = "TEXT"; break;}
+         case Tds.SYBUNIQUEID: {result = "UNIQUEIDENTIFIER"; break;}
          case Tds.SYBVARBINARY: {result = "VARBINARY"; break;}
          case Tds.SYBINTN: {result = "INTN"; break;}
          case Tds.SYBVARCHAR: {result = "VARCHAR"; break;}

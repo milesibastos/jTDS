@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1270,6 +1270,12 @@ public class Tds implements TdsDefinitions {
             element = new Boolean((column_size != 0) ? true : false);
             break;
          }
+         case SYBUNIQUEID:
+         {
+            int len = comm.getByte() & 0xff;
+            element = len==0 ? null : TdsUtil.uniqueIdToString(comm.getBytes(len));
+            break;
+         }
          default:
          {
             element = null;
@@ -1606,6 +1612,7 @@ public class Tds implements TdsDefinitions {
             case SYBDECIMAL:
             case SYBNUMERIC:
             case SYBBITN:
+            case SYBUNIQUEID:
             {
                 return false;
             }
@@ -2121,6 +2128,12 @@ public class Tds implements TdsDefinitions {
                     else {
                         element = new Boolean((comm.getByte() != 0) ? true : false);
                     }
+                    break;
+                }
+                case SYBUNIQUEID:
+                {
+                    int len = comm.getByte() & 0xff;
+                    element = len==0 ? null : TdsUtil.uniqueIdToString(comm.getBytes(len));
                     break;
                 }
                 default:
@@ -3913,6 +3926,9 @@ public class Tds implements TdsDefinitions {
                 result = java.sql.Types.VARCHAR;
                 break;
 //         case SYBVOID:         result = java.sql.Types. ; break;
+            case SYBUNIQUEID:
+                result = java.sql.Types.VARCHAR;
+                break;
             default:
                 throw new TdsException("Unknown native data type "
                          + Integer.toHexString(

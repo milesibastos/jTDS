@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.6 2002-08-05 13:56:30 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.7 2002-08-14 11:44:21 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.6 2002-08-05 13:56:30 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.7 2002-08-14 11:44:21 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -103,6 +103,7 @@ interface TdsDefinitions
    static final byte SYBVOID        =  31;   // 0x1F
    static final byte SYBIMAGE       =  34;   // 0x22
    static final byte SYBTEXT        =  35;   // 0x23
+   static final byte SYBUNIQUEID    =  36;   // 0x24 - uniqueidentifier
    static final byte SYBVARBINARY   =  37;   // 0x25
    static final byte SYBINTN        =  38;   // 0x26
    static final byte SYBVARCHAR     =  39;   // 0x27

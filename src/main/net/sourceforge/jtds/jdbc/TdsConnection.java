@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.23 2004-04-01 19:48:36 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.24 2004-04-12 17:03:30 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -106,7 +106,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.23 2004-04-01 19:48:36 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.24 2004-04-12 17:03:30 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -917,6 +917,8 @@ public class TdsConnection implements Connection
      *     <code>Statement</code>s
      */
     private void commitOrRollback(boolean commit) throws SQLException {
+        checkClosed();
+
         // @todo SAfe Check when must the warnings actually be cleared
         warningChain.clearWarnings();
 

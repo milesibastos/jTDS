@@ -22,6 +22,7 @@ import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.TdsCore;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.9 2004-08-07 00:12:39 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.10 2004-08-07 01:37:43 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -148,6 +149,17 @@ public class DriverUnitTest extends UnitTestBase {
      */
     public void test_getPropertyInfo_Choices() {
 
+        String[] expectedBooleanChoices = new String[]{
+            String.valueOf(true),
+            String.valueOf(false),
+        };
+        String[] expectedPrepareSqlChoices = new String[]{
+            String.valueOf(TdsCore.UNPREPARED),
+            String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES),
+            String.valueOf(TdsCore.EXECUTE_SQL),
+            String.valueOf(TdsCore.PREPARE),
+            String.valueOf(TdsCore.PREPEXEC),
+        };
         String[] expectedServerTypeChoices = new String[]{
             String.valueOf(Driver.SQLSERVER),
             String.valueOf(Driver.SYBASE),
@@ -158,17 +170,13 @@ public class DriverUnitTest extends UnitTestBase {
             DefaultProperties.TDS_VERSION_70,
             DefaultProperties.TDS_VERSION_80,
         };
-        String[] expectedBooleanChoices = new String[]{
-            String.valueOf(true),
-            String.valueOf(false),
-        };
 
         Map expectedChoicesMap = new HashMap();
-        expectedChoicesMap.put(Messages.get("prop.servertype"), expectedServerTypeChoices);
-        expectedChoicesMap.put(Messages.get("prop.tds"), expectedTdsChoices);
         expectedChoicesMap.put(Messages.get("prop.lastupdatecount"), expectedBooleanChoices);
         expectedChoicesMap.put(Messages.get("prop.namedpipe"), expectedBooleanChoices);
-        expectedChoicesMap.put(Messages.get("prop.preparesql"), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get("prop.preparesql"), expectedPrepareSqlChoices);
+        expectedChoicesMap.put(Messages.get("prop.servertype"), expectedServerTypeChoices);
+        expectedChoicesMap.put(Messages.get("prop.tds"), expectedTdsChoices);
         expectedChoicesMap.put(Messages.get("prop.useunicode"), expectedBooleanChoices);
 
         final Map infoMap = new HashMap();

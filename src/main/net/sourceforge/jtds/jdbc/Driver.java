@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.32 2004-08-07 00:07:31 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.33 2004-08-07 01:37:43 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -174,6 +174,20 @@ public class Driver implements java.sql.Driver {
 
         final HashMap choicesMap = new HashMap();
 
+        final String[] booleanChoices = new String[]{"true", "false"};
+        choicesMap.put(Messages.get("prop.lastupdatecount"), booleanChoices);
+        choicesMap.put(Messages.get("prop.namedpipe"), booleanChoices);
+        choicesMap.put(Messages.get("prop.useunicode"), booleanChoices);
+
+        final String[] prepareSqlChoices = new String[]{
+            String.valueOf(TdsCore.UNPREPARED),
+            String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES),
+            String.valueOf(TdsCore.EXECUTE_SQL),
+            String.valueOf(TdsCore.PREPARE),
+            String.valueOf(TdsCore.PREPEXEC),
+        };
+        choicesMap.put(Messages.get("prop.preparesql"), prepareSqlChoices);
+
         final String[] serverTypeChoices = new String[]{
             String.valueOf(SQLSERVER),
             String.valueOf(SYBASE),
@@ -187,12 +201,6 @@ public class Driver implements java.sql.Driver {
             DefaultProperties.TDS_VERSION_80,
         };
         choicesMap.put(Messages.get("prop.tds"), tdsChoices);
-
-        final String[] booleanChoices = new String[]{"true", "false"};
-        choicesMap.put(Messages.get("prop.lastupdatecount"), booleanChoices);
-        choicesMap.put(Messages.get("prop.namedpipe"), booleanChoices);
-        choicesMap.put(Messages.get("prop.preparesql"), booleanChoices);
-        choicesMap.put(Messages.get("prop.useunicode"), booleanChoices);
 
         return choicesMap;
     }

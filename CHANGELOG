@@ -1,3 +1,31 @@
+Changes from jTDS 0.6-rc1
+=========================
+
+01/22/2004 - Alin Sinpalean
+ o Modified again the DatabaseMetaData. Instead of just applying the patch
+   provided by Mike I chose to do it my way, which was REALLY bad, so it finally
+   ended up as it was initially.
+
+01/21/2004 - Alin Sinpalean
+ o Applied patch #880905 (EscapeProcessor does not handle {escape 'x'} properly)
+   submitted by Brian Heineman, with some minor modifications.
+
+01/20/2004 - Alin Sinpalean
+ o Added the "sendStringParametersAsUnicode" parameter, to control whether
+   NVARCHAR/NCHAR should be used when possible. If false, VARCHAR/CHAR are
+   always used to prevent performance degradation under SQL Server 2000.
+   (thanks to Wellington Mariusso for the original patch)
+ o Implemented basic Blob/Clob support. (thanks to Brian Heineman for the
+   patch)
+ o Implemented PreparedStatement.SetAsciiStream and SetUnicodeStream. (again
+   thanks to Brian Heineman for the patch)
+ o Fixed two bugs with DatabaseMetaData on Sybase and SQL Server < 7.0 (thanks
+   Mike Hutchinson for the patch)
+ o Added a method to the Driver implementation to "uppercase" the Properties
+   keys before passing them to inner classes for use.
+
+01/16/2003 - Alin Sinpalean
+ o Applied some patches and fixed some minor bugs.
 
 ===============================================================================
 12/21/2003 - jTDS 0.6-rc1 released

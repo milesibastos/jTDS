@@ -29,7 +29,7 @@ import javax.naming.StringRefAddr;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.TdsCore;
-import net.sourceforge.jtds.jdbc.Settings;
+import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -37,18 +37,18 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.12 2004-08-04 03:30:36 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.13 2004-08-04 15:23:39 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
     protected int loginTimeout = 0;
     protected String databaseName = "";
-    protected int portNumber = Settings.DEFAULT_PORT_NUMBER_SQLSERVER;
+    protected int portNumber = DefaultProperties.PORT_NUMBER_SQLSERVER;
     protected String serverName;
     protected String user;
     protected String password = "";
     protected String description;
-    protected String tds = Settings.TDS_VERSION_70;
+    protected String tds = DefaultProperties.TDS_VERSION_70;
     protected int serverType = Driver.SQLSERVER;
     protected String charset = "";
     protected String language = "";
@@ -60,7 +60,7 @@ implements DataSource, Referenceable, Serializable {
     protected String macAddress = "";
     protected int packetSize = 0;
     protected boolean prepareSql = true;
-    protected long lobBuffer = Settings.DEFAULT_LOB_BUFFER_SIZE;
+    protected long lobBuffer = DefaultProperties.LOB_BUFFER_SIZE;
 
     public Reference getReference() throws NamingException {
         Reference ref = new Reference(getClass().getName(),

@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.27 2004-08-04 03:30:34 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.28 2004-08-04 15:23:30 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -178,10 +178,10 @@ public class Driver implements java.sql.Driver {
             } else if (name.equals(Support.getMessage("prop.tds"))) {
                 dpi[i].description = Support.getMessage("prop.desc.tds");
                 dpi[i].choices = new String[] {
-                    Settings.TDS_VERSION_42,
-                    Settings.TDS_VERSION_50,
-                    Settings.TDS_VERSION_70,
-                    Settings.TDS_VERSION_80,
+                    DefaultProperties.TDS_VERSION_42,
+                    DefaultProperties.TDS_VERSION_50,
+                    DefaultProperties.TDS_VERSION_70,
+                    DefaultProperties.TDS_VERSION_80,
                 };
             } else if (name.equals(Support.getMessage("prop.domain"))) {
                 dpi[i].description = Support.getMessage("prop.desc.domain");
@@ -315,7 +315,7 @@ public class Driver implements java.sql.Driver {
         //
         // Set default properties
         //
-        props = Settings.addDefaultProperties(props);
+        props = DefaultProperties.addDefaultProperties(props);
 
         return props;
     }

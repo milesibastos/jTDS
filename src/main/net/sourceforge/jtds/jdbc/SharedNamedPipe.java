@@ -35,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer.
- * @version $Id: SharedNamedPipe.java,v 1.8 2004-08-04 01:58:39 ddkilzer Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.9 2004-08-04 15:23:30 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
 
@@ -90,7 +90,7 @@ public class SharedNamedPipe extends SharedSocket {
             url.append("/");
         }
 
-        url.append(Settings.DEFAULT_NAMED_PIPE_PATH_SQLSERVER);
+        url.append(DefaultProperties.NAMED_PIPE_PATH_SQLSERVER);
 
         newInstance.setPipe(
                 new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth));

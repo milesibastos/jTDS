@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.17 2004-08-04 03:30:34 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.18 2004-08-04 15:23:30 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -649,7 +649,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         try {
             serverPort  = Integer.parseInt(
                                           info.getProperty(Support.getMessage("prop.portnumber"),
-                                                           String.valueOf(Settings.DEFAULT_PORT_NUMBER_SQLSERVER)));
+                                                           String.valueOf(DefaultProperties.PORT_NUMBER_SQLSERVER)));
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",
@@ -671,8 +671,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         user = info.getProperty(Support.getMessage("prop.user"));
         password = info.getProperty(Support.getMessage("prop.password"));
         macAddress = info.getProperty(Support.getMessage("prop.macaddress"), "");
-        appName = info.getProperty(Support.getMessage("prop.appname"), Settings.DEFAULT_APP_NAME);
-        progName = info.getProperty(Support.getMessage("prop.progname"), Settings.DEFAULT_PROG_NAME);
+        appName = info.getProperty(Support.getMessage("prop.appname"), DefaultProperties.APP_NAME);
+        progName = info.getProperty(Support.getMessage("prop.progname"), DefaultProperties.PROG_NAME);
         serverCharset = info.getProperty(Support.getMessage("prop.charset"));
         language = info.getProperty(Support.getMessage("prop.language"), "us_english");
         prepareSql = info.getProperty(Support.getMessage("prop.preparesql"), "true").equalsIgnoreCase("true");
@@ -687,15 +687,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         String tmp = info.getProperty(
                 Support.getMessage("prop.tds"),
-                (serverType == Driver.SQLSERVER ? Settings.TDS_VERSION_70 : Settings.TDS_VERSION_50));
+                (serverType == Driver.SQLSERVER ? DefaultProperties.TDS_VERSION_70 : DefaultProperties.TDS_VERSION_50));
 
-        if (tmp.equals(Settings.TDS_VERSION_42)) {
+        if (tmp.equals(DefaultProperties.TDS_VERSION_42)) {
             tdsVersion = Driver.TDS42;
-        } else if (tmp.equals(Settings.TDS_VERSION_50)) {
+        } else if (tmp.equals(DefaultProperties.TDS_VERSION_50)) {
             tdsVersion = Driver.TDS50;
-        } else if (tmp.equals(Settings.TDS_VERSION_70)) {
+        } else if (tmp.equals(DefaultProperties.TDS_VERSION_70)) {
             tdsVersion = Driver.TDS70;
-        } else if (tmp.equals(Settings.TDS_VERSION_80)) {
+        } else if (tmp.equals(DefaultProperties.TDS_VERSION_80)) {
             tdsVersion = Driver.TDS80;
         } else {
             throw new SQLException(
@@ -740,7 +740,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         try {
             lobBuffer = Long.parseLong(
                                        info.getProperty(Support.getMessage("prop.lobbuffer"),
-                                                        String.valueOf(Settings.DEFAULT_LOB_BUFFER_SIZE)));
+                                                        String.valueOf(DefaultProperties.LOB_BUFFER_SIZE)));
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",

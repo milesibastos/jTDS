@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.33 2005-03-04 00:11:10 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.34 2005-03-06 09:42:04 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -619,21 +619,37 @@ public class JtdsStatement implements java.sql.Statement {
         return getMoreResults(CLOSE_CURRENT_RESULT);
     }
 
+    /**
+     * Execute batch of SQL Statements.
+     * <p/>
+     * The JDBC3 standard says that for a server which does not continue
+     * processing a batch once the first error has occurred (e.g. SQL Server),
+     * the returned array will never contain <code>EXECUTE_FAILED</code> in any
+     * of the elements. If a failure has occurred the array length will be less
+     * than the count of statements in the batch. For those servers that do
+     * continue to execute a batch containing an error (e.g. Sybase), elements
+     * may contain <code>EXECUTE_FAILED</code>. Note: even here the array
+     * length may also be shorter than the statement count if a serious error
+     * has prevented the rest of the batch from being executed. In addition,
+     * when executing batched stored procedures, Sybase will also stop after
+     * the first error.
+     *
+     * @return update counts as an <code>int[]</code>
+     */
     public synchronized int[] executeBatch()
             throws SQLException, BatchUpdateException {
         checkOpen();
+        initialize();
 
         if (batchValues == null || batchValues.size() == 0) {
             return new int[0];
         }
 
+        ArrayList counts = new ArrayList();
         int size = batchValues.size();
         int executeSize = connection.getBatchSize();
         executeSize = (executeSize == 0) ? Integer.MAX_VALUE : executeSize;
-        int[] updateCounts = null;
-        if (executeSize < size) {
-            updateCounts = new int[size];
-        }
+        SQLException sqlEx = null;
 
         try {
             tds.startBatch();
@@ -652,44 +668,36 @@ public class JtdsStatement implements java.sql.Statement {
 
                 // If the batch has been sent, process the results
                 if (executeNow) {
-                    int[] partialCounts = null;
-                    BatchUpdateException err = null;
-                    try {
-                        // Will throw a BatchUpdateException with the partial
-                        // update counts if an error occurs and consume the
-                        // whole response
-                        partialCounts = tds.getBatchCounts();
-                    } catch (BatchUpdateException ex) {
-                        err = ex;
-                        partialCounts = ex.getUpdateCounts();
-                    }
+                    sqlEx = tds.getBatchCounts(counts, sqlEx);
 
-                    if (executeSize < size) {
-                        // Copy over update counts
-                        System.arraycopy(partialCounts, 0, updateCounts,
-                                ((i - 1) / executeSize) * executeSize,
-                                partialCounts.length);
-                    } else {
-                        updateCounts = partialCounts;
-                    }
-
-                    if (err != null) {
-                        // If an error occurred, truncate the update counts and
-                        // "rethrow" the exception
-                        // TODO Should probably continue for Sybase to keep compatible
-                        if (i > executeSize) {
-                            int[] tmp = new int[((i - 1) / executeSize) * executeSize
-                                    + partialCounts.length];
-                            System.arraycopy(updateCounts, 0, tmp, 0, tmp.length);
-                            updateCounts = tmp;
-                        }
-                        throw new BatchUpdateException(
-                                err.getMessage(), err.getSQLState(),
-                                err.getErrorCode(), updateCounts);
+                    // If a serious error or a MS server error then we stop
+                    // execution now as count is too small. Sybase continues,
+                    // flagging failed updates in the count array.
+                    if (sqlEx != null && counts.size() != i) {
+                        break;
                     }
                 }
             }
-
+            //
+            // Copy the update counts into the int array
+            //
+            int updateCounts[] = new int[counts.size()];
+            for (int i = 0; i < updateCounts.length; i++) {
+                updateCounts[i] = ((Integer) counts.get(i)).intValue();
+            }
+            //
+            // See if we should return an exception
+            //
+            if (sqlEx != null) {
+                BatchUpdateException batchEx =
+                        new BatchUpdateException(sqlEx.getMessage(),
+                                                 sqlEx.getSQLState(),
+                                                 sqlEx.getErrorCode(),
+                                                 updateCounts);
+                // Chain any other exceptions
+                batchEx.setNextException(sqlEx.getNextException());
+                throw batchEx;
+            }
             return updateCounts;
         } catch (BatchUpdateException ex) {
             // If it's a BatchUpdateException let it go
@@ -701,8 +709,10 @@ public class JtdsStatement implements java.sql.Statement {
             // FIXME What should we send here to flush out the batch?
             // Come to think of it, is there any circumstance under which this
             // could actually happen without the connection getting closed?
+            // No counts will have been returned either as last packet will not
+            // have been sent.
             throw new BatchUpdateException(ex.getMessage(), ex.getSQLState(),
-                    ex.getErrorCode(), tds.getBatchCounts());
+                    ex.getErrorCode(), new int[0]);
         } finally {
             clearBatch();
         }

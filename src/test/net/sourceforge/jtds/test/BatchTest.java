@@ -26,7 +26,7 @@ import java.sql.ResultSet;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.4 2005-02-27 11:01:27 alin_sinpalean Exp $
+ * @version $Id: BatchTest.java,v 1.5 2005-03-06 09:42:06 alin_sinpalean Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -93,10 +93,9 @@ public class BatchTest extends DatabaseTestCase {
             x = e.getUpdateCounts();
         }
         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-            assertEquals(3, x.length);
+            assertEquals(2, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(EXECUTE_FAILED, x[2]);
         } else {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
@@ -143,10 +142,9 @@ public class BatchTest extends DatabaseTestCase {
             x = e.getUpdateCounts();
         }
         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-            assertEquals(3, x.length);
+            assertEquals(2, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(EXECUTE_FAILED, x[2]);
         } else {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
@@ -198,10 +196,16 @@ public class BatchTest extends DatabaseTestCase {
             } catch (BatchUpdateException e) {
                 x = e.getUpdateCounts();
             }
-            assertEquals(3, x.length);
-            assertEquals(1, x[0]);
-            assertEquals(1, x[1]);
-            assertEquals(EXECUTE_FAILED, x[2]);
+            if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
+                assertEquals(2, x.length);
+                assertEquals(1, x[0]);
+                assertEquals(1, x[1]);
+            } else {
+                assertEquals(3, x.length);
+                assertEquals(1, x[0]);
+                assertEquals(1, x[1]);
+                assertEquals(EXECUTE_FAILED, x[2]);
+            }
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
             for (int i = 0; i < 5; i++) {
@@ -251,10 +255,16 @@ public class BatchTest extends DatabaseTestCase {
             } catch (BatchUpdateException e) {
                 x = e.getUpdateCounts();
             }
-            assertEquals(3, x.length);
-            assertEquals(1, x[0]);
-            assertEquals(1, x[1]);
-            assertEquals(EXECUTE_FAILED, x[2]);
+            if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
+                assertEquals(2, x.length);
+                assertEquals(1, x[0]);
+                assertEquals(1, x[1]);
+            } else {
+                assertEquals(3, x.length);
+                assertEquals(1, x[0]);
+                assertEquals(1, x[1]);
+                assertEquals(EXECUTE_FAILED, x[2]);
+            }
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
             for (int i = 0; i < 5; i++) {

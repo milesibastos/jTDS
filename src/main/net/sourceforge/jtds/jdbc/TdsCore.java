@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.82 2005-03-02 01:11:36 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.83 2005-03-06 09:42:04 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -85,7 +85,8 @@ public class TdsCore {
          * @return <code>boolean</code> true if the update count is valid.
          */
         boolean isUpdateCount() {
-            return isEndToken() && (status & DONE_ROW_COUNT) != 0;
+            return (token == TDS_DONE_TOKEN || token == TDS_DONEINPROC_TOKEN)
+                    && (status & DONE_ROW_COUNT) != 0;
         }
 
         /**
@@ -1387,27 +1388,33 @@ public class TdsCore {
 
     /**
      * Obtain the counts from a batch of SQL updates.
-     * <p>
-     * If an error occurs Sybase will continue processing a batch whilst SQL
-     * Server will stop. This method returns the JDBC3
+     * <p/>
+     * If an error occurs Sybase will continue processing a batch consisting of
+     * TDS_LANGUAGE records whilst SQL Server will stop after the first error.
+     * Sybase will also stop after the first error when executing RPC calls.
+     * For Sybase only therefore, this method returns the JDBC3
      * <code>EXECUTE_FAILED</code> constant in the counts array when a
-     * statement fails with an error.
+     * statement fails with an error. For Sybase, care is taken to ensure that
+     * <code>SQLException</code>s are chained because there could be several
+     * errors reported in a batch.
      *
-     * @return the update counts as an <code>int[]</code>
+     * @param counts the <code>ArrayList</code> containing the update counts
+     * @param sqlEx  any previous <code>SQLException</code>(s) encountered
+     * @return updated <code>SQLException</code> or <code>null</code> if no
+     *         error has yet occured
      */
-    int[] getBatchCounts() throws BatchUpdateException {
-        ArrayList counts = new ArrayList();
+    SQLException getBatchCounts(ArrayList counts, SQLException sqlEx) {
         Integer lastCount = JtdsStatement.SUCCESS_NO_INFO;
-        BatchUpdateException batchEx = null;
 
         try {
             checkOpen();
             while (!endOfResponse) {
                 nextToken();
                 if (currentToken.isResultSet()) {
+                    // Serious error, statement must not return a result set
                     throw new SQLException(
-                            Messages.get(
-                                    "error.statement.batchnocount"),"07000");
+                            Messages.get("error.statement.batchnocount"),
+                            "07000");
                 }
                 //
                 // Analyse type of end token and try to extract correct
@@ -1415,8 +1422,12 @@ public class TdsCore {
                 //
                 switch (currentToken.token) {
                     case TDS_DONE_TOKEN:
-                        if ((currentToken.status & DONE_ERROR) != 0) {
-                            counts.add(JtdsStatement.EXECUTE_FAILED);
+                        if ((currentToken.status & DONE_ERROR) != 0
+                                || lastCount == JtdsStatement.EXECUTE_FAILED) {
+                            if (connection.getServerType() == Driver.SYBASE) {
+                                // Sybase can continue batch so flag this count
+                                counts.add(JtdsStatement.EXECUTE_FAILED);
+                            }
                         } else {
                             if (currentToken.isUpdateCount()) {
                                 counts.add(new Integer(currentToken.updateCount));
@@ -1429,14 +1440,17 @@ public class TdsCore {
                     case TDS_DONEINPROC_TOKEN:
                         if ((currentToken.status & DONE_ERROR) != 0) {
                             lastCount = JtdsStatement.EXECUTE_FAILED;
-                        } else
-                        if (currentToken.isUpdateCount()) {
+                        } else if (currentToken.isUpdateCount()) {
                             lastCount = new Integer(currentToken.updateCount);
                         }
                         break;
                     case TDS_DONEPROC_TOKEN:
-                        if ((currentToken.status & DONE_ERROR) != 0) {
-                            counts.add(JtdsStatement.EXECUTE_FAILED);
+                        if ((currentToken.status & DONE_ERROR) != 0
+                                || lastCount == JtdsStatement.EXECUTE_FAILED) {
+                            if (connection.getServerType() == Driver.SYBASE) {
+                                // Sybase can continue batch so flag this count
+                                counts.add(JtdsStatement.EXECUTE_FAILED);
+                            }
                         } else {
                             counts.add(lastCount);
                         }
@@ -1444,18 +1458,20 @@ public class TdsCore {
                         break;
                 }
             }
+            //
+            // Check for any exceptions
+            //
             messages.checkErrors();
+
         } catch (SQLException e) {
-            // A server error has been reported
-            // return a BatchUpdateException
-            // Create partial response count array
-            int results[] = new int[counts.size()];
-            for (int i = 0; i < results.length; i++) {
-                results[i] = ((Integer)counts.get(i)).intValue();
+            //
+            // Chain all exceptions
+            //
+            if (sqlEx != null) {
+                sqlEx.setNextException(e);
+            } else {
+                sqlEx = e;
             }
-            batchEx = new BatchUpdateException(e.getMessage(), e.getSQLState(),
-                    e.getErrorCode(), results);
-            throw batchEx;
         } finally {
             while (!endOfResponse) {
                 // Flush rest of response
@@ -1463,20 +1479,16 @@ public class TdsCore {
                     nextToken();
                 } catch (SQLException ex) {
                     // Chain any exceptions to the BatchUpdateException
-                    if (batchEx != null) {
-                        batchEx.setNextException(ex);
+                    if (sqlEx != null) {
+                        sqlEx.setNextException(ex);
+                    } else {
+                        sqlEx = ex;
                     }
                 }
             }
         }
-        //
-        // Batch completed OK return full count array
-        //
-        int results[] = new int[counts.size()];
-        for (int i = 0; i < results.length; i++) {
-            results[i] = ((Integer)counts.get(i)).intValue();
-        }
-        return results;
+
+        return sqlEx;
     }
 
 // ---------------------- Private Methods from here ---------------------

@@ -63,16 +63,19 @@ public class PerformanceTest extends TestBase
         ResultSet rs = stmt.executeQuery( "Select top 10000 * from CustomGoods" );
 
         start( name );
+        int cnt = rs.getMetaData().getColumnCount();
 
         while( rs.next() )
         {
-            rs.getObject( 1 );
+            for( int i=1; i<=cnt; i++ )
+                rs.getObject(i);
             progress();
         }
 
         while( rs.previous() )
         {
-            rs.getObject( 1 );
+            for( int i=1; i<=cnt; i++ )
+                rs.getObject(i);
             progress();
         }
 

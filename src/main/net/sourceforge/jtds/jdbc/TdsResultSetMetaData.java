@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.2 2003-11-28 06:45:04 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.2 2003-11-28 06:45:04 alin_sinpalean Exp $";
 
    /**
     * Does not allow NULL values.
@@ -140,16 +140,21 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public int getColumnType(int column) throws SQLException
    {
-      switch( columnsInfo.getNativeType(column) )
-      {
-         case Tds.SYBNCHAR:
-         case Tds.SYBNTEXT:
-         case Tds.SYBNVARCHAR:
-         case Tds.SYBUNIQUEID:
-            return Types.OTHER;
-         default:
-            return columnsInfo.getJdbcType(column);
-      }
+      return columnsInfo.getJdbcType(column);
+      // SAfe It doesn't help very much to clasify NCHAR, NTEXT and NVARCHAR
+      //      as OTHER. It just confuses clients. I'm not so sure about
+      //      UNIQUEID, which is currently returned as VARCHAR; maybe it
+      //      should be OTHER.
+      // switch( columnsInfo.getNativeType(column) )
+      // {
+      //    case Tds.SYBNCHAR:
+      //    case Tds.SYBNTEXT:
+      //    case Tds.SYBNVARCHAR:
+      //    case Tds.SYBUNIQUEID:
+      //       return Types.OTHER;
+      //    default:
+      //       return columnsInfo.getJdbcType(column);
+      //}
    }
 
    /**

@@ -1146,6 +1146,9 @@ public class TimestampTest extends DatabaseTestCase
             assertTrue("Expected no result set", !rsB.next());
         }
         assertTrue(count == rowsToAdd);
+
+        stmtA.close();
+        stmtB.close();
     }
 
     public void testPrimaryKeyFloat0023() throws Exception
@@ -1351,6 +1354,79 @@ public class TimestampTest extends DatabaseTestCase
         assertTrue(rs.getBoolean("f"));
 
         assertTrue("Expected no result set", !rs.next());
+    }
+
+    /**
+     * <b>SAfe</b> Tests whether cursor-based statements still work ok when
+     * nested. Similar to <code>testNestedStatements0022</code>, which tests
+     * the same with plain (non-cursor-based) statements (and unfortunately
+     * fails).
+     *
+     * @throws Exception if an Exception occurs (very relevant, huh?)
+     */
+    public void testNestedStatements0026() throws Exception
+    {
+        Connection cx = getConnection();
+
+        dropTable("#t0026a");
+        dropTable("#t0026b");
+
+        Statement  stmt    = cx.createStatement();
+        stmt.executeUpdate("create table #t0026a "
+            + "  (i   integer not null, "
+            + "   str char(254) not null) ");
+
+        stmt.executeUpdate("create table #t0026b             "
+        + "  (i   integer not null,      "
+        + "   t   datetime not null)     ");
+        stmt.close();
+
+        PreparedStatement  pStmtA = cx.prepareStatement(
+            "insert into #t0026a values (?, ?)");
+        PreparedStatement  pStmtB = cx.prepareStatement(
+            "insert into #t0026b values (?, getdate())");
+
+        final int rowsToAdd = 1000;
+        int count = 0;
+        for (int i = 1; i <= rowsToAdd; i++)
+        {
+            pStmtA.setInt(1, i);
+            String tmp = "";
+            while (tmp.length() < 240)
+            {
+                tmp = tmp + "row " + i + ". ";
+            }
+            pStmtA.setString(2, tmp);
+            count += pStmtA.executeUpdate();
+
+            pStmtB.setInt(1, i);
+            pStmtB.executeUpdate();
+        }
+        assertTrue(count == rowsToAdd);
+        pStmtA.close();
+        pStmtB.close();
+
+        Statement stmtA = cx.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        Statement stmtB = cx.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+        count = 0;
+        ResultSet rsA = stmtA.executeQuery("select * from #t0026a");
+        assertNotNull(rsA);
+        while (rsA.next())
+        {
+            count++;
+
+            ResultSet  rsB = stmtB.executeQuery(
+                "select * from #t0026b where i=" + rsA.getInt("i"));
+
+            assertNotNull(rsB);
+            assertTrue("Expected a result set", rsB.next());
+            assertTrue("Expected no result set", !rsB.next());
+        }
+        assertTrue(count == rowsToAdd);
+
+        stmtA.close();
+        stmtB.close();
     }
 
     public void testErrors0036() throws Exception

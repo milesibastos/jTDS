@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.7 2003-10-02 18:07:54 matt_brinkley Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.8 2003-11-28 06:45:04 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.7 2003-10-02 18:07:54 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.8 2003-11-28 06:45:04 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -196,9 +196,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
             boolean nullable )
              throws SQLException
     {
-        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?";
+        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
@@ -207,6 +207,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         s.setString(4, "R");
         s.setString(5, "T");
         s.setString(6, "U");
+        s.setInt(7, 3); // ODBC version 3
 
         TdsResultSet rs = (TdsResultSet)s.executeQuery();
         Columns col = rs.getContext().getColumnInfo();
@@ -1306,15 +1307,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
             String columnNamePattern )
              throws SQLException
     {
-        String query = "exec sp_sproc_columns ?, ?, ?, ?, 3";
+        String query = "exec sp_sproc_columns ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec ["+catalog+"]..sp_sproc_columns ?, ?, ?, ?, 3";
+            query = "exec ["+catalog+"]..sp_sproc_columns ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, procedureNamePattern);
         s.setString(2, schemaPattern);
         s.setString(3, catalog);
         s.setString(4, columnNamePattern);
+        s.setInt(5, 3); // ODBC version 3
 
         TdsResultSet rs = (TdsResultSet)s.executeQuery();
         Columns col = rs.getContext().getColumnInfo();
@@ -1413,10 +1415,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public java.sql.ResultSet getSchemas() throws SQLException
     {
-        // XXX We should really clean up all these temporary tables.
         java.sql.Statement statement = connection.createStatement();
 
-        String sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE issqlrole=0";
+        String sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE islogin=1";
 
         return statement.executeQuery(sql);
     }
@@ -1723,7 +1724,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         Statement s = connection.createStatement();
         TdsResultSet rs = (TdsResultSet)s.executeQuery(
-            "exec sp_datatype_info");
+            "exec sp_datatype_info @ODBCVer=3");
 
         Columns col = rs.getContext().getColumnInfo();
         col.setFakeColumnCount(18);
@@ -1904,9 +1905,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     public java.sql.ResultSet getVersionColumns( String catalog, String schema,
             String table ) throws SQLException
     {
-        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?";
+        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
@@ -1915,6 +1916,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         s.setString(4, "V");
         s.setString(5, "C");
         s.setString(6, "O");
+        s.setInt(7, 3); // ODBC version 3
 
         TdsResultSet rs = (TdsResultSet)s.executeQuery();
         Columns col = rs.getContext().getColumnInfo();

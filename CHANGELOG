@@ -1,5 +1,52 @@
+===============================================================================
+11/29/2003 - jTDS 0.5.2 released
+===============================================================================
+
 Changes from jTDS 0.5.1
 =======================
+
+11/27/2003
+ o Fixed bug #808452 (DatabaseMetaData.getTypeInfo() not JDBC compliant). Also
+   added the @ODBCVer parameter to the other calls that support it.
+ o Moved the "moreResults2 = true" statement to the end of Tds.executeProcedure
+   to avoid the situation when an exception is thrown while building the PROC
+   packet and the close code deadlocks in skipToEnd waiting for results when in
+   fact there aren't any (this situation shouldn't really occur in normal
+   situations, it happened to me because of a mistake I made in
+   CallableStatement_base, which failed to set the type of a parameter).
+
+11/26/2003 - Alin Sinpalean
+ o Added support for CallableStatements with return values.
+ o APPNAME and PROGNAME properties didn't actually work; issue fixed.
+
+11/22/2003 - Alin Sinpalean
+ o Cleaned up some of Matt's code (e.g. replaced calls to methods that were
+   only introduced in Java 1.4 with equivalents to ensure backward
+   compatibility).
+ o Fixed an issue with the case sensitive database names (when changing the
+   database jTDS checks if the old database is the same as what the server has
+   returned and the check was case sensitive).
+ o Removed some weird type checking and matching in TdsResultSetMetaData
+   .getColumnType, which would define NCHAR, NVARCHAR and NTEXT as Types.OTHER
+   rather than the correct Java type (this was causing problems with SQuirreL
+   SQL when the column type of a ResultSet was checked -- particularly when 
+   browsing stored procedures and their parameters).
+ o Removed the "synchronized" qualifier from TdsStatement.executeQuery, because
+   it was causing deadlocks between threads creating scrollable result sets and
+   threads closing other scrollable result sets (see unit test TimestampTest
+   .testNestedStatements0026).
+
+11/20/2003 - Matt Brinkley
+ o Added support for Windows authentication for TDS 7.0.
+
+10/02/2003 - Matt Brinkley
+ o Fixed issue related to using catalogs with special characters in name in
+   DatabaseMetaData.
+
+08/30/2003 - Matt Brinkley
+ o Added support for SQL Server 2000 named instances.
+ o Fixed a small bug related to the ordering of the SQLExceptions thrown by
+   TdsConnection.close().
 
 02/15/2003 - Alin Sinpalean
  o Fixed bug #679040: database-specified charset preferred over client-
@@ -11,7 +58,7 @@ Changes from jTDS 0.5.1
    received (initially this was done because getWarnings was not implemented).
 
 ===============================================================================
-01/30/2002 - jTDS 0.5.1 released
+01/30/2003 - jTDS 0.5.1 released
 ===============================================================================
 
 Changes from jTDS 0.5

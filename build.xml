@@ -12,13 +12,13 @@
     <property name="build" value="build"/>
 
     <property name="build.compiler" value="modern"/>
-    <property name="javac.debug" value="off"/>
+    <property name="javac.debug" value="on"/>
 
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="0.5.1"/>
+    <property name="version" value="0.5.2"/>
   </target>
 
   <target name="clean" depends="init">
@@ -40,7 +40,7 @@
   </target>
 
   <target name="compile" depends="init,prepare">
-    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}"/>
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" deprecation="true"/>
   </target>
 
   <target name="javadoc" depends="prepare">

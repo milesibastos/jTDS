@@ -1,11 +1,8 @@
 package net.sourceforge.jtds.jdbc;
 
+import java.io.InterruptedIOException;
 import java.sql.SQLException;
 import java.net.*;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.InputStreamReader;
-import java.io.ByteArrayInputStream;
 
 /**
  * This class communicates with SQL Server 2k to determine what ports its
@@ -33,12 +30,11 @@ import java.io.ByteArrayInputStream;
  */
 public class MSSqlServerInfo
 {
-    public MSSqlServerInfo()
-    {
+    private int m_numRetries             = 3;
+    private int m_timeout                = 2000;
+    private String[] m_serverInfoStrings = null;
 
-    }
-
-    public void getInfo( String host ) throws SQLException
+    public MSSqlServerInfo(String host) throws SQLException
     {
         try
         {
@@ -47,7 +43,7 @@ public class MSSqlServerInfo
             byte[] msg = new byte[] { 0x02 };
             DatagramPacket p = new DatagramPacket( msg, msg.length, addr, 1434 );
             socket.send(p);
-            byte[] buf = new byte[2048];
+            byte[] buf = new byte[4096];
             p = new DatagramPacket( buf, buf.length );
             socket.setSoTimeout(m_timeout);
             for( int i=0; i < m_numRetries; i++ )
@@ -55,18 +51,19 @@ public class MSSqlServerInfo
                 try
                 {
                     socket.receive(p);
-                    String infoString = extractString( buf, p.getLength() );
-                    m_serverInfoStrings = infoString.split( ";");
+                    String infoString = extractString(buf, p.getLength());
+                    m_serverInfoStrings = split(infoString, ';');
                     return;
                 }
-                catch ( SocketTimeoutException toEx ) {}
+                catch ( InterruptedIOException toEx ) {}
             }
         }
         catch (Exception e)
         {
             SQLException sqlEx =
                 new SQLException( "Unable to get info from SQL Server:" + host);
-            sqlEx.initCause(e);
+            // SAfe initCause is only part of J2SE 1.4, this won't work on 1.3 or lower
+            // sqlEx.initCause(e);
             throw sqlEx;
         }
 
@@ -82,7 +79,7 @@ public class MSSqlServerInfo
      * @return port the given instance is listening on, or -1 if it can't be
      * found.
      */
-    public int getPortForInstance( String instanceName )
+    public int getPortForInstance( String instanceName ) throws TdsException
     {
         if( m_serverInfoStrings == null )
             return -1;
@@ -107,21 +104,29 @@ public class MSSqlServerInfo
                 String value = "";
                 if( index < m_serverInfoStrings.length )
                     value = m_serverInfoStrings[index];
-                if( key.equals("InstanceName"))
+                if( key.equals("InstanceName") )
                     curInstance = value;
-                if( key.equals("tcp"))
+                if( key.equals("tcp") )
                     curPort = value;
                 if( curInstance != null &&
                     curPort != null &&
-                    curInstance.equalsIgnoreCase(instanceName))
-                    return Integer.parseInt( curPort );
+                    curInstance.equalsIgnoreCase(instanceName) )
+                    try
+                    {
+                        return Integer.parseInt(curPort);
+                    }
+                    catch( NumberFormatException ex )
+                    {
+                        throw new TdsException("Could not parse instance port number ["
+                            +instanceName+"].");
+                    }
             }
         }
         //didn't find it...
         return -1;
     }
 
-    private static final String extractString(byte[] buf, int len) throws IOException
+    private static final String extractString(byte[] buf, int len)
     {
         // the first three bytes are unknown; after that, it should be a narrow string...
         final int headerLength = 3;
@@ -129,8 +134,21 @@ public class MSSqlServerInfo
         return new String( buf, headerLength, len-headerLength);
     }
 
-    private int m_numRetries             = 3;
-    private int m_timeout                = 2000;
-    private String[] m_serverInfoStrings = null;
-}
+    public static String[] split(String s, int ch)
+    {
+        int size = 0;
+        for( int pos=0; pos!=-1; pos=s.indexOf(ch, pos+1), size++ );
 
+        String res[] = new String[size];
+        int i=0, p1=0, p2=s.indexOf(ch);
+        do
+        {
+            res[i++] = s.substring(p1, p2==-1 ? s.length() : p2);
+            p1=p2+1;
+            p2=s.indexOf(ch, p1);
+        }
+        while( p1 != 0 );
+
+        return res;
+    }
+}

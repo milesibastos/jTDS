@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $
+ * @version    $Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $
+ *@version    $Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -164,7 +164,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -200,9 +200,9 @@ public class Tds implements TdsDefinitions {
         database = null;
         user = props_.getProperty(PROP_USER);
         password = props_.getProperty(PROP_PASSWORD);
-        appName = props_.getProperty(PROP_APPNAME, "jdbclib");
+        appName = props_.getProperty(PROP_APPNAME, "jTDS");
         serverName = props_.getProperty(PROP_SERVERNAME, host);
-        progName = props_.getProperty(PROP_PROGNAME, "java_app");
+        progName = props_.getProperty(PROP_PROGNAME, "jTDS");
         progMajorVersion = (byte) DriverVersion.getDriverMajorVersion();
         progMinorVersion = (byte) DriverVersion.getDriverMinorVersion();
         String verString = props_.getProperty(PROP_TDS, "7.0");
@@ -216,8 +216,7 @@ public class Tds implements TdsDefinitions {
         String instanceName = props_.getProperty(PROP_INSTANCE, "");
         if( instanceName.length() > 0 )
         {
-            MSSqlServerInfo info = new MSSqlServerInfo();
-            info.getInfo(serverName);
+            MSSqlServerInfo info = new MSSqlServerInfo(serverName);
             port = info.getPortForInstance(instanceName);
             if( port == -1 )
                 throw new SQLException( "Server " + serverName + " has no instance named " + instanceName);
@@ -726,7 +725,10 @@ public class Tds implements TdsDefinitions {
         int i;
 
         try {
-            moreResults2 = true;
+            // SAfe We must not do this here, if an exception is thrown before
+            //      the packet is actually sent, we will deadlock in skipToEnd
+            //      with nothing to read.
+            // moreResults2 = true;
 
             // Start sending the procedure execute packet.
             comm.startPacket(TdsComm.PROC);
@@ -1001,6 +1003,7 @@ public class Tds implements TdsDefinitions {
             // mark that we are performing a query
             cancelController.setQueryInProgressFlag();
 
+            moreResults2 = true;
             comm.sendPacket();
             waitForDataOrTimeout(wChain, timeout);
         }
@@ -1166,6 +1169,8 @@ public class Tds implements TdsDefinitions {
             }
             else if( res instanceof PacketMsgResult )
                 warningChain.addOrReturn( (PacketMsgResult)res );
+            else if( res instanceof PacketRetStatResult )
+                statement.handleRetStat((PacketRetStatResult)res);
         }
     }
 
@@ -2493,11 +2498,9 @@ public class Tds implements TdsDefinitions {
 
                 // pad out to a longword
                 comm.appendBytes(empty, 8, pad);
-
-                moreResults2 = true;
-                //JJ 1999-01-10
             }
 
+            moreResults2 = true;
             comm.sendPacket();
         }
         finally
@@ -2544,10 +2547,10 @@ public class Tds implements TdsDefinitions {
     private void send70Login(String _database)
         throws java.io.IOException, TdsException
     {
-        String libName = "jTDS";
+        String libName = this.progName;
         byte pad = (byte) 0;
         byte[] empty = new byte[0];
-        String appName = "jTDS";
+        String appName = this.appName;
 
         //mdb
         boolean ntlmAuth = (domain.length() > 0);
@@ -2914,7 +2917,7 @@ public class Tds implements TdsDefinitions {
                 clen = comm.getByte() & 0xFF;
                 String oldDb = comm.getString(clen, encoder);
 
-                if( database!=null && !oldDb.equals(database) )
+                if( database!=null && !oldDb.equalsIgnoreCase(database) )
                     throw new TdsException("Old database mismatch.");
 
                 database = newDb;
@@ -3368,7 +3371,7 @@ public class Tds implements TdsDefinitions {
          // a datetime parameter
 
          if( (msIntoCurrentDay % msPerMinute)==0
-            && daysIntoSybaseEpoch < Short.MAX_VALUE )
+             && daysIntoSybaseEpoch > Short.MIN_VALUE && daysIntoSybaseEpoch < Short.MAX_VALUE )
          {
             comm.appendByte((byte)4);
             comm.appendByte((byte)4);
@@ -3746,7 +3749,7 @@ public class Tds implements TdsDefinitions {
             databaseProductName = comm.getString(nameLen, encoder);
             databaseProductVersion = ("0" + (databaseMajorVersion=comm.getByte()) + ".0"
                      + comm.getByte() + ".0"
-                     + ((256 * (comm.getByte()+1)) + comm.getByte()));
+                     + ((256 * ((int)comm.getByte()+1)) + comm.getByte()));
         }
         else
         {
@@ -4659,7 +4662,7 @@ public class Tds implements TdsDefinitions {
         return new PacketAuthTokenResult(nonce);
     }
 
-    private void sendNtlmChallengeResponse(PacketAuthTokenResult authToken)
+        private void sendNtlmChallengeResponse(PacketAuthTokenResult authToken)
         throws TdsException, java.io.IOException
     {
         try

@@ -281,4 +281,63 @@ public class SAfeTest extends DatabaseTestCase
         rs.close();
         stmt.close();
     }
+
+    /**
+     * Check that values returned from bit fields are correct (not just 0) (bug #841670).
+     *
+     * @throws Exception
+     */
+    public void testBitFields0005() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #SAfe0005(id int primary key, bit1 bit not null, bit2 bit null) "+
+            "insert into #SAfe0005 values (0, 0, 0) "+
+            "insert into #SAfe0005 values (1, 1, 1) "+
+            "insert into #SAfe0005 values (2, 0, NULL)");
+        while( stmt.getMoreResults() || stmt.getUpdateCount()!=-1 );
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0005");
+        while( rs.next() )
+        {
+            int id = rs.getInt(1);
+            int bit1 = rs.getInt(2);
+            int bit2 = rs.getInt(3);
+            assertTrue("id: "+id+"; bit1: "+bit1+"; bit2: "+bit2, bit1==id%2 && (bit2==id || id==2 && rs.wasNull()));
+        }
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that <code>CallableStatement</code>s with return values work correctly.
+     *
+     * @throws Exception
+     */
+    public void testCallableStatement0006() throws Exception
+    {
+        final int myVal = 13;
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE PROCEDURE #SAfe0006 @p1 INT, @p2 VARCHAR(20) OUT AS "+
+            "SET @p2=CAST(@p1-1 AS VARCHAR(20)) RETURN @p1+1");
+        stmt.close();
+
+        // Try all formats: escaped, w/ exec and w/o exec
+        String[] sql = {"{?=call #SAfe0006(?,?)}", "exec ?=#SAfe0006 ?,?", "?=#SAfe0006 ?,?"};
+
+        for( int i=0; i<sql.length; i++ )
+        {
+            CallableStatement cs = con.prepareCall(sql[i]);
+            cs.registerOutParameter(1, Types.INTEGER);
+            cs.setInt(2, myVal);
+            cs.registerOutParameter(3, Types.VARCHAR);
+            cs.execute();
+
+            assertEquals(myVal+1, cs.getInt(1));
+            assertEquals(String.valueOf(myVal-1), cs.getString(3));
+
+            cs.close();
+        }
+    }
 }

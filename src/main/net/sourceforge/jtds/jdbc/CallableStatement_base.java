@@ -64,16 +64,25 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.3 2002-10-24 12:27:55 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.4 2003-11-28 06:45:04 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
     implements java.sql.CallableStatement
 {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.3 2002-10-24 12:27:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.4 2003-11-28 06:45:04 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
     private int lastOutParam = -1;
+    /**
+     * Return value of the procedure call.
+     */
+    private Integer retVal = null;
+    /**
+     * Set if the procedure call should return a value (i.e. the SQL string is
+     * of the form &quot;{?=call ...}&quot;.
+     */
+    private boolean haveRetVal = false;
 
     public CallableStatement_base(TdsConnection conn_, String sql) throws SQLException
     {
@@ -83,13 +92,27 @@ public class CallableStatement_base extends PreparedStatement_base
     public CallableStatement_base(TdsConnection conn_, String sql, int type, int concurrency)
         throws SQLException
     {
-        super(conn_, sql, type, concurrency);
+        // SAfe We have to call removeRetVal twice because the call to super
+        //      must be the first statement. :(
+        super(conn_, removeRetVal(sql), type, concurrency);
+        String resSql = removeRetVal(sql);
+        // If the result is different, then the "?=" was removed so we have a
+        // return value.
+        if( !resSql.equals(sql) )
+            haveRetVal = true;
+        sql = resSql;
         procedureName = "";
 
         int i = 0;
         int pos = sql.indexOf("{call ");
         if( pos >= 0 )
             i = pos + 6;
+        else
+        {
+            pos = sql.indexOf("exec ");
+            if( pos >= 0 )
+                i = pos + 5;
+        }
 
         // Find the start of the procedure name
         while( i<sql.length() && !Character.isLetterOrDigit(sql.charAt(i)) && sql.charAt(i)!='#' )
@@ -109,6 +132,15 @@ public class CallableStatement_base extends PreparedStatement_base
 
     private Object getParam(int index) throws SQLException
     {
+        // If the originally provided SQL string started with ?= then the
+        // actual positions are shifted to the left and 1 is the return value
+        if( haveRetVal )
+        {
+            if( index == 1 )
+                return retVal;
+            index--;
+        }
+
         if( index < 1 )
             throw new SQLException("Invalid parameter index "
                      + index + ". JDBC indexes start at 1.");
@@ -123,6 +155,21 @@ public class CallableStatement_base extends PreparedStatement_base
         return parameterList[index].value;
     }
 
+    /**
+     * Override <code>PreparedStatement_base.setParam</code> to take into
+     * account an eventual output parameter (if there is one, the parameters
+     * are actually shifted one position).
+     */
+    protected void setParam(
+            int index,
+            Object value,
+            int type,
+            int strLength )
+            throws SQLException
+    {
+        super.setParam(haveRetVal ? index-1 : index, value, type, strLength);
+    }
+
     protected void addOutputParam(Object value) throws SQLException
     {
         for( lastOutParam++; lastOutParam<parameterList.length; lastOutParam++ )
@@ -135,10 +182,26 @@ public class CallableStatement_base extends PreparedStatement_base
         throw new SQLException("More output params than expected.");
     }
 
+    /**
+     * Remove the &quot;?=&quot; from the SQL string (e.g. <code>{?=call
+     * sp_x(?)}</code> becomes <code>{call sp_x(?)}</code>.
+     *
+     * @param sql the SQL string
+     * @return    the string with the &quot;?=&quot; removed, or the same
+     *            string if the sequence is not found
+     */
+    private static String removeRetVal(String sql)
+    {
+        int pos = sql.indexOf("?=");
+        if( pos != -1 )
+            sql = sql.substring(0, pos) + sql.substring(pos+2);
+        return sql;
+    }
+
     // called by TdsStatement.moreResults
-    /** @todo Should implement this method and the {?=call...} escape sequence. */
     protected void handleRetStat(PacketRetStatResult packet)
     {
+        retVal = new Integer(packet.getRetStat());
     }
 
     protected void handleParamResult(PacketOutputParamResult packet) throws SQLException
@@ -326,7 +389,24 @@ public class CallableStatement_base extends PreparedStatement_base
 
     public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException
     {
-        setParam(parameterIndex, null, sqlType, scale);
+        // SAfe If there is a return value, decrement the parameter index or
+        //      simply ignore the call if it's for the return value
+        if( haveRetVal )
+        {
+            if( parameterIndex == 1 )
+            {
+                // If it's the return value, it can only be an integral value
+                // of some kind
+                if( sqlType!=Types.INTEGER && sqlType!=Types.NUMERIC && sqlType!=Types.BIGINT )
+                    throw new SQLException("Procedure return value is integer.");
+                return;
+            }
+            parameterIndex -= 1;
+        }
+
+        // Call directly the method from PreparedStatement_base, otherwise the
+        // index will be decremented one more time.
+        super.setParam(parameterIndex, null, sqlType, scale);
         parameterList[parameterIndex-1].isOutput = true;
     }
 

@@ -442,9 +442,7 @@ public class CursorResultSet extends AbstractResultSet
 
         // SAfe We have to synchronize this, in order to avoid mixing up our
         //      actions with another CursorResultSet's and eating up its
-        //      results. Dirty fix, doesn't take into account that there might
-        //      be regular TdsResultSets executing on the Statement at the same
-        //      time.
+        //      results.
         synchronized( conn.mainTdsMonitor )
         {
             Tds tds = conn.allocateTds(true);

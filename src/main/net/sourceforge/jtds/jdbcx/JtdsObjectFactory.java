@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.7 2004-08-07 03:39:50 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.8 2004-08-08 03:50:26 ddkilzer Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -47,7 +47,7 @@ public class JtdsObjectFactory implements ObjectFactory {
             ds.setPassword((String) ref.get(Messages.get("prop.password")).getContent());
             ds.setCharset((String) ref.get(Messages.get("prop.charset")).getContent());
             ds.setLanguage((String) ref.get(Messages.get("prop.language")).getContent());
-            ds.setTdsVersion((String) ref.get(Messages.get("prop.tds")).getContent());
+            ds.setTds((String) ref.get(Messages.get("prop.tds")).getContent());
             ds.setServerType(Integer.parseInt((String) ref.get(Messages.get("prop.servertype")).getContent()));
             ds.setDomain((String) ref.get(Messages.get("prop.domain")).getContent());
             ds.setInstance((String) ref.get(Messages.get("prop.instance")).getContent());

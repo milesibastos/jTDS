@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.9 2004-08-07 03:39:50 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.10 2004-08-08 03:50:26 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 

@@ -1,6 +1,12 @@
 Changes from jTDS 0.8.1
 =========================
 
+08/07/2004 - David Kilzer
+ o Changed AbstractDataSource.getTdsVersion() and setTdsVersion() back to
+   getTds() and setTds() to preserve external interface.  Left private data
+   member named tdsVersion to provide consistency with private field in
+   ConnectionJDBC2 and to make testing easier.
+
 08/07/2004 - Brian Heineman
  o Applied patch [1005207] Modified microsoftPrepare method; (thanks to Mike
    Hutchinson for the patch).
@@ -31,8 +37,8 @@ Changes from jTDS 0.8.1
    DefaultProperties.getTdsVersion().
  o INCOMPATIBLE INTERFACE CHANGE:  Renamed AbstractDataSource.getTds(),
    setTds() and private tds field to getTdsVersion(), setTdsVersion() and
-   tdsVersion to match private field ConnectionJDBC2.  This also affects
-   JtdsDataSource.
+   tdsVersion to match private field in ConnectionJDBC2.  This also affects
+   JtdsDataSource.  [Reverted: see 08/07/2004]
  o ConnectionJDBC2.unpackProperties():  Removed code that set default
    property values since this is now handled in Driver.parseURL() before
    the method is called.  Refactored common code into parseIntegerProperty()

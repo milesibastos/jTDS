@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.17 2004-08-07 03:39:50 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.18 2004-08-08 03:50:25 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -168,11 +168,11 @@ implements DataSource, Referenceable, Serializable {
         return user;
     }
   
-    public void setTdsVersion(String tdsVersion) {
-        this.tdsVersion = tdsVersion;
+    public void setTds(String tds) {
+        this.tdsVersion = tds;
     }
   
-    public String getTdsVersion() {
+    public String getTds() {
         return tdsVersion;
     }
   

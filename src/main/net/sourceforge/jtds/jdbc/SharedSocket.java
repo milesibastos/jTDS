@@ -62,7 +62,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.25 2005-02-12 19:40:50 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.26 2005-02-13 00:10:02 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -148,28 +148,7 @@ class SharedSocket {
     /**
      * Buffer for packet header.
      */
-    private byte hdrBuf[] = new byte[8];
-    /**
-     * Flag that informs whether a cancel request was sent and the "cancel ACK"
-     * was not yet processed.
-     * <p/>
-     * This is necessary because the end of response logic changes when a
-     * cancel is issued: processing has to continue until the "cancel ACK" has
-     * been received, rather than until the "more packets" flag is not set.
-     */
-    private boolean cancelSent;
-    /**
-     * Buffer for cancel ACKs. When a cancel packet has been sent, this buffer
-     * is used to store the last 9 bytes (the equivalent of a TDS_DONE packet)
-     * from the last received network packet.
-     * <p/>
-     * This is necessary because the final TDS_DONE packet to check for the
-     * "cancel ACK" flag might actually be split between two network packets.
-     * <p/>
-     * <b>Note:</b> if there are no outstanding cancels, this buffer is not
-     * used, to keep overhead low.
-     */
-    private byte cancelAckBuf[] = new byte[9];
+    private byte hdrBuf[] = new byte[TDS_HDR_LEN];
     /**
      * Total memory usage in all instances of the driver
      * NB. Access to this field should probably be synchronized
@@ -223,13 +202,25 @@ class SharedSocket {
      */
     private int port;
     /**
+     * A cancel packet is pending.
+     */
+    private boolean cancelPending;
+    /**
+     * Buffer for TDS_DONE packets
+     */
+    private byte doneBuffer[] = new byte[TDS_DONE_LEN];
+    /**
      * TDS done token.
      */
-    private static final byte TDS_DONE_TOKEN = (byte) 253;
+    private static final int TDS_DONE_TOKEN = 253;
     /**
-     * TDS done procedure token.
+     * Length of a TDS_DONE token.
      */
-    private static final byte TDS_DONEPROC_TOKEN = (byte) 254;
+    private static final int TDS_DONE_LEN  = 9;
+    /**
+     * Length of TDS packet header.
+     */
+    private static final int TDS_HDR_LEN   = 8;
 
     protected SharedSocket() {
     }
@@ -445,8 +436,10 @@ class SharedSocket {
      * Send a TDS cancel packet to the server.
      *
      * @param streamId the <code>RequestStream</code> id
+     * @return <code>boolean</code> true if a cancel is actually
+     * issued by this method call.
      */
-    void cancel(int streamId) {
+    boolean cancel(int streamId) {
         //
         // Only send if response pending for the caller.
         // Caller must have aquired connection mutex first.
@@ -454,12 +447,13 @@ class SharedSocket {
         // as this thread will be blocked in the write until the
         // reading thread has returned from the read.
         //
-        if (responseOwner == streamId) {
+        if (responseOwner == streamId && !cancelPending) {
             try {
                 //
                 // Send a cancel packet.
                 //
-                byte[] cancel = new byte[8];
+                cancelPending = true;
+                byte[] cancel = new byte[TDS_HDR_LEN];
                 cancel[0] = TdsCore.CANCEL_PKT;
                 cancel[1] = 1;
                 cancel[2] = 0;
@@ -468,16 +462,17 @@ class SharedSocket {
                 cancel[5] = 0;
                 cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
                 cancel[7] = 0;
-                getOut().write(cancel, 0, 8);
+                getOut().write(cancel, 0, TDS_HDR_LEN);
                 getOut().flush();
-                cancelSent = true;
                 if (Logger.isActive()) {
                     Logger.logPacket(streamId, false, cancel);
                 }
+                return true;
             } catch (IOException e) {
                 // Ignore error as network is probably dead anyway
             }
         }
+        return false;
     }
 
     /**
@@ -744,13 +739,13 @@ class SharedSocket {
                 vsock.diskQueue.seek(0L);
             }
 
-            vsock.diskQueue.readFully(hdrBuf, 0, 8);
+            vsock.diskQueue.readFully(hdrBuf, 0, TDS_HDR_LEN);
 
             int len = getPktLen(hdrBuf, 2);
 
             buffer = new byte[len];
-            System.arraycopy(hdrBuf, 0, buffer, 0, 8);
-            vsock.diskQueue.readFully(buffer, 8, len - 8);
+            System.arraycopy(hdrBuf, 0, buffer, 0, TDS_HDR_LEN);
+            vsock.diskQueue.readFully(buffer, TDS_HDR_LEN, len - TDS_HDR_LEN);
             vsock.pktsOnDisk--;
 
             if (vsock.pktsOnDisk < 1) {
@@ -804,7 +799,7 @@ class SharedSocket {
         // figure out how many bytes are remaining in this packet.
         int len = getPktLen(hdrBuf, 2);
 
-        if (len < 8 || len > 65536) {
+        if (len < TDS_HDR_LEN || len > 65536) {
             throw new IOException("Invalid network packet length " + len);
         }
 
@@ -818,10 +813,10 @@ class SharedSocket {
         }
 
         // Preserve the packet header in the buffer
-        System.arraycopy(hdrBuf, 0, buffer, 0, 8);
+        System.arraycopy(hdrBuf, 0, buffer, 0, TDS_HDR_LEN);
 
         try {
-            getIn().readFully(buffer, 8, len - 8);
+            getIn().readFully(buffer, TDS_HDR_LEN, len - TDS_HDR_LEN);
         } catch (EOFException e) {
             throw new IOException("DB server closed connection.");
         }
@@ -843,85 +838,45 @@ class SharedSocket {
         // "more packets" flag; this will ensure that the stream keeps
         // processing until the "cancel ACK" is processed.
         //
-        if (cancelSent) {
-            // Check for the cancel ack
-            if (!isCancelAck(buffer)) {
-                // If the packet doesn't have the cancel azk flag set reset
-                // its "last packet" flag; we're still waiting for the
-                // cancel ack to come it.
-                buffer[1] = 0;
+        if (cancelPending) {
+            //
+            // Move what we assume to be the TDS_DONE packet into doneBuffer
+            //
+            if (len >= TDS_DONE_LEN + TDS_HDR_LEN) {
+                System.arraycopy(buffer, len - TDS_DONE_LEN, doneBuffer, 0,
+                        TDS_DONE_LEN);
+            } else {
+                // Packet too short so TDS_DONE record was split over
+                // two packets. Need to reassemble.
+                int frag = len - TDS_HDR_LEN;
+                System.arraycopy(doneBuffer, frag, doneBuffer, 0,
+                        TDS_DONE_LEN - frag);
+                System.arraycopy(buffer, TDS_HDR_LEN, doneBuffer,
+                        TDS_DONE_LEN - frag, frag);
+            }
+            //
+            // If this is the last packet and there is a cancel pending see
+            // if the last packet contains a TDS_DONE token with the cancel
+            // ACK set. If not reset the last packet flag so that the dedicated
+            // cancel packet is also read and processed.
+            //
+            if (buffer[1] == 1) {
+                if ((doneBuffer[0] & 0xFF) < TDS_DONE_TOKEN) {
+                    throw new IOException("Expecting a TDS_DONE or TDS_DONEPROC.");
+                }
 
-                // Also set the "more results" flag for the TDS_DONE packet
-                int tdsDoneFlagsPos = getPktLen(buffer, 2) - 8;
-                buffer[tdsDoneFlagsPos] =
-                        (byte) (buffer[tdsDoneFlagsPos] | 0x01);
-
-                if (Logger.isActive()) {
-                    Logger.println(
-                            "Last packet flag reset. Waiting for cancel ACK.");
+                if ((doneBuffer[1] & TdsCore.DONE_CANCEL) != 0) {
+                    // OK have a cancel ACK packet
+                    cancelPending = false;
+                } else {
+                    // Must be in next packet so
+                    // force client to read next packet
+                    buffer[1] = 0;
                 }
             }
         }
 
         return buffer;
-    }
-
-    /**
-     * Identifies cancel ACK packets. This is necessary in order to locate the
-     * end of the response when a cancel has been sent.
-     * <p/>
-     * The server may respond with the expected response (complete with the
-     * "last packet" flag) and then follow that with a separate cancel ACK. Or
-     * it may set the cancel ACK flag on the last TDS_DONE packet. So the end
-     * of response when a cancel has been sent can only be told by looking at
-     * the cancel ACK flag.
-     *
-     * @param buffer the packet to check whether it contains cancel ACK or not
-     * @throws IOException if the parser is confused
-     */
-    private boolean isCancelAck(byte[] buffer) throws IOException {
-        int packetLen = getPktLen(buffer, 2);
-
-        if (buffer[1] == 0) {
-            // Not the last network packet. Store the last 9 bytes in order to
-            // be able later to rebuild the final TDS_DONE packet to check for
-            // the cancel ACK.
-            // We can safely assume that the packet is larger than 9 bytes (it
-            // should actually have 512 or 4096 bytes if it's not the last).
-            System.arraycopy(buffer, packetLen - 9, cancelAckBuf, 0, 9);
-            return false;
-        }
-
-        // Last network packet. Retrieve the last TDS_DONE packet from it.
-        if (packetLen < 17) {
-            // If the network packet length is less than 17 (i.e. the TDS data is
-            // less than 9 bytes, so it doesn't contain the whole TDS_DONE packet)
-            // we have to rebuild it using what we have in cancelAckBuf
-            System.arraycopy(cancelAckBuf, packetLen - 8, cancelAckBuf, 0,
-                    17 - packetLen);
-            System.arraycopy(buffer, 8, cancelAckBuf, 17 - packetLen,
-                    packetLen - 8);
-        } else {
-            // The network packet length is at least 17 so it contains a full
-            // TDS_DONE packet
-            System.arraycopy(buffer, packetLen - 9, cancelAckBuf, 0, 9);
-        }
-
-        // Make sure it's the correct packet type
-        if (cancelAckBuf[0] != TDS_DONE_TOKEN
-                && cancelAckBuf[0] != TDS_DONEPROC_TOKEN) {
-            throw new IOException("Expecting a TDS_DONE or TDS_DONEPROC.");
-        }
-
-        if ((cancelAckBuf[1] & TdsCore.DONE_CANCEL) == 0) {
-            // Cancel ACK flag not set
-            return false;
-        }
-
-        // The cancel ack has been processed
-        cancelSent = false;
-
-        return true;
     }
 
     /**

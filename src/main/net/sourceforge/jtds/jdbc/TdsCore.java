@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.70 2005-02-12 20:11:20 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.71 2005-02-13 00:10:03 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -395,6 +395,8 @@ public class TdsCore {
     private boolean inBatch;
     /** Indicates type of SSL connection. */
     private int sslMode = SSL_NO_ENCRYPT;
+    /** Indicates pending cancel that needs to be cleared. */
+    private boolean cancelPending;
 
     /**
      * Construct a TdsCore object.
@@ -815,14 +817,16 @@ public class TdsCore {
     }
 
     /**
-     * Send a cancel packet to the server.
+     * Send (only) one cancel packet to the server.
      */
     void cancel() {
         Semaphore mutex = null;
         try {
             mutex = connection.getMutex();
             mutex.acquire();
-            socket.cancel(out.getStreamId());
+            if (!cancelPending) {
+                cancelPending = socket.cancel(out.getStreamId());
+            }
         } catch (InterruptedException e) {
             mutex = null;
         } finally {
@@ -3262,13 +3266,22 @@ public class TdsCore {
             currentToken.status &= ~DONE_ROW_COUNT;
             endOfResults = true;
         }
+        //
+        // Check for cancel ack
+        //
+        if ((currentToken.status & DONE_CANCEL) != 0) {
+            cancelPending = false;
+            // Indicates cancel packet
+            messages.addException(
+                     new SQLException("Request cancelled", "S1008", 0));
+        }
 
         if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
             //
             // There are no more results or pending cancel packets
             // to process.
             //
-            endOfResponse = true;
+            endOfResponse = !cancelPending;
 
             if (fatalError) {
                 // A fatal error has occured, the server has closed the
@@ -3285,12 +3298,6 @@ public class TdsCore {
             if (currentToken.operation == (byte) 0xC1) {
                 currentToken.status &= ~DONE_ROW_COUNT;
             }
-        }
-
-        if ((currentToken.status & DONE_CANCEL) != 0) {
-            // Indicates cancel packet
-            messages.addException(
-                    new SQLException("Request cancelled", "S1008", 0));
         }
     }
 

@@ -36,20 +36,20 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.30 2004-11-18 13:54:03 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.31 2004-11-18 16:32:29 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
      * Constants
      */
-    private static final int FETCH_FIRST = 1;
-    private static final int FETCH_NEXT = 2;
-    private static final int FETCH_PREVIOUS = 4;
-    private static final int FETCH_LAST = 8;
-    private static final int FETCH_ABSOLUTE = 16;
-    private static final int FETCH_RELATIVE = 32;
-    private static final int FETCH_REPEAT = 128;
-    private static final int FETCH_INFO = 256;
+    private static final Integer FETCH_FIRST    = new Integer(1);
+    private static final Integer FETCH_NEXT     = new Integer(2);
+    private static final Integer FETCH_PREVIOUS = new Integer(4);
+    private static final Integer FETCH_LAST     = new Integer(8);
+    private static final Integer FETCH_ABSOLUTE = new Integer(16);
+    private static final Integer FETCH_RELATIVE = new Integer(32);
+    private static final Integer FETCH_REPEAT   = new Integer(128);
+    private static final Integer FETCH_INFO     = new Integer(256);
 
     private static final int CURSOR_TYPE_KEYSET = 1;
     private static final int CURSOR_TYPE_DYNAMIC = 2;
@@ -61,9 +61,9 @@ public class MSCursorResultSet extends JtdsResultSet {
     private static final int CURSOR_CONCUR_SCROLL_LOCKS = 2;
     private static final int CURSOR_CONCUR_OPTIMISTIC = 4;
 
-    private static final int CURSOR_OP_INSERT = 4;
-    private static final int CURSOR_OP_UPDATE = 33;
-    private static final int CURSOR_OP_DELETE = 34;
+    private static final Integer CURSOR_OP_INSERT = new Integer(4);
+    private static final Integer CURSOR_OP_UPDATE = new Integer(33);
+    private static final Integer CURSOR_OP_DELETE = new Integer(34);
 
     /**
      * The row is unchanged.
@@ -99,8 +99,6 @@ public class MSCursorResultSet extends JtdsResultSet {
     /*
      * Instance variables.
      */
-    /** The cursor handle from sp_cusoropen. */
-    private Integer cursorHandle;
     /** The prepared statment handle from prepare/prepexec. */
     private Integer prepStmtHandle;
     /** Stores return values from stored procedure calls. */
@@ -109,6 +107,44 @@ public class MSCursorResultSet extends JtdsResultSet {
     private boolean onInsertRow = false;
     /** The "insert row". */
     private ColData[] insertRow = null;
+
+    //
+    // Fixed sp_XXX parameters
+    //
+    /** Cursor handle parameter. */
+    private final ParamInfo PARAM_CURSOR_HANDLE = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
+
+    /** <code>sp_cursorfetch</code> fetchtype parameter. */
+    private final ParamInfo PARAM_FETCHTYPE = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
+
+    /** <code>sp_cursorfetch</code> rownum IN parameter (for actual fetches). */
+    private final ParamInfo PARAM_ROWNUM_IN = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
+
+    /** <code>sp_cursorfetch</code> numrows IN parameter (for actual fetches). */
+    private final ParamInfo PARAM_NUMROWS_IN = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+
+    /** <code>sp_cursorfetch</code> rownum OUT parameter (for FETCH_INFO). */
+    private final ParamInfo PARAM_ROWNUM_OUT = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
+
+    /** <code>sp_cursorfetch</code> numrows OUT parameter (for FETCH_INFO). */
+    private final ParamInfo PARAM_NUMROWS_OUT = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+
+    /** <code>sp_cursor</code> optype parameter. */
+    private final ParamInfo PARAM_OPTYPE = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
+
+    /** <code>sp_cursor</code> rownum parameter. */
+    private final ParamInfo PARAM_ROWNUM = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+
+    /** <code>sp_cursor</code> table parameter. */
+    private final ParamInfo PARAM_TABLE = new ParamInfo(Types.VARCHAR, "", ParamInfo.UNICODE);
+
+
+    /**
+     * Parameters for columns, to avoid creating <code>ParamInfo</code>
+     * instances for each updated column on each <code>sp_cursor</code>
+     * operation.
+     */
+    private ParamInfo columnParams[];
 
     /**
      * Construct a cursor result set using Microsoft sp_cursorcreate etc.
@@ -301,7 +337,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (procName != null) {
             if (procName.startsWith("#jtds")) {
-                StringBuffer buf = new StringBuffer(procName.length() + 16 + parameters.length * 5);
+                StringBuffer buf = new StringBuffer(procName.length() + 16
+                        + (parameters != null ? parameters.length * 5 : 0));
                 buf.append("EXEC ").append(procName).append(' ');
                 for (int i = 0; parameters != null && i < parameters.length; i++) {
                     if (i != 0) {
@@ -528,7 +565,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         // Retrieve values of output parameters
         //
-        cursorHandle = (Integer) pCursor.getOutValue();
+        PARAM_CURSOR_HANDLE.value = pCursor.getOutValue();
         actualScroll = ((Integer)pScrollOpt.getOutValue()).intValue();
         actualCc     = ((Integer)pConCurOpt.getOutValue()).intValue();
         rowsInResult = ((Integer)pRowCount.getOutValue()).intValue();
@@ -600,8 +637,8 @@ public class MSCursorResultSet extends JtdsResultSet {
      * @return <code>boolean</code> true if a result set row is returned.
      * @throws SQLException
      */
-    private boolean cursorFetch(int fetchType, int rowNum)
-    throws SQLException {
+    private boolean cursorFetch(Integer fetchType, int rowNum)
+            throws SQLException {
         TdsCore tds = statement.getTds();
 
         statement.clearWarnings();
@@ -614,21 +651,25 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         ParamInfo[] param = new ParamInfo[4];
         // Setup cursor handle param
-        param[0] = new ParamInfo(Types.INTEGER, cursorHandle, ParamInfo.INPUT);
+        param[0] = PARAM_CURSOR_HANDLE;
 
         // Setup fetchtype param
-        param[1] = new ParamInfo(Types.INTEGER, new Integer(fetchType), ParamInfo.INPUT);
+        PARAM_FETCHTYPE.value = fetchType;
+        param[1] = PARAM_FETCHTYPE;
 
         if (isInfo) {
             // Setup rownum
-            param[2] = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
+            PARAM_ROWNUM_OUT.clearOutValue();
+            param[2] = PARAM_ROWNUM_OUT;
             // Setup numRows parameter
-            param[3] = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
+            PARAM_NUMROWS_OUT.clearOutValue();
+            param[3] = PARAM_NUMROWS_OUT;
         } else {
             // Setup rownum
-            param[2] = new ParamInfo(Types.INTEGER, new Integer(rowNum), ParamInfo.INPUT);
+            PARAM_ROWNUM_IN.value = new Integer(rowNum);
+            param[2] = PARAM_ROWNUM_IN;
             // Setup numRows parameter
-            param[3] = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+            param[3] = PARAM_NUMROWS_IN;
         }
 
         retVal = null;
@@ -658,8 +699,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         retVal = tds.getReturnStatus();
 
         if (isInfo) {
-            pos = ((Integer) param[2].getOutValue()).intValue();
-            rowsInResult = ((Integer) param[3].getOutValue()).intValue();
+            pos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
+            rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
         }
 
         return  currentRow != null;
@@ -668,11 +709,11 @@ public class MSCursorResultSet extends JtdsResultSet {
     /**
      * Support general cursor operations such as delete, update etc.
      *
-     * @param opType The type of update to perform.
-     * @param row The row number to update.
+     * @param opType the type of operation to perform
+     * @param row    the row number to update
      * @throws SQLException
      */
-    private void cursor(int opType , ColData[] row) throws SQLException {
+    private void cursor(Integer opType , ColData[] row) throws SQLException {
         TdsCore tds = statement.getTds();
 
         statement.clearWarnings();
@@ -690,18 +731,19 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         // Setup cursor handle param
-        param[0] = new ParamInfo(Types.INTEGER, cursorHandle, ParamInfo.INPUT);
+        param[0] = PARAM_CURSOR_HANDLE;
 
         // Setup optype param
-        param[1] = new ParamInfo(Types.INTEGER, new Integer(opType), ParamInfo.INPUT);
+        PARAM_OPTYPE.value = opType;
+        param[1] = PARAM_OPTYPE;
 
         // Setup rownum
-        param[2] = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+        param[2] = PARAM_ROWNUM;
 
         // If row is not null, we're dealing with an insert/update
         if (row != null) {
             // Setup table
-            param[3] = new ParamInfo(Types.VARCHAR, "", ParamInfo.UNICODE);
+            param[3] = PARAM_TABLE;
 
             int colCnt = columnCount;
             // Current column; we will only update/insert columns for which
@@ -709,6 +751,10 @@ public class MSCursorResultSet extends JtdsResultSet {
             int crtCol = 4;
             // Name of the table to insert default values into (if necessary)
             String tableName = null;
+
+            if (columnParams == null) {
+                columnParams = new ParamInfo[colCnt];
+            }
 
             for (int i = 0; i < colCnt; i++) {
                 ColInfo col = columns[i];
@@ -721,16 +767,29 @@ public class MSCursorResultSet extends JtdsResultSet {
                                 Integer.toString(i + 1), col.realName), "24000");
                     }
 
-                    param[crtCol] = new ParamInfo(col,
-                            '@' + col.realName,
-                            colData.getValue(),
-                            colData.getLength());
-                    crtCol++;
+                    if (columnParams[i] == null) {
+                        // If the parameter is null, create it
+                        columnParams[i] = new ParamInfo(col,
+                                '@' + col.realName,
+                                colData.getValue(),
+                                colData.getLength());
+                    } else {
+                        // Otherwise just update its value and length
+                        columnParams[i].value = colData.getValue();
+                        columnParams[i].length = colData.getLength();
+                    }
+                    param[crtCol] = columnParams[i];
+
+                    ++crtCol;
                 }
-                if (col.tableName != null) {
-                    tableName = (col.catalog != null ? col.catalog : "") + "."
-                            + (col.schema != null ? col.schema : "") + "."
-                            + col.tableName;
+                if (tableName == null && col.tableName != null) {
+                    if (col.catalog != null || col.schema != null) {
+                        tableName = (col.catalog != null ? col.catalog : "")
+                                + "." + (col.schema != null ? col.schema : "")
+                                + "." + col.tableName;
+                    } else {
+                        tableName = col.tableName;
+                    }
                 }
             }
 
@@ -764,6 +823,18 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         tds.executeSQL(null, "sp_cursor", param, false, statement.getQueryTimeout(), -1);
         tds.clearResponseQueue();
+
+        if (columnParams != null) {
+            // Clean up the column parameter values, for garbage collection
+            for (int i = columnParams.length - 1; i >= 0; i--) {
+                ParamInfo col = columnParams[i];
+                if (col != null) {
+                    col.value = null;
+                    col.length = -1;
+                }
+            }
+        }
+
         statement.getMessages().checkErrors();
         retVal = tds.getReturnStatus();
     }
@@ -781,7 +852,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         ParamInfo param[] = new ParamInfo[1];
 
         // Setup cursor handle param
-        param[0] = new ParamInfo(Types.INTEGER, cursorHandle, ParamInfo.INPUT);
+        param[0] = PARAM_CURSOR_HANDLE;
 
         tds.executeSQL(null, "sp_cursorclose", param, false, statement.getQueryTimeout(), -1);
         tds.clearResponseQueue();

@@ -28,9 +28,9 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.7 2004-11-17 16:58:39 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.8 2004-11-18 16:32:30 alin_sinpalean Exp $
  */
-class ParamInfo {
+class ParamInfo implements Cloneable {
     /** Flag as an input parameter. */
     final static int INPUT   = 0;
     /** Flag as an output parameter. */
@@ -124,31 +124,6 @@ class ParamInfo {
         this.isSet     = true;
         this.value     = value;
         this.length    = length;
-    }
-
-    /**
-     * Copy constructor used to create a ParamInfo item initialised
-     * to the same values as the supplied parameter.
-     *
-     * @param pi The ParamInfo object to copy.
-     */
-    ParamInfo(ParamInfo pi) {
-        this.collation = pi.collation;
-        this.isOutput  = pi.isOutput;
-        this.isRetVal  = pi.isRetVal;
-        this.isSet     = pi.isSet;
-        this.isUnicode = pi.isUnicode;
-        this.jdbcType  = pi.jdbcType;
-        this.length    = pi.length;
-        this.markerPos = pi.markerPos;
-        this.name      = pi.name;
-        this.precision = pi.precision;
-        this.scale     = pi.scale;
-        this.sqlType   = pi.sqlType;
-        this.tdsType   = pi.tdsType;
-        this.value     = pi.value;
-        this.outValue  = pi.outValue;
-        this.isSetOut  = pi.isSetOut;
     }
 
     /**
@@ -309,5 +284,19 @@ class ParamInfo {
         }
 
         return new String(buf);
+    }
+
+    /**
+     * Creates a shallow copy of this <code>ParamInfo</code> instance. Used by
+     * the <code>PreparedStatement</code> batching implementation to duplicate
+     * parameters.
+     */
+    public Object clone() {
+        try {
+            return super.clone();
+        } catch (CloneNotSupportedException ex) {
+            // Will not happen
+            return null;
+        }
     }
 }

@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.23 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.24 2004-11-18 16:32:29 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -391,7 +391,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         ParamInfo tmp[] = new ParamInfo[parameters.length];
 
         for (int i = 0; i < parameters.length; i++) {
-            tmp[i] = new ParamInfo(parameters[i]);
+            tmp[i] = (ParamInfo) parameters[i].clone();
         }
 
         parameters = tmp;

@@ -2,6 +2,10 @@ Changes from jTDS 0.9
 =========================
 
 11/18/2004 - Alin Sinpalean
+ o More performance improvements: instead of creating new ParamInfo instances
+   for each sp_XXX call, the same objects are reused both for fixed parameters
+   (optype, fetchtype etc.) and updated column values; also, for addBatch() the
+   ParamInfo copy constructor was replaced with clone().
  o Tweaked initial StringBuffer sizes to prevent reallocation as much as
    possible.
  o Corrected a bug that was causing Date values to be inserted just like

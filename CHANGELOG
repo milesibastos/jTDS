@@ -1,6 +1,9 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/12/2004 - Brian Heineman
+ o Removed JNetDirect performance results to comply with their licensing.
+ 
 07/08/2004 - Brian Heineman
  o Added test for bug [983561] getDatetimeValue truncates fractional
    milliseconds.

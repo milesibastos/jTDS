@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.2 2005-03-09 17:38:06 alin_sinpalean Exp $
+ * @version $Id: TimerThread.java,v 1.3 2005-03-12 21:46:29 alin_sinpalean Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -173,6 +173,7 @@ public class TimerThread extends Thread {
                         if (t.time < crt.time) {
                             li.previous();
                             li.add(t);
+                            break;
                         }
                     }
                 }

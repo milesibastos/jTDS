@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/12/2005 - Alin Sinpalean
+ o Added a fix suggested by rtdog to TimerThread.
+
 03/09/2005 - Alin Sinpalean
  o Corrected bug [1158509] Various problems with connect/login timeouts. The
    last problem fixed was concerned with socket connection not timing out (only

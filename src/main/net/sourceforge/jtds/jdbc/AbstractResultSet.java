@@ -17,10 +17,10 @@ import java.util.TimeZone;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.11 2004-02-26 19:00:51 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.12 2004-04-01 19:24:43 bheineman Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.11 2004-02-26 19:00:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.12 2004-04-01 19:24:43 bheineman Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
     public static final long HOUR_CONSTANT = 3600000;
@@ -664,7 +664,13 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public void updateObject(int index, Object x) throws SQLException {
-        currentRow().setElementAt(index, x);
+        if (x instanceof Blob) {
+            updateBlob(index, (Blob) x);
+        } else if (x instanceof Clob) {
+            updateClob(index, (Clob) x);
+        } else {
+            currentRow().setElementAt(index, x);
+        }
     }
 
     public void updateRef(int param, java.sql.Ref ref) throws SQLException {

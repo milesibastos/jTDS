@@ -1,4 +1,4 @@
-/* 
+/*
  * jTDS JDBC Driver for Microsoft SQL Server and Sybase
  * Copyright (C) 2004 The jTDS Project
  *
@@ -21,17 +21,17 @@
  * --- How to compile this code.
  *
  * 1. You will need a Microsoft compatible compiler such as Visual C++ 6.
- * 2. You will need a copy of the Microsoft Platform SDK to obtain the 
+ * 2. You will need a copy of the Microsoft Platform SDK to obtain the
  *    required header files and libraries.
  * 3. The code must be linked with xolehlp.lib, xaswitch.lib and opends60.lib.
  */
 
 /*
  * --- How to install this code.
- * 
+ *
  * 1. Copy the JtdsXA.dll file into the SQL Server binary directory
  *    e.g. C:\Program Files\Microsoft SQL Server\MSSQL\Binn.
- * 2. Log on to the SQL Server as administrator and execute the following 
+ * 2. Log on to the SQL Server as administrator and execute the following
  *    statements:
  *    sp_addextendedproc 'xp_jtdsxa', 'jtdsXA.dll'
  *    go
@@ -46,77 +46,77 @@
 /*
  * --- Principle of operation.
  *
- * First a caveat. The Microsoft documentation in this area is very poorly 
- * organised and incomplete. This code is the result of a lot of guesswork 
- * and experimentation. By their very nature distributed transactions and 
+ * First a caveat. The Microsoft documentation in this area is very poorly
+ * organised and incomplete. This code is the result of a lot of guesswork
+ * and experimentation. By their very nature distributed transactions and
  * supporting software components are very difficult to test completely.
- * 
- * Please DO NOT use this code in any business critical application until 
+ *
+ * Please DO NOT use this code in any business critical application until
  * you have satisfied yourself that it works correctly. You have been warned!
- * 
- * The Microsoft Distributed Transaction Coordinator (DTC) can act as an XA 
- * compatible resource manager proxy for SQL Server as it implements the 
- * required XA Switch routines such as xa_start, xa_end etc. The XA 
- * transactions are internally mapped to Microsoft's proprietary transaction 
+ *
+ * The Microsoft Distributed Transaction Coordinator (DTC) can act as an XA
+ * compatible resource manager proxy for SQL Server as it implements the
+ * required XA Switch routines such as xa_start, xa_end etc. The XA
+ * transactions are internally mapped to Microsoft's proprietary transaction
  * protocol.
  *
- * The DTC requires that each transaction runs on its own Windows thread of 
- * execution and whilst that is easy to achieve in an external server process, 
- * it is more problematical in an SQL Server extended procedure DLL. This is 
- * because SQL Server will call the extended procedure on it's own thread but 
- * this thread will not necessarily have a one to one correspondence with the 
- * external JDBC connection. Therefore a more sophisticated solution is 
- * required to achieve the correct association in the DTC between a Windows 
+ * The DTC requires that each transaction runs on its own Windows thread of
+ * execution and whilst that is easy to achieve in an external server process,
+ * it is more problematical in an SQL Server extended procedure DLL. This is
+ * because SQL Server will call the extended procedure on it's own thread but
+ * this thread will not necessarily have a one to one correspondence with the
+ * external JDBC connection. Therefore a more sophisticated solution is
+ * required to achieve the correct association in the DTC between a Windows
  * thread and the XA transaction.
- * 
- * In this implementation a pool of worker threads is used to manage each 
- * XA connection from xa_open through to xa_close. 
- * This is a reasonably complex solution and hopefully there is someone out 
+ *
+ * In this implementation a pool of worker threads is used to manage each
+ * XA connection from xa_open through to xa_close.
+ * This is a reasonably complex solution and hopefully there is someone out
  * there who knows of a better way to achieve the same result.
- * 
- * There is a further consideration which, is the need to prevent threads 
+ *
+ * There is a further consideration which, is the need to prevent threads
  * being orphaned by their associated JDBC connection failing before it can
- * execute an xa_close. The approach taken here is to allow threads to 
+ * execute an xa_close. The approach taken here is to allow threads to
  * timeout and be reused after a period of time. This is only possible if a
  * transaction is not in progress or if the xa_recover command has not been
  * executed. This approach should ensure that if connections crash the worker
  * threads will still be reused.
- * 
- * The final piece of the puzzle is that, having allocated a MTS transaction 
- * to the external XA transaction, we need a way of telling the SQL server to 
+ *
+ * The final piece of the puzzle is that, having allocated a MTS transaction
+ * to the external XA transaction, we need a way of telling the SQL server to
  * enlist on this transaction. This is achieved by exporting an MTS transaction
- * cookie, sending it to the JDBC driver and then passing it back once more to 
- * the SQL Server in a special TDS packet. This is the equivalent of the ODBC 
+ * cookie, sending it to the JDBC driver and then passing it back once more to
+ * the SQL Server in a special TDS packet. This is the equivalent of the ODBC
  * SQLSetConnectOption  SQL_COPT_SS_ENLIST_IN_DTC method.
  *
  * Some final comments on this XA implementation are in order.
  *
- * Starting from SQL Server 7, Microsoft introduced the User Mode Scheduler (UMS) 
- * to SQL Server. This component attempts to keep thread scheduling out of the 
- * kernel to boost performance and make SQL server more scalable. This is largely 
- * achieved by using cooperative multi tasking on a limited number of threads 
- * rather than allowing the kernel to pre-emptively multi task. 
- * 
- * As Microsoft cannot rely on an extended procedure cooperatively multitasking, 
- * the UMS has to allocate a normal thread to the session for the purposes of 
- * executing the extended procedure. 
- * This has the unfortunate result of disrupting the UMS's ability to manage 
+ * Starting from SQL Server 7, Microsoft introduced the User Mode Scheduler (UMS)
+ * to SQL Server. This component attempts to keep thread scheduling out of the
+ * kernel to boost performance and make SQL server more scalable. This is largely
+ * achieved by using cooperative multi tasking on a limited number of threads
+ * rather than allowing the kernel to pre-emptively multi task.
+ *
+ * As Microsoft cannot rely on an extended procedure cooperatively multitasking,
+ * the UMS has to allocate a normal thread to the session for the purposes of
+ * executing the extended procedure.
+ * This has the unfortunate result of disrupting the UMS's ability to manage
  * scheduling and leads to a drop in performance and scalability.
  *
- * This is one of the reasons why Microsoft has been steadily deprecating more and 
- * more of the open data services API used by extended procedures. There is 
- * therefore no guarantee that extended procedures will be supported much longer 
- * especially as in SQL 2005 procedures can be written in any of the managed .NET 
+ * This is one of the reasons why Microsoft has been steadily deprecating more and
+ * more of the open data services API used by extended procedures. There is
+ * therefore no guarantee that extended procedures will be supported much longer
+ * especially as in SQL 2005 procedures can be written in any of the managed .NET
  * languages.
  *
- * The thread performance issue is further impacted in this application by the need 
- * to schedule additional threads to host transactions. Although the extended procedure 
- * approach leads to a simple implementation from the JDBC point of view, it is not 
- * likely to be as efficient or scalable as the dedicated external server process used 
+ * The thread performance issue is further impacted in this application by the need
+ * to schedule additional threads to host transactions. Although the extended procedure
+ * approach leads to a simple implementation from the JDBC point of view, it is not
+ * likely to be as efficient or scalable as the dedicated external server process used
  * by some of the commercial drivers.
- * 
- * The final obvious message on performance is that distributed transactions are very 
- * expensive to manage when compared to local transactions and should only be used when 
+ *
+ * The final obvious message on performance is that distributed transactions are very
+ * expensive to manage when compared to local transactions and should only be used when
  * absolutely necessary.
  */
 
@@ -137,7 +137,7 @@
  */
 static HANDLE	    hThread[MAX_THREADS];   // Table of thread handles
 static THREAD_CB    threadCB[MAX_THREADS];  // Table of thread control blocks
-static char         szOpen[256];            // XA_OPEN string 
+static char         szOpen[256];            // XA_OPEN string
 static volatile int nThreads = 0;	        // Number of threads in pool
 static CRITICAL_SECTION csThreadPool;		// Critical section to synch access to pool
 static int          connectionId = 0x7F000000; // XA Connection ID
@@ -156,9 +156,9 @@ extern xa_switch_t  msqlsrvxa1;
  * Ideally the worker threads should execute and terminate tidily
  * unfortunately DLLMain is protected by a mutex and there is
  * no way that we can wait for the child threads to die as they will
- * not be able to reenter this routine. 
+ * not be able to reenter this routine.
  * We get round this by forcibly terminating the threads.
- * All handles are closed to avoid resource leaks when this dll 
+ * All handles are closed to avoid resource leaks when this dll
  * is unloaded by the DBCC JtdsXA(free) command.
  */
 BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
@@ -172,7 +172,7 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
         case DLL_PROCESS_ATTACH:
             InitializeCriticalSection(&csThreadPool);
         break;
-    
+
         case DLL_PROCESS_DETACH:
             TRACE("Process Detach\n");
             if (nThreads > 0) {
@@ -197,10 +197,10 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL,  // handle to DLL module
 }
 
 /*
- * Defining this function is recommended by Microsoft to allow the 
+ * Defining this function is recommended by Microsoft to allow the
  * server to check for version compatibility.
  */
-__declspec(dllexport) ULONG __GetXpVersion() 
+__declspec(dllexport) ULONG __GetXpVersion()
 {
     return ODS_VERSION;
 }
@@ -208,13 +208,13 @@ __declspec(dllexport) ULONG __GetXpVersion()
 /*
  * Main entry point for the extended stored procedure.
  * The SQL signature is:
- * exec @retval = xp_jtdsxa @cmd int, @id int, @rmid int, 
- *                            @flags int, @param varbinary(8000) output 
+ * exec @retval = xp_jtdsxa @cmd int, @id int, @rmid int,
+ *                            @flags int, @param varbinary(8000) output
  *
  */
 __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
 {
-    int  xaCmd   = 0;       // XA Command to execute 
+    int  xaCmd   = 0;       // XA Command to execute
     int  xaRmid  = 0;       // Resource Manager ID from TM
     int  conId   = 0;       // Connection ID
     int  xaFlags = 0;       // XA Flags
@@ -245,82 +245,82 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
     //
     for (i = 0; i < NUM_PARAMS-1; i++) {
         // Use srv_paraminfo to get data type and length information.
-        if (FAIL == srv_paraminfo(pSrvProc, i+1, &bType, &cbMaxLen, 
+        if (FAIL == srv_paraminfo(pSrvProc, i+1, &bType, &cbMaxLen,
             &cbActualLen, NULL, &fNull))
         {
             ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed");
-            return rc;    
+            return rc;
         }
         // These should int input params
         if (bType != SRVINTN && bType != SRVINT4) {
             ReportError(pSrvProc, "xp_jtdsxa: integer parameter expected");
-            return rc;    
+            return rc;
         }
     }
-    
+
     // Use srv_paraminfo to get data type and length information.
-    if (FAIL == srv_paraminfo(pSrvProc, NUM_PARAMS, &bType, &cbMaxLen, 
+    if (FAIL == srv_paraminfo(pSrvProc, NUM_PARAMS, &bType, &cbMaxLen,
 	        &cbActualLen, NULL, &fNull))
     {
         ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed");
-        return rc;    
+        return rc;
     }
     // Should be varbinary output
     if (bType != SRVVARBINARY && bType != SRVBIGVARBINARY) {
         ReportError(pSrvProc, "xp_jtdsxa: last parameter should be varbinary");
-        return rc;    
+        return rc;
     }
     // Should be a return (OUTPUT) parameter
     if ((srv_paramstatus(pSrvProc, NUM_PARAMS) & SRV_PARAMRETURN) == FAIL) {
         ReportError(pSrvProc, "xp_jtdsxa: last parameter should be output");
-    return rc;    
+    return rc;
     }
-    // Check that input data length is less than 256 
+    // Check that input data length is less than 256
     if (cbActualLen > 255) {
         ReportError(pSrvProc, "xp_jtdsxa: last parameter is longer than 255 bytes");
-        return rc;    
+        return rc;
     }
 
     //
     // Extract input parameters
     //
     // @cmd
-    if (FAIL == srv_paraminfo(pSrvProc, 1, &bType, &cbMaxLen, 
+    if (FAIL == srv_paraminfo(pSrvProc, 1, &bType, &cbMaxLen,
             &cbActualLen, (BYTE*)&xaCmd, &fNull))
     {
         ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed on @cmd");
         return rc;
     }
     // @id
-    if (FAIL == srv_paraminfo(pSrvProc, 2, &bType, &cbMaxLen, 
+    if (FAIL == srv_paraminfo(pSrvProc, 2, &bType, &cbMaxLen,
             &cbActualLen, (BYTE*)&conId, &fNull))
     {
         ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed on @id");
         return rc;
     }
     // @rmid
-    if (FAIL == srv_paraminfo(pSrvProc, 3, &bType, &cbMaxLen, 
+    if (FAIL == srv_paraminfo(pSrvProc, 3, &bType, &cbMaxLen,
             &cbActualLen, (BYTE*)&xaRmid, &fNull))
     {
         ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed on @rmid");
         return rc;
     }
-    // @flags 
-    if (FAIL == srv_paraminfo(pSrvProc, 4, &bType, &cbMaxLen, 
+    // @flags
+    if (FAIL == srv_paraminfo(pSrvProc, 4, &bType, &cbMaxLen,
             &cbActualLen, (BYTE*)&xaFlags, &fNull))
     {
         ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed on @flags");
         return rc;
     }
-    // @param 
+    // @param
     xid = (BYTE*)malloc(256);
     if (xid == NULL) {
         ReportError(pSrvProc, "xp_jtdsxa: unable to allocate buffer memory");
-        return rc;    
+        return rc;
     }
-    memset(xid, 0, 256); // Zero fill as XID may be truncated  
+    memset(xid, 0, 256); // Zero fill as XID may be truncated
 
-    if (FAIL == srv_paraminfo(pSrvProc, 5, &bType, &cbMaxLen, 
+    if (FAIL == srv_paraminfo(pSrvProc, 5, &bType, &cbMaxLen,
             &cbXid, xid, &fNull))
     {
         ReportError (pSrvProc, "xp_jtdsxa: srv_paraminfo failed on @param");
@@ -370,7 +370,7 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
         // Need to allocate a new one
         thread = AllocateThread(conId);
         if (thread < 0) {
-            ReportError(pSrvProc, 
+            ReportError(pSrvProc,
                   "xp_jtdsxa: xa_open - Maximum number of XA connections in use");
             free(xid);
             return rc;
@@ -392,7 +392,7 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
                 rc = XA_OK;
             }
             //
-            // Return thread ID to user 
+            // Return thread ID to user
             //
             if (rc == XA_OK) {
                 // Set the output parameter to the value of the thread ID.
@@ -407,11 +407,11 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
             threadCB[thread].szOpen     = (char*)xid;
             rc = ThreadExecute(&threadCB[thread], pSrvProc, xaCmd, xaRmid, xaFlags, NULL);
             FreeThread(thread);
-        break;  
+        break;
         //
-        // xa_start - MSDTC requires each transaction to execute on 
+        // xa_start - MSDTC requires each transaction to execute on
         // it's own Windows thread. This requirement is satisfied by
-        // allocating a pooled worker thread for the duration of the 
+        // allocating a pooled worker thread for the duration of the
         // transaction.
         //
         case XAN_START:
@@ -422,7 +422,7 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
             rc = ThreadExecute(&threadCB[thread], pSrvProc, xaCmd, xaRmid, xaFlags, xid);
             if (threadCB[thread].szMsg != NULL) {
                 ReportError(pSrvProc, threadCB[thread].szMsg);
-            } else 
+            } else
             if (cbMaxLen < threadCB[thread].cbCookie) {
                 ReportError(pSrvProc, "xp_jtdsxa: xa_start - Output parameter is too short");
             } else {
@@ -483,15 +483,15 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
             //
             // Describe the single column in result set as XID BINARY(140)
             //
-            if (0 == srv_describe(pSrvProc, 
-                                  1, 
-                                  "XID", 
-                                  SRV_NULLTERM, 
-                                  SRVBINARY, 
-                                  sizeof(XID), 
-                                  SRVBINARY, 
-                                  sizeof(XID), 
-                                  xid)) 
+            if (0 == srv_describe(pSrvProc,
+                                  1,
+                                  "XID",
+                                  SRV_NULLTERM,
+                                  SRVBINARY,
+                                  sizeof(XID),
+                                  SRVBINARY,
+                                  sizeof(XID),
+                                  xid))
             {
                 rc = XAER_RMFAIL;
                 ReportError(pSrvProc, "xp_jtdsxa: Failed to descibe XID result set");
@@ -508,7 +508,7 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
             threadCB[thread].bRecover = TRUE;
             //
             // Now loop to obtain remaining XIDs
-            // TODO: this is not very effeicient should ask MSTDC for 
+            // TODO: this is not very effeicient should ask MSTDC for
             // XIDs in each call
             //
             while (rc > 0) {
@@ -550,7 +550,7 @@ __declspec(dllexport) SRVRETCODE xp_jtdsxa(SRV_PROC *pSrvProc)
 /*
  * Invoke the XA command on the worker thread.
  */
-int ThreadExecute(THREAD_CB *tcb, SRV_PROC *pSrvProc, 
+int ThreadExecute(THREAD_CB *tcb, SRV_PROC *pSrvProc,
                   int xaCmd, int xaRmid, int xaFlags, BYTE *xid)
 {
     int rc;
@@ -638,7 +638,7 @@ int AllocateThread(int conId)
         ResetEvent(threadCB[nThreads].evSuspend);
         threadCB[nThreads].evSuspend = CreateEvent(NULL, TRUE, FALSE, NULL);
 #ifdef _DEBUG
-        hThread[nThreads] = 
+        hThread[nThreads] =
             (HANDLE)_beginthreadex(NULL,
                                    0,
                                    (LPTHREAD_START_ROUTINE)WorkerThread,
@@ -646,7 +646,7 @@ int AllocateThread(int conId)
                                    0,
                                    &threadCB[nThreads].threadID);
 #else
-        hThread[nThreads] = 
+        hThread[nThreads] =
            (HANDLE)CreateThread(NULL,
                                 0,
                                 (LPTHREAD_START_ROUTINE)WorkerThread,
@@ -658,7 +658,7 @@ int AllocateThread(int conId)
             nt = nThreads++;
         }
         TRACE("GetWorkerThread() - New thread allocated\n");
-    }    
+    }
     LeaveCriticalSection(&csThreadPool);
     return nt;
 }
@@ -683,7 +683,7 @@ void ReportError(SRV_PROC *pSrvProc, char *szErrorMsg)
     TRACE(szErrorMsg);
     TRACE("')\n");
     srv_sendmsg(pSrvProc, SRV_MSG_ERROR, XP_JTDS_ERROR, SRV_INFO, 1,
-                NULL, 0, (DBUSMALLINT) 0, 
+                NULL, 0, (DBUSMALLINT) 0,
                 szErrorMsg,
                 SRV_NULLTERM);
 
@@ -692,10 +692,10 @@ void ReportError(SRV_PROC *pSrvProc, char *szErrorMsg)
 
 /*
  * Worker thread created to handle each XA connection.
- * The Thread sleeps on an Event object in the control block 
+ * The Thread sleeps on an Event object in the control block
  * until released by the controlling thread to execute the xa function.
  */
-DWORD WINAPI WorkerThread(LPVOID lpParam) 
+DWORD WINAPI WorkerThread(LPVOID lpParam)
 {
     THREAD_CB *tcb = (THREAD_CB *)lpParam;
     int cmd;
@@ -716,19 +716,19 @@ DWORD WINAPI WorkerThread(LPVOID lpParam)
         switch (cmd) {
             // xa_open
             case XAN_OPEN:
-               TRACE("WorkerThread - executing open\n");
-               tcb->rc = (msqlsrvxa1.xa_open_entry)(tcb->szOpen, tcb->xaRmid, tcb->xaFlags);
+                TRACE("WorkerThread - executing open\n");
+                tcb->rc = (msqlsrvxa1.xa_open_entry)(tcb->szOpen, tcb->xaRmid, tcb->xaFlags);
                 if (tcb->rc == XA_OK) {
-                   tcb->bOpen = TRUE;
+                    tcb->bOpen = TRUE;
                 }
-               break;
-           // xa_close
-           case XAN_CLOSE:
-               TRACE("WorkerThread - executing close\n");
-               if (tcb->bOpen) {
+                break;
+            // xa_close
+            case XAN_CLOSE:
+                TRACE("WorkerThread - executing close\n");
+                if (tcb->bOpen) {
                     tcb->rc = (msqlsrvxa1.xa_close_entry)(tcb->szOpen, tcb->xaRmid, tcb->xaFlags);
-                   tcb->bOpen = FALSE;
-               } else {
+                    tcb->bOpen = FALSE;
+                } else {
                     tcb->rc = XA_OK;
                 }
                 break;
@@ -745,17 +745,17 @@ DWORD WINAPI WorkerThread(LPVOID lpParam)
             // xa_prepare
             case XAN_PREPARE:
                 TRACE("WorkerThread - executing prepare\n");
-                tcb->rc = (msqlsrvxa1.xa_prepare_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags); 
+                tcb->rc = (msqlsrvxa1.xa_prepare_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags);
                 break;
             // xa_rollback
             case XAN_ROLLBACK:
                TRACE("WorkerThread - executing rollback\n");
-                tcb->rc = (msqlsrvxa1.xa_rollback_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags); 
+                tcb->rc = (msqlsrvxa1.xa_rollback_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags);
                 break;
             // xa_commit
             case XAN_COMMIT:
                 TRACE("WorkerThread - executing commit\n");
-                tcb->rc = (msqlsrvxa1.xa_commit_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags); 
+                tcb->rc = (msqlsrvxa1.xa_commit_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags);
                 break;
             // xa_recover
             case XAN_RECOVER:
@@ -767,7 +767,7 @@ DWORD WINAPI WorkerThread(LPVOID lpParam)
                 TRACE("WorkerThread - executing forget\n");
                 tcb->rc = (msqlsrvxa1.xa_forget_entry)(tcb->xid, tcb->xaRmid, tcb->xaFlags);
                 break;
-                        
+
         }
         // Free the sleeping controlling thread
         SetEvent(tcb->evDone);
@@ -795,7 +795,7 @@ DWORD WINAPI WorkerThread(LPVOID lpParam)
         }
     }
     //
-    // Thread is closing down 
+    // Thread is closing down
    //
    TRACE("WorkerThread shutdown\n");
    return 0;
@@ -830,7 +830,7 @@ void XAStartCmd(THREAD_CB *tcb)
     // Now comes the tricky bit, we need to obtain the OLE transaction ID
     // so that we can pass it back to the driver which in turn will pass
     // it to the SQL Server. This will allow us to enlist the SQL server
-    // in the transaction in the same way as the ODBC SQLSetConnectOption 
+    // in the transaction in the same way as the ODBC SQLSetConnectOption
     // SQL_COPT_SS_ENLIST_IN_DTC.
     //
     // Obtain the IXATransLookup interface
@@ -887,7 +887,7 @@ void XAStartCmd(THREAD_CB *tcb)
     }
     //
     // Now obtain the ITransactionExportFactory interface.
-    // We need this to create an ITransactionExport interface 
+    // We need this to create an ITransactionExport interface
     // which we will use to obtain the OLE transaction cookie.
     //
     hr = DtcGetTransactionManagerC(
@@ -911,9 +911,9 @@ void XAStartCmd(THREAD_CB *tcb)
     //
     // Now obtain the whereabouts structure.
     //
-    hr = pTranWhere->lpVtbl->GetWhereabouts(pTranWhere, 
-                                            sizeof(whereabouts), 
-                                            whereabouts, 
+    hr = pTranWhere->lpVtbl->GetWhereabouts(pTranWhere,
+                                            sizeof(whereabouts),
+                                            whereabouts,
                                             &cbWhereabouts);
     if (FAILED (hr))
     {
@@ -928,9 +928,9 @@ void XAStartCmd(THREAD_CB *tcb)
     //
     // Now create the ITransactionExport interface
     //
-    hr = pTranExportFactory->lpVtbl->Create(pTranExportFactory, 
-                                            cbWhereabouts, 
-                                            whereabouts, 
+    hr = pTranExportFactory->lpVtbl->Create(pTranExportFactory,
+                                            cbWhereabouts,
+                                            whereabouts,
                                             &pTranExport);
     if (FAILED (hr))
     {
@@ -942,13 +942,37 @@ void XAStartCmd(THREAD_CB *tcb)
         tcb->rc = XAER_RMFAIL;
         return;
     }
+
+    //
+    // Marshal the transaction for export and obtain
+    // the size of the cookie to be exported
+    //
+    hr  = pTranExport->lpVtbl->Export(pTranExport,
+                                      (IUnknown *)pTransaction,
+                                      &tcb->cbCookie);
+    if (FAILED (hr) || tcb->cbCookie > COOKIE_SIZE)
+    {
+        pTranExport->lpVtbl->Release(pTranExport);
+        pTranExportFactory->lpVtbl->Release(pTranExportFactory);
+        pTranWhere->lpVtbl->Release(pTranWhere);
+        pTransaction->lpVtbl->Release(pTransaction);
+        pXATransLookup->lpVtbl->Release(pXATransLookup);
+        if (FAILED(hr)) {
+            tcb->szMsg = "xp_jtdsxa: ITransactionExport->Export failed";
+        } else {
+            tcb->szMsg = "xp_jtdsxa: Export transaction cookie failed, buffer too smalll";
+        }
+        tcb->rc = XAER_RMFAIL;
+        return;
+    }
+
     //
     // Now obtain the OLE transaction cookie.
     //
-    hr = pTranExport->lpVtbl->GetTransactionCookie( pTranExport, 
-                                                    (IUnknown *)pTransaction, 
-                                                    tcb->cbCookie, 
-                                                    tcb->pCookie, 
+    hr = pTranExport->lpVtbl->GetTransactionCookie( pTranExport,
+                                                    (IUnknown *)pTransaction,
+                                                    tcb->cbCookie,
+                                                    tcb->pCookie,
                                                     &tcb->cbCookie);
     if (FAILED (hr))
     {

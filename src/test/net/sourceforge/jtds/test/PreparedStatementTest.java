@@ -419,6 +419,31 @@ public class PreparedStatementTest extends TestBase {
     }
 
     /**
+     * test for bug [ 1047330 ] prep statement with more than 2100 params fails.
+     */
+    public void testManyParametersStatement() throws Exception {
+
+        Statement stmt = con.createStatement();
+        makeTestTables(stmt);
+        makeObjects(stmt, 10);
+        stmt.close();
+        StringBuffer sb = new StringBuffer(12000);
+        sb.append("SELECT * FROM #test WHERE f_int in ( ?");
+        for (int j = 0; j < 2110; j++)
+        {
+            sb.append(", ?");
+        }
+        sb.append(")");
+        try {
+            PreparedStatement pstmt = con.prepareStatement(sb.toString());
+            fail("Too many parameters Exception expected");
+        } catch (SQLException e)
+        {
+            assertTrue(e.getMessage().startsWith("Prepared or callable"));
+        }
+    }
+
+    /**
      * Test for bug [1010660] 0.9-rc1 setMaxRows causes unlimited temp stored
      * procedures. This test has to be run with logging enabled or while
      * monitoring it with SQL Profiler to see whether the temporary stored

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.46 2004-11-01 09:16:19 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.47 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -423,16 +423,7 @@ public class TdsCore {
 
             for (int i = 0; i < params.length; i++) {
                 ColInfo ci = currentToken.dynamParamInfo[i];
-                ParamInfo pi = new ParamInfo();
-
-                pi.tdsType   = ci.tdsType;
-                pi.scale     = ci.scale;
-                pi.precision = ci.precision;
-                pi.name      = ci.realName;
-                pi.isOutput  = false;
-                pi.jdbcType  = ci.jdbcType;
-                pi.sqlType   = ci.sqlType;
-                params[i]    = pi;
+                params[i] = new ParamInfo(ci, ci.realName, null, 0);
             }
 
             return params;
@@ -805,7 +796,6 @@ public class TdsCore {
 
         if (parameters != null && parameters[0].isRetVal) {
             returnParam = parameters[0];
-            returnParam.isSet = false;
             nextParam = 0;
         } else {
             returnParam = null;
@@ -818,7 +808,7 @@ public class TdsCore {
                     throw new SQLException(Messages.get("error.prepare.paramnotset",
                             Integer.toString(i + 1)), "07000");
                 }
-
+                parameters[i].clearOutValue();
                 TdsData.getNativeType(connection, parameters[i]);
             }
         }
@@ -916,32 +906,20 @@ public class TdsCore {
             ParamInfo prepParam[] = new ParamInfo[needCursor ? 6 : 4];
 
             // Setup prepare handle param
-            prepParam[0] = new ParamInfo();
-            prepParam[0].isSet = true;
-            prepParam[0].jdbcType = Types.INTEGER;
-            prepParam[0].isOutput = true;
+            prepParam[0] = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
 
             // Setup parameter descriptor param
-            prepParam[1] = new ParamInfo();
-            prepParam[1].isSet = true;
-            prepParam[1].jdbcType = Types.LONGVARCHAR;
-            prepParam[1].value = Support.getParameterDefinitions(params);
-            prepParam[1].length = ((String)prepParam[1].value).length();
-            prepParam[1].isUnicode = true;
+            prepParam[1] = new ParamInfo(Types.LONGVARCHAR,
+                    Support.getParameterDefinitions(params),
+                    ParamInfo.UNICODE);
 
             // Setup sql statemement param
-            prepParam[2] = new ParamInfo();
-            prepParam[2].isSet = true;
-            prepParam[2].jdbcType = Types.LONGVARCHAR;
-            prepParam[2].value = Support.substituteParamMarkers(sql, params);
-            prepParam[2].length = ((String)prepParam[2].value).length();
-            prepParam[2].isUnicode = true;
+            prepParam[2] = new ParamInfo(Types.LONGVARCHAR,
+                    Support.substituteParamMarkers(sql, params),
+                    ParamInfo.UNICODE);
 
             // Setup options param
-            prepParam[3] = new ParamInfo();
-            prepParam[3].isSet = true;
-            prepParam[3].jdbcType = Types.INTEGER;
-            prepParam[3].value = new Integer(1);
+            prepParam[3] = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
 
             if (needCursor) {
                 // Select the correct type of Server side cursor to
@@ -950,18 +928,14 @@ public class TdsCore {
                 ccOpt = MSCursorResultSet.getCursorConcurrencyOpt(resultSetConcurrency);
 
                 // Setup scroll options parameter
-                prepParam[4]          = new ParamInfo();
-                prepParam[4].isSet    = true;
-                prepParam[4].jdbcType = Types.INTEGER;
-                prepParam[4].value    = new Integer(scrollOpt);
-                prepParam[4].isOutput = true;
+                prepParam[4] = new ParamInfo(Types.INTEGER,
+                        new Integer(scrollOpt),
+                        ParamInfo.OUTPUT);
 
                 // Setup concurrency options parameter
-                prepParam[5]          = new ParamInfo();
-                prepParam[5].isSet    = true;
-                prepParam[5].jdbcType = Types.INTEGER;
-                prepParam[5].value    = new Integer(ccOpt);
-                prepParam[5].isOutput = true;
+                prepParam[5] = new ParamInfo(Types.INTEGER,
+                        new Integer(ccOpt),
+                        ParamInfo.OUTPUT);
 
                 // TODO Implement support for preparing cursors (including SP support)
                 // Don't forget to include scrollability and concurrency into
@@ -1940,14 +1914,13 @@ public class TdsCore {
      *
      * @throws IOException
      */
-    private void tdsReturnStatusToken()
-        throws IOException
-    {
+    private void tdsReturnStatusToken() throws IOException, SQLException {
         returnStatus = new Integer(in.readInt());
         if (this.returnParam != null) {
-            returnParam.jdbcType = java.sql.Types.INTEGER;
-            returnParam.value = returnStatus;
-            returnParam.isSet = true;
+            returnParam.setOutValue(Support.convert(this.connection,
+                    returnStatus,
+                    returnParam.jdbcType,
+                    connection.getCharSet()));
         }
     }
 
@@ -2306,34 +2279,30 @@ public class TdsCore {
         if (parameters != null) {
             if (tdsVersion >= Driver.TDS80
                 && returnParam != null
-                && !returnParam.isSet) {
+                && !returnParam.isSetOut) {
                 // TDS 8 Allows function return values of types other than int
                 if (value != null) {
-                    parameters[nextParam].value =
+                    parameters[nextParam].setOutValue(
                         Support.convert(connection, value,
-                                        parameters[nextParam].jdbcType,
-                                        connection.getCharSet());
+                                parameters[nextParam].jdbcType,
+                                connection.getCharSet()));
                     parameters[nextParam].collation = col.collation;
                 } else {
-                    parameters[nextParam].value = null;
+                    parameters[nextParam].setOutValue(null);
                 }
-
-                parameters[nextParam].isSet = true;
             } else {
                 // Look for next output parameter in list
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {
                         if (value != null) {
-                            parameters[nextParam].value =
+                            parameters[nextParam].setOutValue(
                                 Support.convert(connection, value,
-                                                parameters[nextParam].jdbcType,
-                                                connection.getCharSet());
+                                        parameters[nextParam].jdbcType,
+                                        connection.getCharSet()));
                             parameters[nextParam].collation = col.collation;
                         } else {
-                            parameters[nextParam].value = null;
+                            parameters[nextParam].setOutValue(null);
                         }
-
-                        parameters[nextParam].isSet = true;
                         break;
                     }
                 }
@@ -2448,14 +2417,13 @@ public class TdsCore {
                     if (parameters[nextParam].isOutput) {
                         Object value = currentToken.dynamParamData[i].getValue();
                         if (value != null) {
-                            parameters[nextParam].value =
+                            parameters[nextParam].setOutValue(
                                 Support.convert(connection, value,
-                                                parameters[nextParam].jdbcType,
-                                                connection.getCharSet());
+                                        parameters[nextParam].jdbcType,
+                                        connection.getCharSet()));
                         } else {
-                            parameters[nextParam].value = null;
+                            parameters[nextParam].setOutValue(null);
                         }
-                        parameters[nextParam].isSet = true;
                         break;
                     }
                 }
@@ -3136,12 +3104,8 @@ public class TdsCore {
                 params = new ParamInfo[1];
             }
 
-            params[0] = new ParamInfo();
-            params[0].jdbcType = Types.INTEGER;
-            params[0].bufferSize = 4;
-            params[0].isSet = true;
-            params[0].isUnicode = false;
-            params[0].value = new Integer(procName);
+            params[0] = new ParamInfo(Types.INTEGER, new Integer(procName), ParamInfo.INPUT);
+
             TdsData.getNativeType(connection, params[0]);
 
             parameters = params;
@@ -3155,28 +3119,19 @@ public class TdsCore {
                 System.arraycopy(parameters, 0, params, 3, parameters.length);
 
                 // Setup prepare handle param
-                params[0] = new ParamInfo();
-                params[0].isSet = true;
-                params[0].jdbcType = Types.INTEGER;
-                params[0].isOutput = true;
+                params[0] = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
                 TdsData.getNativeType(connection, params[0]);
 
                 // Setup parameter descriptor param
-                params[1] = new ParamInfo();
-                params[1].isSet = true;
-                params[1].jdbcType = Types.LONGVARCHAR;
-                params[1].value = Support.getParameterDefinitions(parameters);
-                params[1].length = ((String)params[1].value).length();
-                params[1].isUnicode = true;
+                params[1] = new ParamInfo(Types.LONGVARCHAR,
+                        Support.getParameterDefinitions(parameters),
+                        ParamInfo.UNICODE);
                 TdsData.getNativeType(connection, params[1]);
 
                 // Setup sql statemement param
-                params[2] = new ParamInfo();
-                params[2].isSet = true;
-                params[2].jdbcType = Types.LONGVARCHAR;
-                params[2].value = Support.substituteParamMarkers(sql, parameters);
-                params[2].length = ((String)params[2].value).length();
-                params[2].isUnicode = true;
+                params[2] = new ParamInfo(Types.LONGVARCHAR,
+                        Support.substituteParamMarkers(sql, parameters),
+                        ParamInfo.UNICODE);
                 TdsData.getNativeType(connection, params[2]);
 
                 parameters = params;
@@ -3189,20 +3144,14 @@ public class TdsCore {
                 params = new ParamInfo[2 + parameters.length];
                 System.arraycopy(parameters, 0, params, 2, parameters.length);
 
-                params[0] = new ParamInfo();
-                params[0].jdbcType = Types.VARCHAR;
-                params[0].isSet = true;
-                params[0].isUnicode = true;
-                params[0].value = Support.substituteParamMarkers(sql, parameters);
-                params[0].length = ((String)params[0].value).length();
+                params[0] = new ParamInfo(Types.LONGVARCHAR,
+                        Support.substituteParamMarkers(sql, parameters),
+                        ParamInfo.UNICODE);
                 TdsData.getNativeType(connection, params[0]);
 
-                params[1] = new ParamInfo();
-                params[1].jdbcType = Types.VARCHAR;
-                params[1].isSet = true;
-                params[1].isUnicode = true;
-                params[1].value = Support.getParameterDefinitions(parameters);
-                params[1].length = ((String)params[1].value).length();
+                params[1] = new ParamInfo(Types.LONGVARCHAR,
+                        Support.getParameterDefinitions(parameters),
+                        ParamInfo.UNICODE);
                 TdsData.getNativeType(connection, params[1]);
 
                 parameters = params;

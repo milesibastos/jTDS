@@ -28,23 +28,30 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.5 2004-09-23 14:26:59 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.6 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 class ParamInfo {
+    /** Flag as an input parameter. */
+    final static int INPUT   = 0;
+    /** Flag as an output parameter. */
+    final static int OUTPUT  = 1;
+    /** Flag as an return value parameter. */
+    final static int RETVAL  = 2;
+    /** Flag as a unicode parameter. */
+    final static int UNICODE = 4;
+
     /** Internal TDS data type */
     int tdsType = 0;
     /** JDBC type constant from java.sql.Types */
     int jdbcType = 0;
     /** Formal parameter name eg @P1 */
-    public String name = null;
+    String name = null;
     /** SQL type name eg varchar(10) */
     String sqlType = null;
     /** Parameter offset in target SQL statement */
-    public int markerPos = -1;
+    int markerPos = -1;
     /** Current parameter value */
     Object value = null;
-    /** Parameter buffer size (max length) */
-    int bufferSize = 0;
     /** Parameter decimal precision */
     int precision = -1;
     /** Parameter decimal scale */
@@ -55,17 +62,69 @@ class ParamInfo {
     boolean isOutput = false;
     /** Parameter is used as  SP return value */
     boolean isRetVal = false;
-    /** Parameter has been set */
+    /** IN parameter has been set */
     boolean isSet = false;
     /** Parameter should be sent as unicode */
     boolean isUnicode = true;
     /** TDS 8 Collation string. */
     byte collation[] = null;
+    /** OUT parameter value is set.*/
+    boolean isSetOut = false;
+    /** OUT Parameter value. */
+    Object outValue = null;
 
     /**
-     * Default constructor
+     * Construct a parameter with parameter marker offset.
+     *
+     * @param pos the offset of the ? symbol in the target SQL string
      */
-    ParamInfo() {
+    ParamInfo(int pos) {
+        markerPos = pos;
+    }
+
+    /**
+     * Construct an initialised parameter with extra attributes.
+     *
+     * @param jdbcType the <code>java.sql.Type</code> constant describing this type
+     * @param value    the initial parameter value
+     * @param flags    the additional attributes eg OUTPUT, RETVAL, UNICODE etc.
+     */
+    ParamInfo(int jdbcType, Object value, int flags)
+    {
+        this.jdbcType  = jdbcType;
+        this.value     = value;
+        this.isSet     = true;
+        this.isOutput  = ((flags & OUTPUT) > 0) || ((flags & RETVAL) > 0);
+        this.isRetVal  = ((flags & RETVAL)> 0);
+        this.isUnicode = ((flags & UNICODE) > 0);
+        if (value instanceof String) {
+            this.length = ((String)value).length();
+        } else
+        if (value instanceof byte[]) {
+            this.length = ((byte[])value).length;
+        }
+    }
+
+    /**
+     * Construct a parameter based on a result set column.
+     *
+     * @param ci     the column descriptor
+     * @param name   the name for this parameter or null
+     * @param value  the column data value
+     * @param length the column data length
+     */
+    ParamInfo(ColInfo ci, String name, Object value, int length) {
+        this.name      = name;
+        this.tdsType   = ci.tdsType;
+        this.scale     = ci.scale;
+        this.precision = ci.precision;
+        this.jdbcType  = ci.jdbcType;
+        this.sqlType   = ci.sqlType;
+        this.collation = ci.collation;
+        this.isOutput  = false;
+        this.isSet     = true;
+        this.value     = value;
+        this.length    = length;
     }
 
     /**
@@ -75,30 +134,64 @@ class ParamInfo {
      * @param pi The ParamInfo object to copy.
      */
     ParamInfo(ParamInfo pi) {
-        this.bufferSize = pi.bufferSize;
         this.collation = pi.collation;
-        this.isOutput = pi.isOutput;
-        this.isRetVal = pi.isRetVal;
-        this.isSet = pi.isSet;
+        this.isOutput  = pi.isOutput;
+        this.isRetVal  = pi.isRetVal;
+        this.isSet     = pi.isSet;
         this.isUnicode = pi.isUnicode;
-        this.jdbcType = pi.jdbcType;
-        this.length = pi.length;
+        this.jdbcType  = pi.jdbcType;
+        this.length    = pi.length;
         this.markerPos = pi.markerPos;
-        this.name = pi.name;
+        this.name      = pi.name;
         this.precision = pi.precision;
-        this.scale = pi.scale;
-        this.sqlType = pi.sqlType;
-        this.tdsType = pi.tdsType;
-        this.value = pi.value;
+        this.scale     = pi.scale;
+        this.sqlType   = pi.sqlType;
+        this.tdsType   = pi.tdsType;
+        this.value     = pi.value;
+        this.outValue  = pi.outValue;
+        this.isSetOut  = pi.isSetOut;
     }
 
     /**
-     * Construct a parameter with parameter marker offset.
+     * Get the output parameter value.
      *
-     * @param pos The offset of the ? symbol in the target SQL string.
+     * @return the OUT value as an <code>Object</code>
+     * @throws SQLException if the parameter has not been set
      */
-    ParamInfo(int pos) {
-        markerPos = pos;
+    Object getOutValue()
+        throws SQLException {
+        if (!isSetOut) {
+            throw new SQLException(
+                    Messages.get("error.callable.outparamnotset"), "HY010");
+        }
+        return outValue;
+    }
+
+    /**
+     * Set the OUT parameter value.
+     * @param value The data value.
+     */
+    void setOutValue(Object value) {
+        outValue= value;
+        isSetOut = true;
+    }
+
+    /**
+     * Clear the OUT parameter value and status.
+     */
+    void clearOutValue()
+    {
+        outValue = null;
+        isSetOut = false;
+    }
+
+    /**
+     * Clear the IN parameter value and status.
+     */
+    void clearInValue()
+    {
+        value = null;
+        isSet = false;
     }
 
     /**

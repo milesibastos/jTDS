@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.BatchUpdateException;
 import java.sql.SQLWarning;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
@@ -53,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.20 2004-11-05 12:10:40 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.21 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -395,7 +396,7 @@ public class JtdsStatement implements java.sql.Statement {
                     // This had better be the generated key
                     // FIXME We could use SELECT @@IDENTITY AS jTDS_SOMETHING and check the column name to make sure
                     if (tds.getNextRow()) {
-                        genKeyResultSet = new DummyResultSet(this,
+                        genKeyResultSet = new CachedResultSet(this,
                                 tds.getColumns(),
                                 tds.getRowData());
                     }
@@ -736,7 +737,7 @@ public class JtdsStatement implements java.sql.Statement {
         String sqlWord = "";
         if (escapeProcessing) {
             ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection.getServerType()).parse(false);
+            String tmp[] = new SQLParser(sql, params, connection).parse(false);
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
@@ -789,7 +790,7 @@ public class JtdsStatement implements java.sql.Statement {
         String sqlWord = "";
         if (escapeProcessing) {
             ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection.getServerType()).parse(false);
+            String tmp[] = new SQLParser(sql, params, connection).parse(false);
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(
@@ -868,14 +869,14 @@ public class JtdsStatement implements java.sql.Statement {
         checkOpen();
 
         if (genKeyResultSet == null) {
-            ColInfo[] dummy =  new ColInfo[1];
-            ColInfo col = new ColInfo();
-            col.realName = "ID";
-            col.name = "ID";
-            col.jdbcType = java.sql.Types.INTEGER;
-            col.isWriteable = false;
-            dummy[0] = col;
-            genKeyResultSet = new DummyResultSet(this, dummy, null);
+            String colNames[] = {"ID"};
+            int    colTypes[] = {Types.INTEGER};
+            //
+            // Return an empty result set
+            //
+            CachedResultSet rs = new CachedResultSet(this, colNames, colTypes);
+            rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+            genKeyResultSet = rs;
         }
 
         return genKeyResultSet;
@@ -927,7 +928,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
         if (escapeProcessing) {
             ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection.getServerType()).parse(false);
+            String tmp[] = new SQLParser(sql, params, connection).parse(false);
 
             if (tmp[1].length() != 0 || params.size() > 0) {
                 throw new SQLException(

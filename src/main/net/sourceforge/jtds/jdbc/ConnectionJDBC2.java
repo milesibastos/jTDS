@@ -36,10 +36,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import javax.transaction.xa.XAException;
 
 import net.sourceforge.jtds.jdbc.cache.*;
-import net.sourceforge.jtds.jdbcx.JtdsXid;
 import net.sourceforge.jtds.util.*;
 
 /**
@@ -63,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.46 2004-11-15 13:29:06 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.47 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1224,37 +1222,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return optional byte data eg OLE cookie.
      * @throws SQLException if an error condition occurs
      */
-    byte[]  sendXaPacket(int args[], byte[] data)
+    byte[][]  sendXaPacket(int args[], byte[] data)
             throws SQLException
     {
         ParamInfo params[] = new ParamInfo[6];
-        params[0] = new ParamInfo(-1);
-        params[0].isSet    = false;
-        params[0].jdbcType = Types.INTEGER;
-        params[0].isRetVal = true;
-        params[0].isOutput = true;
-        params[1] = new ParamInfo(-1);
-        params[1].isSet    = true;
-        params[1].jdbcType = Types.INTEGER;
-        params[1].value    = new Integer(args[1]);
-        params[2] = new ParamInfo(-1);
-        params[2].isSet    = true;
-        params[2].jdbcType = Types.INTEGER;
-        params[2].value    = new Integer(args[2]);
-        params[3] = new ParamInfo(-1);
-        params[3].isSet    = true;
-        params[3].jdbcType = Types.INTEGER;
-        params[3].value    = new Integer(args[3]);
-        params[4] = new ParamInfo(-1);
-        params[4].isSet    = true;
-        params[4].jdbcType = Types.INTEGER;
-        params[4].value    = new Integer(args[4]);
-        params[5] = new ParamInfo(-1);
-        params[5].isSet    = true;
-        params[5].jdbcType = Types.VARBINARY;
-        params[5].value    = data;
-        params[5].isOutput = true;
-        params[5].length   = (data == null)? 0: data.length;
+        params[0] = new ParamInfo(Types.INTEGER, null, ParamInfo.RETVAL);
+        params[1] = new ParamInfo(Types.INTEGER, new Integer(args[1]), ParamInfo.INPUT);
+        params[2] = new ParamInfo(Types.INTEGER, new Integer(args[2]), ParamInfo.INPUT);
+        params[3] = new ParamInfo(Types.INTEGER, new Integer(args[3]), ParamInfo.INPUT);
+        params[4] = new ParamInfo(Types.INTEGER, new Integer(args[4]), ParamInfo.INPUT);
+        params[5] = new ParamInfo(Types.VARBINARY, data, ParamInfo.OUTPUT);
         //
         // Execute our extended stored procedure (let's hope it is installed!).
         //
@@ -1275,25 +1252,26 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
         }
         messages.checkErrors();
-        if (params[0].value instanceof Integer) {
+        if (params[0].getOutValue() instanceof Integer) {
             // Should be return code from XA command
-            args[0] = ((Integer)params[0].value).intValue();
+            args[0] = ((Integer)params[0].getOutValue()).intValue();
         } else {
-            args[0] = XAException.XAER_RMFAIL;
+            args[0] = -7; // XAException.XAER_RMFAIL
         }
         if (xids.size() > 0) {
             // List of XIDs from xa_recover
-            byte buffer[] = new byte[xids.size() * JtdsXid.XID_SIZE];
+            byte list[][] = new byte[xids.size()][];
             for (int i = 0; i < xids.size(); i++) {
-                byte[] xid = (byte[])xids.get(i);
-                System.arraycopy(xid, 0, buffer, i * JtdsXid.XID_SIZE, xid.length);
+                list[i] = (byte[])xids.get(i);
             }
-            return buffer;
+            return list;
         } else
-        if (params[5].value instanceof byte[]) {
+        if (params[5].getOutValue() instanceof byte[]) {
             // xa_open  the xa connection ID
             // xa_start OLE Transaction cookie
-            return (byte[])params[5].value;
+            byte cookie[][] = new byte[1][];
+            cookie[0] = (byte[])params[5].getOutValue();
+            return cookie;
         } else {
             // All other cases
             return null;
@@ -1310,6 +1288,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throws SQLException
     {
         if (oleTranID != null) {
+            // TODO: Stored procs are no good but maybe prepare will be OK.
+            this.prepareSql = TdsCore.EXECUTE_SQL;
             baseTds.enlistConnection(1, oleTranID);
             xaTransaction = true;
         } else {
@@ -1600,7 +1580,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
-        String[] result = new SQLParser(sql, new ArrayList(), serverType).parse(false);
+        String[] result = new SQLParser(sql, new ArrayList(), this).parse(false);
 
         return result[0];
     }

@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.22 2004-10-25 19:33:39 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.23 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -71,8 +71,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     protected ParamInfo[] parameters;
     /** True to return generated keys. */
     private boolean returnKeys = false;
-    /** Last parameter retrieved was null. */
-    protected boolean paramWasNull = false;
     /** The cached column meta data. */
     protected ColInfo[] colMetaData = null;
     /** The cached parameter meta data. */
@@ -108,7 +106,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         ArrayList params = new ArrayList();
-        String[] parsedSql = new SQLParser(sql, params, connection.getServerType()).parse(false);
+        String[] parsedSql = new SQLParser(sql, params, connection).parse(false);
 
         if (parsedSql[0].length() == 0) {
             throw new SQLException(Messages.get("error.prepare.nosql"), "07000");
@@ -225,8 +223,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * Check the supplied index and return the selected parameter.
      *
      * @param parameterIndex the parameter index 1 to n.
-     * @param checkIfSet     if <code>true</code> an exception is thrown if the
-     *                       parameter is not set
      * @return the parameter as a <code>ParamInfo</code> object.
      * @throws SQLException if the statement is closed;
      *                      if <code>parameterIndex</code> is less than 0;
@@ -235,7 +231,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      *                      if <code>checkIfSet</code> was <code>true</code>
      *                      and the parameter was not set
      */
-    protected ParamInfo getParameter(int parameterIndex, boolean checkIfSet) throws SQLException {
+    protected ParamInfo getParameter(int parameterIndex) throws SQLException {
         checkOpen();
 
         if (parameterIndex < 1 || parameterIndex > parameters.length) {
@@ -245,13 +241,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         ParamInfo pi = parameters[parameterIndex - 1];
-
-        if (checkIfSet && !pi.isSet) {
-            throw new SQLException(
-                    Messages.get("error.callable.outparamnotset"), "HY010");
-        }
-
-        paramWasNull = pi.value == null;
 
         return pi;
     }
@@ -313,7 +302,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     protected void setParameter(int parameterIndex, Object x, int targetSqlType, int scale, int length)
         throws SQLException {
-        ParamInfo pi = getParameter(parameterIndex, false);
+        ParamInfo pi = getParameter(parameterIndex);
 
         if (Support.getJdbcTypeName(targetSqlType).equals("ERROR")) {
             throw new SQLException(Messages.get("error.generic.badtype",
@@ -412,9 +401,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         checkOpen();
 
         for (int i = 0; i < parameters.length; i++) {
-            parameters[i].isSet = false;
-            parameters[i].value = null;
-//          parameters[i].jdbcType = 0;
+            parameters[i].clearInValue();
         }
     }
 
@@ -662,7 +649,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 // is the only bit with parameter markers and execute the query.
                 // SET FMTONLY ON asks the server just to return only meta data.
                 ArrayList params = new ArrayList();
-                String[] parsedSql = new SQLParser(sql, params, connection.getServerType()).parse(true);
+                String[] parsedSql = new SQLParser(sql, params, connection).parse(true);
                 // This only works for select statements
                 if (!parsedSql[2].equals("select")) {
                     return null;

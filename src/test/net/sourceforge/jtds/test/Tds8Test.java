@@ -198,7 +198,7 @@ public class Tds8Test extends DatabaseTestCase {
         PreparedStatement pstmt = con.prepareStatement(
                 "insert into #testNullBoolean (id, value) values (?, ?)");
         pstmt.setInt(1, 1);
-        pstmt.setNull(2, Types.BOOLEAN);
+        pstmt.setNull(2, 16 /* Types.BOOLEAN */);
         assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 

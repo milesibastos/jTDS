@@ -108,27 +108,27 @@ public class GenKeyTest extends TestBase {
         stmt.execute("CREATE TABLE jtdsTestTrigger1 (id INT IDENTITY (1,1) PRIMARY KEY, data INT)");
         stmt.execute("CREATE TABLE jtdsTestTrigger2 (id INT IDENTITY (1,1) PRIMARY KEY, data INT)");
         stmt.close();
-        
+
         try {
             stmt = con.createStatement();
             stmt.execute("CREATE TRIGGER testTrigger1 ON jtdsTestTrigger1 FOR INSERT AS "
                     + "INSERT INTO jtdsTestTrigger2 (data) VALUES (1)");
             stmt.close();
-            
+
             PreparedStatement pstmt = con.prepareStatement("INSERT INTO jtdsTestTrigger1 (data) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
-            
+
             for (int i = 0; i < 10; i++) {
                 pstmt.setInt(1, i);
                 assertEquals("Insert failed: " + i, 1, pstmt.executeUpdate());
 
                 ResultSet rs = pstmt.getGeneratedKeys();
-                
+
                 assertTrue("ResultSet empty: " + i, rs.next());
                 assertEquals("Bad inserted row ID: " + i, i + 1, rs.getInt(1));
                 assertTrue("ResultSet not empty: " + i, !rs.next());
                 rs.close();
             }
-            
+
             pstmt.close();
         } finally {
             stmt = con.createStatement();
@@ -137,7 +137,18 @@ public class GenKeyTest extends TestBase {
             stmt.close();
         }
     }
-    
+
+    /**
+     * Test empty result set returned when no keys available.
+     */
+    public void testNoKeys() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.getGeneratedKeys();
+        assertEquals("ID", rs.getMetaData().getColumnName(1));
+        assertFalse(rs.next());
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(GenKeyTest.class);
     }

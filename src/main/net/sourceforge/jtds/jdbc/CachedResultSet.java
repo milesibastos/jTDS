@@ -124,7 +124,6 @@ public class CachedResultSet extends JtdsResultSet {
             }
             columns[i] = ci;
         }
-        columnCount        = columns.length;
         this.columnCount   = getColumnCount(columns);
         this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
         this.rowsInResult  = 0;
@@ -141,13 +140,32 @@ public class CachedResultSet extends JtdsResultSet {
     CachedResultSet(JtdsResultSet rs) throws SQLException {
         super((JtdsStatement)rs.getStatement(), ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null, false);
         this.columns       = rs.getColumns();
-        columnCount        = columns.length;
         this.columnCount   = getColumnCount(columns);
         this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
         this.rowsInResult  = 0;
         this.initialRowCnt = 0;
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
+    }
+
+    /**
+     * Create a cached result set containing one row.
+     * @param statement The parent statement object.
+     * @param columns   The column descriptor array.
+     * @param data      The row data.
+     * @throws SQLException
+     */
+    CachedResultSet(JtdsStatement statement,
+            ColInfo columns[], ColData data[]) throws SQLException {
+        super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, null, false);
+        this.columns       = columns;
+        this.columnCount   = getColumnCount(columns);
+        this.rowData       = new ArrayList(1);
+        this.rowsInResult  = 1;
+        this.initialRowCnt = 1;
+        this.pos           = POS_BEFORE_FIRST;
+        this.tempResultSet = true;
+        this.rowData.add(copyRow(data));
     }
 
     /**
@@ -342,26 +360,24 @@ public class CachedResultSet extends JtdsResultSet {
     protected ParamInfo buildParameter(int pos, ColInfo info, ColData col)
             throws SQLException {
 
-        ParamInfo param = new ParamInfo(pos);
-        param.jdbcType = info.jdbcType;
-        param.value    = col.getValue();
-        param.length   = col.getLength();
-        param.scale    = info.scale;
-        param.isSet    = true;
-        String sqlType = info.sqlType;
-        param.isUnicode= sqlType.equals("nvarchar") ||
-        				  sqlType.equals("nchar") ||
-        				  sqlType.equals("ntext");
-        if (param.value instanceof BlobImpl) {
-            BlobImpl blob = (BlobImpl)param.value;
-            param.value   = blob.getBinaryStream();
-            param.length  = (int)blob.length();
+        Object value  = col.getValue();
+        int    length = col.getLength();
+        if (value instanceof BlobImpl) {
+            BlobImpl blob = (BlobImpl)value;
+            value   = blob.getBinaryStream();
+            length  = (int)blob.length();
         } else
-        if (param.value instanceof ClobImpl) {
-            ClobImpl clob = (ClobImpl)param.value;
-            param.value   = clob.getCharacterStream();
-            param.length  = (int)clob.length();
+        if (value instanceof ClobImpl) {
+            ClobImpl clob = (ClobImpl)value;
+            value   = clob.getCharacterStream();
+            length  = (int)clob.length();
         }
+        ParamInfo param = new ParamInfo(info, null, value, length);
+        param.isUnicode = info.sqlType.equals("nvarchar") ||
+                          info.sqlType.equals("nchar") ||
+                          info.sqlType.equals("ntext");
+        param.markerPos = pos;
+
         return param;
     }
 

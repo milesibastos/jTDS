@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.10 2004-10-27 14:57:43 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.11 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -63,10 +63,10 @@ class SQLParser {
     private char terminator;
     /** Procedure name in call escape. */
     private String procName;
-    /** First SQL keyword or identifier in statement */
+    /** First SQL keyword or identifier in statement. */
     private String keyWord;
-    /** Server type  SQL Server or Sybase */
-    private int serverType;
+    /** Connection object for server specific parsing. */
+    private ConnectionJDBC2 connection;
 
     /**
      * Construct a new Parser object to process the supplied SQL.
@@ -74,7 +74,7 @@ class SQLParser {
      * @param sql The SQL statement to parse.
      * @param paramList The Parameter list array to populate.
      */
-    SQLParser(String sql, ArrayList paramList, int serverType) {
+    SQLParser(String sql, ArrayList paramList, ConnectionJDBC2 connection) {
         in = sql.toCharArray();
         len = in.length;
         out = new char[len + 256]; // Allow extra for curdate/curtime
@@ -82,7 +82,7 @@ class SQLParser {
         d = 0;
         params = paramList;
         procName = "";
-        this.serverType = serverType;
+        this.connection = connection;
     }
 
     /**
@@ -363,8 +363,14 @@ class SQLParser {
      * @return True if the escape was valid and processed OK.
      */
     private boolean getDateTimeField(byte[] mask) {
-        out[d++] = '\'';
         skipWhiteSpace();
+        if (in[s] == '?') {
+            // Allow {ts ?} type construct
+            copyParam(null, d);
+            skipWhiteSpace();
+            return in[s] == terminator;
+        }
+        out[d++] = '\'';
         terminator = (in[s] == '\'' || in[s] == '"')? in[s++]: '}';
         skipWhiteSpace();
         int ptr = 0;
@@ -656,7 +662,7 @@ class SQLParser {
         // See if function mapped
         //
         String fn;
-        if (serverType == Driver.SQLSERVER) {
+        if (connection.getServerType() == Driver.SQLSERVER) {
             fn = (String)msFnMap.get(name);
             if (fn == null) {
                 fn = (String)fnMap.get(name);
@@ -846,7 +852,32 @@ class SQLParser {
                         break;
                 }
             }
+            //
+            // Impose a reasonable maximum limit on the number of parameters
+            //
+            if (params.size() > 255) {
+                int limit = 255; // SQL 6.5 and Sybase < 12.50
+                if (connection.getServerType() == Driver.SYBASE) {
+                    if (connection.getDatabaseMajorVersion() > 12 ||
+                            connection.getDatabaseMajorVersion() == 12 &&
+                            connection.getDatabaseMinorVersion() >= 50) {
+                        limit = 2000; // Actually 2048 but allow some head room
+                    }
+                } else {
+                    if (connection.getDatabaseMajorVersion() == 7) {
+                        limit = 1000; // Actually 1024
+                    } else
+                    if (connection.getDatabaseMajorVersion() > 7) {
+                        limit = 2000; // Actually 2100
+                    }
 
+                }
+                if (params.size() > limit) {
+                    throw new SQLException(
+                        Messages.get("error.parsesql.toomanyparams",
+                                Integer.toString(limit)), "22025");
+                }
+            }
             String result[] = new String[3];
 
             // return sql and procname

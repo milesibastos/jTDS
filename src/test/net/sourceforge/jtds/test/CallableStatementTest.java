@@ -562,6 +562,39 @@ public class CallableStatementTest extends TestBase {
         cstmt.close();
     }
 
+    /**
+     * Test for bug [ 1062671 ] SQLParser unable to parse CONVERT(char,{ts ?},102)
+     */
+    public void testTsEscape() throws Exception
+    {
+        Timestamp ts = Timestamp.valueOf("2004-01-01 23:56:56");
+        Statement stmt = con.createStatement();
+        assertFalse(stmt.execute("CREATE TABLE #testTsEscape (val DATETIME)"));
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #testTsEscape VALUES({ts ?})");
+        pstmt.setTimestamp(1, ts);
+        assertEquals(1, pstmt.executeUpdate());
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #testTsEscape");
+        assertTrue(rs.next());
+        assertEquals(ts, rs.getTimestamp(1));
+    }
+
+    /**
+     *  Test for separation of IN and INOUT/OUT parameter values
+     */
+    public void testInOutParameters() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
+        CallableStatement cstmt = con.prepareCall("{ call #testInOut ( ?,? ) }");
+        cstmt.setInt(1, 1);
+        cstmt.registerOutParameter(2, Types.INTEGER);
+        cstmt.setInt(2, 2);
+        cstmt.execute();
+        assertEquals(3, cstmt.getInt(2));
+        cstmt.execute();
+        assertEquals(3, cstmt.getInt(2));
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

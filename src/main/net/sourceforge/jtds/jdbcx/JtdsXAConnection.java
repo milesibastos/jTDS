@@ -22,12 +22,12 @@ import java.sql.SQLException;
 import javax.sql.XAConnection;
 import javax.transaction.xa.XAResource;
 
-import net.sourceforge.jtds.jdbc.Support;
+import net.sourceforge.jtds.jdbc.XASupport;
 
 /**
  * jTDS implementation of the <code>XAConnection</code> interface.
  *
- * @version $Id: JtdsXAConnection.java,v 1.2 2004-11-15 14:45:57 alin_sinpalean Exp $
+ * @version $Id: JtdsXAConnection.java,v 1.3 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 public class JtdsXAConnection extends PooledConnection implements XAConnection {
     /** The XAResource used by the transaction manager to control this connection.*/
@@ -46,7 +46,7 @@ public class JtdsXAConnection extends PooledConnection implements XAConnection {
         super(connection);
         this.resource = new JtdsXAResource(this, connection);
         this.dataSource = dataSource;
-        xaConnectionId = Support.xa_open(connection);
+        xaConnectionId = XASupport.xa_open(connection);
     }
 
     /**
@@ -69,7 +69,7 @@ public class JtdsXAConnection extends PooledConnection implements XAConnection {
 
     public synchronized void close() throws SQLException {
         try {
-            Support.xa_close(connection, xaConnectionId);
+            XASupport.xa_close(connection, xaConnectionId);
         } catch (SQLException e) {
             // Ignore close errors
         }

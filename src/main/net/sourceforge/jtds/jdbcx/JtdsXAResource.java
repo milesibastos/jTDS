@@ -23,13 +23,13 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
-import net.sourceforge.jtds.jdbc.Support;
+import net.sourceforge.jtds.jdbc.XASupport;
 import net.sourceforge.jtds.util.Logger;
 
 /**
  * jTDS implementation of the XAResource interface.
  *
- * @version $Id: JtdsXAResource.java,v 1.1 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: JtdsXAResource.java,v 1.2 2004-11-17 15:04:37 alin_sinpalean Exp $
  */
 public class JtdsXAResource implements XAResource {
     private Connection connection = null;
@@ -77,37 +77,37 @@ public class JtdsXAResource implements XAResource {
 
     public Xid[] recover(int flags) throws XAException {
         Logger.println("XAResource.recover("+flags+")");
-        return Support.xa_recover(connection, xaConnection.getXAConnectionID(), flags);
+        return XASupport.xa_recover(connection, xaConnection.getXAConnectionID(), flags);
     }
 
     public int prepare(Xid xid) throws XAException {
         Logger.println("XAResource.prepare("+xid.toString()+")");
-        return  Support.xa_prepare(connection, xaConnection.getXAConnectionID(), xid);
+        return XASupport.xa_prepare(connection, xaConnection.getXAConnectionID(), xid);
     }
 
     public void forget(Xid xid) throws XAException {
         Logger.println("XAResource.forget(" + xid + ")");
-        Support.xa_forget(connection, xaConnection.getXAConnectionID(), xid);
+        XASupport.xa_forget(connection, xaConnection.getXAConnectionID(), xid);
     }
 
     public void rollback(Xid xid) throws XAException {
         Logger.println("XAResource.rollback(" +xid.toString()+")");
-        Support.xa_rollback(connection, xaConnection.getXAConnectionID(), xid);
+        XASupport.xa_rollback(connection, xaConnection.getXAConnectionID(), xid);
     }
 
     public void end(Xid xid, int flags) throws XAException {
         Logger.println("XAResource.end(" +xid.toString()+")");
-        Support.xa_end(connection, xaConnection.getXAConnectionID(), xid, flags);
+        XASupport.xa_end(connection, xaConnection.getXAConnectionID(), xid, flags);
     }
 
     public void start(Xid xid, int flags) throws XAException {
         Logger.println("XAResource.start(" +xid.toString()+","+flags+")");
-        Support.xa_start(connection, xaConnection.getXAConnectionID(), xid, flags);
+        XASupport.xa_start(connection, xaConnection.getXAConnectionID(), xid, flags);
     }
 
     public void commit(Xid xid, boolean commit) throws XAException {
         Logger.println("XAResource.commit(" +xid.toString()+","+commit+")");
-        Support.xa_commit(connection, xaConnection.getXAConnectionID(), xid, commit);
+        XASupport.xa_commit(connection, xaConnection.getXAConnectionID(), xid, commit);
     }
 
 }

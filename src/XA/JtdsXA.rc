@@ -28,8 +28,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,9,0,0
- PRODUCTVERSION 0,9,0,1
+ FILEVERSION 0,9,0,2
+ PRODUCTVERSION 0,9,0,2
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -47,14 +47,14 @@ BEGIN
             VALUE "Comments", "\0"
             VALUE "CompanyName", "The jTDS Project jtds.sourceforge.net\0"
             VALUE "FileDescription", "JtdsXA\0"
-            VALUE "FileVersion", "0, 9, 0, 0\0"
+            VALUE "FileVersion", "0, 9, 0, 2\0"
             VALUE "InternalName", "JtdsXA\0"
             VALUE "LegalCopyright", "Copyright © 2004 the jTDS project\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "JtdsXA.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "jTDS - SQL Server and Sybase JDBC driver\0"
-            VALUE "ProductVersion", "0, 9, 0, 1\0"
+            VALUE "ProductVersion", "0, 9, 0, 2\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -73,18 +73,18 @@ END
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE DISCARDABLE
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE DISCARDABLE
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE DISCARDABLE
 BEGIN
     "\r\n"
     "\0"

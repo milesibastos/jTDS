@@ -1,5 +1,11 @@
 Changes from jTDS 0.6
 =========================
+
+02/07/2004 - Brian Heineman
+ o Moved TdsStatement.releaseTds() calls into try {} finally {} statements
+   to ensure connections are released back into internal pool even if an
+   exception is thrown.
+ 
 02/06/2004 - Brian Heineman
  o Applied patch [884180] Implement getGeneratedKeys() (thanks to Mike 
    Hutchinson for the patch)

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.11 2004-09-05 16:45:29 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.12 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -53,10 +53,6 @@ public class RequestStream {
     private boolean isClosed = false;
     /** The current output buffer size*/
     private int bufferSize = TdsCore.MIN_PKT_SIZE;
-    /** The TDS version in use. */
-    private int tdsVersion;
-    /** The type of server (MS SQL/Sybase). */
-    private int serverType;
     /** The maximum decimal precision. */
     private int maxPrecision;
 
@@ -71,8 +67,6 @@ public class RequestStream {
         this.socket = socket;
         this.buffer = new byte[bufferSize];
         this.bufferPtr = TdsCore.PKT_HDR_LEN;
-        this.tdsVersion = socket.getTdsVersion();
-        this.serverType = socket.getServerType();
     }
 
     /**
@@ -296,7 +290,7 @@ public class RequestStream {
      * @throws IOException
      */
     void write(String s) throws IOException {
-        if (tdsVersion >= Driver.TDS70) {
+        if (socket.getTdsVersion() >= Driver.TDS70) {
             int len = s.length();
 
             for (int i = 0; i < len; ++i) {
@@ -481,7 +475,7 @@ public class RequestStream {
                 throw new IOException("BigDecimal to big to send");
             }
 
-            if (serverType == Driver.SYBASE) {
+            if (socket.getServerType() == Driver.SYBASE) {
                 write((byte) len);
                 // Sybase TDS5 stores MSB first opposite sign!
                 // length, prec, scale already sent in parameter descriptor.
@@ -525,7 +519,7 @@ public class RequestStream {
      * @return The TDS version as an <code>int</code>.
      */
     int getTdsVersion() {
-        return this.tdsVersion;
+        return socket.getTdsVersion();
     }
 
     /**
@@ -534,7 +528,7 @@ public class RequestStream {
      * @return The Server type as an <code>int</code>.
      */
     int getServerType() {
-        return this.serverType;
+        return socket.getServerType();
     }
 
     /**
@@ -554,7 +548,7 @@ public class RequestStream {
         buffer[3] = (byte) bufferPtr;
         buffer[4] = 0;
         buffer[5] = 0;
-        buffer[6] = (byte) ((tdsVersion >= Driver.TDS70) ? 1 : 0);
+        buffer[6] = (byte) ((socket.getTdsVersion() >= Driver.TDS70) ? 1 : 0);
         buffer[7] = 0;
 
         if (Logger.isActive()) {

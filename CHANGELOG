@@ -1,6 +1,13 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/12/2004 - Alin Sinpalean
+ o Implemented automatic TDS protocol version fallback, according to feature
+   request [991689] jTDS should automatically detect TDS protocol. Should work
+   fine with falling back from TDS 8.0 to 7.0 and could work (but I had no way
+   of testing this) with falling back from 5.0 to 4.2 (although I'm not sure
+   what will happen with the capabilities token).
+
 09/10/2004 - Alin Sinpalean
  o Corrected bug [1023984] Protocol error processing table meta data. Turns out
    the TABNAME packet is only different for TDS versions 0x71000001 and up

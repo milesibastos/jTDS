@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.37 2004-09-10 16:22:53 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.38 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -352,7 +352,6 @@ public class TdsCore {
         this.connection = connection;
         this.socket = connection.getSocket();
         this.messages = messages;
-        tdsVersion = connection.getTdsVersion();
         serverType = connection.getServerType();
         tdsVersion = socket.getTdsVersion();
         out = socket.getRequestStream();
@@ -807,6 +806,7 @@ public class TdsCore {
                     break;
                 case Driver.TDS70:
                 case Driver.TDS80:
+                case Driver.TDS81:
                     executeSQL70(sql, procName, parameters, noMetaData);
                     break;
                 default:
@@ -1870,10 +1870,10 @@ public class TdsCore {
             int    nameLen;
             String tabName;
             TableMetaData table;
-            if (socket.getInternalTdsVersion() >= 0x71000001) {
-                // TDS8.0.0.1 supplies the database.owner.table as three
-                // separate components which allows us to have names
-                // with embedded periods.
+            if (tdsVersion >= Driver.TDS81) {
+                // TDS8.1 supplies the database.owner.table as three separate
+                // components which allows us to have names with embedded
+                // periods.
                 // Can't think why anyone would want that!
                 table = new TableMetaData();
                 bytesRead++;
@@ -2101,24 +2101,25 @@ public class TdsCore {
         String product;
         int major, minor, build = 0;
         in.readShort(); // Packet length
-        int ack = 1;
+
+        int ack = in.read(); // Ack TDS 5 = 5 for OK 6 for fail, 1/0 for the others
+
+        // Update the TDS protocol version in this TdsCore and in the Socket.
+        // The Connection will update itself immediately after this call.
+        // As for other objects containing a TDS version value, there are none
+        // at this point (we're just constructing the Connection).
+        tdsVersion = TdsData.getTdsVersion(((int) in.read() << 24) | ((int) in.read() << 16)
+                | ((int) in.read() << 8) | (int) in.read());
+        socket.setTdsVersion(tdsVersion);
+
+        product = in.readString(in.read());
 
         if (tdsVersion >= Driver.TDS70) {
-            in.skip(1);
-            // TODO Update tdsVersion according to this. Maybe even replace tdsVersion altogether?
-            socket.setInternalTdsVersion(((int) in.read() << 24) | ((int) in.read() << 16)
-                    | ((int) in.read() << 8) | (int) in.read());
-            final int nameLen = in.read();
-            product = in.readString(nameLen);
             major = in.read();
             minor = in.read();
             build = in.read() << 8;
             build += in.read();
         } else {
-            ack = in.read(); // Ack TDS 5 = 5 for OK 6 for fail
-            in.skip(4);
-            final int nameLen = in.read();
-            product = in.readString(nameLen);
             if (product.toLowerCase().startsWith("microsoft")) {
                 in.skip(1);
                 major = in.read();

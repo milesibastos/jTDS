@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.8 2004-09-10 16:22:53 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.9 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -47,10 +47,6 @@ public class ResponseStream {
     private int streamId;
     /** True if stream is closed. */
     private boolean isClosed = false;
-    /** The TDS version in use. */
-    private int tdsVersion;
-    /** The type of server (MS SQL/Sybase). */
-    private int serverType;
     /** A shared byte buffer. */
     private byte[] byteBuffer = new byte[255];
     /** A shared char buffer. */
@@ -68,8 +64,6 @@ public class ResponseStream {
         this.bufferLen = TdsCore.MIN_PKT_SIZE;
         this.buffer = new byte[bufferLen];
         this.bufferPtr = bufferLen;
-        this.tdsVersion = socket.getTdsVersion();
-        this.serverType = socket.getServerType();
     }
 
     /**
@@ -196,7 +190,7 @@ public class ResponseStream {
      * @throws IOException
      */
     String readString(int len) throws IOException {
-        if (tdsVersion >= Driver.TDS70) {
+        if (socket.getTdsVersion() >= Driver.TDS70) {
             char[] chars = (len > charBuffer.length) ? new char[len] : charBuffer;
 
             for (int i = 0; i < len; i++) {
@@ -344,7 +338,7 @@ public class ResponseStream {
      * @return The TDS version as an <code>int</code>.
      */
     int getTdsVersion() {
-        return this.tdsVersion;
+        return socket.getTdsVersion();
     }
 
     /**
@@ -353,7 +347,7 @@ public class ResponseStream {
      * @return The Server type as an <code>int</code>.
      */
     int getServerType() {
-        return this.serverType;
+        return socket.getServerType();
     }
 
     /**

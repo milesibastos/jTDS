@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.13 2004-09-10 16:22:53 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.14 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -185,13 +185,6 @@ class SharedSocket {
      * Tds protocol version
      */
     private int tdsVersion;
-    /**
-     * Actual TDS protocol version, as returned by the server, including minor
-     * version (e.g. 0x71000001).
-     *
-     * @todo Consolidate this and tdsVersion
-     */
-    private int internalTdsVersion;
     /**
      * The servertype one of Driver.SQLSERVER or Driver.SYBASE
      */
@@ -327,25 +320,6 @@ class SharedSocket {
      */
     protected void setTdsVersion(int tdsVersion) {
         this.tdsVersion = tdsVersion;
-    }
-
-    /**
-     * Retrieve the complete TDS version ({@see #internalTdsVersion}) that is
-     * active on the connection * supported by this socket.
-     *
-     * @return The TDS version as an <code>int</code>.
-     */
-    int getInternalTdsVersion() {
-        return internalTdsVersion;
-    }
-
-    /**
-     * Set the complete TDS version ({@see #internalTdsVersion}) field.
-     *
-     * @param internalTdsVersion The TDS version as returned by the server.
-     */
-    protected void setInternalTdsVersion(int internalTdsVersion) {
-        this.internalTdsVersion = internalTdsVersion;
     }
 
     /**

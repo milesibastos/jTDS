@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.24 2004-09-02 15:04:45 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.25 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1954,5 +1954,27 @@ public class TdsData {
 //            // Conversion failed just try toString();
 //            value = value.toString();
 //        }
+    }
+
+    /**
+     * Extract the TDS protocol version from the value returned by the server in the LOGINACK
+     * packet.
+     *
+     * @param rawTdsVersion the TDS protocol version as returned by the server
+     * @return the jTDS internal value for the protocol version (i.e one of the
+     *         <code>Driver.TDS<i>XX</i></code> values)
+     */
+    public static int getTdsVersion(int rawTdsVersion) {
+        if (rawTdsVersion >= 0x71000001) {
+            return Driver.TDS81;
+        } else if (rawTdsVersion >= 0x07010000) {
+            return Driver.TDS80;
+        } else if (rawTdsVersion >= 0x07000000) {
+            return Driver.TDS70;
+        } else if (rawTdsVersion >= 0x05000000) {
+            return Driver.TDS50;
+        } else {
+            return Driver.TDS42;
+        }
     }
 }

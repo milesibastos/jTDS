@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.37 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.38 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -56,14 +56,16 @@ public class Driver implements java.sql.Driver {
     static final String MISC_VERSION = "-rc2";
     public static final boolean JDBC3 =
             "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
-    /** TDS 4.2 protocol. */
+    /** TDS 4.2 protocol (SQL Server 6.5 and later and Sybase 9 and later). */
     public static final int TDS42 = 1;
-    /** TDS 5.0 protocol. */
+    /** TDS 5.0 protocol (Sybase 10 and later). */
     public static final int TDS50 = 2;
-    /** TDS 7.0 protocol. */
+    /** TDS 7.0 protocol (SQL Server 7.0 and later). */
     public static final int TDS70 = 3;
-    /** TDS 8.0 protocol. */
+    /** TDS 8.0 protocol (SQL Server 2000 and later)*/
     public static final int TDS80 = 4;
+    /** TDS 8.1 protocol (SQL Server 2000 SP1 and later). */
+    public static final int TDS81 = 5;
     /** Microsoft SQL Server. */
     public static final int SQLSERVER = 1;
     /** Sybase ASE. */

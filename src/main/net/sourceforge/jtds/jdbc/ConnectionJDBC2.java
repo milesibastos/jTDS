@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.28 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.29 2004-09-12 09:33:15 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -287,6 +287,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // Cancel loginTimer
                 timer.stopTimer();
             }
+
+            // Update the tdsVersion with the value in baseTds. baseTds sets
+            // the TDS version for the socket and there are no other objects
+            // with cached TDS versions at this point.
+            tdsVersion = baseTds.getTdsVersion();
 
             if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
                 // Need to select the default database

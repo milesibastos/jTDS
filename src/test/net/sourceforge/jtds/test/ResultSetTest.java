@@ -179,53 +179,6 @@ public class ResultSetTest extends TestBase {
     }
 
     /**
-     * Test BIGINT data type.
-     */
-    public void testGetObject5() throws Exception {
-        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
-            System.out.println("testGetObject5() requires TDS 8");
-            return;
-        }
-
-    	long data = 1;
-
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #getObject5 (data BIGINT)");
-        stmt.close();
-
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject5 (data) VALUES (?)");
-
-        pstmt.setLong(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
-
-        pstmt.close();
-
-        Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #getObject5");
-
-        assertTrue(rs.next());
-
-        assertTrue(rs.getBoolean(1));
-        assertTrue(rs.getByte(1) == 1);
-        assertTrue(rs.getShort(1) == 1);
-        assertTrue(rs.getInt(1) == 1);
-        assertTrue(rs.getLong(1) == 1);
-        assertTrue(rs.getFloat(1) == 1);
-        assertTrue(rs.getDouble(1) == 1);
-        assertTrue(rs.getBigDecimal(1).longValue() == 1);
-        assertTrue("1".equals(rs.getString(1)));
-
-        Object tmpData = rs.getObject(1);
-
-        assertTrue(tmpData instanceof Long);
-        assertTrue(data == ((Long) tmpData).longValue());
-
-        assertTrue(!rs.next());
-        stmt2.close();
-        rs.close();
-    }
-
-    /**
      * Test for bug [961594] ResultSet.
      */
     public void testResultSetScroll1() throws Exception {

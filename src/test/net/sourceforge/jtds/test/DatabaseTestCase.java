@@ -22,7 +22,7 @@ public class DatabaseTestCase extends TestBase {
         Statement stmt = con.createStatement();
         stmt.executeUpdate(
                           "if exists (select * from " + sobName + " where name like '" + tablename + "%' and type = 'U') "
-                          + " drop table " + tablename);
+                          + "drop table " + tablename);
         stmt.close();
     }
 
@@ -36,7 +36,7 @@ public class DatabaseTestCase extends TestBase {
         Statement stmt = con.createStatement();
         stmt.executeUpdate(
                           "if exists (select * from " + sobName + " where name like '" + procname + "%' and type = 'P') "
-                          + " drop procedure " + procname);
+                          + "drop procedure " + procname);
         stmt.close();
     }
 
@@ -45,7 +45,7 @@ public class DatabaseTestCase extends TestBase {
         Statement stmt = con.createStatement();
         stmt.executeUpdate(
                           "if exists (select * from " + sobName + " where name like '" + procname + "%' and type = 'FN') "
-                          + " drop function " + procname);
+                          + "drop function " + procname);
         stmt.close();
     }
 

@@ -1,9 +1,15 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/13/2004 - Brian Heineman
+ o Corrected bug [989963] BigInt becomes Numeric;
+   ResultSetMetaData.getColumnType(int) now returns Types.BIGINT if the
+   TDS 8.0 protocol is being used with a 1.4+ JRE.  Added tests to ensure
+   this functionality continues to work in the future.
+
 07/12/2004 - Brian Heineman
  o Removed JNetDirect performance results to comply with their licensing.
- 
+
 07/08/2004 - Brian Heineman
  o Added test for bug [983561] getDatetimeValue truncates fractional
    milliseconds.
@@ -62,7 +68,7 @@ Changes from jTDS 0.8
  o Corrected bug [983561] getDatetimeValue truncates fractional milliseconds.
 
 07/07/2004 - Brian Heineman
- o Corrections to compile with the 1.3 JDK; updated Types.BOOLEAN references 
+ o Corrections to compile with the 1.3 JDK; updated Types.BOOLEAN references
    to Tds.BOOLEAN.
 
 06/27/2004 - Brian Heineman

@@ -13,20 +13,20 @@ public class Tds8Test extends DatabaseTestCase {
         super(name);
     }
 
-    public void testBigInt() throws Exception {
+    public void testBigInt1() throws Exception {
         if (!props.getProperty("TDS", "7.0").equals("8.0")) {
-            System.out.println("testBigInt() requires TDS 8");
+            System.out.println("testBigInt1() requires TDS 8");
             return;
         }
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #BIGTEST (num bigint, txt varchar(100))");
+        stmt.execute("CREATE TABLE #bigint1 (num bigint, txt varchar(100))");
         PreparedStatement pstmt = con.prepareStatement(
-                                                      "INSERT INTO #BIGTEST (num, txt) VALUES (?, ?)");
+                                                      "INSERT INTO #bigint1 (num, txt) VALUES (?, ?)");
         pstmt.setLong(1, 1234567890123L);
         pstmt.setString(2, "1234567890123");
         assertEquals("Insert bigint failed", 1, pstmt.executeUpdate());
-        ResultSet rs = stmt.executeQuery("SELECT * FROM #BIGTEST");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #bigint1");
         assertNotNull(rs);
         assertTrue(rs.next());
         assertEquals(String.valueOf(rs.getLong(1)), rs.getString(2));
@@ -34,6 +34,59 @@ public class Tds8Test extends DatabaseTestCase {
         pstmt.close();
     }
 
+    /**
+     * Test BIGINT data type.
+     * Test for [989963] BigInt becomes Numeric
+     */
+    public void testBigInt2() throws Exception {
+        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
+            System.out.println("testBigInt2() requires TDS 8");
+            return;
+        }
+
+        long data = 1;
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #bigint2 (data BIGINT)");
+        stmt.close();
+        
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bigint2 (data) VALUES (?)");
+
+        pstmt.setLong(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #bigint2");
+
+        assertTrue(rs.next());
+
+        assertTrue(rs.getBoolean(1));
+        assertTrue(rs.getByte(1) == 1);
+        assertTrue(rs.getShort(1) == 1);
+        assertTrue(rs.getInt(1) == 1);
+        assertTrue(rs.getLong(1) == 1);
+        assertTrue(rs.getFloat(1) == 1);
+        assertTrue(rs.getDouble(1) == 1);
+        assertTrue(rs.getBigDecimal(1).longValue() == 1);
+        assertTrue("1".equals(rs.getString(1)));
+
+        Object tmpData = rs.getObject(1);
+
+        assertTrue(tmpData instanceof Long);
+        assertTrue(data == ((Long) tmpData).longValue());
+        
+        ResultSetMetaData resultSetMetaData = rs.getMetaData();
+        
+        assertTrue(resultSetMetaData != null);
+        assertTrue(resultSetMetaData.getColumnType(1) == Types.BIGINT);
+        
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+    
     public void testSqlVariant() throws Exception {
         if (!props.getProperty("TDS", "7.0").equals("8.0")) {
             System.out.println("testSqlVariant() requires TDS 8");
@@ -78,18 +131,18 @@ public class Tds8Test extends DatabaseTestCase {
             return;
         }
 
-        dropFunction("fn_varret");
+        dropFunction("f_varret");
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE FUNCTION fn_varret(@data varchar(100)) RETURNS sql_variant AS\r\n"+
+        stmt.execute("CREATE FUNCTION f_varret(@data varchar(100)) RETURNS sql_variant AS\r\n"+
                      "BEGIN\r\n"+
                      "RETURN 'Test ' + @data\r\n" +
                      "END");
-        CallableStatement cstmt = con.prepareCall("{?=call jboss.fn_varret(?)}");
+        CallableStatement cstmt = con.prepareCall("{?=call f_varret(?)}");
         cstmt.registerOutParameter(1, java.sql.Types.OTHER);
         cstmt.setString(2, "String");
         cstmt.execute();
         assertEquals("Test String", cstmt.getString(1));
-        dropFunction("fn_varret");
+        dropFunction("f_varret");
     }
 
     public void testMetaData() throws Exception {

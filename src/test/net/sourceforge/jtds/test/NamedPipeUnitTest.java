@@ -26,34 +26,67 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 
 
-
+/**
+ * Unit tests for the {@link SharedNamedPipe} class.
+ * 
+ * @author David D. Kilzer.
+ * @version $Id: NamedPipeUnitTest.java,v 1.3 2004-07-29 23:50:36 ddkilzer Exp $
+ */ 
 public class NamedPipeUnitTest extends TestCase {
 
 
+    /**
+     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * sets the buffer size appropriately for TDS 4.2 when the packet
+     * size is set to 0.
+     */
     public void testCalculateBufferSize_TDS42() {
         int length = invoke_calculateBufferSize(Driver.TDS42, 0);
         assertEquals(TdsCore.MIN_PKT_SIZE, length);
     }
 
 
+    /**
+     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * sets the buffer size appropriately for TDS 5.0 when the packet
+     * size is set to 0.
+     */
     public void testCalculateBufferSize_TDS50() {
         int length = invoke_calculateBufferSize(Driver.TDS50, 0);
         assertEquals(TdsCore.MIN_PKT_SIZE, length);
     }
 
 
+    /**
+     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * sets the buffer size appropriately for TDS 7.0 when the packet
+     * size is set to 0.
+     */
     public void testCalculateBufferSize_TDS70() {
         int length = invoke_calculateBufferSize(Driver.TDS70, 0);
         assertEquals(TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70, length);
     }
 
 
+    /**
+     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * sets the buffer size appropriately for TDS 8.0 when the packet
+     * size is set to 0.
+     */
     public void testCalculateBufferSize_TDS80() {
         int length = invoke_calculateBufferSize(Driver.TDS80, 0);
         assertEquals(TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70, length);
     }
 
 
+    /**
+     * Helper method to invoke {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * using reflection.
+     * 
+     * @param tdsVersion The TDS version as an <code>int</code>.
+     * @param packetSize The packet size as an <code>int</code>.
+     * @return Result of calling {@link SharedNamedPipe#calculateBufferSize(int, int)}.
+     */ 
     private int invoke_calculateBufferSize(int tdsVersion, int packetSize) {
 
         try {

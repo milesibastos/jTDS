@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.29 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.30 2004-09-15 11:25:28 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1289,7 +1289,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     public Statement createStatement(int type, int concurrency) throws SQLException {
         checkOpen();
-        checkOpen();
+
         JtdsStatement stmt = new JtdsStatement(this, type, concurrency);
         addStatement(stmt);
 

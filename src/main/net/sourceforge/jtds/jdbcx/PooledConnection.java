@@ -22,12 +22,13 @@ import java.util.*;
 
 import javax.sql.*;
 import net.sourceforge.jtds.jdbc.*;
+import net.sourceforge.jtds.jdbcx.proxy.*;
 
 /**
  *
- * @version $Id: PooledConnection.java,v 1.3 2004-07-15 22:02:15 bheineman Exp $
+ * @version $Id: PooledConnection.java,v 1.4 2004-07-23 12:08:39 bheineman Exp $
  */
-public class PooledConnection implements javax.sql.PooledConnection {
+public class PooledConnection implements PooledConnection {
     private final ArrayList _listeners = new ArrayList();
     private Connection _connection;
     private ConnectionProxy _connectionProxy = null;
@@ -65,7 +66,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
      *        an error where the connection may not longer be used.
      * @param sqlException the SQLException to pass to the listeners
      */
-    synchronized void fireConnectionEvent(boolean closed, SQLException sqlException) {
+    public synchronized void fireConnectionEvent(boolean closed, SQLException sqlException) {
         if (_listeners.size() > 0) {
             ConnectionEvent connectionEvent = new ConnectionEvent(this, sqlException);
             Iterator iterator = _listeners.iterator();

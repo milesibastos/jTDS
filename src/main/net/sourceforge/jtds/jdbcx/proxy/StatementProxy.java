@@ -15,229 +15,217 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-package net.sourceforge.jtds.jdbcx;
+package net.sourceforge.jtds.jdbcx.proxy;
 
 import java.sql.*;
-import java.util.Map;
 
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 import net.sourceforge.jtds.jdbc.Support;
 
 /**
  * This class would be better implemented as a java.lang.reflect.Proxy.  However, this
  * feature was not added until 1.3 and reflection performance was not improved until 1.4.
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
- * to delegate the calls to the connection with minimal overhead.
+ * to delegate the calls to a statement with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.5 2004-07-15 22:02:15 bheineman Exp $
+ * @version $Id: StatementProxy.java,v 1.1 2004-07-23 12:08:39 bheineman Exp $
  */
-public class ConnectionProxy implements Connection {
-    private net.sourceforge.jtds.jdbcx.PooledConnection _pooledConnection;
-    private ConnectionJDBC2 _connection;
-    private boolean _closed = false;
+public class StatementProxy implements Statement {
+    private ConnectionProxy _connection;
+    private Statement _statement;
 
-    /**
-     * Constructs a new connection proxy.
-     */
-    public ConnectionProxy(net.sourceforge.jtds.jdbcx.PooledConnection pooledConnection,
-                           Connection connection) {
-        _pooledConnection = pooledConnection;
-        _connection = (ConnectionJDBC2) connection;
+    StatementProxy(ConnectionProxy connection, Statement statement) {
+        _connection = connection;
+        _statement = statement;
     }
-
+    
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public void clearWarnings() throws SQLException {
+    public ResultSet executeQuery(String sql) throws SQLException {
         validateConnection();
 
         try {
-            _connection.clearWarnings();
+            return _statement.executeQuery(sql);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+        
+        return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int executeUpdate(String sql) throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.executeUpdate(sql);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
     public void close() throws SQLException {
-        if (_closed) {
-            return;
-        }
-
-        _pooledConnection.fireConnectionEvent(true, null);
-        _closed = true;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void commit() throws SQLException {
         validateConnection();
 
         try {
-            _connection.commit();
+            _statement.close();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public Statement createStatement() throws SQLException {
+    public int getMaxFieldSize() throws SQLException {
         validateConnection();
 
         try {
-            return _connection.createStatement();
+            return _statement.getMaxFieldSize();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+        
+        return Integer.MIN_VALUE;
+    }
+    
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void setMaxFieldSize(int max) throws SQLException {
+        validateConnection();
 
-        return null;
+        try {
+            _statement.setMaxFieldSize(max);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+    public int getMaxRows() throws SQLException {
         validateConnection();
 
         try {
-            return _connection.createStatement(resultSetType, resultSetConcurrency);
+            return _statement.getMaxRows();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-        validateConnection();
-
-        try {
-            return _connection.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
-        return null;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public boolean getAutoCommit() throws SQLException {
-        validateConnection();
-
-        try {
-            return _connection.getAutoCommit();
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
-        return false;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public String getCatalog() throws SQLException {
-        validateConnection();
-
-        try {
-            return _connection.getCatalog();
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
-        return null;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public int getHoldability() throws SQLException {
-        validateConnection();
-
-        try {
-            return _connection.getHoldability();
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
+        
         return Integer.MIN_VALUE;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public int getTransactionIsolation() throws SQLException {
+    public void setMaxRows(int max) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.getTransactionIsolation();
+            _statement.setMaxRows(max);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+    }
 
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void setEscapeProcessing(boolean enable) throws SQLException {
+        validateConnection();
+
+        try {
+            _statement.setEscapeProcessing(enable);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int getQueryTimeout() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getQueryTimeout();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
         return Integer.MIN_VALUE;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public Map getTypeMap() throws SQLException {
+    public void setQueryTimeout(int seconds) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.getTypeMap();
+            _statement.setQueryTimeout(seconds);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void cancel() throws SQLException {
+        validateConnection();
+
+        try {
+            _statement.cancel();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -246,435 +234,457 @@ public class ConnectionProxy implements Connection {
         validateConnection();
 
         try {
-            return _connection.getWarnings();
+            return _statement.getWarnings();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
+        
         return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public DatabaseMetaData getMetaData() throws SQLException {
+    public void clearWarnings() throws SQLException {
         validateConnection();
 
         try {
-            return _connection.getMetaData();
+            _statement.clearWarnings();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+    }
 
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void setCursorName(String name) throws SQLException {
+        validateConnection();
+
+        try {
+            _statement.setCursorName(name);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+    }
+    
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public boolean execute(String sql) throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.execute(sql);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public ResultSet getResultSet() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getResultSet();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
         return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public boolean isClosed() throws SQLException {
-        if (_closed) {
-            return true;
-        }
-
-        try {
-            return _connection.isClosed();
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
-        return _closed;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public boolean isReadOnly() throws SQLException {
+    public int getUpdateCount() throws SQLException {
         validateConnection();
 
         try {
-            return _connection.isReadOnly();
+            return _statement.getUpdateCount();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+        
+        return Integer.MIN_VALUE;
+    }
 
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public boolean getMoreResults() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getMoreResults();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
         return false;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public String nativeSQL(String sql) throws SQLException {
+    public void setFetchDirection(int direction) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.nativeSQL(sql);
+            _statement.setFetchDirection(direction);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+    }
 
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int getFetchDirection() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getFetchDirection();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void setFetchSize(int rows) throws SQLException {
+        validateConnection();
+
+        try {
+            _statement.setFetchSize(rows);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+    }
+  
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int getFetchSize() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getFetchSize();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int getResultSetConcurrency() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getResultSetConcurrency();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int getResultSetType() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getResultSetType();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void addBatch(String sql) throws SQLException {
+        validateConnection();
+
+        try {
+            _statement.addBatch(sql);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public void clearBatch() throws SQLException {
+        validateConnection();
+
+        try {
+            _statement.clearBatch();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+    }
+
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public int[] executeBatch() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.executeBatch();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
         return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public CallableStatement prepareCall(String sql) throws SQLException {
+    public Connection getConnection()  throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareCall(sql);
+            return _statement.getConnection();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
+        
         return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    public boolean getMoreResults(int current) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareCall(sql, resultSetType, resultSetConcurrency);
+            return _statement.getMoreResults(current);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
+        
+        return false;
+    }
 
+    /**
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
+     * will cause an event to be fired on the connection pool listeners.
+     *
+     * @throws SQLException if an error occurs
+     */
+    public ResultSet getGeneratedKeys() throws SQLException {
+        validateConnection();
+
+        try {
+            return _statement.getGeneratedKeys();
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
+        
         return null;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+            return _statement.executeUpdate(sql, autoGeneratedKeys);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
+        
+        return Integer.MIN_VALUE;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public PreparedStatement prepareStatement(String sql) throws SQLException {
+    public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareStatement(sql);
+            return _statement.executeUpdate(sql, columnIndexes);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
+        
+        return Integer.MIN_VALUE;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
+    public int executeUpdate(String sql, String[] columnNames) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareStatement(sql, autoGeneratedKeys);
+            return _statement.executeUpdate(sql, columnNames);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
+        
+        return Integer.MIN_VALUE;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
+    public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareStatement(sql, columnIndexes);
+            return _statement.execute(sql, autoGeneratedKeys);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
+        
+        return false;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
+    public boolean execute(String sql, int[] columnIndexes) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareStatement(sql, columnNames);
+            return _statement.execute(sql, columnIndexes);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
+        
+        return false;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
+    public boolean execute(String sql, String[] columnNames) throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareStatement(sql, resultSetType, resultSetConcurrency);
+            return _statement.execute(sql, columnNames);
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
+        
+        return false;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
+     * Delgates calls to the statement; SQLExceptions thrown from the statement
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
      */
-    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException {
+    public int getResultSetHoldability() throws SQLException {
         validateConnection();
 
         try {
-            return _connection.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+            return _statement.getResultSetHoldability();
         } catch (SQLException sqlException) {
             processSQLException(sqlException);
         }
-
-        return null;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.releaseSavepoint(savepoint);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void rollback() throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.rollback();
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void rollback(Savepoint savepoint) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.rollback(savepoint);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.setAutoCommit(autoCommit);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void setCatalog(String catalog) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.setCatalog(catalog);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void setHoldability(int holdability) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.setHoldability(holdability);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void setReadOnly(boolean readOnly) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.setReadOnly(readOnly);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public Savepoint setSavepoint() throws SQLException {
-        validateConnection();
-
-        try {
-            return _connection.setSavepoint();
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
-        return null;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public Savepoint setSavepoint(String name) throws SQLException {
-        validateConnection();
-
-        try {
-            return _connection.setSavepoint(name);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-
-        return null;
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void setTransactionIsolation(int level) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.setTransactionIsolation(level);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
-    }
-
-    /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection
-     * will cause an event to be fired on the connection pool listeners.
-     *
-     * @throws SQLException if an error occurs
-     */
-    public void setTypeMap(Map map) throws SQLException {
-        validateConnection();
-
-        try {
-            _connection.setTypeMap(map);
-        } catch (SQLException sqlException) {
-            processSQLException(sqlException);
-        }
+        
+        return Integer.MIN_VALUE;
     }
 
     /**
      * Validates the connection state.
      */
-    private void validateConnection() throws SQLException {
-        if (_closed) {
+    protected void validateConnection() throws SQLException {
+        if (_connection.isClosed()) {
             throw new SQLException(Support.getMessage("error.conproxy.noconn"), "HY010");
         }
     }
@@ -682,10 +692,9 @@ public class ConnectionProxy implements Connection {
     /**
      * Processes SQLExceptions.
      */
-    private void processSQLException(SQLException sqlException) throws SQLException {
-        _pooledConnection.fireConnectionEvent(false, sqlException);
+    protected void processSQLException(SQLException sqlException) throws SQLException {
+        _connection.processSQLException(sqlException);
 
         throw sqlException;
     }
 }
-

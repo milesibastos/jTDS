@@ -105,6 +105,14 @@ public class LOBTest extends TestBase {
         // Test Blob.length()
         assertEquals(blob.length(), data.length);
 
+        // Test Blob.getBytes(0, length); should fail
+        try {
+            blob.getBytes(0L, (int) blob.length());
+            fail("Blob.getBytes(0, length) should fail.");
+        } catch (SQLException ex) {
+            assertEquals("HY090", ex.getSQLState());
+        }
+
         // Test Blob.getBytes()
         byte[] tmpData2 = blob.getBytes(1L, (int) blob.length());
 
@@ -1377,6 +1385,14 @@ public class LOBTest extends TestBase {
 
         // Test Clob.length()
         assertEquals(clob.length(), data.length());
+
+        // Test Clob.getSubString(0, length); should fail
+        try {
+            clob.getSubString(0L, (int) clob.length());
+            fail("Clob.getSubString(0, length) should fail.");
+        } catch (SQLException ex) {
+            assertEquals("HY090", ex.getSQLState());
+        }
 
         // Test Clob.getSubString()
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));

@@ -53,7 +53,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.19 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.20 2004-11-05 12:10:40 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -319,9 +319,9 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // Try to open a cursor result set if required (and possible)
         //
-        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-            || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
-            && sqlWord.equals("select")
+        if ((resultSetType != ResultSet.TYPE_FORWARD_ONLY
+            || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY)
+            && (sqlWord.equals("select") || sqlWord.startsWith("exec"))
             && !returnKeys) {
             try {
                 if (connection.getServerType() == Driver.SQLSERVER) {

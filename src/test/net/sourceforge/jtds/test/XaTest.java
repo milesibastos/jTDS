@@ -36,7 +36,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  * examples found in the following article at
  * <a href="http://archive.devx.com/java/free/articles/dd_jta/jta-2.asp">DevX</a>.
  *
- * @version $Id: XaTest.java,v 1.2 2004-10-20 17:22:01 alin_sinpalean Exp $
+ * @version $Id: XaTest.java,v 1.3 2004-11-05 12:10:46 alin_sinpalean Exp $
  */
 public class XaTest extends DatabaseTestCase {
 
@@ -111,14 +111,14 @@ public class XaTest extends DatabaseTestCase {
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            dropTable("jTDS_XATEST");
-
             if (con2 != null) {
                 con2.close();
             }
             if (xaCon != null) {
                 xaCon.close();
             }
+
+            dropTable("jTDS_XATEST");
         }
     }
 
@@ -159,14 +159,14 @@ public class XaTest extends DatabaseTestCase {
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            dropTable("jTDS_XATEST");
-
             if (con2 != null) {
                 con2.close();
             }
             if (xaCon != null) {
                 xaCon.close();
             }
+
+            dropTable("jTDS_XATEST");
         }
     }
 
@@ -207,14 +207,14 @@ public class XaTest extends DatabaseTestCase {
             assertFalse(rs.next());
             stmt.close();
         } finally {
-            dropTable("jTDS_XATEST");
-
             if (con2 != null) {
                 con2.close();
             }
             if (xaCon != null) {
                 xaCon.close();
             }
+
+            dropTable("jTDS_XATEST");
         }
     }
 
@@ -266,15 +266,15 @@ public class XaTest extends DatabaseTestCase {
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            dropTable("jTDS_XATEST");
-            dropTable("jTDS_XATEST2");
-
             if (con2 != null) {
                 con2.close();
             }
             if (xaCon != null) {
                 xaCon.close();
             }
+
+            dropTable("jTDS_XATEST");
+            dropTable("jTDS_XATEST2");
         }
     }
 
@@ -337,9 +337,6 @@ public class XaTest extends DatabaseTestCase {
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            dropTable("jTDS_XATEST");
-            dropTable("jTDS_XATEST2");
-
             if (con2 != null) {
                 con2.close();
             }
@@ -352,6 +349,9 @@ public class XaTest extends DatabaseTestCase {
             if (xaCon2 != null) {
                 xaCon2.close();
             }
+
+            dropTable("jTDS_XATEST");
+            dropTable("jTDS_XATEST2");
         }
     }
 
@@ -399,11 +399,11 @@ public class XaTest extends DatabaseTestCase {
                }
            }
         } finally {
-            dropTable("jTDS_XATEST");
-
             if (xaCon != null) {
                 xaCon.close();
             }
+
+            dropTable("jTDS_XATEST");
         }
     }
 

@@ -377,6 +377,20 @@ public class PreparedStatementTest extends TestBase {
     }
 
     /**
+     * Test for bug [ 1059916 ] whitespace needed in preparedStatement.
+     */
+    public void testMissingWhitespace() throws Exception
+    {
+        PreparedStatement pstmt = con.prepareStatement(
+            "SELECT name from master..syscharsets where description like?and?between csid and 10");
+        pstmt.setString(1, "ISO%");
+        pstmt.setInt(2, 0);
+        ResultSet rs = pstmt.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+    }
+
+    /**
      * Test for bug [1022968] Long SQL expression error.
      * NB. Test must be run with TDS=7.0 to fail.
      */

@@ -1,6 +1,11 @@
 Changes from jTDS 0.9
 =========================
 
+11/05/2004 - Alin Sinpalean
+ o Applied Mike's fix for bug [1060466] SQL Executed twice.
+ o Applied Mike's fix for bug [1059916] Whitespace needed in preparedStatement.
+ o Tiny fix in XaTest to avoid deadlocks in case an SQLException is thrown.
+
 11/03/2004 - Alin Sinpalean
  o Updated JtdsDatabaseMetaData.getProcedures() to only cut off the ";" at the
    end of the procedure name for the first procedure (i.e. if it's ";1").

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.28 2004-10-27 14:57:44 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.29 2004-11-05 12:10:44 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -815,8 +815,9 @@ public class Support {
      */
     static void embedData(StringBuffer buf, Object value, boolean isUnicode)
             throws SQLException {
+        buf.append(' ');
         if (value == null) {
-            buf.append("NULL");
+            buf.append("NULL ");
             return;
         }
 
@@ -876,8 +877,12 @@ public class Support {
         } else if (value instanceof java.sql.Date) {
             synchronized (cal) {
                 cal.setTime((java.sql.Date) value);
+                int year = cal.get(Calendar.YEAR);
+                if (year < 1753 || year > 9999) {
+                    throw new SQLException(Messages.get("error.datetime.range"), "22003");
+                }
                 buf.append('\'');
-                long dt = cal.get(Calendar.YEAR) * 10000;
+                long dt = year * 10000L;
                 dt += (cal.get(Calendar.MONTH) + 1) * 100;
                 dt += cal.get(Calendar.DAY_OF_MONTH);
                 buf.append(dt);
@@ -905,8 +910,12 @@ public class Support {
             if (value instanceof java.sql.Timestamp) {
             synchronized (cal) {
                 cal.setTime((java.sql.Timestamp) value);
+                int year = cal.get(Calendar.YEAR);
+                if (year < 1753 || year > 9999) {
+                    throw new SQLException(Messages.get("error.datetime.range"), "22003");
+                }
                 buf.append('\'');
-                long dt = cal.get(Calendar.YEAR) * 10000;
+                long dt = year * 10000L;
                 dt += (cal.get(Calendar.MONTH) + 1) * 100;
                 dt += cal.get(Calendar.DAY_OF_MONTH);
                 buf.append(dt);
@@ -935,6 +944,7 @@ public class Support {
         } else {
             buf.append(value.toString());
         }
+        buf.append(' ');
     }
 
     /**
@@ -1011,8 +1021,9 @@ public class Support {
             if (pos > 0) {
                 buf.append(sql.substring(start, list[i].markerPos));
                 start = pos + 1;
-                buf.append("@P");
+                buf.append(" @P");
                 buf.append(i);
+                buf.append(' ');
             }
         }
 
@@ -1062,9 +1073,9 @@ public class Support {
             }
 
             if (value instanceof String) {
-                len += ((String) value).length() + 3;
+                len += ((String) value).length() + 5;
             } else if (value instanceof byte[]) {
-                len += ((byte[]) value).length * 2 + 2;
+                len += ((byte[]) value).length * 2 + 4;
             } else {
                 len += 32; // Default size
             }

@@ -171,6 +171,32 @@ public class CallableStatementTest extends TestBase {
         rs.close();
     }
 
+    public void testCallableStatementExec8() throws Exception {
+        Statement stmt;
+
+        try {
+            stmt = con.createStatement();
+            stmt.execute("create procedure _test as SELECT COUNT(*) FROM sysobjects");
+            stmt.close();
+
+            CallableStatement cstmt = con.prepareCall("execute _test");
+
+            makeTestTables(cstmt);
+            makeObjects(cstmt, 8);
+
+            ResultSet rs = cstmt.executeQuery();
+
+            dump(rs);
+
+            cstmt.close();
+            rs.close();
+        } finally {
+            stmt = con.createStatement();
+            stmt.execute("drop procedure _test");
+            stmt.close();
+        }
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

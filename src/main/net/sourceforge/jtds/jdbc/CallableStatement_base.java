@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.16 2004-02-20 00:09:09 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.17 2004-03-04 04:30:20 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.16 2004-02-20 00:09:09 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.17 2004-03-04 04:30:20 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -123,6 +123,7 @@ implements java.sql.CallableStatement {
 
             if (Character.isLetterOrDigit(ch)
                 || ch == '#'
+                || ch == '_'
                 || ch == '?') {
                 break;
             } else if (ch == '[' || ch == '"') {

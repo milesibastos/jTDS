@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.35 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: Driver.java,v 1.36 2004-09-01 16:04:32 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -113,7 +113,7 @@ public class Driver implements java.sql.Driver {
         if (url == null) {
             return false;
         }
-        
+
         return url.toLowerCase().startsWith(driverPrefix);
     }
 
@@ -191,7 +191,7 @@ public class Driver implements java.sql.Driver {
      * <p/>
      * The values in the map are the <code>String[]</code> objects
      * that should be set to the <code>choices</code> field.
-     * 
+     *
      * @return The map of {@link DriverPropertyInfo} objects whose
      *         <code>choices</code> should be set.
      */
@@ -238,7 +238,7 @@ public class Driver implements java.sql.Driver {
      * the <code>required</code> field should be set to <code>true</code>.
      * If the key does not exist in the map, then the <code>required</code>
      * field is set to <code>false</code>.
-     * 
+     *
      * @return The map of {@link DriverPropertyInfo} objects where
      *         <code>required</code> should be set to <code>true</code>.
      */
@@ -263,7 +263,7 @@ public class Driver implements java.sql.Driver {
         for (Enumeration e = info.keys(); e.hasMoreElements();) {
             String key = (String) e.nextElement();
             String value = info.getProperty(key);
-            
+
             if (value != null) {
                 props.setProperty(key.toUpperCase(), value);
             }
@@ -279,7 +279,7 @@ public class Driver implements java.sql.Driver {
         }
 
         pos = nextToken(url, pos, token); // Skip jtds
-        
+
         if (!token.toString().equalsIgnoreCase("jtds")) {
             return null; // jtds: missing
         }
@@ -302,9 +302,11 @@ public class Driver implements java.sql.Driver {
         pos = nextToken(url, pos, token); // Get server name
         String host = token.toString();
 
-        if (host.length() == 0 &&
-            props.getProperty(Messages.get("prop.servername")) == null) {
-            return null; // Server name missing
+        if (host.length() == 0) {
+            host = props.getProperty(Messages.get("prop.servername"));
+            if (host == null || host.length() == 0) {
+                return null; // Server name missing
+            }
         }
 
         props.setProperty(Messages.get("prop.servername"), host);

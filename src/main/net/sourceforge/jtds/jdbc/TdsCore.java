@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.71 2005-02-13 00:10:03 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.72 2005-02-17 19:53:15 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -397,6 +397,8 @@ public class TdsCore {
     private int sslMode = SSL_NO_ENCRYPT;
     /** Indicates pending cancel that needs to be cleared. */
     private boolean cancelPending;
+    /** Synchronization monitor for {@link #cancelPending}. */
+    private Object cancelMonitor = new Object();
 
     /**
      * Construct a TdsCore object.
@@ -824,8 +826,10 @@ public class TdsCore {
         try {
             mutex = connection.getMutex();
             mutex.acquire();
-            if (!cancelPending) {
-                cancelPending = socket.cancel(out.getStreamId());
+            synchronized (cancelMonitor) {
+                if (!cancelPending) {
+                    cancelPending = socket.cancel(out.getStreamId());
+                }
             }
         } catch (InterruptedException e) {
             mutex = null;
@@ -3270,7 +3274,9 @@ public class TdsCore {
         // Check for cancel ack
         //
         if ((currentToken.status & DONE_CANCEL) != 0) {
-            cancelPending = false;
+            synchronized (cancelMonitor) {
+                cancelPending = false;
+            }
             // Indicates cancel packet
             messages.addException(
                      new SQLException("Request cancelled", "S1008", 0));

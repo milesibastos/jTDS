@@ -1,8 +1,14 @@
 Changes from jTDS 1.0.1
 =======================
 
+02/17/2005 - Alin Sinpalean
+ o Corrected a problem related to cancel synchronization in TdsCore: a race 
+   condition occured between the cancelPending assignments that could cause
+   the Connection to fail. Problem was reproducible using testCancel0003() in
+   SAfeTest on a slow client.
+
 02/16/2005 - Alin Sinpalean
- o Applied Mike's fix for bug [1122357] INSERT is executed twice by scrollable 
+ o Applied Mike's fix for bug [1122357] INSERT is executed twice by scrollable
    Statement on Sybase. CachedResultSets are now created on top of plain
    ResultSets from scrollable/updateable Statements. The query is only altered
    (by adding "FOR BROWSE") if executed via executeQuery().

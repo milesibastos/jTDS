@@ -32,181 +32,269 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+import java.util.Enumeration;
+import java.util.Properties;
 
 /**
  * @author     Craig Spannring
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.2 2004-01-22 23:49:35 alin_sinpalean Exp $
+ * @version    $Id: Driver.java,v 1.3 2004-01-30 22:52:18 bheineman Exp $
  * @see        Connection
  */
-public class Driver implements java.sql.Driver
-{
-    public final static String cvsVersion = "$Id: Driver.java,v 1.2 2004-01-22 23:49:35 alin_sinpalean Exp $";
+public class Driver implements java.sql.Driver {
+    public final static String cvsVersion = "$Id: Driver.java,v 1.3 2004-01-30 22:52:18 bheineman Exp $";
 
-    final static boolean debug = false;
-    final static String oldSQLServerUrlPrefix = "jdbc:jtds://";
-    final static String newSQLServerUrlPrefix = "jdbc:jtds:sqlserver://";
-    final static String sybaseUrlPrefix = "jdbc:jtds:sybase://";
-    final static String defaultSQLServerPort = "1433";
-    final static String defaultSybasePort = "7100";
+    private final static String DEFAULT_SQL_SERVER_PORT = "1433";
+    private final static String DEFAULT_SYBASE_PORT = "7100";
 
-    public Driver() throws SQLException
-    {
+    // Register ourselves with the DriverManager
+    static {
+        try {
+            DriverManager.registerDriver(new Driver());
+        } catch (SQLException e) {
+        }
     }
 
-    /** @todo Implement this method. */
-    public DriverPropertyInfo[] getPropertyInfo(String Url, Properties Info) throws SQLException
-    {
-        DriverPropertyInfo result[] = new DriverPropertyInfo[0];
-        return result;
+    /**
+     * Constructs a new driver instance.
+     */
+    public Driver() throws SQLException {
     }
 
-    public int getMajorVersion()
-    {
+    /**
+     * Returns <code>true</code> if this driver can connect to the url specified;
+     * returns <code>false</code> otherwise.
+     * 
+     * @param url the JDBC url to used to determine if a connection can be made
+     */
+    public boolean acceptsURL(String url) throws SQLException {
+        return parseUrl(url, null);
+    }
+
+    /**
+     * Attempts to establish a database connection with the url and info specified.
+     */
+    public Connection connect(String url, Properties info) throws SQLException {
+        if (info == null) {
+            info = new Properties();
+        } else {
+            info = processProperties(info);
+        }
+
+        if (!parseUrl(url, info)) {
+            return null;
+        } else {
+            try {
+                return new TdsConnection(info);
+            } catch (NumberFormatException e) {
+                throw new SQLException("NumberFormatException converting port number.");
+            } catch (TdsException e) {
+                throw new SQLException(e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Returns the drivers Major version.
+     */
+    public int getMajorVersion() {
         return DriverVersion.getDriverMajorVersion();
     }
 
-    public int getMinorVersion()
-    {
+    /**
+     * Returns the drivers Minor version.
+     */
+    public int getMinorVersion() {
         return DriverVersion.getDriverMinorVersion();
     }
 
-    public java.sql.Connection connect(String Url, Properties info) throws SQLException
-    {
-        if( !parseUrl(Url, info) )
-            return null;
-        else
-            try
-            {
-                info = processProperties(info);
-                return new TdsConnection(info);
-            }
-            catch (NumberFormatException e)
-            {
-                throw new SQLException("NumberFormatException converting port number.");
-            }
-            catch (net.sourceforge.jtds.jdbc.TdsException e)
-            {
-                throw new SQLException(e.getMessage());
-            }
+    /** @todo Implement this method. */
+    public DriverPropertyInfo[] getPropertyInfo(String Url, Properties Info)
+    throws SQLException {
+        DriverPropertyInfo[] result = new DriverPropertyInfo[0];
+
+        return result;
     }
 
-    public boolean acceptsURL(String url) throws SQLException
-    {
-        return parseUrl(url, new Properties());
-    }
-
-    public boolean jdbcCompliant()
-    {
-        // :-(  MS SQLServer 6.5 doesn't provide what JDBC wants.
+    /**
+     * Returns <code>true</code> if the driver is JDBC 1.0 compliant and provides
+     * full support for SQL-92 Entry Level; returns <code>false</code> otherwise.
+     */
+    public boolean jdbcCompliant() {
+        // :-(MS SQLServer 6.5 doesn't provide what JDBC wants.
         // See DatabaseMetaData.nullPlusNonNullIsNull() for more details.
         // XXX Need to check if Sybase could be jdbcCompliant
         return false;
     }
 
-    protected boolean parseUrl(String url, Properties result)
-    {
+    /**
+     * Parses the specified URL into <code>result</code>.
+     * 
+     * @param url the url to parse
+     * @param result reference used to write the results to
+     * @return <code>true</code> if the url was valid; <code>false</code> otherwise
+     */
+    protected boolean parseUrl(String url, Properties result) {
+        if (url == null) {
+            return false;
+        }
+
         String tmpUrl = url;
-        int serverType = -1;
+        int serverType = Tds.SQLSERVER;
+        int pos = tmpUrl.indexOf(':');
 
-        if( tmpUrl.startsWith(oldSQLServerUrlPrefix) ||
-            tmpUrl.startsWith(newSQLServerUrlPrefix) ||
-            tmpUrl.startsWith(sybaseUrlPrefix))
-        {
-            if( tmpUrl.startsWith(oldSQLServerUrlPrefix) )
-            {
-                serverType = Tds.SQLSERVER;
-                tmpUrl = tmpUrl.substring(oldSQLServerUrlPrefix.length());
-            }
-            else if( tmpUrl.startsWith(newSQLServerUrlPrefix) )
-            {
-                serverType = Tds.SQLSERVER;
-                tmpUrl = tmpUrl.substring(newSQLServerUrlPrefix.length());
-            }
-            else if( tmpUrl.startsWith(sybaseUrlPrefix) )
-            {
+        // Expected "jdbc:"
+        if (pos == -1) {
+            return false;
+        }
+
+        pos = tmpUrl.indexOf(':', pos + 1);
+
+        // Expected "jdbc:jtds:"
+        if (pos == -1) {
+            return false;
+        }
+
+        // Expected "jdbc:jtds:"
+        if (!tmpUrl.substring(0, pos + 1).equalsIgnoreCase("jdbc:jtds:")) {
+            return false;
+        }
+
+        int endPos = tmpUrl.indexOf("//", ++pos);
+
+        // Expected at least "jdbc:jtds://"
+        if (endPos == -1) {
+            return false;
+        }
+
+        if (pos != endPos) {
+            String server = tmpUrl.substring(pos, endPos).toLowerCase();
+
+            if (server.equals("sqlserver:")) {
+                // Already set to SQL Server...
+            } else if (server.equals("sybase:")) {
                 serverType = Tds.SYBASE;
-                tmpUrl = url.substring(sybaseUrlPrefix.length());
-            }
-
-            try
-            {
-                StringTokenizer tokenizer = new StringTokenizer(tmpUrl, ":/;", true);
-                String tmp;
-                String host = null;
-                String port = serverType==Tds.SYBASE ? defaultSybasePort : defaultSQLServerPort;
-                String database = "";
-
-                // Get the hostname
-                host = tokenizer.nextToken();
-
-                if( tokenizer.hasMoreTokens() )
-                {
-                    // Find the port if it has one.
-                    tmp = tokenizer.nextToken();
-                    if( tmp.equals(":") )
-                    {
-                        port = tokenizer.nextToken();
-                        // Skip the '/' character
-                        if( tokenizer.hasMoreTokens() )
-                            tmp = tokenizer.nextToken();
-                    }
-
-                    if( tokenizer.hasMoreTokens() && tmp.equals("/") )
-                    {
-                        // find the database name
-                        database = tokenizer.nextToken();
-                        if( tokenizer.hasMoreTokens() )
-                            tmp = tokenizer.nextToken();
-                    }
-
-                    // XXX The next loop is a bit too permisive.
-                    while( tmp.equals(";") )
-                    {
-                        // Extract the additional attribute.
-                        String extra = tokenizer.nextToken();
-                        StringTokenizer tok2 = new StringTokenizer(extra, "=", false);
-                        String key = tok2.nextToken().toUpperCase();
-
-                        if( tok2.hasMoreTokens() )
-                            result.put(key, tok2.nextToken());
-
-                        if( tokenizer.hasMoreTokens() )
-                            tmp = tokenizer.nextToken();
-                        else
-                            break;
-                    }
-                }
-
-                // if there are anymore tokens then don't recognoze this URL
-                if( !tokenizer.hasMoreTokens() && isValidHostname(host) )
-                {
-                    result.put(Tds.PROP_HOST, host);
-                    result.put(Tds.PROP_SERVERTYPE, ""+serverType);
-                    result.put(Tds.PROP_PORT, port);
-                    result.put(Tds.PROP_DBNAME, database);
-                }
-                else
-                    return false;
-
-                return true;
-            }
-            catch (NoSuchElementException e)
-            {
+            } else {
                 return false;
             }
         }
-        else
-            return false;
-    }
 
-    private boolean isValidHostname(String host)
-    {
-        return host != null;
+        tmpUrl = tmpUrl.substring(endPos + 2);
+
+        int portStart = tmpUrl.indexOf(':');
+        int databaseStart = tmpUrl.indexOf('/');
+        int attributesStart = tmpUrl.indexOf(';');
+
+        if (portStart != -1) {
+            endPos = portStart;
+        } else if (databaseStart != -1) {
+            endPos = databaseStart;
+        } else if (attributesStart != -1) {
+            endPos = attributesStart;
+        } else {
+            endPos = tmpUrl.length();
+        }
+
+        // Was expecting some kind of host to be specified...
+        if (endPos == 0) {
+            return false;
+        }
+
+        String host = tmpUrl.substring(0, endPos);
+        String port;
+        String database;
+
+        // Determine if a port is specified
+        if (portStart == -1) {
+            port = (serverType == Tds.SYBASE) ? DEFAULT_SYBASE_PORT : DEFAULT_SQL_SERVER_PORT;
+        } else {
+            if (databaseStart != -1) {
+                endPos = databaseStart;
+            } else if (attributesStart != -1) {
+                endPos = attributesStart;
+            } else {
+                endPos = tmpUrl.length();
+            }
+
+            // All other start positions should be less than the port start otherwise
+            // there is a problem with the order of the settings.
+            // If the end position equals the start position, then no port was entered
+            // after the delimiter so consider this a failure and do not default the
+            // value.
+            if (endPos <= portStart) {
+                return false;
+            }
+
+            port = tmpUrl.substring(portStart + 1, endPos);
+        }
+
+        // Determine if a database is specified
+        if (databaseStart == -1) {
+            database = "";
+        } else {
+            if (attributesStart != -1) {
+                endPos = attributesStart;
+            } else {
+                endPos = tmpUrl.length();
+            }
+
+            // All other start positions should be less than the port start otherwise
+            // there is a problem with the order of the settings.  If the values are
+            // equal the database delimiter was found but no database name was entered.
+            if (endPos <= portStart) {
+                return false;
+            }
+
+            database = tmpUrl.substring(databaseStart + 1, endPos);
+        }
+
+        // Process all attributes that may be specified.
+        while (attributesStart != -1) {
+            pos = attributesStart + 1;
+            int assignment = tmpUrl.indexOf('=', pos);
+
+            // If there is an attribute, there should be an assignement operator;
+            // the assignment operation should not have been discovered at the start
+            // position or else there is no attribute name defined.
+            if (assignment == -1 || pos == assignment) {
+                return false;
+            }
+
+            attributesStart = tmpUrl.indexOf(';', pos);
+
+            if (attributesStart == -1) {
+                endPos = tmpUrl.length();
+            } else {
+                // Make sure an assignment operator was not found for a subsequent
+                // attribute
+                if (assignment > attributesStart) {
+                    return false;
+                }
+
+                endPos = attributesStart;
+            }
+
+            // Should empty values be allowed???
+            if (result != null) {
+                result.put(tmpUrl.substring(pos, assignment).toUpperCase(),
+                           tmpUrl.substring(assignment + 1, endPos));
+            }
+        }
+
+        if (result != null) {
+            result.put(Tds.PROP_HOST, host);
+            result.put(Tds.PROP_SERVERTYPE, String.valueOf(serverType));
+            result.put(Tds.PROP_PORT, port);
+            result.put(Tds.PROP_DBNAME, database);
+        }
+
+        return true;
     }
 
     /**
@@ -214,35 +302,17 @@ public class Driver implements java.sql.Driver
      * The idea is to make them easier to read by the inner classes.
      *
      * @param props the input <code>Properties</code>
-     * @return      the "same" <code>Properties</code> with uppercase keys
+     * @return the "same" <code>Properties</code> with uppercase keys
      */
-    static Properties processProperties(Properties props)
-    {
-        Properties res = null;
+    private Properties processProperties(Properties props) {
+        Properties res = props;
 
-        if( props != null )
-        {
-            res = new Properties();
+        for (Enumeration e = props.keys(); e.hasMoreElements();) {
+            String key = e.nextElement().toString();
 
-            for( Enumeration e=props.keys(); e.hasMoreElements(); )
-            {
-                String key = e.nextElement().toString();
-                res.setProperty(key.toUpperCase(), props.getProperty(key));
-            }
+            res.setProperty(key.toUpperCase(), props.getProperty(key));
         }
 
         return res;
-    }
-
-    // Register ourselves with the DriverManager
-    static
-    {
-        try
-        {
-            java.sql.DriverManager.registerDriver(new Driver());
-        }
-        catch( SQLException ex )
-        {
-        }
     }
 }

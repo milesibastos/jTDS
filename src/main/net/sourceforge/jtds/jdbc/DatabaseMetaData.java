@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.3 2002-10-22 09:50:10 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.4 2002-10-26 12:20:47 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.3 2002-10-22 09:50:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.4 2002-10-26 12:20:47 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -382,140 +382,36 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      *@exception  SQLException   if a database-access error occurs.
      *@see                       #getSearchStringEscape
      */
-    public java.sql.ResultSet getColumns( String catalog, String schemaPattern,
-            String tableNamePattern, String columnNamePattern )
-             throws SQLException
+    public java.sql.ResultSet getColumns( String catalog, String schemaPattern, String tableNamePattern,
+        String columnNamePattern ) throws SQLException
     {
-      /*
-        debugPrintln( "Inside of getColumn" );
-        debugPrintln( "  catalog is |" + catalog + "|" );
-        debugPrintln( "  schemaPattern is " + schemaPattern );
-        debugPrintln( "  tableNamePattern is " + tableNamePattern );
-        debugPrintln( "  columnNamePattern is " + columnNamePattern );
-       */
-        return getColumns_SQLServer65( catalog, schemaPattern,
-                tableNamePattern, columnNamePattern );
-    }
+        String query = "exec sp_columns ?, ?, ?, ?, ?";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_columns ?, ?, ?, ?, ?";
 
-    private static String makeTypeSQL(String colName)
-    {
-        // Create a lookup table for mapping between native and jdbc types
-        // This table can be reused for all drivers of the same version
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, tableNamePattern);
+        s.setString(2, schemaPattern);
+        s.setString(3, catalog);
+        s.setString(4, columnNamePattern);
+        s.setInt(5, 3); // ODBC version 3
 
-        String sql =
-            "CASE " + colName + " " +
-            "WHEN  31 THEN 1111 " +   // VOID
-            "WHEN  34 THEN 1111 " +   // IMAGE
-            "WHEN  35 THEN   -1 " +   // TEXT
-            "WHEN  37 THEN   -3 " +   // VARBINARY
-            "WHEN  38 THEN    4 " +   // INTN
-            "WHEN  39 THEN   12 " +   // VARCHAR
-            "WHEN  45 THEN   -2 " +   // BINARY
-            "WHEN  47 THEN    1 " +   // CHAR
-            "WHEN  48 THEN   -6 " +   // INT1
-            "WHEN  50 THEN   -7 " +   // BIT
-            "WHEN  52 THEN    5 " +   // INT2
-            "WHEN  56 THEN    4 " +   // INT4
-            "WHEN  58 THEN   93 " +   // DATETIME4
-            "WHEN  59 THEN    7 " +   // REAL
-            "WHEN  60 THEN 1111 " +   // MONEY
-            "WHEN  61 THEN   93 " +   // DATETIME
-            "WHEN  62 THEN    8 " +   // FLT8
-            "WHEN  63 THEN    2 " +   // NUMERIC
-            "WHEN 106 THEN    3 " +   // DECIMAL
-            "WHEN 108 THEN    2 " +   // NUMERIC
-            "WHEN 109 THEN    8 " +   // FLTN
-            "WHEN 110 THEN 1111 " +   // MONEYN
-            "WHEN 111 THEN   93 " +   // DATETIMN
-            "WHEN 112 THEN 1111 " +   // MONEY4
-            "WHEN 122 THEN 1111 " +   // SMALLMONEY
-            "ELSE 0             " +   // Unknown
-            "END";
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
 
-        return sql;
-    }
-
-    private java.sql.ResultSet getColumns_SQLServer65(
-        String catalog,
-        String schemaPattern,
-        String tableNamePattern,
-        String columnNamePattern)
-        throws SQLException
-    {
-
-        String sql = null;
-        java.sql.Statement statement = connection.createStatement();
-
-        String lookup = makeTypeSQL("c.type");
-
-        java.sql.ResultSet rs;
-        String cat = catalog;
-
-        if(catalog == null)
-        {
-            rs = statement.executeQuery("SELECT DB_NAME()");
-            rs.next();
-
-            cat = rs.getString(1);
-
-            rs.close();
-        }
-
-         // XXX Security risk.  It 'might' be possible to create
-         // a catalog name that when inserted into this sql statement could
-         // do other commands.
-        sql =
-            "select                                           " +
-            "   TABLE_CAT='" + cat + "',                      " +
-            "   TABLE_SCHEM=USER_NAME(o.uid),                 " +
-            "   TABLE_NAME=o.name,                            " +
-            "   COLUMN_NAME=c.name,                           " +
-            "   DATA_TYPE=" + lookup + ",                     " +
-            "   TYPE_NAME=t.name,                             " +
-            "   COLUMN_SIZE=c.prec,                           " +
-            "   BUFFER_LENGTH=0,                              " +
-            "   DECIMAL_DIGITS=c.scale,                       " +
-            "   NUM_PREC_RADIX=10,                            " +
-            "   NULLABLE=convert(integer,                     " +
-            "                    convert(bit, c.status&8)),   " +
-            (tds.getDatabaseMajorVersion()>=8 && tds.getServerType()==Tds.SQLSERVER ?
-                "   REMARKS=convert(varchar,                  " +
-                "       (select value from                    " +
-                "       " + cat + ".dbo.sysproperties as rm   " +
-                "       where rm.id=o.id and smallid=c.colid  " +
-                "       and rm.name='MS_Description')),       " :
-                "   REMARKS=NULL,                             ") +
-            "   COLUMN_DEF=                                   " +
-            "       (select syscom.text from                  " +
-            "       " + cat + ".dbo.sysobjects as sysobj,     " +
-            "       " + cat + ".dbo.syscomments as syscom     " +
-            "       where sysobj.parent_obj=o.id              " +
-            "       and sysobj.type='D'                       " +
-            "       and sysobj.info=c.colid                   " +
-            "       and syscom.id=sysobj.id),                 " +
-            "   SQL_DATATYPE=c.type,                          " +
-            "   SQL_DATETIME_SUB=0,                           " +
-            "   CHAR_OCTET_LENGTH=c.length,                   " +
-            "   ORDINAL_POSITION=c.colid,                     " +
-            "   IS_NULLABLE=                                  " +
-            "      convert(char(3), rtrim(substring           " +
-            "                             ('NO      YES',     " +
-            "                             (c.status&8)+1,3))) " +
-            "from                                             " +
-            "   " + cat + ".dbo.sysobjects o,                 " +
-            "   " + cat + ".dbo.syscolumns c,                 " +
-            "   " + cat + ".dbo.systypes t                    " +
-            "where o.type in ('S', 'V', 'U') and o.id=c.id    " +
-            "   and t.xusertype=c.xusertype                   " +
-            "   and USER_NAME(o.uid) LIKE                     " +
-            "           '" + schemaPattern + "'               " +
-            "   and o.name LIKE '" + tableNamePattern + "'    " ;
-
-        if(columnNamePattern != null) sql += "  and c.name like '" + columnNamePattern + "'";
-
-        sql += " order by TABLE_CAT, TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION";
-
-        rs = statement.executeQuery(sql);
+        col.setName(1, "TABLE_CAT");
+        col.setLabel(1, "TABLE_CAT");
+        col.setName(2, "TABLE_SCHEM");
+        col.setLabel(2, "TABLE_SCHEM");
+        col.setName(7, "COLUMN_SIZE");
+        col.setLabel(7, "COLUMN_SIZE");
+        col.setName(8, "BUFFER_LENGTH");
+        col.setLabel(8, "BUFFER_LENGTH");
+        col.setName(9, "DECIMAL_DIGITS");
+        col.setLabel(9, "DECIMAL_DIGITS");
+        col.setName(10, "NUM_PREC_RADIX");
+        col.setLabel(10, "NUM_PREC_RADIX");
+        col.setFakeColumnCount(18);
 
         return rs;
     }

@@ -2,6 +2,15 @@
 Changes from jTDS 0.4
 =======================
 
+10/26/2002 - Alin Sinpalean
+
+ o Fixed bug #629022 (also signaled in a post in the jTDS Help forum):
+   DatabaseMetaData.getColumns() did not work if null was supplied as schema or
+   table name. This was because a query was used to retrieve this information.
+   Now sp_columns is used. This brings up another tiny issue: type numbers are
+   wrong (e.g. -9 for NVARCHAR; it should be -1111 == unknown) but I guess it's
+   not that bad.
+
 10/23/2002 - Alin Sinpalean
 
  o Tiny change in CallableStatement_base constructor where the procedure name

@@ -6,6 +6,10 @@ Changes from jTDS 0.8.1
    to Driver class per suggestion by Mike Hutchinson.
  o Made TdsCore.DEFAULT_SQLSERVER_PORT and DEFAULT_SYBASE_PORT public.
    Removed use of "magic" values in other classes.
+ o Applied patch [997211] Refactor Tds8Test to skip tests if not using TDS 8.0.
+   Removed unused TestBase.connectODBC() and TestBase.getConnectionODBC()
+   methods.  Now use loadProperties(ODBC_CONNECTION_PROPERTIES) to switch
+   the connection to use ODBC.
 
 07/27/2004 - David Kilzer
  o Renamed SharedNamedPipeTest to NamedPipeUnitTest to better reflect its

@@ -1,7 +1,16 @@
 package net.sourceforge.jtds.test;
 
-import java.sql.*;
-import java.math.*;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
+import java.sql.Types;
+
+
 
 /**
  * Test case to illustrate use of TDS 8 support
@@ -9,20 +18,23 @@ import java.math.*;
  * @version 1.0
  */
 public class Tds8Test extends DatabaseTestCase {
+
+    public static Test suite() {
+        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
+            return new TestSuite();
+        }
+        return new TestSuite(Tds8Test.class);
+    }
+
+
     public Tds8Test(String name) {
         super(name);
     }
 
     public void testBigInt1() throws Exception {
-        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
-            System.out.println("testBigInt1() requires TDS 8");
-            return;
-        }
-
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #bigint1 (num bigint, txt varchar(100))");
-        PreparedStatement pstmt = con.prepareStatement(
-                                                      "INSERT INTO #bigint1 (num, txt) VALUES (?, ?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bigint1 (num, txt) VALUES (?, ?)");
         pstmt.setLong(1, 1234567890123L);
         pstmt.setString(2, "1234567890123");
         assertEquals("Insert bigint failed", 1, pstmt.executeUpdate());
@@ -39,17 +51,13 @@ public class Tds8Test extends DatabaseTestCase {
      * Test for [989963] BigInt becomes Numeric
      */
     public void testBigInt2() throws Exception {
-        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
-            System.out.println("testBigInt2() requires TDS 8");
-            return;
-        }
 
         long data = 1;
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #bigint2 (data BIGINT)");
         stmt.close();
-        
+
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bigint2 (data) VALUES (?)");
 
         pstmt.setLong(1, data);
@@ -76,27 +84,21 @@ public class Tds8Test extends DatabaseTestCase {
 
         assertTrue(tmpData instanceof Long);
         assertTrue(data == ((Long) tmpData).longValue());
-        
+
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
-        
+
         assertTrue(resultSetMetaData != null);
         assertTrue(resultSetMetaData.getColumnType(1) == Types.BIGINT);
-        
+
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
     }
-    
-    public void testSqlVariant() throws Exception {
-        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
-            System.out.println("testSqlVariant() requires TDS 8");
-            return;
-        }
 
+    public void testSqlVariant() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #VARTEST (id int, data sql_variant)");
-        PreparedStatement pstmt = con.prepareStatement(
-                                                      "INSERT INTO #VARTEST (id, data) VALUES (?, ?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #VARTEST (id, data) VALUES (?, ?)");
         pstmt.setInt(1, 1);
         pstmt.setString(2, "TEST STRING");
         assertEquals("Insert 1 failed", pstmt.executeUpdate(), 1);
@@ -107,7 +109,7 @@ public class Tds8Test extends DatabaseTestCase {
         pstmt.setBigDecimal(2, new BigDecimal("10.23"));
         assertEquals("Insert 3 failed", pstmt.executeUpdate(), 1);
         pstmt.setInt(1, 4);
-        byte bytes[] = {'X','X','X'};
+        byte bytes[] = {'X', 'X', 'X'};
         pstmt.setBytes(2, bytes);
         assertEquals("Insert 4 failed", pstmt.executeUpdate(), 1);
         ResultSet rs = stmt.executeQuery("SELECT id, data FROM #VARTEST ORDER BY id");
@@ -126,17 +128,13 @@ public class Tds8Test extends DatabaseTestCase {
     }
 
     public void testUserFn() throws Exception {
-        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
-            System.out.println("testUserFn() requires TDS 8");
-            return;
-        }
-
         dropFunction("f_varret");
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE FUNCTION f_varret(@data varchar(100)) RETURNS sql_variant AS\r\n"+
-                     "BEGIN\r\n"+
-                     "RETURN 'Test ' + @data\r\n" +
-                     "END");
+        stmt.execute(
+                "CREATE FUNCTION f_varret(@data varchar(100)) RETURNS sql_variant AS\r\n" +
+                "BEGIN\r\n" +
+                "RETURN 'Test ' + @data\r\n" +
+                "END");
         CallableStatement cstmt = con.prepareCall("{?=call f_varret(?)}");
         cstmt.registerOutParameter(1, java.sql.Types.OTHER);
         cstmt.setString(2, "String");
@@ -148,15 +146,14 @@ public class Tds8Test extends DatabaseTestCase {
     public void testMetaData() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("create table #testrsmd (id int, data varchar(10), num decimal(10,2))");
-        PreparedStatement pstmt = con.prepareStatement(
-                                                      "select * from #testrsmd where id = ?");
+        PreparedStatement pstmt = con.prepareStatement("select * from #testrsmd where id = ?");
         ResultSetMetaData rsmd = pstmt.getMetaData();
         assertNotNull(rsmd);
         assertEquals(3, rsmd.getColumnCount());
         assertEquals("data", rsmd.getColumnName(2));
         assertEquals(2, rsmd.getScale(3));
     }
-    
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(Tds8Test.class);
     }

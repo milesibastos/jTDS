@@ -25,18 +25,19 @@ import junit.framework.TestCase;
  * @version 1.0
  */
 public class TestBase extends TestCase {
+
+    private static final String CONNECTION_PROPERTIES = "conf/connection.properties";
+    private static final String ODBC_CONNECTION_PROPERTIES = "conf/odbc-connection.properties";
+    static Properties props = loadProperties(CONNECTION_PROPERTIES);
     Connection con;
-    Properties props;
 
     public TestBase(String name) {
         super(name);
     }
 
-
     public void setUp() throws Exception {
         connect();
     }
-
 
     public void tearDown() throws Exception {
         disconnect();
@@ -44,9 +45,6 @@ public class TestBase extends TestCase {
 
 
     public Connection getConnection() throws Exception {
-        String fileName = "conf/connection.properties";
-
-        props = loadProperties(fileName);
         Class.forName(props.getProperty("driver"));
         String url = props.getProperty("url");
         Connection con = DriverManager.getConnection(url, props);
@@ -56,14 +54,12 @@ public class TestBase extends TestCase {
         return con;
     }
 
-
     public void showWarnings(SQLWarning w) {
         while (w != null) {
             System.out.println(w.getMessage());
             w = w.getNextWarning();
         }
     }
-
 
     private void disconnect() throws Exception {
         if (con != null) {
@@ -72,18 +68,10 @@ public class TestBase extends TestCase {
         }
     }
 
-
     protected void connect() throws Exception {
         disconnect();
         con = getConnection();
     }
-
-
-    protected void connectODBC() throws Exception {
-        disconnect();
-        con = getConnectionODBC();
-    }
-
 
     public void dump(ResultSet rs) throws SQLException {
         ResultSetMetaData rsm = rs.getMetaData();
@@ -104,7 +92,6 @@ public class TestBase extends TestCase {
         }
     }
 
-
     public void dumpRow(ResultSet rs) throws SQLException {
         ResultSetMetaData rsm = rs.getMetaData();
         int cols = rsm.getColumnCount();
@@ -120,38 +107,28 @@ public class TestBase extends TestCase {
         System.out.println();
     }
 
-
-    public Connection getConnectionODBC() throws Exception {
-        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
-        String fileName = "conf/odbc-connection.properties";
-        Properties props = loadProperties(fileName);
-        String url = props.getProperty("url");
-        Connection con = DriverManager.getConnection(url, props);
-        showWarnings(con.getWarnings());
-        initLanguage(con);
-
-        return con;
-    }
-
-
     private void initLanguage(Connection con) throws SQLException {
         Statement stmt = con.createStatement();
         stmt.executeUpdate("set LANGUAGE 'us_english'");
         stmt.close();
     }
 
+    private static Properties loadProperties(String fileName) {
 
-    private Properties loadProperties(String fileName) throws Exception {
         File propFile = new File(fileName);
 
         if (!propFile.exists()) {
             fail("Connection properties not found (" + propFile + ").");
         }
 
-        Properties props = new Properties();
-        props.load(new FileInputStream(propFile));
-
-        return props;
+        try {
+            Properties props = new Properties();
+            props.load(new FileInputStream(propFile));
+            return props;
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected void makeTestTables(Statement stmt) throws SQLException {

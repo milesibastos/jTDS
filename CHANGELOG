@@ -1,6 +1,12 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/13/2004 - David Kilzer
+ o Applied patch to check if connection is null before calling
+   connection.isClosed() in JtdsStatement.  Patch posted to
+   [1007962] 0.9-rc1 NullPointerException; was created while debugging an
+   issue with named pipes.
+
 08/12/2004 - Brian Heineman
  o Added result set tests for min and max values.
  o Added result set tests for BIGINT.

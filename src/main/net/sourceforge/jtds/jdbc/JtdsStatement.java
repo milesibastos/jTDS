@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.9 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: JtdsStatement.java,v 1.10 2004-08-13 17:14:10 ddkilzer Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -153,7 +153,7 @@ public class JtdsStatement implements java.sql.Statement {
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
-        if (closed || connection.isClosed()) {
+        if (closed || connection == null || connection.isClosed()) {
             throw new SQLException(
                     Messages.get("error.generic.closed", "Statement"), "HY010");
         }
@@ -257,7 +257,7 @@ public class JtdsStatement implements java.sql.Statement {
                     // Sybase cursor logic goes here (one day).
                 }
              } catch (SQLException e) {
-                 if (connection.isClosed()) {
+                 if (connection == null || connection.isClosed()) {
                      // Serious error so return exception to caller
                      throw e;
                  }
@@ -328,7 +328,7 @@ public class JtdsStatement implements java.sql.Statement {
                      // Sybase cursor logic goes here (one day).
                  }
               } catch (SQLException e) {
-                  if (connection.isClosed()) {
+                  if (connection == null || connection.isClosed()) {
                       // Serious error so return exception to caller
                       throw e;
                   }

@@ -5,6 +5,7 @@ Changes from jTDS 0.8.1
  o Applied patch in bug [992971] Decimal testcase fails with sql7 (Thanks to
    Mike Hutchinson for the patch)
  o Corrected bug introduced in Clob optimization.
+ o Added test for bug [992715] wasnull() always returns false
 
 07/17/2004 - Brian Heineman
  o Applied patch in bug [992971], which corrects bug [992976] Zero length

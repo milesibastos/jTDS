@@ -361,6 +361,34 @@ public class CallableStatementTest extends TestBase {
             stmt.close();
         }
     }
+
+    /**
+     * Test for bug [992715] wasnull() always returns false
+     */
+    public void testCallableRegisterOutParameter2() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure rop2 @bool bit, @whatever varchar(1) OUTPUT as\r\n "
+                     + "begin\r\n"
+                     + "set @whatever = null\r\n"
+                     + "end");
+        stmt.close();
+        
+        try {
+            CallableStatement cstmt = con.prepareCall("{call rop2(?,?)}");
+
+            cstmt.setNull(1, Types.BOOLEAN);
+            cstmt.registerOutParameter(2, Types.VARCHAR);
+            cstmt.execute();
+
+            assertTrue(cstmt.getString(2) == null);
+            assertTrue(cstmt.wasNull());
+            cstmt.close();
+        } finally {
+            stmt = con.createStatement();
+            stmt.execute("drop procedure rop2");
+            stmt.close();
+        }
+    }
     
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);

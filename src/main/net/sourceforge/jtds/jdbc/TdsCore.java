@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.55 2004-12-03 16:52:00 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.56 2004-12-05 12:07:31 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -803,13 +803,33 @@ public class TdsCore {
         }
 
         if (parameters != null) {
-            for (int i = 0; i < parameters.length; i++){
-                if (!parameters[i].isSet && !parameters[i].isOutput){
-                    throw new SQLException(Messages.get("error.prepare.paramnotset",
-                            Integer.toString(i + 1)), "07000");
+            if (procName == null && sql.startsWith("EXECUTE ")) {
+                //
+                // If this is a callable statement that could not be fully parsed
+                // into an RPC call convert to straight SQL now.
+                // An example of non RPC capable SQL is {?=call sp_example('literal', ?)}
+                //
+                for (int i = 0; i < parameters.length; i++){
+                    // Output parameters not allowed.
+                    if (!parameters[i].isRetVal && parameters[i].isOutput){
+                        throw new SQLException(Messages.get("error.prepare.nooutparam",
+                                Integer.toString(i + 1)), "07000");
+                    }
                 }
-                parameters[i].clearOutValue();
-                TdsData.getNativeType(connection, parameters[i]);
+                sql = Support.substituteParameters(sql, parameters, getTdsVersion());
+                parameters = null;
+            } else {
+                //
+                // Check all parameters are either output or have values set
+                //
+                for (int i = 0; i < parameters.length; i++){
+                    if (!parameters[i].isSet && !parameters[i].isOutput){
+                        throw new SQLException(Messages.get("error.prepare.paramnotset",
+                                Integer.toString(i + 1)), "07000");
+                    }
+                    parameters[i].clearOutValue();
+                    TdsData.getNativeType(connection, parameters[i]);
+                }
             }
         }
 

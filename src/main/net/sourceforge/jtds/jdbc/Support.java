@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.33 2004-11-29 16:33:55 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.34 2004-12-05 12:07:31 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -752,13 +752,7 @@ public class Support {
                 dt += (cal.get(Calendar.MONTH) + 1) * 100;
                 dt += cal.get(Calendar.DAY_OF_MONTH);
                 buf.append(dt);
-                buf.append(' ');
-                int t = cal.get(Calendar.HOUR_OF_DAY);
-                buf.append((t < 10) ? "0" + t + ":" : t + ":");
-                t = cal.get(Calendar.MINUTE);
-                buf.append((t < 10) ? "0" + t + ":" : t + ":");
-                t = cal.get(Calendar.SECOND);
-                buf.append((t < 10) ? "0" + t + "'" : t + "'");
+                buf.append('\'');
             }
         } else
             if (value instanceof java.sql.Time) {

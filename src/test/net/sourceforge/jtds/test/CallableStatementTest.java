@@ -596,7 +596,7 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
-     * Test that procedures containing semicolons work.
+     * Test that procedure names containing semicolons are parsed correctly.
      */
     public void testSemicolonProcedures() throws Exception
     {
@@ -610,6 +610,41 @@ public class CallableStatementTest extends TestBase {
         assertEquals(3, cstmt.getInt(2));
         cstmt.execute();
         assertEquals(3, cstmt.getInt(2));
+    }
+
+    /**
+     * Test that procedure calls with both literal parameters and parameterr
+     * markers are executed correctly (bug [1078927] Callable statement fails).
+     */
+    public void testNonRpcProc1() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute(
+                "create proc #testsp1 @p1 int, @p2 int out as set @p2 = @p1");
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{call #testsp1(100, ?)}");
+        cstmt.setInt(1, 1);
+        cstmt.execute();
+        cstmt.close();
+    }
+
+    /**
+     * Test that procedure calls with both literal parameters and parameterr
+     * markers are executed correctly (bug [1078927] Callable statement fails).
+     */
+    public void testNonRpcProc2() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute("create proc #testsp2 @p1 int, @p2 int as return 99");
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{?=call #testsp2(100, ?)}");
+        cstmt.registerOutParameter(1, java.sql.Types.INTEGER);
+        cstmt.setInt(2, 2);
+        cstmt.execute();
+        assertEquals(99, cstmt.getInt(1));
+        cstmt.close();
     }
 
     public static void main(String[] args) {

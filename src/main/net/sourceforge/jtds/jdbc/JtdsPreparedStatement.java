@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.29 2004-12-03 16:52:00 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.30 2004-12-05 12:07:31 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -372,7 +372,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public int executeUpdate() throws SQLException {
         checkOpen();
 
-        if (procName == null) {
+        if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
             // between the moment when the statement is prepared and the moment
             // when it's executed.
@@ -419,7 +419,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         resultQueue.clear();
         genKeyResultSet = null;
 
-        if (procName == null) {
+        if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
             // between the moment when the statement is prepared and the moment
             // when it's executed.
@@ -635,7 +635,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         genKeyResultSet = null;
         boolean isCallableStatement = this instanceof JtdsCallableStatement;
 
-        if (procName == null) {
+        if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
             // between the moment when the statement is prepared and the moment
             // when it's executed.

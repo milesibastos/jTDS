@@ -15,6 +15,7 @@ import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Messages;
 
 import java.text.SimpleDateFormat;
+import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
@@ -1044,5 +1045,148 @@ public class SAfeTest extends DatabaseTestCase {
 
         pstmt.close();
         rs.close();
+    }
+
+    public void testSocketConcurrency1() {
+        final Connection con = this.con;
+        final int threadCount = 10, loopCount = 10;
+        final Vector errors = new Vector();
+
+//        DriverManager.setLogStream(System.out);
+
+        // Create a huge query
+        StringBuffer queryBuffer = new StringBuffer(4100);
+        queryBuffer.append("SELECT '");
+        while (queryBuffer.length() < 2000) {
+            queryBuffer.append("0123456789");
+        }
+        queryBuffer.append("' AS value1, '");
+        while (queryBuffer.length() < 4000) {
+            queryBuffer.append("9876543210");
+        }
+        queryBuffer.append("' AS value2");
+        final String query = queryBuffer.toString();
+
+        Thread  heavyThreads[] = new Thread[threadCount],
+                lightThreads[] = new Thread[threadCount];
+
+        // Create threadCount heavy threads
+        for (int i = 0; i < threadCount; i++) {
+            heavyThreads[i] = new Thread() {
+                public void run() {
+                    try {
+                        Statement stmt = con.createStatement();
+                        for (int i = 0; i < loopCount; i++) {
+                            stmt.execute(query);
+                        }
+                        stmt.close();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        errors.add(ex);
+                    }
+                }
+            };
+        }
+
+        // Create threadCount light threads
+        for (int i = 0; i < threadCount; i++) {
+            lightThreads[i] = new Thread() {
+                public void run() {
+                    try { sleep(100); } catch (InterruptedException ex) {}
+                    try {
+                        Statement stmt = con.createStatement();
+                        for (int i = 0; i < loopCount; i++) {
+                            stmt.execute("SELECT 1");
+                        }
+                        stmt.close();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        errors.add(ex);
+                    }
+                }
+            };
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            heavyThreads[i].start();
+            lightThreads[i].start();
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            try { heavyThreads[i].join(); } catch (InterruptedException ex) {}
+            try { lightThreads[i].join(); } catch (InterruptedException ex) {}
+        }
+
+        assertEquals(0, errors.size());
+    }
+
+    public void testSocketConcurrency2() {
+        final Connection con = this.con;
+        final int threadCount = 10, loopCount = 10;
+        final Vector errors = new Vector();
+
+//        DriverManager.setLogStream(System.out);
+
+        // Create a huge query
+        StringBuffer valueBuffer = new StringBuffer(4000);
+        while (valueBuffer.length() < 4000) {
+            valueBuffer.append("0123456789");
+        }
+        final String value = valueBuffer.toString();
+
+        Thread  heavyThreads[] = new Thread[threadCount],
+                lightThreads[] = new Thread[threadCount];
+
+        // Create threadCount heavy threads
+        for (int i = 0; i < threadCount; i++) {
+            heavyThreads[i] = new Thread() {
+                public void run() {
+                    try {
+                        PreparedStatement pstmt = con.prepareStatement(
+                                "SELECT ? AS value1, ? AS value2");
+                        pstmt.setString(1, value);
+                        pstmt.setString(2, value);
+                        for (int i = 0; i < loopCount; i++) {
+                            pstmt.execute();
+                        }
+                        pstmt.close();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        errors.add(ex);
+                    }
+                }
+            };
+        }
+
+        // Create threadCount light threads
+        for (int i = 0; i < threadCount; i++) {
+            lightThreads[i] = new Thread() {
+                public void run() {
+                    try { sleep(100); } catch (InterruptedException ex) {}
+                    try {
+                        Statement stmt = con.createStatement();
+                        for (int i = 0; i < loopCount; i++) {
+                            stmt.execute("SELECT 1");
+                        }
+                        stmt.close();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        errors.add(ex);
+                    }
+                }
+            };
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            heavyThreads[i].start();
+            lightThreads[i].start();
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            try { heavyThreads[i].join(); } catch (InterruptedException ex) {}
+            try { lightThreads[i].join(); } catch (InterruptedException ex) {}
+        }
+
+        assertEquals(0, errors.size());
     }
 }

@@ -2,6 +2,9 @@ Changes from jTDS 0.9.1
 =======================
 
 12/16/2004 - Alin Sinpalean
+ o Possible fix for bug [1086156] Hang in driver socketRead under load. Could
+   not actually reproduce the exact behavior but found other errors caused by
+   incomplete synchronization on SharedSocket.
  o Fixed a bug that was causing setSavepoint() to fail when no statements to
    actually start a transaction were executed before.
 

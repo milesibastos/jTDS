@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: RequestStream.java,v 1.2 2004-07-07 17:42:40 bheineman Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -473,15 +473,19 @@ public class RequestStream {
 
                 if (len > maxLen) {   // diminish scale as long as len is to much
                     final int dif = len - maxLen;
+                    
                     scale -= dif * 2;
+                    
                     if (scale < 0) {
                         throw new IOException("BigDecimal to big to send");
                     }
+                    
                     value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
+                    
                     continue;
-                } else {
-                    break;
                 }
+                
+                break;
             } while (true);
 
             write((byte)len);

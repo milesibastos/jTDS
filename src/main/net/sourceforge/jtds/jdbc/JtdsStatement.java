@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.3 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.4 2004-07-07 17:42:40 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -628,14 +628,14 @@ public class JtdsStatement implements java.sql.Statement {
             }
 
             return false;
-        } else {
-            JtdsResultSet rs = new JtdsResultSet(this,
-                                                 ResultSet.TYPE_FORWARD_ONLY,
-                                                 ResultSet.CONCUR_READ_ONLY,
-                                                 tds.getColumns(),
-                                                 false);
-            currentResult = rs;
         }
+        
+        JtdsResultSet rs = new JtdsResultSet(this,
+                                             ResultSet.TYPE_FORWARD_ONLY,
+                                             ResultSet.CONCUR_READ_ONLY,
+                                             tds.getColumns(),
+                                             false);
+        currentResult = rs;
 
         return true;
     }

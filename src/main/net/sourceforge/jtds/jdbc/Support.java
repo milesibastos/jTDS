@@ -45,7 +45,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.2 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: Support.java,v 1.3 2004-07-07 17:42:40 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -305,16 +305,16 @@ public class Support {
                                 if (tmp.charAt(i) != '0') {
                                     if (tmp.charAt(i) == '.') {
                                         return tmp.substring(0, i);
-                                    } else {
-                                        return tmp.substring(0, i + 1);
                                     }
+                                    
+                                    return tmp.substring(0, i + 1);
                                 }
                             }
 
                             return tmp;
-                        } else {
-                            return x.toString();
                         }
+                        
+                        return x.toString();
                     } else if (x instanceof Number) {
                         return x.toString();
                     } else if (x instanceof Boolean) {

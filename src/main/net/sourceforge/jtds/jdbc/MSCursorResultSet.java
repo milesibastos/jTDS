@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.3 2004-07-07 17:42:40 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -772,11 +772,13 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         if (cursorFetch(FETCH_NEXT, 0)) {
             pos += 1;
+            
             return true;
-        } else {
-            pos = POS_AFTER_LAST;
-            return false;
         }
+        
+        pos = POS_AFTER_LAST;
+        
+        return false;
     }
 
     public boolean previous() throws SQLException {
@@ -787,11 +789,11 @@ public class MSCursorResultSet extends JtdsResultSet {
             pos -= (pos < 0) ? (pos - rowsInResult) : 1;
 
             return true;
-        } else {
-            pos = POS_BEFORE_FIRST;
-
-            return false;
         }
+        
+        pos = POS_BEFORE_FIRST;
+
+        return false;
     }
 
     public boolean rowDeleted() throws SQLException {

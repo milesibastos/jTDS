@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.4 2004-07-02 00:36:55 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.5 2004-07-07 17:42:40 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -2526,6 +2526,7 @@ public class TdsCore {
 
     /**
      * Execute SQL using TDS 5.0 protocol.
+     * 
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -2536,32 +2537,31 @@ public class TdsCore {
                               String procName,
                               ParamInfo[] parameters,
                               boolean noMetaData)
-        throws IOException, SQLException
-    {
+        throws IOException, SQLException {
         boolean haveParams = parameters != null && parameters.length > 0;
         boolean useParamNames = false;
 
         // Sybase does not allow text or image parameters
         for (int i = 0; haveParams && i < parameters.length; i++) {
-            if (parameters[i].sqlType.equals("text") ||
-                parameters[i].sqlType.equals("image"))
-            {
+            if (parameters[i].sqlType.equals("text")
+                || parameters[i].sqlType.equals("image")) {
                 if (procName != null && procName.length() > 0) {
                     // Call to store proc nothing we can do
                     if (parameters[i].sqlType.equals("text")) {
-                       throw new SQLException(
-                                       Support.getMessage("error.chartoolong"), "HY000");
-                    } else {
-                       throw new SQLException(
-                                        Support.getMessage("error.bintoolong"), "HY000");
+                        throw new SQLException(
+                                        Support.getMessage("error.chartoolong"), "HY000");
                     }
-                } else {
-                    // prepared statement substitute parameters into SQL
-                    sql = Support.substituteParameters(sql, parameters);
-                    haveParams = false;
-                    procName = null;
-                    break;
+                    
+                    throw new SQLException(
+                                     Support.getMessage("error.bintoolong"), "HY000");
                 }
+                
+                // prepared statement substitute parameters into SQL
+                sql = Support.substituteParameters(sql, parameters);
+                haveParams = false;
+                procName = null;
+                
+                break;
             }
         }
 
@@ -2570,71 +2570,80 @@ public class TdsCore {
         if (procName == null || procName.length() == 0) {
             // Use TDS_LANGUAGE TOKEN with optional parameters
             out.write((byte)TDS_LANG_TOKEN);
+            
             if (haveParams) {
                 sql = Support.substituteParamMarkers(sql, parameters);
             }
+            
             if (socket.isWideChars()) {
                 // Need to preconvert string to get correct length
                 byte[] buf = Support.encodeString(connection.getCharSet(), sql);
-                out.write((int)buf.length+1);
-                out.write((byte)(haveParams? 1: 0));
+                
+                out.write((int) buf.length + 1);
+                out.write((byte)(haveParams ? 1 : 0));
                 out.write(buf);
             } else {
-                out.write((int)sql.length()+1);
-                out.write((byte)(haveParams? 1: 0));
+                out.write((int) sql.length() + 1);
+                out.write((byte) (haveParams ? 1 : 0));
                 out.write(sql);
             }
-        } else
-        if (procName.startsWith("#jtds")) {
+        } else if (procName.startsWith("#jtds")) {
             // Dynamic light weight procedure call
-            out.write((byte)TDS5_DYNAMIC_TOKEN);
-            out.write((short)(procName.length() + 4));
-            out.write((byte)2);
-            out.write((byte)(haveParams? 1: 0));
-            out.write((byte)(procName.length()-1));
+            out.write((byte) TDS5_DYNAMIC_TOKEN);
+            out.write((short) (procName.length() + 4));
+            out.write((byte) 2);
+            out.write((byte) (haveParams ? 1 : 0));
+            out.write((byte) (procName.length() - 1));
             out.write(procName.substring(1));
-            out.write((short)0);
+            out.write((short) 0);
         } else {
-            // RPC call
-            out.write((byte)TDS_DBRPC_TOKEN);
             byte buf[] = Support.encodeString(socket.getCharset(), procName);
-            out.write((short)(buf.length + 3));
-            out.write((byte)buf.length);
+            
+            // RPC call
+            out.write((byte) TDS_DBRPC_TOKEN);
+            out.write((short) (buf.length + 3));
+            out.write((byte) buf.length);
             out.write(buf);
-            out.write((short)(haveParams? 2: 0));
+            out.write((short) (haveParams ? 2 : 0));
             useParamNames = true;
         }
+        
         //
         // Output any parameters
         //
         if (haveParams) {
             // First write parameter descriptors
-            out.write((byte)TDS5_PARAMFMT_TOKEN);
+            out.write((byte) TDS5_PARAMFMT_TOKEN);
+            
             int len = 2;
-            for (int i = nextParam+1; i < parameters.length; i++) {
+            
+            for (int i = nextParam + 1; i < parameters.length; i++) {
                 len += TdsData.getTds5ParamSize(connection.getCharSet(),
                                                 connection.isWideChar(),
                                                 parameters[i],
                                                 useParamNames);
             }
-            out.write((short)len);
-            out.write((short)((nextParam < 0)? parameters.length: parameters.length-1));
-            for (int i = nextParam+1; i < parameters.length; i++) {
+            out.write((short) len);
+            out.write((short) ((nextParam < 0) ? parameters.length : parameters.length - 1));
+            for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5ParamFmt(out,
                                           connection.getCharSet(),
                                           connection.isWideChar(),
                                           parameters[i],
                                           useParamNames);
             }
+            
             // Now write the actual data
-            out.write((byte)TDS5_PARAMS_TOKEN);
-            for (int i = nextParam+1; i < parameters.length; i++) {
+            out.write((byte) TDS5_PARAMS_TOKEN);
+            
+            for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5Param(out,
                                        connection.getCharSet(),
                                        connection.isWideChar(),
                                        parameters[i]);
             }
         }
+        
         out.flush();
     }
 
@@ -2845,14 +2854,14 @@ public class TdsCore {
 
         if (name.length() == 0) {
             return "UNKNOWN";
-        } else {
-            try {
-                Integer.parseInt(name);
-                // All numbers probably an IP address
-                return "UNKNOWN";
-            } catch (NumberFormatException e) {
-                // Bit tacky but simple check for all numbers
-            }
+        }
+        
+        try {
+            Integer.parseInt(name);
+            // All numbers probably an IP address
+            return "UNKNOWN";
+        } catch (NumberFormatException e) {
+            // Bit tacky but simple check for all numbers
         }
 
         return name;

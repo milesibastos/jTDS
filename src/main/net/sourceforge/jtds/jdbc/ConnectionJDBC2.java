@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.4 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.5 2004-07-07 17:42:40 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -292,9 +292,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                       Support.getMessage(
                                                         "error.connection.timeout"),
                                       "08S01");
-            } else {
-                throw e;
             }
+            
+            throw e;
         }
 
         // Discover the maximum decimal precision normal 28 for MS SQL < 2000

@@ -37,6 +37,11 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     }
 
 
+    /**
+     * Constructor.
+     * 
+     * @param name The name of the test.
+     */
     public JtdsDataSourceUnitTest(String name) {
         super(name);
     }

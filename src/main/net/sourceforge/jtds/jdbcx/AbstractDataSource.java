@@ -30,13 +30,13 @@ import net.sourceforge.jtds.util.*;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.6 2004-07-29 00:14:56 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.7 2004-07-29 00:30:54 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
     protected int loginTimeout = 0;
     protected String databaseName = "";
-    protected int portNumber = 1433;
+    protected int portNumber = TdsCore.DEFAULT_SQLSERVER_PORT;
     protected String serverName;
     protected String user;
     protected String password = "";

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.11 2004-07-29 00:14:54 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.12 2004-07-29 00:30:37 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -141,9 +141,9 @@ public class TdsCore {
     // Package private constants
     //
     /** Default Microosoft port. */
-    static final int DEFAULT_SQLSERVER_PORT = 1433;
+    public static final int DEFAULT_SQLSERVER_PORT = 1433;
     /** Default Sybase port. */
-    static final int DEFAULT_SYBASE_PORT = 7100;
+    public static final int DEFAULT_SYBASE_PORT = 7100;
     /** Minimum network packet size. */
     public static final int MIN_PKT_SIZE = 512;
     /** Default minimum network packet size for TDS 7.0 and newer. */

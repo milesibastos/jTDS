@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.12 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.13 2004-07-29 00:30:36 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -648,7 +648,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         try {
             serverPort  = Integer.parseInt(
-                                          info.getProperty(Support.getMessage("prop.portnumber"), "1433"));
+                                          info.getProperty(Support.getMessage("prop.portnumber"),
+                                                           String.valueOf(TdsCore.DEFAULT_SQLSERVER_PORT)));
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",

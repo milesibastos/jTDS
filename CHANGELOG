@@ -1,6 +1,9 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+06/08/2004 - Brian Heineman
+ o Corrected bug [965018] translateDate is not recognized function name.
+
 05/30/2004 - Brian Heineman
  o Corrected bug where "Cp" or "MS" was being appended to strings that already
    started with a different case of the same sequence of characters.

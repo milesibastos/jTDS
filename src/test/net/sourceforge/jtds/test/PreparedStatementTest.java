@@ -602,6 +602,10 @@ public class PreparedStatementTest extends TestBase {
         pstmt.close();
     }
 
+    /**
+     * Inner class used by {@link PreparedStatementTest#testMultiThread} to
+     * test concurrency.
+     */
     static class TestMultiThread extends Thread {
         static Connection con;
         static final int THREAD_MAX = 10;
@@ -618,7 +622,6 @@ public class PreparedStatementTest extends TestBase {
 
         public void run() {
             try {
-//                System.out.println("ID=" + threadId + " starting.");
                 con.rollback();
                 PreparedStatement pstmt = con.prepareStatement(
                         "SELECT id, data FROM #TEST WHERE id = ?",
@@ -634,7 +637,6 @@ public class PreparedStatementTest extends TestBase {
                         rs.getString(2);
                     }
 
-//                    System.out.println("ID=" + threadId + " loop=" + i + " done.");
                 }
 
                 pstmt.close();
@@ -663,7 +665,6 @@ public class PreparedStatementTest extends TestBase {
             stmt.close();
             con.commit();
 
-//            DriverManager.setLogStream(System.out);
             live = THREAD_MAX;
             for (int i = 0; i < THREAD_MAX; i++) {
                 new TestMultiThread(i).start();
@@ -678,8 +679,36 @@ public class PreparedStatementTest extends TestBase {
         }
     }
 
+    /**
+     * Test <code>Connection</code> concurrency by running
+     * <code>PreparedStatement</code>s and rollbacks at the same time to see
+     * whether handles are not lost in the process.
+     */
     public void testMultiThread() throws Exception {
         TestMultiThread.startThreads(con);
+    }
+
+    /**
+     * Test for bug [1094621] Decimal conversion error:  A prepared statement
+     * with a decimal parameter that is -1E38 will fail as a result of the
+     * driver generating a parameter specification of decimal(38,10) rather
+     * than decimal(38,0).
+     */
+    public void testBigDecBadParamSpec() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute(""
+                + "create table #test (id int primary key, val decimal(38,0))");
+        BigDecimal bd =
+                new BigDecimal("99999999999999999999999999999999999999");
+        PreparedStatement pstmt =
+                con.prepareStatement("insert into #test values(?,?)");
+        pstmt.setInt(1,1);
+        pstmt.setBigDecimal(2, bd);
+        assertEquals(1, pstmt.executeUpdate()); // Worked OK
+        pstmt.setInt(1, 2);
+        pstmt.setBigDecimal(2, bd.negate());
+        assertEquals(1, pstmt.executeUpdate()); // Failed
     }
 
     public static void main(String[] args) {

@@ -1,6 +1,10 @@
 Changes from jTDS 1.0
 =======================
 
+02/04/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1116046] {fn} escape can't handle nested
+   functions.
+
 02/02/2005 - Alin Sinpalean
  o Applied patch [1110911] Encryption request causes conn reset, submitted by
    Mike Hutchinson. SSL negotiation has been implemented to handle the encrypt

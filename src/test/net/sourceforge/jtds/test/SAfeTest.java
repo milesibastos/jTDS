@@ -1302,4 +1302,19 @@ public class SAfeTest extends DatabaseTestCase {
             assertEquals("42000", ex.getSQLState());
         }
     }
+
+    public void testFnEscapeNesting() throws Exception {
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery(
+                "select {fn ifnull(max(id), 0)} from sysobjects");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertNotNull(rs.getObject(1));
+        rs = stmt.executeQuery(
+                "select {fn ifnull((select id from sysobjects where id = 1), 0) }");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertNotNull(rs.getObject(1));
+        stmt.close();
+    }
 }

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.54 2004-12-06 12:10:14 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.55 2004-12-08 15:54:22 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -133,8 +133,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                             "SET CHAINED OFF\r\n" +
                                             "SET QUOTED_IDENTIFIER ON\r\n"+
                                             "SET TEXTSIZE 2147483647";
-    /** SQL Server initial connection string. */
-    private String SQL_SERVER_INITIAL_SQL = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
+    /**
+     * SQL Server initial connection string. Also contains a <code>SELECT
+     * @@MAX_PRECISION</code> query to retrieve the maximum precision for
+     * DECIMAL/NUMERIC data. */
+    private String SQL_SERVER_INITIAL_SQL = "SELECT @@MAX_PRECISION\r\n" +
+                                            "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
                                             "SET IMPLICIT_TRANSACTIONS OFF\r\n" +
                                             "SET QUOTED_IDENTIFIER ON\r\n"+
                                             "SET TEXTSIZE 2147483647";
@@ -365,19 +369,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw e;
         }
 
-        // Discover the maximum decimal precision normal 28 for MS SQL < 2000
-        if (serverType == Driver.SQLSERVER) {
-            Statement stmt = this.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT @@MAX_PRECISION");
-
-            if (rs.next()) {
-                maxPrecision = rs.getByte(1);
-            }
-
-            rs.close();
-            stmt.close();
-        }
-
         // If charset is still unknown and the collation is not set either,
         // determine the charset by querying (we're using Sybase or SQL Server
         // 6.5)
@@ -386,15 +377,23 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             loadCharset(determineServerCharset());
         }
 
-        //
         // Initial database settings.
         // Sets: auto commit mode  = true
         //       transaction isolation = read committed.
-        //
         if (serverType == Driver.SYBASE) {
             baseTds.submitSQL(SYBASE_INITIAL_SQL);
         } else {
-            baseTds.submitSQL(SQL_SERVER_INITIAL_SQL);
+            // Also discover the maximum decimal precision (28 for MS SQL pre
+            // 2000, configurable to 28/38 for 2000 and later)
+            Statement stmt = this.createStatement();
+            ResultSet rs = stmt.executeQuery(SQL_SERVER_INITIAL_SQL);
+
+            if (rs.next()) {
+                maxPrecision = rs.getByte(1);
+            }
+
+            rs.close();
+            stmt.close();
         }
     }
 

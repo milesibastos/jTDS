@@ -2,6 +2,18 @@ Changes from jTDS 0.9
 =========================
 
 12/08/2004 - Alin Sinpalean
+ o Combined connection properties setup in the ConnectionJDBC2 constructor with
+   the SELECT @@MAX_PRECISION query into a single request, reducing login
+   overhead to only a single request/response.
+
+===============================================================================
+12/08/2004 - jTDS 0.9.1 released
+===============================================================================
+
+Changes from jTDS 0.9
+=========================
+
+12/08/2004 - Alin Sinpalean
  o Updated the index.html with support information and added a description for
    the xaEmulation parameter in the FAQ.
  o Updated version number to 0.9.1 in code and documentation.

@@ -1667,19 +1667,19 @@ public class TimestampTest extends DatabaseTestCase
 		ResultSetMetaData md = rs.getMetaData();
 		assertNotNull(md);
 
-		assert(md.isAutoIncrement(1));
-		assert(!md.isAutoIncrement(2));
-		assert(!md.isAutoIncrement(3));
-		assert(!md.isAutoIncrement(4));
+		assertTrue(md.isAutoIncrement(1));
+		assertTrue(!md.isAutoIncrement(2));
+		assertTrue(!md.isAutoIncrement(3));
+		assertTrue(!md.isAutoIncrement(4));
 
-		assert(md.isReadOnly(1));
-		assert(!md.isReadOnly(2));
-		assert(!md.isReadOnly(3));
-		assert(md.isReadOnly(4));
+		assertTrue(md.isReadOnly(1));
+		assertTrue(!md.isReadOnly(2));
+		assertTrue(!md.isReadOnly(3));
+		assertTrue(md.isReadOnly(4));
 
-		assert(md.isNullable(1) == java.sql.ResultSetMetaData.columnNoNulls);
-		assert(md.isNullable(2) == java.sql.ResultSetMetaData.columnNoNulls);
-		assert(md.isNullable(3) == java.sql.ResultSetMetaData.columnNullable);
+		assertEquals(md.isNullable(1),java.sql.ResultSetMetaData.columnNoNulls);
+		assertEquals(md.isNullable(2),java.sql.ResultSetMetaData.columnNoNulls);
+		assertEquals(md.isNullable(3),java.sql.ResultSetMetaData.columnNullable);
 		// assert(md.isNullable(4) == java.sql.ResultSetMetaData.columnNoNulls);
 
 		rs.close();

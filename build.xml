@@ -98,7 +98,7 @@
     </copy>
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,CHANGELOG,*.bat,*.xml,jtds.jpx,*.library,src/**/*,lib/**/*,conf/**/*"/>
+      <fileset dir="." includes="README,CHANGELOG,LICENSE,*.bat,*.xml,jtds.jpx,*.library,src/**/*,lib/**/*,conf/**/*"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
 

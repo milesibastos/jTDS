@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.12 2002-09-14 01:44:23 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.13 2002-09-14 06:32:46 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,7 +110,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.12 2002-09-14 01:44:23 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.13 2002-09-14 06:32:46 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_) throws SQLException
     {
@@ -518,6 +518,18 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             {
                 wasCanceled = ((PacketEndTokenResult)
                     tds.processSubPacket(context)).wasCanceled();
+
+                if( stmt instanceof PreparedStatement )
+                {
+                    while( tds.moreResults() && tds.isRetStat() )
+                    {
+                        tds.processSubPacket(context);
+                        if( tds.peek() == Tds.TDS_DONEPROC )
+                            wasCanceled = ((PacketEndTokenResult)
+                                tds.processSubPacket(context)).wasCanceled();
+                    }
+                }
+
                 row = null;
                 hitEndOfData = true;
                 stmt.eofResults();

@@ -221,9 +221,12 @@ public class CursorResultSet extends AbstractResultSet {
     }
 
     private boolean internalFetch( String sql )
-    throws SQLException
+        throws SQLException
     {
-        TdsResultSet rs = stmt.internalExecuteQuery( sql );
+        TdsResultSet rs;
+
+        if( (rs=stmt.internalExecuteQuery(sql)) == null )
+            throw new SQLException("No ResultSet was produced.");
 
         // Moved here from loadContext -- if the query didn't return any
         //                                results, loadContext crashed

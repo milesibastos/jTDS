@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.30 2002-09-14 01:44:23 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -714,8 +714,6 @@ public class Tds implements TdsDefinitions {
         int i;
 
         try {
-            // mark that we are performing a query
-            cancelController.setQueryInProgressFlag();
             moreResults2 = true;
 
             // Start sending the procedure execute packet.
@@ -975,12 +973,18 @@ public class Tds implements TdsDefinitions {
                     }
                 }
             }
-            comm.sendPacket();
+            // mark that we are performing a query
+            cancelController.setQueryInProgressFlag();
 
+            comm.sendPacket();
             waitForDataOrTimeout(stmt, timeout);
         }
         catch (java.io.IOException e) {
             throw new SQLException("Network error-  " + e.getMessage());
+        }
+        finally
+        {
+            comm.packetType = 0;
         }
     }
 
@@ -1022,20 +1026,27 @@ public class Tds implements TdsDefinitions {
         // If the query has length 0, the server doesn't answer, so we'll hang
         if( sql.length() > 0 )
         {
-            cancelController.setQueryInProgressFlag();
-            comm.startPacket(TdsComm.QUERY);
-            if (tdsVer == Tds.TDS70) {
-                comm.appendChars(sql);
-            }
-            else {
-                byte[] sqlBytes = encoder.getBytes(sql);
-                comm.appendBytes(sqlBytes, sqlBytes.length, (byte) 0);
-            }
-            moreResults2 = true;
-            //JJ 1999-01-10
-            comm.sendPacket();
+            try
+            {
+                comm.startPacket(TdsComm.QUERY);
+                if (tdsVer == Tds.TDS70) {
+                    comm.appendChars(sql);
+                }
+                else {
+                    byte[] sqlBytes = encoder.getBytes(sql);
+                    comm.appendBytes(sqlBytes, sqlBytes.length, (byte) 0);
+                }
+                moreResults2 = true;
+                cancelController.setQueryInProgressFlag();
+                //JJ 1999-01-10
+                comm.sendPacket();
 
-            waitForDataOrTimeout(stmt, timeout);
+                waitForDataOrTimeout(stmt, timeout);
+            }
+            finally
+            {
+                comm.packetType = 0;
+            }
         }
     }
 
@@ -2268,163 +2279,171 @@ public class Tds implements TdsDefinitions {
         byte pad = (byte) 0;
         byte[] empty = new byte[0];
 
-        // Added 2000-06-07.
-        if (tdsVer == Tds.TDS70) {
-            send70Login();
+        try
+        {
+            // Added 2000-06-07.
+            if (tdsVer == Tds.TDS70) {
+                send70Login();
+            }
+            else
+            {
+                comm.startPacket(TdsComm.LOGON);
+
+                // hostname  (offset0)
+                // comm.appendString("TOLEDO", 30, (byte)0);
+                byte[] tmp = encoder.getBytes(getClientName());
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // username (offset 31 0x1f)
+                tmp = encoder.getBytes(user);
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // password (offset 62 0x3e)
+                tmp = encoder.getBytes(password);
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // hostproc (offset 93 0x5d)
+                tmp = encoder.getBytes("00000116");
+                comm.appendBytes(tmp, 8, pad);
+
+                // unused (offset 109 0x6d)
+                comm.appendBytes(empty, (30 - 14), pad);
+
+                // apptype (offset )
+                comm.appendByte((byte) 0x0);
+                comm.appendByte((byte) 0xA0);
+                comm.appendByte((byte) 0x24);
+                comm.appendByte((byte) 0xCC);
+                comm.appendByte((byte) 0x50);
+                comm.appendByte((byte) 0x12);
+
+                // hostproc length (offset )
+                comm.appendByte((byte) 8);
+
+                // type of int2
+                comm.appendByte((byte) 3);
+
+                // type of int4
+                comm.appendByte((byte) 1);
+
+                // type of char
+                comm.appendByte((byte) 6);
+
+                // type of flt
+                comm.appendByte((byte) 10);
+
+                // type of date
+                comm.appendByte((byte) 9);
+
+                // notify of use db
+                comm.appendByte((byte) 1);
+
+                // disallow dump/load and bulk insert
+                comm.appendByte((byte) 1);
+
+                // sql interface type
+                comm.appendByte((byte) 0);
+
+                // type of network connection
+                comm.appendByte((byte) 0);
+
+                // spare[7]
+                comm.appendBytes(empty, 7, pad);
+
+                // appname
+                tmp = encoder.getBytes(appName);
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // server name
+                tmp = encoder.getBytes(serverName);
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // remote passwords
+                comm.appendBytes(empty, 2, pad);
+                tmp = encoder.getBytes(password);
+                comm.appendBytes(tmp, 253, pad);
+                comm.appendByte((byte) (tmp.length < 253 ? tmp.length + 2 : 253 + 2));
+
+                // tds version
+                comm.appendByte((byte) 4);
+                comm.appendByte((byte) 2);
+                comm.appendByte((byte) 0);
+                comm.appendByte((byte) 0);
+
+                // prog name
+                tmp = encoder.getBytes(progName);
+                comm.appendBytes(tmp, 10, pad);
+                comm.appendByte((byte) (tmp.length < 10 ? tmp.length : 10));
+
+                // prog version
+                comm.appendByte((byte) 6);
+                // Tell the server we can handle SQLServer version 6
+                comm.appendByte((byte) 0);
+                // Send zero to tell the server we can't handle any other version
+                comm.appendByte((byte) 0);
+                comm.appendByte((byte) 0);
+
+                // auto convert short
+                comm.appendByte((byte) 0);
+
+                // type of flt4
+                comm.appendByte((byte) 0x0D);
+
+                // type of date4
+                comm.appendByte((byte) 0x11);
+
+                // language
+                tmp = encoder.getBytes("us_english");
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // notify on lang change
+                comm.appendByte((byte) 1);
+
+                // security label hierachy
+                comm.appendShort((short) 0);
+
+                // security components
+                comm.appendBytes(empty, 8, pad);
+
+                // security spare
+                comm.appendShort((short) 0);
+
+                // security login role
+                comm.appendByte((byte) 0);
+
+                // charset
+                tmp = encoder.getBytes(charset);
+                comm.appendBytes(tmp, 30, pad);
+                comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
+
+                // notify on charset change
+                comm.appendByte((byte) 1);
+
+                // length of tds packets
+                tmp = encoder.getBytes("512");
+                comm.appendBytes(tmp, 6, pad);
+                comm.appendByte((byte) 3);
+
+                // pad out to a longword
+                comm.appendBytes(empty, 8, pad);
+
+                moreResults2 = true;
+                //JJ 1999-01-10
+            }
+
+            comm.sendPacket();
         }
-        else {
-
-            comm.startPacket(TdsComm.LOGON);
-
-            // hostname  (offset0)
-            // comm.appendString("TOLEDO", 30, (byte)0);
-            byte[] tmp = encoder.getBytes(getClientName());
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // username (offset 31 0x1f)
-            tmp = encoder.getBytes(user);
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // password (offset 62 0x3e)
-            tmp = encoder.getBytes(password);
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // hostproc (offset 93 0x5d)
-            tmp = encoder.getBytes("00000116");
-            comm.appendBytes(tmp, 8, pad);
-
-            // unused (offset 109 0x6d)
-            comm.appendBytes(empty, (30 - 14), pad);
-
-            // apptype (offset )
-            comm.appendByte((byte) 0x0);
-            comm.appendByte((byte) 0xA0);
-            comm.appendByte((byte) 0x24);
-            comm.appendByte((byte) 0xCC);
-            comm.appendByte((byte) 0x50);
-            comm.appendByte((byte) 0x12);
-
-            // hostproc length (offset )
-            comm.appendByte((byte) 8);
-
-            // type of int2
-            comm.appendByte((byte) 3);
-
-            // type of int4
-            comm.appendByte((byte) 1);
-
-            // type of char
-            comm.appendByte((byte) 6);
-
-            // type of flt
-            comm.appendByte((byte) 10);
-
-            // type of date
-            comm.appendByte((byte) 9);
-
-            // notify of use db
-            comm.appendByte((byte) 1);
-
-            // disallow dump/load and bulk insert
-            comm.appendByte((byte) 1);
-
-            // sql interface type
-            comm.appendByte((byte) 0);
-
-            // type of network connection
-            comm.appendByte((byte) 0);
-
-            // spare[7]
-            comm.appendBytes(empty, 7, pad);
-
-            // appname
-            tmp = encoder.getBytes(appName);
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // server name
-            tmp = encoder.getBytes(serverName);
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // remote passwords
-            comm.appendBytes(empty, 2, pad);
-            tmp = encoder.getBytes(password);
-            comm.appendBytes(tmp, 253, pad);
-            comm.appendByte((byte) (tmp.length < 253 ? tmp.length + 2 : 253 + 2));
-
-            // tds version
-            comm.appendByte((byte) 4);
-            comm.appendByte((byte) 2);
-            comm.appendByte((byte) 0);
-            comm.appendByte((byte) 0);
-
-            // prog name
-            tmp = encoder.getBytes(progName);
-            comm.appendBytes(tmp, 10, pad);
-            comm.appendByte((byte) (tmp.length < 10 ? tmp.length : 10));
-
-            // prog version
-            comm.appendByte((byte) 6);
-            // Tell the server we can handle SQLServer version 6
-            comm.appendByte((byte) 0);
-            // Send zero to tell the server we can't handle any other version
-            comm.appendByte((byte) 0);
-            comm.appendByte((byte) 0);
-
-            // auto convert short
-            comm.appendByte((byte) 0);
-
-            // type of flt4
-            comm.appendByte((byte) 0x0D);
-
-            // type of date4
-            comm.appendByte((byte) 0x11);
-
-            // language
-            tmp = encoder.getBytes("us_english");
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // notify on lang change
-            comm.appendByte((byte) 1);
-
-            // security label hierachy
-            comm.appendShort((short) 0);
-
-            // security components
-            comm.appendBytes(empty, 8, pad);
-
-            // security spare
-            comm.appendShort((short) 0);
-
-            // security login role
-            comm.appendByte((byte) 0);
-
-            // charset
-            tmp = encoder.getBytes(charset);
-            comm.appendBytes(tmp, 30, pad);
-            comm.appendByte((byte) (tmp.length < 30 ? tmp.length : 30));
-
-            // notify on charset change
-            comm.appendByte((byte) 1);
-
-            // length of tds packets
-            tmp = encoder.getBytes("512");
-            comm.appendBytes(tmp, 6, pad);
-            comm.appendByte((byte) 3);
-
-            // pad out to a longword
-            comm.appendBytes(empty, 8, pad);
-
-            moreResults2 = true;
-            //JJ 1999-01-10
+        finally
+        {
+            comm.packetType = 0;
         }
 
-        comm.sendPacket();
 
         // Get the reply to the logon packet.
         PacketResult result;
@@ -2554,7 +2573,6 @@ public class Tds implements TdsDefinitions {
         comm.appendByte((byte) 48);
         comm.appendBytes(empty, 3, pad);
     }
-    // changeSettings
 
 
     /**
@@ -2600,18 +2618,25 @@ public class Tds implements TdsDefinitions {
               database = "\"" + database + "\"";
             }
 
-            String query = "use " + database;
-            comm.startPacket(TdsComm.QUERY);
-            if (tdsVer == Tds.TDS70) {
-                comm.appendChars(query);
+            try
+            {
+                String query = "use " + database;
+                comm.startPacket(TdsComm.QUERY);
+                if (tdsVer == Tds.TDS70) {
+                    comm.appendChars(query);
+                }
+                else {
+                    byte[] queryBytes = encoder.getBytes(query);
+                    comm.appendBytes(queryBytes, queryBytes.length, (byte) 0);
+                }
+                moreResults2 = true;
+                //JJ 1999-01-10
+                comm.sendPacket();
             }
-            else {
-                byte[] queryBytes = encoder.getBytes(query);
-                comm.appendBytes(queryBytes, queryBytes.length, (byte) 0);
+            finally
+            {
+                comm.packetType = 0;
             }
-            moreResults2 = true;
-            //JJ 1999-01-10
-            comm.sendPacket();
 
             // XXX Should we check that the change actual was okay
             // and throw some sort of exception if it wasn't?
@@ -4438,17 +4463,24 @@ public class Tds implements TdsDefinitions {
         boolean isOkay = true;
         PacketResult result;
 
-        comm.startPacket(TdsComm.QUERY);
-        if (tdsVer == Tds.TDS70) {
-            comm.appendChars(query);
+        try
+        {
+            comm.startPacket(TdsComm.QUERY);
+            if (tdsVer == Tds.TDS70) {
+                comm.appendChars(query);
+            }
+            else {
+                byte[] queryBytes = encoder.getBytes(query);
+                comm.appendBytes(queryBytes, queryBytes.length, (byte) 0);
+            }
+            moreResults2 = true;
+            //JJ 1999-01-10
+            comm.sendPacket();
         }
-        else {
-            byte[] queryBytes = encoder.getBytes(query);
-            comm.appendBytes(queryBytes, queryBytes.length, (byte) 0);
+        finally
+        {
+            comm.packetType = 0;
         }
-        moreResults2 = true;
-        //JJ 1999-01-10
-        comm.sendPacket();
 
         boolean done = false;
         while (!done) {

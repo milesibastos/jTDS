@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2002-09-14 01:44:23 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.17 2002-09-14 06:32:46 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.16 2002-09-14 01:44:23 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.17 2002-09-14 06:32:46 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2002-09-14 01:44:23 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.17 2002-09-14 06:32:46 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -809,19 +809,25 @@ public class TdsConnection implements ConnectionHelper, Connection
         int i;
         SQLException exception = null;
 
-        if( autoCommit )
-            throw new SQLException("This method should only be " +
-                    " used when auto commit has been disabled.");
+        // SAfe Completely wrong! If in manual commit mode, the transaction is
+        //      not commited when going into auto commit. It has to be commited
+        //      manually (even after the commit mode switch), otherwise it will
+        //      be rolled back when the connection is closed.
+//        if( autoCommit )
+//            throw new SQLException("This method should only be " +
+//                    " used when auto commit has been disabled.");
 
         // XXX race condition here.  It is possible that a statement could
         // close while running this for loop.
-        // SAfe Consume all outstanding data first.
+        // SAfe Release all Tds instances first.
         for( i=0; i<allStatements.size(); i++ )
         {
             TdsStatement stmt = (TdsStatement) allStatements.elementAt(i);
             try
             {
+                // SAfe Need to consume all outstanding input...
                 stmt.skipToEnd();
+                // SAfe ...then release the Tds
                 stmt.releaseTds();
             }
             catch( SQLException ex )

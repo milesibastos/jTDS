@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.16 2002-09-10 13:12:05 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.17 2002-09-14 06:32:45 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -238,95 +238,19 @@ public class PreparedStatement_base
                     this,
                     timeout );
 
-            result = getMoreResults( tds );
-            /*
-         while (tds.isErrorPacket() || tds.isMessagePacket())
-         {
-            tmp = tds.processSubPacket();
-            exception = warningChain.addOrReturn((PacketMsgResult)tmp);
-            if (exception != null)
-            {
-               throw exception;
-            }
-         }
-         while(tds.isDoneInProc())
-         {
-            tmp = tds.processSubPacket();
-         }
-         if (tds.isProcId())
-         {
-            tmp = tds.processSubPacket();
-         }
-         if (tds.isResultSet())
-         {
-            result = true;
-         }
-         else
-         {
-            result = false;
-            boolean done = false;
-            do
-            {
-               tmp = tds.processSubPacket();
-               if (tmp instanceof PacketEndTokenResult)
-               {
-                  done = ! ((PacketEndTokenResult)tmp).moreResults();
-                  wasCanceled = wasCanceled
-                     || ((PacketEndTokenResult)tmp).wasCanceled();
-                  updateCount = ((PacketEndTokenResult)tmp).getRowCount();
-               }
-               else if (tmp instanceof PacketOutputParamResult)
-               {
-                  if (CallableStatement_base.class.isInstance(this))
-                  {
-                     ((CallableStatement_base)this).addOutputParam(
-                        ((PacketOutputParamResult)tmp).getValue());
-                  }
-               }
-               else if (tmp.getPacketType()
-                        == TdsDefinitions.TDS_RET_STAT_TOKEN)
-               {
-                  // nop
-               }
-               else if (tmp instanceof PacketMsgResult)
-               {
-                  exception = warningChain.addOrReturn((PacketMsgResult)tmp);
-                  if (exception != null)
-                  {
-                     throw exception;
-                  }
-               }
-               else
-               {
-                  throw new SQLException("Protocol confusion"
-                                         + "Found a "
-                                         + tmp.getClass().getName()
-                                         + " (packet type 0x"
-                                         + Integer.toHexString(tmp.getPacketType()
-                                                               & 0xff)
-                                         + ")");
-               }
-            } while (!done);
-         }
-          */
+            result = getMoreResults(tds, true);
         }
         catch ( TdsException e ) {
             e.printStackTrace();
             throw new SQLException( e.getMessage() );
         }
-        /*
-      catch(java.io.IOException e)
-      {
-         e.printStackTrace();
-         throw new SQLException(e.getMessage());
-      }
-       */
         finally {
             tds.comm.packetType = 0;
         }
-        if ( wasCanceled ) {
+
+        if( wasCanceled )
             throw new SQLException( "Query was canceled or timed out." );
-        }
+
         return result;
     }
 
@@ -360,14 +284,12 @@ public class PreparedStatement_base
      */
     public java.sql.ResultSet executeQuery() throws SQLException
     {
-//        return executeQuery( rawQueryString );
+        closeResults(false);
+
         Tds tds = getTds( rawQueryString );
-        if ( execute( tds ) ) {
-            startResultSet( tds );
-        }
-        else {
+
+        if( !execute(tds) )
             throw new SQLException( "Was expecting a result set" );
-        }
 
         return results;
     }

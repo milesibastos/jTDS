@@ -8,6 +8,9 @@ Changes from jTDS 0.3.1
    the for was going from 1 up but Statements were removed from the Vector as
    they closed, so every second Statement was skipped.
  o Moved startResultSet logic from TdsStatement to TdsResultSet.
+ o Massive clean-up of TdsStatement: simplified the way getMoreResults()/
+   getResultSet() works. There are still some issues with Tds objects remaining
+   allocated, but I will try to fix them.
 
 09/13/2002 - Alin Sinpalean
 

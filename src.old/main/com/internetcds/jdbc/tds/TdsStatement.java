@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.22 2002-09-14 01:44:23 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.23 2002-09-14 06:32:46 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,38 +53,26 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.22 2002-09-14 01:44:23 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.23 2002-09-14 06:32:46 alin_sinpalean Exp $";
 
+    protected TdsConnection connection; // The connection who created us
+    protected SQLWarningChain warningChain; // The warnings chain.
+    protected int timeout = 0;              // The timeout for a query
 
-   protected TdsConnection connection; // The connection who created us
-   // ResultSet currentResults = null;     // The current results
-   protected SQLWarningChain warningChain; // The warnings chain.
-   protected int timeout = 0;              // The timeout for a query
+    protected TdsResultSet results = null;
+    protected Tds          actTds = null;
 
-   protected TdsResultSet          results     = null;
-   protected Tds actTds = null;
+    private   boolean      escapeProcessing = true;
+    protected int          updateCount = -1;
 
-   private   boolean            escapeProcessing = true;
-
-   protected int                updateCount = -1;
-
-   private int  maxFieldSize = (1<<31)-1;
-   private int  maxRows      = 0;
-
-   /**
-    * Set when <code>getMoreResults</code> returns <code>true</code>. In this
-    * case we should know we have to open the next <code>ResultSet</code> (and
-    * close it) if the user doesn't do it. In a way, it marks that the current
-    * result is the next <code>ResultSet</code>.
-    */
-   private boolean unopenedResult = false;
+    private int  maxFieldSize = (1<<31)-1;
+    private int  maxRows      = 0;
 
     private int type = ResultSet.TYPE_FORWARD_ONLY;
     private int concurrency = ResultSet.CONCUR_READ_ONLY;
 
-
-    public TdsStatement( TdsConnection con, int type, int concurrency )
-             throws SQLException
+    public TdsStatement(TdsConnection con, int type, int concurrency)
+        throws SQLException
     {
         this.connection = con;
         this.warningChain = new SQLWarningChain();
@@ -92,687 +80,539 @@ public class TdsStatement implements java.sql.Statement
         this.concurrency = concurrency;
     }
 
+    /**
+     * Constructor for a Statement.  It simply sets the connection
+     * that created us.
+     *
+     * @param connection_ the Connection instantation that creates us
+     */
+    public TdsStatement(TdsConnection con)
+        throws SQLException
+    {
+        this(con, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+    }
 
-  /**
-   * Constructor for a Statement.  It simply sets the connection
-   * that created us.
-   *
-   * @param connection_ the Connection instantation that creates us
-   * @param tds_        a TDS instance to use for communication with server.
-   */
-   public TdsStatement( TdsConnection con )
-      throws SQLException
-   {
-        this( con, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
-   }
+    protected void eofResults() throws SQLException
+    {
+        releaseTds();
+    }
 
-   protected void eofResults() throws SQLException
-   {
-      releaseTds();
-   }
+    protected void releaseTds() throws SQLException
+    {
+        // MJH remove test of autoCommit
+        if( actTds == null )
+            return;
 
-   protected void releaseTds() throws SQLException
-   {
-      // MJH remove test of autoCommit
-      if( actTds==null )
-         return;
+        // Don't free the Tds if there are any results left.
+        /** @todo Check if this is correct in case an IOException occurs */
+        if( actTds.moreResults() )
+            return;
 
-      // Don't free the Tds if there are any results left.
-      /** @todo Check if this is correct in case an IOException occurs */
-      if( actTds.moreResults() )
-         return;
-
-      try
-      {
-         connection.freeTds(actTds);
-         unopenedResult = false;
-         actTds = null;
-      }
-      catch (TdsException e)
-      {
-         throw new SQLException("Confusion in freeing Tds " + e);
-      }
-   }
-
-   private void NotImplemented() throws java.sql.SQLException
-   {
-      throw new SQLException("Not Implemented");
-   }
-
-   /**
-    * Execute an SQL statement that returns a single <code>ResultSet</code>.
-    *
-    * @param sql typically a static SQL SELECT statement
-    * @return    a <code>ResultSet</code> that contains the data produced by
-    *            the query; never <code>null</code>
-    * @exception SQLException if a database access error occurs
-    */
-   public ResultSet executeQuery(String sql) throws SQLException
-   {
-        if( type==ResultSet.TYPE_FORWARD_ONLY &&
-            concurrency==ResultSet.CONCUR_READ_ONLY )
+        try
         {
-            ResultSet rs = internalExecuteQuery( sql );
+            connection.freeTds(actTds);
+            actTds = null;
+        }
+        catch (TdsException e)
+        {
+            throw new SQLException("Confusion in freeing Tds: " + e);
+        }
+    }
 
-            if( rs != null )
-                return rs;
+    private void NotImplemented() throws java.sql.SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+
+    /**
+     * Execute an SQL statement that returns a single <code>ResultSet</code>.
+     *
+     * @param sql typically a static SQL SELECT statement
+     * @return    a <code>ResultSet</code> that contains the data produced by
+     *            the query; never <code>null</code>
+     * @exception SQLException if a database access error occurs
+     */
+    public ResultSet executeQuery(String sql) throws SQLException
+    {
+        if( type == ResultSet.TYPE_FORWARD_ONLY &&
+            concurrency == ResultSet.CONCUR_READ_ONLY )
+        {
+            if( internalExecute(sql) )
+                return results;
             else
                 throw new SQLException("No ResultSet was produced.");
         }
         else
             return new freetds.CursorResultSet(this, sql);
-   }
+    }
 
-   final public TdsResultSet internalExecuteQuery(String sql) throws SQLException
-   {
-      return internalExecuteQuery( getTds(sql), sql );
-   }
+    final public TdsResultSet internalExecuteQuery(String sql) throws SQLException
+    {
+        internalExecute(getTds(sql), sql);
+        return results;
+    }
 
+    final public boolean internalExecute(String sql) throws SQLException
+    {
+        return internalExecute(getTds(sql), sql);
+    }
+
+    /**
+     * This is the internal function that all subclasses should call.
+     * It is not executeQuery() to allow subclasses (in particular
+     * CursorResultSet) to override that functionality without
+     * breaking the internal methods.
+     *
+     * @param sql any SQL statement
+     * @return true if the next result is a ResulSet, false if it is
+     *      an update count or there are no more results
+     * @exception SQLException if a database access error occurs
+     */
+    final public boolean internalExecute(Tds tds, String sql)
+        throws SQLException
+    {
+        // Clear warnings, otherwise the last exception will be thrown.
+        clearWarnings();
+        updateCount = -1;
+
+        // Consume all outstanding results. Otherwise it will either deadlock,
+        // crash or return results from the previous query.
+        skipToEnd();
+
+        try
+        {
+            if (escapeProcessing)
+                sql = Tds.toNativeSql(sql, tds.getServerType());
+
+            tds.executeQuery(sql, this, timeout);
+        }
+        catch(java.io.IOException e)
+        {
+            throw new SQLException("Network error: " + e.getMessage());
+        }
+        catch(com.internetcds.jdbc.tds.TdsException e)
+        {
+            throw new SQLException("TDS error: " + e.getMessage());
+        }
+
+        return getMoreResults(tds, true);
+    }
+
+
+
+    /**
+     * Execute a SQL INSERT, UPDATE or DELETE statement.  In addition
+     * SQL statements that return nothing such as SQL DDL statements
+     * can be executed
+     *
+     * Any IDs generated for AUTO_INCREMENT fields can be retrieved
+     * by looking through the SQLWarning chain of this statement
+     * for warnings of the form "LAST_INSERTED_ID = 'some number',
+     * COMMAND = 'your sql'".
+     *
+     * @param Sql a SQL statement
+     * @return either a row count, or 0 for SQL commands
+     * @exception SQLException if a database access error occurs
+     */
+
+    public int executeUpdate(String sql) throws SQLException
+    {
+        if( internalExecute(sql) )
+        {
+            skipToEnd();
+            throw new SQLException("executeUpdate can't return a result set");
+        }
+        else
+        {
+            int res = getUpdateCount();
+            // We should return 0 (at least that's what the javadoc above says)
+            return res==-1 ? 0 : res;
+        }
+    }
+
+    protected void closeResults(boolean allowTdsRelease)
+        throws java.sql.SQLException
+    {
+        if( results != null )
+        {
+            results.close(allowTdsRelease);
+            results = null;
+        }
+    }
+
+    /**
+     * Eats all available input from the server. Not very efficient (since it
+     * reads in all data by creating <code>ResultSets</code> and processing
+     * them), but at least it works (the old version would crash when reading in
+     * a row because it didn't have any information about the row's Context).
+     * <p>
+     * This could be changed to use the <code>TdsComm</code> to read in all the
+     * server response without processing it, but that requires some changes in
+     * <code>TdsComm</code>, too.
+     */
+    protected void skipToEnd()
+        throws java.sql.SQLException
+    {
+        if( actTds != null )
+        {
+             closeResults(false);
+             while( getMoreResults(actTds, false) || updateCount!=-1 );
+        }
+    }
+
+    /**
+     * In many cases, it is desirable to immediately release a
+     * Statement's database and JDBC resources instead of waiting
+     * for this to happen when it is automatically closed.  The
+     * close method provides this immediate release.
+     *
+     * <p><B>Note:</B> A Statement is automatically closed when it is
+     * garbage collected.  When a Statement is closed, its current
+     * ResultSet, if one exists, is also closed.
+     *
+     * @exception SQLException if a database access error occurs (why?)
+     */
+    public void close() throws SQLException
+    {
+        // MJH MarkAsClosed is always called to prevent memory leak.
+        connection.markAsClosed(this);
+
+        if( actTds != null )
+            // Tds not yet released.
+            try
+            {
+                // SAfe: Must do this to ensure no garbage is left behind
+                skipToEnd();
+
+                // MJH Do not Rollback any pending transactions!
+                connection.freeTds(actTds);
+                actTds = null;
+            }
+            catch( com.internetcds.jdbc.tds.TdsException e )
+            {
+                throw new SQLException(e.toString());
+            }
+    }
+
+    /**
+     * The maxFieldSize limit (in bytes) is the maximum amount of
+     * data returned for any column value; it only applies to
+     * BINARY, VARBINARY, LONGVARBINARY, CHAR, VARCHAR and LONGVARCHAR
+     * columns.  If the limit is exceeded, the excess data is silently
+     * discarded.
+     *
+     * @return the current max column size limit; zero means unlimited
+     * @exception SQLException if a database access error occurs
+     */
+    public int getMaxFieldSize() throws SQLException
+    {
+        return maxFieldSize;
+    }
+
+    /**
+     * Sets the maxFieldSize
+     *
+     * @param max the new max column size limit; zero means unlimited
+     * @exception SQLException if size exceeds buffer size
+     */
+    public void setMaxFieldSize(int max) throws SQLException
+    {
+        maxFieldSize = max;
+    }
+
+    /**
+     * The maxRows limit is set to limit the number of rows that
+     * any ResultSet can contain.  If the limit is exceeded, the
+     * excess rows are silently dropped.
+     *
+     * @return the current maximum row limit; zero means unlimited
+     * @exception SQLException if a database access error occurs
+     */
+    public int getMaxRows() throws SQLException
+    {
+        return maxRows;
+    }
+
+    /**
+     * Set the maximum number of rows
+     *
+     * @param max the new max rows limit; zero means unlimited
+     * @exception SQLException if a database access error occurs
+     * @see #getMaxRows
+     */
+    public void setMaxRows(int max) throws SQLException
+    {
+        if (maxRows < 0)
+            throw new SQLException("Negative row count");
+
+        maxRows = max;
+    }
+
+    /**
+     * If escape scanning is on (the default), the driver will do escape
+     * substitution before sending the SQL to the database.
+     *
+     * @param enable true to enable; false to disable
+     * @exception SQLException if a database access error occurs
+     */
+    public void setEscapeProcessing(boolean enable) throws SQLException
+    {
+        escapeProcessing = enable;
+    }
+
+    /**
+     * The queryTimeout limit is the number of seconds the driver
+     * will wait for a Statement to execute.  If the limit is
+     * exceeded, a SQLException is thrown.
+     *
+     * @return the current query timeout limit in seconds; 0 = unlimited
+     * @exception SQLException if a database access error occurs
+     */
+    public int getQueryTimeout() throws SQLException
+    {
+        return timeout;
+    }
+
+    /**
+     * Sets the queryTimeout limit
+     *
+     * @param seconds - the new query timeout limit in seconds
+     * @exception SQLException if a database access error occurs
+     */
+    public void setQueryTimeout(int seconds) throws SQLException
+    {
+        timeout = seconds;
+    }
 
    /**
-    * This is the internal function that all subclasses should call.
-    * It is not executeQuery() to allow subclasses (in particular
-    * CursorResultSet) to override that functionality without
-    * breaking the internal methods.
-    */
-   final public TdsResultSet internalExecuteQuery(Tds tds, String sql)
-      throws SQLException
-   {
-      if (execute(tds, sql))
-      {
-         startResultSet(tds);
-      }
-
-      return results;
-   }
-
-
-
-  /**
-   * Execute a SQL INSERT, UPDATE or DELETE statement.  In addition
-   * SQL statements that return nothing such as SQL DDL statements
-   * can be executed
-   *
-   * Any IDs generated for AUTO_INCREMENT fields can be retrieved
-   * by looking through the SQLWarning chain of this statement
-   * for warnings of the form "LAST_INSERTED_ID = 'some number',
-   * COMMAND = 'your sql'".
-   *
-   * @param Sql a SQL statement
-   * @return either a row count, or 0 for SQL commands
-   * @exception SQLException if a database access error occurs
-   */
-
-   public int executeUpdate(String sql) throws SQLException
-   {
-      if (execute(sql))
-      {
-         startResultSet(actTds);
-         closeResults(true);
-         throw new SQLException("executeUpdate can't return a result set");
-      }
-      else
-      {
-         int res = getUpdateCount();
-         // We should return 0 (at least that's what the javadoc above says)
-         return res==-1 ? 0 : res;
-      }
-   }
-
-   protected void closeResults(boolean allowTdsRelease)
-      throws java.sql.SQLException
-   {
-      // If we have a ResultSet that was not opened by the user although a call
-      // to getMoreResults was made, we should skip it, so open it.
-      if( unopenedResult )
-         startResultSet(actTds);
-      if (results != null)
-      {
-         results.close(allowTdsRelease);
-         results = null;
-      }
-   }
-
-   /**
-    * Eats all available input from the server. Not very efficient (since it
-    * reads in all data by creating <code>ResultSets</code> and processing
-    * them), but at least it works (the old version would crash when reading in
-    * a row because it didn't have any information about the row's Context).
-    * <p>
-    * This could be changed to use the <code>TdsComm</code> to read in all the
-    * server response without processing it, but that requires some changes in
-    * <code>TdsComm</code>, too.
-    */
-   protected void skipToEnd()
-      throws java.sql.SQLException
-   {
-      if( actTds != null )
-      {
-         closeResults(false);
-         while( getMoreResultsImpl(actTds, false) || updateCount!=-1 );
-      }
-   }
-
-   /**
-    * In many cases, it is desirable to immediately release a
-    * Statement's database and JDBC resources instead of waiting
-    * for this to happen when it is automatically closed.  The
-    * close method provides this immediate release.
     *
-    * <p><B>Note:</B> A Statement is automatically closed when it is
-    * garbage collected.  When a Statement is closed, its current
-    * ResultSet, if one exists, is also closed.
+    * @exception SQLException
+    */
+    public void cancel() throws SQLException
+    {
+        if (actTds == null)
+            throw new SQLException("Statement is closed");
+
+        try
+        {
+            actTds.cancel();
+        }
+        catch(com.internetcds.jdbc.tds.TdsException e)
+        {
+            throw new SQLException(e.getMessage());
+        }
+        catch(java.io.IOException e)
+        {
+            throw new SQLException(e.getMessage());
+        }
+    }
+
+    /**
+     * The first warning reported by calls on this Statement is
+     * returned.  A Statement's execute methods clear its SQLWarning
+     * chain.  Subsequent Statement warnings will be chained to this
+     * SQLWarning.
+     *
+     * <p>The Warning chain is automatically cleared each time a statement
+     * is (re)executed.
+     *
+     * <p><B>Note:</B>  If you are processing a ResultSet then any warnings
+     * associated with ResultSet reads will be chained on the ResultSet
+     * object.
+     *
+     * @return the first SQLWarning on null
+     * @exception SQLException if a database access error occurs
+     */
+    public SQLWarning getWarnings() throws SQLException
+    {
+        return warningChain.getWarnings();
+    }
+
+
+   /**
+    * After this call, getWarnings returns null until a new warning
+    * is reported for this Statement.
     *
     * @exception SQLException if a database access error occurs (why?)
     */
-   public void close() throws SQLException
-   {
-      // MJH MarkAsClosed is always called to prevent memory leak.
-      connection.markAsClosed(this);
+    public void clearWarnings() throws SQLException
+    {
+        warningChain.clearWarnings();
+    }
 
-      // Tds not yet released.
-      if( actTds != null )
-         try
-         {
-            // SAfe: Must do this to ensure no garbage is left behind
+    /**
+     * setCursorName defines the SQL cursor name that will be used by
+     * subsequent execute methods.  This name can then be used in SQL
+     * positioned update/delete statements to identify the current row
+     * in the ResultSet generated by this statement.  If a database
+     * doesn't support positioned update/delete, this method is a
+     * no-op.
+     *
+     *
+     * @param name the new cursor name
+     * @exception SQLException if a database access error occurs
+     */
+    public void setCursorName(String name) throws SQLException
+    {
+        NotImplemented();
+    }
+
+    public boolean execute(String sql) throws SQLException
+    {
+        return internalExecute(sql);
+    }
+
+    protected Tds getTds(String sql) throws SQLException
+    {
+        if( actTds != null )
+            return actTds;
+        else
+        {
+            actTds=connection.allocateTds();
+            actTds.setStatement(this);
+            return actTds;
+        }
+    }
+
+    /**
+     * getResultSet returns the current result as a ResultSet.  It
+     * should only be called once per result.
+     *
+     * @return the current result set; null if there are no more
+     * @exception SQLException if a database access error occurs
+     */
+    public java.sql.ResultSet getResultSet() throws SQLException
+    {
+        return results;
+    }
+
+    /**
+     * getUpdateCount returns the current result as an update count,
+     * if the result is a ResultSet or there are no more results, -1
+     * is returned.  It should only be called once per result.
+     *
+     * @return the current result as an update count.
+     * @exception SQLException if a database access error occurs
+     */
+    public int getUpdateCount() throws SQLException
+    {
+        return updateCount;
+    }
+
+    /**
+     * getMoreResults moves to a Statement's next result.  If it returns
+     * true, this result is a ResulSet.
+     *
+     * @return true if the next ResultSet is valid
+     * @exception SQLException if a database access error occurs
+     */
+    public boolean getMoreResults() throws SQLException
+    {
+        return getMoreResults(actTds, true);
+    }
+
+    public boolean getMoreResults(int current) throws SQLException
+    {
+        throw new SQLException("Not Implemented");
+    }
+
+    public void handleRetStat(PacketRetStatResult packet)
+    {
+    }
+
+    public void handleParamResult(PacketOutputParamResult packet) throws SQLException
+    {
+    }
+
+    public boolean getMoreResults(Tds tds, boolean allowTdsRelease) throws SQLException
+    {
+        updateCount = -1;
+
+        if( tds == null )
+            return false;
+
+        // Reset all internal variables (do it before checking for more results)
+        closeResults(false);
+
+        if( !tds.moreResults() )
+        {
+            if( allowTdsRelease )
+                releaseTds();
+            return false;
+        }
+
+        try
+        {
+            // Keep eating garbage and warnings until we reach the next result
+            while( true )
+            {
+                if( tds.isResultSet() )
+                {
+                    startResultSet(tds);
+                    break;
+                }
+                // SAfe: Only TDS_END_TOKEN should return row counts for Statements
+                // TDS_DONEINPROC should return row counts for PreparedStatements
+                else if( tds.peek()==Tds.TDS_END_TOKEN ||
+                    (tds.getStatement() instanceof PreparedStatement &&
+                    !(tds.getStatement() instanceof CallableStatement) &&
+                    tds.peek()==Tds.TDS_DONEINPROC) )
+                {
+                    PacketEndTokenResult end =
+                        (PacketEndTokenResult)tds.processSubPacket();
+                    updateCount = end.getRowCount();
+                    if( allowTdsRelease )
+                        releaseTds();
+                    break;
+                }
+                // SAfe: TDS_DONEPROC and TDS_DONEINPROC should *NOT* return
+                //       rowcounts otherwise
+                else if( tds.isEndOfResults() )
+                {
+                    tds.processSubPacket();
+                    if( !tds.moreResults() )
+                    {
+                        if( allowTdsRelease )
+                            releaseTds();
+                        break; // No more results but no update count either
+                    }
+                }
+                else if( tds.isMessagePacket() || tds.isErrorPacket() )
+                    warningChain.addOrReturn((PacketMsgResult)tds.processSubPacket());
+                else if (tds.isRetStat())
+                    handleRetStat((PacketRetStatResult)tds.processSubPacket());
+                else if( tds.isParamResult() )
+                    handleParamResult((PacketOutputParamResult)tds.processSubPacket());
+                else if( tds.isEnvChange() )
+                    // Process the environment change.
+                    tds.processSubPacket();
+                else if( tds.isProcId() )
+                    tds.processSubPacket();
+                else  // process whatever comes now, isParamResult
+                    throw new SQLException("Protocol confusion. Got a 0x"
+                        + Integer.toHexString((tds.peek() & 0xff)) + " packet.");
+            } // end while
+
+            warningChain.checkForExceptions();
+
+            return results != null;
+        }
+
+        catch( Exception ex )
+        {
             skipToEnd();
-
-            // MJH Do not Rollback any pending transactions!
-            connection.freeTds(actTds);
-            actTds = null;
-         }
-         catch( com.internetcds.jdbc.tds.TdsException e )
-         {
-            throw new SQLException(e.toString());
-         }
-   }
-
-   /**
-    * The maxFieldSize limit (in bytes) is the maximum amount of
-    * data returned for any column value; it only applies to
-    * BINARY, VARBINARY, LONGVARBINARY, CHAR, VARCHAR and LONGVARCHAR
-    * columns.  If the limit is exceeded, the excess data is silently
-    * discarded.
-    *
-    * @return the current max column size limit; zero means unlimited
-    * @exception SQLException if a database access error occurs
-    */
-
-   public int getMaxFieldSize() throws SQLException
-   {
-      return maxFieldSize;
-   }
-
-   /**
-    * Sets the maxFieldSize
-    *
-    * @param max the new max column size limit; zero means unlimited
-    * @exception SQLException if size exceeds buffer size
-    */
-
-   public void setMaxFieldSize(int max) throws SQLException
-   {
-      maxFieldSize = max;
-   }
-
-   /**
-    * The maxRows limit is set to limit the number of rows that
-    * any ResultSet can contain.  If the limit is exceeded, the
-    * excess rows are silently dropped.
-    *
-    * @return the current maximum row limit; zero means unlimited
-    * @exception SQLException if a database access error occurs
-    */
-
-   public int getMaxRows() throws SQLException
-   {
-      return maxRows;
-   }
-
-   /**
-    * Set the maximum number of rows
-    *
-    * @param max the new max rows limit; zero means unlimited
-    * @exception SQLException if a database access error occurs
-    * @see #getMaxRows
-    */
-
-   public void setMaxRows(int max) throws SQLException
-   {
-      if (maxRows < 0)
-      {
-         throw new SQLException("Negative row count");
-      }
-      maxRows = max;
-
-      // this.executeUpdate("set rowcount " + maxRows);
-   }
-
-   /**
-    * If escape scanning is on (the default), the driver will do escape
-    * substitution before sending the SQL to the database.
-    *
-    * @param enable true to enable; false to disable
-    * @exception SQLException if a database access error occurs
-    */
-
-   public void setEscapeProcessing(boolean enable) throws SQLException
-   {
-      escapeProcessing = enable;
-   }
-
-   /**
-    * The queryTimeout limit is the number of seconds the driver
-    * will wait for a Statement to execute.  If the limit is
-    * exceeded, a SQLException is thrown.
-    *
-    * @return the current query timeout limit in seconds; 0 = unlimited
-    * @exception SQLException if a database access error occurs
-    */
-
-   public int getQueryTimeout() throws SQLException
-   {
-      return timeout;
-   }
-
-   /**
-    * Sets the queryTimeout limit
-    *
-    * @param seconds - the new query timeout limit in seconds
-    * @exception SQLException if a database access error occurs
-    */
-
-   public void setQueryTimeout(int seconds) throws SQLException
-   {
-      timeout = seconds;
-   }
-
-  /**
-   *
-   * @exception SQLException
-   */
-   public void cancel() throws SQLException
-   {
-      if (actTds == null)
-      {
-         throw new SQLException("Statement is closed");
-      }
-
-      try
-      {
-         actTds.cancel();
-      }
-      catch(com.internetcds.jdbc.tds.TdsException e)
-      {
-         throw new SQLException(e.getMessage());
-      }
-      catch(java.io.IOException e)
-      {
-         throw new SQLException(e.getMessage());
-      }
-   }
-
-
-   /**
-    * The first warning reported by calls on this Statement is
-    * returned.  A Statement's execute methods clear its SQLWarning
-    * chain.  Subsequent Statement warnings will be chained to this
-    * SQLWarning.
-    *
-    * <p>The Warning chain is automatically cleared each time a statement
-    * is (re)executed.
-    *
-    * <p><B>Note:</B>  If you are processing a ResultSet then any warnings
-    * associated with ResultSet reads will be chained on the ResultSet
-    * object.
-    *
-    * @return the first SQLWarning on null
-    * @exception SQLException if a database access error occurs
-    */
-   public SQLWarning getWarnings() throws SQLException
-   {
-      return warningChain.getWarnings();
-   }
-
-
-  /**
-   * After this call, getWarnings returns null until a new warning
-   * is reported for this Statement.
-   *
-   * @exception SQLException if a database access error occurs (why?)
-   */
-   public void clearWarnings() throws SQLException
-   {
-      warningChain.clearWarnings();
-   }
-
-  /**
-   * setCursorName defines the SQL cursor name that will be used by
-   * subsequent execute methods.  This name can then be used in SQL
-   * positioned update/delete statements to identify the current row
-   * in the ResultSet generated by this statement.  If a database
-   * doesn't support positioned update/delete, this method is a
-   * no-op.
-   *
-   *
-   * @param name the new cursor name
-   * @exception SQLException if a database access error occurs
-   */
-   public void setCursorName(String name) throws SQLException
-   {
-      NotImplemented();
-   }
-
-   public boolean execute(String sql) throws SQLException
-   {
-     return execute(getTds(sql),sql);
-   }
-
-   protected Tds getTds(String sql) throws SQLException
-   {
-      if( actTds != null )
-         return actTds;
-      else
-      {
-         actTds=connection.allocateTds();
-         actTds.setStatement(this);
-         return actTds;
-      }
-   }
-   /**
-    * @param sql any SQL statement
-    * @return true if the next result is a ResulSet, false if it is
-    *      an update count or there are no more results
-    * @exception SQLException if a database access error occurs
-    */
-   public boolean execute(Tds tds, String sql) throws SQLException
-   {
-      // Clear warnings, otherwise the last exception will be thrown.
-      clearWarnings();
-      updateCount = -1;
-
-      // Consume all outstanding results. Otherwise it will either deadlock or
-      // return results from the previous query.
-      skipToEnd();
-
-      try
-      {
-         if (escapeProcessing)
-         {
-            sql = Tds.toNativeSql(sql, tds.getServerType());
-         }
-         tds.executeQuery(sql, this, timeout);
-      }
-      catch(java.io.IOException e)
-      {
-         throw new SQLException("Network error- " + e.getMessage());
-      }
-      catch(com.internetcds.jdbc.tds.TdsException e)
-      {
-         throw new SQLException("TDS error- " + e.getMessage());
-      }
-      return getMoreResults(tds);
-   } // execute()
-
-
-   /**
-    * getResultSet returns the current result as a ResultSet.  It
-    * should only be called once per result.
-    *
-    * @return the current result set; null if there are no more
-    * @exception SQLException if a database access error occurs
-    */
-   public java.sql.ResultSet getResultSet() throws SQLException
-   {
-      try
-      {
-         if (actTds == null)
-         {
-            return null;
-         }
-
-         // There is no unopened result, we are just doing that
-         unopenedResult = false;
-         closeResults(false);
-
-         if (actTds.peek()==TdsDefinitions.TDS_DONEINPROC)
-         {
-            PacketResult tmp = actTds.processSubPacket();
-         }
-
-         if (actTds.isResultSet())   // JJ 1999-01-09 used be: ;getMoreResults())
-         {
-            startResultSet(actTds);
-         }
-         else if( actTds.isErrorPacket() )
-         {
-            throw ((PacketErrorResult)actTds.processSubPacket()).getMsg().toSQLException();
-         }
-         else if (updateCount!=-1)
-         {
-            if (! actTds.isEndOfResults())
-            {
-               // XXX
-               throw new SQLException("Internal error.  "+
-                                      " expected EndOfResults, found 0x"
-                                      + Integer.toHexString(actTds.peek()&0xff));
-            }
-            /* curt's version:
-            boolean done = false;
-            while (!done && tds.isEndOfResults())
-            {
-              PacketEndTokenResult end =
-                 (PacketEndTokenResult) actTds.processSubPacket();
-              updateCount = end.getRowCount();
-              done = !end.moreResults();
-            }
-            results = null;
-             */
-            PacketEndTokenResult end =
-                 (PacketEndTokenResult) actTds.processSubPacket();
-            updateCount = end.getRowCount();
-            results = null;
-
-         }
-         else
-         {
-            // We didn't have more data and we didn't have an update count,
-            // now what?
-            throw new SQLException("Internal error.  Confused");
-         }
-      }
-      catch(java.io.IOException e)
-      {
-         throw new SQLException(e.getMessage());
-      }
-      catch(TdsException e)
-      {
-         throw new SQLException(e.getMessage());
-      }
-
-      return results;
-   }
-
-   /**
-    * getUpdateCount returns the current result as an update count,
-    * if the result is a ResultSet or there are no more results, -1
-    * is returned.  It should only be called once per result.
-    *
-    * @return the current result as an update count.
-    * @exception SQLException if a database access error occurs
-    */
-   public int getUpdateCount() throws SQLException
-   {
-      return updateCount;
-   }
-
-   /**
-    * getMoreResults moves to a Statement's next result.  If it returns
-    * true, this result is a ResulSet.
-    *
-    * @return true if the next ResultSet is valid
-    * @exception SQLException if a database access error occurs
-    */
-   public boolean getMoreResults() throws SQLException
-   {
-      return getMoreResults(actTds);
-   }
-
-   public boolean getMoreResults(int current) throws SQLException
-   {
-      throw new SQLException("Not Implemented");
-   }
-
-   public void handleRetStat(PacketRetStatResult packet)
-   {
-   }
-
-   public void handleParamResult(PacketOutputParamResult packet) throws SQLException
-   {
-   }
-
-   public boolean getMoreResults(Tds tds) throws SQLException
-   {
-      return getMoreResultsImpl(tds, true);
-   }
-
-   private boolean getMoreResultsImpl(Tds tds, boolean allowTdsRelease) throws SQLException
-   {
-      updateCount = -1; // Do we need this global variable?
-      if (tds == null)
-      {
-         return false;
-      }
-
-      // Reset all internal variables (do it before checking for more results)
-      closeResults(false);
-
-      if( !tds.moreResults() )
-      {
-         if( allowTdsRelease )
             releaseTds();
-         return false;
-      }
-
-      boolean result = false;
-
-      try
-      {
-         // Keep eating garbage and warnings until we reach the next result
-         while (true)
-         {
-            if (tds.isProcId())
-            {
-               tds.processSubPacket();
-            }
-            /*  isParamToken handled by processSubPacket
-            else if (tds.isTextUpdate())
-            {
-               PacketResult tmp1 =
-                  (PacketResult)tds.processSubPacket();
-            }
-             */
-            else if (tds.isMessagePacket() || tds.isErrorPacket())
-            {
-               PacketMsgResult  tmp = (PacketMsgResult)tds.processSubPacket();
-               warningChain.addOrReturn(tmp);
-            }
-            else if (tds.isRetStat()) {
-               handleRetStat((PacketRetStatResult)tds.processSubPacket());
-            }
-            else if (tds.isResultSet()) {
-              result = true;
-              unopenedResult = true;
-              break;
-            }
-            // SAfe: Only TDS_END_TOKEN should return row counts for Statements
-            // TDS_DONEINPROC should return row counts for PreparedStatements
-            else if( tds.peek()==Tds.TDS_END_TOKEN ||
-                (tds.getStatement() instanceof PreparedStatement &&
-                !(tds.getStatement() instanceof CallableStatement) &&
-                tds.peek()==Tds.TDS_DONEINPROC) )
-            {
-              PacketEndTokenResult end =
-                 (PacketEndTokenResult)tds.processSubPacket();
-              updateCount = end.getRowCount();
-              if( allowTdsRelease )
-                 releaseTds();
-              break;
-            }
-            // SAfe: TDS_DONEPROC and TDS_DONEINPROC should *NOT* return rowcounts
-            else if (tds.isEndOfResults())
-            {
-              PacketEndTokenResult end =
-                 (PacketEndTokenResult)tds.processSubPacket();
-              if( !tds.moreResults() )
-              {
-                 if( allowTdsRelease )
-                    releaseTds();
-                 break; // No more results but no update count either
-              }
-            }
-            else if( tds.isParamResult() )
-                handleParamResult((PacketOutputParamResult)tds.processSubPacket());
-            else if( tds.isEnvChange() )
-                // Process the environment change.
-                tds.processSubPacket();
-            else  // process whatever comes now, isParamResult
-                throw new SQLException("Protocol confusion.  "
-                                      + "Got a 0x"
-                                      + Integer.toHexString((tds.peek() & 0xff))
-                                      + " packet");
-         } // end while
-
-         SQLException exception = warningChain.getExceptions();
-         if( exception != null )
-         {
-            try
-            {
-               /** @todo: This crashes if any rows are returned because no row context is provided */
-               if (result)
-                 tds.discardResultSet(null);
-               releaseTds();
-            }
-            catch(java.io.IOException e)
-            {
-               throw new SQLException("Error discarding result set while processing sql error-  " +
-                                      exception.getMessage() +
-                                      "\nIOException was " +
-                                      e.getMessage());
-            }
-            catch(com.internetcds.jdbc.tds.TdsException e)
-            {
-               throw new SQLException("Error discarding result set while processing sql error-  " +
-                                      exception.getMessage() +
-                                      "\nIOException was " +
-                                      e.getMessage());
-            }
-            throw exception;
-         }
-
-         return result;
-      }
-
-      catch(java.io.IOException e)
-      {
-         releaseTds();
-         throw new SQLException("Network error- " + e.getMessage());
-      }
-      catch(com.internetcds.jdbc.tds.TdsException e)
-      {
-         releaseTds();
-         throw new SQLException("TDS error- " + e.getMessage());
-      }
-   }
+            if( ex instanceof SQLException )
+                throw (SQLException)ex;
+            else
+                throw new SQLException("Network error: " + ex.getMessage());
+        }
+    }
 
     protected void startResultSet(Tds tds) throws SQLException
     {
-        // We are just opening the next result set
-        unopenedResult = false;
-
         results = new TdsResultSet(tds, this);
     }
-
 
     void fetchIntoCache() throws SQLException
     {
@@ -783,10 +623,7 @@ public class TdsStatement implements java.sql.Statement
         }
     }
 
-
-
     //--------------------------JDBC 2.0-----------------------------
-
 
     /**
      * JDBC 2.0
@@ -811,27 +648,25 @@ public class TdsStatement implements java.sql.Statement
         NotImplemented();
     }
 
-
-   /**
-    * JDBC 2.0
-    *
-    * Retrieves the direction for fetching rows from
-    * database tables that is the default for result sets
-    * generated from this <code>Statement</code> object.
-    * If this <code>Statement</code> object has not set
-    * a fetch direction by calling the method <code>setFetchDirection</code>,
-    * the return value is implementation-specific.
-    *
-    * @return the default fetch direction for result sets generated
-    *          from this <code>Statement</code> object
-    * @exception SQLException if a database access error occurs
-    */
+    /**
+     * JDBC 2.0
+     *
+     * Retrieves the direction for fetching rows from
+     * database tables that is the default for result sets
+     * generated from this <code>Statement</code> object.
+     * If this <code>Statement</code> object has not set
+     * a fetch direction by calling the method <code>setFetchDirection</code>,
+     * the return value is implementation-specific.
+     *
+     * @return the default fetch direction for result sets generated
+     *          from this <code>Statement</code> object
+     * @exception SQLException if a database access error occurs
+     */
     public int getFetchDirection() throws SQLException
     {
         NotImplemented();
         return 0;
     }
-
 
     /**
      * JDBC 2.0
@@ -850,7 +685,6 @@ public class TdsStatement implements java.sql.Statement
     {
         NotImplemented();
     }
-
 
     /**
      * JDBC 2.0
@@ -871,7 +705,6 @@ public class TdsStatement implements java.sql.Statement
         return 0;
     }
 
-
     /**
      * JDBC 2.0
      *
@@ -882,7 +715,6 @@ public class TdsStatement implements java.sql.Statement
         return concurrency;
     }
 
-
     /**
      * JDBC 2.0
      *
@@ -892,7 +724,6 @@ public class TdsStatement implements java.sql.Statement
     {
         return type;
     }
-
 
     /**
      * JDBC 2.0
@@ -923,7 +754,6 @@ public class TdsStatement implements java.sql.Statement
         NotImplemented();
     }
 
-
     /**
      * JDBC 2.0
      *
@@ -941,7 +771,6 @@ public class TdsStatement implements java.sql.Statement
         NotImplemented();
         return null;
     }
-
 
     /**
      * JDBC 2.0
@@ -963,7 +792,7 @@ public class TdsStatement implements java.sql.Statement
             String query = actTds.sqlStatementForSettings(autoCommit, transactionIsolationLevel);
             if( query != null )
             {
-                internalExecuteQuery(actTds, query);
+                internalExecute(actTds, query);
                 skipToEnd();
             }
         }

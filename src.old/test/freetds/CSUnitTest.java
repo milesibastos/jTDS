@@ -992,18 +992,17 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testExceptionByUpdate0033() throws Exception {
     boolean passed;
     Statement   stmt = con.createStatement();
-    output.println("Starting test #t0033-  make sure Statement.executeUpdate() throws excpetion");
+    output.println("Starting test #t0033-  make sure Statement.executeUpdate() throws exception");
 
     try {
       passed = false;
       stmt.executeUpdate("I am sure this is an error");
     }
     catch (SQLException e) {
-      output.println("The execption is " + e.getMessage());
+      output.println("The exception is " + e.getMessage());
       passed = true;
     }
     assertTrue(passed);
-
   }
 
   public void testInsertConflict0049() throws Exception {

@@ -152,6 +152,7 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(rs.next());
     assertTrue(rs.getString(1).equals("a"));
     assertTrue(!rs.next());
+    assertTrue(s2.getMoreResults());
     rs = s2.getResultSet();
     assertTrue(rs.next());
     assertTrue(rs.getString(1).equals("b"));

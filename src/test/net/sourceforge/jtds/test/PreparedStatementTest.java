@@ -210,7 +210,7 @@ public class PreparedStatementTest extends TestBase {
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso2 (data) VALUES (?)");
 
-        pstmt.setObject(1, data, Types.NUMERIC, 4);
+        pstmt.setObject(1, data, Types.NUMERIC);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
     
@@ -236,13 +236,65 @@ public class PreparedStatementTest extends TestBase {
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso3 (data) VALUES (?)");
 
-        pstmt.setObject(1, data, Types.DECIMAL, 4);
+        pstmt.setObject(1, data, Types.DECIMAL);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
     
         stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso3");
+
+        assertTrue(rs.next());
+        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertTrue(!rs.next());
+        rs.close();
+    }
+
+    /**
+     * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
+     */
+    public void testPreparedStatementSetObject4() throws Exception {
+        BigDecimal data = new BigDecimal(3.7D);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #psso4 (data MONEY)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso4 (data) VALUES (?)");
+
+        pstmt.setObject(1, data, Types.NUMERIC, 4);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+    
+        stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso4");
+
+        assertTrue(rs.next());
+        assertTrue(data.doubleValue() == rs.getDouble(1));
+        assertTrue(!rs.next());
+        rs.close();
+    }
+
+    /**
+     * Test for bug [938494] setObject(i, o, NUMERIC/DECIMAL) cuts off decimal places
+     */
+    public void testPreparedStatementSetObject5() throws Exception {
+        BigDecimal data = new BigDecimal(3.7D);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #psso5 (data MONEY)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psso5 (data) VALUES (?)");
+
+        pstmt.setObject(1, data, Types.DECIMAL, 4);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+    
+        stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #psso5");
 
         assertTrue(rs.next());
         assertTrue(data.doubleValue() == rs.getDouble(1));

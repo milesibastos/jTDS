@@ -17,6 +17,8 @@
 //
 package net.sourceforge.jtds.jdbc.cache;
 
+import java.util.Collection;
+
 /**
  * Interface for a statement cache. Abstraction of the caching mechanism by use
  * of this interface will allow developers to create custom caching schemes
@@ -24,7 +26,7 @@ package net.sourceforge.jtds.jdbc.cache;
  * required by an implementation should utilize the implementing object for the
  * lock.
  * <p>
- * There are three types of attributes that the cache is concerned with:
+ * There are two types of attributes that the cache is concerned with:
  * <dl>
  *   <dt>statement key</dt>
  *   <dd><code>String</code> generated from the SQL query for which the
@@ -32,24 +34,18 @@ package net.sourceforge.jtds.jdbc.cache;
  *     types; this key uniquely identifies a server-side preparation of the
  *     statement and is used to retrieve the handle of the statement when it
  *     needs to be executed</dd>
- *   <dt>SQL string</dt>
- *   <dd>the SQL query for prepared by the statement (without any type
- *     information); this is used to match <code>PreparedStatement</code>s to
- *     their server-side handles, e.g. when cleaning up unused handles</dd>
- *   <dt>statement handle</dt>
  *   <dd>temporary procedure name or <code>sp_prepare</code> or
  *     <code>sp_cursorprepare</code> handle on the server; one
  *     <code>PreparedStatement</code> can map to multiple handles, depending on
  *     the types of the parameters it is called with (hence the need to be able
  *     to map both keys and SQL strings to handles)</dd>
  * </dl>
- * The cache can retrieve statement handles using both keys and SQL strings,
- * depending on the usage (when retrieving a statement for execution the key is
- * used; for 
+ * The cache can retrieve statement handles using statement keys. 
  * <p>
  * The caching types provided by jTDS should be:
  * <ul>
  *   <li>Arbitrary first un-latched (initial default until other caches are implemented)</li>
+ *   <li>Fast caching (never latches and never releases handles)</li>
  *   <li>FIFO</li>
  *   <li>LRU</li>
  *   <li>No caching</li>
@@ -57,7 +53,7 @@ package net.sourceforge.jtds.jdbc.cache;
  * </ul>
  *
  * @author Brian Heineman
- * @version $Id: StatementCache.java,v 1.2 2004-10-22 15:15:11 alin_sinpalean Exp $
+ * @version $Id: StatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
  */
 public interface StatementCache {
 	/**
@@ -75,10 +71,9 @@ public interface StatementCache {
 	 * a key already exists in the cache, the handle will be overwritten.
 	 *
      * @param key the statement key to associated with the handle
-     * @param sql the SQL String used to prepare the statement
      * @param handle the statement handle
      */
-	public void put(String key, String sql, Object handle);
+	public void put(String key, Object handle);
 
 	/**
 	 * Removes a statement key and handle from the cache for the specified key.
@@ -92,8 +87,8 @@ public interface StatementCache {
 	 * Returns an array of obsolete statement handles that may be released,
 	 * or <code>null</code> if no statement handles are obsolete.
 	 *
-     * @param handle the statement handle that is no longer being used.
-	 * @return array of obsolete statement handles.
+     * @param handles the statement handles that are no longer being used.
+	 * @return collection of obsolete statement handles to be removed
 	 */
-	public Object[] getObsoleteHandles(String handle);
+	public Collection getObsoleteHandles(Collection handles);
 }

@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.11 2004-09-23 14:26:58 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.12 2004-10-25 19:33:39 bheineman Exp $
  */
 public final class DefaultProperties {
 
@@ -62,6 +62,8 @@ public final class DefaultProperties {
     public static final String LOGIN_TIMEOUT = "0";
     /** Default <code>macAddress</code> property. */
     public static final String MAC_ADDRESS = "000000000000";
+    /** Default <code>maxStatements</code> property. */
+    public static final String MAX_STATEMENTS = "500";
     /** Default <code>namedPipe</code> property. */
     public static final String NAMED_PIPE = "false";
     /** Default <code>namedPipePath</code> property for SQL Server. */
@@ -151,6 +153,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, "prop.lobbuffer", LOB_BUFFER_SIZE);
         addDefaultPropertyIfNotSet(props, "prop.logintimeout", LOGIN_TIMEOUT);
         addDefaultPropertyIfNotSet(props, "prop.macaddress", MAC_ADDRESS);
+        addDefaultPropertyIfNotSet(props, "prop.maxstatements", MAX_STATEMENTS);
         addDefaultPropertyIfNotSet(props, "prop.namedpipe", NAMED_PIPE);
 
         addDefaultPropertyIfNotSet(props, "prop.packetsize", "prop.tds", packetSizeDefaults);

@@ -250,6 +250,11 @@
         <dd>The amount of LOB data to buffer in memory before caching to disk. The
           value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>
           data.</dd>
+        <dt><code>maxStatements</code> (default - <code>500</code>)</dt>
+        <dd>The number of statements each connection should keep open.
+          A value of <code>0</code> will disable statement caching.
+          A value of <code>Integer.MAX_VALUE</code> (<code>2147483647</code>) will enable fast caching
+          (uses less memory and has no overhead associated with latching statements).</dd>
         <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
         <dd>The amount of time to wait (in milliseconds) for a successful connection
           before timing out.</dd>

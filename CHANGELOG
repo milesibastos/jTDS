@@ -1,6 +1,19 @@
 Changes from jTDS 0.9
 =========================
 
+10/25/2004 - Brian Heineman
+ o Created FastStatementCache for users with a limited number of unique
+   prepared statements who want the fastest performance possible.
+ o Added maxStatements property to control how many simultaneous statements the
+   connection keeps open.
+ o Corrected bug when dropping procedures; the logic for DROP PROC and
+   sp_unprepare was reversed.
+ o Reduced overhead associated with latching.  The connection now establishes a
+   NonCachingStatementCache (yes, it is an oxymoron) when maxStatements is 0 and
+   a FastStatementCache when maxStatements is Integer.MAX_VALUE.  This prevents
+   the need for the latching methods to check the statement size each time.
+ o These changes address RFE [920825] and bug [1019694].
+
 10/25/2004 - Alin Sinpalean
  o Applied Mike's fix for bug [1052942] Error processing JDBC call escape.
 

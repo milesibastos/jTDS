@@ -17,6 +17,7 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import java.lang.ref.WeakReference;
 import java.sql.CallableStatement;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -26,14 +27,15 @@ import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Types;
 import java.sql.ResultSet;
-import java.util.Map;
-import java.util.Properties;
 import java.net.UnknownHostException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.lang.ref.WeakReference;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 import javax.transaction.xa.XAException;
 
 import net.sourceforge.jtds.jdbc.cache.*;
@@ -61,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.42 2004-10-22 15:15:19 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.43 2004-10-25 19:33:39 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -202,8 +204,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int maxPrecision = 38; // Sybase default
     /** Stored procedure unique ID number. */
     private int spSequenceNo = 1;
-    /** Statement cache.*/
-    private StatementCache statementCache = new DefaultStatementCache(500);
     /** Procedures in this transaction. */
     private ArrayList procInTran = new ArrayList();
     /** Indicates current charset is wide. */
@@ -214,6 +214,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int prepareSql;
     /** The amount of LOB data to buffer in memory. */
     private long lobBuffer;
+    /** The maximum number of statements to keep open. */
+    private int maxStatements;
+    /** Statement cache.*/
+    private StatementCache statementCache;
     /** Send parameters as unicode. */
     private boolean useUnicode = true;
     /** Use named pipe IPC instead of TCP/IP sockets. */
@@ -586,7 +590,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         // OK we have built a proc so add it to the cache.
-        addCachedProcedure(key, sql, proc);
+        addCachedProcedure(key, proc);
+        
+        // Add the handle to the prepared statement so that the handles
+        // can be used to clean up the statement cache properly when the
+        // prepared statement is closed.
+        if (pstmt.handles == null) {
+        	pstmt.handles = new ArrayList(1);
+        }
+        
+        pstmt.handles.add(proc);
+        
 
         // Give the user the name
         return proc.name;
@@ -596,11 +610,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Add a stored procedure to the cache.
      *
      * @param key The signature of the procedure to cache.
-     * @param sql
      * @param proc The stored procedure descriptor.
      */
-    void addCachedProcedure(String key, String sql, ProcEntry proc) {
-        statementCache.put(key, null, proc);
+    void addCachedProcedure(String key, ProcEntry proc) {
+        statementCache.put(key, proc);
 
         if (!autoCommit) {
             procInTran.add(key);
@@ -765,7 +778,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
         lobBuffer = parseLongProperty(info, "prop.lobbuffer");
-
+        maxStatements = parseIntegerProperty(info, "prop.maxstatements");
+        
+        if (maxStatements <= 0) {
+        	statementCache = new NonCachingStatementCache();
+        } else if (maxStatements == Integer.MAX_VALUE) {
+        	statementCache = new FastStatementCache();
+        } else {
+        	statementCache = new DefaultStatementCache(maxStatements);
+        }
+        
         // The TdsCore.PREPEXEC method is only available with TDS 8.0+ (SQL
         // Server 2000+); downgrade to TdsCore.PREPARE if an invalid option
         // is selected.
@@ -1036,27 +1058,24 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (statement instanceof JtdsPreparedStatement) {
             // Clean up the prepared statement cache
-            Object[] handles = statementCache.getObsoleteHandles(
-                    ((JtdsPreparedStatement) statement).sql);
+            Collection handles = statementCache.getObsoleteHandles(
+                    ((JtdsPreparedStatement) statement).handles);
 
             if (handles != null) {
-                StringBuffer cleanupSql = new StringBuffer(handles.length * 15);
+                StringBuffer cleanupSql = new StringBuffer(handles.size() * 15);
 
-                for (int i = 0; i < handles.length; i++) {
-                    String handle = (String) handles[i];
-
-                    if (i != 0) {
-                        cleanupSql.append('\n');
-                    }
+                for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
+                    String handle = iterator.next().toString();
 
                     // FIXME - Add support for sp_cursorunprepare
                     if (TdsCore.isPreparedProcedureName(handle)) {
-                        cleanupSql.append("DROP PROC ");
-                        cleanupSql.append(handle);
-                    } else {
                         cleanupSql.append("EXEC sp_unprepare ");
-                        cleanupSql.append(handle);
+                    } else {
+                        cleanupSql.append("DROP PROC ");
                     }
+                    
+                    cleanupSql.append(handle);
+                    cleanupSql.append('\n');
                 }
 
                 baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0, -1);

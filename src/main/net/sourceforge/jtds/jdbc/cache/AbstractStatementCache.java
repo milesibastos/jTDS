@@ -24,7 +24,7 @@ import java.util.*;
  * is one of the services provided by this class.
  *
  * @author Brian Heineman
- * @version $Id: AbstractStatementCache.java,v 1.2 2004-10-22 15:15:09 alin_sinpalean Exp $
+ * @version $Id: AbstractStatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
  */
 abstract class AbstractStatementCache implements StatementCache {
 	private static final Integer INTEGER_ONE = new Integer(1);
@@ -33,9 +33,7 @@ abstract class AbstractStatementCache implements StatementCache {
 	 * An integer representing the maximum cache size.  This value is only a
 	 * target and may be exceeded by a specific caching implementation.
 	 * However, each cache implementation must make a "best effort" to adhere
-	 * to this maximum cache limit.  A cache value of {@link Integer#MAX_VALUE}
-	 * indicates "unlimited" caching; cache implementations may use this to
-	 * avoid overhead associated with removing obsolete handles.
+	 * to this maximum cache limit.
 	 */
 	protected int maximumCacheTarget;
 
@@ -65,10 +63,6 @@ abstract class AbstractStatementCache implements StatementCache {
      * @param handle the statement handle to add a single latch for.
 	 */
 	protected void latch(Object handle) {
-		if (maximumCacheTarget == Integer.MAX_VALUE) {
-			return;
-		}
-
 		// Convert ProcEntry to the procedure name/handle using ProcEntry.toString()
 		if (handle != null) {
 			handle = handle.toString();
@@ -85,15 +79,24 @@ abstract class AbstractStatementCache implements StatementCache {
 	}
 
 	/**
+	 * Removes a single latch from each handle in the Collection.
+	 *
+     * @param handles the statement handles to remove a single latch from.
+	 */
+	protected void unlatch(Collection handles) {
+		if (handles != null) {
+			for (Iterator iterator = handles.iterator(); iterator.hasNext();) {
+				unlatch(iterator.next());
+			}
+		}
+	}
+	
+	/**
 	 * Removes a single latch from the given statement handle.
 	 *
      * @param handle the statement handle to remove a single latch from.
 	 */
 	protected void unlatch(Object handle) {
-		if (maximumCacheTarget == Integer.MAX_VALUE) {
-			return;
-		}
-
 		// Convert ProcEntry to the procedure name/handle using ProcEntry.toString()
 		if (handle != null) {
 			handle = handle.toString();
@@ -135,10 +138,6 @@ abstract class AbstractStatementCache implements StatementCache {
 	 *   <code>false</code> otherwise.
 	 */
 	protected boolean isLatched(Object handle) {
-		if (maximumCacheTarget == Integer.MAX_VALUE) {
-			return false;
-		}
-
 		// Convert ProcEntry to the procedure name/handle using ProcEntry.toString()
 		if (handle != null) {
 			handle = handle.toString();

@@ -23,7 +23,7 @@ import java.util.*;
  * Implements a light-weight statement cache using a <code>HashMap</code>.
  *
  * @author Brian Heineman
- * @version $Id: DefaultStatementCache.java,v 1.2 2004-10-22 15:15:11 alin_sinpalean Exp $
+ * @version $Id: DefaultStatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
  */
 public class DefaultStatementCache extends AbstractStatementCache {
 	private HashMap cache = new HashMap();
@@ -54,11 +54,9 @@ public class DefaultStatementCache extends AbstractStatementCache {
 	 * a key already exists in the cache, the handle will be overwritten.
 	 *
      * @param key the statement key to associated with the handle
-     * @param sql the SQL String used to prepare the statement
      * @param handle the statement handle
      */
-	public synchronized void put(String key, String sql, Object handle) {
-        // FIXME
+	public synchronized void put(String key, Object handle) {
 		cache.put(key, handle);
 		latch(handle);
 	}
@@ -79,25 +77,25 @@ public class DefaultStatementCache extends AbstractStatementCache {
      * (it might happen that all statements are actually in use and they cannot
      * be removed).
 	 *
-     * @param handle the statement handle that is no longer being used
-	 * @return array of removed statement handles
+     * @param handles the statement handles that are no longer being used.
+	 * @return collection of obsolete statement handles to be removed
 	 */
-	public synchronized Object[] getObsoleteHandles(String handle) {
+	public synchronized Collection getObsoleteHandles(Collection handles) {
 		int cacheOverrun = cache.size() - maximumCacheTarget;
 
-		unlatch(handle);
+		unlatch(handles);
 
 		if (cacheOverrun <= 0) {
 			return null;
 		}
 
-		ArrayList handles = new ArrayList(cacheOverrun);
+		ArrayList obsoleteHandles = new ArrayList(cacheOverrun);
 
 		for (Iterator iterator = cache.entrySet().iterator(); iterator.hasNext();) {
 			Map.Entry mapEntry = (Map.Entry) iterator.next();
 
 			if (!isLatched(mapEntry.getValue())) {
-				handles.add(mapEntry.getValue());
+				obsoleteHandles.add(mapEntry.getValue());
 
 				iterator.remove();
 
@@ -107,10 +105,10 @@ public class DefaultStatementCache extends AbstractStatementCache {
 			}
 		}
 
-		if (handles.size() == 0) {
+		if (obsoleteHandles.size() == 0) {
 			return null;
 		}
 
-		return handles.toArray();
+		return obsoleteHandles;
 	}
 }

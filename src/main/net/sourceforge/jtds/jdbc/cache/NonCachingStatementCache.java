@@ -17,23 +17,17 @@
 //
 package net.sourceforge.jtds.jdbc.cache;
 
+import java.util.Collection;
+
 /**
  * A caching implementation that performs no caching.  This cache implemenation is generally
  * only useful when the driver is not creating statement handles as it will save a slight
  * amount of memory and time by not performing any caching logic.
  *
  * @author Brian Heineman
- * @version $Id: NonCachingStatementCache.java,v 1.2 2004-10-22 15:15:11 alin_sinpalean Exp $
+ * @version $Id: NonCachingStatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
  */
 public class NonCachingStatementCache implements StatementCache {
-	/**
-	 * Initializes the <code>maximumCacheTarget</code>.
-	 *
-	 * @param maximumCacheTarget the maximum cache size
-	 */
-	public NonCachingStatementCache(int maximumCacheTarget) {
-	}
-
 	/**
 	 * Returns a statement handle associated with the specified key or <code>null</code>
 	 * if the key specified does not have an associated statement handle.
@@ -50,10 +44,9 @@ public class NonCachingStatementCache implements StatementCache {
 	 * a key already exists in the cache, the handle will be overwritten.
 	 *
      * @param key the statement key to associated with the handle
-     * @param sql the SQL String used to prepare the statement
      * @param handle the statement handle.
      */
-	public void put(String key, String sql, Object handle) {
+	public void put(String key, Object handle) {
 	}
 
 	/**
@@ -66,18 +59,13 @@ public class NonCachingStatementCache implements StatementCache {
 	}
 
 	/**
-	 * Returns <code>null</code> indicating no statement handles are obsolete.
-	 * Over-riding implementations should return obsolete handles as is
-	 * appropriate for the caching heuristic being used.
+	 * Returns an array of obsolete statement handles that may be released,
+	 * or <code>null</code> if no statement handles are obsolete.
 	 *
-     * @param handle the statement handle that is no longer being used.
-	 * @return <code>null</code>
+     * @param handles the statement handles that are no longer being used.
+	 * @return collection of obsolete statement handles to be removed
 	 */
-	public Object[] getObsoleteHandles(String handle) {
-		if (handle == null) {
-			return null;
-		}
-
-		return new Object[] {handle};
+	public Collection getObsoleteHandles(Collection handles) {
+		return handles;
 	}
 }

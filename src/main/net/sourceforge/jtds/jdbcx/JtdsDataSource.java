@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.17 2004-10-20 12:58:26 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.18 2004-10-25 19:33:40 bheineman Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -65,6 +65,7 @@ public class JtdsDataSource
     protected String password;
     protected String loginTimeout;
     protected String lobBuffer;
+    protected String maxStatements;
     protected String appName;
     protected String progName;
 
@@ -97,6 +98,7 @@ public class JtdsDataSource
         password = props.getProperty(Messages.get("prop.password"));
         loginTimeout = props.getProperty(Messages.get("prop.logintimeout"));
         lobBuffer = props.getProperty(Messages.get("prop.lobbuffer"));
+        maxStatements = props.getProperty(Messages.get("prop.maxstatements"));
         appName = props.getProperty(Messages.get("prop.appname"));
         progName = props.getProperty(Messages.get("prop.progname"));
     }
@@ -174,6 +176,7 @@ public class JtdsDataSource
         props.setProperty(Messages.get("prop.password"), password);
         props.setProperty(Messages.get("prop.logintimeout"), loginTimeout);
         props.setProperty(Messages.get("prop.lobbuffer"), lobBuffer);
+        props.setProperty(Messages.get("prop.maxstatement"), maxStatements);
         props.setProperty(Messages.get("prop.appname"), appName);
         props.setProperty(Messages.get("prop.progname"), progName);
 
@@ -208,6 +211,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get("prop.password"), password));
         ref.add(new StringRefAddr(Messages.get("prop.logintimeout"), loginTimeout));
         ref.add(new StringRefAddr(Messages.get("prop.lobbuffer"), lobBuffer));
+        ref.add(new StringRefAddr(Messages.get("prop.maxstatements"), maxStatements));
         ref.add(new StringRefAddr(Messages.get("prop.appname"), appName));
         ref.add(new StringRefAddr(Messages.get("prop.progname"), progName));
 
@@ -416,6 +420,14 @@ public class JtdsDataSource
         return Long.parseLong(lobBuffer);
     }
 
+    public void setMaxStatements(long maxStatements) {
+        this.maxStatements = String.valueOf(maxStatements);
+    }
+
+    public long getMaxStatements() {
+        return Long.parseLong(maxStatements);
+    }
+    
     public void setAppName(String appName) {
         this.appName = appName;
     }

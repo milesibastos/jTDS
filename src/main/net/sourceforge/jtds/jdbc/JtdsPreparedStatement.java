@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.TimeZone;
 import java.io.InputStreamReader;
@@ -57,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.21 2004-10-22 15:15:20 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.22 2004-10-25 19:33:39 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -78,6 +79,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     protected ParamInfo[] paramMetaData = null;
     /** Used to format numeric values when scale is specified. */
     private static NumberFormat f = NumberFormat.getInstance();
+    /** Collection of handles used by this statement */
+    Collection handles = null;
 
     /**
      * Construct a new preparedStatement object.

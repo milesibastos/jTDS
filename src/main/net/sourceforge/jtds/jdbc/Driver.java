@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.24 2004-08-03 17:51:06 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.25 2004-08-03 19:14:12 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -112,7 +112,7 @@ public class Driver implements java.sql.Driver {
         return new ConnectionJDBC2(url, props);
     }
 
-    public DriverPropertyInfo[] getPropertyInfo(String url, Properties info)
+    public DriverPropertyInfo[] getPropertyInfo(String url, Properties props)
             throws SQLException {
         DriverPropertyInfo[] dpi = new DriverPropertyInfo[] {
             new DriverPropertyInfo(Support.getMessage("prop.servertype"), null),
@@ -136,15 +136,11 @@ public class Driver implements java.sql.Driver {
             new DriverPropertyInfo(Support.getMessage("prop.lobbuffer"), null)
         };
 
-        if (info == null) {
-            info = new Properties();
-        } else {
-            info = parseURL(url, info);
+        Properties info = parseURL(url, (props == null ? new Properties() : props));
 
-            if (info == null) {
-                throw new SQLException(
-                            Support.getMessage("error.driver.badurl", url), "08001");
-            }
+        if (info == null) {
+            throw new SQLException(
+                        Support.getMessage("error.driver.badurl", url), "08001");
         }
 
         for (int i = 0; i < dpi.length; i++) {

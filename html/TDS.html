@@ -475,7 +475,7 @@ TDS_COLINFO packet).</p>
 <p>Stored procedure output parameter (one such package is returned for each output parameter).
 Precedes TDS_ENDPROC. WRITETEXT seems to also generate a TDS_PARAM with a formal type of 0x00.</p>
 <p>Parameter type seems to be exactly the type submitted (e.g. if the formal parameter is of type
-BIGVARCHAR and the actual parameter sent is of type VARCHAR the output parameter will have type
+NVARCHAR and the actual parameter sent is of type VARCHAR the output parameter will have type
 VARCHAR).</p>
 <table class="packet">
  <tr>
@@ -494,13 +494,13 @@ VARCHAR).</p>
   <td class="offset">03</td>
   <td class="length">1</td>
   <td class="value">XX</td>
-  <td class="description">Column (?) name length</td>
+  <td class="description">Parameter name length</td>
  </tr>
  <tr>
   <td class="offset">04</td>
   <td class="length">X</td>
   <td class="value">XX XX XX ...</td>
-  <td class="description">Column (?) name</td>
+  <td class="description">Parameter name</td>
  </tr>
  <tr>
   <td class="offset">XX</td>
@@ -512,7 +512,7 @@ VARCHAR).</p>
   <td class="offset">XX</td>
   <td class="length">1</td>
   <td class="value">XX</td>
-  <td class="description">Formal type (?) (the type that is declared in the stored procedure header);
+  <td class="description">Formal type (the type that is declared in the stored procedure header);
    for TDS_PARAM packets returned by WRITETEXT seems to be 0x00
   </td>
  </tr>
@@ -532,7 +532,7 @@ VARCHAR).</p>
   <td class="offset">XX</td>
   <td class="length">X</td>
   <td class="value">XX ...</td>
-  <td class="description">Maximum size (?) (only variable size types): 2 bytes for large types (type
+  <td class="description">Maximum size (only variable size types): 2 bytes for large types (type
    & 0x80 != 0), 1 byte for all other types (TEXT, NTEXT and IMAGE cannot be parameters)
   </td>
  </tr>

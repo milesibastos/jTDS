@@ -15,6 +15,10 @@ Changes from jTDS 1.0.2
    "{call proc(?)").
  o Corrected a problem with output parameters being defined as Unicode even
    though sendStringParametersAsUnicode=false was specified.
+ o Applied Mike's fix for bug [1152329] Spurious output params assigned
+   (TIMESTMP). WRITETEXT and UPDATETEXT commands generate spurious output
+   parameter packets, which interfere with the real output parameters. Fix
+   ignores output parameters with names not beginning with '@'.
 
 02/25/2005 - Alin Sinpalean
  o Added code to close the socket and release any data buffered at the socket

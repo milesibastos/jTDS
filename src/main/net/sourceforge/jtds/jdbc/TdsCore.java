@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.77 2005-02-27 14:47:18 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.78 2005-02-27 16:27:57 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2735,7 +2735,7 @@ public class TdsCore {
     private void tdsOutputParamToken()
         throws IOException, ProtocolException, SQLException {
         in.readShort(); // Packet length
-        in.skipString(in.read()); // Column Name
+        String name = in.readString(in.read()); // Column Name
         in.skip(5);
 
         ColInfo col = new ColInfo();
@@ -2746,7 +2746,13 @@ public class TdsCore {
         }
         Object value = TdsData.readData(connection, in, col, false);
 
-        if (parameters != null) {
+        //
+        // Real output parameters will either be unnamed or will have a valid
+        // parameter name beginning with '@'. Ignore any other spurious parameters
+        // such as those returned from calls to writetext in the proc.
+        //
+        if (parameters != null &&
+            (name.length() == 0 || name.startsWith("@"))) {
             if (tdsVersion >= Driver.TDS80
                 && returnParam != null
                 && !returnParam.isSetOut) {

@@ -391,6 +391,34 @@ public class PreparedStatementTest extends TestBase {
         rs.close();
     }
 
+    /**
+     * Test for bug [1022968] Long SQL expression error.
+     * NB. Test must be run with TDS=7.0 to fail.
+     * @throws Exception
+     */
+    public void testLongStatement() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+
+        stmt.execute("CREATE TABLE #longStatement (id int primary key, data varchar(8000))");
+
+        StringBuffer buf = new StringBuffer(4096);
+        buf.append("SELECT * FROM #longStatement WHERE data = '");
+
+        for (int i = 0; i < 4000; i++) {
+            buf.append('X');
+        }
+
+        buf.append("'");
+
+        ResultSet rs = stmt.executeQuery(buf.toString());
+
+        assertNotNull(rs);
+        assertFalse(rs.next());
+
+        stmt.close();
+        rs.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

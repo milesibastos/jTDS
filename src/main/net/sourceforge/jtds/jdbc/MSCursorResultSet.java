@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.17 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.18 2004-09-08 01:27:26 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -378,6 +378,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             pParamDef.isSet     = true;
             pParamDef.jdbcType  = Types.LONGVARCHAR;
             pParamDef.value     = Support.getParameterDefinitions(parameters);
+            pParamDef.length    = ((String)pParamDef.value).length();
             pParamDef.isUnicode = true;
         }
         //
@@ -388,6 +389,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         pSQL.isSet     = true;
         pSQL.jdbcType  = Types.LONGVARCHAR;
         pSQL.value     = sql;
+        pSQL.length    = sql.length();
         pSQL.isUnicode = true;
         //
         // If using the prepare/execute model, now need to pepare SQL

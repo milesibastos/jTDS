@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.6 2001-09-18 08:38:07 aschoerk Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.7 2002-06-28 18:01:15 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.6 2001-09-18 08:38:07 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.7 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -310,7 +310,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
       Object        connection_,
       Tds           tds_)
    {
-   	  // TODO: Figure out other specializations
+      // TODO: Figure out other specializations
       if (tds_.getDatabaseProductName().indexOf("Microsoft") >= 0)
       {
          if (tds_.getDatabaseProductVersion().startsWith("7."))
@@ -318,7 +318,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return new com.internetcds.jdbc.tds.Microsoft7MetaData(connection_, tds_);
          }
       }
-      
+
       return new com.internetcds.jdbc.tds.DatabaseMetaData(connection_, tds_);
    }
    //----------------------------------------------------------------------
@@ -503,7 +503,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
       }
       else
       {
-      	 catalog = " ";
+         catalog = " ";
          sql = sql + " where q != ? ";
       }
 
@@ -663,7 +663,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
       // Create a lookup table for mapping between native and jdbc types
       // This table can be reused for all FreeTDS drivers of the same version
 
-   	  String lookup   = "##freetds#typemap#" + UniqueId.getUniqueId();
+      String lookup   = "##freetds#typemap#" + UniqueId.getUniqueId();
 
       String sql =
          "create table " + lookup + " (       " +
@@ -702,7 +702,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
       return lookup;
    }
-      
+
    private java.sql.ResultSet getColumns_SQLServer65(
       String catalog,
       String schemaPattern,
@@ -788,7 +788,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "   " + lookup + " l,                             " +
             "   " + cat + ".dbo.systypes t                    " +
             "where o.type in ('V', 'U') and o.id=c.id         " +
-            "   and t.usertype=c.usertype and t.type=c.type   " +
+            "   and t.usertype=c.usertype "+// SAfe: and t.type=c.type   " +
             "   and l.native_type=c.type                      " +
             "";
          try
@@ -797,7 +797,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
          }
          catch (SQLException e)
          {
-	    System.out.println(e.getMessage());
+        System.out.println(e.getMessage());
          }
       }
       rs.close();
@@ -1831,7 +1831,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         debugPrintln( "  procedurePattern is " + procedureNamePattern );
        */
 
-      int                 paramIndex;  
+      int                 paramIndex;
       int                 i;
 
       String              sql = null;
@@ -1875,7 +1875,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
          }
          catch (SQLException e)
          {
-            // We might not have access to certain tables.  Just ignore the 
+            // We might not have access to certain tables.  Just ignore the
             // error if this is the case.
          }
       }
@@ -1890,8 +1890,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
          + "  -1 NUM_RESULT_SETS,    "
          + "  REMARKS=rem,           "
          + "  PROCEDURE_TYPE=type    "
-         + " from " + tmpTableName 
-         + " where schem like ?  and "    
+         + " from " + tmpTableName
+         + " where schem like ?  and "
          + " name like ?   ";
 
       java.sql.PreparedStatement ps = connection.prepareStatement(sql);
@@ -2013,8 +2013,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getSQLKeywords() throws SQLException
     {
-        NotImplemented();
-        return null;
+        return "BREAK,BROWSE,BULK,CHECKPOINT,CLUSTERED,COMMITTED,COMPUTE,"
+            +"CONFIRM,CONTROLROW,DATABASE,DBCC,DISK,DISTRIBUTED,DUMMY,DUMP,"
+            +"ERRLVL,ERROREXIT,EXIT,FILE,FILLFACTOR,FLOPPY,HOLDLOCK,"
+            +"IDENTITY_INSERT,IDENTITYCOL,IF,KILL,LINENO,LOAD,MIRROREXIT,"
+            +"NONCLUSTERED,OFF,OFFSETS,ONCE,OVER,PERCENT,PERM,PERMANENT,PLAN,"
+            +"PRINT,PROC,PROCESSEXIT,RAISERROR,READ,READTEXT,RECONFIGURE,"
+            +"REPEATABLE,RETURN,ROWCOUNT,RULE,SAVE,SERIALIZABLE,SETUSER,"
+            +"SHUTDOWN,STATISTICS,TAPE,TEMP,TEXTSIZE,TOP,TRAN,TRIGGER,"
+            +"TRUNCATE,TSEQUEL,UNCOMMITTED,UPDATETEXT,USE,WAITFOR,WHILE,"
+            +"WRITETEXT";
     }
 
 
@@ -2238,7 +2246,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                  + "     TABLE_NAME=name, TABLE_TYPE=type, "
                  + "     REMARKS=rem                       "
                  + " from " + tmpTableName
-         + " where schem like ?  and "    
+         + " where schem like ?  and "
                  + " name like ?   ";
         if ( types != null && types.length > 0 ) {
             sql = sql + " and ( type = ? ";
@@ -2550,7 +2558,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         // MS SQLServer seems to break with the SQL standard here.
         // maybe there is an option to make null behavior comply
-        return false;
+        //
+        // SAfe: Nope, it seems to work fine in SQL Server 7.0
+        return true;
     }
 
 
@@ -2563,8 +2573,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean nullsAreSortedAtEnd() throws SQLException
     {
         // XXX Need to check for Sybase
-
-        // This contradicts "Programming ODBC for SQLServer" Appendix A
         return false;
     }
 
@@ -2578,9 +2586,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean nullsAreSortedAtStart() throws SQLException
     {
         // XXX Need to check for Sybase
-
-        // This contradicts "Programming ODBC for SQLServer" Appendix A
-        return true;
+        return false;
     }
 
 
@@ -2593,8 +2599,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean nullsAreSortedHigh() throws SQLException
     {
         // XXX Need to check for Sybase
-
-        // This contradicts "Programming ODBC for SQLServer" Appendix A
         return false;
     }
 
@@ -2608,9 +2612,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean nullsAreSortedLow() throws SQLException
     {
         // XXX Need to check for Sybase
-
-        // This contradicts "Programming ODBC for SQLServer" Appendix A
-        return false;
+        return true;
     }
 
 
@@ -3346,8 +3348,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsStoredProcedures() throws SQLException
     {
-        NotImplemented();
-        return false;
+        return true;
     }
 
 

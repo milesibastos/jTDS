@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.4 2001-09-18 08:38:07 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.5 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -169,37 +169,21 @@ public class PacketRowResult extends PacketResult {
                         break;
                     }
                     case java.sql.Types.TINYINT:
-                    {
-                      if (! (tmp instanceof Number))
-                      {
-                         throw new SQLException("Internal error");
-                      }
-
-                      result = new Byte(((Number)tmp).byteValue());
-                      break;
-                    }
                     case java.sql.Types.SMALLINT:
-                    {
-                      if (! (tmp instanceof Number))
-                      {
-                         throw new SQLException("Internal error");
-                      }
-
-                      result = new Short(((Number)tmp).shortValue());
-                      break;
-                    }
                     case java.sql.Types.INTEGER:
                     {
-                      if (! (tmp instanceof Number))
-                      {
-                         throw new SQLException("Internal error");
-                      }
-
-                      result = new Integer(((Number)tmp).intValue());
-                      break;
+                        if( tmp instanceof Integer )
+                            return tmp;
+                        if(! (tmp instanceof Number) )
+                            throw new SQLException("Can't convert "+tmp.getClass().getName()+
+                                " to Integer.");
+                        result = new Integer(((Number)tmp).intValue());
+                        break;
                     }
                     case java.sql.Types.BIGINT:
                     {
+                      if( tmp instanceof Long )
+                         return tmp;
                       if (! (tmp instanceof Number))
                       {
                          throw new SQLException("Internal error");
@@ -387,24 +371,12 @@ public class PacketRowResult extends PacketResult {
                     case java.sql.Types.TINYINT:
                     case java.sql.Types.SMALLINT:
                     case java.sql.Types.INTEGER:
-                    {
-                        result = ( ( Number ) obj ).doubleValue();
-                        break;
-                    }
                     case java.sql.Types.BIGINT:
-                    {
-                        result = ( ( Number ) obj ).doubleValue();
-                        break;
-                    }
                     case java.sql.Types.REAL:
-                    {
-                        result = ( ( Number ) obj ).doubleValue();
-                        break;
-                    }
                     case java.sql.Types.FLOAT:
                     case java.sql.Types.DOUBLE:
                     {
-                        result = ( ( Number ) obj ).doubleValue();
+                        result = ((Number)obj).doubleValue();
                         break;
                     }
                     case java.sql.Types.CHAR:
@@ -465,20 +437,12 @@ public class PacketRowResult extends PacketResult {
                     case java.sql.Types.TINYINT:
                     case java.sql.Types.SMALLINT:
                     case java.sql.Types.INTEGER:
-                    {
-                        result = ( ( Number ) obj ).longValue();
-                        break;
-                    }
                     case java.sql.Types.BIGINT:
-                    {
-                        result = ( ( Number ) obj ).longValue();
-                        break;
-                    }
                     case java.sql.Types.REAL:
                     case java.sql.Types.FLOAT:
                     case java.sql.Types.DOUBLE:
                     {
-                        result = ( ( Number ) obj ).longValue();
+                        result = ((Number)obj).longValue();
                         break;
                     }
                     case java.sql.Types.CHAR:

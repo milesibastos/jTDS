@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2001-09-25 18:16:56 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.5 2001-09-25 18:16:56 skizz Exp $
+ *@version    $Id: TdsConnection.java,v 1.6 2002-06-28 18:01:15 alin_sinpalean Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -114,52 +114,18 @@ public class TdsConnection implements ConnectionHelper, Connection {
     int transactionIsolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
     boolean isClosed = false;
 
-    private Tds mainTds = null;
-    private boolean mainTdsUsed = false;
-    private Statement lockingStatement = null;
-
     private SQLWarningChain warningChain;
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2001-09-25 18:16:56 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
-
-
-    public synchronized Tds getMainTds() throws SQLException
+    protected int getTdsVer()
     {
-      if (mainTds == null)
-        mainTds = allocateTds();
-      return mainTds;
-    }
-
-    public synchronized void lockMainTds(Statement stmt, Tds tds) throws SQLException
-    {
-      if (tds == mainTds) {
-        if (mainTdsUsed && stmt != lockingStatement) {
-          ((TdsStatement)lockingStatement).fetchIntoCache();
-
-          // throw new SQLException("trying to use same tds a second time");
-        }
-        lockingStatement = stmt;
-        mainTdsUsed = true;
-      }
-    }
-
-    public synchronized void releaseMainTds(Statement stmt, Tds tds)  throws SQLException, TdsException
-    {
-      if (tds == mainTds) {
-        if (mainTdsUsed && stmt != lockingStatement)
-          throw new SQLException("wrong statement tries to unlock tds");
-        mainTdsUsed = false;
-      }
-      else
-        freeTds(tds);
-    }
-
-    public boolean isMainTds(Tds tds)
-    {
-      return tds == mainTds;
+        if( tdsPool.size() > 0 )
+            return ((TdsInstance)tdsPool.get(0)).tds.getTdsVer();
+        else
+            throw new IllegalStateException("No connection established.");
     }
 
     /**
@@ -234,28 +200,15 @@ public class TdsConnection implements ConnectionHelper, Connection {
      */
     public void setAutoCommit(boolean value) throws SQLException
     {
-        int i;
-        String sql = null;
-
         autoCommit = value;
-
-        sql = sqlStatementToSetCommit();
-        Statement stmt = createStatement();
-        stmt.execute(sql);
-        stmt.close();
-        /*
-
-        for (i = 0; i < allStatements.size(); i++) {
-            Statement stmt = (Statement) allStatements.elementAt(i);
-             {
-                // Note-  stmt.execute implicitly eats the END_TOKEN
-                // that will come back from the commit command
-                stmt.execute(sql);
-            }
-        }
-         */
+        changeSettings();
     }
 
+    private void changeSettings() throws SQLException
+    {
+        for( int i=0; i<allStatements.size(); i++ )
+            ((TdsStatement)allStatements.elementAt(i)).changeSettings(autoCommit, transactionIsolationLevel);
+    }
 
     /**
      *  You can put a connection in read-only mode as a hint to enable database
@@ -301,26 +254,8 @@ public class TdsConnection implements ConnectionHelper, Connection {
     public void setTransactionIsolation(int level)
              throws SQLException
     {
-        int i;
-        String sql;
-
         transactionIsolationLevel = level;
-
-        sql = sqlStatementToSetTransactionIsolationLevel();
-        Statement stmt = createStatement();
-        stmt.execute(sql);
-        stmt.close();
-
-        /*
-        for (i = 0; i < allStatements.size(); i++) {
-            Statement stmt = (Statement) allStatements.elementAt(i);
-             {
-                // Note-  stmt.execute implicitly eats the END_TOKEN
-                // that will come back from the commit command
-                stmt.execute(sql);
-            }
-        }
-         */
+        changeSettings();
     }
 
 
@@ -744,113 +679,6 @@ public class TdsConnection implements ConnectionHelper, Connection {
         throw new java.sql.SQLException("Not Implemented");
     }
 
-
-    protected String sqlStatementToInitialize()
-    {
-        return serverType == Tds.SYBASE ? "set quoted_identifier on set textsize 50000" : "";
-    }
-
-
-    protected String sqlStatementToSetTransactionIsolationLevel()
-             throws SQLException
-    {
-        String sql = "set transaction isolation level ";
-
-        if (serverType == Tds.SYBASE) {
-            switch (transactionIsolationLevel) {
-                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                {
-                    throw new SQLException("Bad transaction level");
-                }
-                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                {
-                    sql = sql + "1";
-                    break;
-                }
-                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                {
-                    throw new SQLException("Bad transaction level");
-                }
-                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                {
-                    sql = sql + "3";
-                    break;
-                }
-                case java.sql.Connection.TRANSACTION_NONE:
-                default:
-                {
-                    throw new SQLException("Bad transaction level");
-                }
-            }
-        }
-        else {
-            switch (transactionIsolationLevel) {
-                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                {
-                    sql = sql + " read uncommitted ";
-                    break;
-                }
-                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                {
-                    sql = sql + " read committed ";
-                    break;
-                }
-                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                {
-                    sql = sql + " repeatable read ";
-                    break;
-                }
-                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                {
-                    throw new SQLException("SQLServer does not support " +
-                            "TRANSACTION_SERIALIZABLE");
-                }
-                case java.sql.Connection.TRANSACTION_NONE:
-                default:
-                {
-                    throw new SQLException("Bad transaction level");
-                }
-            }
-        }
-        return sql;
-    }
-
-
-    protected String sqlStatementToSetCommit()
-    {
-        String result;
-
-        if (serverType == Tds.SYBASE) {
-            if (autoCommit) {
-                result = "set CHAINED off ";
-            }
-            else {
-                result = "set CHAINED on ";
-            }
-        }
-        else {
-            if (autoCommit) {
-                result = "set implicit_transactions off ";
-            }
-            else {
-                result = "set implicit_transactions on ";
-            }
-        }
-        return result;
-    }
-
-
-
-    protected String sqlStatementForSettings()
-             throws SQLException
-    {
-        return
-                sqlStatementToInitialize() + " " +
-                sqlStatementToSetTransactionIsolationLevel() + " " +
-                sqlStatementToSetCommit();
-    }
-
-
     /**
      *  allocate a tds instance to the calling thread. <br>
      *  The routine tries to reuse an available tds instance. If there are no
@@ -871,12 +699,11 @@ public class TdsConnection implements ConnectionHelper, Connection {
             if (i == -1) {
                 Tds tmpTds = null;
                 try {
-                    tmpTds = new Tds((java.sql.Connection) this,
-                            initialProps, sqlStatementForSettings());
+                    tmpTds = new Tds(this, initialProps);
                 }
                 catch (SQLException e) {
                     throw new SQLException(e.getMessage() + "\n" + tdsPool.size()
-                             + " connection are in use by this program");
+                             + " connections are in use by the driver");
                 }
                 TdsInstance tmp = new TdsInstance(tmpTds);
                 tdsPool.addElement(tmp);
@@ -892,7 +719,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
             ((TdsInstance) tdsPool.elementAt(i)).inUse = true;
             result = ((TdsInstance) (tdsPool.elementAt(i))).tds;
 
-            result.changeSettings(null, sqlStatementForSettings());
+            result.changeSettings(autoCommit, transactionIsolationLevel);
         }
         catch (com.internetcds.jdbc.tds.TdsException e) {
             throw new SQLException(e.getMessage());
@@ -952,32 +779,6 @@ public class TdsConnection implements ConnectionHelper, Connection {
         }
     }
 
-
-    private SQLException encapsulateCommitOrRollback(TdsStatement stmt, boolean commit)
-    {
-      SQLException exception = null;
-      try {
-        if (commit) {
-            stmt.commit(getMainTds());
-        }
-        else {
-            stmt.rollback(getMainTds());
-        }
-      }
-      // XXX need to put all of these into the warning chain.
-      //
-      // Don't think so, the warnings would belong to Statement anyway -- SB
-      catch (java.sql.SQLException e) {
-          exception = e;
-      }
-      catch (java.io.IOException e) {
-          exception = new SQLException(e.getMessage());
-      }
-      catch (com.internetcds.jdbc.tds.TdsException e) {
-          exception = new SQLException(e.getMessage());
-      }
-      return exception;
-    }
     private void commitOrRollback(boolean commit)
              throws SQLException
     {
@@ -989,12 +790,34 @@ public class TdsConnection implements ConnectionHelper, Connection {
                     " used when auto commit has been disabled.");
         }
 
+        // XXX race condition here.  It is possible that a statement could
+        // close while running this for loop.
+        for (i = 0; i < allStatements.size(); i++) {
+            TdsStatement stmt = (TdsStatement) allStatements.elementAt(i);
 
-        TdsStatement mainCommitStmt = (TdsStatement)createStatement();
-        exception = encapsulateCommitOrRollback(mainCommitStmt,commit);
-        if (exception != null) {
-            throw exception;
+            if( stmt.actTds != null )
+                try
+                {
+                    if( commit )
+                        stmt.commit();
+                    else
+                        stmt.rollback();
+                }
+                // XXX need to put all of these into the warning chain.
+                //
+                // Don't think so, the warnings would belong to Statement anyway -- SB
+                catch (java.sql.SQLException e) {
+                    exception = e;
+                }
+                catch (java.io.IOException e) {
+                    exception = new SQLException(e.getMessage());
+                }
+                catch (com.internetcds.jdbc.tds.TdsException e) {
+                    exception = new SQLException(e.getMessage());
+                }
         }
+
+        if (exception != null)
+            throw exception;
     }
 }
-

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -133,7 +133,6 @@ public class Tds implements TdsDefinitions {
     String procNameGeneratorName = null;
     String procNameTableName = null;
 
-    String initialSettings = null;
     HashMap             procedureCache = null; // XXX: as
     ArrayList           proceduresOfTra = null;
 
@@ -167,7 +166,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -178,11 +177,19 @@ public class Tds implements TdsDefinitions {
     //
     static boolean ignoreNotImplemented = false;
 
+    /**
+     * The last transaction isolation level set for this <code>Tds</code>.
+     */
+    int transactionIsolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
+
+    /**
+     * The last auto commit mode set on this <code>Tds</code>.
+     */
+    boolean autoCommit = true;
 
     public Tds(
             java.sql.Connection connection_,
-            Properties props_,
-            String initialSettings)
+            Properties props_)
              throws java.io.IOException, java.net.UnknownHostException,
             java.sql.SQLException, com.internetcds.jdbc.tds.TdsException
     {
@@ -230,6 +237,9 @@ public class Tds implements TdsDefinitions {
         comm = new TdsComm(sock, tdsVer);
 
         setCharset(props_.getProperty("CHARSET"));
+
+        autoCommit = connection.getAutoCommit();
+        transactionIsolationLevel = connection.getTransactionIsolation();
 
         if (logon()) {
             // everything is hunky-dory.
@@ -442,7 +452,7 @@ public class Tds implements TdsDefinitions {
         byte  type = comm.peek();
         return type==TDS_PARAM_TOKEN;
      }
-     
+
     /**
      *  Determine if the next subpacket is a text update packet <p>
      *
@@ -453,7 +463,7 @@ public class Tds implements TdsDefinitions {
      *@exception  com.internetcds.jdbc.tds.TdsException
      *@exception  java.io.IOException
      */
-     /* strange replaced by paramToken 
+     /* strange replaced by paramToken
     public synchronized boolean isTextUpdate()
              throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
@@ -531,44 +541,18 @@ public class Tds implements TdsDefinitions {
      *      changes, false if rejected.
      *@exception  java.sql.SQLException  Description of Exception
      */
-    public synchronized boolean changeSettings(
-            String database,
-            String settings)
+    private synchronized boolean initSettings(String database)
              throws java.sql.SQLException
     {
         boolean isOkay = true;
-        try {
-            PacketResult result;
 
-            if (database != null) {
+        try
+        {
+            if( database != null )
                 isOkay = changeDB(database);
-            }
 
-            if (isOkay && (settings != null && settings.length() > 0)) {
-                String query = settings;
-                comm.startPacket(TdsComm.QUERY);
-                if (tdsVer == Tds.TDS70) {
-                    comm.appendChars(query);
-                }
-                else {
-                    byte[] queryBytes = encoder.getBytes(query);
-                    comm.appendBytes(queryBytes, queryBytes.length, (byte) 0);
-                }
-                moreResults2 = true;
-                //JJ 1999-01-10
-                comm.sendPacket();
-
-                boolean done = false;
-                while (!done) {
-                    result = processSubPacket();
-                    done = (result instanceof PacketEndTokenResult) &&
-                            !((PacketEndTokenResult) result).moreResults();
-                    if (result instanceof PacketErrorResult) {
-                        isOkay = false;
-                    }
-                    // XXX Should really process some more types of packets.
-                }
-            }
+            if( isOkay )
+                isOkay = changeSettings(sqlStatementForInit());
         }
         catch (com.internetcds.jdbc.tds.TdsUnknownPacketSubType e) {
             throw new SQLException("Unknown response. " + e.getMessage());
@@ -607,15 +591,11 @@ public class Tds implements TdsDefinitions {
      *@return                   Description of the Returned Value
      *@exception  SQLException  Description of Exception
      */
-    public synchronized PacketResult submitProcedure(String sql,
-            SQLWarningChain chain)
-             throws SQLException
+    public synchronized void submitProcedure(String sql, SQLWarningChain chain)
+        throws SQLException
     {
-        PacketResult result = null;
         PacketResult tmp = null;
-        boolean okay = true;
         byte tmpByte;
-        SQLException exception = null;
 
         try {
             executeQuery(sql, null, 0);
@@ -626,34 +606,11 @@ public class Tds implements TdsDefinitions {
             do  // skip to end, why not ?
             {
                tmp = processSubPacket();
+               if( tmp instanceof PacketMsgResult )
+                   chain.addOrReturn((PacketMsgResult)tmp);
                done = (tmp instanceof PacketEndTokenResult)
                   && (! ((PacketEndTokenResult)tmp).moreResults());
             } while (! done);
-           /*
-            while (!((tmp = processSubPacket())
-                     instanceof PacketEndTokenResult)) {
-                if (tmp instanceof PacketErrorResult) {
-                    result = tmp;
-                    okay = false;
-                    // XXX I'm sure we need to do more here.
-
-                    //     how about throwing an Exception? --SB
-                    exception = ((PacketErrorResult) tmp).getMsg().toSQLException();
-                }
-                else if (tmp instanceof PacketMsgResult) {
-                    chain.addOrReturn((PacketMsgResult) tmp);
-                }
-                else {
-                    throw new SQLException(
-                            "Confused.  Was expecting the "
-                             + "end of result, found a "
-                             + tmp.getClass().getName());
-                }
-            }
-            if (result == null) {
-                result = tmp;
-            }
-            */
         }
         catch (java.io.IOException e) {
             throw new SQLException("Network error" + e.getMessage());
@@ -665,11 +622,7 @@ public class Tds implements TdsDefinitions {
             throw new SQLException(e.getMessage());
         }
 
-        if (!okay) {
-            throw exception;
-        }
-
-        return result;
+        chain.checkForExceptions();
     }
 
 
@@ -772,7 +725,7 @@ public class Tds implements TdsDefinitions {
                 {
                    nativeType = SYBINTN;
                 }
-                
+
                 switch (nativeType) {
                     case SYBCHAR:
                     {
@@ -827,7 +780,7 @@ public class Tds implements TdsDefinitions {
                                 if (len > 0)
                                   sendSybImage(encoder.getBytes((String) actualParameterList[i]
                                         .value));
-                                else 
+                                else
                                   sendSybImage((byte[]) actualParameterList[i].value);
                             }
                             else {
@@ -912,18 +865,18 @@ public class Tds implements TdsDefinitions {
                     {
                       if (actualParameterList[i].value == null)
                       {
-                         comm.appendByte((byte)SYBBITN);  // 
+                         comm.appendByte((byte)SYBBITN);  //
                          comm.appendByte((byte)1);
                          comm.appendByte((byte)0);
                       }
                       else
-                      { 
+                      {
                          comm.appendByte((byte)SYBBIT);
                          if (((Boolean)actualParameterList[i].value).equals(Boolean.TRUE))
                             comm.appendByte((byte)1);
-                             else 
+                             else
                                 comm.appendByte((byte)0);
-                          }    
+                          }
                       break;
                     }
                     case SYBNUMERIC:
@@ -950,12 +903,12 @@ public class Tds implements TdsDefinitions {
                             if (tdsVer != TDS70)
                             {
                                throw new java.io.IOException("Field too long");
-                            }                            
+                            }
                             comm.appendByte((byte) (SYBBIGVARBINARY));
                             if (maxLength < 0 || maxLength > 8000) {
                               comm.appendTdsShort((short)8000);
                             }
-                            else                              
+                            else
                               comm.appendTdsShort((short)maxLength);
                             comm.appendTdsShort((short)(value.length));
                          }
@@ -1026,8 +979,11 @@ public class Tds implements TdsDefinitions {
             int timeout)
              throws java.io.IOException, java.sql.SQLException, TdsException
     {
-      checkMaxRows(stmt);
-         {
+        checkMaxRows(stmt);
+
+        // If the query has length 0, the server doesn't answer, so we'll hang
+        if( sql.length() > 0 )
+        {
             cancelController.setQueryInProgressFlag();
             comm.startPacket(TdsComm.QUERY);
             if (tdsVer == Tds.TDS70) {
@@ -1170,8 +1126,8 @@ public class Tds implements TdsDefinitions {
       comm.getBytes(5);
 
       byte colType = comm.getByte();
-      
-      // TODO: Refactor to combine this code with that in getRow()
+
+      /** @todo: Refactor to combine this code with that in getRow() */
       Object element;
       switch (colType)
       {
@@ -1870,27 +1826,12 @@ public class Tds implements TdsDefinitions {
             }
             default:
             {
-                result = null;
-                throw new TdsNotImplemented(
-                        "can't handle integer of type "
+                throw new TdsNotImplemented("Can't handle integer of type "
                          + Integer.toHexString(type));
             }
         }
 
         switch (len) {
-/*  curt´s version 
-          case 4:
-            result = new Integer(comm.getTdsInt());
-            break;
-         
-         case 2:
-            result = new Short((short)comm.getTdsShort());
-            break;
-         
-         case 1: 
-            result = new Byte(comm.getByte());
-            break;
-*/
           case 4:
             {
                 result = new Integer(comm.getTdsInt());
@@ -1898,15 +1839,12 @@ public class Tds implements TdsDefinitions {
             }
             case 2:
             {
-                result = new Short((short)comm.getTdsShort());
+                result = new Integer((short)comm.getTdsShort());
                 break;
             }
             case 1:
             {
-                int tmp = toUInt(comm.getByte());
-                // XXX Are we sure this should be unsigned?
-                // AS: no, there is no unsigned Byte in Java so -> use smallint in Params and Table-Creation
-                result = new Long(tmp);
+                result = new Integer(toUInt(comm.getByte()));
                 break;
             }
             case 0:
@@ -1916,9 +1854,7 @@ public class Tds implements TdsDefinitions {
             }
             default:
             {
-                result = null;
-                throw new TdsConfused("Bad SYBINTN length of " +
-                        len);
+                throw new TdsConfused("Bad SYBINTN length of "+len);
             }
         }
         return result;
@@ -1930,7 +1866,7 @@ public class Tds implements TdsDefinitions {
       throws TdsException, java.io.IOException
    {
       Object result;
-      
+
       boolean shortLen = (tdsVer == Tds.TDS70) && (wideChars || !outputParam);
       int len = shortLen ? comm.getTdsShort() : (comm.getByte() & 0xFF);
       if (len == 0 || tdsVer == Tds.TDS70 && len == 0xFFFF) {
@@ -2433,7 +2369,7 @@ public class Tds implements TdsDefinitions {
 
         if (isOkay) {
             // XXX Should we move this to the Connection class?
-            isOkay = changeSettings(database, initialSettings);
+            isOkay = initSettings(database);
         }
 
         // XXX Possible bug.  What happend if this is cancelled before the logon
@@ -3106,7 +3042,7 @@ public class Tds implements TdsDefinitions {
       throws TdsException, java.io.IOException
    {
       comm.appendByte((byte)nativeType);
-      
+
       if (value_in == null)
       {
          comm.appendByte((byte)8);
@@ -3123,7 +3059,7 @@ public class Tds implements TdsDefinitions {
          {
             value = new Timestamp(((java.util.Date)value_in).getTime());
          }
-         
+
          final int secondsPerDay = 24 * 60 * 60;
          final int msPerDay      = secondsPerDay * 1000;
          final int nsPerMs       = 1000 * 1000;
@@ -3138,7 +3074,7 @@ public class Tds implements TdsDefinitions {
 
          long   ms = ((value.getTime() + (nanoseconds / nsPerMs))
                       + zoneOffset);
-                ms += getDstOffset(ms); 
+                ms += getDstOffset(ms);
          long   msIntoCurrentDay  = ms % msPerDay;
 
          long   daysIntoUnixEpoch = (ms-msIntoCurrentDay)/msPerDay;
@@ -3168,12 +3104,12 @@ public class Tds implements TdsDefinitions {
          }
       }
    }
-   
-   
+
+
    private void writeDecimalValue(byte nativeType, Object o, int scalePar, int precision)
       throws TdsException, java.io.IOException
    {
-     
+
       comm.appendByte((byte)SYBDECIMAL);
       if (o == null) {
         comm.appendByte((byte)0);
@@ -3201,17 +3137,17 @@ public class Tds implements TdsDefinitions {
             value >>>= 8;
           }
         }
-        else {  
+        else {
           BigDecimal bd;
-          
+
           if (o instanceof BigDecimal) {
             bd = (BigDecimal)o;
           }
-          else 
+          else
           if (o instanceof Number) {
            bd = new BigDecimal(((Number)o).doubleValue());
           }
-          else 
+          else
             throw new TdsException("Invalid decimal value");
           boolean repeat = false;
           byte scale;
@@ -3243,10 +3179,10 @@ public class Tds implements TdsDefinitions {
           comm.appendByte(signum);
           for (int mantidx = mantisse.length - 1; mantidx >= 0 ; mantidx--) {
             comm.appendByte(mantisse[mantidx]);
-          }                                
+          }
         }
       }
-       /*               
+       /*
        BigDecimal d;
        if (value == null || value instanceof BigDecimal)
        {
@@ -3295,7 +3231,7 @@ public class Tds implements TdsDefinitions {
            int maxLength = (int)(1.0 + (float)bitLength * 0.30103);
            if (precision < maxLength)
            {
-           	   precision = maxLength;
+               precision = maxLength;
            }
        }
        comm.appendByte(nativeType);
@@ -3788,7 +3724,7 @@ public class Tds implements TdsDefinitions {
                 result = SYBINT4;
                 break;
             }
-            case java.sql.Types.BIT: 
+            case java.sql.Types.BIT:
             {
                 result = SYBBIT;
                 break;
@@ -3816,7 +3752,7 @@ public class Tds implements TdsDefinitions {
                 result = SYBVARBINARY;
                 break;
             }
-              
+
             case java.sql.Types.LONGVARBINARY:
             {
                 result = SYBIMAGE;
@@ -4073,5 +4009,168 @@ public class Tds implements TdsDefinitions {
           done = (tmp instanceof PacketEndTokenResult)
              && (! ((PacketEndTokenResult)tmp).moreResults());
        } while (! done);
+    }
+
+    private String sqlStatementToInitialize()
+    {
+        return serverType == Tds.SYBASE ? "set quoted_identifier on set textsize 50000" : "";
+    }
+
+    private String sqlStatementToSetTransactionIsolationLevel() throws SQLException
+    {
+        StringBuffer sql = new StringBuffer(48);
+        sql.append("set transaction isolation level ");
+
+        if (serverType == Tds.SYBASE)
+            switch( transactionIsolationLevel )
+            {
+                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
+                    throw new SQLException("Bad transaction level");
+
+                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                    sql.append('1');
+                    break;
+
+                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
+                    throw new SQLException("Bad transaction level");
+
+                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                    sql.append('3');
+                    break;
+
+                case java.sql.Connection.TRANSACTION_NONE:
+                default:
+                    throw new SQLException("Bad transaction level");
+            }
+        else
+            switch (transactionIsolationLevel)
+            {
+                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
+                    sql.append(" read uncommitted");
+                    break;
+
+                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                    sql.append(" read committed");
+                    break;
+
+                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
+                    sql.append(" repeatable read");
+                    break;
+
+                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                    throw new SQLException("SQLServer does not support " +
+                            "TRANSACTION_SERIALIZABLE");
+
+                case java.sql.Connection.TRANSACTION_NONE:
+                default:
+                    throw new SQLException("Bad transaction level");
+            }
+
+        return sql.toString();
+    }
+
+    private String sqlStatementToSetCommit()
+    {
+        String result;
+
+        if (serverType == Tds.SYBASE) {
+            if (autoCommit) {
+                result = "set CHAINED off";
+            }
+            else {
+                result = "set CHAINED on";
+            }
+        }
+        else {
+            if (autoCommit) {
+                result = "set implicit_transactions off";
+            }
+            else {
+                result = "set implicit_transactions on";
+            }
+        }
+        return result;
+    }
+
+    private String sqlStatementForInit() throws SQLException
+    {
+        return sqlStatementToInitialize()+' '+
+               sqlStatementToSetTransactionIsolationLevel()+' '+
+               sqlStatementToSetCommit();
+    }
+
+    protected String sqlStatementForSettings(boolean autoCommit, int transactionIsolationLevel) throws SQLException
+    {
+        if( autoCommit==this.autoCommit && transactionIsolationLevel==this.transactionIsolationLevel )
+            return null;
+
+        StringBuffer res = new StringBuffer();
+
+        if( autoCommit != this.autoCommit )
+        {
+            this.autoCommit = autoCommit;
+            if( autoCommit )
+                res.append("if @@trancount>0 commit tran ");
+            res.append(sqlStatementToSetCommit()).append(' ');
+        }
+
+        if( transactionIsolationLevel != this.transactionIsolationLevel )
+        {
+            this.transactionIsolationLevel = transactionIsolationLevel;
+            res.append(sqlStatementToSetTransactionIsolationLevel()).append(' ');
+        }
+
+        res.setLength(res.length()-1);
+        return res.toString();
+    }
+
+    protected void changeSettings(boolean autoCommit, int transactionIsolationLevel) throws SQLException
+    {
+        String query = sqlStatementForSettings(autoCommit, transactionIsolationLevel);
+        if( query != null )
+            try
+            {
+                changeSettings(query);
+            }
+            catch( SQLException ex )
+            {
+                throw ex;
+            }
+            catch( Exception ex )
+            {
+                throw new SQLException(ex.toString());
+            }
+    }
+
+    private synchronized boolean changeSettings(String query)
+        throws TdsUnknownPacketSubType, TdsException, java.io.IOException, SQLException
+    {
+        boolean isOkay = true;
+        PacketResult result;
+
+        comm.startPacket(TdsComm.QUERY);
+        if (tdsVer == Tds.TDS70) {
+            comm.appendChars(query);
+        }
+        else {
+            byte[] queryBytes = encoder.getBytes(query);
+            comm.appendBytes(queryBytes, queryBytes.length, (byte) 0);
+        }
+        moreResults2 = true;
+        //JJ 1999-01-10
+        comm.sendPacket();
+
+        boolean done = false;
+        while (!done) {
+            result = processSubPacket();
+            done = (result instanceof PacketEndTokenResult) &&
+                    !((PacketEndTokenResult) result).moreResults();
+            if (result instanceof PacketErrorResult) {
+                isOkay = false;
+            }
+            // XXX Should really process some more types of packets.
+        }
+
+        return isOkay;
     }
 }

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.9 2001-09-25 18:16:56 skizz Exp $
+ * @version $Id: TdsStatement.java,v 1.10 2002-06-28 18:01:15 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.9 2001-09-25 18:16:56 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.10 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -71,6 +71,14 @@ public class TdsStatement implements java.sql.Statement
 
    private int  maxFieldSize = (1<<31)-1;
    private int  maxRows      = 0;
+
+   /**
+    * Set when <code>getMoreResults</code> returns <code>true</code>. In this
+    * case we should know we have to open the next <code>ResultSet</code> (and
+    * close it) if the user doesn't do it. In a way, it marks that the current
+    * result is the next <code>ResultSet</code>.
+    */
+   private boolean unopenedResult = false;
 
     private int type = ResultSet.TYPE_FORWARD_ONLY;
     private int concurrency = ResultSet.CONCUR_READ_ONLY;
@@ -101,26 +109,32 @@ public class TdsStatement implements java.sql.Statement
 
    protected void eofResults() throws SQLException
    {
-     if(!actTds.moreResults())
-       releaseTds();
+      if( !actTds.moreResults() )
+         releaseTds();
    }
 
    protected void releaseTds() throws SQLException
    {
-     if (actTds == null) return;
-     try {
-       connection.releaseMainTds(this,actTds);
-       actTds = null;
-     }
-     catch (TdsException e) {
-       throw new SQLException("confusion in freeing Tds " + e);
-     }
+      // If the connection is not in autocommit mode, don't free the Tds.
+      // If we do that, we won't be able to commit/rollback the statement.
+      if( actTds==null || !connection.getAutoCommit() )
+         return;
+
+      try
+      {
+         connection.freeTds(actTds);
+         actTds = null;
+      }
+      catch (TdsException e)
+      {
+         throw new SQLException("confusion in freeing Tds " + e);
+      }
    }
 
    private void NotImplemented() throws java.sql.SQLException
-      {
-         throw new SQLException("Not Implemented");
-      }
+   {
+      throw new SQLException("Not Implemented");
+   }
 
    protected void finalize()
       throws Throwable
@@ -135,21 +149,27 @@ public class TdsStatement implements java.sql.Statement
 
 
    /**
-    * Execute a SQL statement that retruns a single ResultSet
+    * Execute an SQL statement that returns a single <code>ResultSet</code>.
     *
-    * @param Sql typically a static SQL SELECT statement
-    * @return a ResulSet that contains the data produced by the query
+    * @param sql typically a static SQL SELECT statement
+    * @return    a <code>ResultSet</code> that contains the data produced by
+    *            the query; never <code>null</code>
     * @exception SQLException if a database access error occurs
     */
    public ResultSet executeQuery(String sql) throws SQLException
    {
-        if ( type == ResultSet.TYPE_FORWARD_ONLY
-                && concurrency == ResultSet.CONCUR_READ_ONLY ) {
-            return internalExecuteQuery( getTds(sql), sql );
+        if( type==ResultSet.TYPE_FORWARD_ONLY &&
+            concurrency==ResultSet.CONCUR_READ_ONLY )
+        {
+            ResultSet rs = internalExecuteQuery( sql );
+
+            if( rs != null )
+                return rs;
+            else
+                throw new SQLException("No ResultSet was produced.");
         }
-        else {
-            return new freetds.CursorResultSet( this, sql );
-        }
+        else
+            return new freetds.CursorResultSet(this, sql);
    }
 
    final public TdsResultSet internalExecuteQuery(String sql) throws SQLException
@@ -202,66 +222,74 @@ public class TdsStatement implements java.sql.Statement
       }
       else
       {
-         return getUpdateCount();
+         int res = getUpdateCount();
+         // We should return 0 (at least that's what the javadoc above says)
+         return res==-1 ? 0 : res;
       }
    }
 
    protected void closeResults()
       throws java.sql.SQLException
    {
+      // If we have a ResultSet that was not opened by the user although a call
+      // to getMoreResults was made, we should skip it, so open it.
+      if( unopenedResult )
+         startResultSet(actTds);
       if (results != null)
       {
          results.close();
+         results = null;
       }
    }
 
+   /**
+    * Eats all available input from the server. Not very efficient (since it
+    * reads in all data by creating <code>ResultSets</code> and processing
+    * them), but at least it works (the old version would crash when reading in
+    * a row because it didn't have any information about the row's Context).
+    * <p>
+    * This could be changed to use the <code>TdsComm</code> to read in all the
+    * server response without processing it, but that requires some changes in
+    * <code>TdsComm</code>, too.
+    */
    private void skipToEnd(Tds tds)
-      throws java.sql.SQLException, java.io.IOException,
-      com.internetcds.jdbc.tds.TdsUnknownPacketSubType,
-      com.internetcds.jdbc.tds.TdsException
+      throws java.sql.SQLException
    {
-      boolean       done = !tds.moreResults();
-      PacketResult  tmp;
-
-      while (!done)
-      {
-         tmp = tds.processSubPacket();
-         done = (tmp instanceof PacketEndTokenResult)
-            && (! ((PacketEndTokenResult)tmp).moreResults());
-      };
+      while( getMoreResultsImpl(tds, false) || updateCount!=-1 );
    }
 
-
-   public void commit(Tds tds)
+   public void commit()
       throws java.sql.SQLException, java.io.IOException, com.internetcds.jdbc.tds.TdsUnknownPacketSubType, com.internetcds.jdbc.tds.TdsException
    {
       String sql = "IF @@TRANCOUNT > 0 COMMIT TRAN ";
 
-      if (tds == null)
+      if( actTds == null )
       {
          throw new SQLException("Statement is closed");
       }
 
-      internalExecuteQuery(tds,sql);
-      skipToEnd(tds);
-      tds.commit();
-      releaseTds();
+      internalExecuteQuery(actTds,sql);
+      skipToEnd(actTds);
+      actTds.commit();
+      connection.freeTds(actTds);
+      actTds = null;
    }
 
-   public void rollback(Tds tds)
+   public void rollback()
       throws java.sql.SQLException, java.io.IOException, com.internetcds.jdbc.tds.TdsUnknownPacketSubType, com.internetcds.jdbc.tds.TdsException
    {
       String sql = "IF @@TRANCOUNT > 0 ROLLBACK TRAN ";
 
-      if (tds == null)
+      if( actTds == null )
       {
          throw new SQLException("Statement is closed");
       }
 
-      internalExecuteQuery(tds,sql);
-      skipToEnd(tds);
-      tds.rollback();
-      releaseTds();
+      internalExecuteQuery(actTds,sql);
+      skipToEnd(actTds);
+      actTds.commit();
+      connection.freeTds(actTds);
+      actTds = null;
    }
 
    /**
@@ -280,15 +308,13 @@ public class TdsStatement implements java.sql.Statement
    {
       closeResults();
 
-
-
       // now we need to relinquish the connection
-      if (actTds != null && actTds != connection.getMainTds())
+      if( actTds != null )
       {
           // Rollback any pending transactions
           try
           {
-             rollback(actTds);
+             rollback();
           }
           catch (com.internetcds.jdbc.tds.TdsUnknownPacketSubType e)
           {
@@ -501,28 +527,10 @@ public class TdsStatement implements java.sql.Statement
 
    protected Tds getTds(String sql) throws SQLException
    {
-     int pos = sql.indexOf(' ');
-     String firstword;
-     if (pos >= 0)
-       firstword = sql.substring(0,pos);
-     else firstword = "";
-
-     if (firstword.equalsIgnoreCase("SELECT") && connection.getTransactionIsolation() == java.sql.Connection.TRANSACTION_READ_UNCOMMITTED) {
-       if (actTds != null)
-         if(connection.isMainTds(actTds)) {
-           releaseTds();
-           actTds = connection.allocateTds();
-         }
-         else ;
-       else
-         actTds = connection.allocateTds();
-       return actTds;
-     }
-     else {
-       actTds = connection.getMainTds();
-       connection.lockMainTds(this,actTds);
-     }
-     return actTds;
+      if( actTds != null )
+         return actTds;
+      else
+         return actTds=connection.allocateTds();
    }
    /**
     * @param sql any SQL statement
@@ -532,17 +540,14 @@ public class TdsStatement implements java.sql.Statement
     */
    public boolean execute(Tds tds, String sql) throws SQLException
    {
-      SQLException   exception = null;
-
-      if (tds == null)
-      {
-         throw new SQLException("Statement is closed");
-      }
-
-
       closeResults();
       clearWarnings();
       updateCount = -1;
+
+      // Consume all outstanding results. Otherwise it will either deadlock or
+      // return results from the previous query.
+      skipToEnd(tds);
+
       try
       {
          if (escapeProcessing)
@@ -578,6 +583,9 @@ public class TdsStatement implements java.sql.Statement
          {
             return null;
          }
+
+         // There is no unopened result, we are just doing that
+         unopenedResult = false;
          closeResults();
 
          if (actTds.peek()==TdsDefinitions.TDS_DONEINPROC)
@@ -589,6 +597,10 @@ public class TdsStatement implements java.sql.Statement
          {
             startResultSet(actTds);
          }
+         else if( actTds.isErrorPacket() )
+         {
+            throw ((PacketErrorResult)actTds.processSubPacket()).getMsg().toSQLException();
+         }
          else if (updateCount!=-1)
          {
             if (! actTds.isEndOfResults())
@@ -598,7 +610,7 @@ public class TdsStatement implements java.sql.Statement
                                       " expected EndOfResults, found 0x"
                                       + Integer.toHexString(actTds.peek()&0xff));
             }
-            /* curt´s version:
+            /* curt's version:
             boolean done = false;
             while (!done && tds.isEndOfResults())
             {
@@ -654,7 +666,13 @@ public class TdsStatement implements java.sql.Statement
       return updateCount;
    }
 
-
+   /**
+    * getMoreResults moves to a Statement's next result.  If it returns
+    * true, this result is a ResulSet.
+    *
+    * @return true if the next ResultSet is valid
+    * @exception SQLException if a database access error occurs
+    */
    public boolean getMoreResults() throws SQLException
    {
      return getMoreResults(actTds);
@@ -666,32 +684,31 @@ public class TdsStatement implements java.sql.Statement
    public void handleParamResult(PacketOutputParamResult packet) throws SQLException
    {
    }
-   /**
-    * getMoreResults moves to a Statement's next result.  If it returns
-    * true, this result is a ResulSet.
-    *
-    * @return true if the next ResultSet is valid
-    * @exception SQLException if a database access error occurs
-    */
+
    public boolean getMoreResults(Tds tds) throws SQLException
    {
-      SQLException exception = null;
-      updateCount = -1; // Do we need this global variable?
+      return getMoreResultsImpl(tds, true);
+   }
 
+   private boolean getMoreResultsImpl(Tds tds, boolean allowTdsRelease) throws SQLException
+   {
+      updateCount = -1; // Do we need this global variable?
       if (tds == null)
       {
          return false;
       }
 
+      // Reset all internal variables (do it before checking for more results)
+      closeResults();
 
-      if (!tds.moreResults() && updateCount == -1)
+      if( !tds.moreResults() )
       {
-        releaseTds();
-        return false;
+         if( allowTdsRelease )
+            releaseTds();
+         return false;
       }
 
       boolean result = false;
-      closeResults(); // Reset all internal variables (why is this done here?)
 
       try
       {
@@ -715,46 +732,54 @@ public class TdsStatement implements java.sql.Statement
             else if (tds.isMessagePacket() || tds.isErrorPacket())
             {
                PacketMsgResult  tmp = (PacketMsgResult)tds.processSubPacket();
-               exception = warningChain.addOrReturn(tmp);
+               warningChain.addOrReturn(tmp);
             }
             else if (tds.isRetStat()) {
-              handleRetStat((PacketRetStatResult)tds.processSubPacket());
+               handleRetStat((PacketRetStatResult)tds.processSubPacket());
             }
             else if (tds.isResultSet()) {
-              connection.lockMainTds(this,tds);
-              actTds = tds;
               result = true;
+              unopenedResult = true;
               break;
             }
-            else if (tds.isEndOfResults()) {
-
+            // SAfe: Only TDS_END_TOKEN should return row counts
+            else if( tds.peek()==Tds.TDS_END_TOKEN )
+            {
               PacketEndTokenResult end =
                  (PacketEndTokenResult)tds.processSubPacket();
               updateCount = end.getRowCount();
-              if (updateCount == -1) releaseTds();
-              result = false;
+              if( !tds.moreResults() && allowTdsRelease )
+                 releaseTds();
               break;
+            }
+            // SAfe: TDS_DONEPROC and TDS_DONEINPROC should *NOT* return rowcounts
+            else if (tds.isEndOfResults())
+            {
+              PacketEndTokenResult end =
+                 (PacketEndTokenResult)tds.processSubPacket();
+              if( !tds.moreResults() )
+              {
+                 if( allowTdsRelease )
+                    releaseTds();
+                 break; // No more results but no update count either
+              }
             }
             else  // process whatever comes now, isParamResult
               if (tds.isParamResult())
                 handleParamResult((PacketOutputParamResult)tds.processSubPacket());
               else
-                tds.processSubPacket();
-            /*
-            {
-               releaseTds();
-               throw new SQLException("Protocol confusion.  "
+                throw new SQLException("Protocol confusion.  "
                                       + "Got a 0x"
                                       + Integer.toHexString((tds.peek() & 0xff))
                                       + " packet");
-            }
-             */
          } // end while
 
-         if (exception != null)
+         SQLException exception = warningChain.getExceptions();
+         if( exception != null )
          {
             try
             {
+               /** @todo: This crashes if any rows are returned because no row context is provided */
                if (result)
                  tds.discardResultSet(null);
                releaseTds();
@@ -791,18 +816,17 @@ public class TdsStatement implements java.sql.Statement
       }
    }
 
-
-
-   protected void startResultSet(Tds tds )
+   protected void startResultSet(Tds tds)
       throws SQLException
    {
       Columns      names     = null;
       Columns      info      = null;
-      SQLException exception = null;
-
 
       try
       {
+         // We are just opening the next result set
+         unopenedResult = false;
+
          while (!tds.isResultRow() && !tds.isEndOfResults())
          {
             PacketResult   tmp = tds.processSubPacket();
@@ -836,7 +860,7 @@ public class TdsStatement implements java.sql.Statement
             }
             else if (tmp instanceof PacketMsgResult)
             {
-               exception = warningChain.addOrReturn((PacketMsgResult)tmp);
+               warningChain.addOrReturn((PacketMsgResult)tmp);
             }
             else if (tmp instanceof PacketUnknown)
             {
@@ -849,11 +873,9 @@ public class TdsStatement implements java.sql.Statement
             }
          }
 
-         if (exception != null)
-         {
-            throw exception;
-         }
-         else if (!tds.isResultRow() && !tds.isEndOfResults())
+         warningChain.checkForExceptions();
+
+         if( !tds.isResultRow() && !tds.isEndOfResults() )
          {
             // XXX
             throw new SQLException("Confused.  Was expecting a result row.  "
@@ -1055,11 +1077,20 @@ public class TdsStatement implements java.sql.Statement
      * @return the connection that produced this statement
      * @exception SQLException if a database access error occurs
      */
-   public java.sql.Connection getConnection() throws SQLException
-      {
-         return connection;
-      }
+    public java.sql.Connection getConnection() throws SQLException
+    {
+        return connection;
+    }
 
+    protected void changeSettings(boolean autoCommit, int transactionIsolationLevel) throws SQLException
+    {
+        if( actTds != null )
+        {
+            String query = actTds.sqlStatementForSettings(autoCommit, transactionIsolationLevel);
+            if( query != null )
+                execute(actTds, query);
+        }
+    }
 
    static public void main(String args[])
       throws java.lang.ClassNotFoundException,

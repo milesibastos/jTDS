@@ -4,60 +4,107 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 
 /**
- * Helper class to redruce duplicated code.
+ * Helper class to reduce duplicated code.
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
- *
- * @version  $Id: SQLWarningChain.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @author Alin Sinpalean
+ * @version $Id: SQLWarningChain.java,v 1.3 2002-06-28 18:01:15 alin_sinpalean Exp $
  */
-class SQLWarningChain  {
-   public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
-   
-   private SQLWarning warnings;
-   
-   SQLWarningChain () 
-   {
-      warnings = null;
-   }
-   
-   /**
-    * The first warning added with {@see #addWarning addWarning}.
-    * Subsequent warnings will be chained to this SQLWarning.  
-    */
-    synchronized SQLWarning getWarnings() {
-        return warnings;
-    }
+class SQLWarningChain
+{
+    public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.3 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
-   /**
-    * After this call {@see #getWarnings getWarnings} returns null
-    * until {@see #addWarning addWarning} has been called again.  
-    */
-    synchronized void clearWarnings() {
+    private SQLWarning warnings;
+    private SQLException exceptions;
+
+    SQLWarningChain ()
+    {
         warnings = null;
     }
 
     /**
-     * Adds a SQLWarning to the warning chain.
+     * The first warning added with {@see #addWarning addWarning}.
+     * Subsequent warnings will be chained to this SQLWarning.
      */
-    synchronized void addWarning(SQLWarning warn) {
-        if (warnings == null) {
+    synchronized SQLWarning getWarnings()
+    {
+        return warnings;
+    }
+
+    /**
+     * The first exception added with {@see #addException addException}.
+     * Subsequent exceptions will be chained to this SQLException.
+     */
+    synchronized SQLException getExceptions()
+    {
+        return exceptions;
+    }
+
+    /**
+     * Checks if there's any exception in the chain and if so, throws the first
+     * one. Subsequent exceptions will be chained to this
+     * <code>SQLException</code>.
+     * <p>
+     * This method should (or should I say *has to*) be called after the
+     * execution of any piece of code that could generate exceptions if no
+     * other actions are to be taken on error. Otherwise,
+     * <code>getExceptions()</code> should be called and, if an exception was
+     * returned, take needed action and then throw the exception.
+     */
+    synchronized void checkForExceptions() throws SQLException
+    {
+        if( exceptions != null )
+            throw exceptions;
+    }
+
+    /**
+     * After this call {@see #getWarnings getWarnings} returns null
+     * until {@see #addWarning addWarning} has been called again.
+     */
+    synchronized void clearWarnings()
+    {
+        warnings = null;
+        exceptions = null;
+    }
+
+    /**
+     * Adds an SQLWarning to the warning chain.
+     */
+    synchronized void addWarning(SQLWarning warn)
+    {
+        if( warnings == null )
             warnings = warn;
-        } else {
+        else
             warnings.setNextWarning(warn);
-        }
+    }
+
+    /**
+     * Adds an SQLException to the exception chain.
+     */
+    synchronized void addException(SQLException ex)
+    {
+        if( exceptions == null )
+            exceptions = ex;
+        else
+            exceptions.setNextException(ex);
     }
 
     /**
      * Adds the SQLWarning wrapped in the packet if it's not an ErrorResult.
-     * Returns the wrapped SQLException otherwise.
+     * Adds and returns the wrapped SQLException otherwise.
      */
-    SQLException addOrReturn(PacketMsgResult pack) {
-        if (pack instanceof PacketErrorResult) {
-            return pack.getMsg().toSQLException();
-        } else {
+    SQLException addOrReturn(PacketMsgResult pack)
+    {
+        if( pack instanceof PacketErrorResult )
+        {
+            SQLException ex = pack.getMsg().toSQLException();
+            addException(ex);
+            return ex;
+        }
+        else
+        {
             addWarning(pack.getMsg().toSQLWarning());
             return null;
         }
     }
 }
-

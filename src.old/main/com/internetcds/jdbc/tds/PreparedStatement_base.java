@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.10 2001-09-26 07:06:22 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.11 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -532,7 +532,7 @@ public class PreparedStatement_base
     {
         // when this method creates the parameter the formal type should
         // be a varbinary if the length of 'x' is <=255, image if length>255.
-        if ( x == null || x.length <= 255 || connection.getMainTds().getTdsVer() == Tds.TDS70 && x.length <= 8000 ) {
+        if ( x == null || x.length <= 255 || connection.getTdsVer() == Tds.TDS70 && x.length <= 8000 ) {
             setParam( parameterIndex, x, java.sql.Types.VARBINARY, -1 );
         }
         else {
@@ -855,7 +855,7 @@ public class PreparedStatement_base
                     setInt( parameterIndex, ( ( Integer ) x ).intValue() );
                     break;
                 case java.sql.Types.BIGINT:
-                    setLong( parameterIndex, ( ( Integer ) x ).longValue() );
+                    setLong( parameterIndex, ( ( Long ) x ).longValue() );
                     break;
                 default:
                     setParam( parameterIndex, x, targetSqlType, scale );

@@ -82,17 +82,18 @@ import java.io.*;
  *  the ResulSetMetaData object returned by the getMetaData method.
  *
  *@author     Craig Spannring
+ *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.7 2001-09-25 15:20:19 aschoerk Exp $
+ *@version    $Id: TdsResultSet.java,v 1.8 2002-06-28 18:01:15 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
  *@see        Tds#getRow
  */
 
-public class TdsResultSet extends AbstractResultSet implements ResultSet {
-
+public class TdsResultSet extends AbstractResultSet implements ResultSet
+{
     Tds tds = null;
     TdsStatement stmt = null;
 
@@ -109,16 +110,11 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.7 2001-09-25 15:20:19 aschoerk Exp $";
-
-    public Context getContext()
-    {
-        return context;
-    }
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.8 2002-06-28 18:01:15 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, Columns columns)
     {
-            tds = tds_;
+        tds = tds_;
         stmt = stmt_;
         context = new Context(columns, tds.getEncoder());
 
@@ -127,6 +123,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         rowCache = new PacketRowResult[fetchSize];
     }
 
+    public Context getContext()
+    {
+        return context;
+    }
 
     /**
      *  JDBC 2.0 Gives a hint as to the direction in which the rows in this
@@ -148,7 +148,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         }
     }
 
-
     /**
      *  JDBC 2.0 Gives the JDBC driver a hint as to the number of rows that
      *  should be fetched from the database when more rows are needed for this
@@ -161,11 +160,30 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
      *@exception  SQLException  if a database access error occurs or the
      *      condition 0 <= rows <= this.getMaxRows() is not satisfied.
      */
-    public void setFetchSize(int rows) throws SQLException
+    public synchronized void setFetchSize(int rows) throws SQLException
     {
-        throw new SQLException("Cannot re-set the fetch size yet!");
-    }
+        int maxRows = stmt.getMaxRows();
 
+        if( rows<0 || (maxRows>0 && rows>maxRows) )
+            throw new SQLException("Illegal fetch size: "+rows);
+
+        // If the user lets us choose, we'll use the whole cache
+        if( rows == 0 )
+        {
+            fetchSize = rowCache.length;
+            return;
+        }
+
+        // Reallocate the cache if too small
+        if( rows > rowCache.length )
+        {
+            PacketRowResult[] newCache = new PacketRowResult[rows];
+            System.arraycopy(rowCache, 0, newCache, 0, rowCache.length);
+            rowCache = newCache;
+        }
+
+        fetchSize = rows;
+    }
 
     /**
      *  Get the name of the SQL cursor used by this ResultSet. <P>
@@ -189,12 +207,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("Not implemented (getCursorName)");
     }
 
-
     public SQLWarning getWarnings() throws SQLException
     {
         return warningChain.getWarnings();
     }
-
 
     //---------------------------------------------------------------------
     // Traversal/Positioning
@@ -209,11 +225,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
      *      false otherwise. Returns false when the result set contains no rows.
      *@exception  SQLException  if a database access error occurs
      */
-    public boolean isBeforeFirst() throws SQLException
+    public synchronized boolean isBeforeFirst() throws SQLException
     {
-        return row == 0;
+        return row==0 && haveMoreResults();
     }
-
 
     /**
      *  JDBC 2.0 <p>
@@ -229,7 +244,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         return hitEndOfData;
     }
 
-
     /**
      *  JDBC 2.0 <p>
      *
@@ -243,7 +257,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         return row == 1;
     }
-
 
     /**
      *  JDBC 2.0 <p>
@@ -259,52 +272,44 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
      */
     public boolean isLast() throws SQLException
     {
-
+        /** @todo Implement isLast */
         throw new SQLException("Cannot determine position on a FORWARD_ONLY RecordSet.");
     }
-
 
     public int getRow() throws SQLException
     {
         return row;
     }
 
-
     public int getFetchDirection() throws SQLException
     {
         return ResultSet.FETCH_FORWARD;
     }
-
 
     public int getFetchSize() throws SQLException
     {
         return fetchSize;
     }
 
-
     public int getType() throws SQLException
     {
         return ResultSet.TYPE_FORWARD_ONLY;
     }
-
 
     public int getConcurrency() throws SQLException
     {
         return ResultSet.CONCUR_READ_ONLY;
     }
 
-
     public java.sql.Statement getStatement() throws SQLException
     {
         return stmt;
     }
 
-
     public void clearWarnings() throws SQLException
     {
         warningChain.clearWarnings();
     }
-
 
     /**
      *  In some cases, it is desirable to immediately release a ResultSet's
@@ -319,43 +324,44 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
      *
      *@exception  SQLException  if a database-access error occurs.
      */
-    public void close() throws SQLException
+    public synchronized void close() throws SQLException
     {
-
         Exception exception = null;
 
-        if (isClosed) {
+        /** @todo SAfe: Maybe an exception should be thrown here */
+        if( isClosed )
             return;
-        }
-
         isClosed = true;
-        try {
-            if (!hitEndOfData) {
-                tds.discardResultSetOld( context );    // from discardResultSet(null)
+
+        if( !hitEndOfData )
+        {
+            try
+            {
+                tds.discardResultSetOld(context);
                 hitEndOfData = true;
                 stmt.eofResults();
             }
-        }
-        catch (TdsException e) {
-            e.printStackTrace();
-            exception = e;
-        }
-        catch (java.io.IOException e) {
-            e.printStackTrace();
-            exception = e;
+            catch( TdsException e )
+            {
+                e.printStackTrace();
+                exception = e;
+            }
+            catch( java.io.IOException e )
+            {
+                e.printStackTrace();
+                exception = e;
+            }
         }
 
         rowCache = null;
         metaData = null;
         context = null;
         stmt = null;
+        tds = null;
 
-        if (exception != null) {
-            throw new SQLException(exception.getMessage());
-        }
-
+        if( exception != null )
+            throw new SQLException(exception.toString());
     }
-
 
     /**
      *  A ResultSet is initially positioned before its first row; the first call
@@ -369,57 +375,46 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
      *      there are no more rows
      *@exception  SQLException  if a database-access error occurs.
      */
-    public boolean next() throws SQLException
+    public synchronized boolean next() throws SQLException
     {
-        if (isClosed) {
+        if( isClosed )
             throw new SQLException("result set is closed");
-        }
 
-        if (haveMoreResults()) {
+        if( haveMoreResults() )
+        {
             rowIndex++;
             row++;
             return true;
         }
-        else
-          rowIndex = -1;   // invalidate current row
 
         return false;
     }
 
-
+    /** @todo fetchNextRow should not be public! Possible synchronization problem! */
     public PacketRowResult fetchNextRow() throws SQLException
     {
-
-        SQLException exception = null;
-        boolean done = false;
         boolean wasCanceled = false;
         PacketRowResult row = null;
 
-        try {
+        try
+        {
             clearWarnings();
 
             // Keep eating garbage and warnings until we reach the next result
-            while (!tds.isResultSet() &&
-                    !tds.isEndOfResults() &&
-                    !tds.isResultRow()) {
-
+            while( !tds.isResultSet() &&
+                   !tds.isEndOfResults() &&
+                   !tds.isResultRow())
+            {
                 // RMK 2000-06-08: don't choke on RET_STAT package.
-                if (tds.isProcId() || tds.peek() == Tds.TDS_RET_STAT_TOKEN) {
+                if( tds.isProcId() || tds.isRetStat() )
                     tds.processSubPacket();
-                }
-                else if (tds.isDoneInProc()) {
-                    PacketDoneInProcResult tmp =
-                            (PacketDoneInProcResult) tds.processSubPacket();
-                }
-                else if (tds.isParamResult())
+                else if( tds.isParamResult() )
                 {
-                   PacketResult tmp1 = (PacketResult)tds.processSubPacket();
-                   if (stmt != null
-                      && CallableStatement_base.class.isInstance(stmt))
-                   {
-                      ((CallableStatement_base)stmt).addOutputParam(
-                         ((PacketOutputParamResult)tmp1).getValue());
-                   }
+                    PacketResult tmp1 = tds.processSubPacket();
+
+                    if( stmt!=null && stmt instanceof CallableStatement_base )
+                        ((CallableStatement_base)stmt).addOutputParam(
+                            ((PacketOutputParamResult)tmp1).getValue());
                 }
                 /*
                 else if (tds.isTextUpdate()) {
@@ -427,63 +422,49 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
                             (PacketResult) tds.processSubPacket();
                 }
                  */
-                else if (tds.isMessagePacket() || tds.isErrorPacket()) {
-                    PacketMsgResult tmp = (PacketMsgResult) tds.processSubPacket();
-                    exception = warningChain.addOrReturn(tmp);
-                }
-                else {
-                  stmt.eofResults();
-                    throw new SQLException("Protocol confusion.  "
-                             + "Got a 0x"
-                             + Integer.toHexString((tds.peek() & 0xff))
-                             + " packet");
-                }
+                else if( tds.isMessagePacket() || tds.isErrorPacket() )
+                    warningChain.addOrReturn(
+                        (PacketMsgResult)tds.processSubPacket());
+                else
+                    throw new SQLException("Protocol confusion. "
+                        + "Got a 0x"
+                        + Integer.toHexString((tds.peek() & 0xff))
+                        + " packet");
             }
 
-            if (exception != null) {
-              stmt.eofResults();
-              throw exception;
-            }
+            stmt.eofResults();
+            warningChain.checkForExceptions();
 
-            if (tds.isResultRow()) {
-                row = (PacketRowResult) tds.processSubPacket(context);
-                done = true;
-            }
-            else if (tds.isEndOfResults()) {
-                PacketResult tmp = tds.processSubPacket(context);
+            if( tds.isResultRow() )
+                row = (PacketRowResult)tds.processSubPacket(context);
+            else if( tds.isEndOfResults() )
+            {
+                wasCanceled = ((PacketEndTokenResult)
+                    tds.processSubPacket(context)).wasCanceled();
                 row = null;
-                done = true;
                 hitEndOfData = true;
-                stmt.eofResults();
-                wasCanceled = wasCanceled
-                         || ((PacketEndTokenResult) tmp).wasCanceled();
             }
-            else if (!tds.isResultSet()) {
-              stmt.eofResults();
-                throw new SQLException("Protocol confusion.  "
-                         + "Got a 0x"
-                         + Integer.toHexString((tds.peek() & 0xff))
-                         + " packet");
-            }
-
-            if (exception != null) {
-              stmt.eofResults();
-                throw exception;
-            }
+            else if( !tds.isResultSet() )
+                throw new SQLException("Protocol confusion. "
+                    + "Got a 0x"
+                    + Integer.toHexString((tds.peek() & 0xff))
+                    + " packet");
         }
-        catch (java.io.IOException e) {
-          stmt.eofResults();
+        catch( java.io.IOException e )
+        {
+            stmt.eofResults();
             throw new SQLException(e.getMessage());
         }
-        catch (TdsException e) {
-          stmt.eofResults();
+        catch( TdsException e )
+        {
+            stmt.eofResults();
             e.printStackTrace();
             throw new SQLException(e.getMessage());
         }
-        if (wasCanceled) {
-          stmt.eofResults();
-          throw new SQLException("Query was canceled or timed out.");
-        }
+
+        if( wasCanceled )
+            throw new SQLException("Query was canceled or timed out.");
+
         return row;
     }
 
@@ -492,7 +473,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
-
 
     /**
      *  JDBC 2.0 <p>
@@ -507,7 +487,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
-
 
     /**
      *  JDBC 2.0 <p>
@@ -524,7 +503,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
 
-
     /**
      *  JDBC 2.0 <p>
      *
@@ -539,7 +517,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
-
 
     /**
      *  JDBC 2.0 <p>
@@ -574,7 +551,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
 
-
     /**
      *  JDBC 2.0 <p>
      *
@@ -599,7 +575,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
 
-
     /**
      *  JDBC 2.0 <p>
      *
@@ -619,7 +594,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("The result set type is TYPE_FORWARD_ONLY");
     }
 
-
     /**
      *  JDBC 2.0 Indicates whether the current row has been updated. The value
      *  returned depends on whether or not the result set can detect updates.
@@ -633,7 +607,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         return false;
     }
-
 
     /**
      *  JDBC 2.0 Indicates whether the current row has had an insertion. The
@@ -649,7 +622,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         return false;
     }
-
 
     /**
      *  JDBC 2.0 Indicates whether a row has been deleted. A deleted row may
@@ -667,7 +639,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         return false;
     }
 
-
     /**
      *  JDBC 2.0 Inserts the contents of the insert row into the result set and
      *  the database. Must be on the insert row when this method is called.
@@ -681,7 +652,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("ResultSet is not updateable");
     }
 
-
     /**
      *  JDBC 2.0 Updates the underlying database with the new contents of the
      *  current row. Cannot be called when on the insert row.
@@ -694,7 +664,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("ResultSet is not updateable");
     }
 
-
     /**
      *  JDBC 2.0 Deletes the current row from the result set and the underlying
      *  database. Cannot be called when on the insert row.
@@ -706,7 +675,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         throw new SQLException("ResultSet is not updateable");
     }
-
 
     /**
      *  JDBC 2.0 Refreshes the current row with its most recent value in the
@@ -731,7 +699,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         //No effect
     }
 
-
     /**
      *  JDBC 2.0 Cancels the updates made to a row. This method may be called
      *  after calling an <code>updateXXX</code> method(s) and before calling
@@ -746,7 +713,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
         //No effect
     }
-
 
     /**
      *  JDBC 2.0 Moves the cursor to the insert row. The current cursor position
@@ -769,7 +735,6 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("ResultSet is not updateable");
     }
 
-
     /**
      *  JDBC 2.0 Moves the cursor to the remembered cursor position, usually the
      *  current row. This method has no effect if the cursor is not on the
@@ -783,20 +748,16 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         throw new SQLException("ResultSet is not updateable");
     }
 
-
-    public PacketRowResult currentRow() throws SQLException
+    public synchronized PacketRowResult currentRow() throws SQLException
     {
-      if (rowIndex < 0)
-        throw new SQLException("No current row in the result set");
-      else
-        if (rowIndex >= rowCount)
-          throw new SQLException("no more results in ResultSet");
+        if( rowIndex < 0 )
+            throw new SQLException("No current row in the ResultSet");
+        else if( rowIndex >= rowCount )
+            throw new SQLException("No more results in ResultSet");
         return rowCache[rowIndex];
     }
 
-
-    protected void finalize()
-             throws Exception
+    protected void finalize() throws Exception
     {
         try {
             close();
@@ -806,90 +767,106 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         }
     }
 
-
-    private boolean haveMoreResults()
-             throws SQLException
+    /**
+     * Checks whether there are more results in the cache or, if the cache is
+     * empty, gets the next batch of results.
+     */
+    private boolean haveMoreResults() throws SQLException
     {
-
-        if (rowCount > 0 && rowIndex < (rowCount - 1)) {
+        if( rowCount>0 && rowIndex<rowCount-1 )
             return true;
-        }
 
-        if (hitEndOfData) {
+        if( hitEndOfData )
+        {
             rowCount = 0;
-            rowIndex = -1;
             return false;
         }
 
-        //Get next batch of results
+        // Get next batch of results
         return internalFetchRows() > 0;
     }
 
-
     /**
-     *  Cahces the next lot of rows, and returns the number of rows cached.
+     * Caches the next lot of rows, and returns the number of rows cached.
+     * The current row is lost! Use with care!
      *
-     *@return                   Description of the Returned Value
-     *@exception  SQLException  Description of Exception
+     * @return    the number of rows cached
+     * @exception SQLException if an SQL error occurs
      */
-    private int internalFetchRows()
-             throws SQLException
+    private int internalFetchRows() throws SQLException
     {
+        // Need to set this so that next() will set it to 0
         rowCount = 0;
 
-        //Need to set this so that next() will set it to 0
-        rowIndex = -1;
-        do {
-
+        do
+        {
             PacketRowResult row = fetchNextRow();
-            if (hitEndOfData) {
-              break;
-            }
+            if( hitEndOfData )
+                break;
 
             rowCache[rowCount] = row;
             rowCount++;
-
+            // Not very efficient, but this should be set only if we got a row
+            rowIndex = -1;
         } while (rowCount < fetchSize);
 
         return rowCount;
     }
 
+    /**
+     * Increases the size of the internal cache (keeping its contents).
+     */
     private void reallocCache()
     {
-      PacketRowResult[] newCache = new PacketRowResult[fetchSize * 2];
-      System.arraycopy(rowCache,0,newCache,0,fetchSize);
-      rowCache = newCache;
-      fetchSize *= 2;
+        if( rowCache.length == fetchSize )
+        {
+            PacketRowResult[] newCache = new PacketRowResult[fetchSize*2];
+            System.arraycopy(rowCache, 0, newCache, 0, rowCache.length);
+            rowCache = newCache;
+            fetchSize *= 2;
+        }
+        else
+            // Make it as large as possible, it doesn't matter since we only do
+            // this when fetching all rows into the cache.
+            fetchSize = rowCache.length;
     }
 
-    void fetchIntoCache() throws SQLException
+    /**
+     * Caches all unread rows into the internal cache, enlarging it as
+     * necessary. Can be quite memory-consuming, depending on result size.
+     */
+    synchronized void fetchIntoCache() throws SQLException
     {
-      if (rowCount == 0) {
-        internalFetchRows();
-      }
-      if (hitEndOfData) return;
-      if (rowIndex > 0 && rowIndex < rowCount) {
-        System.arraycopy(rowCache,rowIndex,rowCache,0,rowCount-rowIndex);
-        rowCount -= rowIndex;
-        rowIndex = 0;
-      }
-      else
-        reallocCache();
-      while (!hitEndOfData) {
-        do {
-            PacketRowResult row = fetchNextRow();
-            if (hitEndOfData) {
-              break;
-            }
+        if( rowCount == 0 )
+            internalFetchRows();
 
-            rowCache[rowCount] = row;
-            rowCount++;
+        if( hitEndOfData )
+            return;
 
-        } while (rowCount < fetchSize);
-        if (!hitEndOfData)
-          reallocCache();
-      }
-      return ;
+        if( rowIndex>0 && rowIndex<rowCount)
+        {
+            System.arraycopy(rowCache,rowIndex,rowCache,0,rowCount-rowIndex);
+            rowCount -= rowIndex;
+            rowIndex = 0;
+        }
+        // Only if the cache is full
+        else if( rowIndex<=0 && rowCount==fetchSize )
+            reallocCache();
+
+        while (!hitEndOfData)
+        {
+            do
+            {
+                PacketRowResult row = fetchNextRow();
+                if( hitEndOfData )
+                    break;
+
+                rowCache[rowCount] = row;
+                rowCount++;
+            } while( rowCount < fetchSize );
+
+            if( !hitEndOfData )
+                reallocCache();
+        }
     }
-
 }

@@ -2,10 +2,14 @@ Changes from jTDS 0.8.1
 =========================
 
 07/21/2004 - Brian Heineman
- o Added test for bug [994988] Network error when null is returned via int output parm
+ o Added test for bug [994988] Network error when null is returned via int
+   output parm
+ o Corrected bug [994916] datetime decoding in TdsData.java; Added tests to
+   ensure this functionality continues to work in the future.
 
 07/20/2004 - Brian Heineman
- o Added test for bug [974284] retval on callable statement isn't handled correctly
+ o Added test for bug [974284] retval on callable statement isn't handled
+   correctly
  o Added test for bug [994888] Callable statement and Float output parameter
 
 07/19/2004 - Brian Heineman

@@ -4,6 +4,7 @@ import java.sql.*;
 import java.math.BigDecimal;
 import net.sourceforge.jtds.util.Logger;
 import junit.framework.TestSuite;
+import java.util.*;
 
 //
 // MJH - Changes to work with the new version of jTDS
@@ -1785,5 +1786,465 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue("Expected a result set", rs.next());
         assertTrue(rs.getInt(1) == -1);
         assertTrue("Expected no result set", !rs.next());
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding1() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.990
+        // Receive: 01/01/98 23:59:59.990
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 990);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 990);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr1 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr1 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr1");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding2() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.991
+        // Receive: 01/01/98 23:59:59.990
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 991);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 990);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr2 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr2 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr2");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding3() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.992
+        // Receive: 01/01/98 23:59:59.993
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 992);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 993);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr3 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr3 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr3");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding4() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.993
+        // Receive: 01/01/98 23:59:59.993
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 993);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 993);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr4 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr4 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr4");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding5() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.994
+        // Receive: 01/01/98 23:59:59.993
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 994);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 993);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr5 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr5 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr5");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding6() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.995
+        // Receive: 01/01/98 23:59:59.997
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 995);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 997);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr6 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr6 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr6");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding7() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.996
+        // Receive: 01/01/98 23:59:59.997
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 996);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 997);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr7 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr7 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr7");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding8() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.997
+        // Receive: 01/01/98 23:59:59.997
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 997);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 997);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr8 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr8 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr8");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding9() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.998
+        // Receive: 01/01/98 23:59:59.997
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 998);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 1);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 23);
+        receiveValue.set(Calendar.MINUTE, 59);
+        receiveValue.set(Calendar.SECOND, 59);
+        receiveValue.set(Calendar.MILLISECOND, 997);
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr9 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr9 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr9");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
+    /**
+     * Test for bug [994916] datetime decoding in TdsData.java
+     */
+    public void testDatetimeRounding10() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    01/01/98 23:59:59.999
+        // Receive: 01/02/98 00:00:00.000
+        Calendar sendValue = Calendar.getInstance();
+        Calendar receiveValue = Calendar.getInstance();
+
+        sendValue.set(Calendar.MONTH, Calendar.JANUARY);
+        sendValue.set(Calendar.DAY_OF_MONTH, 1);
+        sendValue.set(Calendar.YEAR, 1998);
+        sendValue.set(Calendar.HOUR_OF_DAY, 23);
+        sendValue.set(Calendar.MINUTE, 59);
+        sendValue.set(Calendar.SECOND, 59);
+        sendValue.set(Calendar.MILLISECOND, 999);
+
+        receiveValue.set(Calendar.MONTH, Calendar.JANUARY);
+        receiveValue.set(Calendar.DAY_OF_MONTH, 2);
+        receiveValue.set(Calendar.YEAR, 1998);
+        receiveValue.set(Calendar.HOUR_OF_DAY, 0);
+        receiveValue.set(Calendar.MINUTE, 0);
+        receiveValue.set(Calendar.SECOND, 0);
+        receiveValue.set(Calendar.MILLISECOND, 0);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr10 (data datetime)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr10 (data) values (?)");
+        pstmt.setTimestamp(1, new Timestamp(sendValue.getTime().getTime()));
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select data from #dtr10");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertTrue(!rs.next());
+
+        pstmt.close();
+        rs.close();
     }
 }

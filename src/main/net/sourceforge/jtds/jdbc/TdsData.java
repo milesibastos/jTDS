@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.11 2004-07-19 22:17:03 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.12 2004-07-21 21:57:21 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -1644,7 +1644,7 @@ public class TdsData {
                     time = time - (minutes * 18000);
                     seconds = time / 300;
                     cal.set(Calendar.SECOND, seconds);
-                    time = time - seconds * 300;
+                    time = time - seconds * 300;                    
                     time = (int) Math.round(time * 1000 / 300f);
                     cal.set(Calendar.MILLISECOND, time);
 //
@@ -1749,16 +1749,16 @@ public class TdsData {
                 daysSince1900 = 0;
             } else {
                 daysSince1900 = calendarToSybase(cal.get(Calendar.YEAR),
-                                                 cal.get(Calendar.MONTH)+1,
+                                                 cal.get(Calendar.MONTH) + 1,
                                                  cal.get(Calendar.DAY_OF_MONTH));
             }
 
-            time  = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
+            time = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
             time += cal.get(Calendar.MINUTE) * 18000;
             time += cal.get(Calendar.SECOND) * 300;
 
             if (value instanceof java.sql.Timestamp) {
-                time += cal.get(Calendar.MILLISECOND) * 300 / 1000;
+                time += Math.round(cal.get(Calendar.MILLISECOND) * 300f / 1000);
             }
 
             out.write((int) daysSince1900);

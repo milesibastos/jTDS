@@ -27,4 +27,16 @@ public class DatabaseMetaDataTest extends TestBase {
     	
     	rs.close();
     }
+
+    /**
+     * Test for bug [998765] Exception with Sybase and metaData.getTables()
+     */
+    public void testGetTables() throws Exception {
+        DatabaseMetaData dmd = con.getMetaData();
+        ResultSet rs = dmd.getTables(null, null, null, null);
+
+        assertNotNull(rs);
+        
+        rs.close();
+    }
 }

@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.3 2004-07-08 15:27:12 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.4 2004-07-27 15:35:15 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1577,14 +1577,14 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             }
         }
 
-        CallableStatement s = connection.prepareCall(query);
+        CallableStatement cstmt = connection.prepareCall(query);
 
-        s.setString(1, tableNamePattern);
-        s.setString(2, schemaPattern);
-        s.setString(3, catalog);
+        cstmt.setString(1, tableNamePattern);
+        cstmt.setString(2, schemaPattern);
+        cstmt.setString(3, catalog);
 
         if (types == null) {
-            s.setString(4, null);
+            cstmt.setString(4, null);
         } else {
             StringBuffer buf = new StringBuffer(64);
 
@@ -1599,10 +1599,22 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             }
 
             buf.append('"');
-            s.setString(4, buf.toString());
+            cstmt.setString(4, buf.toString());
         }
 
-        JtdsResultSet rs = (JtdsResultSet) s.executeQuery();
+        boolean hasResultSet = cstmt.execute();
+
+        // Consume any update counts
+        while (!hasResultSet) {
+            if (cstmt.getUpdateCount() == -1) {
+                break;
+            }
+            
+            hasResultSet = cstmt.getMoreResults();
+        }
+
+        // If there is not a result set, let the SQLException propagate to the caller.
+        JtdsResultSet rs = (JtdsResultSet) cstmt.getResultSet();
 
         rs.setColName(1, "TABLE_CAT");
         rs.setColLabel(1, "TABLE_CAT");

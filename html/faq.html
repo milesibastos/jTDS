@@ -272,6 +272,13 @@
           the named pipe URL), but it does not currently support the named pipe at
           a location other than <code>/sql/query</code> on the server.  The
           <code>port</code> parameter is ignored if set.</dd>
+        <dt><code>xaEmulation</code> (default - <code>true</code>)</dt>
+        <dd>When set to <code>true</code>, emulate XA distributed transaction
+          support, when set to <code>false</code> use experimental true
+          distributed transaction support. True distributed transaction support
+          is only available for SQL Server 2000 and requires the installation
+          of an external stored procedure in the target server (see the
+          README.XA file in the distribution for details).</dd>
       </dl>
       <p>These properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>
@@ -330,9 +337,9 @@
         <code>jtds.jar</code> to your web application's class path (e.g. by
         editing the application's web.xml file or by copying the jar into the
         application's/server's <code>/lib</code> directory).</p>
-      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-0.9.jar</code>
+      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-0.9.1.jar</code>
         or something similar. If that's the case, replace <code>jtds.jar</code>
-        in the above example with <code>jtds-0.9.jar</code> or whatever your specific
+        in the above example with <code>jtds-0.9.1.jar</code> or whatever your specific
         file name is.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="noSuitableDriver"></a>Why do I get a <code>java.sql.SQLException:

@@ -1,6 +1,11 @@
 Changes from jTDS 0.9
 =========================
 
+12/08/2004 - Alin Sinpalean
+ o Updated the index.html with support information and added a description for
+   the xaEmulation parameter in the FAQ.
+ o Updated version number to 0.9.1 in code and documentation.
+
 12/07/2004 - Alin Sinpalean
  o Updated the build files to create a binary distribution package containing
    the readme, license, html documentation, XA DLL and SQL as well as the jar,

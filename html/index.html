@@ -69,9 +69,11 @@
         (it is distributed with <a href="http://www.aquafold.com">Aqua Data
         Studio</a> and <a href="http://www.datadino.com">DataDino</a> as the
         driver for SQL Server). jTDS is also becoming a common choice for
-        enterprise-level applications: starting with release 0.8-rc1 jTDS
-        passes the <a href="http://www.hibernate.org">Hibernate</a> test suite,
-        making it the driver of choice for SQL Server.</p>
+        enterprise-level applications: starting with release 0.9 jTDS passes
+        both the <a href="http://www.hibernate.org">Hibernate</a> and the <a
+        href="http://java.sun.com/products/jdbc/download.html#testsuite131">
+        J2EE 1.3 certification</a> test suites, making it the driver of choice
+        for SQL Server.</p>
       <p class="title">Getting Started</p>
       <p>Being a type 4 driver, jTDS does not need any special installation.
         Just drop the jar file into your application's classpath and you're
@@ -80,19 +82,22 @@
         all set. You can get these and a lot more information from the
         <a href="faq.html">Frequently Asked Questions</a> page.</p>
       <p class="title">Why use jTDS?</p>
-      <p>Umm, good question... Let's see... Well, first of all because it's
-        open source. jTDS is released under the
-        <a href="http://www.opensource.org/licenses/lgpl-license.php"
+      <p>Good question. First of all because it's open source. jTDS is released
+        under the <a href="http://www.opensource.org/licenses/lgpl-license.php"
         alt="GNU Lesser General Public License">GNU LGPL</a>, giving you not
-        only the opportunity to tweak it to your own liking but also the right
+        only the posibility to tweak it to your own liking but also the right
         to get any improvement anyone ever brings to jTDS.</p>
-      <p>There are, of course, other free choices... There's the JDBC-ODBC
-        bridge and Microsoft's own JDBC driver... Well yes, but both of them
-        crash on you every now and then, just to keep you on your toes, and lack
-        functionality. Indeed jTDS is more stable than both of the two.
-        Just do a <a href="http://www.google.com">Google</a> search for jTDS and
-        you'll find posts from a lot of people choosing to move to jTDS because
-        of stability issues.</p>
+      <p>The other &quot;free&quot; choices, the JDBC-ODBC bridge and
+        Microsoft's own JDBC driver are not actually free. If you encounter an
+        issue with any of them you won't be able to fix it yourself and
+        response and fix times from both Microsoft and Sun are anything but
+        short. Also, both of them lack functionality and have serious stability
+        problems: the bridge crashes the JVM if the ODBC driver has any problem
+        and the MS driver is just bug ridden. Just do a
+        <a href="http://www.google.com">Google</a> search for jTDS and you'll
+        find posts from a lot of people choosing to move to jTDS because of
+        stability issues. Also, the Microsoft driver implemnents only JDBC 2.0,
+        while the bridge is just a JDBC 1.0 implementation.</p>
       <p>Oh, and did we mention that jTDS is faster? Well it's not just faster,
         it's the fastest. Of all the SQL Server drivers. Including commercial
         ones. Well, this seems to have caught your attention. We don't have any
@@ -102,6 +107,13 @@
       <p>Anyway, just give it a try. Get the latest one from
         <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">here</a>
         and see whether you like it or not.</p>
+      <p class="title">Support</p>
+      <p>Following a number of requests on our forums we have decided to offer
+        commercial technical support for interested parties. We are currently
+        looking into creating an organization specifically for this, but in the
+        meantime you can get official technical support from individual
+        developers of jTDS. Contact any of us and we'll be happy to provide you
+        with our terms and conditions as well as our fees.</p>
 
 
 <!--

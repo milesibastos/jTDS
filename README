@@ -118,8 +118,7 @@ To Do
 
 1. Non-cached Blob/Clob implementation.
 2. Fix outstanding minor bugs.
-3. JDBC 3.0 compliance.
-
+3. XADataSource support
 
 Contacts
 ========

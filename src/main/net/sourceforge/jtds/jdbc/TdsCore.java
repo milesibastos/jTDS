@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.62 2005-01-04 10:22:07 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.63 2005-01-06 16:39:29 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -795,13 +795,6 @@ public class TdsCore {
                clearResponseQueue();
                out.close();
                in.close();
-           } catch (IOException ioe) {
-               connection.setClosed();
-               throw Support.linkException(
-                   new SQLException(
-                          Messages.get(
-                                   "error.generic.ioerror", ioe.getMessage()),
-                                       "08S01"), ioe);
            } finally {
                isClosed = true;
            }

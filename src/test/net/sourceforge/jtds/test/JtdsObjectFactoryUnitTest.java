@@ -4,7 +4,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbcx.JtdsObjectFactory;
-import javax.naming.NamingException;
 import javax.naming.Reference;
 import java.util.Properties;
 
@@ -14,7 +13,7 @@ import java.util.Properties;
  * Unit tests for the {@link JtdsObjectFactory} class.
  * 
  * @author David D. Kilzer
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.2 2004-08-28 19:02:32 bheineman Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.3 2004-08-30 15:44:23 bheineman Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
 

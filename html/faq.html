@@ -279,6 +279,20 @@
           is only available for SQL Server 2000 and requires the installation
           of an external stored procedure in the target server (see the
           README.XA file in the distribution for details).</dd>
+        <dt><code>ssl</code> (default - <code>off</code>)</dt>
+        <dd>Specifies if and how to use SSL for secure communication.
+          <table class="inner" cellpadding="0" cellspacing="0">
+            <thead>
+              <tr><th>Value</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>off</code></td><td>SSL is not request or used; this is the default</td></tr>
+              <tr><td><code>request</code></td><td>SSL is requested; if the server does not support it then a plain connection is used</td></tr>
+              <tr><td><code>require</code></td><td>SSL is requested; if the server does not support it then an exception is thrown</td></tr>
+              <tr><td><code>authenticate</code></td><td>Same as <code>require</code> except the server's certificate must be signed by a trusted CA</td></tr>
+            </tbody>
+          </table>
+          </dd></dt>
       </dl>
       <p>These properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

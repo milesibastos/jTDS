@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.18 2004-07-23 14:15:14 bheineman Exp $
+ * @version $Id: Driver.java,v 1.19 2004-07-25 15:30:25 bheineman Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -117,6 +117,7 @@ public class Driver implements java.sql.Driver {
             new DriverPropertyInfo(Support.getMessage("prop.lastupdatecount"), null),
             new DriverPropertyInfo(Support.getMessage("prop.logintimeout"), null),
             new DriverPropertyInfo(Support.getMessage("prop.useunicode"), null),
+            new DriverPropertyInfo(Support.getMessage("prop.namedpipe"), null),
             new DriverPropertyInfo(Support.getMessage("prop.macaddress"), null),
             new DriverPropertyInfo(Support.getMessage("prop.packetsize"), null),
             new DriverPropertyInfo(Support.getMessage("prop.preparesql"), null),
@@ -213,6 +214,13 @@ public class Driver implements java.sql.Driver {
 
                 if (dpi[i].value == null) {
                     dpi[i].value = dpi[i].choices[0]; // true
+                }
+            } else if (name.equals(Support.getMessage("prop.namedpipe"))) {
+                dpi[i].description = Support.getMessage("prop.desc.namedpipe");
+                dpi[i].choices = new String[] {"true","false"};
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = dpi[i].choices[1]; // false
                 }
             } else if (name.equals(Support.getMessage("prop.macaddress"))) {
                 dpi[i].description = Support.getMessage("prop.desc.macaddress");

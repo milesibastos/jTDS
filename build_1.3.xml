@@ -92,7 +92,8 @@
             <attribute name="Implementation-Version" value="${version}"/>
             <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
             <attribute name="Specification-Title" value="JDBC"/>
-            <attribute name="Specification-Version" value="2.1"/>
+            <attribute name="Specification-Version" value="3.0"/>
+            <attribute name="Class-Path" value="jcifs.jar" />
         </manifest>
     </jar>
 

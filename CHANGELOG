@@ -1,6 +1,10 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/25/2004 - Brian Heineman
+ o Applied patch [991684] Implement named pipe IPC for SQL Server 6.5; (Thanks
+   to David Kilzer <ddkilzer@users.sourceforge.net> for the patch)
+
 07/23/2004 - Brian Heineman
  o Improved ConnectionPoolDataSource exception processing and closed connection
    handling.

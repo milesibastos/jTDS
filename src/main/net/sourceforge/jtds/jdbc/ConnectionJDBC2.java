@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.6 2004-07-22 17:09:57 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.7 2004-07-25 15:30:25 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -196,6 +196,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private long lobBuffer;
     /** Send parameters as unicode. */
     private boolean useUnicode = true;
+    /** Use named pipe IPC instead of TCP/IP sockets. */
+    private boolean namedPipe = false;
     /** Only return the last update count. */
     private boolean lastUpdateCount = false;
     /** Login timeout value in seconds or 0. */
@@ -238,7 +240,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         SharedSocket.setMinMemPkts(8);
 
         try {
-            socket = new SharedSocket(serverName, serverPort, tdsVersion, serverType);
+            if (namedPipe == true) {
+                socket = new SharedNamedPipe(serverName, tdsVersion, serverType, packetSize, instanceName, domainName, user, password);
+            } else {
+                socket = new SharedSocket(serverName, serverPort, tdsVersion, serverType);
+            }
+
             loadCharset(serverCharset);
             //
             // Create TDS protocol object
@@ -669,6 +676,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         prepareSql = info.getProperty(Support.getMessage("prop.preparesql"), "true").equalsIgnoreCase("true");
         lastUpdateCount = info.getProperty(Support.getMessage("prop.lastupdatecount"), "true").equalsIgnoreCase("true");
         useUnicode = info.getProperty(Support.getMessage("prop.useunicode"), "true").equalsIgnoreCase("true");
+        namedPipe = info.getProperty(Support.getMessage("prop.namedpipe"), "false").equalsIgnoreCase("true");
         charsetSpecified = (serverCharset != null && serverCharset.length() > 0);
 
         if (!charsetSpecified) {

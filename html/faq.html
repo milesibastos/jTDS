@@ -232,6 +232,15 @@
         <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
         <dd>The amount of time to wait (in milliseconds) for a successful connection
           before timing out.</dd>
+        <dt><code>namedPipe</code> (default - <code>false</code>)</dt>
+        <dd>When set to <code>true</code>, named pipe communication using
+          <a href="http://jcifs.samba.org/">jCIFS</a> is used to connect to the
+          database instead of TCP/IP sockets.  Such a connection requires Windows
+          (NTLM) authentication, so the <code>domain</code> parameter is required.
+          This feature supports the <code>instance</code> parameter (which changes
+          the named pipe URL), but it does not currently support the named pipe at
+          a location other than <code>/sql/query</code> on the server.  The
+          <code>port</code> parameter is ignored if set.</dd>
       </dl>
       <p>These properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

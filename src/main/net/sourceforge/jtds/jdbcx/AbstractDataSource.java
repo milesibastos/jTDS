@@ -30,7 +30,7 @@ import net.sourceforge.jtds.util.*;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.2 2004-07-22 17:09:58 bheineman Exp $
+* @version $Id: AbstractDataSource.java,v 1.3 2004-07-25 15:30:26 bheineman Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -49,6 +49,7 @@ implements DataSource, Referenceable, Serializable {
     protected String instance = "";
     protected boolean lastUpdateCount = false;
     protected boolean sendStringParametersAsUnicode = true;
+    protected boolean namedPipe = false;
     protected String macAddress = "";
     protected int packetSize = 0;
     protected boolean prepareSql = true;
@@ -78,13 +79,15 @@ implements DataSource, Referenceable, Serializable {
                                   String.valueOf(loginTimeout)));
         ref.add(new StringRefAddr(Support.getMessage("prop.useunicode"),
                                   String.valueOf(sendStringParametersAsUnicode)));
+        ref.add(new StringRefAddr(Support.getMessage("prop.namedpipe"),
+                                  String.valueOf(namedPipe)));
         ref.add(new StringRefAddr(Support.getMessage("prop.macaddress"), macAddress));
+        ref.add(new StringRefAddr(Support.getMessage("prop.packetsize"),
+                                  String.valueOf(packetSize)));
         ref.add(new StringRefAddr(Support.getMessage("prop.preparesql"),
                                   String.valueOf(prepareSql)));
         ref.add(new StringRefAddr(Support.getMessage("prop.lobbuffer"),
                 String.valueOf(portNumber)));
-        ref.add(new StringRefAddr(Support.getMessage("prop.packetsize"),
-                                  String.valueOf(packetSize)));
 
         return ref;
     }
@@ -191,7 +194,15 @@ implements DataSource, Referenceable, Serializable {
     public void setSendStringParametersAsUnicode(boolean sendStringParametersAsUnicode) {
         this.sendStringParametersAsUnicode = sendStringParametersAsUnicode;
     }
-  
+
+    public boolean getNamedPipe() {
+        return namedPipe;
+    }
+
+    public void setNamedPipe(boolean namedPipe) {
+        this.namedPipe = namedPipe;
+    }
+
     public boolean isLastUpdateCount() {
         return lastUpdateCount;
     }

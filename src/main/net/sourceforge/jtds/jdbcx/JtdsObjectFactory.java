@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.Support;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.2 2004-07-15 22:02:15 bheineman Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.3 2004-07-25 15:30:26 bheineman Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -53,9 +53,11 @@ public class JtdsObjectFactory implements ObjectFactory {
             ds.setInstance((String) ref.get(Support.getMessage("prop.instance")).getContent());
             ds.setLastUpdateCount("true".equals(ref.get(Support.getMessage("prop.lastupdatecount")).getContent()));
             ds.setSendStringParametersAsUnicode("true".equals(ref.get(Support.getMessage("prop.useunicode")).getContent()));
+            ds.setNamedPipe("true".equals(ref.get(Support.getMessage("prop.namedpipe")).getContent()));
             ds.setMacAddress((String) ref.get(Support.getMessage("prop.macaddress")).getContent());
-            ds.setPrepareSql("true".equals(ref.get(Support.getMessage("prop.preparesql")).getContent()));
             ds.setPacketSize(Integer.parseInt((String) ref.get(Support.getMessage("prop.packetsize")).getContent()));
+            ds.setPrepareSql("true".equals(ref.get(Support.getMessage("prop.preparesql")).getContent()));
+            ds.setLobBuffer(Long.parseLong((String) ref.get(Support.getMessage("prop.lobbuffer")).getContent()));
 
             return ds;
         }

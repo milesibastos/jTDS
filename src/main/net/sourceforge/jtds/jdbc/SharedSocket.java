@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.4 2004-07-25 15:30:26 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -128,11 +128,11 @@ class SharedSocket {
     /**
      * Output stream for network socket.
      */
-    private DataOutputStream out = null;
+    protected DataOutputStream out = null;
     /**
      * Input stream for network socket.
      */
-    private DataInputStream in = null;
+    protected DataInputStream in = null;
     /**
      * Current maxium input buffer size.
      */
@@ -140,7 +140,7 @@ class SharedSocket {
     /**
      * Table of stream objects sharing this socket.
      */
-    private ArrayList socketTable = null;
+    private ArrayList socketTable = new ArrayList();
     /**
      * The Stream ID of the object that is expecting a response from the server.
      */
@@ -184,11 +184,11 @@ class SharedSocket {
     /**
      * Tds protocol version
      */
-    private int tdsVersion;
+    protected int tdsVersion;
     /**
      * The servertype one of TdsCore.SYBASE TdsCore.SQLSERVER
      */
-    private int serverType;
+    protected int serverType;
     /**
      * The character set to use for converting strings to/from bytes
      */
@@ -200,7 +200,10 @@ class SharedSocket {
     /**
      * TDS done token.
      */
-    private static final byte TDS_DONE_TOKEN        = (byte)253;
+    private static final byte TDS_DONE_TOKEN = (byte) 253;
+
+    protected SharedSocket() {
+    }
 
     /**
      * Construct a TdsSocket object specifying host name and port.
@@ -217,7 +220,6 @@ class SharedSocket {
         this.socket = new Socket(host, port);
         this.out = new DataOutputStream(socket.getOutputStream());
         this.in = new DataInputStream(socket.getInputStream());
-        this.socketTable = new ArrayList();
         this.socket.setTcpNoDelay(true);
     }
 
@@ -822,7 +824,7 @@ class SharedSocket {
         do {
             // read the header with timeout specified
             if (timeOut > 0) {
-                socket.setSoTimeout(timeOut);
+                setTimeout(timeOut);
             }
             
             int len = 0;
@@ -835,7 +837,7 @@ class SharedSocket {
                     sendCancel(vsock.owner);
                 } finally {
                     if (timeOut > 0) {
-                        socket.setSoTimeout(0);
+                        setTimeout(0);
                     }
                     
                     timeOut = 0;
@@ -981,5 +983,14 @@ class SharedSocket {
         int hi = (((int) buf[offset] & 0xff) << 8);
 
         return hi | lo;
+    }
+
+    /**
+     * Set the socket timeout.
+     * 
+     * @param timeout the timeout value in milliseconds
+     */
+    protected void setTimeout(int timeout) throws SocketException {
+        socket.setSoTimeout(timeout);
     }
 }

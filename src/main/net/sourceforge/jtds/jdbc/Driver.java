@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.22 2004-07-29 00:30:37 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.23 2004-07-30 01:05:20 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -240,7 +240,7 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.packetsize");
                 
                 if (dpi[i].value == null) {
-                    dpi[i].value = "512";
+                    dpi[i].value = String.valueOf(TdsCore.MIN_PKT_SIZE);
                 }
             } else if (name.equals(Support.getMessage("prop.preparesql"))) {
                 dpi[i].description = Support.getMessage("prop.desc.preparesql");
@@ -253,7 +253,7 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.lobbuffer");
     
                 if (dpi[i].value == null) {
-                    dpi[i].value = "32768";
+                    dpi[i].value = String.valueOf(TdsCore.DEFAULT_LOB_BUFFER_SIZE);
                 }
             }
         }

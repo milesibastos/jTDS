@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.5 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: RequestStream.java,v 1.6 2004-07-30 01:05:20 ddkilzer Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -78,14 +78,14 @@ public class RequestStream {
     /**
      * Set the output buffer size
      *
-     * @param size The new buffer size (>= 512 <= 32768).
+     * @param size The new buffer size (>= {@link TdsCore.MIN_PKT_SIZE} <= {@link TdsCore.MAX_PKT_SIZE}).
      */
     void setBufferSize(int size) {
         if (size < bufferPtr || size == bufferSize) {
             return; // Can't shrink buffer size;
         }
 
-        if (size < 512 || size > 32768) {
+        if (size < TdsCore.MIN_PKT_SIZE || size > TdsCore.MAX_PKT_SIZE) {
             throw new IllegalArgumentException("Invalid buffer size parameter " + size);
         }
 

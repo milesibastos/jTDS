@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.12 2004-07-29 00:30:37 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.13 2004-07-30 01:05:20 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -150,6 +150,8 @@ public class TdsCore {
     public static final int DEFAULT_MIN_PKT_SIZE_TDS70 = 4096;
     /** Maximum network packet size. */
     public static final int MAX_PKT_SIZE = 32768;
+    /** Default LOB buffer size. */
+    public static final int DEFAULT_LOB_BUFFER_SIZE = 32768;
     /** The size of the packet header. */
     static final int PKT_HDR_LEN = 8;
     /** TDS 4.2 or 7.0 Query packet. */

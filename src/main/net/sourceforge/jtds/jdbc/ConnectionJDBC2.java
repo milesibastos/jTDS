@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.13 2004-07-29 00:30:36 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.14 2004-07-30 01:05:20 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -738,7 +738,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         
         try {
             lobBuffer = Long.parseLong(
-                                       info.getProperty(Support.getMessage("prop.lobbuffer"), "32768"));
+                                       info.getProperty(Support.getMessage("prop.lobbuffer"),
+                                                        String.valueOf(TdsCore.DEFAULT_LOB_BUFFER_SIZE)));
         } catch (NumberFormatException e) {
             throw new SQLException(
                                   Support.getMessage("error.connection.badprop",

@@ -30,7 +30,7 @@ import net.sourceforge.jtds.util.*;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.7 2004-07-29 00:30:54 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.8 2004-07-30 01:05:22 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -53,7 +53,7 @@ implements DataSource, Referenceable, Serializable {
     protected String macAddress = "";
     protected int packetSize = 0;
     protected boolean prepareSql = true;
-    protected long lobBuffer = 32768;
+    protected long lobBuffer = TdsCore.DEFAULT_LOB_BUFFER_SIZE;
 
     public Reference getReference() throws NamingException {
         Reference ref = new Reference(getClass().getName(),

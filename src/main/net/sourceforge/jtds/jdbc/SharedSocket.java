@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.7 2004-07-29 00:14:54 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.8 2004-07-30 01:05:20 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -136,7 +136,7 @@ class SharedSocket {
     /**
      * Current maxium input buffer size.
      */
-    private int maxBufSize = 512;
+    private int maxBufSize = TdsCore.MIN_PKT_SIZE;
     /**
      * Table of stream objects sharing this socket.
      */

@@ -4,6 +4,10 @@ Changes from jTDS 0.8.1
 07/29/2004 - David Kilzer
  o Changed default Sybase port from 4000 to 7100 in faq.html to match value
    of TdsCore.DEFAULT_SYBASE_PORT.
+ o Created TdsCore.DEFAULT_LOB_BUFFER_SIZE constant.  Replaced use of "magic"
+   values in other classes.
+ o Replaced more "magic" values with TdsCore.MIN_PKT_SIZE and
+   TdsCore.MAX_PKT_SIZE in various classes.
 
 07/28/2004 - David Kilzer
  o Moved TdsCore.TDS42, TDS50, TDS70, TDS80, SQLSERVER and SYBASE constants

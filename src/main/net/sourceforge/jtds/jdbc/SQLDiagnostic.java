@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.2 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.3 2004-08-03 17:51:06 ddkilzer Exp $
  */
 class SQLDiagnostic {
     /**
@@ -316,8 +316,8 @@ class SQLDiagnostic {
     }
 
     /**
-     * SQL Server type. Either <code>Tds.SQLSERVER</code> or
-     * <code>Tds.SYBASE</code>.
+     * SQL Server type. Either <code>Driver.SQLSERVER</code> or
+     * <code>Driver.SYBASE</code>.
      */
     private final int serverType;
 
@@ -415,8 +415,7 @@ class SQLDiagnostic {
     /**
      * Create an SQL message for a specific server type.
      *
-     * @param serverType either <code>Tds.SQLSERVER</code> or
-     *                   <code>Tds.SYBASE</code>
+     * @param serverType either <code>Driver.SQLSERVER</code> or <code>Driver.SYBASE</code>
      */
     SQLDiagnostic(final int serverType) {
         this.serverType = serverType;
@@ -426,7 +425,7 @@ class SQLDiagnostic {
      * Map an SQL Server error code to an ANSI SQLSTATE code.
      *
      * @param number the SQL Server error number
-     * @param serverType <code>Tds.SQLSERVER</code> or <code>Tds.SYBASE</code>
+     * @param serverType <code>Driver.SQLSERVER</code> or <code>Driver.SYBASE</code>
      * @param defState the default state code to return if the mapping fails
      * @return the SQLSTATE code as a <code>String</code>
      */

@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.8 2004-07-30 01:05:20 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.9 2004-08-03 17:51:06 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -186,7 +186,7 @@ class SharedSocket {
      */
     private int tdsVersion;
     /**
-     * The servertype one of TdsCore.SYBASE TdsCore.SQLSERVER
+     * The servertype one of Driver.SQLSERVER or Driver.SYBASE
      */
     private int serverType;
     /**

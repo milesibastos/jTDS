@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.23 2004-07-30 01:05:20 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.24 2004-08-03 17:51:06 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -164,7 +164,7 @@ public class Driver implements java.sql.Driver {
                 };
 
                 if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[0]; // TdsCore.SQLSERVER
+                    dpi[i].value = dpi[i].choices[0]; // Driver.SQLSERVER
                 }
             } else if (name.equals(Support.getMessage("prop.servername"))) {
                 dpi[i].description = Support.getMessage("prop.desc.servername");

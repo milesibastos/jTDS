@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.21 2004-03-28 18:33:25 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.22 2004-04-20 15:52:37 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.21 2004-03-28 18:33:25 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.22 2004-04-20 15:52:37 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -3222,9 +3222,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * returns <code>false</code> if the database does not support named parameters.
      */
     public boolean supportsNamedParameters() throws SQLException {
-        // NOTE: Event though the database supports named parameters, the driver does
-        // not (currently); until the driver supports this I would leave this set to false
-        return false;
+        return true;
     }
 
     public boolean supportsResultSetHoldability(int param) throws SQLException {

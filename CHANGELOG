@@ -1,6 +1,9 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/20/2004 - Brian Heineman
+ o Updated DatabaseMetaData.supportsNamedParameters() to return true.
+
 04/19/2004 - Brian Heineman
  o Implemented CallableStatement.getMetaData() and
    PreparedStatement.getMetaData(); both implementations are currently

@@ -60,7 +60,7 @@ public class Columns {
     /**
      *@todo    Description of the Field
      */
-    public final static String cvsVersion = "$Id: Columns.java,v 1.3 2002-08-19 11:25:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.4 2002-08-20 13:26:10 alin_sinpalean Exp $";
 
 
     public Columns()
@@ -113,13 +113,11 @@ public class Columns {
         ((Column) (columns.elementAt(columnNumber - 1))).setScale(value);
     }
 
-
     public void setAutoIncrement(int columnNumber, boolean value)
     {
         resize(columnNumber);
         ((Column) (columns.elementAt(columnNumber - 1))).setAutoIncrement(value);
     }
-
 
     public void setNullable(int columnNumber, int value)
     {
@@ -127,13 +125,17 @@ public class Columns {
         ((Column) (columns.elementAt(columnNumber - 1))).setNullable(value);
     }
 
-
     public void setReadOnly(int columnNumber, boolean value)
     {
         resize(columnNumber);
         ((Column) columns.elementAt(columnNumber - 1)).setReadOnly(value);
     }
 
+    public void setCaseSensitive(int columnNumber, boolean value)
+    {
+        resize(columnNumber);
+        ((Column) columns.elementAt(columnNumber - 1)).setCaseSensitive(value);
+    }
 
     public void setJdbcType(int columnNumber, int jdbcType)
     throws SQLException
@@ -147,6 +149,11 @@ public class Columns {
         }
     }
 
+    public void setTableName(int columnNumber, String tableName)
+    {
+        resize(columnNumber);
+        ((Column) columns.elementAt(columnNumber - 1)).setTableName(tableName);
+    }
 
     /**
      *@return    The ColumnCount value
@@ -217,23 +224,30 @@ public class Columns {
     }
 
 
-    public boolean isAutoIncrement(int columnNumber)
+    public Boolean isAutoIncrement(int columnNumber)
     {
         return ((Column) columns.elementAt(columnNumber - 1)).isAutoIncrement();
     }
-
 
     public int isNullable(int columnNumber)
     {
         return ((Column) columns.elementAt(columnNumber - 1)).isNullable();
     }
 
-
-    public boolean isReadOnly(int columnNumber)
+    public Boolean isReadOnly(int columnNumber)
     {
         return ((Column) columns.elementAt(columnNumber - 1)).isReadOnly();
     }
 
+    public Boolean isCaseSensitive(int columnNumber)
+    {
+        return ((Column) columns.elementAt(columnNumber - 1)).isCaseSensitive();
+    }
+
+    public String getTableName(int columnNumber)
+    {
+        return ((Column) columns.elementAt(columnNumber - 1)).getTableName();
+    }
 
     /**
      *  merge the data from two instances of Columns. The 4.2 TDS protocol gives
@@ -253,114 +267,73 @@ public class Columns {
     public Columns merge(Columns other)
              throws TdsException
     {
-        int tmp;
-        int i;
+        if( this.columnCount != other.columnCount )
+            throw new TdsException("Confused. Mismatch in number of columns");
 
-        if (this.columns.size() != other.columns.size()) {
-            throw new TdsException("Confused.  Mismatch in number of columns");
-        }
-
-        for (i = 1; i <= columnCount; i++) {
-            if (this.getName(i) == null) {
+        for( int i=1; i<=columnCount; i++ )
+        {
+            if( this.getName(i) == null )
                 this.setName(i, other.getName(i));
-            }
-            else if (other.getName(i) == null) {
-                // fine
-            }
-            else {
+            else if( other.getName(i) != null )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
 
-            if (this.getDisplaySize(i) == -1) {
-                this.setDisplaySize(i, other.getDisplaySize(i));
-            }
-            else if (other.getDisplaySize(i) == -1) {
-                // fine
-            }
-            else {
-                throw new TdsException("Trying to merge two non-null columns");
-            }
-
-            if (this.getLabel(i) == null) {
+            if( this.getLabel(i) == null )
                 this.setLabel(i, other.getLabel(i));
-            }
-            else if (other.getLabel(i) == null) {
-                // fine
-            }
-            else {
+            else if( other.getLabel(i) != null )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
 
-            if (this.getNativeType(i) == -1) {
+            if( this.getTableName(i) == null )
+                this.setTableName(i, other.getTableName(i));
+            else if( other.getTableName(i) != null )
+                throw new TdsException("Trying to merge two non-null columns");
+
+            if( this.getDisplaySize(i) == -1 )
+                this.setDisplaySize(i, other.getDisplaySize(i));
+            else if( other.getDisplaySize(i) != -1 )
+                throw new TdsException("Trying to merge two non-null columns");
+
+            if( this.getNativeType(i) == -1)
                 this.setNativeType(i, other.getNativeType(i));
-            }
-            else if (other.getNativeType(i) == -1) {
-                // fine
-            }
-            else {
+            else if( other.getNativeType(i) != -1 )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
 
-            if (this.getPrecision(i) == -1) {
+            if( this.getPrecision(i) == -1 )
                 this.setPrecision(i, other.getPrecision(i));
-            }
-            else if (other.getPrecision(i) == -1) {
-                // fine
-            }
-            else {
+            else if( other.getPrecision(i) != -1 )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
 
-            if (this.getScale(i) == -1) {
+            if( this.getScale(i) == -1 )
                 this.setScale(i, other.getScale(i));
-            }
-            else if (other.getScale(i) == -1) {
-                // fine
-            }
-            else {
+            else if( other.getScale(i) != -1 )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
 
-            if ((this.nullableWasSet(i)) && (other.nullableWasSet(i))) {
+            if( !this.readOnlyWasSet(i) )
+                this.setReadOnly(i, other.isReadOnly(i).booleanValue());
+            else if( other.readOnlyWasSet(i) )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
-            else if ((!this.nullableWasSet(i)) && (other.nullableWasSet(i))) {
+
+            if( !this.autoIncrementWasSet(i) )
+                this.setAutoIncrement(i, other.isAutoIncrement(i).booleanValue());
+            else if( other.autoIncrementWasSet(i) )
+                throw new TdsException("Trying to merge two non-null columns");
+
+            if( !this.caseSensitiveWasSet(i) )
+                this.setCaseSensitive(i, other.isCaseSensitive(i).booleanValue());
+            else if( other.caseSensitiveWasSet(i) )
+                throw new TdsException("Trying to merge two non-null columns");
+
+            if( !this.nullableWasSet(i) )
                 this.setNullable(i, other.isNullable(i));
-            }
-            else {
-                // fine
-            }
-
-            if ((this.readOnlyWasSet(i)) && (other.readOnlyWasSet(i))) {
+            else if( other.nullableWasSet(i) )
                 throw new TdsException("Trying to merge two non-null columns");
-            }
-            else if ((!this.readOnlyWasSet(i)) && (other.readOnlyWasSet(i))) {
-                this.setReadOnly(i, other.isReadOnly(i));
-            }
-            else {
-                // fine
-            }
-
-            if ((this.autoIncrementWasSet(i)) && (other.autoIncrementWasSet(i))) {
-                throw new TdsException("Trying to merge two non-null columns");
-            }
-            else if ((!this.autoIncrementWasSet(i))
-                     && (other.autoIncrementWasSet(i))) {
-                this.setAutoIncrement(i, other.isAutoIncrement(i));
-            }
-            else {
-                // fine
-            }
         }
         return this;
     }
 
-
     public boolean autoIncrementWasSet(int columnNumber)
     {
-        return ((Column) (columns.elementAt(columnNumber - 1))).autoIncrementWasSet();
+        return ((Column) (columns.elementAt(columnNumber - 1))).isAutoIncrement() != null;
     }
-
 
     public boolean nullableWasSet(int columnNumber)
     {
@@ -368,12 +341,15 @@ public class Columns {
                  != java.sql.ResultSetMetaData.columnNullableUnknown);
     }
 
-
     public boolean readOnlyWasSet(int columnNumber)
     {
-        return ((Column) (columns.elementAt(columnNumber - 1))).readOnlyWasSet();
+        return ((Column) (columns.elementAt(columnNumber - 1))).isReadOnly() != null;
     }
 
+    public boolean caseSensitiveWasSet(int columnNumber)
+    {
+        return ((Column) (columns.elementAt(columnNumber - 1))).isCaseSensitive() != null;
+    }
 
     /*
      * merge()

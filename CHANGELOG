@@ -13,12 +13,19 @@ Changes from jTDS 0.3
    allocated at once (meaning some of them were not able to create the
    temporary tables/stored procedures created by others) by closing the
    Statements when they were no longer needed.
+ o Implemented all methods of ResultSetMetaData except getColumnClassName and
+   used case sensitivity and table name from result packets (both TDS 4.2 and
+   TDS 7.0). (Request #587751)
+ o Fixed TdsStatement.rollback(): calls Tds.rollback() when not in autocommit
+   mode, in order to redefine all missing stored procedures.
 
+
+===============================================================================
+08/19/2002 - jTDS 0.3 released
+===============================================================================
 
 Changes from jTDS 0.2
 =====================
-
-08/19/2002 - jTDS 0.3 released
 
 08/19/2002 - Alin Sinpalean
 

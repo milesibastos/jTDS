@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.15 2002-08-20 09:11:13 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.16 2002-08-20 13:26:10 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.15 2002-08-20 09:11:13 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.16 2002-08-20 13:26:10 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -292,7 +292,10 @@ public class TdsStatement implements java.sql.Statement
 
       internalExecuteQuery(actTds,sql);
       skipToEnd(actTds);
-      actTds.rollback();
+      if( !actTds.autoCommit )
+         actTds.rollback();
+      else
+         actTds.commit();
       connection.freeTds(actTds);
       actTds = null;
    }
@@ -755,9 +758,11 @@ public class TdsStatement implements java.sql.Statement
               unopenedResult = true;
               break;
             }
-            // SAfe: Only TDS_END_TOKEN should return row counts
+            // SAfe: Only TDS_END_TOKEN should return row counts for Statements
+            // TDS_DONEINPROC should return row counts for PreparedStatements
             else if( tds.peek()==Tds.TDS_END_TOKEN ||
                 (tds.getStatement() instanceof PreparedStatement &&
+                !(tds.getStatement() instanceof CallableStatement) &&
                 tds.peek()==Tds.TDS_DONEINPROC) )
             {
               PacketEndTokenResult end =

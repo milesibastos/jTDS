@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.4 2002-08-19 11:25:31 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.5 2002-08-20 13:26:10 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.4 2002-08-19 11:25:31 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.5 2002-08-20 13:26:10 alin_sinpalean Exp $";
 
 
    /**
@@ -89,7 +89,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getCatalogName(int column) throws SQLException
    {
-      NotImplemented(); return null;
+      return "";
    }
 
 
@@ -214,7 +214,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public int getPrecision(int column) throws SQLException
    {
-      NotImplemented(); return 0;
+      return columnsInfo.getPrecision(column);
    }
 
 
@@ -240,7 +240,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getSchemaName(int column) throws SQLException
    {
-      NotImplemented(); return null;
+      return "";
    }
 
 
@@ -252,7 +252,8 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public String getTableName(int column) throws SQLException
    {
-      NotImplemented(); return null;
+      String res = columnsInfo.getTableName(column);
+      return res==null ? "" : res;
    }
 
 
@@ -265,7 +266,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isAutoIncrement(int column) throws SQLException
    {
-      return columnsInfo.isAutoIncrement(column);
+      return columnsInfo.isAutoIncrement(column).booleanValue();
    }
 
 
@@ -278,7 +279,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isCaseSensitive(int column) throws SQLException
    {
-      NotImplemented(); return false;
+      return columnsInfo.isCaseSensitive(column).booleanValue();
    }
 
 
@@ -316,7 +317,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isDefinitelyWritable(int column) throws SQLException
    {
-      NotImplemented(); return false;
+      return false;
    }
 
 
@@ -342,7 +343,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isReadOnly(int column) throws SQLException
    {
-      return columnsInfo.isReadOnly(column);
+      return columnsInfo.isReadOnly(column).booleanValue();
    }
 
 
@@ -355,8 +356,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isSearchable(int column) throws SQLException
    {
-      // XXX Is this true?  Can all columns be used in a where clause?
-      return true;
+      return columnsInfo.getNativeType(column) != Tds.SYBIMAGE;
    }
 
 
@@ -369,7 +369,45 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isSigned(int column) throws SQLException
    {
-      NotImplemented(); return false;
+      switch( columnsInfo.getNativeType(column) )
+      {
+         case Tds.SYBDECIMAL:
+         case Tds.SYBNUMERIC:
+         case Tds.SYBMONEYN:
+         case Tds.SYBMONEY:
+         case Tds.SYBMONEY4:
+         case Tds.SYBSMALLMONEY:
+         case Tds.SYBFLTN:
+         case Tds.SYBFLT8:
+         case Tds.SYBREAL:
+         case Tds.SYBINT2:
+         case Tds.SYBINT4:
+            return true;
+
+         case Tds.SYBBIT:
+         case Tds.SYBBITN:
+         case Tds.SYBNVARCHAR:
+         case Tds.SYBVARCHAR:
+         case Tds.SYBNCHAR:
+         case Tds.SYBCHAR:
+         case Tds.SYBBINARY:
+         case Tds.SYBVARBINARY:
+         case Tds.SYBDATETIMN:
+         case Tds.SYBDATETIME:
+         case Tds.SYBDATETIME4:
+         case Tds.SYBUNIQUEID:
+         case Tds.SYBINT1:
+         case Tds.SYBIMAGE:
+         case Tds.SYBTEXT:
+         case Tds.SYBNTEXT:
+            return false;
+
+         case Tds.SYBINTN:
+            return columnsInfo.getPrecision(column) > 1;
+
+         default:
+            throw new SQLException("Unknown column type.");
+      }
    }
 
 
@@ -382,7 +420,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public boolean isWritable(int column) throws SQLException
    {
-      NotImplemented(); return false;
+      return !columnsInfo.isReadOnly(column).booleanValue();
    }
 
    /**

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -2835,8 +2835,10 @@ public class Tds implements TdsDefinitions {
                 bytesRead++;
             }
             boolean nullable = (flagData[2] & 0x01) > 0;
-            boolean writeable = (flagData[2] & 0x08) > 0;
+            boolean caseSensitive = (flagData[2] & 0x02) > 0;
+            boolean writeable = (flagData[2] & 0x0C) > 0;
             boolean autoIncrement = (flagData[2] & 0x10) > 0;
+            String tableName = "";
 
             // Get the type of column
             byte columnType = comm.getByte();
@@ -2854,7 +2856,7 @@ public class Tds implements TdsDefinitions {
 
                 int tableNameLen = comm.getTdsShort();
                 bytesRead += 2;
-                String tableName = encoder.getString(comm.getBytes(tableNameLen));
+                tableName = encoder.getString(comm.getBytes(tableNameLen));
                 bytesRead += tableNameLen;
 
                 sizeOfColumn = 2 << 31 - 1;
@@ -2886,6 +2888,7 @@ public class Tds implements TdsDefinitions {
             if (precision != -1) {
                 columns.setPrecision(numColumns, precision);
             }
+            columns.setTableName(numColumns, tableName);
             columns.setNativeType(numColumns, columnType);
             columns.setDisplaySize(numColumns, sizeOfColumn);
             columns.setNullable(numColumns, (nullable
@@ -2893,6 +2896,7 @@ public class Tds implements TdsDefinitions {
                      : ResultSetMetaData.columnNoNulls));
             columns.setAutoIncrement(numColumns, autoIncrement);
             columns.setReadOnly(numColumns, !writeable);
+            columns.setCaseSensitive(numColumns, caseSensitive);
         }
 
         // Don't know what the rest is except that the
@@ -3613,7 +3617,8 @@ public class Tds implements TdsDefinitions {
                 flagData[i] = comm.getByte();
             }
             boolean nullable = (flagData[2] & 0x01) > 0;
-            boolean writeable = (flagData[2] & 0x08) > 0;
+            boolean caseSensitive = (flagData[2] & 0x02) > 0;
+            boolean writable = (flagData[2] & 0x0C) > 0;
             boolean autoIncrement = (flagData[2] & 0x10) > 0;
 
             /*
@@ -3635,13 +3640,14 @@ public class Tds implements TdsDefinitions {
 
             // Determine the column size.
             int colSize;
+            String tableName = "";
             if (isBlobType(columnType)) {
 
                 // Text and image columns have 4-byte size fields.
                 colSize = comm.getTdsInt();
 
                 // Swallow table name.
-                comm.getString(comm.getTdsShort());
+                tableName = comm.getString(comm.getTdsShort());
             }
 
             // Fixed types have no size field in the packet.
@@ -3681,7 +3687,9 @@ public class Tds implements TdsDefinitions {
                      ? ResultSetMetaData.columnNullable
                      : ResultSetMetaData.columnNoNulls));
             columns.setAutoIncrement(colNum, autoIncrement);
-            columns.setReadOnly(colNum, !writeable);
+            columns.setReadOnly(colNum, !writable);
+            columns.setCaseSensitive(colNum, caseSensitive);
+            columns.setTableName(colNum, tableName);
             if (precision != -1) {
                 columns.setPrecision(colNum, precision);
             }

@@ -2,6 +2,8 @@ Changes from jTDS 0.9-rc2
 =========================
 
 09/16/2004 - Alin Sinpalean
+ o Added a test for bug [1028881] statement.execute() causes wrong ResultSet
+   type. Seems like it works, after all.
  o Corrected a bug that was causing no exception to be thrown when an invalid
    call escape syntax ("{call ?=...") was used.
  o Cleaned up some warnings signalled by my IDE again.

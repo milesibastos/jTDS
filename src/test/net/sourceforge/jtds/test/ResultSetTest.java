@@ -319,7 +319,7 @@ public class ResultSetTest extends TestBase {
     }
 
     /**
-     * Test for bug [945462] getResultSet() return null if you use scrollable/updatable
+     * Test for bug [945462] getResultSet() return null if you use scrollable/updatable.
      */
     public void testResultSetScroll2() throws Exception {
         Statement stmt = con.createStatement();
@@ -349,7 +349,55 @@ public class ResultSetTest extends TestBase {
     }
 
     /**
-     * Test for bug [1008208] 0.9-rc1 updateNull doesn't work
+     * Test for bug [1028881] statement.execute() causes wrong ResultSet type.
+     */
+    public void testResultSetScroll3() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #resultSetScroll3 (data INT)");
+        stmt.execute("CREATE PROCEDURE #procResultSetScroll3 AS SELECT data FROM #resultSetScroll3");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll3 (data) VALUES (?)");
+        pstmt.setInt(1, 1);
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        // Test plain Statement
+        Statement stmt2 = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+        assertTrue("Was expecting a ResultSet", stmt2.execute("SELECT data FROM #resultSetScroll3"));
+
+        ResultSet rs = stmt2.getResultSet();
+        assertEquals("ResultSet not scrollable", ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
+
+        rs.close();
+        stmt2.close();
+
+        // Test PreparedStatement
+        pstmt = con.prepareStatement("SELECT data FROM #resultSetScroll3", ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+        assertTrue("Was expecting a ResultSet", pstmt.execute());
+
+        rs = pstmt.getResultSet();
+        assertEquals("ResultSet not scrollable", ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
+
+        rs.close();
+        pstmt.close();
+
+        // Test CallableStatement
+        CallableStatement cstmt = con.prepareCall("{call #procResultSetScroll3}",
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        assertTrue("Was expecting a ResultSet", cstmt.execute());
+
+        rs = cstmt.getResultSet();
+        assertEquals("ResultSet not scrollable", ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
+
+        rs.close();
+        cstmt.close();
+    }
+
+    /**
+     * Test for bug [1008208] 0.9-rc1 updateNull doesn't work.
      */
     public void testResultSetUpdate1() throws Exception {
         Statement stmt = con.createStatement();

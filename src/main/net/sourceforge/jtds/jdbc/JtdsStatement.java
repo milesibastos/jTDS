@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.21 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.22 2004-12-14 15:00:29 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -83,8 +83,8 @@ public class JtdsStatement implements java.sql.Statement {
     protected int resultSetType = ResultSet.TYPE_FORWARD_ONLY;
     /** The concurrency of result sets created by this statement. */
     protected int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
-    /** The fetch size (not used at present). */
-    protected int fetchSize = 1;
+    /** The fetch size (default 100, only used by cursor <code>ResultSet</code>s). */
+    protected int fetchSize = 100;
     /** True if this statement is closed. */
     protected boolean closed = false;
     /** The maximum field size (not used at present). */
@@ -270,7 +270,7 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // Could not open a Cursor so try a direct select
         //
-        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows);
+        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows, true);
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
@@ -359,7 +359,7 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // Could not open a Cursor or not a SELECT so just execute
         //
-        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows);
+        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows, true);
 
         if (warningMessage != null) {
             // Update warning chain if cursor was downgraded

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.57 2004-12-13 12:36:55 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.58 2004-12-14 15:00:29 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -278,7 +278,7 @@ public class TdsCore {
     private static final ParamInfo[] EMPTY_PARAMETER_INFO = new ParamInfo[0];
 
     //
-    // Error status bytes
+    // End token status bytes
     //
     /** Done: more results are expected. */
     private static final byte DONE_MORE_RESULTS     = (byte) 0x01;
@@ -288,6 +288,11 @@ public class TdsCore {
     private static final byte DONE_ROW_COUNT        = (byte) 0x10;
     /** Done: Cancel acknowledgement. */
     static final byte DONE_CANCEL                   = (byte) 0x20;
+    /**
+     * Done: Response terminator (if more than one request packet is sent, each
+     * response is terminated by a DONE packet with this flag set).
+     */
+    private static final byte DONE_END_OF_RESPONSE  = (byte) 0x80;
 
     //
     // Prepared SQL types
@@ -605,7 +610,7 @@ public class TdsCore {
     /**
      * Retrieve the status of the response stream.
      *
-     * @return <code>boolean</code> true if the response has been entirely consumed.
+     * @return <code>boolean</code> true if the response has been entirely consumed
      */
     boolean isEndOfResponse() {
         return endOfResponse;
@@ -614,12 +619,30 @@ public class TdsCore {
     /**
      * Empty the server response queue.
      *
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     void clearResponseQueue() throws SQLException {
         checkOpen();
         while (!endOfResponse) {
             nextToken();
+        }
+    }
+
+    /**
+     * Consume packets from the server response queue up to (and including) the
+     * first response terminator.
+     *
+     * @throws SQLException if an error occurs
+     */
+    void consumeOneResponse() throws SQLException {
+        checkOpen();
+        while (!endOfResponse) {
+            nextToken();
+            // If it's a response terminator, return
+            if (currentToken.isEndToken()
+                    && (currentToken.status & DONE_END_OF_RESPONSE) != 0) {
+                return;
+            }
         }
     }
 
@@ -697,7 +720,7 @@ public class TdsCore {
      * <p>
      * Used by Sybase a no-op for Microsoft.
      */
-    void closeConnection() {
+    synchronized void closeConnection() {
         try {
             if (tdsVersion == Driver.TDS50) {
                 out.setPacketType(SYBQUERY_PKT);
@@ -747,8 +770,8 @@ public class TdsCore {
     /**
      * Submit a simple SQL statement to the server and process all output.
      *
-     * @param sql The statement to execute.
-     * @throws SQLException
+     * @param sql the statement to execute
+     * @throws SQLException if an error is returned by the server
      */
     void submitSQL(String sql) throws SQLException {
         checkOpen();
@@ -757,7 +780,7 @@ public class TdsCore {
             throw new IllegalArgumentException("submitSQL() called with empty SQL String");
         }
 
-        executeSQL(sql, null, null, false, 0, -1);
+        executeSQL(sql, null, null, false, 0, -1, true);
         clearResponseQueue();
         messages.checkErrors();
     }
@@ -765,24 +788,27 @@ public class TdsCore {
     /**
      * Send an SQL statement with optional parameters to the server.
      *
-     * @param sql The SQL statement to execute.
-     * @param procName Stored procedure to execute or null.
-     * @param parameters Parameters for call or null.
-     * @param noMetaData Suppress meta data for cursor calls.
-     * @param timeOut Optional query timeout or 0.
-     * @param maxRows The maximum number of data rows to return.
-     * @throws SQLException
+     * @param sql        SQL statement to execute
+     * @param procName   stored procedure to execute or <code>null</code>
+     * @param parameters parameters for call or null
+     * @param noMetaData suppress meta data for cursor calls
+     * @param timeOut    optional query timeout or 0
+     * @param maxRows    the maximum number of data rows to return
+     * @param sendNow    whether to send the request now or not
+     * @throws SQLException if an error occurs
      */
     synchronized void executeSQL(String sql,
                                  String procName,
                                  ParamInfo[] parameters,
                                  boolean noMetaData,
                                  int timeOut,
-                                 int maxRows)
-        throws SQLException {
+                                 int maxRows,
+                                 boolean sendNow)
+            throws SQLException {
         checkOpen();
         clearResponseQueue();
         messages.exceptions = null;
+        // TODO Make sure this doesn't actually submit a query in the middle of buffering more requests
         setRowCount(maxRows);
         messages.clearWarnings();
         this.returnStatus = null;
@@ -856,9 +882,15 @@ public class TdsCore {
                     throw new IllegalStateException("Unknown TDS version " + tdsVersion);
             }
 
-            endOfResponse = false;
-            endOfResults  = true;
-            wait(timeOut);
+            if (sendNow) {
+                out.flush();
+
+                endOfResponse = false;
+                endOfResults  = true;
+                wait(timeOut);
+            } else {
+                out.write((byte) DONE_END_OF_RESPONSE);
+            }
         } catch (IOException ioe) {
             connection.setClosed();
 
@@ -976,7 +1008,7 @@ public class TdsCore {
             columns = null; // Will be populated if preparing a select
 
             executeSQL(null, needCursor ? "sp_cursorprepare" : "sp_prepare",
-                    prepParam, false, 0, -1);
+                    prepParam, false, 0, -1, true);
 
             clearResponseQueue();
 
@@ -999,7 +1031,7 @@ public class TdsCore {
      * @return name of the procedure.
      * @throws SQLException
      */
-    String sybasePrepare(String sql, ParamInfo[] params)
+    synchronized String sybasePrepare(String sql, ParamInfo[] params)
         throws SQLException {
         checkOpen();
         if (sql == null || sql.length() == 0) {
@@ -1110,7 +1142,7 @@ public class TdsCore {
             Logger.println(sql.toString());
         }
 
-        executeSQL(sql.toString(), null, null, false, 0, -1);
+        executeSQL(sql.toString(), null, null, false, 0, -1, true);
         readTextMode = true;
 
         if (getMoreResults()) {
@@ -1148,7 +1180,7 @@ public class TdsCore {
         sql.append(colName);
         sql.append(") from ");
         sql.append(tabName);
-        executeSQL(sql.toString(), null, null, false, 0, -1);
+        executeSQL(sql.toString(), null, null, false, 0, -1, true);
 
         if (getMoreResults()) {
             if (getNextRow()) {
@@ -1177,7 +1209,7 @@ public class TdsCore {
      * @return a <code>byte[]</code> array containing the TM address data
      * @throws SQLException
      */
-    byte[] enlistConnection(int type, byte[] oleTranID) throws SQLException {
+    synchronized byte[] enlistConnection(int type, byte[] oleTranID) throws SQLException {
         try {
             out.setPacketType(MSDTC_PKT);
             out.write((short)type);
@@ -2991,8 +3023,6 @@ public class TdsCore {
             out.setPacketType(QUERY_PKT);
             out.write(sql);
         }
-
-        out.flush();
     }
 
     /**
@@ -3116,8 +3146,6 @@ public class TdsCore {
                         parameters[i]);
             }
         }
-
-        out.flush();
     }
 
     /**
@@ -3300,15 +3328,14 @@ public class TdsCore {
             out.setPacketType(QUERY_PKT);
             out.write(sql);
         }
-
-        out.flush();
     }
 
     /**
      * Set the server row count used to limit the number of rows in a result set.
      *
-     * @param rowCount The number of rows to return or 0 for no limit.
-     * @throws SQLException
+     * @param rowCount the number of rows to return or 0 for no limit or -1 to
+     *                 leave as is
+     * @throws SQLException if an error is returned by the server
      */
     private void setRowCount(int rowCount) throws SQLException {
         if (rowCount >= 0 && rowCount != connection.getRowCount()) {

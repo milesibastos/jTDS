@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.26 2004-12-10 13:17:26 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.27 2004-12-14 15:00:29 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -98,8 +98,8 @@ public class JtdsResultSet implements ResultSet {
     protected boolean cancelled = false;
     /** The fetch direction. */
     protected int fetchDirection = FETCH_FORWARD;
-    /** The fetch size (100 rows, only applies to cursor <code>ResultSet</code>s). */
-    protected int fetchSize = 100;
+    /** The fetch size (only applies to cursor <code>ResultSet</code>s). */
+    protected int fetchSize;
     /** True if the resultset should read ahead to ensure return parameters are processed. */
     protected boolean readAhead = true;
     /** Cache to optimize findColumn(String) lookups */
@@ -134,6 +134,8 @@ public class JtdsResultSet implements ResultSet {
         this.concurrency = concurrency;
         this.readAhead = readAhead;
         this.columns = columns;
+        this.fetchSize = statement.fetchSize;
+        this.fetchDirection = statement.fetchDirection;
 
         if (columns != null) {
             columnCount  = getColumnCount(columns);

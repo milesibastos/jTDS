@@ -210,7 +210,7 @@ public class CachedResultSet extends JtdsResultSet {
                 try {
                     tds.executeSQL(sql + " FOR BROWSE", null, parameters, false,
                             		statement.getQueryTimeout(),
-                            		statement.getMaxRows());
+                            		statement.getMaxRows(), true);
                     while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
                     if (tds.isResultSet()) {
@@ -260,7 +260,7 @@ public class CachedResultSet extends JtdsResultSet {
         if (columns == null) {
             tds.executeSQL(sql, procName, parameters, false,
                     	   statement.getQueryTimeout(),
-        		           statement.getMaxRows());
+        		           statement.getMaxRows(), true);
             while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
             if (!tds.isResultSet()) {
@@ -547,7 +547,7 @@ public class CachedResultSet extends JtdsResultSet {
          // Execute the delete statement
          //
          TdsCore tds = statement.getTds();
-         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows());
+         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
          int updateCount = 0;
          while (!tds.isEndOfResponse()) {
              if (!tds.getMoreResults()) {
@@ -641,7 +641,7 @@ public class CachedResultSet extends JtdsResultSet {
              // execute the insert statement
              //
              TdsCore tds = statement.getTds();
-             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows());
+             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
              int updateCount = 0;
              while (!tds.isEndOfResponse()) {
                  if (!tds.getMoreResults()) {
@@ -770,7 +770,7 @@ public class CachedResultSet extends JtdsResultSet {
              // Execute the select
              //
              TdsCore tds = statement.getTds();
-             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows());
+             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
              if (!tds.isEndOfResponse()) {
                  if (tds.getMoreResults() && tds.getNextRow()) {
                      // refresh the row data
@@ -880,7 +880,7 @@ public class CachedResultSet extends JtdsResultSet {
          // Now execute update
          //
          TdsCore tds = statement.getTds();
-         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows());
+         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
          int updateCount = 0;
          while (!tds.isEndOfResponse()) {
              if (!tds.getMoreResults()) {

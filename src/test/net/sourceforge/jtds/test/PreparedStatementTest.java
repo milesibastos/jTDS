@@ -329,7 +329,7 @@ public class PreparedStatementTest extends TestBase {
      * Test for bug [985754] row count is always 0
      */
     public void testUpdateCount1() throws Exception {
-    	int count = 500;
+    	int count = 50;
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #updateCount1 (data INT)");

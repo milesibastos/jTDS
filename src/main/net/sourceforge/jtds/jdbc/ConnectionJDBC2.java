@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.55 2004-12-08 15:54:22 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.56 2004-12-14 15:00:29 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1094,7 +1094,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     cleanupSql.append('\n');
                 }
 
-                baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0, -1);
+                baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0, -1, true);
                 baseTds.clearResponseQueue();
             }
         }
@@ -1247,7 +1247,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         //
         // Execute our extended stored procedure (let's hope it is installed!).
         //
-        baseTds.executeSQL(null, "master..xp_jtdsxa", params, false, 0, 0);
+        baseTds.executeSQL(null, "master..xp_jtdsxa", params, false, 0, 0, true);
         //
         // Now process results
         //

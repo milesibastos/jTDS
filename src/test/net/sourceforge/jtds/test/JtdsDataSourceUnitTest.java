@@ -19,7 +19,7 @@ import javax.naming.NamingException;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.8 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.9 2004-12-14 15:00:37 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -239,9 +239,9 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
                 fail("What the?...");
             } catch (SQLException ex) {
                 String sqlState = ex.getSQLState();
-                if (!"28000".equals(sqlState) && !"08S01".equals(sqlState)) {
+                if (!"28000".equals(sqlState) && !sqlState.startsWith("08")) {
                     ex.printStackTrace();
-                    fail("Expecting SQL state 28000 or 08S01. Got " + ex.getSQLState());
+                    fail("Expecting SQL state 28000 or 08XXX. Got " + ex.getSQLState());
                 }
             } catch (Throwable t) {
                 t.printStackTrace();

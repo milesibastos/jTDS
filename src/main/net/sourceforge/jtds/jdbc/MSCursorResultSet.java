@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.37 2004-12-10 13:17:26 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.38 2004-12-14 15:00:29 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -85,14 +85,16 @@ public class MSCursorResultSet extends JtdsResultSet {
      */
     /** The prepared statment handle from prepare/prepexec. */
     private Integer prepStmtHandle;
-    /** Stores return values from stored procedure calls. */
-    private Integer retVal;
     /** Set when <code>moveToInsertRow()</code> was called. */
-    private boolean onInsertRow = false;
+    private boolean onInsertRow;
     /** The "insert row". */
-    private ParamInfo[] insertRow = null;
+    private ParamInfo[] insertRow;
     /** The "update row". */
-    private ParamInfo[] updateRow = null;
+    private ParamInfo[] updateRow;
+    /** The row cache used instead {@link #currentRow}. */
+    private Object[][] rowCache;
+    /** Actual position of the cursor. */
+    private int cursorPos;
 
     //
     // Fixed sp_XXX parameters
@@ -141,6 +143,8 @@ public class MSCursorResultSet extends JtdsResultSet {
             throws SQLException {
         super(statement, resultSetType, concurrency, null, false);
 
+        rowCache = new Object[fetchSize][];
+
         cursorCreate(sql, procName, procedureParams);
     }
 
@@ -155,7 +159,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         super.setColValue(colIndex, jdbcType, value, length);
 
-        if (!onInsertRow && currentRow == null) {
+        if (!onInsertRow && getCurrentRow() == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
         colIndex--;
@@ -216,13 +220,15 @@ public class MSCursorResultSet extends JtdsResultSet {
                     "07009");
         }
 
-        if (onInsertRow || currentRow == null) {
+        Object[] currentRow;
+        if (onInsertRow || (currentRow = getCurrentRow()) == null) {
             throw new SQLException(
                     Messages.get("error.resultset.norow"), "24000");
         }
 
-        if (SQL_ROW_DIRTY.equals(getRowStat())) {
-            cursorFetch(FETCH_REPEAT, 1);
+        if (SQL_ROW_DIRTY.equals(currentRow[columns.length - 1])) {
+            cursorFetch(FETCH_REPEAT, 0);
+            currentRow = getCurrentRow();
         }
 
         Object data = currentRow[index - 1];
@@ -464,7 +470,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             columns = null; // Will be populated if preparing a select
 
             // Use sp_cursorprepare approach
-            tds.executeSQL(null, "sp_cursorprepare", params, false, statement.getQueryTimeout(), -1);
+            tds.executeSQL(null, "sp_cursorprepare", params, false, statement.getQueryTimeout(), -1, true);
             tds.clearResponseQueue();
 
             // columns will now hold meta data for select statements
@@ -560,10 +566,8 @@ public class MSCursorResultSet extends JtdsResultSet {
             procName = "sp_cursoropen";
         }
 
-        retVal = null;
-
         tds.executeSQL(null, procName, parameters, false,
-                statement.getQueryTimeout(), statement.getMaxRows());
+                statement.getQueryTimeout(), statement.getMaxRows(), true);
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
@@ -577,7 +581,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         tds.clearResponseQueue();
         statement.messages.checkErrors();
-        retVal = tds.getReturnStatus();
+        Integer retVal = tds.getReturnStatus();
 
         int actualScroll;
         int actualCc;
@@ -663,8 +667,6 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         statement.clearWarnings();
 
-        boolean isInfo = (fetchType == FETCH_INFO);
-
         if (fetchType != FETCH_ABSOLUTE && fetchType != FETCH_RELATIVE) {
             rowNum = 1;
         }
@@ -677,53 +679,67 @@ public class MSCursorResultSet extends JtdsResultSet {
         PARAM_FETCHTYPE.value = fetchType;
         param[1] = PARAM_FETCHTYPE;
 
-        if (isInfo) {
+        // Setup rownum
+        PARAM_ROWNUM_IN.value = new Integer(rowNum);
+        param[2] = PARAM_ROWNUM_IN;
+        // Setup numRows parameter
+        if (((Integer) PARAM_NUMROWS_IN.value).intValue() != fetchSize) {
+            // If the fetch size changed, update the parameter and cache size
+            PARAM_NUMROWS_IN.value = new Integer(fetchSize);
+            rowCache = new Object[fetchSize][];
+        }
+        param[3] = PARAM_NUMROWS_IN;
+
+        synchronized (tds) {
+            // No meta data, no timeout (we're not sending it yet), no row
+            // limit, don't send yet
+            tds.executeSQL(null, "sp_cursorfetch", param, true, 0, 0, false);
+
+            // Setup fetchtype param
+            PARAM_FETCHTYPE.value = FETCH_INFO;
+            param[1] = PARAM_FETCHTYPE;
+
             // Setup rownum
             PARAM_ROWNUM_OUT.clearOutValue();
             param[2] = PARAM_ROWNUM_OUT;
             // Setup numRows parameter
             PARAM_NUMROWS_OUT.clearOutValue();
             param[3] = PARAM_NUMROWS_OUT;
-        } else {
-            // Setup rownum
-            PARAM_ROWNUM_IN.value = new Integer(rowNum);
-            param[2] = PARAM_ROWNUM_IN;
-            // Setup numRows parameter
-            param[3] = PARAM_NUMROWS_IN;
+
+            // No meta data, use the statement timeout, leave max rows as it is
+            // (no limit), send now
+            tds.executeSQL(null, "sp_cursorfetch", param, true,
+                    statement.getQueryTimeout(), -1, true);
         }
-
-        retVal = null;
-
-        tds.executeSQL(null, "sp_cursorfetch", param, true, statement.getQueryTimeout(), 0);
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
+        int i = 0;
         if (tds.isResultSet()) {
-            if (tds.isRowData()) {
-                // With TDS 7 the data row (if any) is sent without any
-                // preceding resultset header.
-                this.currentRow = copyRow(tds.getRowData());
-            } else if (tds.getNextRow()) {
-                // With TDS 8 there is a dummy result set header first
-                // then the data. This case also used if meta data not supressed.
-                this.currentRow = copyRow(tds.getRowData());
-            } else {
-                this.currentRow = null;
+            // With TDS 7 the data row (if any) is sent without any
+            // preceding resultset header.
+            // With TDS 8 there is a dummy result set header first
+            // then the data. This case also used if meta data not supressed.
+            if (tds.isRowData() || tds.getNextRow()) {
+                do {
+                    rowCache[i++] = copyRow(tds.getRowData());
+                } while (tds.getNextRow());
             }
-        } else if (!isInfo) {
-            this.currentRow = null;
+        }
+        // Set the rest of the rows to null
+        for (; i < rowCache.length; ++i) {
+            rowCache[i] = null;
         }
 
         tds.clearResponseQueue();
+
+        pos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
+        cursorPos = pos;
+        rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
+
         statement.getMessages().checkErrors();
-        retVal = tds.getReturnStatus();
 
-        if (isInfo) {
-            pos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
-            rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
-        }
-
-        return currentRow != null;
+        return getCurrentRow() != null;
     }
 
     /**
@@ -758,6 +774,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         param[1] = PARAM_OPTYPE;
 
         // Setup rownum
+        PARAM_ROWNUM.value = new Integer(pos - cursorPos + 1);
         param[2] = PARAM_ROWNUM;
 
         // If row is not null, we're dealing with an insert/update
@@ -822,13 +839,43 @@ public class MSCursorResultSet extends JtdsResultSet {
             }
         }
 
-        retVal = null;
+        synchronized (tds) {
+            // With meta data (we're not expecting any ResultSets), no timeout
+            // (because we're not sending the request yet), don't alter max
+            // rows, don't send yet
+            tds.executeSQL(null, "sp_cursor", param, false, 0, -1, false);
 
-        tds.executeSQL(null, "sp_cursor", param, false, statement.getQueryTimeout(), -1);
-        tds.clearResponseQueue();
+            if (param.length != 4) {
+                param = new ParamInfo[4];
+                param[0] = PARAM_CURSOR_HANDLE;
+            }
 
+            // Setup fetchtype param
+            PARAM_FETCHTYPE.value = FETCH_INFO;
+            param[1] = PARAM_FETCHTYPE;
+
+            // Setup rownum
+            PARAM_ROWNUM_OUT.clearOutValue();
+            param[2] = PARAM_ROWNUM_OUT;
+            // Setup numRows parameter
+            PARAM_NUMROWS_OUT.clearOutValue();
+            param[3] = PARAM_NUMROWS_OUT;
+
+            // No meta data (no ResultSets expected), use statement timeout,
+            // don't alter max rows, send now
+            tds.executeSQL(null, "sp_cursorfetch", param, true,
+                    statement.getQueryTimeout(), -1, true);
+        }
+
+        // Consume the sp_cursor response
+        tds.consumeOneResponse();
         statement.getMessages().checkErrors();
-        retVal = tds.getReturnStatus();
+        Integer retVal = tds.getReturnStatus();
+        if (retVal.intValue() != 0) {
+            throw new SQLException(Messages.get("error.resultset.cursorfail"),
+                    "24000");
+        }
+
         //
         // Allow row values to be garbage collected
         //
@@ -838,6 +885,24 @@ public class MSCursorResultSet extends JtdsResultSet {
                     row[i].clearInValue();
                 }
             }
+        }
+
+        // Consume the sp_cursorfetch response
+        tds.clearResponseQueue();
+        statement.getMessages().checkErrors();
+        cursorPos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
+        rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
+
+        // Update row status
+        if (opType == CURSOR_OP_DELETE || opType == CURSOR_OP_UPDATE) {
+            Object[] currentRow = getCurrentRow();
+            if (currentRow == null) {
+                throw new SQLException(
+                        Messages.get("error.resultset.updatefail"), "24000");
+            }
+            // No need to re-fetch the row, just mark it as deleted or dirty
+            currentRow[columns.length - 1] =
+                    (opType == CURSOR_OP_DELETE) ? SQL_ROW_DELETED : SQL_ROW_DIRTY;
         }
     }
 
@@ -856,16 +921,15 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Setup cursor handle param
         param[0] = PARAM_CURSOR_HANDLE;
 
-        tds.executeSQL(null, "sp_cursorclose", param, false, statement.getQueryTimeout(), -1);
+        tds.executeSQL(null, "sp_cursorclose", param, false, statement.getQueryTimeout(), -1, true);
         tds.clearResponseQueue();
         statement.getMessages().checkErrors();
-        retVal = tds.getReturnStatus();
         //
         // If using prepared statements unprepare now to prevent resource leaks on server.
         //
         if (prepStmtHandle != null) {
             param[0].value = prepStmtHandle;
-            tds.executeSQL(null, "sp_cursorunprepare", param, false, statement.getQueryTimeout(), -1);
+            tds.executeSQL(null, "sp_cursorunprepare", param, false, statement.getQueryTimeout(), -1, true);
             tds.clearResponseQueue();
             statement.getMessages().checkErrors();
         }
@@ -882,7 +946,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         if (pos != POS_AFTER_LAST) {
             // SAfe Just fetch a very large absolute value
             cursorFetch(FETCH_ABSOLUTE, Integer.MAX_VALUE);
-            pos = POS_AFTER_LAST;
         }
     }
 
@@ -892,7 +955,6 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         if (pos != POS_BEFORE_FIRST) {
             cursorFetch(FETCH_ABSOLUTE, 0);
-            pos = POS_BEFORE_FIRST;
         }
     }
 
@@ -928,7 +990,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkOpen();
         checkUpdateable();
 
-        if (currentRow == null) {
+        if (getCurrentRow() == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
@@ -937,8 +999,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         cursor(CURSOR_OP_DELETE, null);
-        // No need to re-fetch the row, just mark it as deleted
-        setRowStat(SQL_ROW_DELETED);
     }
 
     public void insertRow() throws SQLException {
@@ -950,11 +1010,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         cursor(CURSOR_OP_INSERT, insertRow);
-        // On SQL Server inserts show up at the end of the ResultSet in scroll
-        // sensitive ResultSets. The position remains the same.
-        if (resultSetType == TYPE_SCROLL_SENSITIVE) {
-            rowsInResult++;
-        }
     }
 
     public void moveToCurrentRow() throws SQLException {
@@ -980,14 +1035,17 @@ public class MSCursorResultSet extends JtdsResultSet {
             throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
-        cursorFetch(FETCH_REPEAT, 1);
+        // Save and restore current position
+        int crtPos = pos;
+        cursorFetch(FETCH_REPEAT, 0);
+        pos = crtPos;
     }
 
     public void updateRow() throws SQLException {
         checkOpen();
         checkUpdateable();
 
-        if (currentRow == null) {
+        if (getCurrentRow() == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
         }
 
@@ -996,26 +1054,18 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         cursor(CURSOR_OP_UPDATE, updateRow);
-        // On SQL Server own inserts show up at the end of the ResultSet (if
-        // the primary key is altered) or are updaded in place (otherwise) so
-        // we need to see what happened to the number of rows
-        if (resultSetType == TYPE_SCROLL_SENSITIVE) {
-            // Update the number of rows and the cursor position
-            cursorFetch(FETCH_INFO, 1);
-        }
-        // In any eventuality we must mark the current row as dirty
-        setRowStat(SQL_ROW_DIRTY);
     }
 
     public boolean first() throws SQLException {
         checkOpen();
         checkScrollable();
 
-        boolean res = cursorFetch(FETCH_FIRST, 0);
-
         pos = 1;
-
-        return res;
+        if (getCurrentRow() == null) {
+            return cursorFetch(FETCH_FIRST, 0);
+        } else {
+            return true;
+        }
     }
 
     // FIXME Make the isXXX() methods work with forward-only cursors (rowsInResult == -1)
@@ -1029,42 +1079,68 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkOpen();
         checkScrollable();
 
-        boolean res = cursorFetch(FETCH_LAST, 0);
-
         pos = rowsInResult;
-
-        return res;
+        if (getCurrentRow() == null) {
+            if (cursorFetch(FETCH_LAST, 0)) {
+                // Set pos to the last row, as the number of rows can change
+                pos = rowsInResult;
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
     }
 
     public boolean next() throws SQLException {
         checkOpen();
 
-        if (cursorFetch(FETCH_NEXT, 0)) {
-            pos += 1;
+        ++pos;
+        if (getCurrentRow() == null) {
+            return cursorFetch(FETCH_NEXT, 0);
+        } else {
             return true;
         }
-
-        pos = POS_AFTER_LAST;
-        return false;
     }
 
     public boolean previous() throws SQLException {
         checkOpen();
         checkScrollable();
 
-        if (cursorFetch(FETCH_PREVIOUS, 0)) {
-            pos -= (pos == POS_AFTER_LAST) ? (pos - rowsInResult) : 1;
+        // Save current ResultSet position
+        int initPos = pos;
+        // Decrement current position
+        --pos;
+        if (initPos == POS_AFTER_LAST || getCurrentRow() == null) {
+            boolean res = cursorFetch(FETCH_PREVIOUS, 0);
+            pos = (initPos == POS_AFTER_LAST) ? rowsInResult : (initPos - 1);
+            return res;
+        } else {
             return true;
         }
-
-        pos = POS_BEFORE_FIRST;
-        return false;
     }
 
     public boolean rowDeleted() throws SQLException {
         checkOpen();
 
-        return SQL_ROW_DELETED.equals(getRowStat());
+        Object[] currentRow = getCurrentRow();
+
+        // If there is no current row, return false (the row was not deleted)
+        if (currentRow == null) {
+            return false;
+        }
+
+        // Reload if dirty
+        if (SQL_ROW_DIRTY.equals(currentRow[columns.length - 1])) {
+            // Save and restore ResultSet position
+            int crtPos = pos;
+            cursorFetch(FETCH_REPEAT, 0);
+            pos = crtPos;
+            currentRow = getCurrentRow();
+        }
+
+        return SQL_ROW_DELETED.equals(currentRow[columns.length - 1]);
     }
 
     public boolean rowInserted() throws SQLException {
@@ -1079,52 +1155,35 @@ public class MSCursorResultSet extends JtdsResultSet {
         return false;
     }
 
-    private Object getRowStat() {
-        return currentRow[columns.length - 1];
-    }
-
-    private void setRowStat(Integer rowStat) {
-        currentRow[columns.length - 1] = rowStat;
-    }
-
     public boolean absolute(int row) throws SQLException {
         checkOpen();
         checkScrollable();
 
-        // If nothing was fetched, we got passed the beginning or end
-        if (!cursorFetch(FETCH_ABSOLUTE, row)) {
-            if (row > 0) {
-                pos = POS_AFTER_LAST;
-            } else {
-                pos = POS_BEFORE_FIRST;
-            }
-
-            return false;
+        pos = row;
+        if (getCurrentRow() == null) {
+            return cursorFetch(FETCH_ABSOLUTE, row);
+        } else {
+            return true;
         }
-
-        pos = row >= 0 ? row : rowsInResult + 1 + row;
-        return true;
     }
 
     public boolean relative(int row) throws SQLException {
         checkOpen();
         checkScrollable();
 
-        if (!cursorFetch(FETCH_RELATIVE, row)) {
-            if (row > 0) {
-                pos = POS_AFTER_LAST;
-            } else {
-                pos = POS_BEFORE_FIRST;
-            }
-
-            return false;
-        }
-
-        if (pos == POS_AFTER_LAST) {
-            pos = rowsInResult + 1;
-        }
-
         pos += row;
-        return true;
+        if (getCurrentRow() == null) {
+            return cursorFetch(FETCH_RELATIVE, row);
+        } else {
+            return true;
+        }
+    }
+
+    private Object[] getCurrentRow() {
+        if (pos < cursorPos || pos >= cursorPos + rowCache.length) {
+            return null;
+        }
+
+        return rowCache[pos - cursorPos];
     }
 }

@@ -701,7 +701,6 @@ public class ResultSetTest extends TestBase {
             assertFalse(rs.rowDeleted());
             rs.updateInt(1, rs.getInt(1) + 10);
             rs.updateRow();
-            rs.refreshRow();
             assertFalse(rs.rowUpdated());
             assertFalse(rs.rowInserted());
             assertTrue(rs.rowDeleted());
@@ -747,7 +746,6 @@ public class ResultSetTest extends TestBase {
             assertFalse(rs.rowDeleted());
             rs.updateInt(2, rs.getInt(2) + 10);
             rs.updateRow();
-            rs.refreshRow();
             assertFalse(rs.rowUpdated());
             assertFalse(rs.rowInserted());
             assertFalse(rs.rowDeleted());
@@ -786,7 +784,6 @@ public class ResultSetTest extends TestBase {
             assertFalse(rs.rowInserted());
             assertFalse(rs.rowDeleted());
             rs.deleteRow();
-            rs.refreshRow();
             assertFalse(rs.rowUpdated());
             assertFalse(rs.rowInserted());
             assertTrue(rs.rowDeleted());
@@ -1172,6 +1169,44 @@ public class ResultSetTest extends TestBase {
         ResultSet rs = stmt.executeQuery("select * from #testsetobj");
         assertTrue(rs.next());
         assertEquals("1234", rs.getString(1));
+    }
+
+    /**
+     * Test that <code>ResultSet.previous()</code> works correctly on cursor
+     * <code>ResultSet</code>s.
+     */
+    public void testCursorPrevious() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #cursorPrevious (val int)");
+        stmt.close();
+
+        // Insert 10 rows
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into #cursorPrevious (val) values (?)");
+        for (int i = 0; i < 10; i++) {
+            pstmt.setInt(1, i);
+            assertEquals(1, pstmt.executeUpdate());
+        }
+        pstmt.close();
+
+        // Create a cursor ResultSet
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        // Set fetch size to 2
+        stmt.setFetchSize(2);
+
+        // Select all
+        ResultSet rs = stmt.executeQuery("select * from #cursorPrevious");
+        rs.last();
+        int i = 10;
+        do {
+            assertEquals(i, rs.getRow());
+            assertEquals(--i, rs.getInt(1));
+        } while (rs.previous());
+        assertTrue(rs.isBeforeFirst());
+        assertEquals(0, i);
+
+        rs.close();
+        stmt.close();
     }
 
     public static void main(String[] args) {

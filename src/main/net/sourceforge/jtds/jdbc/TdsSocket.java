@@ -39,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: TdsSocket.java,v 1.6 2004-04-17 03:48:50 bheineman Exp $
+ * @version $Id: TdsSocket.java,v 1.7 2004-05-01 05:36:40 bheineman Exp $
  */
 public class TdsSocket {
 
@@ -280,7 +280,6 @@ public class TdsSocket {
         // the need to impose the additional overhead on each call to a
         // Connection / Statement / ResultSet...
         return this.socket != null && socket.isConnected();
-//        return this.socket != null && socket.isConnected() && !socket.isClosed();
     }
 
     /**
@@ -298,6 +297,11 @@ public class TdsSocket {
                 sendCancel(tdsComm);
             } catch (IOException e) {
                 // Ignore error as network is probably dead anyway
+                try {
+                    close();
+                } catch (IOException e1) {
+                    //  swallow the exception. it is not interesting
+                }
             }
         }
     }
@@ -378,15 +382,26 @@ public class TdsSocket {
                 //
                 // First, send out any output that might have been queued
                 //
-                byte[] tmpBuf = dequeueOutput(vsock);
+                try {
+                    byte[] tmpBuf = dequeueOutput(vsock);
+    
+                    while (tmpBuf != null) {
+                        out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
+                        tmpBuf = dequeueOutput(vsock);
+                    }
+    
+                    // Now we can safely send this packet too
+                    out.write(buffer, 0, TdsComm.ntohs(buffer, 2));
+                } catch (IOException e) {
+                    try {
+                        close();
+                    } catch (IOException e1) {
+                        //  swallow the exception. it is not interesting
+                    }
 
-                while (tmpBuf != null) {
-                    out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
-                    tmpBuf = dequeueOutput(vsock);
+                    throw e;
                 }
 
-                // Now we can safely send this packet too
-                out.write(buffer, 0, TdsComm.ntohs(buffer, 2));
 
                 if (buffer[1] != 0) {
                     // This means the TDS Packet is complete
@@ -430,38 +445,48 @@ public class TdsSocket {
             //  2. Read and save another callers request
             //  3. Flush the end of our previous request and send a new one
             //
-            if (responseOwner == null || responseOwner != tdsComm || vsock.flushInput) {
-                byte[] tmpBuf;
-                if (responseOwner != null) {
-                    // Complex case there is another socket's data in the network pipe
-                    // or we had our own incomplete request to discard first
-                    // Read and store other socket's data or flush our own
-                    VirtualSocket other = lookup(responseOwner);
-                    do {
-                        tmpBuf = readPacket(null, other, 0);
-                        if (!other.flushInput)
-                        // We need to save this input
-                            enqueueInput(other, tmpBuf);
-                    } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
-                    other.flushInput = false;
-                }
-                // OK All input either read and stored or read and discarded
-                // now send our cached request packet.
-                tmpBuf = dequeueOutput(vsock);
-                if (tmpBuf == null) {
-                    // Oops something has gone wrong. Trying to read but no
-                    // complete request packet to send first.
-                    throw new TdsException("No client request to send");
-                }
-                while (tmpBuf != null) {
-                    out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
+            try {
+                if (responseOwner == null || responseOwner != tdsComm || vsock.flushInput) {
+                    byte[] tmpBuf;
+                    if (responseOwner != null) {
+                        // Complex case there is another socket's data in the network pipe
+                        // or we had our own incomplete request to discard first
+                        // Read and store other socket's data or flush our own
+                        VirtualSocket other = lookup(responseOwner);
+                        do {
+                            tmpBuf = readPacket(null, other, 0);
+                            if (!other.flushInput)
+                            // We need to save this input
+                                enqueueInput(other, tmpBuf);
+                        } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
+                        other.flushInput = false;
+                    }
+                    // OK All input either read and stored or read and discarded
+                    // now send our cached request packet.
                     tmpBuf = dequeueOutput(vsock);
+                    if (tmpBuf == null) {
+                        // Oops something has gone wrong. Trying to read but no
+                        // complete request packet to send first.
+                        throw new TdsException("No client request to send");
+                    }
+                    while (tmpBuf != null) {
+                        out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
+                        tmpBuf = dequeueOutput(vsock);
+                    }
+                    responseOwner = tdsComm;
                 }
-                responseOwner = tdsComm;
-            }
 
-            // Simple case we are reading our input directly from the server
-            buffer = readPacket(buffer, vsock, vsock.timeOut);
+                // Simple case we are reading our input directly from the server
+                buffer = readPacket(buffer, vsock, vsock.timeOut);
+            } catch (IOException e) {
+                try {
+                    close();
+                } catch (IOException e1) {
+                    //  swallow the exception. it is not interesting
+                }
+
+                throw e;
+            }
 
             return buffer;
         }
@@ -684,7 +709,7 @@ public class TdsSocket {
             if (queryTimedOut) {
                 // We had timed out so return an exception to notify the caller
                 // All input will have been read
-                throw new InterruptedIOException("Query timed out");
+                throw new TdsTimeoutException("Query timed out");
             }
         }
 

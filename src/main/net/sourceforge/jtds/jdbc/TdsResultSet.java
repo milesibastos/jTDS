@@ -77,7 +77,7 @@ import java.sql.*;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    17 March 2001
- * @version    $Id: TdsResultSet.java,v 1.9 2004-04-17 03:48:50 bheineman Exp $
+ * @version    $Id: TdsResultSet.java,v 1.10 2004-05-01 05:36:40 bheineman Exp $
  * @see        Statement#executeQuery
  * @see        Statement#getResultSet
  * @see        ResultSetMetaData @
@@ -98,7 +98,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     int rowCount = 0;
     PacketRowResult[] rowCache = null;
 
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.9 2004-04-17 03:48:50 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.10 2004-05-01 05:36:40 bheineman Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
@@ -833,12 +833,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     }
 
     private void checkClosed() throws SQLException {
-        if (stmt != null) {
-            stmt.checkClosed();
-        }
-
         if (isClosed) {
             throw new SQLException("Invalid state: ResultSet closed.");
         }
+
+        stmt.checkClosed();
     }
 }

@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.55 2004-04-16 21:14:11 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.56 2004-05-01 05:36:40 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.55 2004-04-16 21:14:11 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.56 2004-05-01 05:36:40 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -3225,7 +3225,7 @@ public class Tds implements TdsDefinitions {
             sock.setSoTimeout(comm, timeout * 1000);
             try {
                 comm.peek();
-            } catch (InterruptedIOException e) {
+            } catch (TdsTimeoutException e) {
                 moreResults = false;
                 wChain.addException(new SQLException("Query has timed out.", "HYT00"));
             } finally {

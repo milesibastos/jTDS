@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.26 2004-04-17 03:48:50 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.27 2004-05-01 05:36:40 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -106,7 +106,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.26 2004-04-17 03:48:50 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.27 2004-05-01 05:36:40 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -713,7 +713,7 @@ public class TdsConnection implements Connection
 
         tdsPool.clear();
 
-        clearWarnings();
+        warningChain.clearWarnings();
         isClosed = true;
         // Close the physical socket
         //

@@ -4,6 +4,8 @@ Changes from jTDS 0.8-rc1
 04/30/2004 - Brian Heineman
  o Added test for bug [945507] closing statement after selecting a large
    IMAGE - Exception
+ o Applied second update to patch [934396] better IO error handling; thanks to
+   Fedor Karpelevitch.
 
 04/21/2004 - Brian Heineman
  o Corrected bug [938632] String index out of bounds error in 0.8rc1;

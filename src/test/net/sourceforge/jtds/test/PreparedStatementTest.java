@@ -304,6 +304,41 @@ public class PreparedStatementTest extends TestBase {
         rs.close();
     }
 
+    /**
+     * Test for bug [985754] row count is always 0
+     */
+    public void testUpdateCount1() throws Exception {
+    	int count = 500;
+    	
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #updateCount1 (data INT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #updateCount1 (data) VALUES (?)");
+
+        for (int i = 1; i <= count; i++) {
+        	pstmt.setInt(1, i);
+        	assertTrue(pstmt.executeUpdate() == 1);
+        }
+
+        pstmt.close();
+
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM #updateCount1");
+
+        assertTrue(rs.next());
+        assertTrue(rs.getInt(1) == count);
+        assertTrue(!rs.next());
+        
+        stmt.close();
+        rs.close();
+        
+        pstmt = con.prepareStatement("DELETE FROM #updateCount1");
+        assertTrue(pstmt.executeUpdate() == count);
+        pstmt.close();
+        
+    }
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

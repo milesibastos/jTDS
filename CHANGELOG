@@ -18,6 +18,7 @@ Changes from jTDS 0.8
  o Added test for bug [946171] null boolean in CallableStatement bug
  o Added test for bug [963799] float values change when written to the database
  o Added test for bug [961594] ResultSet.
+ o Added test for bug [985754] row count is always 0
 
 07/01/2004 - Brian Heineman
  o Improved Blob and Clob support.  Writes done through a Blob or Clob are now

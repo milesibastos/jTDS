@@ -122,7 +122,7 @@ public class Tds8Test extends DatabaseTestCase {
         assertEquals("java.math.BigDecimal", rs.getObject(2).getClass().getName());
         assertEquals("10.23", rs.getString(2));
         assertTrue(rs.next());
-        assertEquals("585858", rs.getString(2));
+        assertEquals("XXX", rs.getString(2));
         stmt.close();
         pstmt.close();
     }

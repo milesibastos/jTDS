@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.6 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: Support.java,v 1.7 2004-08-04 02:16:30 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -382,7 +382,11 @@ public class Support {
                     }
 
                     if (x instanceof byte[]) {
-                        return Support.toHex((byte[]) x);
+                        try {
+                            return new String((byte[]) x, charSet);
+                        } catch (UnsupportedEncodingException e) {
+                            return new String((byte[]) x);
+                        }
                     }
 
                     return x.toString(); // Last hope!

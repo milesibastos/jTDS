@@ -6,6 +6,8 @@ Changes from jTDS 0.8.1
    constructor.
  o Made TdsCore.SQLSERVER and TdsCore.SYBASE public.  Removed use of
    "magic" numbers and strings.
+ o Fixed default value of lobBuffer in AbstractDataSource.getReference().
+   It was using "portNumber" instead of "lobBuffer" for its default.
 
 07/26/2004 - Brian Heineman
  o Removed extraneous methods from SharedSocket and SharedNamedPipe.

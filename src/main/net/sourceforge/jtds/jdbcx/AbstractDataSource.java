@@ -31,7 +31,7 @@ import net.sourceforge.jtds.util.*;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.4 2004-07-27 01:22:05 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.5 2004-07-27 01:29:26 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -88,7 +88,7 @@ implements DataSource, Referenceable, Serializable {
         ref.add(new StringRefAddr(Support.getMessage("prop.preparesql"),
                                   String.valueOf(prepareSql)));
         ref.add(new StringRefAddr(Support.getMessage("prop.lobbuffer"),
-                String.valueOf(portNumber)));
+                                  String.valueOf(lobBuffer)));
 
         return ref;
     }

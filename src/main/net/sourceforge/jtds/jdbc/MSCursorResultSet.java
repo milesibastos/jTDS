@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.26 2004-11-17 12:18:31 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.27 2004-11-17 13:30:23 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -1095,7 +1095,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             return false;
         }
 
-        pos = row;
+        pos = row >= 0 ? row : rowsInResult + 1 + row;
         return true;
     }
 

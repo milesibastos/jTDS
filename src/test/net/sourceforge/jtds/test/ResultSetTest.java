@@ -682,16 +682,16 @@ public class ResultSetTest extends TestBase {
                 ResultSet.CONCUR_UPDATABLE);
 
         stmt.executeUpdate(
-                "create table #testUpdateRowDuplicatesRow (val int primary key)");
+                "create table #updateRowDuplicatesRow (val int primary key)");
         stmt.executeUpdate(
-                "insert into #testUpdateRowDuplicatesRow (val) values (1)");
+                "insert into #updateRowDuplicatesRow (val) values (1)");
         stmt.executeUpdate(
-                "insert into #testUpdateRowDuplicatesRow (val) values (2)");
+                "insert into #updateRowDuplicatesRow (val) values (2)");
         stmt.executeUpdate(
-                "insert into #testUpdateRowDuplicatesRow (val) values (3)");
+                "insert into #updateRowDuplicatesRow (val) values (3)");
 
         ResultSet rs = stmt.executeQuery(
-                "select val from #testUpdateRowDuplicatesRow order by val");
+                "select val from #updateRowDuplicatesRow order by val");
 
         for (int i = 0; i < 3; i++) {
             assertTrue(rs.next());
@@ -727,16 +727,16 @@ public class ResultSetTest extends TestBase {
                 ResultSet.CONCUR_UPDATABLE);
 
         stmt.executeUpdate(
-                "create table #testUpdateRowDuplicatesRow (val int primary key)");
+                "create table #deleteRowMarksDeleted (val int primary key)");
         stmt.executeUpdate(
-                "insert into #testUpdateRowDuplicatesRow (val) values (1)");
+                "insert into #deleteRowMarksDeleted (val) values (1)");
         stmt.executeUpdate(
-                "insert into #testUpdateRowDuplicatesRow (val) values (2)");
+                "insert into #deleteRowMarksDeleted (val) values (2)");
         stmt.executeUpdate(
-                "insert into #testUpdateRowDuplicatesRow (val) values (3)");
+                "insert into #deleteRowMarksDeleted (val) values (3)");
 
         ResultSet rs = stmt.executeQuery(
-                "select val from #testUpdateRowDuplicatesRow order by val");
+                "select val from #deleteRowMarksDeleted order by val");
 
         for (int i = 0; i < 3; i++) {
             assertTrue(rs.next());
@@ -751,6 +751,39 @@ public class ResultSetTest extends TestBase {
         }
 
         assertFalse(rs.next());
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that <code>absolute(-1)</code> works the same as <code>last()</code>.
+     */
+    public void testAbsoluteMinusOne() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+
+        stmt.executeUpdate(
+                "create table #absoluteMinusOne (val int primary key)");
+        stmt.executeUpdate(
+                "insert into #absoluteMinusOne (val) values (1)");
+        stmt.executeUpdate(
+                "insert into #absoluteMinusOne (val) values (2)");
+        stmt.executeUpdate(
+                "insert into #absoluteMinusOne (val) values (3)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select val from #absoluteMinusOne order by val");
+
+        rs.absolute(-1);
+        assertTrue(rs.isLast());
+        assertEquals(3, rs.getInt(1));
+        assertFalse(rs.next());
+
+        rs.last();
+        assertTrue(rs.isLast());
+        assertEquals(3, rs.getInt(1));
+        assertFalse(rs.next());
+
         rs.close();
         stmt.close();
     }

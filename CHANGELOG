@@ -2,10 +2,12 @@ Changes from jTDS 0.9
 =========================
 
 11/17/2004 - Alin Sinpalean
+ o Fixed a problem with absolute(-1) (the row position was incorrectly
+   updated).
  o Improved performance of MSCursorResultSet, by replacing sp_cursor FETCH_INFO
    calls with simple operations mimicking the behavior of SQL Server
    (incrementing the row count on INSERT and UPDATE).
- o Implemented support for ResultSet.insertRow() when no column is updated 
+ o Implemented support for ResultSet.insertRow() when no column is updated
    (i.e. inserting default values) in MSCursorResultSet.
  o Added charsets GB2312 and GBK as aliases for MS936.
  o Corrected bug [1067224] getPrimaryKeys does not return PK_NAME column.

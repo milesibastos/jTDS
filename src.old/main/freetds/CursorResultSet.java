@@ -80,7 +80,8 @@ public class CursorResultSet extends AbstractResultSet {
     {
         if ( current == null ) {
             internalFetch( "FETCH NEXT FROM " + cursorName );
-            context = current.getContext();
+            // context = current.getContext();  Moved to internalFetch -- if no
+            //            results are returned a NullPointerException is thrown
         }
     }
 
@@ -226,6 +227,12 @@ public class CursorResultSet extends AbstractResultSet {
     throws SQLException
     {
         TdsResultSet rs = stmt.internalExecuteQuery( sql );
+
+        // Moved here from loadContext -- if the query didn't return any
+        //                                results, loadContext crashed
+        if( context == null )
+            context = rs.getContext();
+
         current = rs.fetchNextRow();
         warnings = rs.getWarnings();
         rs.close();

@@ -36,3 +36,10 @@ Changes from jTDS 0.2
 
  o DatabaseMetaData.getInstance() now returns a DatabaseMetaData or
    Microsoft7MetaData based on the TDS version rather than the server version.
+
+08/13/2002 - Alin Sinpalean
+
+ o Fix in CursorResultSet: if no rows were returned by the query, loadContext
+   failed with a NullPointerException when trying to get the current row's
+   context. Now the context is loaded in internalFetch -- not very elegant, but
+   at least it works. ;o)

@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.31 2004-12-06 12:10:14 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.32 2004-12-14 17:24:24 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -386,7 +386,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         return getUpdateCount(0);
     }
-
 
     public synchronized void addBatch() throws SQLException {
         checkOpen();

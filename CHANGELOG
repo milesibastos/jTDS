@@ -2,6 +2,14 @@
 Changes from jTDS 0.4
 =======================
 
+10/22/2002 - Alin Sinpalean
+
+ o Implemented correctly the DatabaseMetaData methods getNumericFunctions,
+   getStringFunctions and getSystemFunctions and added the corresponding code
+   to EscapeProcessor (to convert the standard function names to SQL Server-
+   specific function names -- I sure hope it works with Sybase, too as I have
+   no way of testing this).
+
 10/21/2002 - Alin Sinpalean
 
  o Fix in Tds.executeProcedure() if a Boolean was supplied as value for a

@@ -1314,10 +1314,10 @@ public class TimestampTest extends DatabaseTestCase
             "   f      float)   ");
 
         // @todo Check which CHAR/VARCHAR values should be true and which should be false.
-        assertTrue(stmt.executeUpdate("insert into #t0025 values(0, 0, '0', 0.0)") == 1);
+        assertTrue(stmt.executeUpdate("insert into #t0025 values(0, 0, 'false', 0.0)") == 1);
         assertTrue(stmt.executeUpdate("insert into #t0025 values(0, 0, '0', 0.0)") == 1);
         assertTrue(stmt.executeUpdate("insert into #t0025 values(1, 1, 'true', 7.0)") == 1);
-        assertTrue(stmt.executeUpdate("insert into #t0025 values(2, 1, 'Y', -5.0)") == 1);
+        assertTrue(stmt.executeUpdate("insert into #t0025 values(2, 1, '1', -5.0)") == 1);
 
         ResultSet rs = stmt.executeQuery("select * from #t0025 order by i");
         assertNotNull(rs);

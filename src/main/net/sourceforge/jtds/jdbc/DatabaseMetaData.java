@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.2 2002-10-21 16:28:52 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.3 2002-10-22 09:50:10 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.2 2002-10-21 16:28:52 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.3 2002-10-22 09:50:10 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -398,7 +398,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     private static String makeTypeSQL(String colName)
-    throws SQLException
     {
         // Create a lookup table for mapping between native and jdbc types
         // This table can be reused for all drivers of the same version
@@ -809,6 +808,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getExtraNameCharacters() throws SQLException
     {
+        // @todo Maybe add the extended set characters, too, to this list
         return "#$";
     }
 
@@ -1286,10 +1286,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getNumericFunctions() throws SQLException
     {
+        // @todo Implement (a)%(b) for MOD(a,b)
         // XXX need to find out if this is still true for SYBASE
-        return "ABS,ACOS,ASIN,ATAN,ATN2,CEILING,COS,COT,"
-                 + "DEGREES,EXP,FLOOR,LOG,LOG10,PI,POWER,RADIANS,"
-                 + "RAND,ROUND,SIGN,SIN,SQRT,TAN";
+        return "ABS,ACOS,ASIN,ATAN,ATAN2,CEILING,COS,COT,DEGREES,EXP,FLOOR,LOG,LOG10,PI,POWER,RADIANS,RAND,ROUND,SIGN,SIN,SQRT,TAN";
     }
 
     /**
@@ -1519,16 +1518,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         // XXX We should really clean up all these temporary tables.
         java.sql.Statement statement = connection.createStatement();
-        java.sql.ResultSet rs;
 
-        String sql =
-            "select                                         " +
-            "  u.name as TABLE_SCHEM                        " +
-//            "  DB_NAME() as TABLE_CATALOG                   " +  This should not be here
-            "from                                           " +
-            "  dbo.sysusers as u                            " +
-            "where                                          " +
-            "  issqlrole=0                                  ";
+        String sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE issqlrole=0";
 
         return statement.executeQuery(sql);
     }
@@ -1593,9 +1584,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getStringFunctions() throws SQLException
     {
-        return "LTRIM,SOUNDEX,ASCII,PATINDEX,SPACE,CHAR,REPLICATE,"
-                 + "STR,CHARINDEX,REVERSE,STUFF,DIFFERENCE,RIGHT,"
-                 + "SUBSTRING,LOWER,RTRIM,UPPER";
+        // @todo Implement CONCAT(a,b) as (a)+(b)
+        return "ASCII,CHAR,DIFFERENCE,INSERT,LCASE,LEFT,LENGTH,LOCATE,LTRIM,REPEAT,REPLACE,RIGHT,RTRIM,SOUNDEX,SPACE,SUBSTRING,UCASE";
     }
 
     /**
@@ -1606,28 +1596,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getSystemFunctions() throws SQLException
     {
-        return
-                "COALESCE," +
-                "COL_LENGTH," +
-                "COL_NAME," +
-                "DATALENGTH," +
-                "DB_ID," +
-                "DB_NAME," +
-                "GETANSINULL," +
-                "HOST_ID," +
-                "HOST_NAME," +
-                "IDENT_INCR," +
-                "IDENT_SEED," +
-                "INDEX_COL," +
-                "ISNULL," +
-                "NULLIF," +
-                "OBJECT_ID," +
-                "OBJECT_NAME," +
-                "STATS_DATE," +
-                "SUSER_ID," +
-                "SUSER_NAME," +
-                "USER_ID," +
-                "USER_NAME";
+        return "DATABASE,IFNULL,USER";
     }
 
     /**
@@ -1799,6 +1768,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getTimeDateFunctions() throws SQLException
     {
+        // @todo Implement this method correctly (and add dependencies to EscapeProcessor)!
         return "GETDATE,DATEPART,DATENAME,DATEDIFF,DATEADD";
     }
 
@@ -2263,7 +2233,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public boolean supportsAlterTableWithDropColumn() throws SQLException
     {
-        return false;
+        return true;
     }
 
     /**
@@ -2486,7 +2456,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
              throws SQLException
     {
         // XXX Need to check for Sybase
-        return tds.getTdsVer()>=Tds.TDS70 || (tds.getTdsVer()==Tds.TDS42 && tds.getServerType()==Tds.SQLSERVER);
+        return tds.getServerType()==Tds.SQLSERVER;
     }
 
     /**
@@ -2499,7 +2469,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
              throws SQLException
     {
         // XXX Need to check for Sybase
-        return tds.getTdsVer()<Tds.TDS70 && (tds.getTdsVer()!=Tds.TDS42 || tds.getServerType()!=Tds.SQLSERVER);
+        return tds.getServerType()!=Tds.SQLSERVER;
     }
 
     /**
@@ -2716,7 +2686,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException
     {
         // XXX Need to check for Sybase
-        return false;
+        return true;
     }
 
     /**
@@ -3194,12 +3164,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         // It doesn't so why throw an exception?
         return false;
-    }
-
-    protected void NotImplemented() throws SQLException
-    {
-        SQLException ex = new SQLException( "Not implemented" );
-        throw ex;
     }
 
     private void setCaseSensitiveFlag() throws SQLException

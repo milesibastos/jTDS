@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.3 2002-10-22 09:50:10 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -538,6 +538,8 @@ public class PacketRowResult extends PacketResult {
                     }
                     // Would somebody like to tell what a true/false has
                     // to do with a double?
+                    // SAfe It looks like it has to work just like with BIT columns ('0' or 'false' for false and '1' or
+                    //      'true' for true).
                     result = ( ( java.lang.Number ) obj ).intValue() != 0;
                     break;
                 }
@@ -561,15 +563,27 @@ public class PacketRowResult extends PacketResult {
                     // But since the spec says I have to convert from
                     // character to boolean data...
 
+                    // SAfe It looks like it has to work just like with BIT columns ('0' or 'false' for false and '1' or
+                    //      'true' for true).
+
                     if ( !( obj instanceof String ) ) {
                         // Must be out of sync with the implementation of
                         // Tds.getRow() for this to happen.
                         throw new SQLException( "Internal error" );
                     }
 
-                    // SAfe I guess this is how it should be done.
-                    result = !"0".equals(obj.toString().trim());
-                    break;
+                    String v = obj.toString().trim();
+                    if( v.equalsIgnoreCase("0") || v.equalsIgnoreCase("false") )
+                    {
+                        result = false;
+                        break;
+                    }
+                    else if( v.equalsIgnoreCase("1") || v.equalsIgnoreCase("true") )
+                    {
+                        result = true;
+                        break;
+                    }
+                    // SAfe Otherwise fall-through to the "default:" label and throw an exception.
                 }
                 default:
                 {

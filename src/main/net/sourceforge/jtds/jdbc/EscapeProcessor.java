@@ -36,7 +36,7 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.4 2002-10-22 09:50:10 alin_sinpalean Exp $";
 
     String   input;
     private static final String ESCAPE_PREFIX_DATE = "d ";
@@ -312,10 +312,29 @@ abstract public class EscapeProcessor
             throw new SQLException("Malformed function escape: "+str);
         String fName = str.substring(0, pPos).trim();
 
+        // @todo Implement this in a smarter way
         if( fName.equalsIgnoreCase("user") )
             result = "user_name" + str.substring(pPos);
-        else if( fName.equalsIgnoreCase("now"))
+        else if( fName.equalsIgnoreCase("database") )
+            result = "db_name" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("ifnull") )
+            result = "isnull" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("now") )
             result = "getdate" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("atan2") )
+            result = "atn2" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("length") )
+            result = "len" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("locate") )
+            result = "charindex" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("repeat") )
+            result = "replicate" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("insert") )
+            result = "stuff" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("lcase") )
+            result = "lower" + str.substring(pPos);
+        else if( fName.equalsIgnoreCase("ucase") )
+            result = "upper" + str.substring(pPos);
 
         return result;
     }

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.18 2004-08-08 03:50:25 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.19 2004-08-21 18:36:10 bheineman Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -44,8 +44,8 @@ implements DataSource, Referenceable, Serializable {
     protected String databaseName = DefaultProperties.DATABASE_NAME;
     protected int portNumber = DefaultProperties.PORT_NUMBER_SQLSERVER;
     protected String serverName;
-    protected String user;
-    protected String password = "";
+    protected String user = DefaultProperties.USER;
+    protected String password = DefaultProperties.PASSWORD;
     protected String description;
     protected String tdsVersion = DefaultProperties.TDS_VERSION_70;
     protected int serverType = Driver.SQLSERVER;

@@ -16,6 +16,9 @@ Changes from jTDS 0.9-rc1
      [1002971] TimestampTest failures under JDK 1.3 (Possible class cast
      exception in TdsData).
      [1008126] Metadata getTimeDateFunctions() wrong
+ o Corrected bug [1012318] 0.9-rc1 throw NullPointerException if user/password
+   passed; if a null user or password was passed the driver would throw a
+   NullPointerException.
 
 08/17/2004 - Brian Heineman
  o Additional corrections for bug [966274] Trusted Connections no longer work;

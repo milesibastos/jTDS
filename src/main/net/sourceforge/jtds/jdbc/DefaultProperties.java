@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.8 2004-08-16 18:43:00 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.9 2004-08-21 18:36:10 bheineman Exp $
  */
 public final class DefaultProperties {
 
@@ -72,6 +72,8 @@ public final class DefaultProperties {
     public static final int PACKET_SIZE_42_50 = TdsCore.MIN_PKT_SIZE;
     /** Default <code>packetSize</code> property for TDS 7.0 and TDS 8.0. */
     public static final int PACKET_SIZE_70_80 = 0; // server sets packet size
+    /** Default <code>password</code> property. */
+    public static final String PASSWORD = "";
     /** Default <code>portNumber</code> property for SQL Server. */
     public static final int PORT_NUMBER_SQLSERVER = 1433;
     /** Default <code>portNumber</code> property for Sybase. */
@@ -82,6 +84,8 @@ public final class DefaultProperties {
     public static final String PROG_NAME = "jTDS";
     /** Default <code>sendStringParametersAsUnicode</code> property. */
     public static final boolean USE_UNICODE = true;
+    /** Default <code>user</code> property. */
+    public static final String USER = "";
 
     /** Default <code>serverType</code> property for SQL Server. */
     public static final String SERVER_TYPE_SQLSERVER = "sqlserver";
@@ -106,11 +110,12 @@ public final class DefaultProperties {
      *         if the <code>serverType</code> property is not set.
      */ 
     public static Properties addDefaultProperties(final Properties props) {
-
         final String serverType = props.getProperty(Messages.get("prop.servertype"));
+
         if (serverType == null) {
             return null;
         }
+
 
         final HashMap tdsDefaults = new HashMap(2);
         tdsDefaults.put(String.valueOf(Driver.SQLSERVER), TDS_VERSION_70);
@@ -121,6 +126,9 @@ public final class DefaultProperties {
         portNumberDefaults.put(String.valueOf(Driver.SQLSERVER), String.valueOf(PORT_NUMBER_SQLSERVER));
         portNumberDefaults.put(String.valueOf(Driver.SYBASE), String.valueOf(PORT_NUMBER_SYBASE));
         addDefaultPropertyIfNotSet(props, "prop.portnumber", "prop.servertype", portNumberDefaults);
+
+        addDefaultPropertyIfNotSet(props, "prop.user", USER);
+        addDefaultPropertyIfNotSet(props, "prop.password", PASSWORD);
 
         addDefaultPropertyIfNotSet(props, "prop.databasename", DATABASE_NAME);
         addDefaultPropertyIfNotSet(props, "prop.appname", APP_NAME);
@@ -203,10 +211,10 @@ public final class DefaultProperties {
     public static String getServerType(int serverType) {
         if (serverType == Driver.SQLSERVER) {
             return SERVER_TYPE_SQLSERVER;
-        }
-        else if (serverType == Driver.SYBASE) {
+        } else if (serverType == Driver.SYBASE) {
             return SERVER_TYPE_SYBASE;
         }
+
         return null;
     }
 
@@ -220,10 +228,10 @@ public final class DefaultProperties {
     public static Integer getServerType(String serverType) {
         if (DefaultProperties.SERVER_TYPE_SQLSERVER.equals(serverType)) {
             return new Integer(Driver.SQLSERVER);
-        }
-        else if (DefaultProperties.SERVER_TYPE_SYBASE.equals(serverType)) {
+        } else if (DefaultProperties.SERVER_TYPE_SYBASE.equals(serverType)) {
             return new Integer(Driver.SYBASE);
         }
+
         return null;
     }
 
@@ -237,16 +245,14 @@ public final class DefaultProperties {
     public static Integer getTdsVersion(String tdsVersion) {
         if (DefaultProperties.TDS_VERSION_42.equals(tdsVersion)) {
             return new Integer(Driver.TDS42);
-        }
-        else if (DefaultProperties.TDS_VERSION_50.equals(tdsVersion)) {
+        } else if (DefaultProperties.TDS_VERSION_50.equals(tdsVersion)) {
             return new Integer(Driver.TDS50);
-        }
-        else if (DefaultProperties.TDS_VERSION_70.equals(tdsVersion)) {
+        } else if (DefaultProperties.TDS_VERSION_70.equals(tdsVersion)) {
             return new Integer(Driver.TDS70);
-        }
-        else if (DefaultProperties.TDS_VERSION_80.equals(tdsVersion)) {
+        } else if (DefaultProperties.TDS_VERSION_80.equals(tdsVersion)) {
             return new Integer(Driver.TDS80);
         }
+
         return null;
     }
 

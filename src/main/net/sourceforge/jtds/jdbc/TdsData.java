@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.26 2004-09-16 13:53:45 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.27 2004-10-05 17:14:04 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1994,8 +1994,12 @@ public class TdsData {
      * @param month The month 1-12.
      * @param day The day in month 1-31.
      * @return The julian date adjusted for Sybase epoch of 1900.
+     * @throws SQLException if the date is outside the accepted range, 1753-9999
      */
-    private static int calendarToSybDate(int year, int month, int day) {
+    private static int calendarToSybDate(int year, int month, int day) throws SQLException {
+        if (year < 1753 || year > 9999) {
+            throw new SQLException(Messages.get("error.datetime.range"), "22003");
+        }
 
         return day - 32075 + 1461 * (year + 4800 + (month - 14) / 12) /
         4 + 367 * (month - 2 - (month - 14) / 12 * 12) /
@@ -2045,10 +2049,9 @@ public class TdsData {
      *
      * @param out The server request stream.
      * @param value The date value to write.
-     * @throws IOException
      */
     private static void putDateTimeValue(RequestStream out, Object value)
-    throws IOException {
+            throws SQLException, IOException {
         int daysSince1900;
         int time;
 

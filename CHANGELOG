@@ -1,6 +1,12 @@
 Changes from jTDS 0.9
 =========================
 
+10/05/2004 - Alin Sinpalean
+ o Corrected bug [1040475] Possible bug when converting to and from datetime.
+   SQL Server seems to accept datetime values outside the 1753-9999 range as
+   long as they are submitted as SYBDATETIME values and not as Strings and they
+   are read back just fine. Weird.
+
 10/04/2004 - Alin Sinpalean
  o Corrected a bug in TdsCore causing "java.sql.SQLException: Output parameters
    have not yet been processed. Call getMoreResults()." to be thrown with

@@ -2321,10 +2321,9 @@ public class TimestampTest extends DatabaseTestCase {
      */
     public void testTimestampTimeZone() throws SQLException {
         Statement stmt = con.createStatement();
-        stmt.executeUpdate("CREATE TABLE #tst_tstamp ("
+        stmt.executeUpdate("CREATE TABLE #testTimestampTimeZone ("
                 + "ref INT NOT NULL, "
-                + "tstamp DATETIME NOT NULL, "
-                + "CONSTRAINT PK_dummy PRIMARY KEY (ref))");
+                + "tstamp DATETIME NOT NULL)");
         stmt.close();
 
         Calendar calNY = Calendar.getInstance
@@ -2333,14 +2332,14 @@ public class TimestampTest extends DatabaseTestCase {
         Timestamp tsStart = new Timestamp(System.currentTimeMillis());
 
         PreparedStatement pstmt = con.prepareStatement(
-                "INSERT INTO #tst_tstamp (ref, tstamp) VALUES (?, ?)");
+                "INSERT INTO #testTimestampTimeZone (ref, tstamp) VALUES (?, ?)");
         pstmt.setInt(1, 0);
         pstmt.setTimestamp(2, tsStart, calNY);
         assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
 
         pstmt = con.prepareStatement(
-                "SELECT * FROM #tst_tstamp WHERE ref = ?");
+                "SELECT * FROM #testTimestampTimeZone WHERE ref = ?");
         pstmt.setInt(1, 0);
         ResultSet rs = pstmt.executeQuery();
         assertTrue(rs.next());
@@ -2350,5 +2349,33 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue(Math.abs(tsStart.getTime()-ts.getTime()) < 3);
         rs.close();
         pstmt.close();
+    }
+
+    /**
+     * Test for bug [1040475] Possible bug when converting to and from
+     * datetime. jTDS seems to accept dates outside the range accepted by SQL
+     * Server (i.e. 1753-9999).
+     */
+    public void testTimestampRange() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate(
+                "CREATE TABLE #testTimestampRange (id INT, d DATETIME)");
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO #testTimestampRange VALUES (?, ?)");
+        pstmt.setInt(1, 1);
+        pstmt.setDate(2, Date.valueOf("0012-03-03")); // This should fail
+        try {
+            pstmt.executeUpdate();
+            fail("Expecting an exception to be thrown. Date out of range.");
+        } catch (SQLException ex) {
+            assertEquals("22003", ex.getSQLState());
+        }
+        pstmt.close();
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #testTimestampRange");
+        assertFalse("Row was inserted even though date was out of range.", rs.next());
+        rs.close();
+        stmt.close();
     }
 }

@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.24 2004-11-17 09:52:02 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.25 2004-11-17 10:12:02 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -923,7 +923,9 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         cursor(CURSOR_OP_DELETE, null);
-        cursorFetch(FETCH_REPEAT, 1);
+        // No need to re-fetch the row, just mark it as deleted
+//        cursorFetch(FETCH_REPEAT, 1);
+        currentRow[currentRow.length - 1].setValue(new Integer(SQL_ROW_DELETED));
     }
 
     public void insertRow() throws SQLException {

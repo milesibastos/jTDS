@@ -36,7 +36,9 @@ package net.sourceforge.jtds.jdbc;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * A SQL statement is pre-compiled and stored in a PreparedStatement object.
@@ -54,13 +56,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.22 2004-02-20 00:09:09 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.23 2004-02-20 23:57:18 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.22 2004-02-20 00:09:09 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.23 2004-02-20 23:57:18 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -835,7 +837,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      * @see                      Statement#addBatch
      */
-    public synchronized void addBatch() throws java.sql.SQLException {
+    public synchronized void addBatch() throws SQLException {
         if (batchValues == null) {
             batchValues = new ArrayList();
         }
@@ -889,7 +891,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      */
     public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length)
-        throws java.sql.SQLException
+        throws SQLException
     {
         if( reader==null || length<0 )
             setString(parameterIndex, null);
@@ -918,7 +920,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  x                 an object representing data of an SQL REF Type
      * @exception  SQLException  if a database access error occurs
      */
-    public void setRef( int i, java.sql.Ref x ) throws java.sql.SQLException
+    public void setRef( int i, java.sql.Ref x ) throws SQLException
     {
         NotImplemented();
     }
@@ -931,7 +933,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      */
     public void setBlob( int parameterIndex, java.sql.Blob blob )
-        throws java.sql.SQLException
+        throws SQLException
     {
         if( blob == null )
             setBinaryStream(parameterIndex, null, 0);
@@ -954,7 +956,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      */
     public void setClob( int parameterIndex, java.sql.Clob clob )
-        throws java.sql.SQLException
+        throws SQLException
     {
         if( clob == null )
             setCharacterStream(parameterIndex, null, 0);
@@ -976,7 +978,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  x                 an object representing an SQL array
      * @exception  SQLException  if a database access error occurs
      */
-    public void setArray( int i, java.sql.Array x ) throws java.sql.SQLException
+    public void setArray( int i, java.sql.Array x ) throws SQLException
     {
         NotImplemented();
     }
@@ -987,7 +989,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @return                   the description of a ResultSet's columns
      * @exception  SQLException  if a database access error occurs
      */
-    public java.sql.ResultSetMetaData getMetaData() throws java.sql.SQLException
+    public java.sql.ResultSetMetaData getMetaData() throws SQLException
     {
         NotImplemented();
         return null;
@@ -1002,16 +1004,24 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * no <code>Calendar</code> object is specified, the driver uses the
      * default timezone and locale.
      *
-     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
-     * @param  x                 the parameter value
-     * @param  cal               the <code>Calendar</code> object the driver will
+     * @param  parameterIndex the first parameter is 1, the second is 2, ...
+     * @param  date the parameter value
+     * @param  calendar the <code>Calendar</code> object the driver will
      *      use to construct the date
      * @exception  SQLException  if a database access error occurs
      */
-    public void setDate( int parameterIndex, java.sql.Date x, java.util.Calendar cal )
-             throws java.sql.SQLException
-    {
-        NotImplemented();
+    public void setDate(int parameterIndex, java.sql.Date date, Calendar calendar)
+             throws SQLException {
+        if (date != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = date.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            date = new java.sql.Date(newTime);
+        }
+
+        setDate(parameterIndex, date);
     }
 
     /**
@@ -1023,16 +1033,24 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * no <code>Calendar</code> object is specified, the driver uses the
      * default timezone and locale.
      *
-     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
-     * @param  x                 the parameter value
-     * @param  cal               the <code>Calendar</code> object the driver will
+     * @param  parameterIndex the first parameter is 1, the second is 2, ...
+     * @param  time the parameter value
+     * @param  calendar the <code>Calendar</code> object the driver will
      *      use to construct the time
      * @exception  SQLException  if a database access error occurs
      */
-    public void setTime( int parameterIndex, java.sql.Time x, java.util.Calendar cal )
-             throws java.sql.SQLException
-    {
-        NotImplemented();
+    public void setTime(int parameterIndex, java.sql.Time time, Calendar calendar)
+             throws SQLException {
+        if (time != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = time.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            time = new java.sql.Time(newTime);
+        }
+
+        setTime(parameterIndex, time);
     }
 
     /**
@@ -1045,17 +1063,25 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * the default timezone and locale.
      *
      * @param  parameterIndex    the first parameter is 1, the second is 2, ...
-     * @param  x                 the parameter value
-     * @param  cal               the <code>Calendar</code> object the driver will
+     * @param  timestamp the parameter value
+     * @param  calendar the <code>Calendar</code> object the driver will
      *      use to construct the timestamp
      * @exception  SQLException  if a database access error occurs
      */
-    public void setTimestamp( int parameterIndex,
-            java.sql.Timestamp x,
-            java.util.Calendar cal )
-             throws java.sql.SQLException
-    {
-        NotImplemented();
+    public void setTimestamp(int parameterIndex,
+                             java.sql.Timestamp timestamp,
+                             Calendar calendar)
+             throws SQLException {
+        if (timestamp != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = timestamp.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            timestamp = new java.sql.Timestamp(newTime);
+        }
+
+        setTimestamp(parameterIndex, timestamp);
     }
 
     /**
@@ -1081,18 +1107,18 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      */
     public void setNull( int paramIndex, int sqlType, String typeName )
-             throws java.sql.SQLException
+             throws SQLException
     {
         NotImplemented();
     }
 
-    public java.sql.ParameterMetaData getParameterMetaData() throws java.sql.SQLException
+    public java.sql.ParameterMetaData getParameterMetaData() throws SQLException
     {
         NotImplemented();
         return null;
     }
 
-    public void setURL(int param, java.net.URL url) throws java.sql.SQLException
+    public void setURL(int param, java.net.URL url) throws SQLException
     {
         NotImplemented();
     }

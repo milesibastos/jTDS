@@ -1,6 +1,17 @@
 Changes from jTDS 0.6
 ========================
 
+02/20/2004 - Brian Heineman
+ o Implemented ResultSet.getDate(int,Calendar)
+ o Implemented ResultSet.getTime(int,Calendar)
+ o Implemented ResultSet.getTimestamp(int,Calendar)
+ o Implemented CallableStatement.setDate(int,Date,Calendar)
+ o Implemented CallableStatement.setTime(int,Time,Calendar)
+ o Implemented CallableStatement.setTimestamp(int,Timestamp,Calendar)
+ o Implemented PreparedStatement.setDate(int,Date,Calendar)
+ o Implemented PreparedStatement.setTime(int,Time,Calendar)
+ o Implemented PreparedStatement.setTimestamp(int,Timestamp,Calendar)
+
 02/19/2004 - Alin Sinpalean
  o Implemented support for scrollable/updateable ResultSets from prepared/
    callable statements.

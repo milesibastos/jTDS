@@ -6,6 +6,7 @@ import java.sql.*;
 import java.text.*;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
  * This class implements all of the get and update methods, which are delegated to the row object.
@@ -16,12 +17,13 @@ import java.util.GregorianCalendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.9 2004-02-20 00:09:09 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.10 2004-02-20 23:57:17 bheineman Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.9 2004-02-20 00:09:09 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.10 2004-02-20 23:57:17 bheineman Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
+    public static final long HOUR_CONSTANT = 3600000;
 
     /**
      * Number of rows to fetch once. An implementation may ignore this.
@@ -355,18 +357,51 @@ public abstract class AbstractResultSet implements ResultSet {
         throw new java.lang.UnsupportedOperationException("Not Implemented");
     }
 
-    public java.sql.Timestamp getTimestamp(int index, Calendar cal)
+    public java.sql.Timestamp getTimestamp(int index, Calendar calendar)
     throws SQLException {
-        throw new java.lang.UnsupportedOperationException("Not Implemented");
+        java.sql.Timestamp timestamp = getTimestamp(index);
+
+        if (timestamp != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = timestamp.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            timestamp = new java.sql.Timestamp(newTime);
+        }
+
+        return timestamp;
     }
 
-    public java.sql.Date getDate(int index, Calendar cal) throws SQLException {
-        throw new java.lang.UnsupportedOperationException("Not Implemented");
+    public java.sql.Date getDate(int index, Calendar calendar) throws SQLException {
+        java.sql.Date date = getDate(index);
+
+        if (date != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = date.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            date = new java.sql.Date(newTime);
+        }
+
+        return date;
     }
 
-    public java.sql.Time getTime(int index, Calendar cal)
+    public java.sql.Time getTime(int index, Calendar calendar)
     throws SQLException {
-        throw new java.lang.UnsupportedOperationException("Not Implemented");
+        java.sql.Time time = getTime(index);
+
+        if (time != null && calendar != null) {
+            TimeZone timeZone = TimeZone.getDefault();
+            long newTime = time.getTime();
+
+            newTime -= timeZone.getRawOffset();
+            newTime += calendar.getTimeZone().getRawOffset();
+            time = new java.sql.Time(newTime);
+        }
+
+        return time;
     }
 
     public java.sql.Timestamp getTimestamp(int index) throws SQLException {

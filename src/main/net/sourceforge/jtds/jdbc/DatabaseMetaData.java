@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.18 2004-02-12 03:34:40 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.19 2004-02-16 20:14:31 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.18 2004-02-12 03:34:40 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.19 2004-02-16 20:14:31 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -2980,56 +2980,56 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     public boolean supportsResultSetConcurrency( int type, int concurrency )
              throws SQLException
     {
-        // jTDS only supports read-only ResultSets
-        return concurrency==ResultSet.CONCUR_READ_ONLY;
+        // jTDS supports both read-only and updatable ResultSets (more or less)
+        return true;
     }
 
     /**
      * JDBC 2.0 Indicates whether a result set's own updates are visible.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   <code>true</code> if updates are visible for the
      *      result set type; <code>false</code> otherwise
      * @exception  SQLException  if a database access error occurs
      */
     public boolean ownUpdatesAreVisible( int type ) throws SQLException
     {
-        // Updates not supported, so just return false
+        // No support in SQL Server for this
         return false;
     }
 
     /**
      * JDBC 2.0 Indicates whether a result set's own deletes are visible.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   <code>true</code> if deletes are visible for the
      *      result set type; <code>false</code> otherwise
      * @exception  SQLException  if a database access error occurs
      */
     public boolean ownDeletesAreVisible( int type ) throws SQLException
     {
-        // Deletes not supported, so just return false
-        return false;
+        // Yes, own deletes are visible
+        return true;
     }
 
     /**
      * JDBC 2.0 Indicates whether a result set's own inserts are visible.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   <code>true</code> if inserts are visible for the
      *      result set type; <code>false</code> otherwise
      * @exception  SQLException  if a database access error occurs
      */
     public boolean ownInsertsAreVisible( int type ) throws SQLException
     {
-        // Inserts not supported, so just return false
+        // No support in SQL Server for this
         return false;
     }
 
     /**
      * JDBC 2.0 Indicates whether updates made by others are visible.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   <code>true</code> if updates made by others are
      *      visible for the result set type; <code>false</code> otherwise
      * @exception  SQLException  if a database access error occurs
@@ -3043,21 +3043,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * JDBC 2.0 Indicates whether deletes made by others are visible.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   <code>true</code> if deletes made by others are
      *      visible for the result set type; <code>false</code> otherwise
      * @exception  SQLException  if a database access error occurs
      */
     public boolean othersDeletesAreVisible( int type ) throws SQLException
     {
-        // Deletes not supported, so just return false
-        return false;
+        // @todo Make sure this is indeed true
+        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
     }
 
     /**
      * JDBC 2.0 Indicates whether inserts made by others are visible.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   true if updates are visible for the result set
      *      type
      * @return                   <code>true</code> if inserts made by others are
@@ -3074,14 +3074,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * JDBC 2.0 Indicates whether or not a visible row update can be detected
      * by calling the method <code>ResultSet.rowUpdated</code> .
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   <code>true</code> if changes are detected by the
      *      result set type; <code>false</code> otherwise
      * @exception  SQLException  if a database access error occurs
      */
     public boolean updatesAreDetected( int type ) throws SQLException
     {
-        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
+        return false;
     }
 
     /**
@@ -3089,7 +3089,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * by calling ResultSet.rowDeleted(). If deletesAreDetected() returns
      * false, then deleted rows are removed from the result set.
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   true if changes are detected by the resultset
      *      type
      * @exception  SQLException  if a database access error occurs
@@ -3103,14 +3103,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * JDBC 2.0 Indicates whether or not a visible row insert can be detected
      * by calling ResultSet.rowInserted().
      *
-     * @param  type              @todo Description of Parameter
+     * @param  type              </code>ResultSet<code> type
      * @return                   true if changes are detected by the resultset
      *      type
      * @exception  SQLException  if a database access error occurs
      */
     public boolean insertsAreDetected( int type ) throws SQLException
     {
-        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
+        return false;
     }
 
     /**
@@ -3118,7 +3118,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      *
      * @return                   true if the driver supports batch updates; false
      *      otherwise
-     * @exception  SQLException  @todo Description of Exception
+     * @exception  SQLException  never
      */
     public boolean supportsBatchUpdates() throws SQLException {
         return true;

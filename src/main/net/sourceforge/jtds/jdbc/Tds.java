@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.20 2004-01-29 22:04:23 bheineman Exp $
+ *@version    $Id: Tds.java,v 1.21 2004-01-29 22:36:48 bheineman Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.20 2004-01-29 22:04:23 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.21 2004-01-29 22:36:48 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -3572,9 +3572,9 @@ public class Tds implements TdsDefinitions
                          + "";
 
                 stmt.execute(sql);
-                stmt.execute("sp_procxmode " +
-                        procNameGeneratorName +
-                        ", 'anymode' ");
+                stmt.execute("exec sp_procxmode "
+                             + procNameGeneratorName
+                             + ", 'anymode' ");
             }
             catch (java.sql.SQLException e) {
                 // don't care

@@ -60,7 +60,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -76,17 +76,17 @@ public class LOBTest extends TestBase {
         InputStream is = rs.getBinaryStream(1);
         byte[] isTmpData = new byte[data.length];
 
-        assertTrue(is.read(isTmpData) == data.length);
-        assertTrue(is.read() == -1);
+        assertEquals(is.read(isTmpData), data.length);
+        assertEquals(is.read(), -1);
         assertTrue(Arrays.equals(data, isTmpData));
 
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
 
-        assertTrue(blob != null);
+        assertNotNull(blob);
 
         // Test Blob.length()
-        assertTrue(blob.length() == data.length);
+        assertEquals(blob.length(), data.length);
 
         // Test Blob.getBytes()
         byte[] tmpData2 = blob.getBytes(1L, (int) blob.length());
@@ -113,7 +113,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBinaryStream()
         pstmt.setBinaryStream(1, new ByteArrayInputStream(data), data.length);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -129,7 +129,7 @@ public class LOBTest extends TestBase {
 
         Blob blob = (Blob) result;
 
-        assertTrue(data.length == blob.length());
+        assertEquals(data.length, blob.length());
 
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
@@ -150,7 +150,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBinaryStream()
         pstmt.setBinaryStream(1, new ByteArrayInputStream(data), data.length);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -178,7 +178,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -202,7 +202,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBlob()
         pstmt2.setBlob(1, blob);
-        assertTrue(pstmt2.executeUpdate() == 1);
+        assertEquals(pstmt2.executeUpdate(), 1);
 
         pstmt2.close();
 
@@ -233,7 +233,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,byte[])
         pstmt.setObject(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -261,7 +261,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -285,7 +285,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Blob)
         pstmt2.setObject(1, blob);
-        assertTrue(pstmt2.executeUpdate() == 1);
+        assertEquals(pstmt2.executeUpdate(), 1);
 
         pstmt2.close();
 
@@ -316,7 +316,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,byte[],int)
         pstmt.setObject(1, data, Types.BINARY);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -344,7 +344,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,byte[],int)
         pstmt.setObject(1, data, Types.VARBINARY);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -372,7 +372,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -396,7 +396,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Blob,int)
         pstmt2.setObject(1, blob, Types.BLOB);
-        assertTrue(pstmt2.executeUpdate() == 1);
+        assertEquals(pstmt2.executeUpdate(), 1);
 
         pstmt2.close();
 
@@ -497,7 +497,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -560,7 +560,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -620,7 +620,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBinaryStream()
         pstmt.setBinaryStream(1, null, 0);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -630,19 +630,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs.getBinaryStream(1) == null);
+        assertNull(rs.getBinaryStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs.getBlob(1) == null);
+        assertNull(rs.getBlob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs.getBytes(1) == null);
+        assertNull(rs.getBytes(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -659,7 +659,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBlob()
         pstmt.setBlob(1, null);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -669,19 +669,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs.getBinaryStream(1) == null);
+        assertNull(rs.getBinaryStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs.getBlob(1) == null);
+        assertNull(rs.getBlob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs.getBytes(1) == null);
+        assertNull(rs.getBytes(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -698,7 +698,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, null);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -708,19 +708,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs.getBinaryStream(1) == null);
+        assertNull(rs.getBinaryStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs.getBlob(1) == null);
+        assertNull(rs.getBlob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs.getBytes(1) == null);
+        assertNull(rs.getBytes(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -740,7 +740,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Object)
         pstmt.setObject(1, null);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -750,19 +750,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs.getBinaryStream(1) == null);
+        assertNull(rs.getBinaryStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs.getBlob(1) == null);
+        assertNull(rs.getBlob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs.getBytes(1) == null);
+        assertNull(rs.getBytes(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -779,7 +779,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Object,int)
         pstmt.setObject(1, null, Types.BLOB);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -789,19 +789,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs.getBinaryStream(1) == null);
+        assertNull(rs.getBinaryStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs.getBlob(1) == null);
+        assertNull(rs.getBlob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs.getBytes(1) == null);
+        assertNull(rs.getBytes(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -818,7 +818,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setNull()
         pstmt.setNull(1, Types.BLOB);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -828,19 +828,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs.getBinaryStream(1) == null);
+        assertNull(rs.getBinaryStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs.getBlob(1) == null);
+        assertNull(rs.getBlob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs.getBytes(1) == null);
+        assertNull(rs.getBytes(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -873,19 +873,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs2.getBinaryStream(1) == null);
+        assertNull(rs2.getBinaryStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs2.getBlob(1) == null);
+        assertNull(rs2.getBlob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs2.getBytes(1) == null);
+        assertNull(rs2.getBytes(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -918,19 +918,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs2.getBinaryStream(1) == null);
+        assertNull(rs2.getBinaryStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs2.getBlob(1) == null);
+        assertNull(rs2.getBlob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs2.getBytes(1) == null);
+        assertNull(rs2.getBytes(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -963,19 +963,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs2.getBinaryStream(1) == null);
+        assertNull(rs2.getBinaryStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs2.getBlob(1) == null);
+        assertNull(rs2.getBlob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs2.getBytes(1) == null);
+        assertNull(rs2.getBytes(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -1008,19 +1008,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs2.getBinaryStream(1) == null);
+        assertNull(rs2.getBinaryStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs2.getBlob(1) == null);
+        assertNull(rs2.getBlob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs2.getBytes(1) == null);
+        assertNull(rs2.getBytes(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -1053,19 +1053,19 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getBinaryStream()
-        assertTrue(rs2.getBinaryStream(1) == null);
+        assertNull(rs2.getBinaryStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBlob()
-        assertTrue(rs2.getBlob(1) == null);
+        assertNull(rs2.getBlob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getBytes()
-        assertTrue(rs2.getBytes(1) == null);
+        assertNull(rs2.getBytes(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -1087,7 +1087,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1099,7 +1099,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
         
-        assertTrue(blob != null);
+        assertNotNull(blob);
         
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
@@ -1120,7 +1120,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1132,7 +1132,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
         
-        assertTrue(blob != null);
+        assertNotNull(blob);
         
         byte[] tmpData = new byte[data.length / 2];
         
@@ -1157,7 +1157,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1169,7 +1169,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
         
-        assertTrue(blob != null);
+        assertNotNull(blob);
         
         byte[] tmpData = new byte[data.length / 2];
         
@@ -1195,7 +1195,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1207,10 +1207,10 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
         
-        assertTrue(blob != null);
+        assertNotNull(blob);
         
         // Test Blob.length()
-        assertTrue(data.length == blob.length());
+        assertEquals(data.length, blob.length());
 
         assertTrue(!rs.next());
         stmt2.close();
@@ -1228,7 +1228,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setBytes()
         pstmt.setBytes(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1240,7 +1240,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
         
-        assertTrue(blob != null);
+        assertNotNull(blob);
 
         byte[] tmpData = new byte[data.length / 2];
         
@@ -1248,7 +1248,7 @@ public class LOBTest extends TestBase {
         
         // Test Blob.truncate()
         blob.truncate(tmpData.length);
-        assertTrue(tmpData.length == blob.length());
+        assertEquals(tmpData.length, blob.length());
         
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, (int) blob.length())));
@@ -1274,7 +1274,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobget1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1301,10 +1301,10 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
-        assertTrue(clob != null);
+        assertNotNull(clob);
 
         // Test Clob.length()
-        assertTrue(clob.length() == data.length());
+        assertEquals(clob.length(), data.length());
 
         // Test Clob.getSubString()
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
@@ -1333,7 +1333,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setCharacterStream()
         pstmt.setCharacterStream(1, new StringReader(data), data.length());
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1349,7 +1349,7 @@ public class LOBTest extends TestBase {
 
         Clob clob = (Clob) result;
 
-        assertTrue(data.length() == clob.length());
+        assertEquals(data.length(), clob.length());
 
         // Test Clob.getSubString()
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
@@ -1370,7 +1370,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setAsciiStream()
         pstmt.setAsciiStream(1, new ByteArrayInputStream(data.getBytes("ASCII")), data.length());
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1398,7 +1398,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setCharacterStream()
         pstmt.setCharacterStream(1, new StringReader(data), data.length());
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1426,7 +1426,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1450,7 +1450,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setClob()
         pstmt2.setClob(1, clob);
-        assertTrue(pstmt2.executeUpdate() == 1);
+        assertEquals(pstmt2.executeUpdate(), 1);
 
         pstmt2.close();
 
@@ -1481,7 +1481,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setUnicodeStream()
         pstmt.setUnicodeStream(1, new ByteArrayInputStream(data.getBytes("UTF-16BE")), data.length());
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1509,7 +1509,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,String)
         pstmt.setObject(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1537,7 +1537,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1561,7 +1561,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Clob)
         pstmt2.setObject(1, clob);
-        assertTrue(pstmt2.executeUpdate() == 1);
+        assertEquals(pstmt2.executeUpdate(), 1);
 
         pstmt2.close();
 
@@ -1592,7 +1592,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,String,int)
         pstmt.setObject(1, data, Types.LONGVARCHAR);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1620,7 +1620,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1644,7 +1644,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Clob,int)
         pstmt2.setObject(1, clob, Types.CLOB);
-        assertTrue(pstmt2.executeUpdate() == 1);
+        assertEquals(pstmt2.executeUpdate(), 1);
 
         pstmt2.close();
 
@@ -1778,7 +1778,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1841,7 +1841,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1901,7 +1901,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setAsciiStream()
         pstmt.setAsciiStream(1, null, 0);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1911,27 +1911,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -1948,7 +1948,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setCharacterStream()
         pstmt.setCharacterStream(1, null, 0);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -1958,27 +1958,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -1995,7 +1995,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setClob()
         pstmt.setClob(1, null);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2005,27 +2005,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -2042,7 +2042,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Object)
         pstmt.setObject(1, null);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2052,27 +2052,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -2089,7 +2089,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setObject(int,Object,int)
         pstmt.setObject(1, null, Types.CLOB);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2099,27 +2099,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -2136,7 +2136,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setString()
         pstmt.setString(1, null);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2146,27 +2146,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -2183,7 +2183,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setUnicodeStream()
         pstmt.setUnicodeStream(1, null, 0);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2193,27 +2193,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -2230,7 +2230,7 @@ public class LOBTest extends TestBase {
 
         // Test PreparedStatement.setNull()
         pstmt.setNull(1, Types.CLOB);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2240,27 +2240,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs.getAsciiStream(1) == null);
+        assertNull(rs.getAsciiStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs.getCharacterStream(1) == null);
+        assertNull(rs.getCharacterStream(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs.getClob(1) == null);
+        assertNull(rs.getClob(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs.getObject(1) == null);
+        assertNull(rs.getObject(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs.getString(1) == null);
+        assertNull(rs.getString(1));
         assertTrue(rs.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs.getUnicodeStream(1) == null);
+        assertNull(rs.getUnicodeStream(1));
         assertTrue(rs.wasNull());
 
         assertTrue(!rs.next());
@@ -2293,27 +2293,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs2.getAsciiStream(1) == null);
+        assertNull(rs2.getAsciiStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs2.getCharacterStream(1) == null);
+        assertNull(rs2.getCharacterStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs2.getClob(1) == null);
+        assertNull(rs2.getClob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs2.getString(1) == null);
+        assertNull(rs2.getString(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs2.getUnicodeStream(1) == null);
+        assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -2346,27 +2346,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs2.getAsciiStream(1) == null);
+        assertNull(rs2.getAsciiStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs2.getCharacterStream(1) == null);
+        assertNull(rs2.getCharacterStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs2.getClob(1) == null);
+        assertNull(rs2.getClob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs2.getString(1) == null);
+        assertNull(rs2.getString(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs2.getUnicodeStream(1) == null);
+        assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -2399,27 +2399,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs2.getAsciiStream(1) == null);
+        assertNull(rs2.getAsciiStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs2.getCharacterStream(1) == null);
+        assertNull(rs2.getCharacterStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs2.getClob(1) == null);
+        assertNull(rs2.getClob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs2.getString(1) == null);
+        assertNull(rs2.getString(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs2.getUnicodeStream(1) == null);
+        assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -2452,27 +2452,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs2.getAsciiStream(1) == null);
+        assertNull(rs2.getAsciiStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs2.getCharacterStream(1) == null);
+        assertNull(rs2.getCharacterStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs2.getClob(1) == null);
+        assertNull(rs2.getClob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs2.getString(1) == null);
+        assertNull(rs2.getString(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs2.getUnicodeStream(1) == null);
+        assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -2505,27 +2505,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs2.getAsciiStream(1) == null);
+        assertNull(rs2.getAsciiStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs2.getCharacterStream(1) == null);
+        assertNull(rs2.getCharacterStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs2.getClob(1) == null);
+        assertNull(rs2.getClob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs2.getString(1) == null);
+        assertNull(rs2.getString(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs2.getUnicodeStream(1) == null);
+        assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -2558,27 +2558,27 @@ public class LOBTest extends TestBase {
         assertTrue(rs2.next());
 
         // Test ResultSet.getAsciiStream()
-        assertTrue(rs2.getAsciiStream(1) == null);
+        assertNull(rs2.getAsciiStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getCharacterStream()
-        assertTrue(rs2.getCharacterStream(1) == null);
+        assertNull(rs2.getCharacterStream(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getClob()
-        assertTrue(rs2.getClob(1) == null);
+        assertNull(rs2.getClob(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getObject()
-        assertTrue(rs2.getObject(1) == null);
+        assertNull(rs2.getObject(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getString()
-        assertTrue(rs2.getString(1) == null);
+        assertNull(rs2.getString(1));
         assertTrue(rs2.wasNull());
 
         // Test ResultSet.getUnicodeStream()
-        assertTrue(rs2.getUnicodeStream(1) == null);
+        assertNull(rs2.getUnicodeStream(1));
         assertTrue(rs2.wasNull());
 
         assertTrue(!rs2.next());
@@ -2596,7 +2596,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2608,7 +2608,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
-        assertTrue(clob != null);
+        assertNotNull(clob);
 
         // Test Clob.getSubString()
         assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
@@ -2628,7 +2628,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring2 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2640,7 +2640,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
-        assertTrue(clob != null);
+        assertNotNull(clob);
 
         String tmpData = data.substring(0, data.length() / 2);
         
@@ -2662,7 +2662,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring3 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2674,7 +2674,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
-        assertTrue(clob != null);
+        assertNotNull(clob);
 
         // Offset data by 1
         String tmpData = data.substring(1, data.length() / 2);
@@ -2697,7 +2697,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #cloblength1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2709,10 +2709,10 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
-        assertTrue(clob != null);
+        assertNotNull(clob);
         
         // Test Clob.length()
-        assertTrue(data.length() == clob.length());
+        assertEquals(data.length(), clob.length());
 
         assertTrue(!rs.next());
         stmt2.close();
@@ -2729,7 +2729,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobtruncate1 (data) VALUES (?)");
 
         pstmt.setString(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -2741,13 +2741,13 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
-        assertTrue(clob != null);
+        assertNotNull(clob);
 
         String tmpData = data.substring(0, data.length() / 2);
         
         // Test Clob.truncate()
         clob.truncate(tmpData.length());
-        assertTrue(tmpData.length() == clob.length());
+        assertEquals(tmpData.length(), clob.length());
         
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(1L, (int) clob.length())));

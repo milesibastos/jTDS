@@ -448,6 +448,40 @@ public class CallableStatementTest extends TestBase {
         assertTrue(cstmt.wasNull());
         cstmt.close();
     }
+
+    /**
+     * Test for bug [983432] Prepared call doesn't work with jTDS 0.8
+     */
+    public void testCallableRegisterOutParameter6() throws Exception {
+        CallableStatement cstmt = con.prepareCall("{call sp_addtype T_INTEGER, int, 'NULL'}");
+        
+        cstmt.execute();
+        cstmt.close();
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure rop6 @data T_INTEGER OUTPUT as\r\n "
+                     + "begin\r\n"
+                     + "set @data = 1\r\n"
+                     + "end");
+        stmt.close();
+        
+        cstmt = con.prepareCall("{call rop6(?)}");
+
+        cstmt.registerOutParameter(1, Types.VARCHAR);
+        cstmt.execute();
+
+        assertEquals(cstmt.getInt(1), 1);
+        assertTrue(!cstmt.wasNull());
+        cstmt.close();
+
+        stmt = con.createStatement();
+        stmt.execute("drop procedure rop6");
+        stmt.close();
+        
+        cstmt = con.prepareCall("{call sp_droptype 'T_INTEGER'}");        
+        cstmt.execute();
+        cstmt.close();        
+    }
     
     /**
      * Test for bug [991640] java.sql.Date error and RAISERROR problem

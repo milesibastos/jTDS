@@ -25,13 +25,15 @@ import net.sourceforge.jtds.jdbc.*;
 import net.sourceforge.jtds.jdbcx.proxy.*;
 
 /**
+ * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.7 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: PooledConnection.java,v 1.8 2004-10-10 20:37:15 alin_sinpalean Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private final ArrayList _listeners = new ArrayList();
-    private Connection _connection;
     private ConnectionProxy _connectionProxy = null;
+
+    protected Connection _connection;
 
     public PooledConnection(Connection connection) {
         _connection = connection;

@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Types;
 import java.sql.ResultSet;
 import java.util.Map;
 import java.util.Properties;
@@ -33,7 +34,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.ref.WeakReference;
+import javax.transaction.xa.XAException;
 
+import net.sourceforge.jtds.jdbcx.JtdsXid;
 import net.sourceforge.jtds.util.*;
 
 /**
@@ -57,7 +60,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.37 2004-10-07 09:12:48 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.38 2004-10-10 20:37:14 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -216,6 +219,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int loginTimeout = 0;
     /** Sybase capability mask.*/
     private int sybaseInfo = 0;
+    /** True if running distributed transaction. */
+    private boolean xaTransaction = false;
 
     /**
      * Default constructor.
@@ -1078,6 +1083,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Check that this connection is in local transaction mode.
+     *
+     * @param method The method name being tested.
+     * @throws SQLException if in XA distributed transaction mode
+     */
+    void checkLocal(String method) throws SQLException {
+        if (xaTransaction) {
+            throw new SQLException(
+                    Messages.get("error.connection.badxaop", method), "HY010");
+        }
+    }
+
+    /**
      * Report that user tried to call a method which has not been implemented.
      *
      * @param method The method name to report in the error message.
@@ -1134,11 +1152,125 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieve the host and port for this connection.
+     * <p>
+     * Used to identify same resource manager in XA transactions.
+     *
+     * @return the hostname and port as a <code>String</code>.
+     */
+    public String getRmHost()
+    {
+        return serverName + ":" + portNumber;
+    }
+
+    /**
      * Used to force the closed status on the statement if an
      * IO error has occurred.
      */
     void setClosed() {
         closed = true;
+    }
+
+    /**
+     * Invoke the <code>xp_jtdsxa</code> extended stored procedure on the server.
+     *
+     * @param args the arguments eg cmd, rmid, flags etc.
+     * @param data option byte data eg open string xid etc.
+     * @return optional byte data eg OLE cookie.
+     * @throws SQLException if an error condition occurs
+     */
+    byte[]  sendXaPacket(int args[], byte[] data)
+            throws SQLException
+    {
+        ParamInfo params[] = new ParamInfo[6];
+        params[0] = new ParamInfo(-1);
+        params[0].isSet    = false;
+        params[0].jdbcType = Types.INTEGER;
+        params[0].isRetVal = true;
+        params[0].isOutput = true;
+        params[1] = new ParamInfo(-1);
+        params[1].isSet    = true;
+        params[1].jdbcType = Types.INTEGER;
+        params[1].value    = new Integer(args[1]);
+        params[2] = new ParamInfo(-1);
+        params[2].isSet    = true;
+        params[2].jdbcType = Types.INTEGER;
+        params[2].value    = new Integer(args[2]);
+        params[3] = new ParamInfo(-1);
+        params[3].isSet    = true;
+        params[3].jdbcType = Types.INTEGER;
+        params[3].value    = new Integer(args[3]);
+        params[4] = new ParamInfo(-1);
+        params[4].isSet    = true;
+        params[4].jdbcType = Types.INTEGER;
+        params[4].value    = new Integer(args[4]);
+        params[5] = new ParamInfo(-1);
+        params[5].isSet    = true;
+        params[5].jdbcType = Types.VARBINARY;
+        params[5].value    = data;
+        params[5].isOutput = true;
+        params[5].length   = (data == null)? 0: data.length;
+        //
+        // Execute our extended stored procedure (let's hope it is installed!).
+        //
+        baseTds.executeSQL(null, "master..xp_jtdsxa", params, false, 0, 0);
+        //
+        // Now process results
+        //
+        ArrayList xids = new ArrayList();
+        while (!baseTds.isEndOfResponse()) {
+            if (baseTds.getMoreResults()) {
+                // This had better be the results from a xa_recover command
+                while (baseTds.getNextRow()) {
+                    ColData row[] = baseTds.getRowData();
+                    if (row.length == 1 && row[0].getValue() instanceof byte[]) {
+                        xids.add(row[0].getValue());
+                    }
+                }
+            }
+        }
+        messages.checkErrors();
+        if (params[0].value instanceof Integer) {
+            // Should be return code from XA command
+            args[0] = ((Integer)params[0].value).intValue();
+        } else {
+            args[0] = XAException.XAER_RMFAIL;
+        }
+        if (xids.size() > 0) {
+            // List of XIDs from xa_recover
+            byte buffer[] = new byte[xids.size() * JtdsXid.XID_SIZE];
+            for (int i = 0; i < xids.size(); i++) {
+                byte[] xid = (byte[])xids.get(i);
+                System.arraycopy(xid, 0, buffer, i * JtdsXid.XID_SIZE, xid.length);
+            }
+            return buffer;
+        } else
+        if (params[5].value instanceof byte[]) {
+            // xa_open  the xa connection ID
+            // xa_start OLE Transaction cookie
+            return (byte[])params[5].value;
+        } else {
+            // All other cases
+            return null;
+        }
+    }
+
+    /**
+     * Enlist the current connection in a distributed transaction.
+     *
+     * @param oleTranID the OLE transaction cookie or null to delist
+     * @throws SQLException if an error condition occurs
+     */
+    void enlistConnection(byte[] oleTranID)
+            throws SQLException
+    {
+        if (oleTranID != null) {
+            baseTds.enlistConnection(1, oleTranID);
+            xaTransaction = true;
+        } else {
+            baseTds.enlistConnection(1, null);
+            xaTransaction = false;
+        }
     }
 
     //
@@ -1204,6 +1336,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     synchronized public void commit() throws SQLException {
         checkOpen();
+        checkLocal("commit");
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
         procInTran.clear();
@@ -1212,6 +1345,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     synchronized public void rollback() throws SQLException {
         checkOpen();
+        checkLocal("rollback");
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
 
@@ -1295,6 +1429,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     synchronized public void setAutoCommit(boolean autoCommit) throws SQLException {
         checkOpen();
+        checkLocal("setAutoCommit");
 
         if (this.autoCommit != autoCommit) {
             commit();

@@ -1,21 +1,13 @@
 #
 # The URL of the server to which you want to connect
 #
-# Replace SERVER-NAME with the name of your server
-#
-# Replace DB-NAME with the name of the defult database
-# to use
-#
 driver=net.sourceforge.jtds.jdbc.Driver
-url=jdbc:jtds:sqlserver://SERVER-NAME/DB-NAME
-user=sa
-password=
-
-#driver=com.jnetdirect.jsql.JSQLDriver
-#url=jdbc:JSQLConnect://SERVER-NAME/database=DB-NAME
-
-#driver=com.inet.tds.TdsDriver
-#url=jdbc:inetdae7:SERVER-NAME?database=DB-NAME
+url=jdbc:jtds:sqlserver://localhost/dbname
+USER=XXXX
+PASSWORD=YYYY
+SERVERNAME=localhost
+PORTNUMBER=1433
+DATABASENAME=dbname
 
 #
 # TDS Version
@@ -27,11 +19,16 @@ password=
 #TDS=4.2
 
 #
+# Use this for Sybase 10+
+#
+#TDS=5.0
+
+#
 # Use this for MS SQL Server 7.0+
 #
 #TDS=7.0
 
 #
-# Use this for MS SQL Server 2000 or 2005 (default)
+# Use this for MS SQL Server 2000 (default)
 #
 TDS=8.0

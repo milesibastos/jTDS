@@ -618,9 +618,9 @@ public class CachedResultSet extends JtdsResultSet {
                          }
                          sql.append(columns[i].realName);
                          sql.append("=?");
-                         count++;
                          params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
                      }
+                     count++;
                  }
              }
              ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);

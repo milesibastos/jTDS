@@ -173,12 +173,38 @@ public class Tds8Test extends DatabaseTestCase {
     public void testMetaData() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("create table #testrsmd (id int, data varchar(10), num decimal(10,2))");
+        stmt.close();
+
         PreparedStatement pstmt = con.prepareStatement("select * from #testrsmd where id = ?");
         ResultSetMetaData rsmd = pstmt.getMetaData();
         assertNotNull(rsmd);
         assertEquals(3, rsmd.getColumnCount());
         assertEquals("data", rsmd.getColumnName(2));
         assertEquals(2, rsmd.getScale(3));
+        pstmt.close();
+    }
+
+    /**
+     * Test for bug [1042272] jTDS doesn?t allow null value into Boolean.
+     */
+    public void testNullBoolean() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testNullBoolean (id int, data boolean)");
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into #testNullBoolean (id, value) values (?, ?)");
+        pstmt.setInt(1, 1);
+        pstmt.setNull(2, Types.BOOLEAN);
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        ResultSet rs = stmt.executeQuery("select * from #testNullBoolean");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals(null, rs.getObject(2));
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
     }
 
     public static void main(String[] args) {

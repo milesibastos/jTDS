@@ -33,7 +33,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.7 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: Logger.java,v 1.8 2004-10-10 20:37:15 alin_sinpalean Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
@@ -114,6 +114,9 @@ public class Logger {
                 break;
             case 6:
                 line.append("Cancel packet ");
+                break;
+            case 14:
+                line.append("XA control packet ");
                 break;
             case 15:
                 line.append("TDS5 Request packet ");

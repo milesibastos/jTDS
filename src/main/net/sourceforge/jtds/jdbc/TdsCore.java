@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.43 2004-10-07 09:12:48 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.44 2004-10-10 20:37:14 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -170,6 +170,8 @@ public class TdsCore {
     static final byte REPLY_PKT = 4;
     /** TDS Cancel packet. */
     static final byte CANCEL_PKT = 6;
+    /** TDS MSDTC packet. */
+    static final byte MSDTC_PKT = 14;
     /** TDS 5.0 Query packet. */
     static final byte SYBQUERY_PKT = 15;
     /** TDS 7.0 Login packet. */
@@ -1164,6 +1166,61 @@ public class TdsCore {
         }
 
         return ((Number) results).intValue();
+    }
+
+    /**
+     * Enlist the current connection in a distributed transaction or request the location of the
+     * MSDTC instance controlling the server we are connected to.
+     *
+     * @param type      set to 0 to request TM address or 1 to enlist connection
+     * @param oleTranID the 40 OLE transaction ID
+     * @return a <code>byte[]</code> array containing the TM address data
+     * @throws SQLException
+     */
+    byte[] enlistConnection(int type, byte[] oleTranID) throws SQLException {
+        try {
+            out.setPacketType(MSDTC_PKT);
+            out.write((short)type);
+            switch (type) {
+                case 0: // Get result set with location of MSTDC
+                    out.write((short)0);
+                    break;
+                case 1: // Set OLE transaction ID
+                    if (oleTranID != null) {
+                        out.write((short)oleTranID.length);
+                        out.write(oleTranID);
+                    } else {
+                        // Delist the connection from all transactions.
+                        out.write((short)0);
+                    }
+                    break;
+            }
+            out.flush();
+            endOfResponse = false;
+            endOfResults  = true;
+        } catch (IOException ioe) {
+            connection.setClosed();
+            throw Support.linkException(
+                    new SQLException(
+                            Messages.get(
+                                    "error.generic.ioerror", ioe.getMessage()),
+                            "08S01"),
+                    ioe);
+        }
+
+        byte[] tmAddress = null;
+        if (getMoreResults() && getNextRow()) {
+            if (rowData.length == 1) {
+                Object x = rowData[0].getValue();
+                if (x instanceof byte[]) {
+                    tmAddress = (byte[])x;
+                }
+            }
+        }
+
+        clearResponseQueue();
+        messages.checkErrors();
+        return tmAddress;
     }
 
 // ---------------------- Private Methods from here ---------------------
@@ -2942,7 +2999,7 @@ public class TdsCore {
             out.write(procName.substring(1));
             out.write((short) 0);
         } else {
-            byte buf[] = Support.encodeString(socket.getCharset(), procName);
+            byte buf[] = Support.encodeString(connection.getCharSet(), procName);
 
             // RPC call
             out.write((byte) TDS_DBRPC_TOKEN);

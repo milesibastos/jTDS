@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.6 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.7 2004-10-10 20:37:14 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -119,6 +119,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
     public synchronized void rollback(Savepoint savepoint) throws SQLException {
         checkOpen();
+        checkLocal("rollback");
 
         if (savepoints == null) {
             throw new SQLException(
@@ -169,6 +170,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
     public Savepoint setSavepoint() throws SQLException {
         checkOpen();
+        checkLocal("setSavepoint");
 
         if (getAutoCommit()) {
             throw new SQLException(
@@ -184,6 +186,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
     public Savepoint setSavepoint(String name) throws SQLException {
         checkOpen();
+        checkLocal("setSavepoint");
 
         if (getAutoCommit()) {
             throw new SQLException(

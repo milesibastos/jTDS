@@ -19,17 +19,20 @@ package net.sourceforge.jtds.jdbcx;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.sql.*;
-import java.util.*;
-
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
 import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
+import javax.sql.XAConnection;
+import javax.sql.XADataSource;
 
-import net.sourceforge.jtds.jdbc.*;
+import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
+import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -37,10 +40,10 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.15 2004-09-28 12:12:55 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.16 2004-10-10 20:37:15 alin_sinpalean Exp $
  */
 public class JtdsDataSource
-implements DataSource, Referenceable, Serializable {
+        implements DataSource, XADataSource, Referenceable, Serializable {
     protected String serverName;
     protected String serverType;
     protected String portNumber;
@@ -94,6 +97,27 @@ implements DataSource, Referenceable, Serializable {
         lobBuffer = props.getProperty(Messages.get("prop.lobbuffer"));
         appName = props.getProperty(Messages.get("prop.appname"));
         progName = props.getProperty(Messages.get("prop.progname"));
+    }
+
+    /**
+     * Returns a new XA database connection.
+     *
+     * @return a new database connection
+     * @throws SQLException if an error occurs
+     */
+    public XAConnection getXAConnection() throws SQLException {
+        return new JtdsXAConnection(this, getConnection(user, password));
+    }
+    /**
+     * Returns a new XA database connection for the user and password specified.
+     *
+     * @param user     the user name to connect with
+     * @param password the password to connect with
+     * @return a new database connection
+     * @throws SQLException if an error occurs
+     */
+    public XAConnection getXAConnection(String user, String password) throws SQLException {
+        return new JtdsXAConnection(this, getConnection(user, password));
     }
 
     /**

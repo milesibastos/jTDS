@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.27 2004-10-05 17:14:04 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.28 2004-10-10 20:37:14 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -524,6 +524,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
+                    // FIXME Use the collation for reading
                     return new ClobImpl(callerReference, in, false, readTextMode);
                 }
 
@@ -542,16 +543,17 @@ public class TdsData {
             case SYBVARCHAR:
                 len = in.read();
 
-                if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
-                    // In TDS 4/5 zero length strings are stored as a single space
-                    // to distinguish them from nulls.
+                if (len > 0) {
+                    // FIXME Use collation for reading
                     String value = in.readAsciiString(len);
 
-                    return (value.equals(" ")) ? "" : value;
-                }
+                    if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
+                        // In TDS 4/5 zero length strings are stored as a single space
+                        // to distinguish them from nulls.
+                        return (value.equals(" ")) ? "" : value;
+                    }
 
-                if (len > 0) {
-                    return in.readAsciiString(len);
+                    return value;
                 }
 
                 break;
@@ -2170,12 +2172,14 @@ public class TdsData {
 
             case XSYBCHAR:
             case XSYBVARCHAR:
+                // FIXME Use collation for reading the value
                 in.skip(7); // Skip collation and buffer size
 
                 return in.readAsciiString(len);
 
             case XSYBNCHAR:
             case XSYBNVARCHAR:
+                // TODO Why do we need collation for Unicode strings?
                 in.skip(7); // Skip collation and buffer size
 
                 return in.readString(len / 2);

@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.8 2004-09-28 13:12:42 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.9 2004-10-10 20:37:14 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**
@@ -186,7 +186,6 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         pi.scale = scale;
     }
 
-    // FIXME Throw an exception if the parameter is not set. Or just a warning?
     public Object getObject(int parameterIndex) throws SQLException {
         Object value = getParameter(parameterIndex, true).value;
 

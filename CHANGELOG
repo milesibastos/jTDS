@@ -1,6 +1,17 @@
 Changes from jTDS 0.6
 ========================
 
+02/16/2004 - Alin Sinpalean
+ o Implemented updateRow and insertRow in CursorResultSet. Updateable
+   ResultSets are now fully supported.
+ o Updated DatabaseMetaData to reflect the newly added functionality.
+ o Optimized the methods wrapping the sp_cursor calls.
+ o Fixed an issue in TdsStatement where exceptions would get lost when the next
+   result was a ResultSet or there were no more results (the warning chain was
+   only checked in getMoreResults if the next result was an update count).
+ o Small optimization in AbstractResultSet.
+ o Added a simple test for inserting a row in a ResultSet.
+
 02/15/2004 - Brian Heineman
  o Corrected bug in CallableStatement parsing where [ and " would cause the
    procedure name to be parsed incorrectly.

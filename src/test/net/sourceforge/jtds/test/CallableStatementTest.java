@@ -311,14 +311,14 @@ public class CallableStatementTest extends TestBase {
      */
     public void testCallableRegisterOutParameter1() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("create procedure TEST_BOOL @bool bit, @whatever int OUTPUT as\r\n "
+        stmt.execute("create procedure rop1 @bool bit, @whatever int OUTPUT as\r\n "
                      + "begin\r\n"
                      + "set @whatever = 1\r\n"
                      + "end");
         stmt.close();
     	
         try {
-            CallableStatement cstmt = con.prepareCall("{call TEST_BOOL(?,?)}");
+            CallableStatement cstmt = con.prepareCall("{call rop1(?,?)}");
 
             cstmt.setNull(1, Types.BOOLEAN);
             cstmt.registerOutParameter(2, Types.INTEGER);
@@ -328,7 +328,7 @@ public class CallableStatementTest extends TestBase {
             cstmt.close();
         } finally {
             stmt = con.createStatement();
-            stmt.execute("drop procedure TEST_BOOL");
+            stmt.execute("drop procedure rop1");
             stmt.close();
         }
     }

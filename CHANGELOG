@@ -7,6 +7,8 @@ Changes from jTDS 0.9-rc1
    sp_execute.  Currently the statement handle is not retrieved and cached so
    sp_prepexec is being called each time. Update the FAQ to indicate that
    sp_prepexec functionality is experimental.
+ o Corrected bug [1008208] 0.9-rc1 updateNull doesn't work; updated test to
+   ensure functionality continues to work in the future.
 
 08/13/2004 - David Kilzer
  o Applied patch to check if connection is null before calling

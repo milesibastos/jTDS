@@ -354,13 +354,13 @@ public class ResultSetTest extends TestBase {
 
         assertNotNull(rs);
         assertTrue(rs.next());
-        rs.updateNull(2);
-        rs.updateNull(3);
+        rs.updateNull("dsi");
+        rs.updateNull("di");
         rs.updateRow();
         rs.moveToInsertRow();
         rs.updateInt(1, 2);
-        rs.updateNull(2);
-        rs.updateNull(3);
+        rs.updateNull("dsi");
+        rs.updateNull("di");
         rs.insertRow();
 
         stmt.close();

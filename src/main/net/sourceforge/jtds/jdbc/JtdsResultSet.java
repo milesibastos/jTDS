@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.10 2004-08-10 14:57:44 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.11 2004-08-14 05:01:35 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -623,9 +623,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateNull(int columnIndex) throws SQLException {
-        checkUpdateable();
-        ColData data = getColumn(columnIndex);
-        data.setValue(null);
+        updateObject(columnIndex,  null);
     }
 
     public boolean absolute(int row) throws SQLException {
@@ -801,14 +799,17 @@ public class JtdsResultSet implements ResultSet {
     public void updateObject(int columnIndex, Object x) throws SQLException {
         ColData data = getColumn(columnIndex);
         checkUpdateable();
-        ColInfo ci = columns[columnIndex - 1];
-        String charSet = ((ConnectionJDBC2) statement.getConnection()).getCharSet();
 
-        x = Support.convert(this, x, ci.jdbcType, charSet);
+        if (x != null) {
+            ColInfo ci = columns[columnIndex - 1];
+            String charSet = ((ConnectionJDBC2) statement.getConnection()).getCharSet();
 
-        if (x instanceof BigDecimal) {
-            int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
-            x = Support.normalizeBigDecimal((BigDecimal)x, prec);
+            x = Support.convert(this, x, ci.jdbcType, charSet);
+
+            if (x instanceof BigDecimal) {
+                int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
+                x = Support.normalizeBigDecimal((BigDecimal)x, prec);
+            }
         }
 
         data.setValue(x);
@@ -901,7 +902,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateNull(String columnName) throws SQLException {
-        updateObject(findColumn(columnName), null);
+        updateNull(findColumn(columnName));
     }
 
     public boolean getBoolean(String columnName) throws SQLException {

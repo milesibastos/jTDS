@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.13 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.14 2004-08-28 15:46:50 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -348,7 +348,7 @@ public class JtdsStatement implements java.sql.Statement {
             while (!tds.isEndOfResponse()) {
                 if (tds.getMoreResults()) {
                     // This had better be the generated key
-                    if (tds.getNextRow(false)) {
+                    if (tds.getNextRow()) {
                         genKeyResultSet = new
                             DummyResultSet(this,
                                            tds.getColumns(),

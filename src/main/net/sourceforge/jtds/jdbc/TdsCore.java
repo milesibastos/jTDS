@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.30 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.31 2004-08-28 15:46:50 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -588,12 +588,9 @@ public class TdsCore {
     /**
      * Retrieve the next data row from the result set.
      *
-     * @param readAhead <code>true</code> to force driver to skip to end of
-     *        response when the last row has been read. This ensures all SP
-     *        output parameters are processed. Only usable in executeQuery().
      * @return <code>boolean</code> - <code>false</code> if at end of results.
      */
-    boolean getNextRow(boolean readAhead) throws SQLException {
+    boolean getNextRow() throws SQLException {
         if (endOfResponse || endOfResults) {
             return false;
         }
@@ -604,41 +601,10 @@ public class TdsCore {
         while (!currentToken.isRowData() && !currentToken.isEndToken()) {
             nextToken(); // Could be messages
         }
-
-        boolean isResultSet = currentToken.isRowData();
-
-        if (readAhead && !endOfResponse) {
-            // This will ensure that called procedure return parameters
-            // and status are read in executeQuery()
-            byte x;
-
-            try {
-                x = (byte) in.peek();
-
-                while (x != TDS_ROW_TOKEN) {
-                    nextToken();
-
-                    if (endOfResponse) {
-                        break;
-                    }
-
-                    x = (byte) in.peek();
-                }
-            } catch (IOException e) {
-                isClosed = true;
-                connection.setClosed();
-
-                throw Support.linkException(
-                    new SQLException(
-                           Messages.get(
-                                    "error.generic.ioerror", e.getMessage()),
-                                        "08S01"), e);
-            }
-        }
-
+        
         messages.checkErrors();
 
-        return isResultSet;
+        return currentToken.isRowData();
     }
 
     /**
@@ -1058,7 +1024,7 @@ public class TdsCore {
         readTextMode = true;
 
         if (getMoreResults()) {
-            if (getNextRow(false)) {
+            if (getNextRow()) {
             	// FIXME - this will not be valid since a Blob/Clob is returned
             	// instead of byte[]/String
                 results = rowData[0].getValue();
@@ -1095,7 +1061,7 @@ public class TdsCore {
         executeSQL(sql.toString(), null, null, false, 0, 0);
 
         if (getMoreResults()) {
-            if (getNextRow(false)) {
+            if (getNextRow()) {
                 results = rowData[0].getValue();
             }
         }

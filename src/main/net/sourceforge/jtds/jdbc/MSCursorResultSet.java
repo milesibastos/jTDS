@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.15 2004-08-24 21:47:38 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.16 2004-08-28 15:46:50 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -658,7 +658,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                 // With TDS 7 the data row (if any) is sent without any
                 // preceding resultset header.
                 this.currentRow = copyRow(tds.getRowData());
-            } else if (tds.getNextRow(false)) {
+            } else if (tds.getNextRow()) {
                 // With TDS 8 there is a dummy result set header first
                 // then the data. This case also used if meta data not supressed.
                 this.currentRow = copyRow(tds.getRowData());

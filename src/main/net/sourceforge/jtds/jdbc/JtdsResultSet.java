@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.14 2004-08-24 21:47:38 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.15 2004-08-28 15:46:50 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -508,7 +508,13 @@ public class JtdsResultSet implements ResultSet {
     public boolean next() throws SQLException {
         checkOpen();
 
-        if (!statement.getTds().getNextRow(readAhead)) {
+        if (!statement.getTds().getNextRow()) {
+            if (readAhead) {
+                // Process rest of response to set output 
+                // variables.
+                statement.getTds().clearResponseQueue();
+            }
+
             currentRow = null;
         } else {
             currentRow = statement.getTds().getRowData();

@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.16 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: Support.java,v 1.17 2004-08-28 15:46:50 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -327,7 +327,6 @@ public class Support {
                     }
 
                     return x.toString(); // Last hope!
-
                 case java.sql.Types.BIT:
                 case JtdsStatement.BOOLEAN:
                     if (x == null) {
@@ -342,6 +341,8 @@ public class Support {
                         return (tmp.equals("1") || tmp.equalsIgnoreCase("true")) ? Boolean.TRUE : Boolean.FALSE;
                     }
 
+                    break;
+                    
                 case java.sql.Types.LONGVARBINARY:
                 case java.sql.Types.VARBINARY:
                 case java.sql.Types.BINARY:
@@ -380,7 +381,7 @@ public class Support {
                     }
 
                     break;
-
+                    
                 case java.sql.Types.TIMESTAMP:
                     if (x == null) {
                         return null;
@@ -395,7 +396,7 @@ public class Support {
                     }
 
                     break;
-
+                    
                 case java.sql.Types.DATE:
                     if (x == null) {
                         return null;

@@ -6,6 +6,8 @@ Changes from jTDS 0.9-rc1
    JtdsDataSource no longer inherits accessors and mutators from another class.
  o Corrected bug [1017896] Fn convert parameters wrong way round; (thanks to
    Mike Hutchinson for the bug report and patch).
+ o Corrected bug [1017164] executeQuery fails with > 2 resultsets; (thanks to
+   Mike Hutchinson for the patch).
 
 08/24/2004 - Brian Heineman
  o Corrected JDBC compliance test files per Mike Hutchinson's recommendations:

@@ -1,6 +1,12 @@
 Changes from jTDS 0.5
 =======================
 
+01/27/2003 - Alin Sinpalean
+
+ o Fixed bug #664507: DatabaseMetaData.getIndexInfo() called sp_statistics with
+   5 parameters instead of 6 (@index_name was missing). Thanks to Simon Kelly
+   (simonkelly) for submitting the bug and the solution.
+
 01/20/2003 - Alin Sinpalean
 
  o jTDS feels completely strange after such a long while. I honestly hope the

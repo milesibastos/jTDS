@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.5 2002-12-18 13:19:36 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.6 2003-01-27 09:24:37 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.5 2002-12-18 13:19:36 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.6 2003-01-27 09:24:37 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -870,16 +870,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         boolean approximate)
         throws SQLException
     {
-        String query = "exec sp_statistics ?, ?, ?, ?, ?";
+        String query = "exec sp_statistics ?, ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_statistics ?, ?, ?, ?, ?";
+            query = "exec "+catalog+"..sp_statistics ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
         s.setString(2, schema);
         s.setString(3, catalog);
-        s.setString(4, unique ? "Y" : "N");
-        s.setString(5, approximate ? "Q" : "E");
+        s.setString(4, "%");
+        s.setString(5, unique ? "Y" : "N");
+        s.setString(6, approximate ? "Q" : "E");
 
         TdsResultSet rs = (TdsResultSet)s.executeQuery();
         Columns col = rs.getContext().getColumnInfo();

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse. 
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.4 2004-08-21 18:09:05 bheineman Exp $
+ * @version $Id: SQLParser.java,v 1.5 2004-08-22 15:37:21 bheineman Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -92,7 +92,15 @@ class SQLParser {
      */
     private void copyLiteral(String txt) {
         for (int i = 0; i < txt.length(); i++) {
-            out[d++] = txt.charAt(i);
+            char c = txt.charAt(i);
+
+            if (c == '?') {
+                // param marker embedded in escape
+                ParamInfo pi = new ParamInfo(d);
+                params.add(pi);
+            }
+
+            out[d++] = c;
         }
     }
 

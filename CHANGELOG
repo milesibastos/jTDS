@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/22/2004 - Brian Heineman
+ o Corrected bug [1013749] Driver does not support params inside escapes;
+   (thanks to Mike Hutchinson for the bug report and patch).
+
 08/21/2004 - Brian Heineman
  o Applied patch [1013432] Patches for SUN JDBC Compatibility test; (many thanks
    again to Hutchinson for the patch.  The driver now passes the SUN JDBC

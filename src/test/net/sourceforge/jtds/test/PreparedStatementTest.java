@@ -338,6 +338,24 @@ public class PreparedStatementTest extends TestBase {
 
     }
 
+    /**
+     * Test for parameter markers in function escapes.
+     */
+    public void testEscapedParams() throws Exception {
+        PreparedStatement pstmt = con.prepareStatement("SELECT {fn left(?, 2)}");
+
+        pstmt.setString(1, "TEST");
+
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals("TE", rs.getString(1));
+        assertFalse(rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

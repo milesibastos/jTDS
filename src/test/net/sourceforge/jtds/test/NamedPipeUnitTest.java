@@ -17,22 +17,28 @@
 //
 package net.sourceforge.jtds.test;
 
-import junit.framework.TestCase;
+import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.SharedNamedPipe;
 import net.sourceforge.jtds.jdbc.TdsCore;
-import net.sourceforge.jtds.jdbc.Driver;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Constructor;
+
 
 
 /**
  * Unit tests for the {@link SharedNamedPipe} class.
  * 
  * @author David D. Kilzer.
- * @version $Id: NamedPipeUnitTest.java,v 1.3 2004-07-29 23:50:36 ddkilzer Exp $
- */ 
-public class NamedPipeUnitTest extends TestCase {
+ * @version $Id: NamedPipeUnitTest.java,v 1.4 2004-07-30 02:34:51 ddkilzer Exp $
+ */
+public class NamedPipeUnitTest extends UnitTestBase {
+
+    /**
+     * Constructor.
+     * 
+     * @param name The name of the test.
+     */
+    public NamedPipeUnitTest(final String name) {
+        super(name);
+    }
 
 
     /**
@@ -86,36 +92,15 @@ public class NamedPipeUnitTest extends TestCase {
      * @param tdsVersion The TDS version as an <code>int</code>.
      * @param packetSize The packet size as an <code>int</code>.
      * @return Result of calling {@link SharedNamedPipe#calculateBufferSize(int, int)}.
-     */ 
+     */
     private int invoke_calculateBufferSize(int tdsVersion, int packetSize) {
 
-        try {
-            Class klass = SharedNamedPipe.class;
-            Constructor constructor = klass.getDeclaredConstructor(new Class[]{});
-            constructor.setAccessible(true);
-            Object newInstance = constructor.newInstance(new Object[]{});
-            Method method =
-                    klass.getDeclaredMethod(
-                            "calculateBufferSize",
-                            new Class[]{int.class, int.class});
-            method.setAccessible(true);
-            Object[] args =
-                    new Object[]{
-                        new Integer(tdsVersion),
-                        new Integer(packetSize)};
-            return ((Integer) method.invoke(newInstance, args)).intValue();
-        }
-        catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-        catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-        catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        }
+        SharedNamedPipe instance = (SharedNamedPipe) invokeConstructor(
+                SharedNamedPipe.class, new Class[]{}, new Object[]{});
+
+        Class[] classes = new Class[]{int.class, int.class};
+        Object[] objects = new Object[]{new Integer(tdsVersion), new Integer(packetSize)};
+
+        return ((Integer) invokeInstanceMethod(instance, "calculateBufferSize", classes, objects)).intValue();
     }
 }

@@ -24,7 +24,7 @@ import junit.framework.TestCase;
  * @author  builder
  * @version 1.0
  */
-public class TestBase extends TestCase {
+public abstract class TestBase extends TestCase {
 
     private static final String CONNECTION_PROPERTIES = "conf/connection.properties";
     private static final String ODBC_CONNECTION_PROPERTIES = "conf/odbc-connection.properties";

@@ -9,7 +9,6 @@ import java.sql.*;
 import java.math.BigDecimal;
 import junit.framework.TestSuite;
 import java.io.*;
-import java.lang.reflect.*;
 
 import net.sourceforge.jtds.util.Logger;
 
@@ -1320,16 +1319,8 @@ public class CSUnitTest extends DatabaseTestCase {
 
                 output.println("Testing getCharacterStream()");
                 try {
-                    Method getCharacterStreamString =
-                    ResultSet.class.getMethod("getCharacterStream",
-                                              new Class[] {String.class});
-                    Method getCharacterStreamInt =
-                    ResultSet.class.getMethod("getCharacterStream",
-                                              new Class[] {Integer.TYPE});
-
-                    reader =
-                    (Reader)getCharacterStreamString.invoke(rs,
-                                                            new Object[] {"myvarchar"});
+                    reader = (Reader) UnitTestBase.invokeInstanceMethod(
+                            rs, "getCharacterStream", new Class[]{String.class}, new Object[]{"myvarchar"});
                     expect = "This is a test with german umlauts הצü";
                     charsToRead = new char[expect.length()];
                     count = reader.read(charsToRead, 0, expect.length());
@@ -1350,12 +1341,16 @@ public class CSUnitTest extends DatabaseTestCase {
                     reader.close();
 
                     /* Cannot think of a meaningfull test */
-                    reader =
-                    (Reader)getCharacterStreamInt.invoke(rs,
-                                                         new Object[] {new Integer(2)});
+                    reader = (Reader) UnitTestBase.invokeInstanceMethod(
+                            rs, "getCharacterStream", new Class[]{Integer.TYPE}, new Object[]{new Integer(2)});
                     reader.close();
-                } catch (NoSuchMethodException e) {
-                    output.println("JDBC 2 only");
+                } catch (RuntimeException e) {
+                    if (e.getCause() instanceof NoSuchMethodException) {
+                        output.println("JDBC 2 only");
+                    }
+                    else {
+                        throw e;
+                    }
                 } catch (Throwable t) {
                     passed = false;
                     output.println("Exception: "+t.getMessage());

@@ -4,7 +4,7 @@ import java.sql.*;
 import java.util.Map;
 import java.math.BigDecimal;
 
-public class DatabaseTestCase extends TestBase {
+public abstract class DatabaseTestCase extends TestBase {
     protected static Map typemap = null;
 
     public DatabaseTestCase(String name) {

@@ -37,7 +37,7 @@ import net.sourceforge.jtds.util.Logger;
  * of the <code>get</code> methods.
  *
  * @author Alin Sinpalean
- * @version $Id: CharsetInfo.java,v 1.2 2004-12-07 12:13:11 alin_sinpalean Exp $
+ * @version $Id: CharsetInfo.java,v 1.3 2005-01-27 17:49:09 alin_sinpalean Exp $
  */
 public final class CharsetInfo {
     //
@@ -72,13 +72,19 @@ public final class CharsetInfo {
             }
 
             if (stream == null) {
-                final ClassLoader loader = CharsetInfo.class.getClassLoader();
                 // The doPrivileged() call stops the SecurityManager from
                 // checking further in the stack trace whether all callers have
                 // the permission to load Charsets.properties
                 stream = (InputStream) java.security.AccessController.doPrivileged(
                         new java.security.PrivilegedAction() {
                             public Object run() {
+                                ClassLoader loader = CharsetInfo.class.getClassLoader();
+                                // getClassLoader() may return null if the class was loaded by
+                                // the bootstrap ClassLoader
+                                if (loader == null) {
+                                    loader = ClassLoader.getSystemClassLoader();
+                                }
+
                                 return loader.getResourceAsStream(
                                         CHARSETS_RESOURCE_NAME);
                             }

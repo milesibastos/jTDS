@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.8 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: RequestStream.java,v 1.9 2004-08-28 19:10:01 bheineman Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -78,7 +78,7 @@ public class RequestStream {
     /**
      * Set the output buffer size
      *
-     * @param size The new buffer size (>= {@link TdsCore.MIN_PKT_SIZE} <= {@link TdsCore.MAX_PKT_SIZE}).
+     * @param size The new buffer size (>= {@link TdsCore#MIN_PKT_SIZE} <= {@link TdsCore#MAX_PKT_SIZE}).
      */
     void setBufferSize(int size) {
         if (size < bufferPtr || size == bufferSize) {

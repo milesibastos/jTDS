@@ -35,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.11 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.12 2004-08-28 19:10:01 bheineman Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
 
@@ -199,8 +199,8 @@ public class SharedNamedPipe extends SharedSocket {
      * that all of the data will be returned in the buffer without wasting any
      * space.
      * <p/>
-     * <code>assert (packetSize == 0 || (packetSize >= {@link TdsCore.MIN_PKT_SIZE}
-     * && packetSize <= {@link TdsCore.MAX_PKT_SIZE}))</code>
+     * <code>assert (packetSize == 0 || (packetSize >= {@link TdsCore#MIN_PKT_SIZE}
+     * && packetSize <= {@link TdsCore#MAX_PKT_SIZE}))</code>
      * 
      * @param packetSize The requested packet size for the connection.
      * @return minimum default packet size if <code>packetSize == 0</code>, else <code>packetSize</code>
@@ -211,8 +211,10 @@ public class SharedNamedPipe extends SharedSocket {
             if (tdsVersion >= Driver.TDS70) {
                 return TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
             }
+
             return TdsCore.MIN_PKT_SIZE;
         }
+
         return packetSize;
     }
 }

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.32 2004-08-28 17:59:54 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.33 2004-08-28 19:10:01 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -658,9 +658,7 @@ public class TdsCore {
     /**
      * Inform the server that this connection is closing.
      * <p>
-     * Used by Sybase a no op for Microsoft.
-     *
-     * @throws SQLException
+     * Used by Sybase a no-op for Microsoft.
      */
     void closeConnection() {
         try {
@@ -681,7 +679,6 @@ public class TdsCore {
     /**
      * Close the TDSCore connection object and associated streams.
      *
-     * @throws IOException
      * @throws SQLException
      */
     void close() throws SQLException {

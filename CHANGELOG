@@ -12,6 +12,8 @@ Changes from jTDS 0.8-rc1
  o Updated ResultSet.updateObject() to work properly with Blob and Clob values.
  o Corrected ClasCastException when Blob or Clob values were used with cursor
    result sets.
+ o Updated savepoint SQL to use SAVE TRAN/ROLLBACK TRAN instead of
+   SAVE TRANSACTION/ROLLBACK TRANSACTION.
 
 03/31/2004 - Alin Sinpalean
  o Added a test for bug #926620 (Too long value for VARCHAR field) and fixed it

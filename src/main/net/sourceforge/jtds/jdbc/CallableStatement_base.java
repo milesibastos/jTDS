@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.21 2004-04-14 22:26:11 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.22 2004-04-21 19:45:13 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.21 2004-04-14 22:26:11 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.22 2004-04-21 19:45:13 bheineman Exp $";
 
     private final static int ACCESS_UNKNOWN = 0;
     private final static int ACCESS_ORDINAL = 1;
@@ -158,6 +158,7 @@ implements java.sql.CallableStatement {
             if (rawQueryString.charAt(i) == '=') {
                 rawQueryString = rawQueryString.substring(0, retPos) + rawQueryString.substring(i + 1);
                 numberOfParameters--;
+                length = rawQueryString.length();
                 haveRetVal = true;
             } else {
                 throw new SQLException("Invalid return value syntax; expected to find '=': "

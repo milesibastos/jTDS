@@ -38,8 +38,8 @@ public class AsTest extends DatabaseTestCase {
     public void testProc1() throws Exception {
         boolean passed = false;
         Statement stmt = con.createStatement();
-        stmt.executeUpdate("  if (exists (select * from sysobjects where name = '#spTestExec')) drop procedure spTestExec");
-        stmt.executeUpdate("  if (exists (select * from sysobjects where name = '#spTestExec2')) drop procedure spTestExec2");
+        dropProcedure(stmt, "#spTestExec");
+        dropProcedure(stmt, "#spTestExec2");
 
         stmt.executeUpdate(" create procedure #spTestExec2 as " +
                            "select 'Did it work?' as Result");
@@ -79,10 +79,7 @@ public class AsTest extends DatabaseTestCase {
 
     public void testProc2() throws Exception {
         Statement stmt = con.createStatement();
-        String sqlwithcount1 =
-        "if (exists(select * from sysobjects where name = '#multi1withcount' and xtype = 'P'))" +
-        "  drop procedure #multi1withcount ";
-        String sqlwithcount2 =
+        String sqlwithcount =
         "create procedure #multi1withcount as " +
         "  set nocount off " +
         "  select 'a' " +
@@ -93,10 +90,7 @@ public class AsTest extends DatabaseTestCase {
         "  insert into #multi1withcountt VALUES ('a') " +
         "  select 'a' " +
         "  select 'b' ";
-        String sqlnocount1 =
-        "if (exists(select * from sysobjects where name = '#multi1nocount' and xtype = 'P'))" +
-        "  drop procedure #multi1nocount ";
-        String sqlnocount2 =
+        String sqlnocount =
         "create procedure #multi1nocount as " +
         "  set nocount on " +
         "  select 'a' " +
@@ -107,10 +101,10 @@ public class AsTest extends DatabaseTestCase {
         "  insert into #multi1nocountt VALUES ('a') " +
         "  select 'a' " +
         "  select 'b' ";
-        stmt.executeUpdate(sqlwithcount1);
-        stmt.executeUpdate(sqlnocount1);
-        stmt.executeUpdate(sqlwithcount2);
-        stmt.executeUpdate(sqlnocount2);
+        dropProcedure(stmt, "#multi1withcount");
+        dropProcedure(stmt, "#multi1nocount");
+        stmt.executeUpdate(sqlwithcount);
+        stmt.executeUpdate(sqlnocount);
 
         CallableStatement cstmt = con.prepareCall("#multi1nocount");
         assertTrue(cstmt.execute());

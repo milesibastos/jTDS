@@ -27,17 +27,19 @@ public class DatabaseTestCase extends TestBase {
     }
 
     protected void dropProcedure(String procname) throws SQLException {
-        String sobName = "sysobjects";
+        Statement stmt = con.createStatement();
+        dropProcedure(stmt, procname);
+        stmt.close();
+    }
 
+    protected void dropProcedure(Statement stmt, String procname) throws SQLException {
+        String sobName = "sysobjects";
         if (procname.startsWith("#")) {
             sobName = "tempdb.dbo.sysobjects";
         }
-
-        Statement stmt = con.createStatement();
         stmt.executeUpdate(
                           "if exists (select * from " + sobName + " where name like '" + procname + "%' and type = 'P') "
                           + "drop procedure " + procname);
-        stmt.close();
     }
 
     protected void dropFunction(String procname) throws SQLException {

@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.26 2004-08-04 01:58:39 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.27 2004-08-04 03:30:34 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -133,7 +133,9 @@ public class Driver implements java.sql.Driver {
             new DriverPropertyInfo(Support.getMessage("prop.macaddress"), null),
             new DriverPropertyInfo(Support.getMessage("prop.packetsize"), null),
             new DriverPropertyInfo(Support.getMessage("prop.preparesql"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.lobbuffer"), null)
+            new DriverPropertyInfo(Support.getMessage("prop.lobbuffer"), null),
+            new DriverPropertyInfo(Support.getMessage("prop.appname"), null),
+            new DriverPropertyInfo(Support.getMessage("prop.progname"), null),
         };
 
         Properties info = parseURL(url, (props == null ? new Properties() : props));
@@ -158,30 +160,13 @@ public class Driver implements java.sql.Driver {
                     String.valueOf(SQLSERVER),
                     String.valueOf(SYBASE)
                 };
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[0]; // Driver.SQLSERVER
-                }
             } else if (name.equals(Support.getMessage("prop.servername"))) {
                 dpi[i].description = Support.getMessage("prop.desc.servername");
                 dpi[i].required = true;
             } else if (name.equals(Support.getMessage("prop.portnumber"))) {
                 dpi[i].description = Support.getMessage("prop.desc.portnumber");
-
-                if (dpi[i].value == null) {
-                    if (String.valueOf(SYBASE).equalsIgnoreCase(
-                            String.valueOf(info.get(Support.getMessage("prop.servertype"))))) {
-                        dpi[i].value = Integer.toString(Settings.DEFAULT_PORT_NUMBER_SYBASE);
-                    } else {
-                        dpi[i].value = Integer.toString(Settings.DEFAULT_PORT_NUMBER_SQLSERVER);
-                    }
-                }
             } else if (name.equals(Support.getMessage("prop.databasename"))) {
                 dpi[i].description = Support.getMessage("prop.desc.databasename");
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = "master";
-                }
             } else if (name.equals(Support.getMessage("prop.user"))) {
                 dpi[i].description = Support.getMessage("prop.desc.user");
             } else if (name.equals(Support.getMessage("prop.password"))) {
@@ -193,12 +178,11 @@ public class Driver implements java.sql.Driver {
             } else if (name.equals(Support.getMessage("prop.tds"))) {
                 dpi[i].description = Support.getMessage("prop.desc.tds");
                 dpi[i].choices = new String[] {
-                    "4.2", "5.0", "7.0", "8.0"
+                    Settings.TDS_VERSION_42,
+                    Settings.TDS_VERSION_50,
+                    Settings.TDS_VERSION_70,
+                    Settings.TDS_VERSION_80,
                 };
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[2]; // TdsCore.TDS70
-                }
             } else if (name.equals(Support.getMessage("prop.domain"))) {
                 dpi[i].description = Support.getMessage("prop.desc.domain");
             } else if (name.equals(Support.getMessage("prop.instance"))) {
@@ -206,51 +190,27 @@ public class Driver implements java.sql.Driver {
             } else if (name.equals(Support.getMessage("prop.lastupdatecount"))) {
                 dpi[i].description = Support.getMessage("prop.desc.lastupdatecount");
                 dpi[i].choices = new String[] {"true", "false"};
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[1]; // false
-                }
             } else if (name.equals(Support.getMessage("prop.logintimeout"))) {
                 dpi[i].description = Support.getMessage("prop.desc.logintimeout");
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = "0";
-                }
             } else if (name.equals(Support.getMessage("prop.useunicode"))) {
                 dpi[i].description = Support.getMessage("prop.desc.useunicode");
                 dpi[i].choices = new String[] {"true","false"};
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[0]; // true
-                }
             } else if (name.equals(Support.getMessage("prop.namedpipe"))) {
                 dpi[i].description = Support.getMessage("prop.desc.namedpipe");
                 dpi[i].choices = new String[] {"true","false"};
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[1]; // false
-                }
             } else if (name.equals(Support.getMessage("prop.macaddress"))) {
                 dpi[i].description = Support.getMessage("prop.desc.macaddress");
             } else if (name.equals(Support.getMessage("prop.packetsize"))) {
                 dpi[i].description = Support.getMessage("prop.desc.packetsize");
-                
-                if (dpi[i].value == null) {
-                    dpi[i].value = String.valueOf(TdsCore.MIN_PKT_SIZE);
-                }
             } else if (name.equals(Support.getMessage("prop.preparesql"))) {
                 dpi[i].description = Support.getMessage("prop.desc.preparesql");
                 dpi[i].choices = new String[] {"true", "false"};
-
-                if (dpi[i].value == null) {
-                    dpi[i].value = dpi[i].choices[0]; // true
-                }
             } else if (name.equals(Support.getMessage("prop.lobbuffer"))) {
                 dpi[i].description = Support.getMessage("prop.desc.lobbuffer");
-    
-                if (dpi[i].value == null) {
-                    dpi[i].value = String.valueOf(Settings.DEFAULT_LOB_BUFFER_SIZE);
-                }
+            } else if (name.equals(Support.getMessage("prop.appname"))) {
+                dpi[i].description = Support.getMessage("prop.desc.appname");
+            } else if (name.equals(Support.getMessage("prop.progname"))) {
+                dpi[i].description = Support.getMessage("prop.desc.progname");
             }
         }
 

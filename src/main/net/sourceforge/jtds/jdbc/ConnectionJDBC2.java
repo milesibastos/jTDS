@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.16 2004-08-04 01:58:39 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.17 2004-08-04 03:30:34 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -685,16 +685,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             serverCharset = "iso_1";
         }
 
-        String tmp = info.getProperty(Support.getMessage("prop.tds"),
-                                      (serverType == Driver.SQLSERVER)? "7.0": "5.0");
+        String tmp = info.getProperty(
+                Support.getMessage("prop.tds"),
+                (serverType == Driver.SQLSERVER ? Settings.TDS_VERSION_70 : Settings.TDS_VERSION_50));
 
-        if (tmp.equals("4.2")) {
+        if (tmp.equals(Settings.TDS_VERSION_42)) {
             tdsVersion = Driver.TDS42;
-        } else if (tmp.equals("5.0")) {
+        } else if (tmp.equals(Settings.TDS_VERSION_50)) {
             tdsVersion = Driver.TDS50;
-        } else if (tmp.equals("7.0")) {
+        } else if (tmp.equals(Settings.TDS_VERSION_70)) {
             tdsVersion = Driver.TDS70;
-        } else if (tmp.equals("8.0")) {
+        } else if (tmp.equals(Settings.TDS_VERSION_80)) {
             tdsVersion = Driver.TDS80;
         } else {
             throw new SQLException(

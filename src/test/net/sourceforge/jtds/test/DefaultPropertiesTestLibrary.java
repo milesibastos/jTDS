@@ -19,11 +19,9 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbc.Settings;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Support;
-import net.sourceforge.jtds.jdbc.TdsCore;
 import java.util.Properties;
 
 
@@ -31,20 +29,28 @@ import java.util.Properties;
 /**
  * Library for testing default properties.
  * <p/>
- * Uses a {@link DefaultPropertiesTester} object to test different methods in different classes.
+ * Uses a {@link DefaultPropertiesTester} object to test different methods
+ * in different classes.
+ * <p/>
+ * To extend this class, the programmer must implement the following items:
+ * <ol>
+ * <li>A <code>private static DefaultPropertiesTester tester</code> field.</li>
+ * <li>The {@link #getTester()} method that returns <code>tester</code>.</li>
+ * <li>A <code>public static Test suite()</code> method that takes one or more
+ *     arguments and sets the <code>tester</code> field.  (The
+ *     <code>suite()</code> method in this class should <em>not</em> be
+ *     overridden.)</li>
+ * </ol>
  * 
  * @author David D. Kilzer.
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.1 2004-08-04 01:58:40 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.2 2004-08-04 03:30:36 ddkilzer Exp $
  */
-public class DefaultPropertiesTestLibrary extends TestCase {
+public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /** Test JDBC URL for SQL Server. */
     private static final String URL_SQLSERVER = "jdbc:jtds:sqlserver://servername";
     /** Test JDBC URL for Sybase. */
     private static final String URL_SYBASE = "jdbc:jtds:sybase://servername";
-
-    /** Object used to run tests. */
-    private static DefaultPropertiesTester tester;
 
 
     /**
@@ -53,30 +59,17 @@ public class DefaultPropertiesTestLibrary extends TestCase {
      * 
      * @return The test suite (always <code>null</code>).
      */ 
-    public static Test suite() {
+    public static final Test suite() {
         return null;
-    }
-
-
-    /**
-     * Construct a test suite for this library.
-     * 
-     * @param tester The object used to run the tests.
-     * @param name The name of the tests.
-     * @return The test suite.
-     */ 
-    public static Test suite(DefaultPropertiesTester tester, String name) {
-        DefaultPropertiesTestLibrary.tester = tester;
-        return new TestSuite(DefaultPropertiesTestLibrary.class, name);
     }
 
 
     /**
      * Default constructor.
      * <p/>
-     * Used by {@link #suite(net.sourceforge.jtds.test.DefaultPropertiesTester, java.lang.String)}
-     * to construct a test suite.
-     */ 
+     * Used by <code>suite()</code> method in a subclass to construct a
+     * test suite.
+     */
     public DefaultPropertiesTestLibrary() {
     }
 
@@ -264,6 +257,14 @@ public class DefaultPropertiesTestLibrary extends TestCase {
 
 
     /**
+     * Get the <code>tester</code> object.
+     * 
+     * @return The <code>tester</code> object to be used in the tests.
+     */ 
+    protected abstract DefaultPropertiesTester getTester();
+
+
+    /**
      * Assert that the <code>expected</code> property value is set using
      * a given <code>url</code> and <code>tdsVersion</code> property.
      * 
@@ -278,7 +279,7 @@ public class DefaultPropertiesTestLibrary extends TestCase {
 
         Properties properties = new Properties();
         properties.setProperty(Support.getMessage("prop.tds"), tdsVersion);
-        tester.assertDefaultProperty("Default property incorrect", url, properties, fieldName, key, expected);
+        getTester().assertDefaultProperty("Default property incorrect", url, properties, fieldName, key, expected);
     }
 
 
@@ -292,7 +293,7 @@ public class DefaultPropertiesTestLibrary extends TestCase {
      * @param expected The expected value of the property.
      */ 
     private void assertDefaultPropertyByServerType(String url, String key, String fieldName, String expected) {
-        tester.assertDefaultProperty("Default property incorrect", url, new Properties(), fieldName, key, expected);
+        getTester().assertDefaultProperty("Default property incorrect", url, new Properties(), fieldName, key, expected);
     }
 
 }

@@ -23,6 +23,10 @@ Changes from jTDS 0.8.1
  o Modified Driver.parseURL() to set default properties using
    Settings.addDefaultProperties().
  o Created DefaultPropertiesTestLibrary class for testing Driver.parseURL().
+ o Implemented Settings.TDS_VERSION_XX constants in various classes.
+ o Added test suite to DriverUnitTest to test Driver.getPropertyInfo().
+ o Added missing 'appname' and 'progname' properties to, and removed default
+   setting code (now handled in parseURL()) from, Driver.getPropertyInfo().
 
 08/01/2004 - Brian Heineman
  o Partial application of patch [997595] SQL 6.5 Test suite.; general test clean

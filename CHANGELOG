@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+02/23/3005 - Alin Sinpalean
+ o Implemented feature [1145697] Better handling of OutOfMemoryError. On an
+   OutOfMemoryError, TdsCore.nextToken() now consumes the rest of the server
+   response to ensure no protocol confusion will occur.
+
 02/23/2005 - David Kilzer
  o Fix comment in ConnectionJDBC2(String, Properties) constructor.
 
@@ -50,19 +55,6 @@ Changes from jTDS 1.0.2
 
 02/10/2005 - Alin Sinpalean
  o Improved test for bug [1116046] {fn } escape can't handle nested functions.
-
-===============================================================================
-02/15/2005 - jTDS 1.0.2 released
-===============================================================================
-
-Changes from jTDS 1.0.1
-=======================
-
-02/14/2005 - Alin Sinpalean
- o Corrected bug [1122481] how handle new behavior since 1.0.1. The DataSource
-   factory failed with NPE because the properties are no longer initialized in
-   the constructor. Added tests to ensure no regressions.
- o Updated version number to 1.0.2.
 
 ===============================================================================
 02/09/2005 - jTDS 1.0.1 released

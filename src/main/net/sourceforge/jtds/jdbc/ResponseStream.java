@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.14 2005-01-06 15:45:06 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.15 2005-02-23 20:40:09 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -363,6 +363,25 @@ public class ResponseStream {
         }
 
         return tmp;
+    }
+
+    /**
+     * Consumes the rest of the server response, without parsing it.
+     * <p/>
+     * <b>Note:</b> Use only in extreme cases, packets will not be parsed and
+     * could leave the connection in an inconsistent state.
+     */
+    void skipToEnd() {
+        try {
+            // No more data to read.
+            bufferPtr = bufferLen;
+            // Now consume all data until we get an exception.
+            while (true) {
+                buffer = socket.getNetPacket(streamId, buffer);
+            }
+        } catch (IOException ex) {
+            // Ignore it. Probably no more packets.
+        }
     }
 
     /**

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.72 2005-02-17 19:53:15 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.73 2005-02-23 20:40:09 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2220,6 +2220,12 @@ public class TdsCore {
                        Messages.get(
                                 "error.generic.tdserror", pe.getMessage()),
                                     "08S01"), pe);
+        } catch (OutOfMemoryError err) {
+            // Consume the rest of the response
+            in.skipToEnd();
+            endOfResponse = true;
+            endOfResults = true;
+            throw err;
         }
     }
 

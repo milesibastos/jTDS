@@ -43,7 +43,7 @@ import java.sql.*;
 import java.util.StringTokenizer;
 
 public class Procedure {
-    public static final String cvsVersion = "$Id: Procedure.java,v 1.8 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: Procedure.java,v 1.9 2004-02-22 20:10:58 bheineman Exp $";
 
     // next number to return from the getUniqueId() method
     private static long  id = 1;
@@ -181,43 +181,19 @@ public class Procedure {
      */
     private String getUniqueProcedureName(Tds tds) throws SQLException {
         if (tds.getServerType() == Tds.SYBASE) {
+            String id = getNewId();
+
             // Fix for bug 822544 ???
 
             // Since Sybase does not support temporary stored procedures, construct
             // permenant stored procedures with a UUID as the name.
             // Since I do not have access to Sybase I was unable to test this...
-            Statement stmt = null;
-            ResultSet rs = null;
-            String result;
 
-            try {
-                stmt = tds.getConnection().createStatement();
-
-                if (!stmt.execute("SELECT NEWID()")) {
-                    throw new SQLException("Confused.  Was expecting a result set.");
-                }
-
-                rs = stmt.getResultSet();
-
-                if (!rs.next()) {
-                    throw new SQLException("Couldn't get stored proc name [NEWID()]");
-                }
-
-                result = rs.getString(1);
-            } finally {
-                stmt.close();
-                rs.close();
-            }
-
-            // NEWID() - "86C5075D-6625-411F-B979-9972F68DC5D6"
-            // Prepend "jTDS" and remove the dashes '-' from the UUID.  Since stored
-            // procedure names in Sybase can only be 30 characters long, remove the first
-            // 6 (the machine address which should always be the same for the DB) and
-            // prefix the name with "jTDS" so that the procedures can be deleted easily
-            // by a system administrator.
-            return "jTDS" + result.substring(6, 8) + result.substring(9, 13)
-                    + result.substring(14, 18) + result.substring(19, 23)
-                    + result.substring(24);
+            // Prepend "jTDS" and to the new id.  Since stored procedure names in Sybase
+            // can only be 30 characters long, use only the last 26 characters of the new
+            // id and prefix the name with "jTDS" so that the procedures can be deleted
+            // easily by a system administrator.
+            return "jTDS" + id.substring(id.length() - 26);
         } else {
             return "#jdbc#" + getUniqueId();
         }
@@ -234,5 +210,29 @@ public class Procedure {
      */
     public static synchronized long getUniqueId() {
        return id++;
+    }
+
+    /**
+     * Returns a string id that is guaranteed to be as unique at the
+     * {@link java.rmi.dgc.VMID VMID} class.
+     */
+    public static String getNewId() {
+        String id = new java.rmi.dgc.VMID().toString();
+        int pos = id.lastIndexOf(':');
+        String count = id.substring(pos + 1);
+
+        if (count.charAt(0) == '-') {
+            count = "n" + count.substring(1);
+        } else {
+            count = "p" + count;
+        }
+
+        id = id.substring(0, pos) + count;
+         
+        while ((pos = id.indexOf(':')) != -1) {
+            id = id.substring(0, pos) + id.substring(pos + 1, id.length());
+        }
+
+        return id;
     }
 }

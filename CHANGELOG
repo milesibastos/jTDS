@@ -1,6 +1,12 @@
 Changes from jTDS 0.6
 ========================
 
+02/22/2004 - Brian Heineman
+ o Removed usage of NEWID() for Sybase which does not exist in the 11.x
+   versions; logic was replaced with VM generated unique id.  This
+   implementation should perform much faster as well since no remote calls are
+   required.
+
 02/20/2004 - Brian Heineman
  o Implemented ResultSet.getDate(int,Calendar)
  o Implemented ResultSet.getTime(int,Calendar)

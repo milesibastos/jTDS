@@ -31,6 +31,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
     private String instance = "";
     private boolean lastUpdateCount = false;
     private boolean sendStringParametersAsUnicode = true;
+    private String macAddress = "";
 
     /**
      * Constructs a new datasource.
@@ -72,6 +73,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
                           String.valueOf(isLastUpdateCount()));
         props.setProperty(Tds.PROP_USEUNICODE,
                           String.valueOf(sendStringParametersAsUnicode));
+        props.setProperty(Tds.PROP_MAC_ADDR, macAddress);
 
         props.setProperty(Tds.PROP_USER, user);
         props.setProperty(Tds.PROP_PASSWORD, password);
@@ -139,6 +141,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
                                   String.valueOf(isLastUpdateCount())));
         ref.add(new StringRefAddr("sendStringParametersAsUnicode",
                                   String.valueOf(sendStringParametersAsUnicode)));
+        ref.add(new StringRefAddr("macAddress", macAddress));
 
         return ref;
     }
@@ -244,5 +247,13 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
 
     public void setCharset(String charset) {
         this.charset = charset;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 }

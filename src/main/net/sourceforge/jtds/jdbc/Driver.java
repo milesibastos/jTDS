@@ -44,11 +44,11 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.8 2004-02-26 19:00:51 alin_sinpalean Exp $
+ * @version    $Id: Driver.java,v 1.9 2004-03-03 22:14:13 alin_sinpalean Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.8 2004-02-26 19:00:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.9 2004-03-03 22:14:13 alin_sinpalean Exp $";
 
     static final int MAJOR_VERSION = 0;
     static final int MINOR_VERSION = 7;
@@ -148,7 +148,8 @@ public class Driver implements java.sql.Driver {
             new DriverPropertyInfo(Tds.PROP_DOMAIN, null),
             new DriverPropertyInfo(Tds.PROP_INSTANCE, null),
             new DriverPropertyInfo(Tds.PROP_LAST_UPDATE_COUNT, null),
-            new DriverPropertyInfo(Tds.PROP_USEUNICODE, null)
+            new DriverPropertyInfo(Tds.PROP_USEUNICODE, null),
+            new DriverPropertyInfo(Tds.PROP_MAC_ADDR, null)
         };
 
         if (info == null) {
@@ -235,6 +236,8 @@ public class Driver implements java.sql.Driver {
                 if (dpi[i].value == null) {
                     dpi[i].value = dpi[i].choices[0]; // true
                 }
+            } else if (name.equals(Tds.PROP_MAC_ADDR)) {
+                dpi[i].description = "Hex-encoded client MAC address.";
             }
         }
 

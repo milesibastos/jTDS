@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.34 2004-02-25 01:24:47 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.35 2004-03-03 22:14:13 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.34 2004-02-25 01:24:47 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.35 2004-03-03 22:14:13 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -184,7 +184,8 @@ public class Tds implements TdsDefinitions {
         transactionIsolationLevel = this.connection.getTransactionIsolation();
 
         try {
-            logon(props.getProperty(PROP_DBNAME));
+            logon(props.getProperty(PROP_DBNAME),
+                  props.getProperty(PROP_MAC_ADDR));
         } catch( SQLException ex ) {
             throw new SQLException("Logon failed.  " + ex.getMessage(),
                 ex.getSQLState(),
@@ -1852,7 +1853,7 @@ public class Tds implements TdsDefinitions {
      * @exception  java.io.IOException
      * @exception  SQLException
      */
-    private void logon(String database)
+    private void logon(String database, String macAddress)
             throws SQLException, TdsUnknownPacketSubType,
             java.io.IOException, TdsException {
         final byte pad = (byte) 0;
@@ -1861,7 +1862,7 @@ public class Tds implements TdsDefinitions {
         try {
             // Added 2000-06-07.
             if (tdsVer == Tds.TDS70) {
-                send70Login(database);
+                send70Login(database, macAddress);
                 database = "";
             } else {
                 comm.startPacket(TdsComm.LOGON);
@@ -2047,7 +2048,7 @@ public class Tds implements TdsDefinitions {
      *
      * Added 2000-06-05.
      */
-    private void send70Login(final String _database)
+    private void send70Login(final String _database, final String macAddress)
             throws java.io.IOException, TdsException {
         final String libName = this.progName;
         final byte pad = (byte) 0;
@@ -2150,7 +2151,7 @@ public class Tds implements TdsDefinitions {
         curPos += _database.length() * 2;
 
         // MAC address
-        comm.appendBytes(empty, 6, pad);
+        comm.appendBytes(getMACAddress(macAddress));
 
         //mdb: location of ntlm auth block. note that for sql auth, authLen==0.
         comm.appendTdsShort(curPos);
@@ -3957,5 +3958,28 @@ public class Tds implements TdsDefinitions {
         }
 
         return null;
+    }
+
+    private static byte[] getMACAddress(String macString) {
+        byte[] mac = new byte[6];
+        boolean ok = false;
+
+        if (macString != null && macString.length() == 6) {
+            try {
+                for (int i=0, j=0; i<6; i++, j+=2) {
+                    mac[i] = (byte) Integer.parseInt(
+                            macString.substring(j, j+2), 16);
+                }
+                ok = true;
+            } catch (Exception ex) {
+                // Ignore it. ok will be false.
+            }
+        }
+
+        if (!ok) {
+            Arrays.fill(mac, (byte)0);
+        }
+
+        return mac;
     }
 }

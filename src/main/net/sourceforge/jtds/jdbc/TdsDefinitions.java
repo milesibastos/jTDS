@@ -38,13 +38,13 @@ package net.sourceforge.jtds.jdbc;
 /**
  * Constants from the TDS protocol.
  *
- * @version  $Id: TdsDefinitions.java,v 1.7 2004-02-11 19:10:25 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.8 2004-03-03 22:14:13 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   String cvsVersion = "$Id: TdsDefinitions.java,v 1.7 2004-02-11 19:10:25 alin_sinpalean Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.8 2004-03-03 22:14:13 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -154,5 +154,6 @@ interface TdsDefinitions
           PROP_TDS        = "TDS",
           PROP_DOMAIN     = "DOMAIN", //if present, indicates NTLM auth
           PROP_LAST_UPDATE_COUNT = "LASTUPDATECOUNT",
-          PROP_USEUNICODE = "SENDSTRINGPARAMETERSASUNICODE";
+          PROP_USEUNICODE = "SENDSTRINGPARAMETERSASUNICODE",
+          PROP_MAC_ADDR   = "MACADDRESS";
 }

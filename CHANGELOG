@@ -1,5 +1,23 @@
+===============================================================================
+03/03/2004 - jTDS 0.7.1 released
+===============================================================================
+
 Changes from jTDS 0.7
 ========================
+
+03/03/2004 - Alin Sinpalean
+ o Added the 'macAddress' URL parameter allowing the user to specify the MAC
+   address of the network interface card. There's no way to determine this from
+   Java code and it can cause problems with licensing limitations.
+ o Fixed an issue affecting SQL Server 6.5 related to binary data. Binary
+   values were defined as 'binary(8000)' while the maximum length for 6.5 is
+   255. (thank you, Mike)
+ o Fixed bug [907431] (Statement does not return auto-generated keys). In fact,
+   the actual issue was that if a execute was not called with
+   RETURN_GENERATED_KEYS specified and then getGeneratedKeys() was called, an
+   uninitialized ResultSet was returned instead of throwing an exception.
+ o Finally added the API server cursor (sp_cursor procedures) documentation and
+   the test results (excluding JSQLConnect, whose license prohibits this).
 
 02/27/2004 - Alin Sinpalean
  o Fixed the implementation of cursor-based ResultSets obtained from prepared

@@ -35,6 +35,7 @@ public class TdsObjectFactory implements ObjectFactory {
                     "true".equals(ref.get("lastUpdateCount").getContent()));
             ds.setSendStringParametersAsUnicode(
                     "true".equals(ref.get("sendStringParametersAsUnicode").getContent()));
+            ds.setMacAddress((String) ref.get("macAddress").getContent());
 
             return ds;
         }

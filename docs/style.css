@@ -2,14 +2,12 @@ a
 {
     color: #B5D4E7;
     text-decoration: none;
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-size: 10px;
 }
 
 a:hover
 {
-    text-decoration: underline;
     color: #FFFFFF;
+    text-decoration: underline;
 }
 
 a.outer
@@ -39,7 +37,7 @@ table
     border-left: 0px;
 }
 
-td
+td, th
 {
     border: 1px solid #517093;
     border-bottom: 0px;
@@ -47,6 +45,11 @@ td
     padding: 0px 10px;
     font-size: 9px;
     color: #FFFFFF;
+}
+
+th
+{
+    font-size: 10px;
 }
 
 b
@@ -106,6 +109,14 @@ p.title
     margin: 0px;
     font-weight: bold;
     text-decoration: underline;
+}
+
+h1
+{
+    padding: 10px 0px 0px 0px;
+    margin: 0px;
+    font-weight: bold;
+    font-size: 12px;
 }
 
 span.selected

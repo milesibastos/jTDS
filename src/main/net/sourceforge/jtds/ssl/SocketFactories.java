@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * Used for acquiring a socket factory when SSL is enabled.
  *
  * @author Rob Worsnop
- * @version $Id: SocketFactories.java,v 1.1 2005-01-04 17:13:04 alin_sinpalean Exp $
+ * @version $Id: SocketFactories.java,v 1.2 2005-01-06 15:45:12 alin_sinpalean Exp $
  */
 public class SocketFactories {
     /**
@@ -50,7 +50,6 @@ public class SocketFactories {
      *
      * @param ssl      the SSL setting
      * @param instance the DB instance name
-     * @return
      */
     public static SocketFactory getSocketFactory(String ssl, String instance) {
         return new TdsTlsSocketFactory(ssl, instance);

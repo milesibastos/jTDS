@@ -2,8 +2,8 @@ Changes from jTDS 0.9.1
 =======================
 
 01/05/2005 - Alin Sinpalean
- o Applied patch [1096296] DatabaseMetaData.getTypeInfo() ordering submitted by
-   David Eaves.
+ o Applied patch [1096296] DatabaseMetaData.getTypeInfo() ordering, submitted
+   by David Eaves.
  o Applied Mike's fix to bug [1096086] Zero length streams generate null
    values.
 
@@ -22,7 +22,8 @@ Changes from jTDS 0.9.1
 12/20/2004 - Alin Sinpalean
  o Fixed bug [1086477] RETURN_GENERATED_KEYS on select returns 1 row.
  o Applied patch [1088293] Simplified multi threaded execution with a few minor
-   corrections and modifications.
+   corrections and modifications (including optimized, single request, batch
+   updating).
  o DDL statements no longer return update counts. This should make jTDS more
    compatible with other drivers and the spec.
 

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.12 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.13 2005-01-06 15:45:06 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -506,10 +506,8 @@ public class RequestStream {
 
     /**
      * Close the output stream.
-     *
-     * @throws IOException
      */
-    void close() throws IOException {
+    void close() {
         isClosed = true;
     }
 

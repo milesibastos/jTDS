@@ -308,7 +308,6 @@ public class CallableStatementTest extends TestBase {
             con.prepareCall("{call sp_test(?, ?)");
             fail("Was expecting an invalid escape error");
         } catch (SQLException ex) {
-            ex.printStackTrace();
             assertEquals("22025", ex.getSQLState());
             assertTrue(ex.getMessage().indexOf('}') != -1);
         }
@@ -325,7 +324,6 @@ public class CallableStatementTest extends TestBase {
             con.prepareCall("{call sp_test(?, ?}");
             fail("Was expecting an invalid escape error");
         } catch (SQLException ex) {
-            ex.printStackTrace();
             assertEquals("22025", ex.getSQLState());
             assertTrue(ex.getMessage().indexOf(')') != -1);
         }
@@ -802,6 +800,36 @@ public class CallableStatementTest extends TestBase {
         cstmt.setInt(2, 2);
         cstmt.execute();
         assertEquals(99, cstmt.getInt(1));
+        cstmt.close();
+    }
+
+    /**
+     * Test for bug [1152329] Spurious output params assigned (TIMESTMP).
+     * <p/>
+     * If a stored procedure execute WRITETEXT or UPDATETEXT commands, spurious
+     * output parameter data is returned to the client. This additional data
+     * can be confused with the real output parameter data leading to an output
+     * string parameter returning the text ?TIMESTMP? on SQL Server 7+ or
+     * binary garbage on other servers.
+     */
+    public void testWritetext() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute(
+                "create proc #testWritetext @p1 varchar(20) output as "
+                + "begin "
+                + "create table #test (id int, txt text) "
+                + "insert into #test (id, txt) values(1, '') "
+                + "declare @ptr binary(16) "
+                + "select @ptr = (select textptr(txt) from #test where id = 1) "
+                + "writetext #test.txt @ptr 'This is a test' "
+                + "select @p1 = 'done' "
+                + "end");
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{call #testWritetext(?)}");
+        cstmt.registerOutParameter(1, Types.VARCHAR);
+        cstmt.execute();
+        assertEquals("done", cstmt.getString(1));
         cstmt.close();
     }
 

@@ -74,7 +74,7 @@ import java.util.Calendar;
 public class CallableStatement_base
          extends com.internetcds.jdbc.tds.PreparedStatement_base
          implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.7 2001-09-25 18:16:56 skizz Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.8 2001-09-26 07:06:22 aschoerk Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;

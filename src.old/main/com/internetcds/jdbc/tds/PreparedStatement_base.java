@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.9 2001-09-25 18:16:56 skizz Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.10 2001-09-26 07:06:22 aschoerk Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds

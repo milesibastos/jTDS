@@ -48,11 +48,6 @@ The driver supports the enabling of logging via the JDBC standard methods in the
 DriverManager and DataSource classes. The driver also supports login timeouts
 specified through standard method calls on the same classes.
 
-There will need to be a concensus about how best to incorporate this code into
-the existing jTDS project. Options range from adopting this code wholesale
-through replacing certain classes in the existing driver to just picking out
-the 'best' bits.
-
 As noted above, this revised code base is basically a re-implementation of the
 ideas in the original driver. I can only really claim credit for all the typing!
 The authorship has been recorded in the class files, partly to identify the
@@ -76,12 +71,13 @@ TO DO LIST:
  5. [Completed] Some independent performance testing would be wise. The goal is for this code
     to be at least as fast as the original.
 
- 6. Add support for Sybase varchar and varbinary columns > 255 bytes in length.
+ 6. [Completed] Add support for Sybase varchar and varbinary columns > 255 bytes
+    in length.
 
- 7. The Microsoft server side cursors are not very efficient. A simple forward
-    only cursor with a fetch size > 1 would be useful for iterating through large
-    result sets where otherwise the driver would be forced to cache large result
-    sets.
+ 7. [Completed] The Microsoft server side cursors are not very efficient. A
+    simple forward only cursor with a fetch size > 1 would be useful for
+    iterating through large result sets where otherwise the driver would be
+    forced to cache large result sets.
 
  8. The READTEXT LOB logic is experimental and probably not very efficient from
     the server's perspective. It may still be worth investigating streaming
@@ -92,10 +88,11 @@ TO DO LIST:
     there is no efficient way of writing LOBs. One option is to explore the use
     of WRITETEXT in this case?
 
-10. Make use of collation information for translating SQL 2000 unicode to local
-    character sets.
+10. [Completed] Make use of collation information for translating SQL 2000
+    Unicode to local character sets.
 
-11. Add updateable (and possibly scrollable) cursor result sets for Sybase.
+11. [Completed] Add updateable (and possibly scrollable) cursor result sets for
+    Sybase.
 
 12. [Fixed 6/29/2004]
     Check if the savepoint logic can sometimes delete temp stored procedures when
@@ -103,8 +100,9 @@ TO DO LIST:
 
 13. Check to see if Sybase lightweight procedures are rolled back like normal ones.
 
-14. Set textsize manipulation via the setMaxField size method call affects the text
-    size for all statements. Ideally it should only affect the current result set.
+14. [Completed] Set textsize manipulation via the setMaxField size method call
+    affects the text size for all statements. Ideally it should only affect the
+    current result set.
 
 15. With TDS8, sql_variants is handled as a separate data type exposing the
     underlying data type to getObject(). This does cause some semantic problems
@@ -118,6 +116,9 @@ TO DO LIST:
 
 17. Diagnostics need improvement. More error conditions should be trapped to
     protect against unimplemented or misunderstood aspects of the TDS protocol.
+    Would be very useful to clean up and reorganize tests, make Sybase pass the
+    suite (by removing not applicable tests and modifying those that could and
+    should work).
 
 18. The Logger output is a bit all or nothing at present. Could possibly do with
     extending the diagnostic messages and providing an option to disable packet
@@ -138,8 +139,8 @@ TO DO LIST:
     given the extra functionality. Even so the code could benefit from review
     and possible re-factoring to slim things down a bit.
 
-23. Implement the XA classes to make this driver more generally useful in java
-    enterprise environments.
+23. [Completed] Implement the XA classes to make this driver more generally
+    useful in java enterprise environments.
 
 24. More regression testing. The driver passes the test suite but needs more real
     world exposure before it is ready for the big time.

@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.21 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.22 2004-10-04 12:17:58 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -95,9 +95,6 @@ public class MSCursorResultSet extends JtdsResultSet {
      * The row is unretrievable due to an error.
      */
     private static final int SQL_ROW_ERROR = 6;
-
-    private static final int POS_BEFORE_FIRST = 0;
-    private static final int POS_AFTER_LAST = -1;
 
     /*
      * Instance variables.
@@ -1007,12 +1004,10 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         if (cursorFetch(FETCH_NEXT, 0)) {
             pos += 1;
-
             return true;
         }
 
         pos = POS_AFTER_LAST;
-
         return false;
     }
 
@@ -1021,13 +1016,11 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkScrollable();
 
         if (cursorFetch(FETCH_PREVIOUS, 0)) {
-            pos -= (pos < 0) ? (pos - rowsInResult) : 1;
-
+            pos -= (pos == POS_AFTER_LAST) ? (pos - rowsInResult) : 1;
             return true;
         }
 
         pos = POS_BEFORE_FIRST;
-
         return false;
     }
 
@@ -1071,7 +1064,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         pos = row;
-
         return true;
     }
 
@@ -1089,13 +1081,11 @@ public class MSCursorResultSet extends JtdsResultSet {
             return false;
         }
 
-        // If less than 0, it can only be POS_AFTER_LAST
-        if (pos < 0) {
+        if (pos == POS_AFTER_LAST) {
             pos = rowsInResult + 1;
         }
 
         pos += row;
-
         return true;
     }
 }

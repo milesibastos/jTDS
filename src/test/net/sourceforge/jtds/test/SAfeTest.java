@@ -304,6 +304,57 @@ public class SAfeTest extends DatabaseTestCase {
     }
 
     /**
+     * Check that the <code>isBeforeFirst</code>, <code>isAfterLast</code>,
+     * <code>isFirst</code> and <code>isLast</code> methods work for
+     * forward-only, read-only result sets (bug [1039876] MS SQL
+     * JtdsResultSet.isAfterLast() always returns false).
+     *
+     * @throws Exception if an error condition occurs
+     */
+    public void testPlainResultSetPosition0004() throws Exception {
+        Statement stmt = con.createStatement();
+
+        // Try with an empty ResultSet
+        ResultSet rs = stmt.executeQuery("SELECT 5 Value WHERE 1=0");
+        assertEquals(null, stmt.getWarnings());
+        assertEquals(null, rs.getWarnings());
+        assertEquals("Value", rs.getMetaData().getColumnName(1));
+        assertTrue(!rs.isBeforeFirst());
+        assertTrue(!rs.isAfterLast());
+        assertTrue(!rs.isFirst());
+        assertTrue(!rs.isLast());
+        rs.next();
+        assertTrue(!rs.isBeforeFirst());
+        assertTrue(!rs.isAfterLast());
+        assertTrue(!rs.isFirst());
+        assertTrue(!rs.isLast());
+        rs.close();
+
+        // Try with a non-empty ResultSet
+        rs = stmt.executeQuery("SELECT 5 Value");
+        assertEquals(null, stmt.getWarnings());
+        assertEquals(null, rs.getWarnings());
+        assertEquals("Value", rs.getMetaData().getColumnName(1));
+        assertTrue(rs.isBeforeFirst());
+        assertTrue(!rs.isAfterLast());
+        assertTrue(!rs.isFirst());
+        assertTrue(!rs.isLast());
+        rs.next();
+        assertTrue(!rs.isBeforeFirst());
+        assertTrue(!rs.isAfterLast());
+        assertTrue(rs.isFirst());
+        assertTrue(rs.isLast());
+        rs.next();
+        assertTrue(!rs.isBeforeFirst());
+        assertTrue(rs.isAfterLast());
+        assertTrue(!rs.isFirst());
+        assertTrue(!rs.isLast());
+        rs.close();
+
+        stmt.close();
+    }
+
+    /**
      * Check that values returned from bit fields are correct (not just 0) (bug #841670).
      *
      * @throws Exception

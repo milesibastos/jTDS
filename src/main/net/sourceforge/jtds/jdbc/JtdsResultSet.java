@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.18 2004-09-28 13:12:42 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.19 2004-10-04 12:17:57 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -511,6 +511,7 @@ public class JtdsResultSet implements ResultSet {
                 statement.getTds().clearResponseQueue();
             }
 
+            pos = POS_AFTER_LAST;
             currentRow = null;
         } else {
             currentRow = statement.getTds().getRowData();

@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.4 2003-01-27 09:55:44 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.5 2003-12-04 00:27:20 matt_brinkley Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.4 2003-01-27 09:55:44 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.5 2003-12-04 00:27:20 matt_brinkley Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -440,12 +440,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setLong( int parameterIndex, long value ) throws SQLException
     {
-        if ( value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE ) {
-            setParam( parameterIndex, new Integer( ( int ) value ), java.sql.Types.INTEGER, -1 );
-        }
-        else {
-            setParam( parameterIndex, new Long( value ), java.sql.Types.NUMERIC, 0 );
-        }
+        setParam( parameterIndex, new Long( value ), java.sql.Types.NUMERIC, 0 );
     }
 
 

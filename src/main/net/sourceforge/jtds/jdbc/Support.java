@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.18 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.19 2004-09-05 16:45:29 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -134,7 +134,7 @@ public class Support {
      * @throws SQLException If the number is too big.
      */
     static BigDecimal normalizeBigDecimal(BigDecimal value, int maxPrecision)
-    throws SQLException {
+            throws SQLException {
         if (value == null) {
             return null;
         }
@@ -156,9 +156,8 @@ public class Support {
 
             if (scale < 0) {
                 // Can't do it number just too big
-                throw new SQLException(
-                                      Messages.get("error.normalize.numtoobig",
-                                                 String.valueOf(maxPrecision)), "22000");
+                throw new SQLException(Messages.get("error.normalize.numtoobig",
+                        String.valueOf(maxPrecision)), "22000");
             }
 
             value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
@@ -179,7 +178,7 @@ public class Support {
      * @throws SQLException if the conversion is not supported or fails.
      */
     static Object convert(Object callerReference, Object x, int jdbcType, String charSet)
-    throws SQLException {
+            throws SQLException {
         try {
             switch (jdbcType) {
                 case java.sql.Types.TINYINT:
@@ -520,19 +519,19 @@ public class Support {
 
                 default:
                     throw new SQLException(
-                                          Messages.get("error.convert.badtypeconst",
-                                                     getJdbcTypeName(jdbcType)), "HY004");
+                            Messages.get("error.convert.badtypeconst",
+                                    getJdbcTypeName(jdbcType)), "HY004");
             }
 
             throw new SQLException(
-                                  Messages.get("error.convert.badtypes",
-//                                             getJdbcTypeName(getJdbcType(x)),
-                                             x.getClass().getName(),
-                                             getJdbcTypeName(jdbcType)), "22005");
+                    Messages.get("error.convert.badtypes",
+//                            getJdbcTypeName(getJdbcType(x)),
+                            x.getClass().getName(),
+                            getJdbcTypeName(jdbcType)), "22005");
         } catch (NumberFormatException nfe) {
             throw new SQLException(
-                                  Messages.get("error.convert.badnumber",
-                                             getJdbcTypeName(jdbcType)), "22000");
+                    Messages.get("error.convert.badnumber",
+                            getJdbcTypeName(jdbcType)), "22000");
         }
     }
 
@@ -784,14 +783,6 @@ public class Support {
             }
         } else if (value instanceof Boolean) {
             buf.append(((Boolean) value).booleanValue() ? '1' : '0');
-        } else if (value instanceof BigDecimal) {
-            BigDecimal bd = (BigDecimal) value;
-
-            if (bd.scale() > 10) { // Must be a better answer than this
-                bd = bd.setScale(10, BigDecimal.ROUND_HALF_UP);
-            }
-
-            buf.append(bd.toString());
         } else {
             buf.append(value.toString());
         }

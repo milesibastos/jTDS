@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.10 2004-09-01 15:33:59 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.11 2004-09-05 16:45:29 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -389,7 +389,7 @@ public class RequestStream {
         }
 
         // XXX Not sure that this is actually an error
-        if (in.read() >= 0) {
+        if (length < 0 || in.read() >= 0) {
             throw new java.io.IOException(
                     "More data in stream than specified by length");
         }
@@ -424,7 +424,7 @@ public class RequestStream {
         }
 
         // XXX Not sure that this is actually an error
-        if (in.read() >= 0) {
+        if (length < 0 || in.read() >= 0) {
             throw new java.io.IOException(
                     "More data in stream than specified by length");
         }

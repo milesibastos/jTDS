@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.3 2004-08-24 17:45:01 bheineman Exp $
+ * @version $Id: ParamInfo.java,v 1.4 2004-09-05 16:45:29 alin_sinpalean Exp $
  */
 class ParamInfo {
     /** Internal TDS data type */
@@ -171,7 +171,11 @@ class ParamInfo {
         throws IOException {
         byte[] buf = new byte[length];
 
-        if (in.read(buf) != length) {
+        int pos = 0, res;
+        while (pos != length && (res = in.read(buf, pos, length - pos)) != -1) {
+            pos += res;
+        }
+        if (pos != length) {
             throw new java.io.IOException(
                 "Data in stream less than specified by length");
         }
@@ -196,7 +200,11 @@ class ParamInfo {
         throws IOException {
         char[] buf = new char[length];
 
-        if (in.read(buf) != length) {
+        int pos = 0, res;
+        while (pos != length && (res = in.read(buf, pos, length - pos)) != -1) {
+            pos += res;
+        }
+        if (pos != length) {
             throw new java.io.IOException(
                 "Data in stream less than specified by length");
         }

@@ -2,6 +2,10 @@ Changes from jTDS 0.9-rc2
 =========================
 
 09/05/2004 - Alin Sinpalean
+ o Fixed some minoe issues with LOBs and InputStreams/Readers that don't fill
+   the read buffer.
+ o Fixed BigDecimal handling in Support.embedData() (used when prepareSQL=0).
+   BigDecimal values had their precision changed to 10 for some reason.
  o Corrected a bug which was causing strings to always be sent as non-unicode
    (i.e. not preceded by N') by prepared statements with prepareSQL=0,
    regardless of TDS version and settings.

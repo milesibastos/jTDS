@@ -427,6 +427,27 @@ public class CallableStatementTest extends TestBase {
         assertTrue(cstmt.getFloat(1) == 1.1f);
         cstmt.close();
     }
+
+    /**
+     * Test for bug [994988] Network error when null is returned via int output parm
+     */
+    public void testCallableRegisterOutParameter5() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure #rop5 @data int OUTPUT as\r\n "
+                     + "begin\r\n"
+                     + "set @data = null\r\n"
+                     + "end");
+        stmt.close();
+        
+        CallableStatement cstmt = con.prepareCall("{call #rop5(?)}");
+
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.execute();
+
+        cstmt.getInt(1);
+        assertTrue(cstmt.wasNull());
+        cstmt.close();
+    }
     
     /**
      * Test for bug [991640] java.sql.Date error and RAISERROR problem

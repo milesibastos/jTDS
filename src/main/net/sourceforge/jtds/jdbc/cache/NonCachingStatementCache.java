@@ -23,23 +23,23 @@ package net.sourceforge.jtds.jdbc.cache;
  * amount of memory and time by not performing any caching logic.
  *
  * @author Brian Heineman
- * @version $Id: NonCachingStatementCache.java,v 1.1 2004-10-22 04:32:28 bheineman Exp $
+ * @version $Id: NonCachingStatementCache.java,v 1.2 2004-10-22 15:15:11 alin_sinpalean Exp $
  */
 public class NonCachingStatementCache implements StatementCache {
 	/**
 	 * Initializes the <code>maximumCacheTarget</code>.
-	 * 
-	 * @param maximumCacheTarget an integer representing the maximum cache size.
+	 *
+	 * @param maximumCacheTarget the maximum cache size
 	 */
 	public NonCachingStatementCache(int maximumCacheTarget) {
 	}
-	
+
 	/**
 	 * Returns a statement handle associated with the specified key or <code>null</code>
 	 * if the key specified does not have an associated statement handle.
-	 * 
-	 * @return statement handle.
-     * @param key the statement key whose associated handle is to be returned.
+	 *
+     * @param key the statement key whose associated handle is to be returned
+     * @return statement handle
 	 */
 	public Object get(String key) {
 		return null;
@@ -48,17 +48,19 @@ public class NonCachingStatementCache implements StatementCache {
 	/**
 	 * Places the specified statement handle in the cache for the given key.  If
 	 * a key already exists in the cache, the handle will be overwritten.
-	 * 
-     * @param key the statement key to associated with the handle.
-	 * @param handle the statement handle.
-	 */
-	public void put(String key, Object handle) {
+	 *
+     * @param key the statement key to associated with the handle
+     * @param sql the SQL String used to prepare the statement
+     * @param handle the statement handle.
+     */
+	public void put(String key, String sql, Object handle) {
 	}
 
 	/**
 	 * Removes a statement key and handle from the cache for the specified key.
-	 *  
-     * @param key the statement key whose associated handle is to be removed from the cache.
+	 *
+     * @param key the statement key whose associated handle is to be removed
+     *            from the cache
 	 */
 	public void remove(String key) {
 	}
@@ -66,8 +68,8 @@ public class NonCachingStatementCache implements StatementCache {
 	/**
 	 * Returns <code>null</code> indicating no statement handles are obsolete.
 	 * Over-riding implementations should return obsolete handles as is
-	 * appropriate for the caching heuristic being used. 
-	 * 
+	 * appropriate for the caching heuristic being used.
+	 *
      * @param handle the statement handle that is no longer being used.
 	 * @return <code>null</code>
 	 */
@@ -75,7 +77,7 @@ public class NonCachingStatementCache implements StatementCache {
 		if (handle == null) {
 			return null;
 		}
-		
+
 		return new Object[] {handle};
 	}
 }

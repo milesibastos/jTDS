@@ -2,6 +2,12 @@ Changes from jTDS 0.9
 =========================
 
 10/21/2004 - Alin Sinpalean
+ o Altered the interface of Brian's StatementCache interface to correctly
+   handle both usage counts (searching by SQL string) and searching by key.
+   Still need to do the implementation, though.
+ o One more minor change for bug [1051747] Array out of bounds Exception in
+   ResultSetMetaData (outputting the actual column index in the exception text
+   rather than the column count).
  o JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.testNormal() now
    uses the new properties in connection.properties to check if connecting
    through a DataSource actually works (also tests bug [1051595] jtdsDataSource

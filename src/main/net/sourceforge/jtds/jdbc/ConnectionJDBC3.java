@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.7 2004-10-10 20:37:14 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.8 2004-10-22 15:15:20 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -63,7 +63,9 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
             statement = createStatement();
             statement.execute("SAVE TRAN jtds" + savepoint.getId());
         } finally {
-            statement.close();
+            if (statement != null) {
+                statement.close();
+            }
         }
 
         synchronized (this) {
@@ -142,7 +144,9 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
             statement = createStatement();
             statement.execute("ROLLBACK TRAN jtds" + ((SavepointImpl) savepoint).getId());
         } finally {
-            statement.close();
+            if (statement != null) {
+                statement.close();
+            }
         }
 
         int size = savepoints.size();
@@ -217,10 +221,11 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
      * Add a stored procedure to the cache.
      *
      * @param key The signature of the procedure to cache.
+     * @param sql
      * @param proc The stored procedure descriptor.
      */
-    void addCachedProcedure(String key, ProcEntry proc) {
-        super.addCachedProcedure(key, proc);
+    void addCachedProcedure(String key, String sql, ProcEntry proc) {
+        super.addCachedProcedure(key, sql, proc);
 
         addCachedProcedure(key);
     }

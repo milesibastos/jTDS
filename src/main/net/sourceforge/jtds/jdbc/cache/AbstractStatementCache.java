@@ -20,25 +20,25 @@ package net.sourceforge.jtds.jdbc.cache;
 import java.util.*;
 
 /**
- * Provides a base implementation for other caches.  Statement handle latching 
- * is one of the services provided by this class. 
+ * Provides a base implementation for other caches.  Statement handle latching
+ * is one of the services provided by this class.
  *
  * @author Brian Heineman
- * @version $Id: AbstractStatementCache.java,v 1.1 2004-10-22 04:32:08 bheineman Exp $
+ * @version $Id: AbstractStatementCache.java,v 1.2 2004-10-22 15:15:09 alin_sinpalean Exp $
  */
 abstract class AbstractStatementCache implements StatementCache {
 	private static final Integer INTEGER_ONE = new Integer(1);
-	
+
 	/**
 	 * An integer representing the maximum cache size.  This value is only a
 	 * target and may be exceeded by a specific caching implementation.
 	 * However, each cache implementation must make a "best effort" to adhere
-	 * to this maximum cache limit.  A cache value of {@link Integer.MAX_VALUE}
+	 * to this maximum cache limit.  A cache value of {@link Integer#MAX_VALUE}
 	 * indicates "unlimited" caching; cache implementations may use this to
-	 * avoid overhead associated with removing obsolete handles. 
-	 */  
+	 * avoid overhead associated with removing obsolete handles.
+	 */
 	protected int maximumCacheTarget;
-	
+
 	/**
 	 * A map of statement handle latches and the associated latch count.  Latches
 	 * provide a mechanism for registering use of a statement handle and preventing
@@ -46,36 +46,36 @@ abstract class AbstractStatementCache implements StatementCache {
 	 * specific cache implementations should add a latch or increment an existing
 	 * latch count for a statement key when {@link #put} is called.  Conversely,
 	 * the latch for a statement handles should be removed of decremented when
-	 * {@link #getObsoleteHandles} is called. 
+	 * {@link #getObsoleteHandles} is called.
 	 */
 	private HashMap latches = new HashMap();
-	
+
 	/**
 	 * Initializes the <code>maximumCacheTarget</code>.
-	 * 
+	 *
 	 * @param maximumCacheTarget an integer representing the maximum cache size.
 	 */
 	protected AbstractStatementCache(int maximumCacheTarget) {
 		this.maximumCacheTarget = maximumCacheTarget;
 	}
-	
+
 	/**
 	 * Adds a single latch to the given statement handle.
-	 * 
+	 *
      * @param handle the statement handle to add a single latch for.
 	 */
 	protected void latch(Object handle) {
 		if (maximumCacheTarget == Integer.MAX_VALUE) {
 			return;
 		}
-		
+
 		// Convert ProcEntry to the procedure name/handle using ProcEntry.toString()
 		if (handle != null) {
 			handle = handle.toString();
 		}
-		
+
 		Integer latchCount = (Integer) latches.get(handle);
-		
+
 		if (latchCount == null) {
 			latches.put(handle, INTEGER_ONE);
 		} else {
@@ -86,7 +86,7 @@ abstract class AbstractStatementCache implements StatementCache {
 
 	/**
 	 * Removes a single latch from the given statement handle.
-	 * 
+	 *
      * @param handle the statement handle to remove a single latch from.
 	 */
 	protected void unlatch(Object handle) {
@@ -98,9 +98,9 @@ abstract class AbstractStatementCache implements StatementCache {
 		if (handle != null) {
 			handle = handle.toString();
 		}
-		
+
 		Integer latchCount = (Integer) latches.get(handle);
-		
+
 		if (latchCount == null) {
 			// nothing to unlatch.
 			return;
@@ -115,7 +115,7 @@ abstract class AbstractStatementCache implements StatementCache {
 
 	/**
 	 * Removes all latches from the given statement handle.
-	 * 
+	 *
      * @param handle the statement handle to remove all latches from.
 	 */
 	protected void removeLatches(Object handle) {
@@ -126,10 +126,10 @@ abstract class AbstractStatementCache implements StatementCache {
 
 		latches.remove(handle);
 	}
-	
+
 	/**
 	 * Returns <code>true</code> if there are latches for the given statement handle.
-	 * 
+	 *
      * @param handle the statement handle to check the latch status of.
 	 * @return <code>true</code> if there are latches for the given statement handle;
 	 *   <code>false</code> otherwise.
@@ -143,7 +143,7 @@ abstract class AbstractStatementCache implements StatementCache {
 		if (handle != null) {
 			handle = handle.toString();
 		}
-		
+
 		return latches.containsKey(handle);
 	}
 }

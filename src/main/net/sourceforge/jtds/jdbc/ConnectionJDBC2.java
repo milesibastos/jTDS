@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.41 2004-10-22 04:31:40 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.42 2004-10-22 15:15:19 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -74,7 +74,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         private ColInfo[] colMetaData;
         /** The parameter meta data (Sybase only). */
         private ParamInfo[] paramMetaData;
-        
+
         public final String toString() {
         	return name;
         }
@@ -586,7 +586,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         // OK we have built a proc so add it to the cache.
-        addCachedProcedure(key, proc);
+        addCachedProcedure(key, sql, proc);
 
         // Give the user the name
         return proc.name;
@@ -596,10 +596,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Add a stored procedure to the cache.
      *
      * @param key The signature of the procedure to cache.
+     * @param sql
      * @param proc The stored procedure descriptor.
      */
-    void addCachedProcedure(String key, ProcEntry proc) {
-        statementCache.put(key, proc);
+    void addCachedProcedure(String key, String sql, ProcEntry proc) {
+        statementCache.put(key, null, proc);
 
         if (!autoCommit) {
             procInTran.add(key);
@@ -617,15 +618,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (!autoCommit) {
             procInTran.remove(key);
         }
-    }
-    
-    /**
-     * Returns the statement cache reference.
-     * 
-     * @return the statement cache reference.
-     */
-    StatementCache getStatementCache() {
-    	return statementCache;
     }
 
     /**
@@ -1021,11 +1013,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Remove a statement object from the list maintained by the connection.
+     * Remove a statement object from the list maintained by the connection and
+     * clean up the statement cache if necessary.
      *
-     * @param statement The statement to remove.
+     * @param statement the statement to remove
      */
-    void removeStatement(JtdsStatement statement) {
+    void removeStatement(JtdsStatement statement) throws SQLException {
+        // Remove the JtdsStatement
         synchronized (statements) {
             for (int i = 0; i < statements.size(); i++) {
                 WeakReference wr = (WeakReference) statements.get(i);
@@ -1037,6 +1031,36 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                         statements.set(i, null);
                     }
                 }
+            }
+        }
+
+        if (statement instanceof JtdsPreparedStatement) {
+            // Clean up the prepared statement cache
+            Object[] handles = statementCache.getObsoleteHandles(
+                    ((JtdsPreparedStatement) statement).sql);
+
+            if (handles != null) {
+                StringBuffer cleanupSql = new StringBuffer(handles.length * 15);
+
+                for (int i = 0; i < handles.length; i++) {
+                    String handle = (String) handles[i];
+
+                    if (i != 0) {
+                        cleanupSql.append('\n');
+                    }
+
+                    // FIXME - Add support for sp_cursorunprepare
+                    if (TdsCore.isPreparedProcedureName(handle)) {
+                        cleanupSql.append("DROP PROC ");
+                        cleanupSql.append(handle);
+                    } else {
+                        cleanupSql.append("EXEC sp_unprepare ");
+                        cleanupSql.append(handle);
+                    }
+                }
+
+                baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0, -1);
+                baseTds.clearResponseQueue();
             }
         }
     }

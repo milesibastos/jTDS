@@ -54,13 +54,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.18 2004-02-11 19:10:25 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.18 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -107,7 +107,12 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     }
 
     public boolean execute() throws SQLException {
-        return execute(getTds());
+        Tds tds = getTds();
+        try {
+            return execute(tds);
+        } finally {
+            releaseTds();
+        }
     }
 
     /**
@@ -128,6 +133,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         //
 
         Procedure procedure = null;
+        closeResults(false);
 
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet(parameterList);
@@ -188,13 +194,16 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     public java.sql.ResultSet executeQuery() throws SQLException {
         Tds tds = getTds();
 
-        if (!execute(tds)) {
-            tds.skipToEnd();
-            releaseTds();
-            throw new SQLException("Was expecting a result set");
-        }
+        try {
+            if (!execute(tds)) {
+                tds.skipToEnd();
+                throw new SQLException("Was expecting a result set");
+            }
 
-        return results;
+            return results;
+        } finally {
+            releaseTds();
+        }
     }
 
     /**
@@ -209,26 +218,28 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     public int executeUpdate() throws SQLException
     {
         Tds tds = getTds();
-        if ( execute( tds ) ) {
-            tds.skipToEnd();
-            releaseTds();
-            throw new SQLException( "executeUpdate can't return a result set" );
-        }
-        else {
-            int res;
-            while (((res = getUpdateCount()) != -1)
-                && ((TdsConnection) getConnection()).returnLastUpdateCount()) {
 
-                // If we found a ResultSet, there's a problem.
-                if( getMoreResults() ) {
-                    skipToEnd();
-                    releaseTds();
-                    throw new SQLException("executeUpdate can't return a result set");
-                }
+        try {
+            if ( execute( tds ) ) {
+                tds.skipToEnd();
+                throw new SQLException( "executeUpdate can't return a result set" );
             }
+            else {
+                int res;
+                while (((res = getUpdateCount()) != -1)
+                    && ((TdsConnection) getConnection()).returnLastUpdateCount()) {
 
+                    // If we found a ResultSet, there's a problem.
+                    if( getMoreResults() ) {
+                        skipToEnd();
+                        throw new SQLException("executeUpdate can't return a result set");
+                    }
+                }
+
+                return res==-1 ? 0 : res;
+            }
+        } finally {
             releaseTds();
-            return res==-1 ? 0 : res;
         }
     }
 

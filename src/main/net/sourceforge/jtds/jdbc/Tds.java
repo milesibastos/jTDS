@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.27 2004-02-09 23:52:13 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.28 2004-02-11 19:10:25 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.27 2004-02-09 23:52:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.28 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -1034,7 +1034,7 @@ public class Tds implements TdsDefinitions {
 
         case SYBFLTN:
             comm.getByte(); // Column size
-            final int actual_size = comm.getByte();
+            final int actual_size = comm.getByte(); // No need to & with 0xff
             element = readFloatN(actual_size);
             break;
 
@@ -1049,7 +1049,7 @@ public class Tds implements TdsDefinitions {
         case SYBDECIMAL:
             comm.getByte(); // Column size
             comm.getByte(); // Precision
-            final int scale = comm.getByte();
+            final int scale = comm.getByte(); // No need to & with 0xff
             element = getDecimalValue(scale);
             break;
 
@@ -1080,8 +1080,7 @@ public class Tds implements TdsDefinitions {
             break;
 
         case SYBBIT:
-            final int column_size = comm.getByte();
-            element = new Boolean((column_size != 0) ? true : false);
+            element = new Boolean((comm.getByte() != 0) ? true : false);
             break;
 
         case SYBUNIQUEID:
@@ -1183,7 +1182,6 @@ public class Tds implements TdsDefinitions {
         case TDS_COL_INFO_TOKEN:
             return processColumnInfo();
 
-        case TDS_UNKNOWN_0xA5:
         case TDS_UNKNOWN_0xA7:
         case TDS_UNKNOWN_0xA8:
             // XXX Need to figure out what this packet is
@@ -1192,6 +1190,9 @@ public class Tds implements TdsDefinitions {
 
         case TDS_TABNAME:
             return processTabName();
+
+        case TDS_COLINFO:
+            return processColInfo();
 
         case TDS_ORDER:
             int len = comm.getTdsShort();
@@ -1374,7 +1375,7 @@ public class Tds implements TdsDefinitions {
             break;
 
         case SYBMONEYN:
-            len = comm.getByte();
+            len = comm.getByte(); // No need to & with 0xff
             break;
 
         default:
@@ -1457,7 +1458,7 @@ public class Tds implements TdsDefinitions {
         long millis;
 
         if (type == SYBDATETIMN) {
-            len = comm.getByte();
+            len = comm.getByte(); // No need to & with 0xff
         } else if (type == SYBDATETIME4) {
             len = 4;
         } else {
@@ -1537,7 +1538,7 @@ public class Tds implements TdsDefinitions {
 
         switch (type) {
         case SYBINTN:
-            len = comm.getByte();
+            len = comm.getByte(); // No need to & with 0xff
             break;
 
         case SYBINT4:
@@ -1567,7 +1568,7 @@ public class Tds implements TdsDefinitions {
             break;
 
         case 1:
-            result = new Integer(toUInt(comm.getByte()));
+            result = new Integer(comm.getByte() & 0xff);
             break;
 
         case 0:
@@ -1593,7 +1594,7 @@ public class Tds implements TdsDefinitions {
             result = null;
         } else if (len >= 0) {
             if (wideChars) {
-                result = comm.getString(len / 2, encoder);
+                result = comm.getString(len >> 1, encoder);
             } else {
                 result = encoder.getString(comm.getBytes(len, false), 0, len);
             }
@@ -1759,7 +1760,7 @@ public class Tds implements TdsDefinitions {
                 break;
 
             case SYBFLTN:
-                element = readFloatN(comm.getByte());
+                element = readFloatN(comm.getByte()); // No need to & with 0xff
                 break;
 
             case SYBSMALLMONEY:
@@ -2301,8 +2302,8 @@ public class Tds implements TdsDefinitions {
         getSubPacketLength(); // Packet length
 
         msg.number = comm.getTdsInt();
-        msg.state = comm.getByte();
-        msg.severity = comm.getByte();
+        msg.state = comm.getByte() & 0xff;
+        msg.severity = comm.getByte() & 0xff;
 
         final int msgLen = comm.getTdsShort();
         msg.message = comm.getString(msgLen, encoder);
@@ -2348,11 +2349,10 @@ public class Tds implements TdsDefinitions {
             {
                 final String blocksize;
                 final int clen = comm.getByte() & 0xFF;
+                blocksize = comm.getString(clen, encoder);
                 if (tdsVer == TDS70) {
-                    blocksize = comm.getString(clen, encoder);
                     comm.skip(len - 2 - clen * 2);
                 } else {
-                    blocksize = encoder.getString(comm.getBytes(clen, false), 0, clen);
                     comm.skip(len - 2 - clen);
                 }
                 // SAfe This was only done for TDS70. Why?
@@ -2365,12 +2365,10 @@ public class Tds implements TdsDefinitions {
         case TDS_ENV_CHARSET:
             {
                 final int clen = comm.getByte() & 0xFF;
-                final String charset;
+                final String charset = comm.getString(clen, encoder);
                 if (tdsVer == TDS70) {
-                    charset = comm.getString(clen, encoder);
                     comm.skip(len - 2 - clen * 2);
                 } else {
-                    charset = encoder.getString(comm.getBytes(clen, false), 0, clen);
                     comm.skip(len - 2 - clen);
                 }
                 if (!charsetSpecified) {
@@ -2428,9 +2426,8 @@ public class Tds implements TdsDefinitions {
         int bytesRead = 0;
         int i = 0;
         while (bytesRead < totalLen) {
-            final int colNameLen = comm.getByte();
-            final String colName = encoder.getString(
-                    comm.getBytes(colNameLen, false), 0, colNameLen);
+            final int colNameLen = comm.getByte() & 0xff;
+            final String colName = comm.getString(colNameLen, encoder);
             bytesRead = bytesRead + 1 + colNameLen;
             i++;
             columns.setName(i, colName);
@@ -2492,17 +2489,17 @@ public class Tds implements TdsDefinitions {
 
                 final int tableNameLen = comm.getTdsShort();
                 bytesRead += 2;
-                tableName = encoder.getString(comm.getBytes(tableNameLen, false), 0, tableNameLen);
+                tableName = comm.getString(tableNameLen, encoder);
                 bytesRead += tableNameLen;
 
                 bufLength = 2 << 31 - 1;
             } else if (columnType == SYBDECIMAL || columnType == SYBNUMERIC) {
-                bufLength = comm.getByte();
+                bufLength = comm.getByte(); // No need to & with 0xff
                 bytesRead++;
-                precision = comm.getByte();
+                precision = comm.getByte(); // No need to & with 0xff
                 // Total number of digits
                 bytesRead++;
-                scale = comm.getByte();
+                scale = comm.getByte(); // No need to & with 0xff
                 // # of digits after the decimal point
                 bytesRead++;
             } else if (isFixedSizeColumn(columnType)) {
@@ -2530,33 +2527,81 @@ public class Tds implements TdsDefinitions {
         return new PacketColumnInfoResult(columns);
     }
 
+    /**
+     * Process a TDS_TABNAME packet and place the list of table names into the
+     * current context. These will be assigned to columns when the TDS_COLINFO
+     * packet will be processed (it should be the very next packet).
+     *
+     * @return a <code>PacketTabNameResult</code> containing the table names
+     * @throws java.io.IOException if an I/O error occurs
+     * @throws TdsException if an internal error occurs
+     */
     private PacketTabNameResult processTabName()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
         final int totalLen = comm.getTdsShort();
+        int bytesRead = 0;
 
-        // RMK 2000-06-11.  Not sure why the original code is bothering
-        // to extract the bytes with such meticulous care if it isn't
-        // going to use the extracted strings for creating the returned
-        // object.  At any rate, this approach doesn't work under TDS 7.0,
-        // because (1) the name length is a short, not a byte under 7.0,
-        // and (2) the name string is nameLen wide characters for 7.0,
-        // not 8-bit characters.  So I'm commenting the wasted effort
-        // and replacing it with a simple call to TdsComm.skip().
-        //int bytesRead   = 0;
-        //int nameLen     = 0;
-        //String  tabName = null;
+        String tabName;
+        ArrayList tables = new ArrayList();
 
-        //while(bytesRead < totalLen)
-        //{
-        //   nameLen = comm.getByte();
-        //   bytesRead++;
-        //   tabName = new String(comm.getBytes(nameLen));
-        //   bytesRead += nameLen;
-        //}
+        if (tdsVer == TDS70) {
+            while (bytesRead < totalLen) {
+                int nameLen = comm.getTdsShort();
+                bytesRead += 2;
+                tabName = comm.getString(nameLen, encoder);
+                bytesRead += (nameLen << 1);
+                tables.add(tabName);
+            }
+        } else {
+            while (bytesRead < totalLen) {
+                int nameLen = comm.getByte() & 0xff;
+                bytesRead++;
+                tabName = comm.getString(nameLen, encoder);
+                bytesRead += nameLen;
+                tables.add(tabName);
+            }
+        }
 
-        comm.skip(totalLen);
+        currentContext.setTables(tables);
 
-        return new PacketTabNameResult();
+        return new PacketTabNameResult(tables);
+    }
+
+    /**
+     * Process a TDS_COLINFO packet and assign table names to columns in the
+     * current context.
+     *
+     * @return a <code>PacketColInfoResult</code>
+     * @throws java.io.IOException if an I/O error occurs
+     * @throws TdsException if an internal error occurs
+     */
+    private PacketColInfoResult processColInfo()
+            throws java.io.IOException, TdsException {
+        final int totalLen = comm.getTdsShort();
+        int bytesRead = 0;
+
+        List tables = currentContext.getTables();
+        Columns columns = currentContext.getColumnInfo();
+
+        // In some cases (e.g. if the user calls 'CREATE CURSOR', the
+        // TDS_TABNAME packet seems to be missing. Weird.
+        if (tables == null) {
+            comm.skip(totalLen);
+        } else {
+            while (bytesRead < totalLen) {
+                int columnIndex = (comm.getByte() & 0xff);
+                int tableIndex = (comm.getByte() & 0xff) - 1;
+                comm.getByte(); // flags
+                bytesRead += 3;
+
+                if (tableIndex != -1) {
+                    columns.getColumn(columnIndex).setTableName(
+                            tables.get(tableIndex).toString());
+                }
+            }
+        }
+
+        return new PacketColInfoResult();
     }
 
     /**
@@ -2952,18 +2997,18 @@ public class Tds implements TdsDefinitions {
 
         if (tdsVer == Tds.TDS70) {
             comm.skip(5);
-            final int nameLen = comm.getByte();
+            final int nameLen = comm.getByte() & 0xff;
             databaseProductName = comm.getString(nameLen, encoder);
-            databaseProductVersion = ("0" + (databaseMajorVersion = comm.getByte()) + ".0"
-                    + (databaseMinorVersion = comm.getByte()) + ".0"
-                    + ((256 * ((int) comm.getByte() + 1)) + comm.getByte()));
+            databaseProductVersion = ("0" + (databaseMajorVersion = (comm.getByte() & 0xff))
+                    + ".0" + (databaseMinorVersion = (comm.getByte() & 0xff))
+                    + ".0" + comm.getNetShort());
         } else {
             comm.skip(5);
-            final short nameLen = comm.getByte();
+            final int nameLen = comm.getByte() & 0xff;
             databaseProductName = comm.getString(nameLen, encoder);
             comm.skip(1);
-            databaseProductVersion = ("" + (databaseMajorVersion = comm.getByte()) +
-                    "." + (databaseMinorVersion = comm.getByte()));
+            databaseProductVersion = ("" + (databaseMajorVersion = (comm.getByte() & 0xff)) +
+                    "." + (databaseMinorVersion = (comm.getByte() & 0xff)));
             comm.skip(1);
         }
 
@@ -3071,22 +3116,22 @@ public class Tds implements TdsDefinitions {
             } else if (isLargeType(xColType)) {
                 bufLength = comm.getTdsShort();
             } else {
-                bufLength = comm.getByte();
+                bufLength = comm.getByte() & 0xff;
             }
 
             // Get precision, scale for decimal types.
             int precision = -1;
             int scale = -1;
             if (columnType == SYBDECIMAL || columnType == SYBNUMERIC) {
-                precision = comm.getByte();
-                scale = comm.getByte();
+                precision = comm.getByte(); // No need to & with 0xff
+                scale = comm.getByte(); // No need to & with 0xff
             }
 
             /*
              * NB: under 7.0 lengths are number of characters, not number of
              * bytes.  The getString() method handles this.
              */
-            final int colNameLen = comm.getByte();
+            final int colNameLen = comm.getByte() & 0xff;
             final String columnName = comm.getString(colNameLen, encoder);
 
             // Populate the Column object.
@@ -3495,11 +3540,6 @@ public class Tds implements TdsDefinitions {
      */
     private static boolean isLargeType(final int type) {
         return type == SYBNCHAR || type > 128;
-    }
-
-    private static int toUInt(final byte b) {
-        final int result = ((int) b) & 0x00ff;
-        return result;
     }
 
     /**

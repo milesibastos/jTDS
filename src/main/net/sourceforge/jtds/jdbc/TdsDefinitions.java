@@ -38,13 +38,13 @@ package net.sourceforge.jtds.jdbc;
 /**
  * Constants from the TDS protocol.
  *
- * @version  $Id: TdsDefinitions.java,v 1.6 2004-02-05 19:00:31 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.7 2004-02-11 19:10:25 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   String cvsVersion = "$Id: TdsDefinitions.java,v 1.6 2004-02-05 19:00:31 alin_sinpalean Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.7 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -71,7 +71,7 @@ interface TdsDefinitions
    byte TDS_COL_NAME_TOKEN  = (byte)160;  // 0xA0 TDS 4.2 only
    byte TDS_COL_INFO_TOKEN  = (byte)161;  // 0xA1 TDS 4.2 only
    byte TDS_TABNAME         = (byte)164;  // 0xA4 TABNAME
-   byte TDS_UNKNOWN_0xA5    = (byte)165;  // 0xA5 COLINFO
+   byte TDS_COLINFO         = (byte)165;  // 0xA5 COLINFO
    byte TDS_UNKNOWN_0xA7    = (byte)167;  // 0xA7
    byte TDS_UNKNOWN_0xA8    = (byte)168;  // 0xA8
    byte TDS_ORDER           = (byte)169;  // 0xA9 ORDER

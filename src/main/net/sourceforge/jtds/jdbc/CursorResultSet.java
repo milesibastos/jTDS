@@ -19,35 +19,49 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     public static final int FETCH_REPEAT = 128;
     public static final int FETCH_INFO = 256;
 
+    public static final int CURSOR_TYPE_KEYSET = 1;
+    public static final int CURSOR_TYPE_DYNAMIC = 2;
+    public static final int CURSOR_TYPE_FORWARD = 4;
+    public static final int CURSOR_TYPE_STATIC = 8;
+
+    public static final int CURSOR_CONCUR_READ_ONLY = 1;
+    public static final int CURSOR_CONCUR_SCROLL_LOCKS = 2;
+    public static final int CURSOR_CONCUR_OPTIMISTIC = 4;
+
+    public static final int CURSOR_OP_INSERT = 4;
+    public static final int CURSOR_OP_UPDATE = 33;
+    public static final int CURSOR_OP_DELETE = 34;
+
     /**
      * The row is unchanged.
      */
-    public static final int SQL_ROW_SUCCESS = 0;
+    public static final int SQL_ROW_SUCCESS = 1;
 
     /**
      * The row has been deleted.
      */
-    public static final int SQL_ROW_DELETED = 1;
+    public static final int SQL_ROW_DELETED = 2;
 
+    // @todo Check the values for the constants below (above are ok).
     /**
      * The row has been updated.
      */
-    public static final int SQL_ROW_UPDATED = 2;
+    public static final int SQL_ROW_UPDATED = 3;
 
     /**
      * There is no row that corresponds this position.
      */
-    public static final int SQL_ROW_NOROW = 3;
+    public static final int SQL_ROW_NOROW = 4;
 
     /**
      * The row has been added.
      */
-    public static final int SQL_ROW_ADDED = 4;
+    public static final int SQL_ROW_ADDED = 5;
 
     /**
      * The row is unretrievable due to an error.
      */
-    public static final int SQL_ROW_ERROR = 5;
+    public static final int SQL_ROW_ERROR = 6;
 
     private static final int POS_BEFORE_FIRST = -100000;
     private static final int POS_AFTER_LAST = -200000;
@@ -143,11 +157,11 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     public boolean isBeforeFirst() throws SQLException {
-        return pos == POS_BEFORE_FIRST;
+        return (pos == POS_BEFORE_FIRST) && (rowsInResult != 0);
     }
 
     public boolean isAfterLast() throws SQLException {
-        return pos == POS_AFTER_LAST;
+        return (pos == POS_AFTER_LAST) && (rowsInResult != 0);
     }
 
     public boolean isFirst() throws SQLException {
@@ -340,11 +354,12 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     public void deleteRow() throws SQLException {
-        throw new SQLException("ResultSet is not updateable");
+        cursor(CURSOR_OP_DELETE, null);
+        cursorFetch(FETCH_REPEAT, 1);
     }
 
     public void refreshRow() throws SQLException {
-        throw new SQLException("ResultSet is not updateable");
+        cursorFetch(FETCH_REPEAT, 1);
     }
 
     private void cursorCreate() throws SQLException {
@@ -360,27 +375,27 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
 
                 switch (type) {
                 case TYPE_SCROLL_INSENSITIVE:
-                    scrollOpt = 8; // Static cursor
+                    scrollOpt = CURSOR_TYPE_STATIC;
                     break;
 
                 case TYPE_SCROLL_SENSITIVE:
-                    scrollOpt = 1; // Keyset-driven
+                    scrollOpt = CURSOR_TYPE_KEYSET;
                     break;
 
                 case TYPE_FORWARD_ONLY:
                 default:
-                    scrollOpt = 4; // Forward-only
+                    scrollOpt = CURSOR_TYPE_FORWARD;
                     break;
                 }
 
                 switch (concurrency) {
                 case CONCUR_READ_ONLY:
                 default:
-                    ccOpt = 1; // Read-only
+                    ccOpt = CURSOR_CONCUR_READ_ONLY;
                     break;
 
                 case CONCUR_UPDATABLE:
-                    ccOpt = 2; // Scroll locks
+                    ccOpt = CURSOR_CONCUR_SCROLL_LOCKS;
                     break;
                 }
 
@@ -454,7 +469,47 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 int actualCc = ((Number) param[3].value).intValue();
 
                 if ((actualScroll != scrollOpt) || (actualCc != ccOpt)) {
-                    // @todo Check the returned scroll and concurrency values
+                    if (actualScroll != scrollOpt) {
+                        switch (actualScroll) {
+                        case CURSOR_TYPE_FORWARD:
+                            type = TYPE_FORWARD_ONLY;
+                            break;
+
+                        case CURSOR_TYPE_STATIC:
+                            type = TYPE_SCROLL_INSENSITIVE;
+                            break;
+
+                        case CURSOR_TYPE_DYNAMIC:
+                        case CURSOR_TYPE_KEYSET:
+                            type = TYPE_SCROLL_SENSITIVE;
+                            break;
+
+                        default:
+                            warningChain.addException(new SQLException(
+                                    "Don't know how to handle cursor type "
+                                    + actualScroll));
+                        }
+                    }
+
+                    if (actualCc != ccOpt) {
+                        switch (actualCc) {
+                        case CURSOR_CONCUR_READ_ONLY:
+                            type = CONCUR_READ_ONLY;
+                            break;
+
+                        case CURSOR_CONCUR_SCROLL_LOCKS:
+                        case CURSOR_CONCUR_OPTIMISTIC:
+                            type = CONCUR_UPDATABLE;
+                            break;
+
+                        default:
+                            warningChain.addException(new SQLException(
+                                    "Don't know how to handle concurrency type "
+                                    + actualScroll));
+                        }
+                    }
+
+                    // @todo This warning should somehow go to the Statement
                     warningChain.addWarning(new SQLWarning(
                             "ResultSet type/concurrency downgraded."));
                 }
@@ -500,26 +555,26 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     rowNum = 1;
 
                 // Setup cursor handle param
-                param[0] = new ParameterListItem();
+                param[0].clear();
                 param[0].isSet = true;
                 param[0].type = Types.INTEGER;
                 param[0].value = cursorHandle;
 
                 // Setup fetchtype param
-                param[1] = new ParameterListItem();
+                param[1].clear();
                 param[1].isSet = true;
                 param[1].type = Types.INTEGER;
                 param[1].value = new Integer(fetchType);
 
                 // Setup rownum
-                param[2] = new ParameterListItem();
+                param[2].clear();
                 param[2].isSet = true;
                 param[2].type = Types.INTEGER;
                 param[2].value = isInfo ? null : new Integer(rowNum);
                 param[2].isOutput = isInfo;
 
                 // Setup numRows parameter
-                param[3] = new ParameterListItem();
+                param[3].clear();
                 param[3].isSet = true;
                 param[3].type = Types.INTEGER;
                 param[3].value = isInfo ? null : new Integer(1);
@@ -538,18 +593,12 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 if (stmt.getMoreResults(tds, warningChain, true)
                         || (stmt.getUpdateCount() != -1)) {
                     warningChain.addException(new SQLException(
-                            "No more results expected."));
+                            "No results expected."));
                 }
-
-//                System.out.println("sp_cursorfetch " +
-//                                   param[0].value + " " +
-//                                   param[1].value + " " +
-//                                   param[2].value + " " +
-//                                   param[3].value);
 
                 if ((retVal == null) || (retVal.intValue() != 0)) {
                     warningChain.addException(
-                            new SQLException("Cursor open failed."));
+                            new SQLException("Cursor fetch failed."));
                 }
             } finally {
                 try {
@@ -582,7 +631,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 param[0] = parameterList[0];
 
                 // Setup cursor handle param
-                param[0] = new ParameterListItem();
+                param[0].clear();
                 param[0].isSet = true;
                 param[0].type = Types.INTEGER;
                 param[0].value = cursorHandle;
@@ -598,15 +647,104 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 if (stmt.getMoreResults(tds, warningChain, true)
                         || (stmt.getUpdateCount() != -1)) {
                     warningChain.addException(new SQLException(
-                            "No more results expected."));
+                            "No results expected."));
                 }
-
-//                System.out.println("sp_cursorclose " +
-//                                   param[0].value);
 
                 if ((retVal == null) || (retVal.intValue() != 0)) {
                     warningChain.addException(
-                            new SQLException("Cursor open failed."));
+                            new SQLException("Cursor close failed."));
+                }
+            } finally {
+                try {
+                    conn.freeTds(tds);
+                } catch (TdsException ex) {
+                    warningChain.addException(
+                            new SQLException(ex.getMessage()));
+                }
+
+                lastOutParam = -1;
+                retVal = null;
+                stmt.outParamHandler = null;
+            }
+        }
+
+        warningChain.checkForExceptions();
+        return current != null;
+    }
+
+    private boolean cursor(int opType, PacketRowResult row) throws SQLException {
+        // SAfe We have to synchronize this, in order to avoid mixing up our
+        //      actions with another CursorResultSet's and eating up its
+        //      results.
+        synchronized (conn.mainTdsMonitor) {
+            Tds tds = conn.allocateTds(true);
+            try {
+                warningChain.clearWarnings();
+                ParameterListItem param[];
+
+                if (opType == CURSOR_OP_DELETE) {
+                    if (row != null) {
+                        throw new SQLException(
+                                "Non-null row provided to delete operation.");
+                    }
+                    // 3 parameters for delete
+                    param = new ParameterListItem[3];
+                    System.arraycopy(parameterList, 0, param, 0, 3);
+                } else {
+                    if (row == null) {
+                        throw new SQLException(
+                                "Null row provided to insert/update operation.");
+                    }
+                    // 4 parameters plus one for each column for insert/update
+                    param = new ParameterListItem[4
+                            + row.context.getColumnInfo().fakeColumnCount()];
+                    System.arraycopy(parameterList, 0, param, 0, 4);
+                }
+
+                // Setup cursor handle param
+                param[0].clear();
+                param[0].isSet = true;
+                param[0].type = Types.INTEGER;
+                param[0].value = cursorHandle;
+
+                // Setup optype param
+                param[1].clear();
+                param[1].isSet = true;
+                param[1].type = Types.INTEGER;
+                param[1].value = new Integer(opType);
+
+                // Setup rownum
+                param[2].clear();
+                param[2].isSet = true;
+                param[2].type = Types.INTEGER;
+                param[2].value = new Integer(1);
+
+                // If row is not null, we're dealing with an insert/update
+                if (row != null) {
+                    // Setup table
+                    param[3].clear();
+                    param[3].isSet = true;
+                    param[3].type = Types.VARCHAR;
+                    param[3].value = null;
+                }
+
+                stmt.outParamHandler = this;
+                lastOutParam = -1;
+                retVal = null;
+
+                tds.executeProcedure("sp_cursor", param, param, stmt,
+                                     warningChain, stmt.getQueryTimeout(), false);
+
+                // @todo Should maybe use a different statement here
+                if (stmt.getMoreResults(tds, warningChain, true)
+                        || (stmt.getUpdateCount() != -1)) {
+                    warningChain.addException(new SQLException(
+                            "No results expected."));
+                }
+
+                if ((retVal == null) || (retVal.intValue() != 0)) {
+                    warningChain.addException(
+                            new SQLException("Cursor operation failed."));
                 }
             } finally {
                 try {

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.18 2004-02-10 16:17:34 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.19 2004-02-11 19:10:25 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -59,7 +59,7 @@ public class TdsStatement implements java.sql.Statement
      */
     public static final int RETURN_GENERATED_KEYS = 1;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.18 2004-02-10 16:17:34 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.19 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -689,7 +689,7 @@ public class TdsStatement implements java.sql.Statement
                 if (ex instanceof SQLException) {
                     throw (SQLException)ex;
                 } else {
-                    throw new SQLException("Network error: " + ex.getMessage());
+                    throw new SQLException("Network error: " + ex.toString());
                 }
             }
         }

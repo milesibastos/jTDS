@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.9 2004-02-08 19:14:55 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.10 2004-02-11 19:10:24 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.9 2004-02-08 19:14:55 bheineman Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.10 2004-02-11 19:10:24 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -432,14 +432,13 @@ implements java.sql.CallableStatement {
         return lastWasNull;
     }
 
-    public boolean execute() throws SQLException {
+    public boolean execute(Tds tds) throws SQLException {
         closeResults(false);
         lastOutParam = -1;
 
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet(parameterList);
 
-        Tds tds = getTds();
         // Setup the parameter native types and maximum sizes
         ParameterUtils.createParameterMapping(rawQueryString,
                                               parameterList,

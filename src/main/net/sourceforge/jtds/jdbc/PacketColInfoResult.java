@@ -1,5 +1,5 @@
 //
-// Copyright 1998 CDS Networks, Inc., Medford Oregon
+// Copyright 1998, 1999 CDS Networks, Inc., Medford Oregon
 //
 // All rights reserved.
 //
@@ -32,47 +32,14 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.util.List;
-
 /**
- * Stores context information that <code>Tds.processSubPacket()</code> might need to process a
- * packet. This information is also used by the <code>ResultSetMetaData</code> implementation.
- *
- * @author     Craig Spannring
- * @created    17 March 2001
- * @version    $Id: Context.java,v 1.2 2004-02-11 19:10:25 alin_sinpalean Exp $
+ * Packet containing information about columns: index of table name in the last
+ * <code>PacketTabNameResult</code> packet and read-only/hidden flags.
  */
-public class Context {
-    public final static String cvsVersion = "$Id: Context.java,v 1.2 2004-02-11 19:10:25 alin_sinpalean Exp $";
+public class PacketColInfoResult extends PacketResult {
+    public static final String cvsVersion = "$Id: PacketColInfoResult.java,v 1.1 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
-    private Columns columns;
-    private List tables;
-    private EncodingHelper encoder;
-
-    public Context(Columns columns, EncodingHelper encoder) {
-        this.columns = columns;
-        this.tables = null;
-        this.encoder = encoder;
-    }
-
-    public Columns getColumnInfo() {
-        return columns;
-    }
-
-    public List getTables() {
-        return tables;
-    }
-
-    public void setTables(List tables) {
-        this.tables = tables;
-    }
-
-    public EncodingHelper getEncoder() {
-        return encoder;
-    }
-
-    public void clearAll() {
-        columns = null;
-        tables = null;
+    public PacketColInfoResult() {
+        super(TdsDefinitions.TDS_COLINFO);
     }
 }

@@ -1,6 +1,31 @@
 Changes from jTDS 0.6
 ========================
 
+02/11/2004 - Alin Sinpalean
+ o Implemented CursorResultSet.deleteRow() and wrote a unit test for it.
+ o Added processing for TDS_TABNAME and TDS_COLINFO packets. Table names are now
+   correctly set for SELECTs when the FOR BROWSE clause is specified and for the
+   sp_cursoropen stored procedure.
+ o Found a bug in CallableStatement_base (executeUpdate and executeQuery were in
+   fact executed by PreparedStatement_base and return values/output parameters
+   did not function). Fixed it and extended unit tests to inclued executeQuery
+   (they only tested execute, before).
+ o Fixed a bug pointed out by Mike Hutchinson in the developer forum
+   (@@MAX_PRECISION does not exist on Sybase).
+ o Corrected some uses of TdsComm.getByte() and getString() in Tds.
+ o Detailed cursor-based ResultSet tests and fixed a number of bugs that were
+   detected while running these tests.
+ o Cursor creation method now sets the cursor type and concurrency options to
+   match the values returned by sp_cursoropen in addition to adding a warning
+   to the chain.
+ o Wrote a test for bug [815348] - CallableStatement truncates varchar to 255.
+   Test ran ok, bug closed.
+ o Added a finally clause to PreparedStatement_base execute, executeQuery and
+   executeUpdate that calls releaseTds. This is useful if an exception occurs
+   while running the methods, but also if the execution only returns an update
+   count (in which case, the result is completely processed and the Tds can be
+   released).
+
 02/10/2004 - Alin Sinpalean
  o Applied Mike Hutchinson's patch to Tds and TdsComm, replacing
    CancelController with a boolean flag and fixing some other issues (see
@@ -13,6 +38,12 @@ Changes from jTDS 0.6
    next/previous), even if the cursor is positioned before the first row or
    after the last one.
    
+02/10/2004 - Brian Heineman
+ o Corrected bug in Statement.executeBatch() where batch values were not being
+   cleared after execution.
+ o Numerous (minor) optimizations to underlying Tds communication logic:
+   reduced memory allocations and assignments; reduced cost of control logic.
+
 02/10/2004 - Brian Heineman
  o Corrected bug in Statement.executeBatch() where batch values were not being
    cleared after execution.

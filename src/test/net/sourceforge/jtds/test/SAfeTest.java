@@ -98,8 +98,6 @@ public class SAfeTest extends DatabaseTestCase
         // physical connection
         Connection con2 = getConnection();
 
-        Logger.setActive(true);
-
         Statement stmt = con.createStatement();
         assertTrue(!stmt.execute(
             "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
@@ -278,7 +276,18 @@ public class SAfeTest extends DatabaseTestCase
     {
         Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         ResultSet rs = stmt.executeQuery("SELECT 5 Value WHERE 1=0");
+        assertEquals(null, stmt.getWarnings());
+        assertEquals(null, rs.getWarnings());
         assertEquals("Value", rs.getMetaData().getColumnName(1));
+        assertTrue(!rs.isBeforeFirst());
+        assertTrue(!rs.isAfterLast());
+        assertTrue(!rs.isFirst());
+        assertTrue(!rs.isLast());
+        rs.next();
+        assertTrue(!rs.isBeforeFirst());
+        assertTrue(!rs.isAfterLast());
+        assertTrue(!rs.isFirst());
+        assertTrue(!rs.isLast());
         rs.close();
         stmt.close();
     }
@@ -320,8 +329,10 @@ public class SAfeTest extends DatabaseTestCase
         final int myVal = 13;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROCEDURE #SAfe0006 @p1 INT, @p2 VARCHAR(20) OUT AS "+
-                "SET @p2=CAST(@p1-1 AS VARCHAR(20)) RETURN @p1+1");
+        stmt.execute("CREATE PROCEDURE #SAfe0006 @p1 INT, @p2 VARCHAR(20) OUT AS "
+                     + "SELECT @p2=CAST(@p1-1 AS VARCHAR(20)) "
+                     + "SELECT @p1 AS value "
+                     + "RETURN @p1+1");
         stmt.close();
 
         // Try all formats: escaped, w/ exec and w/o exec
@@ -329,11 +340,25 @@ public class SAfeTest extends DatabaseTestCase
 
         for( int i=0; i<sql.length; i++ )
         {
+            // Execute it using executeQuery
             CallableStatement cs = con.prepareCall(sql[i]);
             cs.registerOutParameter(1, Types.INTEGER);
             cs.setInt(2, myVal);
             cs.registerOutParameter(3, Types.VARCHAR);
-            cs.execute();
+            cs.executeQuery().close();
+
+            assertEquals(myVal+1, cs.getInt(1));
+            assertEquals(String.valueOf(myVal-1), cs.getString(3));
+
+            cs.close();
+
+            // Now use execute
+            cs = con.prepareCall(sql[i]);
+            cs.registerOutParameter(1, Types.INTEGER);
+            cs.setInt(2, myVal);
+            cs.registerOutParameter(3, Types.VARCHAR);
+            assertTrue(cs.execute());
+            cs.getResultSet().close();
 
             assertEquals(myVal+1, cs.getInt(1));
             assertEquals(String.valueOf(myVal-1), cs.getString(3));
@@ -377,11 +402,11 @@ public class SAfeTest extends DatabaseTestCase
      */
     public void testBigDecimal0007() throws Exception {
         Statement createStmt = con.createStatement();
-        createStmt.execute("CREATE TABLE #SAfe0007(value money)");
+        createStmt.execute("CREATE TABLE #SAfe0007(value MONEY)");
         createStmt.close();
 
         PreparedStatement stmt = con.prepareStatement(
-                "INSERT INTO #SAfe0007(value) values (?) "
+                "INSERT INTO #SAfe0007(value) VALUES (?) "
                 + "SELECT * FROM #SAfe0007 DELETE #SAfe0007");
         // Now test with certain values.
         insertBigDecimal(stmt, 1.1, false);
@@ -404,7 +429,7 @@ public class SAfeTest extends DatabaseTestCase
         long myVal = 13;
 
         Statement createStmt = con.createStatement();
-        createStmt.execute("CREATE TABLE #SAfe0008(value varchar(255))");
+        createStmt.execute("CREATE TABLE #SAfe0008(value VARCHAR(255))");
         createStmt.close();
 
         PreparedStatement stmt = con.prepareStatement(
@@ -423,5 +448,81 @@ public class SAfeTest extends DatabaseTestCase
                      String.valueOf(myVal), rs.getString(1));
 
         stmt.close();
+    }
+
+    /**
+     * Test <code>ResultSet.deleteRow()</code> on updateable result sets.
+     */
+    public void testDeleteRow0009() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #SAfe0009(value VARCHAR(255) PRIMARY KEY)");
+        stmt.close();
+
+        PreparedStatement insStmt = con.prepareStatement(
+                "INSERT INTO #SAfe0009(value) values (?)");
+        insStmt.setString(1, "Row 1");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.setString(1, "Row 2");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                                   ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0009 ORDER BY 1");
+        assertEquals(null, stmt.getWarnings());
+        assertEquals(null, rs.getWarnings());
+        assertTrue(rs.last());
+        assertTrue(!rs.rowDeleted());
+        rs.deleteRow();
+        assertTrue(rs.rowDeleted());
+        rs.close();
+
+        rs = stmt.executeQuery("SELECT * FROM #SAfe0009");
+        assertTrue(rs.next());
+        assertEquals("Row 1", rs.getString(1));
+        assertTrue(!rs.next());
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test VARCHAR output parameters returned by CallableStatements.
+     * <p>
+     * An issue existed, caused by the fact that the parameter was sent to SQL
+     * Server as a short VARCHAR (not XORed with 0x80) limiting its length to
+     * 255 characters. See bug [815348] for more details.
+     */
+    public void testCallableStatementVarchar0010() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE PROCEDURE #SAfe0010 @p1 VARCHAR(2049) OUT AS "
+                     + "SELECT @p1 = @p1 + @p1 "
+                     + "SELECT @p1 = @p1 + @p1 "
+                     + "SELECT @p1 = @p1 + @p1 "
+                     + "SELECT @p1 AS value "
+                     + "RETURN LEN(@p1)");
+        stmt.close();
+
+        // 256 characters long string
+        String myVal = "01234567890123456789012345678901234567890123456789"
+                + "01234567890123456789012345678901234567890123456789"
+                + "01234567890123456789012345678901234567890123456789"
+                + "01234567890123456789012345678901234567890123456789"
+                + "01234567890123456789012345678901234567890123456789"
+                + "012345";
+
+        // Execute it using executeQuery
+        CallableStatement cs = con.prepareCall("{?=call #SAfe0010(?)}");
+        cs.registerOutParameter(1, Types.INTEGER);
+        cs.setString(2, myVal);
+        cs.registerOutParameter(2, Types.VARCHAR);
+        ResultSet rs = cs.executeQuery();
+        assertTrue(rs.next());
+        String rsVal = rs.getString(1);
+        rs.close();
+
+        assertEquals(myVal.length() * 8, cs.getInt(1));
+        assertEquals(rsVal, cs.getString(2));
+
+        cs.close();
     }
 }

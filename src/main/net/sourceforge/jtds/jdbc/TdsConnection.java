@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.13 2004-02-10 05:14:52 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -85,7 +85,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.13 2004-02-10 05:14:52 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.14 2004-02-11 19:10:25 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,43 +123,43 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.13 2004-02-10 05:14:52 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.14 2004-02-11 19:10:25 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
      *
-     * @param  props_            <code>Properties</code> of the new
+     * @param  props            <code>Properties</code> of the new
      *     <code>Connection</code> instance
      * @exception  SQLException  if a database access error occurs
      * @exception  TdsException  if a network protocol error occurs
      */
-    public TdsConnection(Properties props_)
+    public TdsConnection(Properties props)
             throws SQLException, TdsException {
 
-        host = props_.getProperty(Tds.PROP_HOST);
-        serverType = Integer.parseInt(props_.getProperty(Tds.PROP_SERVERTYPE));
-        port = Integer.parseInt(props_.getProperty(Tds.PROP_PORT));
-        database = props_.getProperty(Tds.PROP_DBNAME);
-        String user = props_.getProperty(Tds.PROP_USER);
-        String password = props_.getProperty(Tds.PROP_PASSWORD);
-        initialProps = props_;
+        host = props.getProperty(Tds.PROP_HOST);
+        serverType = Integer.parseInt(props.getProperty(Tds.PROP_SERVERTYPE));
+        port = Integer.parseInt(props.getProperty(Tds.PROP_PORT));
+        database = props.getProperty(Tds.PROP_DBNAME);
+        String user = props.getProperty(Tds.PROP_USER);
+        String password = props.getProperty(Tds.PROP_PASSWORD);
+        initialProps = props;
 
         warningChain = new SQLWarningChain();
 
         if (user == null) {
-            user = props_.getProperty(Tds.PROP_USER.toLowerCase());
+            user = props.getProperty(Tds.PROP_USER.toLowerCase());
             if (user == null) {
                 throw new SQLException("Need a username.");
             }
-            props_.put(Tds.PROP_USER, user);
+            props.put(Tds.PROP_USER, user);
         }
 
         if (password == null) {
-            password = props_.getProperty(Tds.PROP_PASSWORD.toLowerCase());
+            password = props.getProperty(Tds.PROP_PASSWORD.toLowerCase());
             if (password == null) {
                 throw new SQLException("Need a password.");
             }
-            props_.put(Tds.PROP_PASSWORD, password);
+            props.put(Tds.PROP_PASSWORD, password);
         }
 
         Tds tmpTds = this.allocateTds(false);
@@ -169,14 +169,19 @@ public class TdsConnection implements Connection
         freeTds(tmpTds);
 
         TdsStatement stmt = null;
-        try {
-            stmt = new TdsStatement(this);
-            ResultSet rs = stmt.executeQuery("SELECT @@MAX_PRECISION");
-            rs.next();
-            maxPrecision = rs.getByte(1);
-        } finally {
-            if (stmt != null) {
-                stmt.close();
+        if (String.valueOf(TdsDefinitions.SYBASE).equals(
+                props.getProperty(Tds.PROP_SERVERTYPE))) {
+            maxPrecision = 38; // Sybase default
+        } else {
+            try {
+                stmt = new TdsStatement(this);
+                ResultSet rs = stmt.executeQuery("SELECT @@MAX_PRECISION");
+                rs.next();
+                maxPrecision = rs.getByte(1);
+            } finally {
+                if (stmt != null) {
+                    stmt.close();
+                }
             }
         }
     }
@@ -215,8 +220,7 @@ public class TdsConnection implements Connection
      *     auto-commit.
      * @exception SQLException  if a database-access error occurs.
      */
-    public synchronized void setAutoCommit(boolean value) throws SQLException
-    {
+    public synchronized void setAutoCommit(boolean value) throws SQLException {
         checkClosed();
         autoCommit = value;
         changeSettings();
@@ -232,10 +236,9 @@ public class TdsConnection implements Connection
      * Note: This is not synchronized because it's only supposed to be called
      *       by synchronized methods.
      */
-    private void changeSettings() throws SQLException
-    {
-        for( int i=0; i<tdsPool.size(); i++ )
-            ((TdsInstance)tdsPool.elementAt(i)).tds
+    private void changeSettings() throws SQLException {
+        for (int i = 0; i < tdsPool.size(); i++)
+            ((TdsInstance) tdsPool.elementAt(i)).tds
                 .changeSettings(autoCommit, transactionIsolationLevel);
     }
 
@@ -247,8 +250,7 @@ public class TdsConnection implements Connection
      * @param readOnly          true enables read-only mode; false disables it
      * @exception SQLException  if a database access error occurs
      */
-    public void setReadOnly(boolean readOnly) throws SQLException
-    {
+    public void setReadOnly(boolean readOnly) throws SQLException {
     }
 
     /**
@@ -259,20 +261,17 @@ public class TdsConnection implements Connection
      * @param  catalog           The new Catalog value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public synchronized void setCatalog(String catalog) throws SQLException
-    {
-        if( database.equals(catalog) )
+    public synchronized void setCatalog(String catalog) throws SQLException {
+        if (database.equals(catalog))
             return;
 
         /** @todo Maybe find a smarter implementation for this */
-        for( int i=0; i<tdsPool.size(); i++ )
-        {
-            Tds tds = ((TdsInstance)tdsPool.get(i)).tds;
+        for (int i = 0; i < tdsPool.size(); i++) {
+            Tds tds = ((TdsInstance) tdsPool.get(i)).tds;
 
             // SAfe We have to synchronize this so that the Statement doesn't
             //      begin sending data while we're changing the database.
-            synchronized( tds )
-            {
+            synchronized (tds) {
                 tds.skipToEnd();
                 tds.changeDB(catalog, warningChain);
             }
@@ -296,8 +295,7 @@ public class TdsConnection implements Connection
      * @see                     DatabaseMetaData#supportsTransactionIsolationLevel
      */
     public synchronized void setTransactionIsolation(int level)
-             throws SQLException
-    {
+            throws SQLException {
         checkClosed();
         transactionIsolationLevel = level;
         changeSettings();
@@ -311,20 +309,18 @@ public class TdsConnection implements Connection
      * @param  map               The new TypeMap value
      * @exception  SQLException  Description of Exception
      */
-    public void setTypeMap(java.util.Map map) throws SQLException
-    {
+    public void setTypeMap(java.util.Map map) throws SQLException {
         NotImplemented();
     }
 
-    public String getUrl() throws SQLException
-    {
+    public String getUrl() throws SQLException {
         checkClosed();
         // XXX Is it legal to return something that might not be
         // exactly the URL used to connect?
         return
                 ("jdbc:jtds:"
-                 + (serverType == Tds.SYBASE ? "sybase" : "sqlserver")
-                 + "://" + host + ":" + port + "/" + database);
+                + (serverType == Tds.SYBASE ? "sybase" : "sqlserver")
+                + "://" + host + ":" + port + "/" + database);
     }
 
     /**
@@ -334,8 +330,7 @@ public class TdsConnection implements Connection
      *@exception  SQLException  if a database-access error occurs.
      *@see                      #setAutoCommit
      */
-    public boolean getAutoCommit() throws SQLException
-    {
+    public boolean getAutoCommit() throws SQLException {
         checkClosed();
         return autoCommit;
     }
@@ -343,12 +338,10 @@ public class TdsConnection implements Connection
     /**
      * Tests to see if a Connection is closed.
      *
-     * @return                  true if the connection is closed; false if it's
-     *     still open
+     * @return    true if the connection is closed; false if it's still open
      * @exception SQLException  if a database-access error occurs.
      */
-    public boolean isClosed() throws SQLException
-    {
+    public boolean isClosed() throws SQLException {
         return isClosed;
     }
 
@@ -361,14 +354,14 @@ public class TdsConnection implements Connection
      * @return                   a DatabaseMetaData object for this connection
      * @exception  SQLException  if a database access error occurs
      */
-    public synchronized java.sql.DatabaseMetaData getMetaData() throws SQLException
-    {
+    public synchronized java.sql.DatabaseMetaData getMetaData()
+            throws SQLException {
         checkClosed();
-        if( databaseMetaData == null )
-            // SAfe: There is always one Tds in the connection pool and we
-            // don't need exclusive access to it.
-            databaseMetaData = DatabaseMetaData.getInstance(this,
-                ((TdsInstance)tdsPool.get(0)).tds);
+        if (databaseMetaData == null)
+        // SAfe: There is always one Tds in the connection pool and we
+        // don't need exclusive access to it.
+            databaseMetaData = DatabaseMetaData.getInstance(
+                    this, ((TdsInstance) tdsPool.get(0)).tds);
         return databaseMetaData;
     }
 
@@ -378,8 +371,7 @@ public class TdsConnection implements Connection
      * @return                   true if connection is read-only
      * @exception  SQLException  if a database-access error occurs.
      */
-    public boolean isReadOnly() throws SQLException
-    {
+    public boolean isReadOnly() throws SQLException {
         checkClosed();
         return false;
     }
@@ -390,8 +382,7 @@ public class TdsConnection implements Connection
      * @return                   the current catalog name or null
      * @exception  SQLException  if a database-access error occurs.
      */
-    public String getCatalog() throws SQLException
-    {
+    public String getCatalog() throws SQLException {
         checkClosed();
         return database;
     }
@@ -402,8 +393,7 @@ public class TdsConnection implements Connection
      * @return                   the current TRANSACTION_* mode value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public int getTransactionIsolation() throws SQLException
-    {
+    public int getTransactionIsolation() throws SQLException {
         checkClosed();
         return transactionIsolationLevel;
     }
@@ -416,8 +406,7 @@ public class TdsConnection implements Connection
      * @return                   the first SQLWarning or null
      * @exception  SQLException  if a database-access error occurs.
      */
-    public synchronized SQLWarning getWarnings() throws SQLException
-    {
+    public synchronized SQLWarning getWarnings() throws SQLException {
         checkClosed();
         return warningChain.getWarnings();
     }
@@ -431,8 +420,7 @@ public class TdsConnection implements Connection
      *     with this <code>Connection</code> object
      * @exception  SQLException  Description of Exception
      */
-    public java.util.Map getTypeMap() throws SQLException
-    {
+    public java.util.Map getTypeMap() throws SQLException {
         return new java.util.HashMap();
     }
 
@@ -457,8 +445,7 @@ public class TdsConnection implements Connection
      * @return                   a new Statement object
      * @exception  SQLException  passed through from the constructor
      */
-    public synchronized java.sql.Statement createStatement() throws SQLException
-    {
+    public synchronized java.sql.Statement createStatement() throws SQLException {
         checkClosed();
         return new TdsStatement(this);
     }
@@ -485,13 +472,12 @@ public class TdsConnection implements Connection
      * @exception SQLException if a database-access error occurs.
      */
     public java.sql.PreparedStatement prepareStatement(String sql)
-        throws SQLException
-    {
+            throws SQLException {
         // No need for synchronized here, prepareStatement(String, int, int) is
         // synchronized
         return prepareStatement(sql,
-            ResultSet.TYPE_FORWARD_ONLY,
-            ResultSet.CONCUR_READ_ONLY);
+                                ResultSet.TYPE_FORWARD_ONLY,
+                                ResultSet.CONCUR_READ_ONLY);
     }
 
     /**
@@ -514,13 +500,12 @@ public class TdsConnection implements Connection
      *     pre-compiled SQL statement
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.CallableStatement prepareCall(String sql) throws SQLException
-    {
+    public java.sql.CallableStatement prepareCall(String sql) throws SQLException {
         // No need for synchronized here, prepareCall(String, int, int) is
         // synchronized
         return prepareCall(sql,
-            ResultSet.TYPE_FORWARD_ONLY,
-            ResultSet.CONCUR_READ_ONLY);
+                           ResultSet.TYPE_FORWARD_ONLY,
+                           ResultSet.CONCUR_READ_ONLY);
     }
 
     /**
@@ -546,8 +531,7 @@ public class TdsConnection implements Connection
      * @exception  SQLException  if a database-access error occurs.
      * @see                      #setAutoCommit
      */
-    public synchronized void commit() throws SQLException
-    {
+    public synchronized void commit() throws SQLException {
         commitOrRollback(true);
     }
 
@@ -559,8 +543,7 @@ public class TdsConnection implements Connection
      * @exception  SQLException  if a database-access error occurs.
      * @see                      #setAutoCommit
      */
-    public synchronized void rollback() throws SQLException
-    {
+    public synchronized void rollback() throws SQLException {
         commitOrRollback(false);
     }
 
@@ -575,32 +558,26 @@ public class TdsConnection implements Connection
      *
      * @exception  SQLException  if a database-access error occurs.
      */
-    public synchronized void close() throws SQLException
-    {
+    public synchronized void close() throws SQLException {
         int i;
         SQLException exception = null;
 
         // MJH Need to rollback if in manual commit mode
-        for( i=0; i<tdsPool.size(); i++ )
-        {
-            try
-            {
+        for (i = 0; i < tdsPool.size(); i++) {
+            try {
                 // SAfe Maybe we should commit regardless of the fact that we're in manual commit mode or not. There
                 //      might be uncommited statements, anyway (e.g. we were in manual commit mode, executed some
                 //      queries, went into auto commit mode but did not commit them).
-                Tds tds = ((TdsInstance)tdsPool.elementAt(i)).tds;
-                synchronized( tds )
-                {
+                Tds tds = ((TdsInstance) tdsPool.elementAt(i)).tds;
+                synchronized (tds) {
                     // Consume all remaining packets
                     tds.skipToEnd();
 
-                    if( !autoCommit )
+                    if (!autoCommit)
                         tds.rollback(); // MJH
                     tds.close();
                 }
-            }
-            catch( SQLException ex )
-            {
+            } catch (SQLException ex) {
                 // SAfe Add the exception to the chain
                 ex.setNextException(exception);
                 exception = ex;
@@ -612,7 +589,7 @@ public class TdsConnection implements Connection
         clearWarnings();
         isClosed = true;
 
-        if( exception != null )
+        if (exception != null)
             throw exception;
     }
 
@@ -622,8 +599,7 @@ public class TdsConnection implements Connection
      *
      * @exception  SQLException  if a database access error occurs
      */
-    public synchronized void clearWarnings() throws SQLException
-    {
+    public synchronized void clearWarnings() throws SQLException {
         checkClosed();
         warningChain.clearWarnings();
     }
@@ -643,8 +619,7 @@ public class TdsConnection implements Connection
      * @exception SQLException if a database access error occurs
      */
     public synchronized java.sql.Statement createStatement(int type, int concurrency)
-        throws SQLException
-    {
+            throws SQLException {
         checkClosed();
         return new TdsStatement(this, type, concurrency);
     }
@@ -664,14 +639,13 @@ public class TdsConnection implements Connection
      * @exception SQLException     if a database access error occurs
      */
     public synchronized java.sql.PreparedStatement prepareStatement(
-        String sql,
-        int resultSetType,
-        int resultSetConcurrency)
-        throws SQLException
-    {
+            String sql,
+            int resultSetType,
+            int resultSetConcurrency)
+            throws SQLException {
         checkClosed();
         return new PreparedStatement_base(
-            this, sql, resultSetType, resultSetConcurrency);
+                this, sql, resultSetType, resultSetConcurrency);
     }
 
     /**
@@ -689,24 +663,22 @@ public class TdsConnection implements Connection
      * @exception SQLException     if a database access error occurs
      */
     public synchronized java.sql.CallableStatement prepareCall(
-        String sql,
-        int resultSetType,
-        int resultSetConcurrency) throws SQLException
-    {
+            String sql,
+            int resultSetType,
+            int resultSetConcurrency) throws SQLException {
         checkClosed();
         return new CallableStatement_base(
-            this, sql, resultSetType, resultSetConcurrency);
+                this, sql, resultSetType, resultSetConcurrency);
     }
 
-    private void NotImplemented() throws java.sql.SQLException
-    {
+    private void NotImplemented() throws java.sql.SQLException {
         throw new java.sql.SQLException("Not Implemented");
     }
 
-    private void checkClosed() throws SQLException
-    {
-        if( isClosed )
+    private void checkClosed() throws SQLException {
+        if (isClosed) {
             throw new java.sql.SQLException("Connection closed");
+        }
     }
 
     /**
@@ -717,31 +689,26 @@ public class TdsConnection implements Connection
      * @return    A Tds instance to use for database communications.
      * @exception SQLException
      */
-    synchronized Tds allocateTds(boolean mainTds) throws java.sql.SQLException
-    {
+    synchronized Tds allocateTds(boolean mainTds) throws java.sql.SQLException {
         Tds result;
         int i;
 
-        try
-        {
-            if( mainTds && haveMainTds )
+        try {
+            if (mainTds && haveMainTds) {
                 i = 0;
-            else
-            {
+            } else {
                 i = findAnAvailableTds();
-                if( i == -1 )
-                {
+                if (i == -1) {
                     Tds tmpTds = new Tds(this, initialProps);
                     TdsInstance tmp = new TdsInstance(tmpTds);
                     tdsPool.addElement(tmp);
                     i = findAnAvailableTds();
                 }
 
-                if( i == -1 )
+                if (i == -1)
                     throw new TdsException("Internal Error. Couldn't get Tds instance.");
 
-                if( mainTds )
-                {
+                if (mainTds) {
                     Object o = tdsPool.remove(i);
                     tdsPool.insertElementAt(o, 0);
                     haveMainTds = true;
@@ -749,27 +716,24 @@ public class TdsConnection implements Connection
                 }
             }
 
-            TdsInstance inst = (TdsInstance)tdsPool.elementAt(i);
+            TdsInstance inst = (TdsInstance) tdsPool.elementAt(i);
 
             // This also means that i==0 and haveMainTds==true
-            if( mainTds )
-                synchronized( inst.tds )
-                {
+            if (mainTds) {
+                synchronized (inst.tds) {
                     // SAfe Do nothing, just wait for it to be released (if it's in use).
                 }
+            }
 
-            if( inst.inUse )
-                throw new TdsException("Internal Error. Tds "+i+" is already allocated.");
+            if (inst.inUse) {
+                throw new TdsException("Internal Error. Tds " + i + " is already allocated.");
+            }
 
             inst.inUse = true;
             result = inst.tds;
-        }
-        catch( net.sourceforge.jtds.jdbc.TdsException e )
-        {
+        } catch (net.sourceforge.jtds.jdbc.TdsException e) {
             throw new SQLException(e.getMessage());
-        }
-        catch( java.io.IOException e )
-        {
+        } catch (java.io.IOException e) {
             throw new SQLException(e.getMessage());
         }
 
@@ -784,13 +748,12 @@ public class TdsConnection implements Connection
      *
      * @return -1 if none was found, otherwise return the index of a free tds
      */
-    private int findAnAvailableTds()
-    {
+    private int findAnAvailableTds() {
         int i, min = haveMainTds ? 1 : 0;
 
-        for( i=tdsPool.size()-1; i>=min && ((TdsInstance)tdsPool.elementAt(i)).inUse; i-- );
+        for (i = tdsPool.size() - 1; i >= min && ((TdsInstance) tdsPool.elementAt(i)).inUse; i--);
 
-        return i==0 && haveMainTds ? -1 : i;
+        return (i == 0 && haveMainTds) ? -1 : i;
     }
 
     /**
@@ -802,18 +765,16 @@ public class TdsConnection implements Connection
      * @exception  TdsException  Description of Exception
      * @see                      #allocateTds
      */
-    void freeTds(Tds tds) throws TdsException
-    {
+    void freeTds(Tds tds) throws TdsException {
         int i;
         TdsInstance inst;
 
         i = tdsPool.size();
-        do
-            inst = (TdsInstance)tdsPool.elementAt(--i);
-        while( i>0 && tds!=inst.tds );
+        do {
+            inst = (TdsInstance) tdsPool.elementAt(--i);
+        } while (i > 0 && tds != inst.tds);
 
-        if( i >= 0 && inst.inUse )
-        {
+        if (i >= 0 && inst.inUse) {
             inst.inUse = false;
 
             // XXX Should also send a cancel to the server and throw out any data that has already been sent.
@@ -821,9 +782,9 @@ public class TdsConnection implements Connection
             // SAfe Not so sure about that. I think that if you cancel the execution of multiple statements sent at the
             //      same time, the last ones will simply not be executed. We don't want that. If the user explicitly
             //      cancels thir execution, it's his business. We could, however, consume the data.
-        }
-        else
+        } else {
             throw new TdsException("Tried to free a tds that wasn't in use.");
+        }
     }
 
     /**
@@ -836,25 +797,21 @@ public class TdsConnection implements Connection
      * @param commit if <code>true</code> commit, else rollback all executing
      *     <code>Statement</code>s
      */
-    private void commitOrRollback(boolean commit) throws SQLException
-    {
+    private void commitOrRollback(boolean commit) throws SQLException {
         int i;
 
         // @todo SAfe Check when does clearWarnings actually have to be called
         warningChain.clearWarnings();
 
         // MJH  Commit or Rollback Tds connections directly rather than mess with TdsStatement
-        for( i=0; i<tdsPool.size(); i++ )
-        {
-            try
-            {
-                if( commit )
-                    ((TdsInstance)tdsPool.elementAt(i)).tds.commit();
-                else
-                    ((TdsInstance)tdsPool.elementAt(i)).tds.rollback();
-            }
-            catch( java.sql.SQLException e )
-            {
+        for (i = 0; i < tdsPool.size(); i++) {
+            try {
+                if (commit) {
+                    ((TdsInstance) tdsPool.elementAt(i)).tds.commit();
+                } else {
+                    ((TdsInstance) tdsPool.elementAt(i)).tds.rollback();
+                }
+            } catch (java.sql.SQLException e) {
                 warningChain.addException(e);
             }
         }
@@ -862,18 +819,17 @@ public class TdsConnection implements Connection
         warningChain.checkForExceptions();
     }
 
-    public java.sql.Statement createStatement(int param, int param1, int param2) throws java.sql.SQLException
-    {
+    public java.sql.Statement createStatement(int param, int param1, int param2)
+            throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public int getHoldability() throws java.sql.SQLException
-    {
+    public int getHoldability() throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public java.sql.CallableStatement prepareCall(String str, int param, int param2, int param3) throws java.sql.SQLException
-    {
+    public java.sql.CallableStatement prepareCall(String str, int param, int param2, int param3)
+            throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
@@ -886,7 +842,7 @@ public class TdsConnection implements Connection
         boolean returnKeys = false;
 
         if (param == TdsStatement.RETURN_GENERATED_KEYS
-            && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
+                && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             StringBuffer tmpSQL = new StringBuffer(sql);
 
             if (tdsVer == Tds.TDS70) {
@@ -937,33 +893,27 @@ public class TdsConnection implements Connection
         return prepareStatement(sql, TdsStatement.RETURN_GENERATED_KEYS);
     }
 
-    public java.sql.PreparedStatement prepareStatement(String str, int param, int param2, int param3) throws java.sql.SQLException
-    {
+    public java.sql.PreparedStatement prepareStatement(String str, int param, int param2, int param3) throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public void releaseSavepoint(java.sql.Savepoint savepoint) throws java.sql.SQLException
-    {
+    public void releaseSavepoint(java.sql.Savepoint savepoint) throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public void rollback(java.sql.Savepoint savepoint) throws java.sql.SQLException
-    {
+    public void rollback(java.sql.Savepoint savepoint) throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public void setHoldability(int param) throws java.sql.SQLException
-    {
+    public void setHoldability(int param) throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public java.sql.Savepoint setSavepoint() throws java.sql.SQLException
-    {
+    public java.sql.Savepoint setSavepoint() throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 
-    public java.sql.Savepoint setSavepoint(String str) throws java.sql.SQLException
-    {
+    public java.sql.Savepoint setSavepoint(String str) throws java.sql.SQLException {
         throw new UnsupportedOperationException();
     }
 }

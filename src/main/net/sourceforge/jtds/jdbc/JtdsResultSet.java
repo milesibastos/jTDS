@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.19 2004-10-04 12:17:57 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.20 2004-10-13 14:09:02 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -904,7 +904,7 @@ public class JtdsResultSet implements ResultSet {
          if (columnMap == null) {
              columnMap = new HashMap();
 
-             for (int i = 0; i < columnCount; i++) {
+             for (int i = columnCount - 1; i >= 0; i--) {
                  columnMap.put(columns[i].name.toUpperCase(),
                                new Integer(i + 1));
              }

@@ -4,6 +4,8 @@ Changes from jTDS 0.9
 10/13/2004 - Alin Sinpalean
  o Fixed a couple of errors in Support.convert(), calls to Blob.getBytes() and
    Clob.getString() with a position of 0.
+ o Fixed a bug that was causing ResultSet retrieval by name to return the last
+   matching column rather than the first.
 
 10/12/2004 - Alin Sinpalean
  o Applied Mike's fix for bug [1042272] jTDS doesn't allow null value into

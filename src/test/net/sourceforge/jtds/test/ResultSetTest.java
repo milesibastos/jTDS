@@ -575,6 +575,20 @@ public class ResultSetTest extends TestBase {
         cstmt.close();
     }
 
+    /**
+     * Test whether retrieval by name returns the first occurence (that's what
+     * the spec requires).
+     */
+    public void testGetByName() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT 1 myCol, 2 myCol, 3 myCol");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt("myCol"));
+        assertFalse(rs.next());
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

@@ -1,6 +1,13 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/02/2004 - Alin Sinpalean
+ o Corrected bug [1020733] Sysbase test failures; (thanks to Mike Hutchinson
+   for the bug report and patch).
+ o Replaced global temporary tables and procedures ("##"-prefixed) with local
+   temporary tables and procedures ("#"-prefixed) in all tests, after a failure
+   in the test suite caused by a CREATE TABLE statement.
+
 09/01/2004 - Alin Sinpalean
  o Fixed bug #1020324 - "Driver.parseURL method: missing host check". Thanks
    duccio for the find and fix.

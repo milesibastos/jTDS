@@ -8,7 +8,7 @@ Changes from jTDS 0.6
    sp_cursoropen stored procedure.
  o Found a bug in CallableStatement_base (executeUpdate and executeQuery were in
    fact executed by PreparedStatement_base and return values/output parameters
-   did not function). Fixed it and extended unit tests to inclued executeQuery
+   did not function). Fixed it and extended unit tests to include executeQuery
    (they only tested execute, before).
  o Fixed a bug pointed out by Mike Hutchinson in the developer forum
    (@@MAX_PRECISION does not exist on Sybase).
@@ -25,6 +25,9 @@ Changes from jTDS 0.6
    while running the methods, but also if the execution only returns an update
    count (in which case, the result is completely processed and the Tds can be
    released).
+   
+02/11/2004 - Brian Heineman
+ o Updated DatabaseMetaData.supportsBatchUpdates() to return true.
 
 02/10/2004 - Alin Sinpalean
  o Applied Mike Hutchinson's patch to Tds and TdsComm, replacing

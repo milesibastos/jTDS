@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.17 2004-02-09 03:34:53 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.18 2004-02-12 03:34:40 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.17 2004-02-09 03:34:53 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.18 2004-02-12 03:34:40 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -3120,10 +3120,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      *      otherwise
      * @exception  SQLException  @todo Description of Exception
      */
-    public boolean supportsBatchUpdates() throws SQLException
-    {
-        // It doesn't so why throw an exception?
-        return false;
+    public boolean supportsBatchUpdates() throws SQLException {
+        return true;
     }
 
     private void setCaseSensitiveFlag() throws SQLException

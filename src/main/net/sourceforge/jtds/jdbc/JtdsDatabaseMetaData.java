@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.11 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.12 2004-09-13 21:24:15 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -54,7 +54,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     Boolean caseSensitive = null;
 
-    public JtdsDatabaseMetaData(ConnectionJDBC2 connection) throws SQLException {
+    public JtdsDatabaseMetaData(ConnectionJDBC2 connection) {
         this.connection = connection;
         tdsVersion = connection.getTdsVersion();
 
@@ -1353,7 +1353,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setString(3, catalog);
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
-        
+
         rs.setColName(1,  "PROCEDURE_CAT");
         rs.setColLabel(1, "PROCEDURE_CAT");
         rs.setColName(2,  "PROCEDURE_SCHEM");
@@ -1381,26 +1381,30 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * The schema column is:
      * <OL>
-     *   <LI> <B>TABLE_SCHEM</B> String =>schema name
+     *   <LI> <B>TABLE_SCHEM</B> String => schema name
+     *   <LI> <B>TABLE_CATALOG</B> String => catalog name (may be <code>null</code>, JDBC 3.0)
      * </OL>
      *
-     * @return ResultSet - each row has a single String column
-     *         that is a schema name
-     * @throws SQLException if a database-access error occurs.
+     * @return a <code>ResultSet</code> object in which each row is a schema decription
+     * @throws SQLException if a database access error occurs
      */
     public java.sql.ResultSet getSchemas() throws SQLException {
         java.sql.Statement statement = connection.createStatement();
 
-        String sql;
+        String sql = Driver.JDBC3
+                ? "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers"
+                : "SELECT name AS TABLE_SCHEM FROM dbo.sysusers";
 
         //
         // MJH - isLogin column only in MSSQL >= 7.0
         //
         if (tdsVersion >= Driver.TDS70) {
-            sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE islogin=1";
+            sql += " WHERE islogin=1";
         } else {
-            sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE uid>0";
+            sql += " WHERE uid>0";
         }
+
+        sql += " ORDER BY TABLE_SCHEM";
 
         return statement.executeQuery(sql);
     }
@@ -1654,7 +1658,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getTimeDateFunctions() throws SQLException {
         return "CURDATE,CURTIME,DAYNAME,DAYOFMONTH,DAYOFWEEK,DAYOFYEAR,HOUR,"
-            + "MINUTE,MONTH,MONTHNAME,NOW,QUARTER,TIMESTAMPADD,TIMESTAMPDIFF," 
+            + "MINUTE,MONTH,MONTHNAME,NOW,QUARTER,TIMESTAMPADD,TIMESTAMPDIFF,"
             + "SECOND,WEEK,YEAR";
     }
 
@@ -1919,7 +1923,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * JDBC 2.0 Retrieves the connection that produced this metadata object.
      *
      * @return the connection that produced this metadata object
-     * @throws  SQLException  @todo Description of Exception
+     * @throws  SQLException if a database-access error occurs.
      */
     public java.sql.Connection getConnection() throws SQLException {
         return connection;

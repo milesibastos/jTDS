@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/13/2004 - Alin Sinpalean
+ o Corrected bug [1027304] DatabaseMetaData.getSchemas() returns 1 column (need
+   2); for JDBC 3.0 getSchemas() now also returns a NULL TABLE_CATALOG column.
+
 09/12/2004 - Alin Sinpalean
  o Implemented automatic TDS protocol version fallback, according to feature
    request [991689] jTDS should automatically detect TDS protocol. Should work

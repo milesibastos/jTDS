@@ -1514,8 +1514,13 @@ public class CSUnitTest extends DatabaseTestCase {
             ResultSet         rs         = dbMetaData.getSchemas();
             ResultSetMetaData rsm        = rs.getMetaData();
 
-            assertTrue(rsm.getColumnCount()==1);
-            assertTrue(rsm.getColumnName(1).equals("TABLE_SCHEM"));
+            boolean JDBC3 = "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
+
+            assertEquals(JDBC3 ? 2 : 1, rsm.getColumnCount());
+            assertTrue(rsm.getColumnName(1).equalsIgnoreCase("TABLE_SCHEM"));
+            if (JDBC3) {
+                assertTrue(rsm.getColumnName(2).equalsIgnoreCase("TABLE_CATALOG"));
+            }
 
             while (rs.next()) {
                 output.println("schema " + rs.getString(1));

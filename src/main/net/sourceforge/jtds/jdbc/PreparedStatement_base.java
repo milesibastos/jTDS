@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.15 2004-02-07 19:26:10 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.16 2004-02-08 19:12:12 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.15 2004-02-07 19:26:10 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.16 2004-02-08 19:12:12 bheineman Exp $";
 
     String rawQueryString;
     ParameterListItem[] parameterList;
@@ -71,7 +71,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
     public PreparedStatement_base(TdsConnection conn_, String sql, int type, int concurrency)
     throws SQLException {
-        super(conn_, type, concurrency);
+        this(conn_, type, concurrency);
 
         rawQueryString = conn_.nativeSQL(sql);
 
@@ -82,6 +82,11 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         for (int i = 0; i < numberOfParameters; i++ ) {
             parameterList[i] = new ParameterListItem();
         }
+    }
+
+    public PreparedStatement_base(TdsConnection conn_, int type, int concurrency)
+    throws SQLException {
+        super(conn_, type, concurrency);
     }
 
     /**

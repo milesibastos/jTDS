@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.4 2002-10-26 12:20:47 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.5 2002-12-18 13:19:36 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.4 2002-10-26 12:20:47 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.5 2002-12-18 13:19:36 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -1850,7 +1850,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         try {
             s = connection.createStatement();
             // XXX Need to check this for Sybase
-            rs = s.executeQuery( "select USER_NAME()" );
+            rs = s.executeQuery( "select system_user" );
 
             if ( !rs.next() ) {
                 throw new SQLException( "Couldn't determine user name" );

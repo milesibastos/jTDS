@@ -1,3 +1,14 @@
+Changes from jTDS 0.5
+=======================
+
+12/18/2002 - Alin Sinpalean
+
+ o Long time, no jTDS! Hope I'll have some more time to look after jTDS now
+   that I found a new job...
+ o Fixed bug #653510: the value returned by DatabaseMetaData.getUserName() was
+   different from what the Microsoft driver returned (jTDS was returning "dbo"
+   while the Microsoft driver was returning "sa"). Thanks to Jim McBeath for
+   finding this out and providing a solution.
 
 ===============================================================================
 11/11/2002 - jTDS 0.5 released

@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.10 2004-11-24 06:42:01 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.11 2004-11-29 06:43:08 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -232,6 +232,19 @@ public class ResponseStream {
         CharsetInfo info = socket.getCharsetInfo();
 
         return readString(len, info);
+    }
+
+    /**
+     * Retrieve a String object from the server response stream, translating it
+     * from a byte array using the specified character set.
+     *
+     * @param len the length of the string to read <b>in bytes</b>
+     * @return the result as a <code>String</code>
+     * @throws IOException if an I/O error occurs
+     */
+    String readNonUnicodeString(int len, CharsetInfo charsetInfo)
+            throws IOException {
+        return readString(len, charsetInfo);
     }
 
     /**

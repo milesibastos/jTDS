@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+11/29/2004 - Alin Sinpalean
+ o Implemented support for reading character data using per column collations
+   for SQL Server 2000.
+
 11/26/2004 - Alin Sinpalean
  o Corrected a bug which was causing Statement.setMaxRows() to not work with
    cursor-based ResultSets.

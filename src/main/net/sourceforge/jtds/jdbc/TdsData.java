@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.33 2004-11-24 06:42:01 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.34 2004-11-29 06:43:08 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -253,15 +253,30 @@ public class TdsData {
         return 0;
     }
 
+    /**
+     * Set the <code>charsetInfo</code> field of <code>ci</code> according to
+     * the value of its <code>collation</code> field.
+     * <p>
+     * The default collation and <code>CharsetInfo</code> are provided as an
+     * optimization -- if the collation matches the default server collation
+     * then the default <code>CharsetInfo</code> is used.
+     *
+     * @param ci                 the <code>ColInfo</code> instance to update
+     * @param defaultCollation   the default connection collation
+     * @param defaultCharsetInfo the default <code>CharsetInfo</code> for the
+     *                           connection
+     * @throws SQLException      if a <code>CharsetInfo</code> is not found for
+     *                           the specified collation
+     */
     static void setColumnCharset(ColInfo ci,
-                               byte[] defaultCollation,
-                               CharsetInfo defaultCharsetInfo)
+                                 byte[] defaultCollation,
+                                 CharsetInfo defaultCharsetInfo)
             throws SQLException {
-        byte[] collation = ci.collation;
-
-        if (collation != null) {
+        if (ci.collation != null) {
             // TDS version will be 8.0 or higher in this case
+            byte[] collation = ci.collation;
             int i;
+
             for (i = 0; i < 5; ++i) {
                 if (collation[i] != defaultCollation[i]) {
                     break;
@@ -559,8 +574,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    // FIXME Use the collation for reading
-                    return new ClobImpl(callerReference, in, false, readTextMode);
+                    return new ClobImpl(callerReference, in, false, readTextMode, ci.charsetInfo);
                 }
 
                 break;
@@ -569,7 +583,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new ClobImpl(callerReference, in, true, readTextMode);
+                	return new ClobImpl(callerReference, in, true, readTextMode, null);
                 }
 
                 break;
@@ -580,7 +594,7 @@ public class TdsData {
 
                 if (len > 0) {
                     // FIXME Use collation for reading
-                    String value = in.readNonUnicodeString(len);
+                    String value = in.readNonUnicodeString(len, ci.charsetInfo);
 
                     if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
                         // In TDS 4/5 zero length strings are stored as a single space
@@ -618,7 +632,8 @@ public class TdsData {
                     // This is a TDS 7+ long string
                     len = in.readShort();
                     if (len != -1) {
-                        return in.readNonUnicodeString(len);
+                        // FIXME Use collation for reading
+                        return in.readNonUnicodeString(len, ci.charsetInfo);
                     }
                 }
 
@@ -1461,17 +1476,13 @@ public class TdsData {
     /**
      * Write a parameter to the server request stream.
      *
-     * @param out The Server request stream.
-     * @param charset The encoding character set name.
-     * @param isWideChar True if multi byte encoding.
-     * @param collation The SQL Server 2000 collation
-     * @param pi The parameter descriptor.
-     * @throws IOException
-     * @throws SQLException
+     * @param out         the server request stream
+     * @param charsetInfo the default character set
+     * @param collation   the default SQL Server 2000 collation
+     * @param pi          the parameter descriptor
      */
     static void writeParam(RequestStream out,
-                           String charset,
-                           boolean isWideChar,
+                           CharsetInfo charsetInfo,
                            byte[] collation,
                            ParamInfo pi)
     throws IOException, SQLException {
@@ -1482,6 +1493,7 @@ public class TdsData {
 
         if (isTds8 && pi.collation == null) {
             pi.collation = collation;
+            pi.charsetInfo = charsetInfo;
         }
 
         switch (pi.tdsType) {
@@ -1497,7 +1509,7 @@ public class TdsData {
 
                     out.write((short) 0xFFFF);
                 } else {
-                    buf = pi.getBytes(charset);
+                    buf = pi.getBytes(pi.charsetInfo.getCharset());
 
                     if (buf.length > 8000) {
                         out.write((byte) SYBTEXT);
@@ -1530,7 +1542,7 @@ public class TdsData {
                     out.write((byte) 255);
                     out.write((byte) 0);
                 } else {
-                    buf = pi.getBytes(charset);
+                    buf = pi.getBytes(pi.charsetInfo.getCharset());
 
                     if (buf.length > 255) {
                         if (buf.length < 8001 && out.getTdsVersion() >= Driver.TDS70) {
@@ -1580,7 +1592,7 @@ public class TdsData {
                 if (pi.value == null) {
                     out.write((short) 0xFFFF);
                 } else {
-                    tmp = pi.getString(charset);
+                    tmp = pi.getString(pi.charsetInfo.getCharset());
                     out.write((short) (tmp.length() * 2));
                     out.write(tmp);
                 }
@@ -1612,7 +1624,7 @@ public class TdsData {
 
                         out.write((int) len);
                         out.writeStreamBytes((InputStream) pi.value, len);
-                    } else if (pi.value instanceof Reader && !isWideChar) {
+                    } else if (pi.value instanceof Reader && !pi.charsetInfo.isWideChars()) {
                         // Write output directly from stream with character translation
                         out.write((int) len);
 
@@ -1623,7 +1635,7 @@ public class TdsData {
                         out.write((int) len);
                         out.writeReaderBytes((Reader) pi.value, len);
                     } else {
-                        buf = pi.getBytes(charset);
+                        buf = pi.getBytes(pi.charsetInfo.getCharset());
                         out.write((int) buf.length);
 
                         if (isTds8) {
@@ -1664,7 +1676,7 @@ public class TdsData {
 
                         out.write((int) len * 2);
                         out.writeReaderChars((Reader) pi.value, len);
-                    } else if (pi.value instanceof InputStream && !isWideChar) {
+                    } else if (pi.value instanceof InputStream && !pi.charsetInfo.isWideChars()) {
                         out.write((int) len);
 
                         if (isTds8) {
@@ -1672,9 +1684,10 @@ public class TdsData {
                         }
 
                         out.write((int) len * 2);
-                        out.writeReaderChars(new InputStreamReader((InputStream) pi.value, charset), len);
+                        out.writeReaderChars(new InputStreamReader(
+                                (InputStream) pi.value, pi.charsetInfo.getCharset()), len);
                     } else {
-                        tmp = pi.getString(charset);
+                        tmp = pi.getString(pi.charsetInfo.getCharset());
                         len = tmp.length();
                         out.write((int) len);
 
@@ -1704,7 +1717,7 @@ public class TdsData {
                 if (pi.value == null) {
                     out.write((short)0xFFFF);
                 } else {
-                    buf = pi.getBytes(charset);
+                    buf = pi.getBytes(pi.charsetInfo.getCharset());
                     out.write((short) buf.length);
                     out.write(buf);
                 }
@@ -1718,7 +1731,7 @@ public class TdsData {
                 if (pi.value == null) {
                     out.write((byte) 0);
                 } else {
-                    buf = pi.getBytes(charset);
+                    buf = pi.getBytes(pi.charsetInfo.getCharset());
                     out.write((byte) buf.length);
                     out.write(buf);
                 }
@@ -1740,10 +1753,10 @@ public class TdsData {
                         out.write((int) len);
                         out.writeStreamBytes((InputStream) pi.value, len);
                     } else {
-                        buf = pi.getBytes(charset);
+                        buf = pi.getBytes(pi.charsetInfo.getCharset());
                         out.write((int) buf.length);
                         out.write((int) buf.length);
-                        out.write(pi.getBytes(charset));
+                        out.write(buf);
                     }
                 } else {
                     out.write((int) len);
@@ -2174,22 +2187,20 @@ public class TdsData {
 
     /**
      * Read a MSQL 2000 sql_variant data value from the input stream.
-     * <p>sql_variant has the following structure:
+     * <p>SQL_VARIANT has the following structure:
      * <ol>
-     * <li>int4 total size of data.
-     * <li>int1 TDS data type (text/image/ntext/sql_variant not allowed).
-     * <li>int1 Length of extra type descriptor information.
-     * <li>Optional additional type info required by some types.
-     * <li>byte[0...n] the actual data.
+     * <li>INT4 total size of data
+     * <li>INT1 TDS data type (text/image/ntext/sql_variant not allowed)
+     * <li>INT1 Length of extra type descriptor information
+     * <li>Optional additional type info required by some types
+     * <li>byte[0...n] the actual data
      * </ol>
      *
-     * @param in The server response stream.
-     * @return The sql_variant data.
-     * @throws IOException
-     * @throws ProtocolException
+     * @param in the server response stream
+     * @return the SQL_VARIANT data
      */
     private static Object getVariant(ResponseStream in)
-    throws IOException, ProtocolException {
+            throws IOException, ProtocolException {
         byte[] bytes;
         int len = in.readInt();
 
@@ -2218,14 +2229,23 @@ public class TdsData {
 
             case XSYBCHAR:
             case XSYBVARCHAR:
-                // FIXME Use collation for reading the value
-                in.skip(7); // Skip collation and buffer size
+                // FIXME Use collation for reading
+                getCollation(in, ci);
+                try {
+                    setColumnCharset(ci, new byte[5], null);
+                } catch (SQLException ex) {
+                    // Skip the buffer size and value
+                    in.skip(2 + len);
+                    throw new ProtocolException(ex.toString() + " [SQLState: "
+                            + ex.getSQLState() + "]");
+                }
 
+                in.skip(2); // Skip buffer size
                 return in.readNonUnicodeString(len);
 
             case XSYBNCHAR:
             case XSYBNVARCHAR:
-                // TODO Why do we need collation for Unicode strings?
+                // XXX Why do we need collation for Unicode strings?
                 in.skip(7); // Skip collation and buffer size
 
                 return in.readUnicodeString(len / 2);

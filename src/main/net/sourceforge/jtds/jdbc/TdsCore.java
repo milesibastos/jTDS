@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.49 2004-11-24 06:42:01 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.50 2004-11-29 06:43:08 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1823,7 +1823,7 @@ public class TdsCore {
             //
             ColInfo col = new ColInfo();
             int colNameLen = in.read();
-            col.realName = in.readString(colNameLen);
+            col.realName = in.readNonUnicodeString(colNameLen);
             int column_flags = in.readInt();   /*  Flags */
             col.isCaseSensitive = false;
             col.nullable    = ((column_flags & 0x20) != 0)?
@@ -1866,27 +1866,27 @@ public class TdsCore {
              // Get the alias name
              //
              int nameLen = in.read();
-             col.name  = in.readString(nameLen);
+             col.name  = in.readNonUnicodeString(nameLen);
              //
              // Get the catalog name
              //
              nameLen = in.read();
-             col.catalog = in.readString(nameLen);
+             col.catalog = in.readNonUnicodeString(nameLen);
              //
              // Get the schema name
              //
              nameLen = in.read();
-             col.schema = in.readString(nameLen);
+             col.schema = in.readNonUnicodeString(nameLen);
              //
              // Get the table name
              //
              nameLen = in.read();
-             col.tableName = in.readString(nameLen);
+             col.tableName = in.readNonUnicodeString(nameLen);
              //
              // Get the column name
              //
              nameLen = in.read();
-             col.realName  = in.readString(nameLen);
+             col.realName  = in.readNonUnicodeString(nameLen);
              if (col.name == null || col.name.length() == 0) {
                  col.name = col.realName;
              }
@@ -1978,7 +1978,7 @@ public class TdsCore {
 
             int clen = in.read();
 
-            col.realName = in.readString(clen);
+            col.realName = in.readUnicodeString(clen);
             col.name = col.realName;
 
             this.columns[i] = col;
@@ -2002,7 +2002,7 @@ public class TdsCore {
         while (bytesRead < pktLen) {
             ColInfo col = new ColInfo();
             int nameLen = in.read();
-            String name = in.readString(nameLen);
+            String name = in.readNonUnicodeString(nameLen);
 
             // FIXME This will not work for multi-byte charsets
             bytesRead = bytesRead + 1 + nameLen;
@@ -2302,6 +2302,7 @@ public class TdsCore {
                                 parameters[nextParam].jdbcType,
                                 connection.getCharset()));
                     parameters[nextParam].collation = col.collation;
+                    parameters[nextParam].charsetInfo = col.charsetInfo;
                 } else {
                     parameters[nextParam].setOutValue(null);
                 }
@@ -2315,6 +2316,7 @@ public class TdsCore {
                                         parameters[nextParam].jdbcType,
                                         connection.getCharset()));
                             parameters[nextParam].collation = col.collation;
+                            parameters[nextParam].charsetInfo = col.charsetInfo;
                         } else {
                             parameters[nextParam].setOutValue(null);
                         }
@@ -2624,21 +2626,21 @@ public class TdsCore {
         int severity = in.read();
         // Discard text state
         int stateLen = in.read();
-        in.readString(stateLen);
+        in.readNonUnicodeString(stateLen);
         in.read(); // == 1 if extended error data follows
         // Discard status and transaction state
         in.readShort();
         sizeSoFar += 4 + stateLen;
 
         int msgLen = in.readShort();
-        String message = in.readString(msgLen);
+        String message = in.readNonUnicodeString(msgLen);
         sizeSoFar += 2 + msgLen;
         final int srvNameLen = in.read();
-        String server = in.readString(srvNameLen);
+        String server = in.readNonUnicodeString(srvNameLen);
         sizeSoFar += 1 + srvNameLen;
 
         final int procNameLen = in.read();
-        String procName = in.readString(procNameLen);
+        String procName = in.readNonUnicodeString(procNameLen);
         sizeSoFar += 1 + procNameLen;
 
         int line = in.readShort();
@@ -2651,10 +2653,10 @@ public class TdsCore {
         if (severity > 10)
         {
             messages.addDiagnostic(number, state, severity,
-                                    message, server, procName, line);
+                    message, server, procName, line);
         } else {
             messages.addDiagnostic(number, state, severity,
-                                     message, server, procName, line);
+                    message, server, procName, line);
         }
     }
 
@@ -2664,7 +2666,7 @@ public class TdsCore {
      * @throws IOException
      */
     private void tds5DynamicToken()
-        throws IOException
+            throws IOException
     {
         int pktLen = in.readShort();
         byte type = (byte)in.read();
@@ -2673,7 +2675,7 @@ public class TdsCore {
         if (type == (byte)0x20) {
             // Only handle aknowledgements for now
             int len = in.read();
-            currentToken.dynamicId = in.readString(len);
+            currentToken.dynamicId = in.readNonUnicodeString(len);
             pktLen -= len+1;
         }
         // FIXME This won't work with multi-byte charsets
@@ -2700,7 +2702,7 @@ public class TdsCore {
             //
             ColInfo col = new ColInfo();
             int colNameLen = in.read();
-            col.realName = in.readString(colNameLen);
+            col.realName = in.readNonUnicodeString(colNameLen);
             int column_flags = in.read();   /*  Flags */
             col.isCaseSensitive = false;
             col.nullable    = ((column_flags & 0x20) != 0)?
@@ -2782,7 +2784,7 @@ public class TdsCore {
             //
             ColInfo col = new ColInfo();
             int colNameLen = in.read();
-            col.realName  = in.readString(colNameLen);
+            col.realName  = in.readNonUnicodeString(colNameLen);
             col.name = col.realName;
             int column_flags = in.read();   /*  Flags */
             col.isCaseSensitive = false;
@@ -2895,8 +2897,7 @@ public class TdsCore {
 
                     out.write((byte) (parameters[i].isOutput ? 1 : 0));
                     TdsData.writeParam(out,
-                                       connection.getCharset(),
-                                       connection.isWideChar(),
+                                       connection.getCharsetInfo(),
                                        null,
                                        parameters[i]);
                 }

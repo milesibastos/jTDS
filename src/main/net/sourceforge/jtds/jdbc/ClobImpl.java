@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.25 2004-11-24 06:42:01 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.26 2004-11-29 06:43:08 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -81,8 +81,15 @@ public class ClobImpl implements Clob {
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
      * @param in the clob object to encapsulate
+     * @param ntext <code>true</code> if the data type is NTEXT (i.e. Unicode)
+     * @param readTextMode <code>true</code> if READTEXT should be used to
+     *                     retrieve the value <code>false</code> if the value
+     *                     is directly available from <code>in</code>
+     * @param charsetInfo the character set to be used for reading if the value
+     *                    is not Unicode encoded (i.e. TEXT)
      */
-    ClobImpl(Object callerReference, ResponseStream in, boolean ntext, boolean readTextMode) throws IOException {
+    ClobImpl(Object callerReference, ResponseStream in, boolean ntext, boolean readTextMode,
+             CharsetInfo charsetInfo) throws IOException {
         if (in == null) {
             throw new IllegalArgumentException("in cannot be null.");
         }
@@ -121,7 +128,8 @@ public class ClobImpl implements Clob {
                 	if (ntext) {
                 		_clob = in.readUnicodeString(tp.len / 2);
                 	} else {
-                		_clob = in.readNonUnicodeString(tp.len);
+                        // FIXME Use collation for reading
+                		_clob = in.readNonUnicodeString(tp.len, charsetInfo);
                 	}
                 } else {
                 	_clob = EMPTY_CLOB;
@@ -137,7 +145,8 @@ public class ClobImpl implements Clob {
 	    	        		data = in.readUnicodeString(results / 2);
 		    	        } else {
                             // FIXME This won't work for multi-byte charsets
-			                data = in.readNonUnicodeString(results);
+                            // FIXME Use collation for reading
+			                data = in.readNonUnicodeString(results, charsetInfo);
 		    	        }
 
 		    	        length -= results;

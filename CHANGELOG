@@ -3,3 +3,23 @@ Changes from jTDS 0.2
 
  o TdsStatement checks if it isn't already closed on a call to close() and the
    allocated Tds object isn't freed until no more results are available
+
+08/05/2002 - Jason Banes (patch)
+
+ o Fixed the following methods in DatabaseMetaData: getSchemas, getTables,
+   getColumns, supportSchemasInTableDefinitions.
+ o Implemented the following methods of DatabaseMetaData: getIndexes,
+   getPrimaryKeys, getImportedKeys.
+
+08/05/2002 - Alin Sinpalean
+
+ o Added a databaseMajorVersion member to the Tds class to help make the
+   difference between SQL Server versions (e.g. for DatabaseMetaData usage).
+ o Fixed some of the additions Jason made, most of them due to the fact that
+   he probably used SQLServer 2000 while I am using 7.0 (there could be some
+   even bigger problems for people using SQLServer 6.5, if there are any) and
+   a problem related to getTables - catalog name for tables in other databases
+   (catalogs) were wrong (pubs was used instead of the catalog name).
+ o Added implementations to methods without parameters returning boolean values
+   in DatabaseMetaData (based on values returned by the JDBC-ODBC and some
+   other drivers).

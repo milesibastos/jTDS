@@ -1,6 +1,15 @@
 Changes from jTDS 0.5
 =======================
 
+01/30/2003 - Alin Sinpalean
+ o Hope I fixed the "Tds 0 already allocated" issue (for Tds other than 0 it
+   seems to be a different issue, that has already been solved, but I have to
+   check to make sure). The problem appeared when an exception was thrown
+   while executing a scrollable statement or scrolling through it: Tds 0 was
+   first allocated, but it wasn't freed because the exception would interrupt
+   the normal flow. Moved the Tds freeing into a finally block and seems to
+   work just fine, now.
+
 01/29/2003 - Alin Sinpalean
 
  o Fixed CSUnitTest (had a problem because of the MONEY/SMALLMONEY precision

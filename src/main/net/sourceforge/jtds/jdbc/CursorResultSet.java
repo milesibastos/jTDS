@@ -173,10 +173,17 @@ public class CursorResultSet extends AbstractResultSet
             synchronized( conn.mainTdsMonitor )
             {
                 Tds tds = conn.allocateTds(true);
-                stmt.internalExecute("CLOSE " + cursorName, tds, warningChain);
-                stmt.internalExecute("DEALLOCATE " + cursorName, tds, warningChain);
-                open = false;
-                try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+                try
+                {
+                    stmt.internalExecute("CLOSE " + cursorName, tds, warningChain);
+                    stmt.internalExecute("DEALLOCATE " + cursorName, tds, warningChain);
+                    open = false;
+                }
+                finally
+                {
+                    stmt.skipToEnd();
+                    try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+                }
             }
         }
 
@@ -230,20 +237,27 @@ public class CursorResultSet extends AbstractResultSet
         synchronized( conn.mainTdsMonitor )
         {
             Tds tds = conn.allocateTds(true);
-            if( !stmt.internalExecute(sql, tds, warningChain) )
-                throw new SQLException("No ResultSet was produced.");
+            try
+            {
+                if( !stmt.internalExecute(sql, tds, warningChain) )
+                    throw new SQLException("No ResultSet was produced.");
 
-            rs = (TdsResultSet)stmt.getResultSet();
+                rs = (TdsResultSet)stmt.getResultSet();
 
-            // Moved here from loadContext -- if the query didn't return any
-            //                                results, loadContext crashed
-            if( context == null )
-                context = rs.getContext();
+                // Moved here from loadContext -- if the query didn't return any
+                //                                results, loadContext crashed
+                if( context == null )
+                    context = rs.getContext();
 
-            current = rs.next() ? rs.currentRow() : null;
-            warningChain.addWarning(rs.getWarnings());
-            rs.close();
-            try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+                current = rs.next() ? rs.currentRow() : null;
+                warningChain.addWarning(rs.getWarnings());
+                rs.close();
+            }
+            finally
+            {
+                stmt.skipToEnd();
+                try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+            }
         }
 
         // Hide rowstat column.
@@ -434,9 +448,16 @@ public class CursorResultSet extends AbstractResultSet
         synchronized( conn.mainTdsMonitor )
         {
             Tds tds = conn.allocateTds(true);
-            stmt.internalExecute(query.toString(), tds, warningChain);
-            stmt.internalExecute("OPEN " + cursorName, tds, warningChain);
-            try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+            try
+            {
+                stmt.internalExecute(query.toString(), tds, warningChain);
+                stmt.internalExecute("OPEN " + cursorName, tds, warningChain);
+            }
+            finally
+            {
+                stmt.skipToEnd();
+                try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+            }
         }
         open = true;
     }

@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  *
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.14 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: DriverUnitTest.java,v 1.15 2005-03-07 21:57:45 alin_sinpalean Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -280,6 +280,11 @@ public class DriverUnitTest extends UnitTestBase {
                                             Driver.class, "parseURL",
                                             new Class[]{String.class, Properties.class},
                                             new Object[]{url, properties});
+                            results =
+                                    (Properties) invokeStaticMethod(
+                                            DefaultProperties.class, "addDefaultProperties",
+                                            new Class[]{ Properties.class},
+                                            new Object[]{ results});
                             assertEquals(message, expected, results.getProperty(Messages.get(key)));
                         }
                     }

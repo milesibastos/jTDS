@@ -77,11 +77,16 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                 (ConnectionJDBC2) invokeConstructor(
                         ConnectionJDBC2.class, new Class[]{}, new Object[]{});
 
-        final Properties properties =
+        Properties properties =
                 (Properties) invokeStaticMethod(
                         Driver.class, "parseURL",
                         new Class[]{String.class, Properties.class},
                         new Object[]{"jdbc:jtds:sqlserver://servername", new Properties()});
+        properties =
+                (Properties) invokeStaticMethod(
+                        DefaultProperties.class, "addDefaultProperties",
+                        new Class[]{ Properties.class},
+                        new Object[]{ properties});
 
         properties.setProperty(Messages.get(key), "1.21 Gigawatts");
 
@@ -142,6 +147,11 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                             Driver.class, "parseURL",
                                             new Class[]{ String.class, Properties.class},
                                             new Object[]{ url, properties});
+                            parsedProperties =
+                                    (Properties) invokeStaticMethod(
+                                            DefaultProperties.class, "addDefaultProperties",
+                                            new Class[]{ Properties.class},
+                                            new Object[]{ parsedProperties});
                             ConnectionJDBC2 instance =
                                     (ConnectionJDBC2) invokeConstructor(
                                             ConnectionJDBC2.class, new Class[]{}, new Object[]{});

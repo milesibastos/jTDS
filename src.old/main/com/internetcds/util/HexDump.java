@@ -37,26 +37,26 @@ package com.internetcds.util;
 /**
  * A simple class to convert a raw buffer to a hex dump
  *
- * @version $Id: HexDump.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version $Id: HexDump.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  * @author Craig Spannring
  */ 
 public class HexDump
 {
-   public static final String cvsVersion = "$Id: HexDump.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: HexDump.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
-   static String byteToHexString(byte b)
+   static void appendByteToHexString(StringBuffer res, byte b)
    {
-      return intToHexString(b, 2, '0');
+      appendIntToHexString(res, b, 2, '0');
    } /* byteToHexString()  */
    
-   static String intToHexString(int num, int width, char fill)
+   static void appendIntToHexString(StringBuffer res, int num, int width, char fill)
    {
-      String   result = "";
       int      i;
 
+      int insertpoint = res.length();
       if (num==0)
       {
-         result = "0";
+         res.append('0');
          width--;
       }
       else
@@ -64,16 +64,17 @@ public class HexDump
          while(num!=0 && width>0)
          {
             String  tmp = Integer.toHexString(num & 0xf);
-            result = tmp + result;
+            res.insert(insertpoint,tmp);
+            // result = tmp + result;
             num = (num>>4);
             width--;
          }
       }
       for(; width>0; width--)
       {
-         result = fill + result;
+        res.insert(insertpoint,fill);
+         // result = fill + result;
       }
-      return result;
    } /* intToHexString()  */
 
    public static String hexDump(byte data[])
@@ -88,26 +89,26 @@ public class HexDump
       int        i;
       int        j;  
       final int  bytesPerLine = 16;
-      String     result = "";
+      StringBuffer     result = new StringBuffer(length + 4);
 
       
       for(i=0; i<length; i+=bytesPerLine)
       {
          // print the offset as a 4 digit hex number
-         result = result + intToHexString(i, 4, '0') + "  ";
+         appendIntToHexString(result,i, 4, '0'); result.append("  ");
 
          // print each byte in hex
          for(j=i; j<length && (j-i)<bytesPerLine; j++)
          {
-            result = result + byteToHexString(data[j]) + " ";
+            appendByteToHexString(result,data[j]); result.append(" ");
          }
 
          // skip over to the ascii dump column
          for(; 0!=(j % bytesPerLine); j++)
          {
-            result = result +  "   ";
+            result.append("   ");
          }
-         result = result + "  |";         
+         result.append("  |");         
 
          // print each byte in ascii
          for(j=i; j<length && (j-i)<bytesPerLine; j++)
@@ -115,15 +116,15 @@ public class HexDump
             if (((data[j] & 0xff) > 0x001f) && ((data[j] & 0xff) < 0x007f))
             {
                Character ch = new Character((char) data[j]);
-               result = result + ch;
+               result.append(ch);
             }
             else
             {
-               result = result + ".";
+               result.append(".");
             }
          }
-         result = result + "|\n";
+         result.append("|\n");
       }
-      return result;
+      return result.toString();
    } /* hexDump()  */
 }

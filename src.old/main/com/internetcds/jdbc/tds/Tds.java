@@ -48,14 +48,16 @@ import java.util.Calendar;
 import java.util.Properties;
 import java.util.TimeZone;
 import java.util.Locale;
-
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  *  Cancel the current SQL if the timeout expires.
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ *@version    $Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -65,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -101,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ *@version    $Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -132,6 +134,8 @@ public class Tds implements TdsDefinitions {
     String procNameTableName = null;
 
     String initialSettings = null;
+    HashMap             procedureCache = null; // XXX: as
+    ArrayList           proceduresOfTra = null;
 
     CancelController cancelController = null;
 
@@ -158,10 +162,12 @@ public class Tds implements TdsDefinitions {
 
     // RMK 2000-06-12.  Time zone offset on client (disregarding DST).
     private int zoneOffset = Calendar.getInstance().get(Calendar.ZONE_OFFSET);
+    
+    int maxRows = 0;
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -195,10 +201,13 @@ public class Tds implements TdsDefinitions {
         progMajorVersion = (byte) DriverVersion.getDriverMajorVersion();
         progMinorVersion = (byte) DriverVersion.getDriverMinorVersion();
         String verString = props_.getProperty("TDS", "42");
+        procedureCache = new HashMap(); // new Vector();   // XXX as
+        proceduresOfTra = new ArrayList();
 
         // XXX This driver doesn't properly support TDS 5.0, AFAIK.
         // Added 2000-06-07.
         tdsVer = TDS42;
+        // tdsVer = TDS70;
         if (verString.equals("5.0")) {
             tdsVer = Tds.TDS50;
         }
@@ -589,6 +598,14 @@ public class Tds implements TdsDefinitions {
 
             tmpByte = (byte) (comm.peek() & 0xff);
 
+            boolean done;
+            do  // skip to end, why not ?
+            {
+               tmp = processSubPacket();
+               done = (tmp instanceof PacketEndTokenResult)
+                  && (! ((PacketEndTokenResult)tmp).moreResults());
+            } while (! done);
+           /*
             while (!((tmp = processSubPacket())
                      instanceof PacketEndTokenResult)) {
                 if (tmp instanceof PacketErrorResult) {
@@ -612,6 +629,7 @@ public class Tds implements TdsDefinitions {
             if (result == null) {
                 result = tmp;
             }
+            */
         }
         catch (java.io.IOException e) {
             throw new SQLException("Network error" + e.getMessage());
@@ -679,6 +697,7 @@ public class Tds implements TdsDefinitions {
         // N1 + 10          4           length of param 1 (duplicated?)
         // N1 + 7           N2          parameter 1 data
         // ...
+      checkMaxRows(stmt);
 
         int i;
 
@@ -712,11 +731,17 @@ public class Tds implements TdsDefinitions {
                 switch (nativeType) {
                     case SYBCHAR:
                     {
-                        String val = (String) actualParameterList[i].value;
+                        String val;
+                        try {
+                          val = (String)actualParameterList[i].value;
+                        }
+                        catch (ClassCastException e) {
+                          val = actualParameterList[i].value.toString();                     
+                        }
                         int len = val != null ? val.length() : 0;
                         int max = formalParameterList[i].maxLength;
 
-                        if (actualParameterList[i].formalType.startsWith("n")) {
+                        if (formalParameterList[i].formalType.startsWith("n")) {
                             /*
                              * This is a Unicode column, save to assume TDS 7.0
                              */
@@ -797,11 +822,16 @@ public class Tds implements TdsDefinitions {
                     case SYBFLT8:
                     {
                         Number n = (Number) (actualParameterList[i].value);
-                        Double d = new Double(n.doubleValue());
-
-                        comm.appendByte((byte) nativeType);
-
-                        comm.appendFlt8(d);
+                        if (n == null) {
+                          comm.appendByte(SYBINTN);
+                          comm.appendByte((byte)4);
+                          comm.appendByte((byte)0);
+                        }
+                        else {
+                          comm.appendByte((byte)nativeType);
+                          Double d = new Double(n.doubleValue());
+                          comm.appendFlt8(d);
+                        }
                         break;
                     }
                     case SYBDATETIMN:
@@ -836,7 +866,7 @@ public class Tds implements TdsDefinitions {
 
                             long ms = ((value.getTime() + (nanoseconds / nsPerMs))
                                      + zoneOffset);
-                            ms -= getDstOffset(ms);
+                            ms += getDstOffset(ms);    // XXX: as previous version was -=
                             long msIntoCurrentDay = ms % msPerDay;
 
                             long daysIntoUnixEpoch = (ms - msIntoCurrentDay) / msPerDay;
@@ -864,6 +894,58 @@ public class Tds implements TdsDefinitions {
                                 value));
                         break;
                     }
+                    case SYBDECIMAL:
+                    case SYBNUMERIC:
+                    {       
+                      Object o = actualParameterList[i].value;
+                      comm.appendByte((byte)SYBDECIMAL);
+                      if (o == null) {
+                        comm.appendByte((byte)0);
+                        comm.appendByte((byte)28);
+                        comm.appendByte((byte)0);
+                        comm.appendByte((byte)0);
+                      }
+                      else {
+                        if (actualParameterList[i].value instanceof Long) {
+                          long value = ((Long)o).longValue();
+                          comm.appendByte((byte)9);
+                          comm.appendByte((byte)28);
+                          comm.appendByte((byte)0);
+                          comm.appendByte((byte)9);
+                          if (value >= 0L) {
+                            comm.appendByte((byte)1);
+                          }
+                          else {
+                            comm.appendByte((byte)0);
+                            value = -value;
+                          }
+                          for (int valueidx = 0; valueidx<8; valueidx++) {
+                            // comm.appendByte((byte)(value & 0xFF));
+                            comm.appendByte((byte)(value & 0xFF));
+                            value >>>= 8;
+                          }
+                        }
+                        else {
+                          BigDecimal bd = (BigDecimal)o;
+                          byte scale = (byte)bd.scale();
+                          byte signum = (byte)(bd.signum() < 0 ? 0 : 1);
+                          BigInteger bi = bd.unscaledValue();
+                          long l = bi.longValue();
+                          byte[] mantisse = bi.abs().toByteArray();
+                          byte len = (byte)(mantisse.length + 1);
+                          byte prec = 28;
+                          comm.appendByte(len);
+                          comm.appendByte(prec);
+                          comm.appendByte(scale);
+                          comm.appendByte(len);
+                          comm.appendByte(signum);
+                          for (int mantidx = mantisse.length - 1; mantidx >= 0 ; mantidx--) {
+                            comm.appendByte(mantisse[mantidx]);
+                          }                                
+                        }
+                      }
+                      break;
+                    }
                     case SYBVOID:
                     case SYBVARBINARY:
                     case SYBVARCHAR:
@@ -875,8 +957,6 @@ public class Tds implements TdsDefinitions {
                     case SYBREAL:
                     case SYBMONEY:
                     case SYBDATETIME:
-                    case SYBDECIMAL:
-                    case SYBNUMERIC:
                     case SYBFLTN:
                     case SYBMONEYN:
                     case SYBMONEY4:
@@ -897,6 +977,17 @@ public class Tds implements TdsDefinitions {
     }
 
 
+    void checkMaxRows(java.sql.Statement stmt) 
+             throws java.sql.SQLException, TdsException
+    {
+      if (stmt == null) // internal usage
+        return;
+      int maxRows = stmt.getMaxRows();
+      if ( maxRows != this.maxRows) {
+        submitProcedure("set rowcount " + maxRows, new SQLWarningChain());       
+        this.maxRows = maxRows;
+      }
+    }
     /**
      *  send a query to the SQLServer for execution. <p>
      *
@@ -918,6 +1009,7 @@ public class Tds implements TdsDefinitions {
             int timeout)
              throws java.io.IOException, java.sql.SQLException, TdsException
     {
+      checkMaxRows(stmt);
          {
             cancelController.setQueryInProgressFlag();
             comm.startPacket(TdsComm.QUERY);
@@ -2414,6 +2506,20 @@ public class Tds implements TdsDefinitions {
         int len = getSubPacketLength();
         int type = comm.getByte();
         switch (type) {
+            case TDS_ENV_BLOCKSIZE: {
+              String blocksize;
+              int clen = comm.getByte() & 0xFF;
+              if (tdsVer == TDS70) {
+                blocksize = comm.getString(clen);
+                comm.resizeOutbuf(Integer.parseInt(blocksize));
+                comm.skip(len - 2 - clen * 2);
+              }
+              else {
+                blocksize = encoder.getString(comm.getBytes(clen));
+                comm.skip(len - 2 - clen);
+              }
+            }
+            break;
             case CHARSET_CHANGE:
             {
                 int clen = comm.getByte() & 0xFF;
@@ -3223,6 +3329,7 @@ public class Tds implements TdsDefinitions {
         // This function is thread safe.
         byte result = 0;
         switch (jdbcType) {
+          case java.sql.Types.BIT:    // XXX: as
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
             case java.sql.Types.LONGVARCHAR:
@@ -3235,6 +3342,7 @@ public class Tds implements TdsDefinitions {
                 result = SYBINT4;
                 break;
             }
+            case java.sql.Types.FLOAT:
             case java.sql.Types.REAL:
             case java.sql.Types.DOUBLE:
             {
@@ -3252,6 +3360,17 @@ public class Tds implements TdsDefinitions {
             {
                 result = SYBIMAGE;
                 break;
+            }
+            case java.sql.Types.BIGINT:
+            {
+              result = SYBDECIMAL;
+              break;
+            }
+            case java.sql.Types.NUMERIC:
+            case java.sql.Types.DECIMAL:
+            {
+              result = SYBDECIMAL;
+              break;
             }
             default:
             {
@@ -3440,5 +3559,53 @@ public class Tds implements TdsDefinitions {
             chars[i] = (char) (m1 | m2);
         }
         return new String(chars);
+    }
+    void commit()
+    {
+      proceduresOfTra.clear();
+    }
+
+    boolean rollback()
+    {
+      boolean oncemore = false;
+      try {
+        Iterator it = proceduresOfTra.iterator();
+        while (it.hasNext()) {
+          Procedure p = (Procedure)it.next();
+          String sql  = p.getPreparedSqlString();
+          submitProcedure(sql, new SQLWarningChain());       
+          oncemore = true;
+        }
+        if (oncemore)
+          submitProcedure("IF @@TRANCOUNT > 0 COMMIT TRAN ", new SQLWarningChain());       
+        proceduresOfTra.clear();
+      }
+      catch (Exception e) {
+        Iterator it = proceduresOfTra.iterator();
+        while (it.hasNext()) {
+          Procedure p = (Procedure)it.next();
+          String sql  = p.getPreparedSqlString();
+          procedureCache.remove(p.rawQueryString);
+        }
+        oncemore = false;       
+        proceduresOfTra.clear();
+      }
+      return oncemore;
+    }
+
+    void skipToEnd() 
+      throws java.sql.SQLException, java.io.IOException,
+        com.internetcds.jdbc.tds.TdsUnknownPacketSubType,
+        com.internetcds.jdbc.tds.TdsException
+    {
+       boolean       done;
+       PacketResult  tmp;
+        if (moreResults)
+       do
+       {
+          tmp = processSubPacket();
+          done = (tmp instanceof PacketEndTokenResult)
+             && (! ((PacketEndTokenResult)tmp).moreResults());
+       } while (! done);
     }
 }

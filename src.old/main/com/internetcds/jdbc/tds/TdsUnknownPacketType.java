@@ -30,7 +30,7 @@
 // SUCH DAMAGE.                                                               
 //                                                                            
 
-// test
+
 
 package com.internetcds.jdbc.tds;
 
@@ -40,7 +40,7 @@ import com.internetcds.util.HexDump;
 
 public class TdsUnknownPacketType extends TdsException
 {
-   public static final String cvsVersion = "$Id: TdsUnknownPacketType.java,v 1.3 2001-09-06 18:40:06 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsUnknownPacketType.java,v 1.4 2001-09-10 06:08:18 aschoerk Exp $";
    
 
    public TdsUnknownPacketType(

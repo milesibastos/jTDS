@@ -42,13 +42,13 @@ import java.sql.Timestamp;
 /**
  * Handle the communications for a Tds instance.
  *
- * @version  $Id: TdsComm.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version  $Id: TdsComm.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  * @author Craig Spannring
  * @author Igor Petrovski
  */
 public class TdsComm implements TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsComm.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: TdsComm.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
 
    static final int headerLength = 8;
@@ -83,6 +83,8 @@ public class TdsComm implements TdsDefinitions
    // outBuffer is used to construct the physical packets that will
    // be sent to the database server.
    byte  outBuffer[];
+   
+   int   outBufferLen;
 
    // nextOutBufferIndex is an index into outBuffer where the next
    // byte of data will be stored while constructing a packet.
@@ -120,8 +122,9 @@ public class TdsComm implements TdsDefinitions
       out = new DataOutputStream(sock.getOutputStream());
       in  = new DataInputStream(sock.getInputStream());
 
-      outBuffer = new byte[2048];
-      inBuffer  = new byte[2048];
+      outBufferLen = maxPacketLength;
+      outBuffer = new byte[outBufferLen];
+      inBuffer  = new byte[maxPacketLength];
 
       // Added 2000-06-07
       tdsVer    = tdsVer_;
@@ -133,6 +136,33 @@ public class TdsComm implements TdsDefinitions
    {
       // nop for now.
    }
+
+   /*
+   private void clearInputStream() throws IOException
+   {
+     int leftOver = in.available();
+     if (leftOver > 0) {
+       byte[] tmpBuffer = new byte[leftOver];
+       for (int tmpread = 0; tmpread < leftOver; )
+       {
+         int num = in.read(tmpBuffer, tmpread, leftOver - tmpread);
+         if (num < 0) break;
+         tmpread += num;
+       }
+       if (Logger.isActive())
+       {
+         String  dump = com.internetcds.util.HexDump.hexDump(tmpBuffer, leftOver);
+         String  t    = (new Timestamp(
+             System.currentTimeMillis())).toString();
+  
+         Logger.println("Instance "  + id + " @ " + t
+                         + " recevied leftOver" 
+                         + "\n" + dump);
+       }
+     }   
+   }
+   */
+
 
 
    /**
@@ -146,8 +176,20 @@ public class TdsComm implements TdsDefinitions
     */
    public synchronized void startPacket(int type)
    {
+     
+     inBufferIndex = inBufferLen;  // drop all leftovers !!
+     /*
+      try {
+        clearInputStream();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+      */
+            
       // Only one thread at a time can be building an outboudn packet.
       // This is primarily a concern with building cancel packets.
+      //  XXX: as why should more than one thread work with the same tds-stream ??? would be fatal anyway
       while(someThreadIsBuildingPacket())
       {
          try
@@ -159,6 +201,7 @@ public class TdsComm implements TdsDefinitions
             // nop
          }
       }
+       
       packetType    = type;
       nextOutBufferIndex  = headerLength;
    }
@@ -186,7 +229,7 @@ public class TdsComm implements TdsDefinitions
    public void appendByte(byte b)
       throws java.io.IOException
    {
-      if (nextOutBufferIndex == maxPacketLength)
+      if (nextOutBufferIndex == outBufferLen)
       {
          // If we have a full physical packet then ship it out to the
          // network.
@@ -710,10 +753,18 @@ public class TdsComm implements TdsDefinitions
          String  t    = (new Timestamp(
             System.currentTimeMillis())).toString();
 
-         Logger.println("Instance "  + id + " @ " + t
+         Logger.println("Instance "  + id + " @ " + t 
                         + " recevied data #" + (packetsReceived)
                         + "\n" + dump);
       }
+   }
+   void resizeOutbuf(int newsize) {
+     if (newsize > outBufferLen) {
+       byte[] newBuf = new byte[newsize];
+       System.arraycopy(outBuffer,0,newBuf,0,outBufferLen);
+       outBufferLen = newsize;
+       outBuffer = newBuf;
+     }
    }
 }
 

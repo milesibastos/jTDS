@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -293,7 +293,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
 
     public DatabaseMetaData(
@@ -391,10 +391,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 "    n  char(30) null,                                           " +
                 "    t  char(30) null,                                           " +
                 "    r  varchar(255) null                                        " +
-                " )                                                              " +
-                "                                                                " +
-                " insert into " + tmpName + " EXEC sp_tables ' ', ' ', '%', null " +
-                "                                                                " +
+                " )                                                              ";
+        final String sql2 = 
+                " insert into " + tmpName + " EXEC sp_tables ' ', ' ', '%', null ";
+        final String selectString = 
                 " select q from " + tmpName + "                                  " +
                 "";
         java.sql.Statement stmt = connection.createStatement();
@@ -403,13 +403,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         if ( stmt.execute( sql ) ) {
             throw new SQLException( "Internal error.  Confused" );
         }
-
-        // Eat the data returned by the 'create table'
         if ( null != ( rs = stmt.getResultSet() ) ) {
+            // RMK 2000-06-11: test t0051 gets the result set here.
+
+            // XXX we really need to figure out what the protocol is doing here.
+            // It appears that sometimes it returns an immediate result set
+            //and sometimes it doesn't.
+
+            return rs;
+        }
+        if ( stmt.execute( sql2 ) ) {
             throw new SQLException( "Internal error.  Confused" );
         }
-
-        // Eat the data returned by the 'insert'
+        
         if ( null != ( rs = stmt.getResultSet() ) ) {
             // RMK 2000-06-11: test t0051 gets the result set here.
 
@@ -420,6 +426,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             return rs;
         }
 
+        if ( !stmt.execute( selectString ) ) {
+            throw new SQLException( "Internal error.  Confused" );
+        }
         // now get the result set
         if ( null == ( rs = stmt.getResultSet() ) ) {
             throw new SQLException( "Internal error.  Confused" );
@@ -1255,8 +1264,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxStatements() throws SQLException
     {
-        NotImplemented();
-        return 0;
+        return 1; // XXX: as NotImplemented();
+        // return 0;
     }
 
 
@@ -1577,10 +1586,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 "    n  char(30) null,                                           " +
                 "    t  char(30) null,                                           " +
                 "    r  varchar(255) null                                        " +
-                " )                                                              " +
-                "                                                                " +
-                " insert into " + tmpName + " EXEC sp_tables ' ', '%', ' ', null " +
-                "                                                                " +
+                " )                                                              ";
+        final String sql2 = 
+                " insert into " + tmpName + " EXEC sp_tables ' ', '%', ' ', null ";
+        final String sql3 = 
                 " select TABLE_SCHEM=o from " + tmpName + "                      " +
                 "";
         java.sql.Statement stmt = connection.createStatement();
@@ -1601,14 +1610,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             int updateCount = stmt.getUpdateCount();
         }
 
-        if ( !stmt.getMoreResults() ) {
+        if ( stmt.execute( sql2 ) ) {
+            throw new SQLException( "Internal error.  "
+                     + "Unexpected result from stmt.execute(sql) "
+                     + "inside of getSchemas" );
+        }
+        
+        if ( stmt.execute( sql3 ) ) {
+            rs = stmt.getResultSet();
+        }
+        else
             throw new SQLException( "Internal error.  "
                      + "Was expecting an result set "
                      + "inside of getSchemas" );
-        }
-        else {
-            rs = stmt.getResultSet();
-        }
 
         return rs;
     }

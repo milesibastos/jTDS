@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -88,6 +88,9 @@ interface TdsDefinitions
    static final byte TDS_DONEINPROC      = (byte)255;   // 0xFF TDS_DONEINPROC
    // end of sub packet types
 
+   static final byte TDS_ENV_DATABASE  = (byte)1;
+   static final byte TDS_ENV_CHARSET   = (byte)3;
+   static final byte TDS_ENV_BLOCKSIZE = (byte)4;
 
 
    //

@@ -38,11 +38,11 @@ package com.internetcds.jdbc.tds;
  * interface to work around circular references
  *
  * @author Craig Spannring
- * @version  $Id: PreparedStatementHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version  $Id: PreparedStatementHelper.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  */
 public interface PreparedStatementHelper 
 {
-   public static final String PreparedStatementHelperCvsVersion = "$Id: PreparedStatementHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String PreparedStatementHelperCvsVersion = "$Id: PreparedStatementHelper.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
-   public void dropAllProcedures();
+//   public void dropAllProcedures();
 }

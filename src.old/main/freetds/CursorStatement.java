@@ -19,14 +19,20 @@ public class CursorStatement extends TdsStatement {
     int concurrency = ResultSet.CONCUR_READ_ONLY;
 
 
-    public CursorStatement( TdsConnection con, Tds tds, int type, int concurrency )
+    public CursorStatement( TdsConnection con, int type, int concurrency )
              throws SQLException
     {
-        super( con, tds );
+        super( con );
         this.type = type;
         this.concurrency = concurrency;
     }
 
+   protected Tds getTds(String sql) throws SQLException
+   {
+     actTds = connection.getMainTds();
+     connection.lockMainTds(this,actTds);
+     return actTds;
+   }
 
     public ResultSet executeQuery( String sql )
              throws SQLException

@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 public class ParameterUtils
 {
-   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
 
    /**
@@ -186,7 +186,7 @@ public class ParameterUtils
             case java.sql.Types.CHAR:
             {
                String value = (String)parameterList[i].value;
-               if (value == null) 
+               if (value == null && tdsVer != Tds.TDS70) 
                {
                    // use the smalles case possible for nulls
                    parameterList[i].formalType = "varchar(255)";
@@ -200,7 +200,7 @@ public class ParameterUtils
                     * possible
                     */
 
-                   if (value.length() < 4001) 
+                   if (value == null || value.length() < 4001) 
                    {
                        parameterList[i].formalType = "nvarchar(4000)";
                        parameterList[i].maxLength = 4000;
@@ -252,11 +252,13 @@ public class ParameterUtils
                parameterList[i].maxLength = Integer.MAX_VALUE;
                break;
             }
+            case java.sql.Types.SMALLINT:
             case java.sql.Types.INTEGER:
             {
                parameterList[i].formalType = "integer";
                break;
             }
+            case java.sql.Types.FLOAT:
             case java.sql.Types.REAL:
             {
                parameterList[i].formalType = "real";
@@ -279,15 +281,24 @@ public class ParameterUtils
                parameterList[i].formalType = "image";
                break;
             }
-            case java.sql.Types.BIGINT:
-            case java.sql.Types.BINARY:
-            case java.sql.Types.BIT:
+            case java.sql.Types.BIGINT: {
+               parameterList[i].formalType = "decimal(28,10)";
+               break;
+            }
             case java.sql.Types.DECIMAL:
-            case java.sql.Types.FLOAT:
-            case java.sql.Types.NULL:
             case java.sql.Types.NUMERIC:
+            {
+               parameterList[i].formalType = "decimal(28,10)";
+               break;
+            }            
+            case java.sql.Types.BIT:
+            {
+               parameterList[i].formalType = "CHAR";
+               break;
+            }            
+            case java.sql.Types.BINARY:
+            case java.sql.Types.NULL:
             case java.sql.Types.OTHER:
-            case java.sql.Types.SMALLINT:
             case java.sql.Types.TIME:
             case java.sql.Types.TINYINT:
             {

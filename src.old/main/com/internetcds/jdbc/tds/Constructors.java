@@ -37,7 +37,7 @@ package com.internetcds.jdbc.tds;
 
 public class Constructors
 {
-   public static final String cvsVersion = "$Id: Constructors.java,v 1.4 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: Constructors.java,v 1.5 2001-09-10 06:08:18 aschoerk Exp $";
 
    static boolean   dejavu  = false;
 
@@ -196,14 +196,13 @@ public class Constructors
          init();
       }
 
-      return new CallableStatement_base( (TdsConnection)cx_, tds_, sql_ );
+      return new CallableStatement_base( (TdsConnection)cx_, sql_ );
 
    }
 
 
    public static java.sql.PreparedStatement newPreparedStatement(
       Object                        cx_,
-      com.internetcds.jdbc.tds.Tds  tds_,
       java.lang.String              sql_) throws java.sql.SQLException
    {
       if (!dejavu)
@@ -211,7 +210,7 @@ public class Constructors
          init();
       }
 
-      return new PreparedStatement_base( (TdsConnection)cx_, tds_, sql_ );
+      return new PreparedStatement_base( (TdsConnection)cx_, sql_ );
    }
 
 

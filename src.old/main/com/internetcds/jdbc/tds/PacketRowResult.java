@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
 
     public PacketRowResult( Context context )
@@ -363,7 +363,7 @@ public class PacketRowResult extends PacketResult {
                     }
                     case java.sql.Types.REAL:
                     {
-                        result = ( ( Float ) obj ).doubleValue();
+                        result = ( ( Number ) obj ).doubleValue();
                         break;
                     }
                     case java.sql.Types.FLOAT:
@@ -539,12 +539,12 @@ public class PacketRowResult extends PacketResult {
         else if ( tmp instanceof java.lang.Float ) {
             result = new BigDecimal( ( ( Float ) tmp ).doubleValue() );
         }
+        else if ( tmp instanceof BigDecimal ) {
+            result = ( BigDecimal ) tmp;
+        }
         else if ( tmp instanceof java.lang.Number ) {
             // This handles Byte, Short, Integer, and Long
             result = BigDecimal.valueOf( ( ( Number ) tmp ).longValue() );
-        }
-        else if ( tmp instanceof BigDecimal ) {
-            result = ( BigDecimal ) tmp;
         }
         else if ( tmp instanceof java.lang.String ) {
             try {

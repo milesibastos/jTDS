@@ -38,7 +38,7 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-   public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
    String   input;
 
@@ -380,7 +380,7 @@ abstract public class EscapeProcessor
    private String nativeString(String sql, char escapeCharacter)
       throws SQLException
    {
-      String            result = "";
+      StringBuffer            result = new StringBuffer(sql.length());
 
       String            escape = "";
       int               i; 
@@ -417,7 +417,7 @@ abstract public class EscapeProcessor
                }
                else 
                {
-                  result = result + ch;
+                  result.append(ch);
                   
                   if (ch == '\'') state = inString;
                }
@@ -433,11 +433,12 @@ abstract public class EscapeProcessor
                {
                   i++;
                   ch = sql.charAt(i);
-                  result = result + '\\' + ch;
+                  result.append('\\');
+                  result.append(ch);
                }
                else
                {
-                  result = result + ch;
+                  result.append(ch);
                   if (state == inStringWithBackquote)
                   {
                      state = inString;
@@ -483,14 +484,15 @@ abstract public class EscapeProcessor
 
                      c = findEscapeCharacter(sql.substring(escapeStartedAt));
 
-                     result = nativeString(sql.substring(0, escapeStartedAt),
-                                           c);
+                     result.delete(0,result.length());
+                     result.append(nativeString(sql.substring(0, escapeStartedAt),
+                                           c));
                      state = normal;
                   }
                   else
                   {
                      state = normal;
-                     result = result + expandEscape(escape);
+                     result.append(expandEscape(escape));
                      escapeStartedAt = -1;
                   }
                }
@@ -524,14 +526,14 @@ abstract public class EscapeProcessor
                throw new SQLException("Internal error.  Unknown state in FSM");
             }
          }
-         i++;
+           i++;
       }
       
       if (state!=normal && state!=inString)
       {
          throw new SQLException("Syntax error in SQL escape syntax");
       }
-      return result;
+      return result.toString();
    } // nativeString()
 
    static char findEscapeCharacter(String original_str)

@@ -56,7 +56,7 @@ import java.util.Calendar;
  *
  * @author Craig Spannring
  * @author The FreeTDS project
- * @version  $Id: PreparedStatement_base.java,v 1.3 2001-08-31 12:47:20 curthagenlocher Exp $
+ * @version  $Id: PreparedStatement_base.java,v 1.4 2001-09-10 06:08:18 aschoerk Exp $
  *
  * @see Connection#prepareStatement
  * @see ResultSet
@@ -65,20 +65,19 @@ public class PreparedStatement_base
    extends    TdsStatement
    implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.3 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.4 2001-09-10 06:08:18 aschoerk Exp $";
 
 
    String               rawQueryString     = null;
-   Vector               procedureCache     = null;
+   // Vector               procedureCache     = null;  put it in tds
    ParameterListItem[]  parameterList      = null;
 
    public PreparedStatement_base(
       TdsConnection conn_,
-      Tds                 tds_,
       String              sql)
       throws SQLException
    {
-      super(conn_, tds_);
+      super(conn_);
 
       rawQueryString = sql;
 
@@ -91,7 +90,7 @@ public class PreparedStatement_base
          parameterList[i] = new ParameterListItem();
       }
 
-      procedureCache = new Vector();
+      // procedureCache = new Vector();
    }
 
 
@@ -119,12 +118,19 @@ public class PreparedStatement_base
       }
    }
 
+   /* Cache connected to tds
    public void dropAllProcedures()
    {
       procedureCache = null;
       procedureCache = new Vector();
    }
+    */
 
+   public boolean execute() throws SQLException
+   {
+      Tds tds = getTds(rawQueryString);
+      return execute(tds);
+   }
 
    /**
     * Some prepared statements return multiple results; the execute
@@ -134,7 +140,7 @@ public class PreparedStatement_base
     * @exception SQLException if a database-access error occurs.
     * @see Statement#execute
     */
-   public boolean execute() throws SQLException
+   public boolean execute(Tds tds) throws SQLException
    {
       //
       // TDS can handle prepared statements by creating a temporary
@@ -155,7 +161,7 @@ public class PreparedStatement_base
 
       // Find a stored procedure that is compatible with this set of
       // parameters if one exists.
-      procedure = findCompatibleStoredProcedure();
+      procedure = findCompatibleStoredProcedure(tds, rawQueryString);  // now look in tds
 
       // if we don't have a suitable match then create a new
       // temporary stored procedure
@@ -167,20 +173,36 @@ public class PreparedStatement_base
                                    parameterList, tds);
 
          // store it in the procedureCache
-         procedureCache.addElement(procedure);
+         // procedureCache.addElement(procedure);
+         // store it in the procedureCache
+         tds.procedureCache.put(rawQueryString,procedure);
+         tds.proceduresOfTra.add(procedure);
 
          // create it on the SQLServer.
-         submitProcedure(procedure);
+         submitProcedure(tds,procedure);
       }
-      result = executeCall(procedure.getProcedureName(),
+      result = executeCall(tds,
+                           procedure.getProcedureName(),
                            procedure.getParameterList(), // formal params
                            parameterList);               // actual params
 
       return result;
    }
 
-
+   
    protected boolean executeCall(
+      String              name,
+      ParameterListItem[] formalParameterList,
+      ParameterListItem[] actualParameterList)
+      throws SQLException
+   {
+     Tds tds = getTds("UPDATE "); 
+     return executeCall(tds,name,formalParameterList,actualParameterList);
+   }
+    
+   
+   protected boolean executeCall(
+      Tds tds,
       String              name,
       ParameterListItem[] formalParameterList,
       ParameterListItem[] actualParameterList)
@@ -269,6 +291,9 @@ public class PreparedStatement_base
          e.printStackTrace();
          throw new SQLException(e.getMessage());
       }
+      finally {
+        tds.comm.packetType = 0;
+      }
       if (wasCanceled)
       {
          throw new SQLException("Query was canceled or timed out.");
@@ -278,13 +303,15 @@ public class PreparedStatement_base
 
 
 
-   private Procedure findCompatibleStoredProcedure()
+   private Procedure findCompatibleStoredProcedure(Tds tds, String rawQueryString)
       throws SQLException
    {
       Procedure  procedure = null;
       int        i;
 
 
+      procedure = (Procedure)tds.procedureCache.get(rawQueryString);
+      /*
       for(i=0; i<procedureCache.size(); i++)
       {
          Procedure tmp = (Procedure)procedureCache.elementAt(i);
@@ -297,11 +324,12 @@ public class PreparedStatement_base
             }
          }
       }
+      */
       return procedure;
    }
 
 
-   private void submitProcedure(Procedure proc)
+   private void submitProcedure(Tds tds, Procedure proc)
       throws SQLException
    {
       String       sql  = proc.getPreparedSqlString();
@@ -317,9 +345,10 @@ public class PreparedStatement_base
     */
    public java.sql.ResultSet executeQuery() throws SQLException
    {
-      if (execute())
+      Tds tds = getTds(rawQueryString);
+      if (execute(tds))
       {
-         startResultSet();
+         startResultSet(tds);
       }
       else
       {
@@ -343,15 +372,19 @@ public class PreparedStatement_base
    {
       closeResults();
 
-      if (execute())
+      Tds tds = getTds("UPDATE ");
+      if (execute(tds))
       {
-         startResultSet();
+         startResultSet(tds);
          closeResults();
+         releaseTds();
          throw new SQLException("executeUpdate can't return a result set");
       }
       else
       {
-         return getUpdateCount();
+         int res = getUpdateCount();
+         releaseTds();
+         return res;         
       }
    }
 
@@ -392,7 +425,7 @@ public class PreparedStatement_base
     */
    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException
    {
-      NotImplemented();
+      setParam(parameterIndex, x, java.sql.Types.DECIMAL, -1);
    }
 
 
@@ -416,7 +449,30 @@ public class PreparedStatement_base
                                int                 length)
       throws SQLException
    {
-      NotImplemented();
+     if (length == 0) setBytes(parameterIndex,null);
+     byte[] bs = new byte[length];
+     int actlen;
+     try {
+       actlen = x.read(bs);
+     }
+     catch (java.io.IOException e) {
+       SQLException newE = new SQLException("setBinaryStream: IO-Exception occured reading Stream" + e.toString());         
+       throw newE;
+     }
+     if (actlen != length) 
+       throw new SQLException("SetBinaryStream parameterized Length: " + Integer.toString(length) + " got length: " + Integer.toString(actlen));
+     else {
+       try {
+         actlen = x.read(bs);
+       }
+       catch (java.io.IOException e) {
+         SQLException newE = new SQLException("setBinaryStream: IO-Exception occured reading Stream" + e.toString());         
+         throw newE;
+       }
+       if (actlen != -1) 
+         throw new SQLException("SetBinaryStream parameterized Length: " + Integer.toString(length) + " got more than that ");
+     }
+     this.setBytes(parameterIndex,bs);
    }
 
 
@@ -430,7 +486,7 @@ public class PreparedStatement_base
     */
    public void setBoolean(int parameterIndex, boolean x) throws SQLException
    {
-      NotImplemented();
+      setParam(parameterIndex, x ? "1" : "0", java.sql.Types.CHAR, 1);
    }
 
 
@@ -462,7 +518,7 @@ public class PreparedStatement_base
    {
       // when this method creates the parameter the formal type should
       // be a varbinary if the length of 'x' is <=255, image if length>255.
-      if (x == null || x.length<=255)
+      if (x == null || x.length<=255 || connection.getMainTds().getTdsVer() == Tds.TDS70 && x.length <= 8000)
       {
          setParam(parameterIndex, x, java.sql.Types.VARBINARY, -1);
       }
@@ -582,6 +638,42 @@ public class PreparedStatement_base
     */
    public void setObject(int parameterIndex, Object x) throws SQLException
    {
+     if (x == null)
+       setNull(parameterIndex, java.sql.Types.VARCHAR);
+     else
+     if (x instanceof java.lang.String)
+       setString(parameterIndex,(String)x);
+     else 
+     if (x instanceof java.math.BigDecimal)
+       setBigDecimal(parameterIndex,(BigDecimal)x);
+     else 
+     if (x instanceof java.lang.Integer)
+       setInt(parameterIndex,((Number)x).intValue());
+     else 
+     if (x instanceof java.lang.Long)
+       setLong(parameterIndex,((Number)x).longValue());
+     else 
+     if (x instanceof java.lang.Byte)
+       setByte(parameterIndex,((Number)x).byteValue());
+     else 
+     if (x instanceof java.lang.Short)
+       setShort(parameterIndex,((Number)x).shortValue());
+     else 
+     if (x instanceof java.lang.Boolean)
+       setBoolean(parameterIndex,((Boolean)x).booleanValue());
+     else 
+     if (x instanceof java.lang.Double)
+       setDouble(parameterIndex,((Number)x).doubleValue());
+     else 
+     if (x instanceof java.lang.Float)
+       setFloat(parameterIndex,((Number)x).floatValue());
+     else               
+     if (x instanceof java.sql.Date)
+       setDate(parameterIndex,(java.sql.Date)x);
+     else               
+     if (x instanceof java.util.Date)
+       setTimestamp(parameterIndex,new Timestamp(((java.util.Date)x).getTime()));
+     else               
       throw new SQLException("Not implemented");
    }
 
@@ -593,7 +685,7 @@ public class PreparedStatement_base
     */
    public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException
    {
-      throw new SQLException("Not implemented");
+     setObject(parameterIndex,x,targetSqlType,0);
    }
 
    /**
@@ -661,7 +753,26 @@ public class PreparedStatement_base
    public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
       throws SQLException
    {
-      throw new SQLException("Not implemented");
+     switch (targetSqlType) {
+       case java.sql.Types.CHAR:
+       case java.sql.Types.VARCHAR:
+         setString(parameterIndex,(String)x);
+         break;
+       case java.sql.Types.REAL:
+         setFloat(parameterIndex,((Float)x).floatValue());
+         break;
+       case java.sql.Types.DOUBLE:
+         setDouble(parameterIndex,((Double)x).doubleValue());
+         break;
+       case java.sql.Types.INTEGER:
+         setInt(parameterIndex,((Integer)x).intValue());
+         break;
+       case java.sql.Types.BIGINT:
+         setLong(parameterIndex,((Integer)x).longValue());
+         break;       
+       default: 
+         throw new SQLException("Not implemented");
+     }
    }
 
 

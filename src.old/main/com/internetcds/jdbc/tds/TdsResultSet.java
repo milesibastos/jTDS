@@ -84,7 +84,7 @@ import java.io.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ *@version    $Id: TdsResultSet.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -109,7 +109,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
 
     public Context getContext()
     {
@@ -331,8 +331,9 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         isClosed = true;
         try {
             if (!hitEndOfData) {
-                tds.discardResultSet( null );
+                tds.discardResultSetOld(context );    // from discardResultSet(null)
                 hitEndOfData = true;
+                stmt.eofResults();
             }
         }
         catch (TdsException e) {
@@ -417,6 +418,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
                     exception = warningChain.addOrReturn(tmp);
                 }
                 else {
+                  stmt.eofResults();
                     throw new SQLException("Protocol confusion.  "
                              + "Got a 0x"
                              + Integer.toHexString((tds.peek() & 0xff))
@@ -425,7 +427,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
             }
 
             if (exception != null) {
-                throw exception;
+              stmt.eofResults();  
+              throw exception;
             }
 
             if (tds.isResultRow()) {
@@ -437,10 +440,12 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
                 row = null;
                 done = true;
                 hitEndOfData = true;
+                stmt.eofResults();
                 wasCanceled = wasCanceled
                          || ((PacketEndTokenResult) tmp).wasCanceled();
             }
             else if (!tds.isResultSet()) {
+              stmt.eofResults();
                 throw new SQLException("Protocol confusion.  "
                          + "Got a 0x"
                          + Integer.toHexString((tds.peek() & 0xff))
@@ -448,18 +453,22 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
             }
 
             if (exception != null) {
+              stmt.eofResults();
                 throw exception;
             }
         }
         catch (java.io.IOException e) {
+          stmt.eofResults();
             throw new SQLException(e.getMessage());
         }
         catch (TdsException e) {
+          stmt.eofResults();
             e.printStackTrace();
             throw new SQLException(e.getMessage());
         }
         if (wasCanceled) {
-            throw new SQLException("Query was canceled or timed out.");
+          stmt.eofResults();
+          throw new SQLException("Query was canceled or timed out.");
         }
         return row;
     }
@@ -813,8 +822,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
 
             PacketRowResult row = fetchNextRow();
             if (hitEndOfData) {
-                //clearArray?
-                break;
+              break;
             }
 
             rowCache[rowCount] = row;
@@ -823,6 +831,44 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
         } while (rowCount < fetchSize);
 
         return rowCount;
+    }
+    
+    private void reallocCache()
+    {
+      PacketRowResult[] newCache = new PacketRowResult[fetchSize * 2];
+      System.arraycopy(rowCache,0,newCache,0,fetchSize);
+      rowCache = newCache;
+      fetchSize *= 2;
+    }
+    
+    void fetchIntoCache() throws SQLException
+    {     
+      if (rowCount == 0) {
+        internalFetchRows();
+        if (hitEndOfData) return;
+      }
+      if (rowIndex > 0 && rowIndex < rowCount) {
+        System.arraycopy(rowCache,rowIndex,rowCache,0,rowCount-rowIndex);
+        rowCount -= rowIndex;
+        rowIndex = 0;
+      }
+      else 
+        reallocCache();
+      while (!hitEndOfData) {
+        do {
+            PacketRowResult row = fetchNextRow();
+            if (hitEndOfData) {
+              break;
+            }
+
+            rowCache[rowCount] = row;
+            rowCount++;
+
+        } while (rowCount < fetchSize);        
+        if (!hitEndOfData)         
+          reallocCache();
+      }
+      return ;
     }
 
 }

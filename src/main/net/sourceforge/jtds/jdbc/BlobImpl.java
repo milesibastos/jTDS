@@ -28,7 +28,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.13 2004-07-08 22:23:22 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.14 2004-07-19 22:17:02 bheineman Exp $
  */
 public class BlobImpl implements Blob {
 	private static final int MAXIMUM_SIZE = 32768;
@@ -480,13 +480,15 @@ public class BlobImpl implements Blob {
      * @param len the length to truncate the value to
      */
     public synchronized void truncate(long len) throws SQLException {
+        long currentLength = length();
+        
         if (len < 0) {
             throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
-        } else if (len > length()) {
+        } else if (len > currentLength) {
             throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
-        if (len == length()) {
+        if (len == currentLength) {
             return;
         } else if (len <= MAXIMUM_SIZE) {
             _blob = getBytes(1, (int) len);

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.10 2004-07-17 20:13:10 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.11 2004-07-19 22:17:03 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -165,11 +165,6 @@ public class TdsData {
     private final static TypeInfo types[] = new TypeInfo[256];
 
     /**
-     * Used to optimize TDS 4/5 empty string values.
-     */
-    private static final java.sql.Clob EMPTY_CLOB = new ClobImpl("");
-
-    /**
      * Static block to initialise TDS data type descriptors.
      */
     static {//                             SQL Type       Size Prec  DS signed TDS8 Col java Type
@@ -214,6 +209,9 @@ public class TdsData {
         types[SYBUNIQUE]    = new TypeInfo("uniqueidentifier",-1,36, 36, false, false, java.sql.Types.VARCHAR);
         types[SYBVARIANT]   = new TypeInfo("sql_variant",   -5,  1,  1, false, false, java.sql.Types.OTHER);
     }
+
+    /** Default Decimal Scale. */
+    static final int DEFAULT_SCALE = 10;
 
     /**
      * TDS 8 supplies collation information for character data types.
@@ -281,23 +279,23 @@ public class TdsData {
         } else if (ci.bufferSize == -4) {
             // text or image
             ci.bufferSize = in.readInt();
-            
+
             if (isTds8) {
                 bytesRead += getCollation(in, ci);
             }
-            
+
             int lenName = in.readShort();
-            
+
             ci.tableName = in.readString(lenName);
             bytesRead += 6 + ((in.getTdsVersion() >= TdsCore.TDS70) ? lenName * 2 : lenName);
         } else if (ci.bufferSize == -2) {
             // longvarchar longvarbinary
             ci.bufferSize = in.readShort();
-            
+
             if (isTds8) {
                 bytesRead += getCollation(in, ci);
             }
-            
+
             bytesRead += 2;
         } else if (ci.bufferSize == -1) {
             // varchar varbinary decimal etc
@@ -320,7 +318,7 @@ public class TdsData {
         // Now fine tune sizes for specific types
         if (type == SYBDATETIMN) {
             ci.nullable = java.sql.ResultSetMetaData.columnNullable;
-            
+
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBDATETIME].displaySize;
                 ci.precision = types[SYBDATETIME].precision;
@@ -331,7 +329,7 @@ public class TdsData {
             }
         } else if (type == SYBFLTN) {
             ci.nullable = java.sql.ResultSetMetaData.columnNullable;
-            
+
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBFLT8].displaySize;
                 ci.precision = types[SYBFLT8].precision;
@@ -343,7 +341,7 @@ public class TdsData {
             }
         } else if (type == SYBINTN) {
             ci.nullable = java.sql.ResultSetMetaData.columnNullable;
-            
+
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBINT8].displaySize;
                 ci.precision = types[SYBINT8].precision;
@@ -365,7 +363,7 @@ public class TdsData {
             }
         } else if (type == SYBMONEYN) {
             ci.nullable = java.sql.ResultSetMetaData.columnNullable;
-            
+
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBMONEY].displaySize;
                 ci.precision = types[SYBMONEY].precision;
@@ -397,11 +395,11 @@ public class TdsData {
             bytesRead += 2;
             StringBuffer tmp = new StringBuffer(16);
             tmp.append(types[type].sqlType).append('(').append(ci.precision);
-            
+
             if (ci.scale > 0) {
                 tmp.append(',').append(ci.scale);
             }
-            
+
             tmp.append(')');
             ci.sqlType = tmp.toString();
         }
@@ -425,7 +423,7 @@ public class TdsData {
     static Object readData(ResponseStream in, ColInfo ci, boolean readTextMode)
     throws IOException, ProtocolException {
         int len;
-        
+
         switch (ci.tdsType) {
             case SYBINTN:
                 switch (in.read()) {
@@ -438,7 +436,7 @@ public class TdsData {
                     case 8:
                         return new Long(in.readLong());
                 }
-                
+
                 break;
 
             case SYBINT1:
@@ -455,36 +453,20 @@ public class TdsData {
 
             case SYBIMAGE:
                 len = in.read();
-                
+
                 if (len > 0) {
                 	return new BlobImpl(in);
                 }
-                
+
                 break;
 
             case SYBTEXT:
                 len = in.read();
 
                 if (len > 0) {
-                    if (in.getTdsVersion() < TdsCore.TDS70) {
-                        ClobImpl value = new ClobImpl(in, false, readTextMode);
-
-                        // In TDS 4/5 zero length strings are stored as a single space
-                        // to distinguish them from nulls.
-                        try {
-                            if (value.length() == 1 && value.getSubString(1,1).equals(" ")) {
-                                return EMPTY_CLOB;
-                            }
-                        } catch (SQLException e) {
-                            // Should not occur in practice
-                        }
-
-                        return value;
-                    }
-
                     return new ClobImpl(in, false, readTextMode);
                 }
-                
+
                 break;
 
             case SYBNTEXT:
@@ -493,7 +475,7 @@ public class TdsData {
                 if (len > 0) {
                 	return new ClobImpl(in, true, readTextMode);
                 }
-                
+
                 break;
 
             case SYBCHAR:
@@ -507,7 +489,7 @@ public class TdsData {
 
                     return (value.equals(" ")) ? "" : value;
                 }
-                
+
                 if (len > 0) {
                     return in.readAsciiString(len);
                 }
@@ -549,9 +531,9 @@ public class TdsData {
 
                 if (len > 0) {
                     byte[] bytes = new byte[len];
-                    
+
                     in.read(bytes);
-                    
+
                     return bytes;
                 }
 
@@ -563,9 +545,9 @@ public class TdsData {
 
                 if (len != -1) {
                     byte[] bytes = new byte[len];
-                    
+
                     in.read(bytes);
-                    
+
                     return bytes;
                 }
 
@@ -615,9 +597,9 @@ public class TdsData {
 
                 if (len > 0) {
                     byte[] bytes = new byte[len];
-                    
+
                     in.read(bytes);
-                    
+
                     return new UniqueIdentifier(bytes);
                 }
 
@@ -651,7 +633,7 @@ public class TdsData {
 
                     return new BigDecimal(bi, ci.scale);
                 }
-                
+
                 break;
 
             case SYBVARIANT:
@@ -862,23 +844,38 @@ public class TdsData {
                 if (connection.getTdsVersion() >= TdsCore.TDS80) {
                     pi.tdsType = SYBINTN;
                     pi.sqlType = "bigint";
-                    break;
+                } else {
+                    // int8 not supported send as a decimal field
+                    pi.tdsType  = SYBDECIMAL;
+
+                    if (connection.getMaxPrecision() > 28) {
+                        pi.sqlType = "decimal(38)";
+                    } else {
+                        pi.sqlType = "decimal(28)";
+                    }
                 }
-                // Fall through BIGINT as decimal
+
+                break;
+
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
                 pi.tdsType  = SYBDECIMAL;
                 if (connection.getMaxPrecision() > 28) {
-                    if (pi.scale < 0) {
-                        pi.sqlType = "decimal(38,10)";
-                    } else {
-                        pi.sqlType = "decimal(38," + pi.scale + ")";
-                    }
+                    pi.sqlType = "decimal(38,10)";
                 } else {
-                    if (pi.scale < 0) {
-                        pi.sqlType = "decimal(28,10)";
+                    pi.sqlType = "decimal(28,10)";
+                }
+
+                if (pi.value instanceof BigDecimal) {
+                    BigDecimal value = (BigDecimal)pi.value;
+                    if (connection.getMaxPrecision() > 28) {
+                        if (value.scale() > 10 || value.compareTo(limit38) > 0) {
+                            pi.sqlType = "decimal(38," + value.scale() + ")";
+                        }
                     } else {
-                        pi.sqlType = "decimal(28," + pi.scale + ")";
+                        if (value.scale() > 10 || value.compareTo(limit28) > 0) {
+                            pi.sqlType = "decimal(28," + value.scale() + ")";
+                        }
                     }
                 }
 
@@ -995,13 +992,17 @@ public class TdsData {
                 out.write((byte) 8);
                 break;
             case SYBDECIMAL:
-                out.write((byte) ((out.getMaxPrecision() > 28) ? 17 : 13));
-                out.write((byte) out.getMaxPrecision());
+                out.write((byte) 17);
+                out.write((byte) 38);
 
                 if (pi.jdbcType == java.sql.Types.BIGINT) {
                     out.write((byte) 0);
                 } else {
-                    out.write((byte) ((pi.scale < 0) ? 10 : pi.scale));
+                    if (pi.value instanceof BigDecimal) {
+                        out.write((byte) ((BigDecimal) pi.value).scale());
+                    } else {
+                        out.write((byte) 10);
+                    }
                 }
 
                 break;
@@ -1102,14 +1103,6 @@ public class TdsData {
             case SYBNUMERIC:
             case SYBDECIMAL:
                 BigDecimal value = null;
-                int scale = pi.scale;
-                if (pi.jdbcType == java.sql.Types.BIGINT) {
-                    scale = 0;                
-                } else {
-                    if (scale < 0) {
-                        scale = 10;
-                    }
-                }
 
                 if (pi.value != null) {
                     if (pi.value instanceof Long) {
@@ -1117,10 +1110,9 @@ public class TdsData {
                     } else {
                         value = (BigDecimal) pi.value;
                     }
-                    value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
                 }
 
-                out.write(value, scale);
+                out.write(value);
                 break;
 
             default:
@@ -1471,7 +1463,7 @@ public class TdsData {
             case SYBFLTN:
                 out.write((byte) pi.tdsType);
                 out.write((byte) 8);
-                
+
                 if (pi.value == null) {
                     out.write((byte) 0);
                 } else {
@@ -1501,7 +1493,7 @@ public class TdsData {
             case SYBBITN:
                 out.write((byte) SYBBITN);
                 out.write((byte) 1);
-                
+
                 if (pi.value == null) {
                     out.write((byte) 0);
                 } else {
@@ -1515,22 +1507,23 @@ public class TdsData {
             case SYBDECIMAL:
                 out.write((byte) pi.tdsType);
                 BigDecimal value = null;
-                int scale = pi.scale;
+                int scale = (pi.jdbcType == java.sql.Types.BIGINT) ? 0 : DEFAULT_SCALE;
 
                 if (pi.value != null) {
                     if (pi.value instanceof Long) {
                         value = new BigDecimal(((Long) pi.value).longValue());
-                        scale = 0;
                     } else {
                         value = (BigDecimal) pi.value;
                         scale = value.scale();
                     }
-                } else {
-                    if (scale < 0) {
-                        scale = 0;
-                    }
                 }
-                out.write(value, scale);
+
+                int prec = out.getMaxPrecision();
+                int maxLen = (prec <= 28) ? 13 : 17;
+                out.write((byte) maxLen);
+                out.write((byte) prec);
+                out.write((byte) scale);
+                out.write(value);
                 break;
 
             default:
@@ -1548,7 +1541,7 @@ public class TdsData {
      */
     private TdsData() {
     }
-    
+
     /**
      * Convert a Julian date from the Sybase epoch of 1900-01-01
      * to a Calendar object.
@@ -1601,6 +1594,8 @@ public class TdsData {
     }
 
     private static GregorianCalendar cal = new GregorianCalendar();
+    private static BigDecimal limit28 = new BigDecimal("999999999999999999");
+    private static BigDecimal limit38 = new BigDecimal("9999999999999999999999999999");
 
     /**
      * Get a DATETIME value from the server response stream.
@@ -1650,7 +1645,7 @@ public class TdsData {
                     seconds = time / 300;
                     cal.set(Calendar.SECOND, seconds);
                     time = time - seconds * 300;
-                    time = (int) Math.round(time * 1000 / 300f);                    
+                    time = (int) Math.round(time * 1000 / 300f);
                     cal.set(Calendar.MILLISECOND, time);
 //
 //                  getTimeInMillis() is protected in java vm 1.3 :-(
@@ -1865,13 +1860,13 @@ public class TdsData {
             case XSYBCHAR:
             case XSYBVARCHAR:
                 in.skip(7); // Skip collation and buffer size
-                
+
                 return in.readAsciiString(len);
 
             case XSYBNCHAR:
             case XSYBNVARCHAR:
                 in.skip(7); // Skip collation and buffer size
-                
+
                 return in.readString(len / 2);
 
             case XSYBVARBINARY:
@@ -1879,7 +1874,7 @@ public class TdsData {
                 in.skip(2); // Skip buffer size
                 bytes = new byte[len];
                 in.read(bytes);
-                
+
                 return bytes;
 
             case SYBMONEY4:
@@ -1912,7 +1907,7 @@ public class TdsData {
                         buf.append('-');
                     }
                 }
-                
+
                 return buf.toString();
 
             case SYBNUMERIC:
@@ -1929,7 +1924,7 @@ public class TdsData {
                 }
 
                 bi = new BigInteger((sign == 0) ? -1 : 1, bytes);
-                
+
                 return new BigDecimal(bi, ci.scale);
 
             default:

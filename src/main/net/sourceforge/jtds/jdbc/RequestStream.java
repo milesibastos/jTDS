@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.3 2004-07-17 20:13:10 bheineman Exp $
+ * @version $Id: RequestStream.java,v 1.4 2004-07-19 22:17:03 bheineman Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -448,54 +448,24 @@ public class RequestStream {
      * Write a BigDecimal value to the output stream.
      *
      * @param value The BigDecimal value to write.
-     * @param scale The decimal scale for the value.
      * @throws IOException
      */
-    void write(BigDecimal value, int scale) throws IOException {
+    void write(BigDecimal value) throws IOException {
         final byte prec = (byte)maxPrecision;
         final byte maxLen = (prec <= 28) ? (byte) 13 : (byte) 17;
 
         if (value == null) {
-            if (serverType == TdsCore.SQLSERVER) {
-                write((byte) maxLen);
-                write((byte) prec);
-                write((byte) scale);
-            }
-
             write((byte) 0);
         } else {
+            byte signum = (byte) (value.signum() < 0 ? 0 : 1);
+            BigInteger bi = value.unscaledValue();
+            byte mantisse[] = bi.abs().toByteArray();
+            byte len = (byte) (mantisse.length + 1);
 
-            if (value.scale() > prec) {
-                value = value.setScale(prec, BigDecimal.ROUND_HALF_UP);
+            if (len > maxLen) {
+                // Should never happen now as value is normalized elsewhere
+                throw new IOException("BigDecimal to big to send");
             }
-
-            final byte signum = (byte) (value.signum() < 0 ? 0 : 1);
-            byte[] mantisse;
-            byte len;
-
-            do {
-                scale = (byte) value.scale();
-                final BigInteger bi = value.unscaledValue();
-                mantisse = bi.abs().toByteArray();
-                len = (byte) (mantisse.length + 1);
-
-                if (len > maxLen) {   
-                    // diminish scale as long as length is to much.
-                    // NB. Wont work for Sybase as we have already sent scale.
-                    final int dif = len - maxLen;
-                    scale -= dif * 2;
-                    
-                    if (scale < 0 || serverType == TdsCore.SYBASE) {
-                        throw new IOException("BigDecimal to big to send");
-                    }
-                    
-                    value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
-                    
-                    continue;
-                }
-                
-                break;
-            } while (true);
 
             if (serverType == TdsCore.SYBASE) {
                 write((byte)len);
@@ -507,13 +477,9 @@ public class RequestStream {
                     write((byte) mantisse[i]);
                 }
             } else {
-                // For SQL server we can write the length, prec and scale bytes out now.
-                write((byte) maxLen);
-                write((byte) prec);
-                write((byte) scale);
-
                 write((byte) len);
                 write((byte) signum);
+
                 for (int i = mantisse.length - 1; i >= 0; i--) {
                     write((byte) mantisse[i]);
                 }

@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.5 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.6 2004-07-19 22:17:03 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -108,7 +108,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Construct a simple result set from a statement, metadata or generated keys.
-     * 
+     *
      * @param statement The parent statement object or null.
      * @param resultSetType one of FORWARD_ONLY, SCROLL_INSENSITIVE, SCROLL_SENSITIVE.
      * @param concurrency One of CONCUR_READ_ONLY, CONCUR_UPDATE.
@@ -129,7 +129,7 @@ public class JtdsResultSet implements ResultSet {
         this.concurrency = concurrency;
         this.readAhead = readAhead;
         this.columns = columns;
-        
+
         if (columns != null) {
             columnCount  = getColumnCount(columns);
             rowsInResult = (statement.getTds().isDataInResultSet()) ? 1 : 0;
@@ -138,7 +138,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Retrieve the column count excluding hidden columns
-     * 
+     *
      * @param columns The columns array
      * @return The new column count as an <code>int</code>.
      */
@@ -148,13 +148,13 @@ public class JtdsResultSet implements ResultSet {
                 return i;
             }
         }
-        
+
         return columns.length;
     }
 
     /**
      * Retrieve the column descriptor array.
-     * 
+     *
      * @return The column descriptors as a <code>ColInfo[]</code>.
      */
     protected ColInfo[] getColumns() {
@@ -163,7 +163,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Set the specified column's name.
-     * 
+     *
      * @param colIndex The index of the column in the row.
      * @param name The new name.
      */
@@ -172,13 +172,13 @@ public class JtdsResultSet implements ResultSet {
             throw new IllegalArgumentException("columnIndex "
                     + colIndex + " invalid");
         }
-        
+
         columns[colIndex - 1].name = name;
     }
 
     /**
      * Set the specified column's label.
-     * 
+     *
      * @param colIndex The index of the column in the row.
      * @param name The new label.
      */
@@ -187,13 +187,13 @@ public class JtdsResultSet implements ResultSet {
             throw new IllegalArgumentException("columnIndex "
                     + colIndex + " invalid");
         }
-        
+
         columns[colIndex - 1].label = name;
     }
 
     /**
      * Set the specified column's JDBC type.
-     * 
+     *
      * @param colIndex The index of the column in the row.
      * @param jdbcType The new type value.
      */
@@ -202,13 +202,13 @@ public class JtdsResultSet implements ResultSet {
             throw new IllegalArgumentException("columnIndex "
                     + colIndex + " invalid");
         }
-        
+
         columns[colIndex - 1].jdbcType = jdbcType;
     }
 
     /**
      * Set the specified column's data value.
-     * 
+     *
      * @param colIndex The index of the column in the row.
      * @param value The new column value.
      */
@@ -222,7 +222,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Set the current row's column count.
-     * 
+     *
      * @param columnCount The number of visible columns in the row.
      */
     protected void setColumnCount(int columnCount) {
@@ -230,13 +230,13 @@ public class JtdsResultSet implements ResultSet {
             throw new IllegalArgumentException("columnCount "
                     + columnCount + " is invalid");
         }
-        
+
         this.columnCount = columnCount;
     }
 
     /**
      * Get the specified column's data item.
-     * 
+     *
      * @param index The column index in the row.
      * @return The column value as a <code>ColData</code> object.
      * @throws SQLException if the connection is closed;
@@ -246,27 +246,27 @@ public class JtdsResultSet implements ResultSet {
      */
     protected ColData getColumn(int index) throws SQLException {
         checkOpen();
-        
+
         if (index < 1 || index > columnCount) {
             throw new SQLException(Support.getMessage("error.resultset.colindex",
                                                       Integer.toString(index)),
                                                        "07009");
         }
-        
+
         if (currentRow == null) {
             throw new SQLException(Support.getMessage("error.resultset.norow"), "24000");
         }
-        
+
         ColData data = currentRow[index - 1];
-        
+
         wasNull = data.isNull();
-        
+
         return data;
     }
 
     /**
      * Check that this connection is still open.
-     * 
+     *
      * @throws SQLException if connection closed.
      */
     protected void checkOpen() throws SQLException {
@@ -274,7 +274,7 @@ public class JtdsResultSet implements ResultSet {
             throw new SQLException(Support.getMessage("error.generic.closed", "ResultSet"),
                                         "HY010");
         }
-        
+
         if (cancelled) {
             throw new SQLException(Support.getMessage("error.generic.cancelled", "ResultSet"),
                                         "HY010");
@@ -283,7 +283,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Check that this resultset is scrollable.
-     * 
+     *
      * @throws SQLException if connection closed.
      */
     protected void checkScrollable() throws SQLException {
@@ -294,7 +294,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Check that this resultset is updateable.
-     * 
+     *
      * @throws SQLException if connection closed.
      */
     protected void checkUpdateable() throws SQLException {
@@ -305,7 +305,7 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Report that user tried to call a method which has not been implemented.
-     * 
+     *
      * @param method The method name to report in the error message.
      * @throws SQLException
      */
@@ -315,44 +315,44 @@ public class JtdsResultSet implements ResultSet {
 
     /**
      * Create a new row containing empty data items.
-     * 
+     *
      * @return The new row as a <code>ColData[]</code>.
      */
     protected ColData[] newRow() {
         ColData row[] = new ColData[columns.length];
-        
+
         for (int i = 0; i < row.length; i++) {
             row[i] = new ColData();
         }
-        
+
         return row;
     }
 
     /**
      * Copy an existing result set row.
-     * 
+     *
      * @param row The result set row to copy.
      * @return The new row as a <code>ColData[]</code>.
      */
     protected ColData[] copyRow(ColData[] row) {
         ColData copy[] = new ColData[columns.length];
-        
+
         System.arraycopy(row,0, copy, 0, row.length);
-        
+
         return copy;
     }
 
     /**
      * Copy an existing result set column descriptor array.
-     * 
+     *
      * @param info The result set column descriptors to copy.
      * @return The new descriptors as a <code>ColInfo[]</code>.
      */
     protected ColInfo[] copyInfo(ColInfo[] info) {
         ColInfo copy[] = new ColInfo[info.length];
-        
+
         System.arraycopy(info, 0, copy, 0, info.length);
-        
+
         return copy;
     }
 
@@ -361,31 +361,31 @@ public class JtdsResultSet implements ResultSet {
 //
     public int getConcurrency() throws SQLException {
         checkOpen();
-        
+
         return this.concurrency;
     }
 
     public int getFetchDirection() throws SQLException {
         checkOpen();
-        
+
         return this.fetchDirection;
     }
 
     public int getFetchSize() throws SQLException {
         checkOpen();
-        
+
         return fetchSize;
     }
 
     public int getRow() throws SQLException {
         checkOpen();
-        
+
         return pos > 0 ? pos : 0;
     }
 
     public int getType() throws SQLException {
         checkOpen();
-        
+
         return resultSetType;
     }
 
@@ -406,7 +406,7 @@ public class JtdsResultSet implements ResultSet {
 
     public void clearWarnings() throws SQLException {
         checkOpen();
-        
+
         if (statement != null) {
             statement.clearWarnings();
         }
@@ -462,48 +462,48 @@ public class JtdsResultSet implements ResultSet {
     public boolean first() throws SQLException {
         checkOpen();
         checkScrollable();
-        
+
         return false;
     }
 
     public boolean isAfterLast() throws SQLException {
         checkOpen();
-        
+
         return (pos == POS_AFTER_LAST) && (rowsInResult != 0);
     }
 
     public boolean isBeforeFirst() throws SQLException {
         checkOpen();
-        
+
         return (pos == POS_BEFORE_FIRST) && (rowsInResult != 0);
     }
 
     public boolean isFirst() throws SQLException {
         checkOpen();
-        
+
         return pos == 1;
     }
 
     public boolean isLast() throws SQLException {
         checkOpen();
-        
+
         if (statement.getTds().isDataInResultSet()) {
             rowsInResult = pos + 1; // Keep rowsInResult 1 ahead of pos
         }
-        
+
         return (pos == rowsInResult) && (rowsInResult != 0);
     }
 
     public boolean last() throws SQLException {
         checkOpen();
         checkScrollable();
-        
+
         return false;
     }
 
     public boolean next() throws SQLException {
         checkOpen();
-        
+
         if (!statement.getTds().getNextRow(readAhead)) {
             currentRow = null;
         } else {
@@ -511,77 +511,77 @@ public class JtdsResultSet implements ResultSet {
             pos++;
             rowsInResult = pos;
         }
-        
+
         return currentRow != null;
     }
 
     public boolean previous() throws SQLException {
         checkOpen();
         checkScrollable();
-        
+
         return false;
     }
 
     public boolean rowDeleted() throws SQLException {
         checkOpen();
         checkUpdateable();
-        
+
         return false;
     }
 
     public boolean rowInserted() throws SQLException {
         checkOpen();
         checkUpdateable();
-        
+
         return false;
     }
 
     public boolean rowUpdated() throws SQLException {
         checkOpen();
         checkUpdateable();
-        
+
         return false;
     }
 
     public boolean wasNull() throws SQLException {
         checkOpen();
-        
+
         return wasNull;
     }
 
     public byte getByte(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Byte) Support.convert(data.getValue(), java.sql.Types.TINYINT, null)).byteValue();
     }
 
     public double getDouble(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Double) Support.convert(data.getValue(), java.sql.Types.DOUBLE, null)).doubleValue();
     }
 
     public float getFloat(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Float) Support.convert(data.getValue(), java.sql.Types.FLOAT, null)).floatValue();
     }
 
     public int getInt(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Integer) Support.convert(data.getValue(), java.sql.Types.INTEGER, null)).intValue();
     }
 
     public long getLong(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Long) Support.convert(data.getValue(), java.sql.Types.BIGINT, null)).longValue();
     }
 
     public short getShort(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Short) Support.convert(data.getValue(), java.sql.Types.SMALLINT, null)).shortValue();
     }
 
@@ -608,13 +608,13 @@ public class JtdsResultSet implements ResultSet {
 
     public void setFetchSize(int size) throws SQLException {
         checkOpen();
-        
+
         if (size < 0 || statement != null && size > statement.getFetchSize()) {
             throw new SQLException(Support.getMessage("error.generic.badparam",
                                          Integer.toString(size), "setFetchSize"),
                                             "HY092");
         }
-        
+
         this.fetchSize = size;
     }
 
@@ -632,7 +632,7 @@ public class JtdsResultSet implements ResultSet {
 
     public boolean getBoolean(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return ((Boolean) Support.convert(data.getValue(), JtdsStatement.BOOLEAN, null)).booleanValue();
     }
 
@@ -699,31 +699,31 @@ public class JtdsResultSet implements ResultSet {
 
     public InputStream getAsciiStream(int columnIndex) throws SQLException {
         Clob clob = getClob(columnIndex);
-        
+
         if (clob == null) {
             return null;
         }
-        
+
         return clob.getAsciiStream();
     }
 
     public InputStream getBinaryStream(int columnIndex) throws SQLException {
         Blob blob = getBlob(columnIndex);
-        
+
         if (blob == null) {
             return null;
         }
-        
+
         return blob.getBinaryStream();
     }
 
     public InputStream getUnicodeStream(int columnIndex) throws SQLException {
         Reader reader = getCharacterStream(columnIndex);
-        
+
         if (reader == null) {
             return null;
         }
-        
+
         return new ReaderInputStream(reader, "UTF-16BE");
     }
 
@@ -743,16 +743,16 @@ public class JtdsResultSet implements ResultSet {
     public void updateBinaryStream(int columnIndex, InputStream inputStream, int length)
         throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         checkUpdateable();
-        
+
         if (inputStream == null || length < 1) {
             updateBytes(columnIndex, null);
             return;
         }
-        
+
         ColInfo ci   = this.columns[columnIndex - 1];
-        
+
         if (ci.jdbcType != java.sql.Types.BINARY
             && ci.jdbcType != java.sql.Types.VARBINARY
             && ci.jdbcType != java.sql.Types.LONGVARBINARY) {
@@ -762,34 +762,34 @@ public class JtdsResultSet implements ResultSet {
                                     Support.getJdbcTypeName(ci.jdbcType)), "22005");
 
         }
-        
+
         data.setValue(inputStream);
         data.setLength(length);
     }
 
     public Reader getCharacterStream(int columnIndex) throws SQLException {
         Clob clob = getClob(columnIndex);
-        
+
         if (clob == null) {
             return null;
         }
-        
+
         return clob.getCharacterStream();
     }
 
     public void updateCharacterStream(int columnIndex, Reader reader, int length)
         throws SQLException {
         ColData data = this.getColumn(columnIndex);
-        
+
         checkUpdateable();
-        
+
         if (reader == null || length < 1) {
             updateString(columnIndex, null);
             return;
         }
-        
+
         ColInfo ci = this.columns[columnIndex - 1];
-        
+
         if (ci.jdbcType != java.sql.Types.CHAR
             && ci.jdbcType != java.sql.Types.VARCHAR
             && ci.jdbcType != java.sql.Types.LONGVARCHAR) {
@@ -799,14 +799,14 @@ public class JtdsResultSet implements ResultSet {
                                     Support.getJdbcTypeName(ci.jdbcType)), "22005");
 
         }
-        
+
         data.setValue(reader);
         data.setLength(length);
     }
 
     public Object getObject(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return data.getValue();
     }
 
@@ -814,28 +814,28 @@ public class JtdsResultSet implements ResultSet {
         ColData data = getColumn(columnIndex);
         checkUpdateable();
         ColInfo ci = columns[columnIndex - 1];
-        String charSet = (statement != null) ?
-                ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
-                
-        x = Support.convert(x, columns[columnIndex - 1].jdbcType, charSet);
-        
-        if (ci.jdbcType == java.sql.Types.DECIMAL && x instanceof BigDecimal) {
-            x = ((BigDecimal) x).setScale(ci.scale, BigDecimal.ROUND_HALF_UP);
+        String charSet = ((ConnectionJDBC2) statement.getConnection()).getCharSet();
+
+        x = Support.convert(x, ci.jdbcType, charSet);
+
+        if (x instanceof BigDecimal) {
+            int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
+            x = Support.normalizeBigDecimal((BigDecimal)x, prec);
         }
-        
+
         data.setValue(x);
     }
 
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
         checkOpen();
         checkUpdateable();
-        
+
         if (scale < 0 || scale > 28) {
             throw new SQLException(Support.getMessage("error.generic.badscale"), "HY092");
         }
-        
+
         if (x instanceof BigDecimal) {
-            updateObject(columnIndex, ((BigDecimal)x).setScale(scale));
+            updateObject(columnIndex, ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP));
         } else if (x instanceof Number) {
             f.setMaximumFractionDigits(scale);
             updateObject(columnIndex, f.format(x));
@@ -852,14 +852,14 @@ public class JtdsResultSet implements ResultSet {
     public String getString(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
         Object tmp = data.getValue();
-        
+
         if (tmp != null && (tmp instanceof String)){
             return (String) tmp;
         }
-        
+
         String charSet = (statement != null) ?
                 ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
-                
+
         return (String) Support.convert(data.getValue(), java.sql.Types.LONGVARCHAR, charSet);
     }
 
@@ -883,13 +883,13 @@ public class JtdsResultSet implements ResultSet {
 
     public int findColumn(String columnName) throws SQLException {
         checkOpen();
-        
+
         for (int i = 0; i < columnCount; i++) {
             if (columns[i].name.equalsIgnoreCase(columnName)) {
                 return i+1;
             }
         }
-        
+
         throw new SQLException(
             Support.getMessage("error.resultset.colname", columnName), "07009");
     }
@@ -958,11 +958,11 @@ public class JtdsResultSet implements ResultSet {
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
         ColData data = getColumn(columnIndex);
         BigDecimal result = (BigDecimal) Support.convert(data.getValue(), java.sql.Types.DECIMAL, null);
-        
+
         if (result == null) {
             return null;
         }
-        
+
         return result.setScale(scale);
     }
 
@@ -975,7 +975,7 @@ public class JtdsResultSet implements ResultSet {
 
     public URL getURL(int columnIndex) throws SQLException {
         String url = getString(columnIndex);
-        
+
         try {
             return new java.net.URL(url);
         } catch (MalformedURLException e) {
@@ -1025,7 +1025,7 @@ public class JtdsResultSet implements ResultSet {
 
     public Date getDate(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return (java.sql.Date)Support.convert(data.getValue(), java.sql.Types.DATE, null);
     }
 
@@ -1036,7 +1036,7 @@ public class JtdsResultSet implements ResultSet {
     public Ref getRef(int columnIndex) throws SQLException {
         checkOpen();
         notImplemented("ResultSet.getRef()");
-        
+
         return null;
     }
 
@@ -1048,25 +1048,25 @@ public class JtdsResultSet implements ResultSet {
 
     public ResultSetMetaData getMetaData() throws SQLException {
         checkOpen();
-        
+
         return new JtdsResultSetMetaData(this.columns, this.columnCount);
     }
 
     public SQLWarning getWarnings() throws SQLException {
         checkOpen();
-        
+
         return (statement != null) ? statement.getWarnings() : null;
     }
 
     public Statement getStatement() throws SQLException {
         checkOpen();
-        
+
         return this.statement;
     }
 
     public Time getTime(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return (java.sql.Time) Support.convert(data.getValue(), java.sql.Types.TIME, null);
     }
 
@@ -1076,7 +1076,7 @@ public class JtdsResultSet implements ResultSet {
 
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        
+
         return (Timestamp) Support.convert(data.getValue(), java.sql.Types.TIMESTAMP, null);
     }
 

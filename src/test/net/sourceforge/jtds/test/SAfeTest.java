@@ -866,26 +866,61 @@ public class SAfeTest extends DatabaseTestCase {
      * Test for bug [939206] TdsException: can't sent this BigDecimal
      */
     public void testBigDecimal1() throws Exception {
-        BigDecimal bigDecimal = new BigDecimal("1E+27");
-        
         Statement stmt = con.createStatement();
-        stmt.execute("create table #testBigDecimal1 (data decimal(28,0))");
-        stmt.close();
-        
-        PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal1 (data) values (?)");
-        pstmt.setBigDecimal(1, bigDecimal);
+        ResultSet rs = stmt.executeQuery("SELECT @@MAX_PRECISION");
+        assertTrue(rs.next());
+        int maxPrecision = rs.getInt(1);
+        rs.close();
+        BigDecimal maxval = new BigDecimal("1E+" + maxPrecision);
+        maxval = maxval.subtract(new BigDecimal(1));
+        // maxval now = 99999999999999999999999999999999999999
+        if (maxPrecision > 28) {
+            stmt.execute("create table #testBigDecimal1 (id int primary key, data01 decimal(38,0), data02 decimal(38,12), data03 money)");
+        } else {
+            stmt.execute("create table #testBigDecimal1 (id int primary key, data01 decimal(28,0), data02 decimal(28,12), data03 money)");
+        }
+        PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal1 (id, data01, data02, data03) values (?,?,?,?)");
+        pstmt.setInt(1, 1);
+        try {
+            pstmt.setBigDecimal(2, maxval.add(new BigDecimal(1)));
+            assertTrue(false); // Should fail
+        } catch (SQLException e) {
+            // System.out.println(e.getMessage());
+            // OK Genuinely can't send this one!
+        }
+        pstmt.setBigDecimal(2, maxval);
+        pstmt.setBigDecimal(3, new BigDecimal((double)(1.0 / 3.0))); // Scale > 38
+        pstmt.setBigDecimal(4, new BigDecimal("12345.56789"));
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-        
-        pstmt = con.prepareStatement("select data from #testBigDecimal1");
-        ResultSet rs = pstmt.executeQuery();
-        
-        assertTrue(rs.next());        
-        assertTrue(bigDecimal.equals(rs.getBigDecimal(1)));
-        assertTrue(!rs.next());
-        
-        pstmt.close();
+        rs = stmt.executeQuery("SELECT * FROM #testBigDecimal1");
+        assertTrue(rs.next());
+        assertEquals(maxval, rs.getBigDecimal(2));
+        assertEquals(new BigDecimal("0.333333333333"), rs.getBigDecimal(3)); // Rounded to scale 10
+        assertEquals(new BigDecimal("12345.5679"), rs.getBigDecimal(4)); // Money has scale of 4
         rs.close();
+        maxval = maxval.negate();
+        Statement stmt2 = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        rs = stmt2.executeQuery("SELECT * FROM #testBigDecimal1");
+        SQLWarning warn = stmt.getWarnings();
+        while (warn != null) {
+            System.out.println(warn.getMessage());
+            warn = warn.getNextWarning();
+        }
+        assertTrue(rs.next());
+        rs.updateBigDecimal("data01", maxval);
+        rs.updateNull("data02");
+        rs.updateObject("data03", new BigDecimal("-12345.56789"), 2); // Round to scale 2
+        rs.updateRow();
+        rs.close();
+        stmt2.close();
+        rs = stmt.executeQuery("SELECT * FROM #testBigDecimal1");
+        assertTrue(rs.next());
+        assertEquals(maxval, rs.getBigDecimal(2));
+        assertEquals(null, rs.getBigDecimal(3));
+        assertEquals(new BigDecimal("-12345.5700"), rs.getBigDecimal(4));
+        rs.close();
+        stmt.close();
     }
 
     /**
@@ -893,27 +928,27 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testFloat1() throws Exception {
         float value = 2.2f;
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #testFloat1 (data decimal(28,10))");
         stmt.close();
-        
+
         PreparedStatement pstmt = con.prepareStatement("insert into #testFloat1 (data) values (?)");
         pstmt.setFloat(1, value);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-        
+
         pstmt = con.prepareStatement("select data from #testFloat1");
         ResultSet rs = pstmt.executeQuery();
-        
+
         assertTrue(rs.next());
         assertTrue(value == rs.getFloat(1));
         assertTrue(!rs.next());
-        
+
         pstmt.close();
         rs.close();
     }
-    
+
     /**
      * Test for bug [983561] getDatetimeValue truncates fractional milliseconds
      */
@@ -924,19 +959,19 @@ public class SAfeTest extends DatabaseTestCase {
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr1 (data datetime)");
         stmt.close();
-        
+
         PreparedStatement pstmt = con.prepareStatement("insert into #dtr1 (data) values (?)");
         pstmt.setTimestamp(1, value);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-        
+
         pstmt = con.prepareStatement("select data from #dtr1");
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
         assertTrue(value.equals(rs.getTimestamp(1)));
         assertTrue(!rs.next());
-        
+
         pstmt.close();
         rs.close();
     }

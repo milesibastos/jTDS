@@ -18,6 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.MessageFormat;
 import java.util.ResourceBundle;
 import java.sql.Blob;
@@ -45,7 +46,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.4 2004-07-07 17:59:56 bheineman Exp $
+ * @version $Id: Support.java,v 1.5 2004-07-19 22:17:03 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -65,6 +66,8 @@ public class Support {
     private static final BigDecimal BIG_DECIMAL_ONE = new BigDecimal(1.0);
     private static final java.sql.Date DATE_ZERO = new java.sql.Date(0);
     private static final java.sql.Time TIME_ZERO = new java.sql.Time(0);
+    private static BigInteger maxValue28 = new BigInteger("9999999999999999999999999999");
+    private static BigInteger maxValue38 = new BigInteger("99999999999999999999999999999999999999");
 
     /**
      * Convert java clases to java.sql.Type constant.
@@ -168,6 +171,50 @@ public class Support {
         }
 
         return "";
+    }
+
+    /**
+     * Normalize a BigDecimal value so that it fits within the
+     * available precision.
+     *
+     * @param value The decimal value to normalize.
+     * @param maxPrecision The decimal precision supported by the server
+     *        (assumed to be a value of either 28 or 38).
+     * @return The possibly normalized decimal value as a <code>BigDecimal</code>.
+     * @throws SQLException If the number is too big.
+     */
+    static BigDecimal normalizeBigDecimal(BigDecimal value, int maxPrecision)
+    throws SQLException {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.scale() > maxPrecision) {
+            // This is an optimization to quickly adjust the scale of a
+            // very precise BD value. For example
+            // BigDecimal((double)1.0/3.0) yields a BD 54 digits long!
+            value = value.setScale(maxPrecision, BigDecimal.ROUND_HALF_UP);
+        }
+
+        BigInteger max = (maxPrecision == 28) ? maxValue28 : maxValue38;
+
+        while (value.abs().unscaledValue().compareTo(max) > 0) {
+            // OK we need to reduce the scale if possible to preserve
+            // the integer part of the number and still fit within the
+            // available precision.
+            int scale = value.scale() - 1;
+
+            if (scale < 0) {
+                // Can't do it number just too big
+                throw new SQLException(
+                                      getMessage("error.normalize.numtoobig",
+                                                 String.valueOf(maxPrecision)), "22000");
+            }
+
+            value = value.setScale(scale, BigDecimal.ROUND_HALF_UP);
+        }
+
+        return value;
     }
 
     /**
@@ -306,14 +353,14 @@ public class Support {
                                     if (tmp.charAt(i) == '.') {
                                         return tmp.substring(0, i);
                                     }
-                                    
+
                                     return tmp.substring(0, i + 1);
                                 }
                             }
 
                             return tmp;
                         }
-                        
+
                         return x.toString();
                     } else if (x instanceof Number) {
                         return x.toString();
@@ -452,7 +499,7 @@ public class Support {
                         return new BlobImpl((byte[]) x);
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
-                        
+
                         x = clob.getSubString(0, (int) clob.length());
                         // FIXME - Use reader to populate Blob
                     }
@@ -460,7 +507,7 @@ public class Support {
                     if (x instanceof String) {
                         BlobImpl blob = new BlobImpl();
                         String data = (String) x;
-                        
+
                         if (charSet == null) {
                             charSet = "ISO-8859-1";
                         }
@@ -470,10 +517,10 @@ public class Support {
                         } catch (UnsupportedEncodingException e) {
                             blob.setBytes(1, data.getBytes());
                         }
-                        
+
                         return blob;
                     }
-                    
+
                     break;
 
                 case java.sql.Types.CLOB:
@@ -485,15 +532,15 @@ public class Support {
                         return new ClobImpl((String) x);
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
-                        
-                        x = blob.getBytes(0, (int) blob.length()); 
+
+                        x = blob.getBytes(0, (int) blob.length());
                         // FIXME - Use input stream to populate Clob
                     }
-                    
+
                     if (x instanceof byte[]) {
                         ClobImpl clob = new ClobImpl();
                         byte[] data = (byte[]) x;
-                        
+
                         if (charSet == null) {
                             charSet = "ISO-8859-1";
                         }
@@ -503,7 +550,7 @@ public class Support {
                         } catch (UnsupportedEncodingException e) {
                             clob.setString(1, new String(data));
                         }
-                        
+
                         return clob;
                     }
 

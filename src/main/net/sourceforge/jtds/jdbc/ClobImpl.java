@@ -37,7 +37,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.13 2004-07-08 22:23:22 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.14 2004-07-19 22:17:02 bheineman Exp $
  */
 public class ClobImpl implements Clob {
 	private static final int MAXIMUM_SIZE = 32768;
@@ -104,16 +104,16 @@ public class ClobImpl implements Clob {
 	        	_clob = new String((byte[]) tp.value);
 	        }
         } else {
-            if (tp.len < MAXIMUM_SIZE) {
-            	if (ntext) {
-            		_clob = in.readString(tp.len / 2);
-            	} else {
-            		_clob = in.readAsciiString(tp.len);
-            	}
-            } else {
-            	_clob = EMPTY_CLOB;
+            try {
+                if (tp.len < MAXIMUM_SIZE) {
+                	if (ntext) {
+                		_clob = in.readString(tp.len / 2);
+                	} else {
+                		_clob = in.readAsciiString(tp.len);
+                	}
+                } else {
+                	_clob = EMPTY_CLOB;
             	
-            	try {
 	            	Writer writer = setCharacterStream(1);
 	            	long length = tp.len;
 
@@ -132,9 +132,17 @@ public class ClobImpl implements Clob {
     	        	}
     	        	
     	        	writer.close();
-            	} catch (SQLException e) {
-            		// Should never happen...
             	}
+                
+                if (in.getTdsVersion() < TdsCore.TDS70
+                        && length() == 1
+                        && getSubString(1, 1).equals(" ")) {
+                        // In TDS 4/5 zero length strings are stored as a single space
+                        // to distinguish them from nulls.
+                        truncate(0);
+                }                
+            } catch (SQLException e) {
+                // Should never happen...
             }
         }
         
@@ -143,6 +151,7 @@ public class ClobImpl implements Clob {
             // Then only part of a char is available.
             in.read(); // Discard!
         }
+        
 /*
         if (statement != null && statement.getMaxFieldSize() == 1) {
             // Try to build a CLOB built over a Reader stream.
@@ -566,17 +575,24 @@ public class ClobImpl implements Clob {
      * @param len the length to truncate the value to
      */
     public synchronized void truncate(long len) throws SQLException {
+        long currentLength = length();
+        
         if (len < 0) {
             throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
-        } else if (len > length()) {
+        } else if (len > currentLength) {
             throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
-        if (len == length()) {
+        if (len == currentLength) {
             return;
         } else if (len <= MAXIMUM_SIZE) {
         	_clob = getSubString(1, (int) len);
-        	_clobFile = null;
+            
+            if (_clobFile != null) {
+                _clobFile.delete();
+                _clobFile = null;
+            }
+            
         	_jtdsReader = null;
         } else {
 	        try {

@@ -39,6 +39,7 @@ import java.util.TimeZone;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.text.NumberFormat;
 
 /**
  * jTDS implementation of the java.sql.PreparedStatement interface.
@@ -56,7 +57,7 @@ import java.lang.reflect.Constructor;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.4 2004-07-07 18:57:03 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.5 2004-07-19 22:17:03 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -73,10 +74,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     protected ColInfo[] colMetaData = null;
     /** The cached parameter meta data. */
     protected ParamInfo[] paramMetaData = null;
+    /** Used to format numeric values when scale is specified. */
+    private static NumberFormat f = NumberFormat.getInstance();
 
     /**
      * Construct a new preparedStatement object.
-     * 
+     *
      * @param connection The parent connection.
      * @param sql   The SQL statement to prepare.
      * @param resultSetType The result set type eg SCROLLABLE etc.
@@ -175,7 +178,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     /**
      * Check that this statement is still open.
-     * 
+     *
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
@@ -187,7 +190,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     /**
      * Report that user tried to call a method not supported on this type of statement.
-     * 
+     *
      * @param method The method name to report in the error message.
      * @throws SQLException
      */
@@ -212,7 +215,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 parameters = saveParameters;
             }
         }
-        
+
         super.executeBatchOther(value);
 
         return Integer.MIN_VALUE;
@@ -220,7 +223,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     /**
      * Check the supplied index and return the selected parameter.
-     * 
+     *
      * @param parameterIndex the parameter index 1 to n.
      * @return the parameter as a <code>ParamInfo</code> object.
      * @throws SQLException if the statement is closed;
@@ -243,6 +246,48 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         return pi;
     }
 
+    /**
+     * Generic setObject method.
+     *
+     * @param parameterIndex Parameter index 1 to n.
+     * @param x The value to set.
+     * @param targetSqlType The java.sql.Types constant describing the data.
+     * @param scale The decimal scale -1 if not set.
+     */
+    public void setObjectBase(int parameterIndex, Object x, int targetSqlType, int scale)
+         throws SQLException {
+
+         if (targetSqlType == java.sql.Types.CLOB) {
+             targetSqlType = java.sql.Types.LONGVARCHAR;
+         } else if (targetSqlType == java.sql.Types.BLOB) {
+             targetSqlType = java.sql.Types.LONGVARBINARY;
+         }
+
+         if (x != null) {
+             x = Support.convert(x, targetSqlType, connection.getCharSet());
+
+             if (scale >= 0) {
+                 if (x instanceof BigDecimal) {
+                     x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
+                 } else if (x instanceof Number) {
+                     f.setMaximumFractionDigits(scale);
+                     x = Support.convert(f.format(x), targetSqlType, connection.getCharSet());
+                 }
+             }
+         }
+
+         setParameter(parameterIndex, x, targetSqlType, scale, 0);
+     }
+
+    /**
+     * Update the ParamInfo object for the specified parameter.
+     *
+     * @param parameterIndex Parameter index 1 to n.
+     * @param x The value to set.
+     * @param targetSqlType The java.sql.Types constant describing the data.
+     * @param scale The decimal scale -1 if not set.
+     * @param length The length of the data item.
+     */
     protected void setParameter(int parameterIndex, Object x, int targetSqlType, int scale, int length)
         throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
@@ -252,9 +297,17 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                                 Integer.toString(targetSqlType)), "HY092");
         }
 
+        pi.scale = (scale < 0) ? 0 : scale;
         // Update parameter descriptor
-        pi.value = x;
-        pi.scale = scale;
+        if (targetSqlType == java.sql.Types.DECIMAL
+            || targetSqlType == java.sql.Types.NUMERIC) {
+            pi.precision = connection.getMaxPrecision();
+
+            if (x instanceof BigDecimal) {
+                x = Support.normalizeBigDecimal((BigDecimal) x, pi.precision);
+                pi.scale = ((BigDecimal) x).scale();
+            }
+        }
 
         if (x instanceof String) {
             pi.length = ((String) x).length();
@@ -264,15 +317,15 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             pi.length   = length;
         }
 
-        pi.jdbcType = targetSqlType;
         pi.value = x;
+        pi.jdbcType = targetSqlType;
         pi.isSet = true;
         pi.isUnicode = connection.isUseUnicode();
     }
 
     /**
      * Update the cached column meta data information.
-     * 
+     *
      * @param value The Column meta data array.
      */
     void setColMetaData(ColInfo[] value) {
@@ -281,7 +334,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     /**
      * Update the cached parameter meta data information.
-     * 
+     *
      * @param value The Column meta data array.
      */
     void setParamMetaData(ParamInfo[] value) {
@@ -377,7 +430,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         } else if (sqlType == java.sql.Types.BLOB) {
             sqlType = java.sql.Types.LONGVARBINARY;
         }
-        
+
         setParameter(parameterIndex, null, sqlType, -1, 0);
     }
 
@@ -455,27 +508,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setObject(int parameterIndex, Object x) throws SQLException {
-        setObject(parameterIndex, x, Support.getJdbcType(x));
+        setObjectBase(parameterIndex, x, Support.getJdbcType(x), -1);
     }
 
     public void setObject(int parameterIndex, Object x, int targetSqlType)
         throws SQLException {
-        if (targetSqlType == java.sql.Types.CLOB) {
-            targetSqlType = java.sql.Types.LONGVARCHAR;
-        } else if (targetSqlType == java.sql.Types.BLOB) {
-            targetSqlType = java.sql.Types.LONGVARBINARY;
-        }
-
-        if (x != null) {
-            x = Support.convert(x, targetSqlType, connection.getCharSet());
-        }
-
-        if (targetSqlType == java.sql.Types.DECIMAL
-            || targetSqlType == java.sql.Types.NUMERIC) {
-            setParameter(parameterIndex, x, targetSqlType, -1, 0);
-        } else {
-            setParameter(parameterIndex, x, targetSqlType, 0, 0);
-        }
+        setObjectBase(parameterIndex, x, targetSqlType, -1);
     }
 
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
@@ -483,32 +521,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         if (scale < 0 || scale > 28) {
             throw new SQLException(Support.getMessage("error.generic.badscale"), "HY092");
         }
-
-        if (targetSqlType == java.sql.Types.CLOB) {
-            targetSqlType = java.sql.Types.LONGVARCHAR;
-        } else if (targetSqlType == java.sql.Types.BLOB) {
-            targetSqlType = java.sql.Types.LONGVARBINARY;
-        }
-
-        if (x != null) {
-            x = Support.convert(x, targetSqlType, connection.getCharSet());
-
-            if ((targetSqlType == java.sql.Types.DECIMAL
-                 || targetSqlType == java.sql.Types.NUMERIC)
-                && x instanceof BigDecimal) {
-                x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
-            }
-        }
-
-        int len = 0;
-
-        if (x instanceof String) {
-            len = ((String) x).length();
-        } else if (x instanceof byte[]) {
-            len = ((byte[]) x).length;
-        }
-
-        setParameter(parameterIndex, x, targetSqlType, scale, len);
+        setObjectBase(parameterIndex, x, targetSqlType, scale);
     }
 
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {

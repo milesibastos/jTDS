@@ -146,13 +146,6 @@ public abstract class TestBase extends TestCase {
         stmt.close();
     }
 
-    public void assertEquals(double value1, double value2) {
-        if (value1 != value2) {
-            throw new AssertionFailedError("expected:<" + value1
-                                           + "> but was:<" + value2 + ">");
-        }
-    }
-
     public void compareInputStreams(InputStream is1, InputStream is2) throws IOException {
         try {
             if (is1 == null && is2 == null) {
@@ -162,30 +155,30 @@ public abstract class TestBase extends TestCase {
             } else if (is1 != null && is2 == null) {
                 assertTrue("is1 != null && is2 == null", false);
             }
-            
+
             long count = 0;
-            int value1; 
-            int value2; 
-            
+            int value1;
+            int value2;
+
             while ((value1 = is1.read()) != -1) {
                 value2 = is2.read();
-                
+
                 if (value2 == -1) {
                     assertTrue("stream 2 EOF at: " + count, false);
                 }
-                
+
                 assertTrue("stream 1 value [" + value1
                         + "] differs from stream 2 value ["
                         + value2 + "] at: " + count,
                         (value1 == value2));
-                
+
                 count++;
             }
         } finally {
             if (is1 != null) {
                 is1.close();
             }
-            
+
             if (is2 != null) {
                 is2.close();
             }
@@ -201,30 +194,30 @@ public abstract class TestBase extends TestCase {
             } else if (r1 != null && r2 == null) {
                 assertTrue("r1 != null && r2 == null", false);
             }
-            
+
             long count = 0;
-            int value1; 
-            int value2; 
-            
+            int value1;
+            int value2;
+
             while ((value1 = r1.read()) != -1) {
                 value2 = r2.read();
-                
+
                 if (value2 == -1) {
                     assertTrue("reader 2 EOF at: " + count, false);
                 }
-                
+
                 assertTrue("reader 1 value [" + value1
                         + "] differs from reader 2 value ["
                         + value2 + "] at: " + count,
                         (value1 == value2));
-                
+
                 count++;
             }
         } finally {
             if (r1 != null) {
                 r1.close();
             }
-            
+
             if (r2 != null) {
                 r2.close();
             }

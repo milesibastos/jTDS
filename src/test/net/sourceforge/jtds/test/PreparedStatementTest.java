@@ -194,7 +194,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso1");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
         assertTrue(!rs.next());
         rs.close();
     }
@@ -220,7 +220,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso2");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
         assertTrue(!rs.next());
         rs.close();
     }
@@ -246,7 +246,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso3");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
         assertTrue(!rs.next());
         rs.close();
     }
@@ -272,7 +272,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso4");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
         assertTrue(!rs.next());
         rs.close();
     }
@@ -298,7 +298,7 @@ public class PreparedStatementTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT data FROM ##psso5");
 
         assertTrue(rs.next());
-        assertEquals(data.doubleValue(), rs.getDouble(1));
+        assertEquals(data.doubleValue(), rs.getDouble(1), 0);
         assertTrue(!rs.next());
         rs.close();
     }
@@ -328,16 +328,16 @@ public class PreparedStatementTest extends TestBase {
         assertTrue(rs.next());
         assertEquals(rs.getInt(1), count);
         assertTrue(!rs.next());
-        
+
         stmt.close();
         rs.close();
-        
+
         pstmt = con.prepareStatement("DELETE FROM ##updateCount1");
         assertEquals(pstmt.executeUpdate(), count);
         pstmt.close();
-        
+
     }
-    
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

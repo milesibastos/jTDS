@@ -64,15 +64,28 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.20 2004-03-27 17:24:58 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.21 2004-04-14 22:26:11 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.20 2004-03-27 17:24:58 bheineman Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.21 2004-04-14 22:26:11 alin_sinpalean Exp $";
+
+    private final static int ACCESS_UNKNOWN = 0;
+    private final static int ACCESS_ORDINAL = 1;
+    private final static int ACCESS_NAMED   = 2;
 
     private String procedureName = null;
     private boolean lastWasNull = false;
     private int lastOutParam = -1;
+
+    /**
+     * Set to <code>ACCESS_NAMED</code> if this
+     * <code>CallableStatement</code> is using named parameters,
+     * <code>ACCESS_ORDINAL</code> if using ordinal
+     * parameters and <code>ACCESS_UNKNOWN</code> if no parameter has
+     * been set yet (and any of the two access types is still possible).
+     */
+    private int accessType = ACCESS_UNKNOWN;
 
     /**
      * Return value of the procedure call.
@@ -200,7 +213,43 @@ implements java.sql.CallableStatement {
         }
     }
 
+    /**
+     * Check that the <code>CallableStatement</code> is using the expected
+     * access type. There are two possible access types, ordinal (as in
+     * <code>setString(1, "value")</code>) and named (as in
+     * <code>setString("@param", "value")</code>), and access to parameters
+     * must be consistent in using only one of them. Mixing access types will
+     * generate an <code>SQLException</code> and that is what this method is
+     * enforcing.
+     *
+     * @param expected      one of <code>ACCESS_ORDINAL</code> and
+     *                      <code>ACCESS_NAMED</code>; if the current access
+     *                      type is <code>ACCESS_UNKNOWN</code>, then it is set
+     *                      to this value; otherwise if doesn't match this value
+     *                      an <code>SQLException</code> is thrown
+     * @throws SQLException if the current access type is not
+     *                      <code>ACCESS_UNKNOWN</code> and is different from
+     *                      <code>expected</code>
+     */
+    private void checkAccessType(int expected) throws SQLException {
+        if (accessType != expected) {
+            if (accessType == ACCESS_UNKNOWN) {
+                accessType = expected;
+            } else {
+                throw new SQLException(
+                        "Named and ordinal parameter access cannot be mixed.",
+                        "HY000");
+            }
+        }
+    }
+
     private Object getParam(int index) throws SQLException {
+        // TODO We should check for access type, too. We can't do it in the
+        //      current implementation but we should be able to if we move the
+        //      whole conversion for getters and setters in a single place, say
+        //      ParameterUtils
+//        checkAccessType(ACCESS_ORDINAL);
+
         // If the originally provided SQL string started with ?= then the
         // actual positions are shifted to the left and 1 is the return value
         if (haveRetVal) {
@@ -208,7 +257,7 @@ implements java.sql.CallableStatement {
                 return retVal;
             }
 
-            index--;
+            --index;
         }
 
         if (index < 1) {
@@ -223,7 +272,7 @@ implements java.sql.CallableStatement {
         }
 
         // JDBC indexes start at 1, java array indexes start at 0 :-(
-        index--;
+        --index;
         lastWasNull = (parameterList[index] == null);
 
         return parameterList[index].value;
@@ -235,11 +284,16 @@ implements java.sql.CallableStatement {
      * are actually shifted one position).
      */
     protected void setParam(int index, Object value, int type, int scale)
-    throws SQLException {
+            throws SQLException {
+        // TODO We should check for access type, too. We can't do it in the
+        //      current implementation but we should be able to if we move the
+        //      whole conversion for getters and setters in a single place, say
+        //      ParameterUtils
+//        checkAccessType(ACCESS_ORDINAL);
         super.setParam(haveRetVal ? index - 1 : index, value, type, scale);
     }
 
-    protected void addOutputParam(Object value) throws SQLException {
+    private void addOutputValue(Object value) throws SQLException {
         for (lastOutParam++; lastOutParam<parameterList.length; lastOutParam++) {
             if (parameterList[lastOutParam].isOutput) {
                 parameterList[lastOutParam].value = value;
@@ -247,7 +301,7 @@ implements java.sql.CallableStatement {
             }
         }
 
-        throw new SQLException("More output params than expected.");
+        throw new SQLException("More output params than expected.", "HY000");
     }
 
     // called by TdsStatement.moreResults
@@ -261,7 +315,7 @@ implements java.sql.CallableStatement {
 
     protected boolean handleParamResult(PacketOutputParamResult packet) throws SQLException {
         if (!super.handleParamResult(packet)) {
-            addOutputParam(packet.value);
+            addOutputValue(packet.value);
         }
 
         return true;
@@ -411,6 +465,7 @@ implements java.sql.CallableStatement {
         return null;
     }
 
+    // TODO Implement these methods
     public java.sql.Timestamp getTimestamp(int parameterIndex) throws SQLException {
         NotImplemented();
         return null;
@@ -421,7 +476,13 @@ implements java.sql.CallableStatement {
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType, int scale)
-    throws SQLException {
+            throws SQLException {
+        checkAccessType(ACCESS_ORDINAL);
+        internalRegisterOutParameter(parameterIndex, sqlType, scale);
+    }
+
+    public void internalRegisterOutParameter(int parameterIndex, int sqlType, int scale)
+            throws SQLException {
         // SAfe If there is a return value, decrement the parameter index or
         //      simply ignore the call if it's for the return value
         if (haveRetVal) {
@@ -518,236 +579,300 @@ implements java.sql.CallableStatement {
         return null;
     }
 
-    public void registerOutParameter(String str, int param, String str2) throws SQLException {
+    protected int getParamNo(String parameterName, boolean checkIsOut, boolean assign)
+            throws SQLException {
+        checkAccessType(ACCESS_NAMED);
+
+        // Check if it's the return status (its name is @RETURN_STATUS because
+        // that's how getColumns returns it and that's what spec says should be
+        // used as parameter name).
+        if (parameterName.equalsIgnoreCase("@return_status")) {
+//            if (assign) {
+//                throw new SQLException("Parameter type is OUT: " + parameterName,
+//                        "HY000");
+//            }
+
+            if (haveRetVal) {
+                return 1;
+            } else {
+                // We could maybe provide the return status even if it was not
+                // registered as output parameter
+                throw new SQLException("No such parameter: " + parameterName,
+                        "HY000");
+            }
+        }
+
+        // Not the return status, look for it through the list and if not found
+        // and assign is true, then assign it
+        // TODO Improve the search by using a HashMap instead?
+    	for (int i = 0; i < parameterList.length; ++i) {
+            String formalName = parameterList[i].formalName;
+
+            // If the parameter name not found, we should add it
+            if (formalName == null) {
+                // If not assigning parameter names, break and throw the
+                // exception
+                if (!assign) {
+                    break;
+                }
+                // Ok to assign the parameter name and return the position
+                parameterList[i].formalName = parameterName;
+                return i + (haveRetVal ? 2 : 1);
+            }
+
+    		if (formalName.equalsIgnoreCase(parameterName)) {
+                // TODO Should we keep this check? It works with ordinals.
+    			if (checkIsOut) {
+    				if (!parameterList[i].isOutput) {
+    					throw new SQLException(
+                                "Parameter type is IN: " + parameterName, "HY000");
+    				}
+    			}
+                return i + (haveRetVal ? 2 : 1);
+    		}
+    	}
+
+		throw new SQLException("No such parameter: " + parameterName, "HY000");
+	}
+
+    public void registerOutParameter(String parameterName,
+                                     int sqlType,
+                                     String typeName)
+            throws SQLException {
         NotImplemented();
     }
 
-    public void registerOutParameter(String str, int param, int param2) throws SQLException {
-        NotImplemented();
+    public void registerOutParameter(String parameterName,
+                                     int sqlType,
+                                     int scale)
+            throws SQLException {
+        internalRegisterOutParameter(
+                getParamNo(parameterName, false, true), sqlType, scale);
     }
 
-    public void registerOutParameter(String str, int param) throws SQLException {
-        NotImplemented();
+    public void registerOutParameter(String parameterName, int sqlType)
+            throws SQLException {
+    	registerOutParameter(parameterName, sqlType, -1);
     }
 
-    public java.sql.Array getArray(String str) throws SQLException {
+    public java.sql.Array getArray(String parameterName) throws SQLException {
+        return getArray(getParamNo(parameterName, true, false));
+    }
+
+    public java.math.BigDecimal getBigDecimal(String parameterName)
+            throws SQLException {
+        return getBigDecimal(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Blob getBlob(String parameterName) throws SQLException {
+        return getBlob(getParamNo(parameterName, true, false));
+    }
+
+    public boolean getBoolean(String parameterName) throws SQLException {
+        return getBoolean(getParamNo(parameterName, true, false));
+    }
+
+    public byte getByte(String parameterName) throws SQLException {
+        return getByte(getParamNo(parameterName, true, false));
+    }
+
+    public byte[] getBytes(String parameterName) throws SQLException {
+        return getBytes(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Clob getClob(String parameterName) throws SQLException {
+        return getClob(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Date getDate(String parameterName) throws SQLException {
+        return getDate(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Date getDate(String parameterName, java.util.Calendar cal)
+            throws SQLException {
+        return getDate(getParamNo(parameterName, true, false), cal);
+    }
+
+    public double getDouble(String parameterName) throws SQLException {
+        return getDouble(getParamNo(parameterName, true, false));
+    }
+
+    public float getFloat(String parameterName) throws SQLException {
+        return getFloat(getParamNo(parameterName, true, false));
+    }
+
+    public int getInt(String parameterName) throws SQLException {
+    	return getInt(getParamNo(parameterName, true, false));
+    }
+
+    public long getLong(String parameterName) throws SQLException {
+        return getLong(getParamNo(parameterName, true, false));
+    }
+
+    public Object getObject(String parameterName) throws SQLException {
+        return getObject(getParamNo(parameterName, true, false));
+    }
+
+    public Object getObject(String parameterName, java.util.Map map)
+            throws SQLException {
+        return getObject(getParamNo(parameterName, true, false), map);
+    }
+
+    public java.sql.Ref getRef(String parameterName) throws SQLException {
+        return getRef(getParamNo(parameterName, true, false));
+    }
+
+    public short getShort(String parameterName) throws SQLException {
+        return getShort(getParamNo(parameterName, true, false));
+    }
+
+    public String getString(String parameterName) throws SQLException {
+    	return getString(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Time getTime(String parameterName) throws SQLException {
+        return getTime(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Time getTime(String parameterName, java.util.Calendar cal)
+            throws SQLException {
+        return getTime(getParamNo(parameterName, true, false), cal);
+    }
+
+    public java.sql.Timestamp getTimestamp(String parameterName)
+            throws SQLException {
+        return getTimestamp(getParamNo(parameterName, true, false));
+    }
+
+    public java.sql.Timestamp getTimestamp(String parameterName, java.util.Calendar cal)
+            throws SQLException {
+        return getTimestamp(getParamNo(parameterName, true, false), cal);
+    }
+
+    public java.net.URL getURL(int parameterIndex) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.math.BigDecimal getBigDecimal(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public java.net.URL getURL(String parameterName) throws SQLException {
+        return getURL(getParamNo(parameterName, true, false));
     }
 
-    public java.sql.Blob getBlob(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setAsciiStream(String parameterName, java.io.InputStream x, int length)
+            throws SQLException {
+        setAsciiStream(getParamNo(parameterName, false, true), x, length);
     }
 
-    public boolean getBoolean(String str) throws SQLException {
-        NotImplemented();
-        return false;
+    public void setBigDecimal(String parameterName, java.math.BigDecimal x)
+            throws SQLException {
+        setBigDecimal(getParamNo(parameterName, false, true), x);
     }
 
-    public byte getByte(String str) throws SQLException {
-        NotImplemented();
-        return 0;
+    public void setBinaryStream(String parameterName, java.io.InputStream x, int length)
+            throws SQLException {
+        setBinaryStream(getParamNo(parameterName, false, true), x, length);
     }
 
-    public byte[] getBytes(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setBoolean(String parameterName, boolean x)
+            throws SQLException {
+        setBoolean(getParamNo(parameterName, false, true), x);
     }
 
-    public java.sql.Clob getClob(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setByte(String parameterName, byte x)
+            throws SQLException {
+        setByte(getParamNo(parameterName, false, true), x);
     }
 
-    public java.sql.Date getDate(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setBytes(String parameterName, byte[] x)
+            throws SQLException {
+        setBytes(getParamNo(parameterName, false, true), x);
     }
 
-    public java.sql.Date getDate(String str, java.util.Calendar calendar) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setCharacterStream(String parameterName, java.io.Reader x, int length)
+            throws SQLException {
+        setCharacterStream(getParamNo(parameterName, false, true), x, length);
     }
 
-    public double getDouble(String str) throws SQLException {
-        NotImplemented();
-        return 0;
+    public void setDate(String parameterName, java.sql.Date x)
+            throws SQLException {
+        setDate(getParamNo(parameterName, false, true), x);
     }
 
-    public float getFloat(String str) throws SQLException {
-        NotImplemented();
-        return 0;
+    public void setDate(String parameterName, java.sql.Date x, java.util.Calendar cal)
+            throws SQLException {
+        setDate(getParamNo(parameterName, false, true), x, cal);
     }
 
-    public int getInt(String str) throws SQLException {
-        NotImplemented();
-        return 0;
+    public void setDouble(String parameterName, double x) throws SQLException {
+        setDouble(getParamNo(parameterName, false, true), x);
     }
 
-    public long getLong(String str) throws SQLException {
-        NotImplemented();
-        return 0;
+    public void setFloat(String parameterName, float x) throws SQLException {
+        setFloat(getParamNo(parameterName, false, true), x);
     }
 
-    public Object getObject(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setInt(String parameterName, int x) throws SQLException {
+    	setInt(getParamNo(parameterName, false, true), x);
     }
 
-    public Object getObject(String str, java.util.Map map) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setLong(String parameterName, long x) throws SQLException {
+        setLong(getParamNo(parameterName, false, true), x);
     }
 
-    public java.sql.Ref getRef(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setNull(String parameterName, int sqlType) throws SQLException {
+        setNull(getParamNo(parameterName, false, true), sqlType);
     }
 
-    public short getShort(String str) throws SQLException {
-        NotImplemented();
-        return 0;
+    public void setNull(String parameterName, int sqlType, String typeName)
+            throws SQLException {
+        setNull(getParamNo(parameterName, false, true), sqlType, typeName);
     }
 
-    public String getString(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setObject(String parameterName, Object x) throws SQLException {
+        setObject(getParamNo(parameterName, false, true), x);
     }
 
-    public java.sql.Time getTime(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setObject(String parameterName, Object x, int targetSqlType)
+            throws SQLException {
+        setObject(getParamNo(parameterName, false, true), x, targetSqlType);
     }
 
-    public java.sql.Time getTime(String str, java.util.Calendar calendar) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setObject(String parameterName, Object x, int targetSqlType, int scale)
+            throws SQLException {
+        setObject(getParamNo(parameterName, false, true), x, targetSqlType, scale);
     }
 
-    public java.sql.Timestamp getTimestamp(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setShort(String parameterName, short x) throws SQLException {
+        setShort(getParamNo(parameterName, false, true), x);
     }
 
-    public java.sql.Timestamp getTimestamp(String str, java.util.Calendar calendar) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setString(String parameterName, String x) throws SQLException {
+        setString(getParamNo(parameterName, false, true), x);
     }
 
-    public java.net.URL getURL(int param) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setTime(String parameterName, java.sql.Time x)
+            throws SQLException {
+        setTime(getParamNo(parameterName, false, true), x);
     }
 
-    public java.net.URL getURL(String str) throws SQLException {
-        NotImplemented();
-        return null;
+    public void setTime(String parameterName, java.sql.Time x, java.util.Calendar cal)
+            throws SQLException {
+        setTime(getParamNo(parameterName, false, true), x, cal);
     }
 
-    public void setAsciiStream(String str, java.io.InputStream inputStream, int param) throws SQLException {
-        NotImplemented();
+    public void setTimestamp(String parameterName, java.sql.Timestamp x)
+            throws SQLException {
+        setTimestamp(getParamNo(parameterName, false, true), x);
     }
 
-    public void setBigDecimal(String str, java.math.BigDecimal bigDecimal) throws SQLException {
-        NotImplemented();
+    public void setTimestamp(String parameterName, java.sql.Timestamp x, java.util.Calendar cal)
+            throws SQLException {
+        setTimestamp(getParamNo(parameterName, false, true), x, cal);
     }
 
-    public void setBinaryStream(String str, java.io.InputStream inputStream, int param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setBoolean(String str, boolean param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setByte(String str, byte param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setBytes(String str, byte[] values) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setCharacterStream(String str, java.io.Reader reader, int param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setDate(String str, java.sql.Date date) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setDate(String str, java.sql.Date date, java.util.Calendar calendar) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setDouble(String str, double param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setFloat(String str, float param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setInt(String str, int param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setLong(String str, long param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setNull(String str, int param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setNull(String str, int param, String str2) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setObject(String str, Object obj) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setObject(String str, Object obj, int param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setObject(String str, Object obj, int param, int param3) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setShort(String str, short param) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setString(String str, String str1) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setTime(String str, java.sql.Time time) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setTime(String str, java.sql.Time time, java.util.Calendar calendar) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setTimestamp(String str, java.sql.Timestamp timestamp) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setTimestamp(String str, java.sql.Timestamp timestamp, java.util.Calendar calendar) throws SQLException {
-        NotImplemented();
-    }
-
-    public void setURL(String str, java.net.URL url) throws SQLException {
-        NotImplemented();
+    public void setURL(String parameterName, java.net.URL x)
+            throws SQLException {
+        setURL(getParamNo(parameterName, false, true), x);
     }
 
     public String getProcedureName() {

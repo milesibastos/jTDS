@@ -1,12 +1,16 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/14/2004 - Alin Sinpalean
+ o Applied and improved patch #930076 - Passing parameters to stored procedure
+   by name. Thanks Tommy Sandstrom for the original patch.
+
 04/12/2004 - Brian Heineman
  o Corrected bug preventing connections to databases with spaces in the name.
  o Added check to commit() and rollback() to determine if connection is closed
-   to fix bug [931090] ArrayIndexOutOfBoundsException in rollback() 
+   to fix bug [931090] ArrayIndexOutOfBoundsException in rollback()
  o Added test for bug [931090] ArrayIndexOutOfBoundsException in rollback()
- 
+
 04/05/2004 - Brian Heineman
  o Code clean up - removed unused import statements.
 

@@ -40,6 +40,7 @@
         <exclude name="**/GenKeyTest.java"/>
         <exclude name="**/LOBTest.java"/>
         <exclude name="**/SavepointTest.java"/>
+        <exclude name="**/CallableStatementJDBC3Test.java"/>
       </fileset>
     </copy>
   </target>

@@ -2,6 +2,13 @@
 Changes from jTDS 0.4
 =======================
 
+10/29/2002 - Alin Sinpalean
+
+ o Fixed CursorResultSet.next(): position was not incremented/decremented
+   (probably since my last update). Anyway, correct position reporting will not
+   work correctly in all cases until the sp_cursorXXX procedures are used
+   instead of the current CREATE CURSOR/FETCH NEXT/FETCH PREVIOUS statements.
+
 10/26/2002 - Alin Sinpalean
 
  o Fixed bug #629022 (also signaled in a post in the jTDS Help forum):

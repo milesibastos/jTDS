@@ -199,9 +199,27 @@ public class CursorResultSet extends AbstractResultSet
 //            return true;
 //        }
         if( direction == ResultSet.FETCH_REVERSE )
-            return internalFetch("FETCH PRIOR FROM " + cursorName);
+        {
+            pos -= 1;
+            if( internalFetch("FETCH PRIOR FROM " + cursorName) )
+                return true;
+            else
+            {
+                pos = POS_BEFORE_FIRST;
+                return false;
+            }
+        }
         else
-            return internalFetch("FETCH NEXT FROM " + cursorName);
+        {
+            pos += 1;
+            if( internalFetch("FETCH NEXT FROM " + cursorName) )
+                return true;
+            else
+            {
+                pos = POS_AFTER_LAST;
+                return false;
+            }
+        }
     }
 
     private boolean internalFetch( String sql )
@@ -301,11 +319,23 @@ public class CursorResultSet extends AbstractResultSet
     {
         if ( direction == ResultSet.FETCH_REVERSE ) {
             pos += 1;
-            return internalFetch( "FETCH NEXT FROM " + cursorName );
+            if( internalFetch("FETCH NEXT FROM " + cursorName) )
+                return true;
+            else
+            {
+                pos = POS_AFTER_LAST;
+                return false;
+            }
         }
         else {
             pos -= 1;
-            return internalFetch( "FETCH PRIOR FROM " + cursorName );
+            if( internalFetch("FETCH PRIOR FROM " + cursorName) )
+                return true;
+            else
+            {
+                pos = POS_BEFORE_FIRST;
+                return false;
+            }
         }
     }
 

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.3 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.4 2004-07-08 15:27:12 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -1616,8 +1616,8 @@ public class TdsData {
                     seconds = time / 300;
                     cal.set(Calendar.SECOND, seconds);
                     time = time - seconds * 300;
-                    time = time * 1000 / 300;
-                    cal.set(Calendar.MILLISECOND, (int) time);
+                    time = (int) Math.round(time * 1000 / 300f);                    
+                    cal.set(Calendar.MILLISECOND, time);
 //
 //                  getTimeInMillis() is protected in java vm 1.3 :-(
 //                  return new Timestamp(cal.getTimeInMillis());

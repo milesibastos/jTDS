@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.2 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.3 2004-07-08 15:27:12 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -866,7 +866,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setString(5, unique ? "Y" : "N");
         s.setString(6, approximate ? "Q" : "E");
 
-        JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
+        JtdsResultSet rs = (JtdsResultSet) s.executeQuery();
 
         rs.setColName(1, "TABLE_CAT");
         rs.setColLabel(1, "TABLE_CAT");

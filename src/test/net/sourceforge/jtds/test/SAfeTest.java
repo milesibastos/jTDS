@@ -913,4 +913,31 @@ public class SAfeTest extends DatabaseTestCase {
         pstmt.close();
         rs.close();
     }
+    
+    /**
+     * Test for bug [983561] getDatetimeValue truncates fractional milliseconds
+     */
+    public void testDatetimeRounding1() throws Exception {
+    	long dateTime = 1089297738677L;
+    	Timestamp value = new Timestamp(dateTime);
+
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #dtr1 (data datetime)");
+        stmt.close();
+        
+        PreparedStatement pstmt = con.prepareStatement("insert into #dtr1 (data) values (?)");
+        pstmt.setTimestamp(1, value);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+        
+        pstmt = con.prepareStatement("select data from #dtr1");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertTrue(value.equals(rs.getTimestamp(1)));
+        assertTrue(!rs.next());
+        
+        pstmt.close();
+        rs.close();
+    }
 }

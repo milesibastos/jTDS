@@ -332,7 +332,7 @@ public class CallableStatementTest extends TestBase {
             stmt.close();
         }
     }
-
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

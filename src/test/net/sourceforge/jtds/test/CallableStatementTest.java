@@ -224,6 +224,28 @@ public class CallableStatementTest extends TestBase {
         rs.close();
     }
 
+    /**
+     * Test fro bug [938632] String index out of bounds error in 0.8rc1
+     */
+    public void testCallableStatementParsing2() throws Exception {
+        try {
+            Statement stmt = con.createStatement();
+
+            stmt.execute("create procedure load_smtp_in_1gr_ls804192 as SELECT name FROM sysobjects");
+            stmt.close();
+
+            CallableStatement cstmt = con.prepareCall("{?=call load_smtp_in_1gr_ls804192}");
+
+            cstmt.execute();
+            cstmt.close();
+        } finally {
+            Statement stmt = con.createStatement();
+
+            stmt.execute("drop procedure load_smtp_in_1gr_ls804192");
+            stmt.close();
+        }
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

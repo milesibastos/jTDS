@@ -15,16 +15,18 @@ import java.util.Calendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet
 {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $";
+
+    public final static int DEFAULT_FETCH_SIZE = 100;
 
     /**
      * Number of rows to fetch once. An implementation may ignore this.
      */
-    protected int fetchSize = 100;
+    protected int fetchSize = DEFAULT_FETCH_SIZE;
 
     /**
      * The <code>ResultSet</code>'s warning chain.

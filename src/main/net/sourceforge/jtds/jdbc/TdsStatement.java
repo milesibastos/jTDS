@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.4 2002-10-22 11:22:51 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.4 2002-10-22 11:22:51 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -67,6 +67,8 @@ public class TdsStatement implements java.sql.Statement
     private int maxFieldSize = (1<<31)-1;
     private int maxRows      = 0;
     private int timeout      = 0; // The timeout for a query
+    private int fetchSize    = AbstractResultSet.DEFAULT_FETCH_SIZE;
+    private int fetchDir     = ResultSet.FETCH_FORWARD;
 
     private int type = ResultSet.TYPE_FORWARD_ONLY;
     private int concurrency = ResultSet.CONCUR_READ_ONLY;
@@ -145,7 +147,7 @@ public class TdsStatement implements java.sql.Statement
                 throw new SQLException("No ResultSet was produced.");
         }
         else
-            return new CursorResultSet(this, sql);
+            return new CursorResultSet(this, sql, fetchDir);
     }
 
     /**
@@ -533,13 +535,12 @@ public class TdsStatement implements java.sql.Statement
      * doesn't support positioned update/delete, this method is a
      * no-op.
      *
-     *
      * @param name the new cursor name
      * @exception SQLException if a database access error occurs
      */
     public void setCursorName(String name) throws SQLException
     {
-        NotImplemented();
+        // SAfe As the javadoc above says, this should be a no-op.
     }
 
     public synchronized boolean execute(String sql) throws SQLException
@@ -644,7 +645,7 @@ public class TdsStatement implements java.sql.Statement
             {
                 if( tds.isResultSet() )
                 {
-                    results = new TdsResultSet(tds, this, wChain);
+                    results = new TdsResultSet(tds, this, wChain, fetchSize);
                     break;
                 }
                 // SAfe: Only TDS_DONE should return row counts for Statements
@@ -742,7 +743,9 @@ public class TdsStatement implements java.sql.Statement
      */
     public void setFetchDirection(int direction) throws SQLException
     {
-        NotImplemented();
+        if( direction!=ResultSet.FETCH_FORWARD && direction!=ResultSet.FETCH_REVERSE && direction!=ResultSet.FETCH_UNKNOWN )
+            throw new SQLException("Invalid fetch direction.");
+        fetchDir = direction;
     }
 
     /**
@@ -761,8 +764,7 @@ public class TdsStatement implements java.sql.Statement
      */
     public int getFetchDirection() throws SQLException
     {
-        NotImplemented();
-        return 0;
+        return fetchDir;
     }
 
     /**
@@ -780,7 +782,9 @@ public class TdsStatement implements java.sql.Statement
      */
     public void setFetchSize(int rows) throws SQLException
     {
-        NotImplemented();
+        if( rows < 0 )
+            throw new SQLException("Invalid fetch size.");
+        fetchSize = rows;
     }
 
     /**
@@ -798,8 +802,7 @@ public class TdsStatement implements java.sql.Statement
      */
     public int getFetchSize() throws SQLException
     {
-        NotImplemented();
-        return 0;
+        return fetchSize;
     }
 
     /**

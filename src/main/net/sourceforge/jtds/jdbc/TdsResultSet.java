@@ -34,12 +34,6 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
-import java.math.BigDecimal;
-import java.util.Vector;
-// import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.Calendar;
-import java.io.*;
 
 /**
  *  <P>
@@ -85,13 +79,12 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
  *@see        Tds#getRow
  */
-
 public class TdsResultSet extends AbstractResultSet implements ResultSet
 {
     Tds tds = null;
@@ -110,18 +103,20 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $";
 
-    public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain)
-        throws SQLException
+    public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
         tds = tds_;
         stmt = stmt_;
         startResultSet(tds, stmtChain);
 
+        if( fetchSize > 0 )
+            this.fetchSize = fetchSize;
+
         hitEndOfData = false;
         warningChain = new SQLWarningChain();
-        rowCache = new PacketRowResult[fetchSize];
+        rowCache = new PacketRowResult[this.fetchSize];
     }
 
     private void startResultSet(Tds tds, SQLWarningChain stmtWarningChain) throws SQLException
@@ -204,11 +199,9 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     public void setFetchDirection(int direction) throws SQLException
     {
         checkClosed();
-        if (getType() == TYPE_FORWARD_ONLY && direction != FETCH_FORWARD) {
+        if( direction != FETCH_FORWARD )
             throw new SQLException(
-                    "The result set type is TYPE_FORWARD_ONLY "
-                     + "and the fetch direction is not FETCH_FORWARD");
-        }
+                "The result set type is TYPE_FORWARD_ONLY and the fetch direction is not FETCH_FORWARD.");
     }
 
     /**

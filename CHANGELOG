@@ -9,6 +9,7 @@ Changes from jTDS 0.4
    to EscapeProcessor (to convert the standard function names to SQL Server-
    specific function names -- I sure hope it works with Sybase, too as I have
    no way of testing this).
+ o Implemented TdsStatement methods get/setFetchSize and get/setFetchDirection.
 
 10/21/2002 - Alin Sinpalean
 

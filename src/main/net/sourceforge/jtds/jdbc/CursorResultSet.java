@@ -51,7 +51,6 @@ public class CursorResultSet extends AbstractResultSet
     private TdsConnection conn;
 
     private int direction = FETCH_FORWARD;
-    private int fetchSize = 1;
 
     private boolean open = false;
 
@@ -79,12 +78,13 @@ public class CursorResultSet extends AbstractResultSet
         return context;
     }
 
-    public CursorResultSet(TdsStatement stmt, String sql)
+    public CursorResultSet(TdsStatement stmt, String sql, int fetchDir)
              throws SQLException
     {
         this.stmt = stmt;
         this.conn = (TdsConnection)stmt.getConnection();
         this.sql = sql;
+        this.direction = fetchDir==FETCH_UNKNOWN ? FETCH_FORWARD : fetchDir;
         warningChain = new SQLWarningChain();
 
         createCursor();
@@ -109,7 +109,6 @@ public class CursorResultSet extends AbstractResultSet
 
     public void setFetchSize(int rows) throws SQLException
     {
-        fetchSize = rows;
     }
 
     public String getCursorName() throws SQLException
@@ -149,7 +148,7 @@ public class CursorResultSet extends AbstractResultSet
 
     public int getFetchSize() throws SQLException
     {
-        return fetchSize;
+        return 1;
     }
 
     public int getType() throws SQLException

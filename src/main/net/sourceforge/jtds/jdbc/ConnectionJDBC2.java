@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.19 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.20 2004-08-06 18:46:12 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -178,8 +178,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int rowCount = 0;
     /** Maximum decimal precision. */
     private int maxPrecision = 38; // Sybase default
-    /** Stored procedure unique ID number. */
-    private int spSequenceNo = 1;
     /** Procedure cache.*/
     private HashMap procedures = new HashMap();
     /** Procedures in this transaction. */
@@ -190,8 +188,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean wideChars = false;
     /** java charset for encoding. */
     private String javaCharset;
-    /** Convert Prepared Statements to procs. */
-    private boolean prepareSql = true;
+    /** Method for preparing SQL used in Prepared Statements. */
+    private int prepareSql;
     /** The amount of LOB data to buffer in memory. */
     private long lobBuffer;
     /** Send parameters as unicode. */
@@ -404,26 +402,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieve the next unique stored procedure name.
-     * <p>Notes:
-     * <ol>
-     * <li>Some versions of Sybase require an id with
-     * a length of &lt;= 10.
-     * <li>The format of this name works for sybase and Microsoft
-     * and allows for 16M names per session.
-     * <li>The leading '#jtds' indicates this is a temporary procedure and
-     * the '#' is removed by the lower level TDS5 routines.
-     * </ol>
-     * @return The sp name as a <code>String</code>.
-     */
-    String getProcName() {
-        String seq = "000000" + Integer.toHexString(spSequenceNo++).toUpperCase();
-        String name = "#jtds" + seq.substring(seq.length() - 6, seq.length());
-
-        return name;
-    }
-
-    /**
      * Find a stored procedure in the cache.
      *
      * @param key The signature of the procedure.
@@ -446,7 +424,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                    ParamInfo[] params,
                                    boolean returnKeys)
     throws SQLException {
-        if (!prepareSql) {
+        if (prepareSql == TdsCore.UNPREPARED
+                || prepareSql == TdsCore.EXECUTE_SQL) {
             return null; // User selected not to use procs
         }
 
@@ -510,18 +489,21 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // No so create the stored procedure now
         //
         proc = new ProcEntry();
-        proc.name = getProcName();
 
         if (serverType == Driver.SQLSERVER) {
-            if (!baseTds.microsoftPrepare(sql, proc.name, params)) {
+            proc.name = baseTds.microsoftPrepare(sql, params);
+            
+            if (proc.name == null) {
                 return null;
             }
             // TODO Find some way of getting parameter meta data for MS
         } else {
-            if (!baseTds.sybasePrepare(sql, proc.name, params)) {
+            proc.name = baseTds.sybasePrepare(sql, params);
+
+            if (proc.name == null) {
                 return null;
             }
-
+            
             // Sybase gives us lots of useful information about the result set
             proc.colMetaData = baseTds.getColumns();
             proc.paramMetaData = baseTds.getParameters();
@@ -635,6 +617,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     long getLobBuffer() {
         return this.lobBuffer;
     }
+
+    /**
+     * Retrive the Prepared SQL method.
+     *
+     * @return the Prepared SQL method.
+     */
+    int getPrepareSql() {
+        return this.prepareSql;
+    }
     
     /**
      * Transfer the properties to the local instance variables.
@@ -675,7 +666,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         progName = info.getProperty(Messages.get("prop.progname"), DefaultProperties.PROG_NAME);
         serverCharset = info.getProperty(Messages.get("prop.charset"));
         language = info.getProperty(Messages.get("prop.language"), "us_english");
-        prepareSql = info.getProperty(Messages.get("prop.preparesql"), "true").equalsIgnoreCase("true");
+        prepareSql = Integer.valueOf(info.getProperty(Messages.get("prop.preparesql"), String.valueOf(DefaultProperties.PREPARE_SQL))).intValue();
         lastUpdateCount = info.getProperty(Messages.get("prop.lastupdatecount"), "true").equalsIgnoreCase("true");
         useUnicode = info.getProperty(Messages.get("prop.useunicode"), "true").equalsIgnoreCase("true");
         namedPipe = info.getProperty(Messages.get("prop.namedpipe"), "false").equalsIgnoreCase("true");

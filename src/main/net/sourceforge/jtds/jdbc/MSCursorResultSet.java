@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.8 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.9 2004-08-06 18:46:12 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -546,7 +546,8 @@ public class MSCursorResultSet extends JtdsResultSet {
             // Current column; we should only update/insert columns
             // that are not read-only (such as identity columns)
             int crtCol = 4;
-            for (int i=0; i < colCnt; i++) {
+            
+            for (int i = 0; i < colCnt; i++) {
                 // Only send non-read-only columns
                 if (columns[i].isWriteable && row[i].isUpdated()) {
                     ColInfo col = columns[i];

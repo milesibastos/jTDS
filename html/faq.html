@@ -217,11 +217,21 @@
           is always the last as the triggers execute first. If <code>false</code>
           all update counts are returned; use <code>getMoreResults()</code> to
           loop through them.</dd>
-        <dt><code>prepareSQL</code> (default - <code>true</code>)</dt>
-        <dd>If <code>true</code> the driver will use temporary stored procedures
-          for <code>PreparedStatement</code> SQL. If <code>false</code>
-          the driver will execute prepared statements with the <code>sp_executesql</code>
-          stored procedure for SQL Server, or send the raw SQL for Sybase.</dd>
+        <dt><code>prepareSQL</code> (default - <code>1</code>)</dt>
+        <dd>This parameter specifies the mechanism used for Prepared Statements.
+          <table class="inner" cellpadding="0" cellspacing="0">
+            <thead>
+              <tr><th>Value</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation</td></tr>
+              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination</td></tr>
+              <tr><td><code>2</code></td><td>sp_executesql is used</td></tr>
+              <tr><td><code>3</code></td><td>sp_prepare is used in conjuntion with sp_execute</td></tr>
+              <tr><td><code>4 (not implemented)</code></td><td>sp_prepexec is used in conjuntion with sp_execute</td></tr>
+            </tbody>
+          </table>
+          </dd></dt>
         <dt><code>packetSize</code> (default - <code>4096</code> for TDS 7.0/8.0;
           <code>512</code> for TDS 4.2/5.0)</dt>
         <dd>The network packet size (a multiple of 512).</dd>

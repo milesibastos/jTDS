@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.18 2004-08-05 21:21:50 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.19 2004-08-06 18:46:12 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -273,6 +273,20 @@ public class TdsCore {
     private static final byte DONE_CANCEL           = (byte) 0x20;
 
     //
+    // Prepared SQL types
+    //
+    /** Do not prepare SQL */
+    public static final int UNPREPARED = 0;
+    /** Prepare SQL using temporary stored procedures */
+    public static final int TEMPORARY_STORED_PROCEDURES = 1;
+    /** Prepare SQL using sp_executesql */
+    public static final int EXECUTE_SQL = 2;
+    /** Prepare SQL using sp_prepare and sp_execute */
+    public static final int PREPARE = 3;
+    /** Prepare SQL using sp_prepexec and sp_execute */
+    public static final int PREPEXEC = 4;
+
+    //
     // Instance variables
     //
     /** The Connection object that created this object. */
@@ -313,6 +327,8 @@ public class TdsCore {
     private boolean isClosed = false;
     /** Indicates reading results from READTEXT command. */
     private boolean readTextMode = false;
+    /** Stored procedure unique ID number. */
+    private int spSequenceNo = 1;
 
     /**
      * Construct a TdsCore object.
@@ -829,50 +845,119 @@ public class TdsCore {
     }
 
     /**
+     * Retrieve the next unique stored procedure name.
+     * <p>Notes:
+     * <ol>
+     * <li>Some versions of Sybase require an id with
+     * a length of &lt;= 10.
+     * <li>The format of this name works for sybase and Microsoft
+     * and allows for 16M names per session.
+     * <li>The leading '#jtds' indicates this is a temporary procedure and
+     * the '#' is removed by the lower level TDS5 routines.
+     * </ol>
+     * @return The sp name as a <code>String</code>.
+     */
+    String getProcName() {
+        String seq = "000000" + Integer.toHexString(spSequenceNo++).toUpperCase();
+        
+        return "#jtds" + seq.substring(seq.length() - 6, seq.length());
+    }
+    
+    /**
      * Create a temporary stored procedure on a Microsoft server.
      *
      * @param sql The SQL statement to prepare.
      * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
-     * @return <code>boolean</code> true if statement sucessfully prepared.
+     * @return name of the procedure.
      * @throws SQLException
      */
-    boolean microsoftPrepare(String sql, String procName, ParamInfo[] params)
+    String microsoftPrepare(String sql, ParamInfo[] params)
         throws SQLException {
-        StringBuffer spSql = new StringBuffer(sql.length()+64);
-        spSql.append("create proc ");
-        spSql.append(procName);
-        spSql.append(' ');
-
-        for (int i = 0; i < params.length; i++) {
-            spSql.append("@P");
-            spSql.append(i);
+        StringBuffer spSql = new StringBuffer(sql.length() + 64);
+        int prepareSql = connection.getPrepareSql();
+        
+        if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
+            String procName = getProcName();
+            
+            spSql.append("create proc ");
+            spSql.append(procName);
             spSql.append(' ');
-            spSql.append(params[i].sqlType);
-
-            if (i + 1 < params.length) {
-                spSql.append(',');
+    
+            for (int i = 0; i < params.length; i++) {
+                spSql.append("@P");
+                spSql.append(i);
+                spSql.append(' ');
+                spSql.append(params[i].sqlType);
+    
+                if (i + 1 < params.length) {
+                    spSql.append(',');
+                }
+            }
+    
+            // continue building proc
+            spSql.append(" as ");
+            spSql.append(Support.substituteParamMarkers(sql, params));
+    
+            try {
+                submitSQL(spSql.toString());
+            } catch (SQLException e) {
+                if (e.getSQLState() != null && e.getSQLState().equals("08S01")) {
+                    // Serious error rethrow
+                    throw e;
+                }
+    
+                // This exception probably caused by failure to prepare
+                // Return false;
+                return null;
+            }
+            
+            return procName;
+        } else if (prepareSql == PREPARE) {
+            Statement stmt = null;
+            ResultSet rs = null;
+            
+            spSql.append("DECLARE @procid INT\r\n");
+            spSql.append("SET @procid=null\r\n");
+            spSql.append("EXEC sp_prepare @procid output,N'");
+            
+            for (int i = 0; i < params.length; i++) {
+                spSql.append("@P");
+                spSql.append(i);
+                spSql.append(' ');
+                spSql.append(params[i].sqlType);
+    
+                if (i + 1 < params.length) {
+                    spSql.append(',');
+                }
+            }
+            
+            spSql.append("',N");
+            Support.embedData(spSql, Support.substituteParamMarkers(sql, params));
+            spSql.append(",1\r\n");
+            spSql.append("SELECT @procid");
+            
+            try {
+                stmt = connection.createStatement();
+                rs = stmt.executeQuery(spSql.toString());
+                
+                if (rs.next()) {
+                    return rs.getString(1);
+                } else {
+                    return null;
+                }
+            } finally {
+                if (stmt != null) {
+                    stmt.close();
+                }
+                
+                if (rs != null) {
+                    rs.close();
+                }
             }
         }
-
-        // continue building proc
-        spSql.append(" as ");
-        spSql.append(Support.substituteParamMarkers(sql, params));
-
-        try {
-            submitSQL(spSql.toString());
-        } catch (SQLException e) {
-            if (e.getSQLState() != null && e.getSQLState().equals("08S01")) {
-                // Serious error rethrow
-                throw e;
-            }
-
-            // This exception probably caused by failure to prepare
-            // Return false;
-            return false;
-        }
-
-        return true;
+        
+        return null;
     }
 
     /**
@@ -881,16 +966,18 @@ public class TdsCore {
      * @param sql The SQL statement to prepare.
      * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
-     * @return <code>boolean</code> true if statement sucessfully prepared.
+     * @return name of the procedure.
      * @throws SQLException
      */
-    boolean sybasePrepare(String sql, String procName, ParamInfo[] params)
+    String sybasePrepare(String sql, ParamInfo[] params)
         throws SQLException {
         if (sql == null || sql.length() == 0) {
             throw new IllegalArgumentException(
                     "sql parameter must be at least 1 character long.");
         }
 
+        String procName = getProcName();
+        
         if (procName == null || procName.length() != 11) {
             throw new IllegalArgumentException(
                     "procName parameter must be 11 characters long.");
@@ -900,7 +987,7 @@ public class TdsCore {
         for (int i = 0; i < params.length; i++) {
             if (params[i].sqlType.equals("text")
                 || params[i].sqlType.equals("image")) {
-                return false; // Sadly no way
+                return null; // Sadly no way
             }
         }
 
@@ -939,11 +1026,11 @@ public class TdsCore {
             }
 
             // This exception probably caused by failure to prepare
-            // Return false;
-            return false;
+            // Return null;
+            return null;
         }
 
-        return true;
+        return procName;
     }
 
     /**
@@ -2665,7 +2752,7 @@ public class TdsCore {
         tds8SpNames.put("sp_cursorclose",       new Integer(9));
         tds8SpNames.put("sp_executesql",        new Integer(10));
         tds8SpNames.put("sp_prepare",           new Integer(11));
-//      tds8SpNames.put("sp_execute",           new Integer(12)); broken!
+        tds8SpNames.put("sp_execute",           new Integer(12));
         tds8SpNames.put("sp_prepexec",          new Integer(13));
         tds8SpNames.put("sp_prepexecrpc",       new Integer(14));
         tds8SpNames.put("sp_unprepare",         new Integer(15));
@@ -2685,45 +2772,69 @@ public class TdsCore {
                               ParamInfo[] parameters,
                               boolean noMetaData)
         throws IOException, SQLException {
-        if (procName == null && parameters != null && parameters.length > 0) {
-            ParamInfo params[] = new ParamInfo[parameters.length + 2];
-
-            // Use sp_executesql approach
-            procName = "sp_executesql";
-
-            System.arraycopy(parameters, 0, params, 2, parameters.length);
-
-            params[0] = new ParamInfo();
-            params[0].jdbcType = java.sql.Types.VARCHAR;
-            params[0].bufferSize = 4000;
-            params[0].isSet = true;
-            params[0].isUnicode = true;
-            params[0].value = Support.substituteParamMarkers(sql, parameters);
-
-            TdsData.getNativeType(connection, params[0]);
-            StringBuffer paramDef = new StringBuffer(80);
-
-            for (int i = 0; i < parameters.length; i++) {
-                paramDef.append("@P");
-                paramDef.append(i);
-                paramDef.append(' ');
-                paramDef.append(parameters[i].sqlType);
-
-                if (i + 1 < parameters.length) {
-                    paramDef.append(',');
+        int prepareSql = connection.getPrepareSql();
+        
+        if (parameters != null && parameters.length > 0) {
+            if (procName == null && prepareSql == EXECUTE_SQL) {
+                // Use sp_executesql approach
+                procName = "sp_executesql";
+    
+                ParamInfo params[] = new ParamInfo[parameters.length + 2];
+                
+                System.arraycopy(parameters, 0, params, 2, parameters.length);
+    
+                params[0] = new ParamInfo();
+                params[0].jdbcType = Types.VARCHAR;
+                params[0].bufferSize = 4000;
+                params[0].isSet = true;
+                params[0].isUnicode = true;
+                params[0].value = Support.substituteParamMarkers(sql, parameters);
+    
+                TdsData.getNativeType(connection, params[0]);
+                StringBuffer paramDef = new StringBuffer(80);
+    
+                for (int i = 0; i < parameters.length; i++) {
+                    paramDef.append("@P");
+                    paramDef.append(i);
+                    paramDef.append(' ');
+                    paramDef.append(parameters[i].sqlType);
+    
+                    if (i + 1 < parameters.length) {
+                        paramDef.append(',');
+                    }
                 }
+    
+                params[1] = new ParamInfo();
+                params[1].jdbcType = Types.VARCHAR;
+                params[1].bufferSize = 4000;
+                params[1].isSet = true;
+                params[1].isUnicode = true;
+                params[1].value = paramDef.toString();
+    
+                TdsData.getNativeType(connection, params[1]);
+    
+                parameters = params;
+            } else if (procName != null && procName.length() > 0
+                    && Character.isDigit(procName.charAt(0))
+                    && (prepareSql == PREPARE || prepareSql == PREPEXEC)) {
+                ParamInfo params[] = new ParamInfo[parameters.length + 1];
+                
+                System.arraycopy(parameters, 0, params, 1, parameters.length);
+    
+                params[0] = new ParamInfo();
+                params[0].jdbcType = Types.INTEGER;
+                params[0].bufferSize = 4;
+                params[0].isSet = true;
+                params[0].isUnicode = false;
+                params[0].value = new Integer(procName);
+    
+                TdsData.getNativeType(connection, params[0]);
+    
+                parameters = params;
+                
+                // Use sp_execute approach
+                procName = "sp_execute";
             }
-
-            params[1] = new ParamInfo();
-            params[1].jdbcType = java.sql.Types.VARCHAR;
-            params[1].bufferSize = 4000;
-            params[1].isSet = true;
-            params[1].isUnicode = true;
-            params[1].value = paramDef.toString();
-
-            TdsData.getNativeType(connection, params[1]);
-
-            parameters = params;
         }
 
         if (procName != null && procName.length() > 0) {
@@ -2762,6 +2873,10 @@ public class TdsCore {
 
             out.flush();
         } else if (sql.length() > 0) {
+            if (parameters != null && parameters.length > 0) {
+                sql = Support.substituteParameters(sql, parameters);
+            }
+            
             // Simple query
             out.setPacketType(QUERY_PKT);
             out.write(sql);

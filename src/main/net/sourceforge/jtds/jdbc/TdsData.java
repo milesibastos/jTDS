@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.16 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: TdsData.java,v 1.17 2004-08-06 18:46:12 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -376,7 +376,7 @@ public class TdsData {
 
         // Set sizes for character types
         if (ci.precision == -1) {
-            ci.precision  = ci.bufferSize;
+            ci.precision = ci.bufferSize;
 
             if (ci.displaySize == -2) {
                 ci.displaySize = ci.bufferSize / 2;

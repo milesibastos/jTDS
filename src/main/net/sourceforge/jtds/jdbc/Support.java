@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.10 2004-08-05 21:21:50 bheineman Exp $
+ * @version $Id: Support.java,v 1.11 2004-08-06 18:46:12 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -861,8 +861,9 @@ public class Support {
             }
 
             Object value = list[i].value;
-            if (value instanceof java.io.InputStream ||
-                value instanceof java.io.Reader) {
+            
+            if (value instanceof java.io.InputStream
+                    || value instanceof java.io.Reader) {
                 try {
                     if (list[i].jdbcType == java.sql.Types.LONGVARCHAR) {
                         value = list[i].getString("US-ASCII");

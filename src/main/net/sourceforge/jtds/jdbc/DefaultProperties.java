@@ -38,7 +38,7 @@ import java.util.HashMap;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.4 2004-08-06 18:46:12 bheineman Exp $
  */
 public final class DefaultProperties {
 
@@ -69,7 +69,7 @@ public final class DefaultProperties {
     /** Default <code>portNumber</code> property for Sybase. */
     public static final int PORT_NUMBER_SYBASE = 7100;
     /** Default <code>prepareSql</code> property. */
-    public static final boolean PREPARE_SQL = true;
+    public static final int PREPARE_SQL = TdsCore.TEMPORARY_STORED_PROCEDURES;
     /** Default <code>progName</code> property. */
     public static final String PROG_NAME = "jTDS";
     /** Default <code>sendStringParametersAsUnicode</code> property. */
@@ -146,8 +146,8 @@ public final class DefaultProperties {
      */ 
     private static void addDefaultPropertyIfNotSet(
             final Properties props, final String key, final String defaultValue) {
-
         final String messageKey = Messages.get(key);
+        
         if (props.getProperty(messageKey) == null) {
             props.setProperty(messageKey, defaultValue);
         }
@@ -168,15 +168,17 @@ public final class DefaultProperties {
      */ 
     private static void addDefaultPropertyIfNotSet(
             final Properties props, final String key, final String defaultKey, final Map defaults) {
-
         final String defaultKeyValue = props.getProperty(Messages.get(defaultKey));
+        
         if (defaultKeyValue == null) {
             return;
         }
 
         final String messageKey = Messages.get(key);
+        
         if (props.getProperty(messageKey) == null) {
             final Object defaultValue = defaults.get(defaultKeyValue);
+            
             if (defaultValue != null) {
                 props.setProperty(messageKey, String.valueOf(defaultValue));
             }

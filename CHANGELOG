@@ -1,6 +1,17 @@
 Changes from jTDS 0.8.1
 =========================
 
+08/06/2004 - Brian Heineman
+ o Update the usage of the prepareSql parameter.  This parameter is now used to
+   determine how prepared statements are sent to the server.  Options include:
+     0 - SQL is sent to the server each time without any preparation
+     1 - Temporary stored procedures are created for each unique SQL statement
+         and parameter combination
+     2 - sp_executesql is used
+     3 - sp_prepare is used in conjuntion with sp_execute
+     4 (not implemented) - sp_prepexec is used in conjuntion with sp_execute
+   Update the FAQ to include this new information.
+
 08/05/2004 - David Kilzer
  o Added missing javadoc to DriverUnitTest methods.
  o Renamed Messages.defaultResource to Messages.DEFAULT_RESOURCE to reflect its

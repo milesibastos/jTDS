@@ -71,9 +71,9 @@ TO DO LIST:
 
  3. Review and test statement cancellation logic.
 
- 4. Review data type conversion logic.
+ 4. [Completed] Review data type conversion logic.
 
- 5. Some independent performance testing would be wise. The goal is for this code
+ 5. [Completed] Some independent performance testing would be wise. The goal is for this code
     to be at least as fast as the original.
 
  6. Add support for Sybase varchar and varbinary columns > 255 bytes in length.

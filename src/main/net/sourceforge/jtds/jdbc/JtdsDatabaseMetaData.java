@@ -38,7 +38,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.16 2004-11-03 14:53:22 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.17 2004-11-17 09:40:46 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -199,7 +199,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         rsTmp.moveToInsertRow();
         int colCnt = rs.getMetaData().getColumnCount();
         while (rs.next()) {
-            for (int i = 1; i < colCnt; i++) {
+            for (int i = 1; i <= colCnt; i++) {
                 if (i == 3) {
                     int type = normalizeDataType(rs.getInt(i));
                     rsTmp.updateInt(i, type);
@@ -210,6 +210,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             rsTmp.insertRow();
         }
         rs.close();
+        s.close();
         rsTmp.moveToCurrentRow();
         rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
         return rsTmp;
@@ -384,7 +385,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                              "COLUMN_DEF",          "SQL_DATA_TYPE",
                              "SQL_DATETIME_SUB",    "CHAR_OCTET_LENGTH",
                              "ORDINAL_POSITION",    "IS_NULLABLE",
-                             "SCOPE_CATALOG",        "SCOPE_SCHEMA",
+                             "SCOPE_CATALOG",       "SCOPE_SCHEMA",
                              "SCOPE_TABLE",         "SOURCE_DATA_TYPE"};
 
        int colTypes[]     = {Types.VARCHAR,         Types.VARCHAR,
@@ -413,8 +414,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         rs.setColumnCount(18);
         CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
         rsTmp.moveToInsertRow();
+        int colCnt = rs.getMetaData().getColumnCount();
         while (rs.next()) {
-            for (int i = 1; i <= 18; i++) {
+            for (int i = 1; i <= colCnt; i++) {
                 if (i == 5) {
                     int type = normalizeDataType(rs.getInt(i));
                     rsTmp.updateInt(i, type);
@@ -1241,7 +1243,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         rsTmp.moveToInsertRow();
         int colCnt = rs.getMetaData().getColumnCount();
         while (rs.next()) {
-            for (int i = 1; i < colCnt; i++) {
+            for (int i = 1; i <= colCnt; i++) {
                 rsTmp.updateObject(i, rs.getObject(i));
             }
             rsTmp.insertRow();

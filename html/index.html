@@ -55,23 +55,23 @@
         Microsoft SQL Server (6.5, 7, 2000 and 2005) and Sybase (10, 11, 12).
         jTDS is based on the work of the <a href="http://www.freetds.org">FreeTDS</a>
         project and is currently the fastest complete JDBC driver for SQL Server
-        and Sybase. Starting with release 0.7.1 jTDS is 100% JDBC 2.1
+        and Sybase. Starting with release 0.9 jTDS is 100% JDBC 3.0
         compatible, supporting forward-only and scrollable/updateable
         <code>ResultSet</code>s, multiple concurrent (completely independent)
         <code>Statement</code>s per <code>Connection</code> and implementing all
         of the <code>DatabaseMetaData</code> and <code>ResultSetMetaData</code>
-        methods. As of version 0.9 most of the JDBC 3.0 features are also
-        implemented.</p>
+        methods. Check out the <a href="features.html">feature matrix</a> for
+        more details.</p>
       <p>Quite a few of the commercial JDBC drivers out there are based on jTDS
         (or FreeTDS), even if they no longer acknowledge this. jTDS has been
         tested with virtually all of the available JDBC-based database
         management tools and is the driver of choice for most of these
-        (<a href="http://www.datadino.com">DataDino</a> and
-        <a href="http://www.aquafold.com">Aqua Data Studio</a> even contain it).
-        jTDS is also becoming a common choice for enterprise-level applications:
-        starting with release 0.8-rc1 jTDS passes the
-        <a href="http://www.hibernate.org">Hibernate</a> test suite, making it
-        the driver of choice for SQL Server.</p>
+        (it is distributed with <a href="http://www.aquafold.com">Aqua Data
+        Studio</a> and <a href="http://www.datadino.com">DataDino</a> as the
+        driver for SQL Server). jTDS is also becoming a common choice for
+        enterprise-level applications: starting with release 0.8-rc1 jTDS
+        passes the <a href="http://www.hibernate.org">Hibernate</a> test suite,
+        making it the driver of choice for SQL Server.</p>
       <p class="title">Getting Started</p>
       <p>Being a type 4 driver, jTDS does not need any special installation.
         Just drop the jar file into your application's classpath and you're
@@ -86,13 +86,13 @@
         alt="GNU Lesser General Public License">GNU LGPL</a>, giving you not
         only the opportunity to tweak it to your own liking but also the right
         to get any improvement anyone ever brings to jTDS.</p>
-      <p>You'll say there are other free choices... There's the JDBC-ODBC
+      <p>There are, of course, other free choices... There's the JDBC-ODBC
         bridge and Microsoft's own JDBC driver... Well yes, but both of them
         crash on you every now and then, just to keep you on your toes, and lack
         functionality. Indeed jTDS is more stable than both of the two.
         Just do a <a href="http://www.google.com">Google</a> search for jTDS and
-        you'll find posts from a lot of people moving to jTDS because of
-        stability issues.</p>
+        you'll find posts from a lot of people coosing to move to jTDS because
+        of stability issues.</p>
       <p>Oh, and did we mention that jTDS is faster? Well it's not just faster,
         it's the fastest. Of all the SQL Server drivers. Including commercial
         ones. Well, this seems to have caught your attention. We don't have any
@@ -101,7 +101,7 @@
         MS SQL Server</a>.</p>
       <p>Anyway, just give it a try. Get the latest one from
         <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">here</a>
-        and see if you like it or not.</p>
+        and see whether you like it or not.</p>
 
 
 <!--

@@ -73,16 +73,17 @@
           connect string? Connecting with <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code>
           gives an SQLException with the message "Logon failed".</a></li>
         <li><a href="#instanceGetInfo">Why do I get a <code>java.sql.SQLException:
-          &quot;Unable to get info from SQL Server&quot;</code> when trying to
-          connect to a SQL Server instance?</a></li>
+          &quot;Unable to get information from SQL Server&quot;</code> when
+          trying to connect to an SQL Server instance?</a></li>
         <li><a href="#windowsAuth">I was hoping that appending <code>";domain=X"</code>
           to the URL would be enough on a workstation that was already logged
           into domain X. Why do I still need to provide a username and password?</a></li>
         <li><a href="#expectingResultSet"><code>executeQuery()</code> throws
-          <code>java.sql.SQLException: "Was expecting a result set"</code>.</a></li>
+          <code>java.sql.SQLException: "The executeQuery method must return a
+          result set."</code>.</a></li>
         <li><a href="#forwardOnlyResultSet">I get <code>java.sql.SQLException:
-          &quot;The result set type is TYPE_FORWARD_ONLY&quot;</code> or
-          <code>&quot;ResultSet is not updateable&quot;</code> when using a
+          &quot;ResultSet may only be accessed in a forward direction&quot;</code>
+          or <code>&quot;ResultSet is read only&quot;</code> when using a
           scrollable and/or updateable <code>ResultSet</code>.</a></li>
         <li><a href="#sqlStates">Not all <code>SQLException</code>s thrown by
           jTDS seem to have associated SQL state values.</a></li>
@@ -113,8 +114,8 @@
       </ul>
       <p class="question">Other</p>
       <ul>
-        <li><a href="#other">I didn't manage to find the answer to my problem in
-          this FAQ. What should I do?</a></li>
+        <li><a href="#other">I didn't find the answer to my problem in this
+          FAQ. What should I do?</a></li>
       </ul>
 
       <p class="title">Getting Started</p>
@@ -152,7 +153,7 @@
           String user, String password)</code> it's not required to set this property
           as it is passed as parameter, but you will have to set it when using
           <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
-        <dt><code>TDS</code> (default - <code>&quot;7.0&quot;</code> for SQL Server;
+        <dt><code>TDS</code> (default - <code>&quot;8.0&quot;</code> for SQL Server;
           <code>&quot;5.0&quot;</code> for Sybase)</dt>
         <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol
           used by Microsoft SQL Server and Sybase to communicate with database
@@ -169,13 +170,17 @@
           <code>&quot;7.0&quot; or &quot;8.0&quot;</code>) when connecting to any
           version of Sybase as these are SQL Server specific protocols.  Further, you
           should not set this value to <code>&quot;5.0&quot;</code>) when connecting
-          to any version of SQL Server as this is a Sybase specific protocol.</dd>
+          to any version of SQL Server as this is a Sybase specific protocol.<br>
+          Currently jTDS automatically falls back from 8.0 to 7.0 (if used with
+          SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying
+          the value for this parameter is only necessary for SQL Server 6.5.</dd>
         <dt><code>charset</code> (default - the character set the server was installed
           with)</dt>
         <dd>Very important setting, determines the byte value to character mapping
           for <code>CHAR</code>/<code>VARCHAR</code>/<code>TEXT</code> values.
-          Applies for characters from the extended set (codes 128-255). For <code>NCHAR</code>/<code>NVARCHAR</code>/<code>NTEXT</code>
-          values doesn't have any effect since these are stored using Unicode.</dd>
+          Applies for characters from the extended set (codes 128-255). For
+          <code>NCHAR</code>/<code>NVARCHAR</code>/<code>NTEXT</code> values
+          doesn't have any effect since these are stored using Unicode.</dd>
         <dt><code>domain</code></dt>
         <dd>Specifies the Windows domain to authenticate in. If present, jTDS
           uses Windows (NTLM) authentication instead of the usual SQL Server authentication
@@ -225,7 +230,7 @@
             </thead>
             <tbody>
               <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation</td></tr>
-              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination</td></tr>
+              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (usually fastest)</td></tr>
               <tr><td><code>2</code></td><td>sp_executesql is used</td></tr>
               <tr><td><code>3 (experimental)</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute</td></tr>
               <tr><td><code>4 (experimental)</code></td><td>sp_prepexec and sp_cursorprepexec are used in conjunction with sp_execute and sp_cursorexecute</td></tr>
@@ -279,8 +284,8 @@
         <a href="http://www.jnetdirect.com/downloads.php?op=performsuite">JNetDirect's
         JDBC Performance Benchmark</a>. Here are the results of the i-net test:
         <a href="benchTest.html">BenchTest 2.1 for MS SQL Server</a>. The JNetDirect
-        license precludes publication of performance test results. However, jTDS is
-        generally faster than all other drivers.</p>
+        license precludes publication of performance test results. However, you
+        can run any of the benchmarks yourself without much configuration.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="features"></a>Which JDBC features are and
         which features are not supported by jTDS?</p>
@@ -339,8 +344,8 @@
         be changed (and using it this way confuses the URL parser).
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="instanceGetInfo"></a>Why do I get a
-        <code>java.sql.SQLException: &quot;Unable to get info from SQL
-        Server&quot;</code> when trying to connect to a SQL Server instance?</p>
+        <code>java.sql.SQLException: &quot;Unable to get information from SQL
+        Server&quot;</code> when trying to connect to an SQL Server instance?</p>
       <p>The exception you are getting is usually caused by a timeout. When
         connecting to named instances jTDS needs to connect via UDP to port 1434
         to get information about available SQL Server instances. While doing
@@ -361,8 +366,8 @@
         into SQL Server.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="expectingResultSet"></a>
-        <code>executeQuery()</code> throws <code>java.sql.SQLException: "Was
-        expecting a result set"</code>.</p>
+        <code>executeQuery()</code> throws <code>java.sql.SQLException: "The
+        executeQuery method must return a result set."</code>.</p>
       <p>The <a href="http://java.sun.com/products/jdbc/download.html">JDBC
         spec</a> and
         <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/sql/Statement.html#executeQuery(java.lang.String)">API
@@ -383,15 +388,15 @@
         obtain the <code>ResultSet</code> you want.</p>
       <p>As a sidenote, The Microsoft driver (and probably the others, too)
         "optimize" this behavior by skipping over the update count, which is
-        wrong according to the JDBC spec. So, for maximum compatibility, I would
-        recommend that you use <code>execute()</code> anytime you run queries
+        wrong according to the JDBC spec. So, for maximum compatibility, it is
+        recommended that you use <code>execute()</code> anytime you run queries
         returning more than one result even if the particular driver you are
         using allows you to do otherwise.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="forwardOnlyResultSet"></a>I get
-        <code>java.sql.SQLException: &quot;The result set type is
-        TYPE_FORWARD_ONLY&quot;</code> or <code>&quot;ResultSet is not
-        updateable&quot;</code> when using a scrollable and/or updateable
+        <code>java.sql.SQLException: &quot;ResultSet may only be accessed in a
+        forward direction&quot;</code> or <code>&quot;ResultSet is read
+        only&quot;</code> when using a scrollable/updateable
         <code>ResultSet</code>.</p>
       <p>There are two possible causes to this (if we exclude not creating the
         <code>ResultSet</code> with the appropriate type and concurrency in the
@@ -423,10 +428,10 @@
         originated errors and warnings that are not found in this map are given
         a default code of 'S1000', respectively '01000'. This is what happens
         with SQL Server-returned errors and warnings and is consistent with how
-        other drivers handle exceptions; errors and warnings generated
-        internally by jTDS have not been completely reviewed yet, so some of
-        them still have no SQL state (and of course there's no native error
-        number either).</p>
+        other drivers handle exceptions. However, if you find some case in
+        which other JDBC or ODBC drivers return specific SQL states or that are
+        obviously wrong, please let us know. We will make the necessary
+        changes.</p>
       <p>See the
         <a href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">SQL
         92</a> spec for the complete list and description of SQL state
@@ -614,8 +619,8 @@
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Other</p>
-      <p class="question"><a name="other"></a>I didn't manage to find the answer
-        to my problem in this FAQ. What should I do?</p>
+      <p class="question"><a name="other"></a>I didn't find the answer to my
+        problem in this FAQ. What should I do?</p>
       <p>If you need help with any other jTDS-related issue, search the
         <a href="http://sourceforge.net/forum/forum.php?forum_id=104389">Help
         forum</a> first and if you still don't find anything, post a question.

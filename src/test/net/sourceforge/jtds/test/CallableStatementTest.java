@@ -455,7 +455,7 @@ public class CallableStatementTest extends TestBase {
 
     /**
      * Test that procedure outputs are available immediately for procedures
-     * that do not return ResultSets (i.e. that update counts are cached).
+     * that do not return ResultSets (i.e that update counts are cached).
      */
     public void testProcessUpdateCounts1() throws SQLException {
         Statement stmt = con.createStatement();
@@ -496,7 +496,7 @@ public class CallableStatementTest extends TestBase {
 
     /**
      * Test that procedure outputs are available immediately after processing
-     * the last ResultSet returned by the procedure (i.e. that update counts
+     * the last ResultSet returned by the procedure (i.e that update counts
      * are cached).
      */
     public void testProcessUpdateCounts2() throws SQLException {

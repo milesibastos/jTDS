@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.39 2004-09-24 09:24:38 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.40 2004-09-28 16:59:00 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -53,7 +53,7 @@ public class Driver implements java.sql.Driver {
     /** Driver minor version. */
     static final int MINOR_VERSION = 9;
     /** Driver version miscellanea (e.g "-rc2" or ".1"). */
-    static final String MISC_VERSION = "-rc2";
+    static final String MISC_VERSION = null;
     public static final boolean JDBC3 =
             "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
     /** TDS 4.2 protocol (SQL Server 6.5 and later and Sybase 9 and later). */

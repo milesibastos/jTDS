@@ -2331,7 +2331,6 @@ public class TimestampTest extends DatabaseTestCase {
                 (TimeZone.getTimeZone("America/New_York"));
 
         Timestamp tsStart = new Timestamp(System.currentTimeMillis());
-        System.out.println("Current time = " + tsStart);
 
         PreparedStatement pstmt = con.prepareStatement(
                 "INSERT INTO #tst_tstamp (ref, tstamp) VALUES (?, ?)");

@@ -1,6 +1,9 @@
 Changes from jTDS 0.9
 =========================
 
+10/25/2004 - Alin Sinpalean
+ o Applied Mike's fix for bug [1052942] Error processing JDBC call escape.
+
 10/21/2004 - Alin Sinpalean
  o Altered the interface of Brian's StatementCache interface to correctly
    handle both usage counts (searching by SQL string) and searching by key.

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -381,9 +381,9 @@ public class Tds implements TdsDefinitions {
     {
         byte type = comm.peek();
 
-        return type == TDS_END_TOKEN || type == TDS_DONEPROC;
+        return type == TDS_END_TOKEN || type == TDS_DONEPROC || type == TDS_DONEINPROC;
     }
-
+    
 
     /**
      *  Determine if the next subpacket is a DONEINPROC marker <p>
@@ -704,6 +704,7 @@ public class Tds implements TdsDefinitions {
         try {
             // mark that we are performing a query
             cancelController.setQueryInProgressFlag();
+            moreResults2 = true;
 
             // Start sending the procedure execute packet.
             comm.startPacket(TdsComm.PROC);
@@ -1232,10 +1233,12 @@ public class Tds implements TdsDefinitions {
                 break;
             }
             case TDS_DONEINPROC:
+              /*
             {
                 result = processDoneInProc(packetSubType);
                 break;
             }
+               */
             case TDS_DONEPROC:
             case TDS_END_TOKEN:
             {
@@ -2748,10 +2751,14 @@ public class Tds implements TdsDefinitions {
         comm.skip(3);
         int rowCount = comm.getTdsInt();
 
+        /*
         if (packetType == TdsDefinitions.TDS_DONEINPROC) {
             throw new TdsException("Internal error.  TDS_DONEINPROC "
                      + " is no longer considered an end token");
         }
+         */
+        if (packetType == TdsDefinitions.TDS_DONEPROC)
+          rowCount = -1;  
 
         PacketEndTokenResult result = new PacketEndTokenResult(packetType,
                 status, rowCount);
@@ -3163,12 +3170,6 @@ public class Tds implements TdsDefinitions {
         int numColumns = comm.getTdsShort();
         Columns columns = new Columns();
 
-        //try {
-        //throw new Exception();
-        //}
-        //catch (Exception e) {
-        //e.printStackTrace();
-        //}
         for (int colNum = 1; colNum <= numColumns; ++colNum) {
 
             /*

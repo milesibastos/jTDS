@@ -56,7 +56,7 @@ import java.util.Calendar;
  *
  * @author Craig Spannring
  * @author The FreeTDS project
- * @version  $Id: PreparedStatement_base.java,v 1.4 2001-09-10 06:08:18 aschoerk Exp $
+ * @version  $Id: PreparedStatement_base.java,v 1.5 2001-09-14 16:04:30 aschoerk Exp $
  *
  * @see Connection#prepareStatement
  * @see ResultSet
@@ -65,7 +65,7 @@ public class PreparedStatement_base
    extends    TdsStatement
    implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.4 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.5 2001-09-14 16:04:30 aschoerk Exp $";
 
 
    String               rawQueryString     = null;
@@ -224,6 +224,8 @@ public class PreparedStatement_base
                               this,
                               timeout);
 
+         result = getMoreResults(tds);
+         /*
          while (tds.isErrorPacket() || tds.isMessagePacket())
          {
             tmp = tds.processSubPacket();
@@ -280,17 +282,20 @@ public class PreparedStatement_base
                }
             } while (!done);
          }
+          */
       }
       catch(TdsException e)
       {
          e.printStackTrace();
          throw new SQLException(e.getMessage());
       }
+      /*
       catch(java.io.IOException e)
       {
          e.printStackTrace();
          throw new SQLException(e.getMessage());
       }
+       */
       finally {
         tds.comm.packetType = 0;
       }
@@ -311,20 +316,6 @@ public class PreparedStatement_base
 
 
       procedure = (Procedure)tds.procedureCache.get(rawQueryString);
-      /*
-      for(i=0; i<procedureCache.size(); i++)
-      {
-         Procedure tmp = (Procedure)procedureCache.elementAt(i);
-         if (tmp.compatibleParameters(parameterList))
-         {
-            procedure = tmp;
-            if (!tmp.hasLobParameters())
-            {
-               break;
-            }
-         }
-      }
-      */
       return procedure;
    }
 

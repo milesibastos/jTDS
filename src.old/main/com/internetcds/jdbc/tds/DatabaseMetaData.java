@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.4 2001-09-14 16:04:29 aschoerk Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -293,7 +293,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.4 2001-09-14 16:04:29 aschoerk Exp $";
 
 
     public DatabaseMetaData(
@@ -403,29 +403,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
         if ( stmt.execute( sql ) ) {
             throw new SQLException( "Internal error.  Confused" );
         }
-        if ( null != ( rs = stmt.getResultSet() ) ) {
-            // RMK 2000-06-11: test t0051 gets the result set here.
-
-            // XXX we really need to figure out what the protocol is doing here.
-            // It appears that sometimes it returns an immediate result set
-            //and sometimes it doesn't.
-
-            return rs;
-        }
         if ( stmt.execute( sql2 ) ) {
             throw new SQLException( "Internal error.  Confused" );
         }
         
-        if ( null != ( rs = stmt.getResultSet() ) ) {
-            // RMK 2000-06-11: test t0051 gets the result set here.
-
-            // XXX we really need to figure out what the protocol is doing here.
-            // It appears that sometimes it returns an immediate result set
-            //and sometimes it doesn't.
-
-            return rs;
-        }
-
         if ( !stmt.execute( selectString ) ) {
             throw new SQLException( "Internal error.  Confused" );
         }

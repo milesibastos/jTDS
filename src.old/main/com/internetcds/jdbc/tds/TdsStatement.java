@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ * @version $Id: TdsStatement.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -656,12 +656,13 @@ public class TdsStatement implements java.sql.Statement
       }
 
 
-      if (!tds.moreResults())
+      if (!tds.moreResults() && updateCount == -1)
       {
         releaseTds();
         return false;
       }
 
+      boolean result = false;
       closeResults(); // Reset all internal variables (why is this done here?)
 
       try
@@ -669,16 +670,12 @@ public class TdsStatement implements java.sql.Statement
          tds.isResultSet();
 
          // Keep eating garbage and warnings until we reach the next result
-         while (!tds.isResultSet() && !tds.isEndOfResults())
+         
+         while (true)
          {
             if (tds.isProcId())
             {
                tds.processSubPacket();
-            }
-            else if (tds.isDoneInProc())
-            {
-               PacketDoneInProcResult tmp =
-                  (PacketDoneInProcResult)tds.processSubPacket();
             }
             else if (tds.isTextUpdate())
             {
@@ -690,9 +687,27 @@ public class TdsStatement implements java.sql.Statement
                PacketMsgResult  tmp = (PacketMsgResult)tds.processSubPacket();
                exception = warningChain.addOrReturn(tmp);
             }
+            else if (tds.isRetStat()) {
+              tds.processSubPacket();
+            }
+            else if (tds.isResultSet()) {
+              connection.lockMainTds(this,tds);
+              actTds = tds;
+              result = true;
+              break;
+            }
+            else if (tds.isEndOfResults()) {
+
+              PacketEndTokenResult end =
+                 (PacketEndTokenResult)tds.processSubPacket();
+              updateCount = end.getRowCount();
+              if (updateCount == -1) releaseTds();
+              result = false;
+              break;
+            }
             else
             {
-              releaseTds();
+               releaseTds();
                throw new SQLException("Protocol confusion.  "
                                       + "Got a 0x"
                                       + Integer.toHexString((tds.peek() & 0xff))
@@ -704,7 +719,8 @@ public class TdsStatement implements java.sql.Statement
          {
             try
             {
-               tds.discardResultSet(null);
+               if (result) 
+                 tds.discardResultSet(null);
                releaseTds();
             }
             catch(java.io.IOException e)
@@ -724,27 +740,7 @@ public class TdsStatement implements java.sql.Statement
             throw exception;
          }
 
-         if (tds.isEndOfResults())
-         {
-            PacketEndTokenResult end =
-               (PacketEndTokenResult)tds.processSubPacket();
-            updateCount = end.getRowCount();
-            releaseTds();
-            return false;
-         }
-         else if (tds.isResultSet())
-         {
-           connection.lockMainTds(this,tds);
-           actTds = tds;
-           return true;
-         }
-         else
-         {
-            throw new SQLException("Protocol confusion.  "
-                                   + "Got a 0x"
-                                   + Integer.toHexString((tds.peek() & 0xff))
-                                   + " packet");
-         }
+         return result; 
       }
 
       catch(java.io.IOException e)
@@ -845,6 +841,14 @@ public class TdsStatement implements java.sql.Statement
    }
 
 
+   void fetchIntoCache() throws SQLException
+   {
+     if (results != null) {
+       // System.out.println("fetching into Cache !!");       
+       results.fetchIntoCache();
+     }
+   }
+   
 
 
     //--------------------------JDBC 2.0-----------------------------
@@ -1079,14 +1083,6 @@ public class TdsStatement implements java.sql.Statement
          System.out.println("gross:  " + gross);
          System.out.println("");
       }
-   }
-   
-   void fetchIntoCache() throws SQLException
-   {
-     if (results != null) {
-       System.out.println("fetching into Cache !!");       
-       results.fetchIntoCache();
-     }
    }
    
 }

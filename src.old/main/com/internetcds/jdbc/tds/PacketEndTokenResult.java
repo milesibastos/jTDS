@@ -37,7 +37,7 @@ package com.internetcds.jdbc.tds;
 
 public class PacketEndTokenResult extends PacketResult
 {
-   public static final String cvsVersion = "$Id: PacketEndTokenResult.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: PacketEndTokenResult.java,v 1.3 2001-09-14 16:04:30 aschoerk Exp $";
 
 
    private byte    status;
@@ -52,11 +52,13 @@ public class PacketEndTokenResult extends PacketResult
       throws TdsConfused
    {
       super(type);
+      /*
       if(type == TdsDefinitions.TDS_DONEINPROC)
       {
          // NOTE-  TDS_DONEINPROC is not a end marker.
          throw new TdsConfused("Internal error-\nTDS_DONEINPROC is not an end of packet.");
       }
+       */
       status       = _status;
       rowCount     = _rowCount;
       isRetStatSet = false;

@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.24 2004-12-20 15:51:17 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.25 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -86,6 +86,8 @@ public class JtdsStatement implements java.sql.Statement {
     protected int resultSetConcurrency = ResultSet.CONCUR_READ_ONLY;
     /** The fetch size (default 100, only used by cursor <code>ResultSet</code>s). */
     protected int fetchSize = 100;
+    /** The cursor name to be used for positioned updates. */
+    protected String cursorName;
     /** True if this statement is closed. */
     protected boolean closed = false;
     /** The maximum field size (not used at present). */
@@ -277,7 +279,8 @@ public class JtdsStatement implements java.sql.Statement {
         // Try to open a cursor result set if required
         //
         if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-            || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
+            || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
+            || cursorName != null) {
             try {
                 if (connection.getServerType() == Driver.SQLSERVER) {
                     currentResult =
@@ -364,7 +367,8 @@ public class JtdsStatement implements java.sql.Statement {
         // Try to open a cursor result set if required (and possible)
         //
         if ((resultSetType != ResultSet.TYPE_FORWARD_ONLY
-                || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY)
+                || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
+                || cursorName != null)
                 && !returnKeys
                 && (sqlWord.equals("select") || sqlWord.startsWith("exec"))) {
             try {
@@ -808,7 +812,12 @@ public class JtdsStatement implements java.sql.Statement {
 
     public void setCursorName(String name) throws SQLException {
         checkOpen();
-        // No operation
+        this.cursorName = name;
+        if (name != null) {
+            // Reset statement type to JDBC 1 default.
+            this.resultSetType = ResultSet.TYPE_FORWARD_ONLY;
+            this.fetchSize = 1; // Needed for positioned updates
+        }
     }
 
     public boolean execute(String sql) throws SQLException {

@@ -140,8 +140,8 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
         assertFalse("supportsIntegrityEnhancementFacility", dbmd.supportsIntegrityEnhancementFacility());
         assertFalse("supportsMixedCaseIdentifiers", dbmd.supportsMixedCaseIdentifiers());
         assertFalse("supportsMixedCaseQuotedIdentifiers", dbmd.supportsMixedCaseQuotedIdentifiers());
-        assertFalse("supportsPositionedDelete", dbmd.supportsPositionedDelete());
-        assertFalse("supportsPositionedUpdate", dbmd.supportsPositionedUpdate());
+        assertTrue("supportsPositionedDelete", dbmd.supportsPositionedDelete());
+        assertTrue("supportsPositionedUpdate", dbmd.supportsPositionedUpdate());
         assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE));
         assertTrue("supportsSchemasInPrivilegeDefinitions", dbmd.supportsSchemasInPrivilegeDefinitions());
         assertFalse("supportsSelectForUpdate", dbmd.supportsSelectForUpdate());

@@ -312,8 +312,9 @@
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="features"></a>Which JDBC features are and
         which features are not supported by jTDS?</p>
-      <p>jTDS offers full support for all JDBC 3.0 features: forward-only and
-        scrollable/updateable result sets, batch updates, prepared and callable
+      <p>jTDS offers full support for all JDBC 3.0 features:
+        <a href="resultSets.html">forward-only and scrollable/updateable result
+        sets</a>, batch updates, prepared and callable
         statements, unlimited number of statements per connection, complete
         database and result set meta data, and a <code>DataSource</code>
         implementation (which also implements <code>ConnectionPoolDataSource</code>
@@ -446,7 +447,9 @@
       </ol>
       <p>In both cases if you call <code>Statement.getWarnings()</code> right
         after calling <code>executeQuery()</code> you'll get a warning about the
-        <code>ResultSet</code> being downgraded.</p>
+        <code>ResultSet</code> being downgraded. Also, please take a look at
+        our <a href="resultSets.html"><code>ResultSet</code> support page</a>
+        for some additional information and tips.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="sqlStates"></a>Not all
         <code>SQLException</code>s thrown by jTDS seem to have associated

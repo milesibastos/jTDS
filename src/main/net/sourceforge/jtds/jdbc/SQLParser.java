@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.13 2004-12-03 15:28:29 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.14 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -65,6 +65,8 @@ class SQLParser {
     private String procName;
     /** First SQL keyword or identifier in statement. */
     private String keyWord;
+    /** First table name in from clause */
+    private String tableName;
     /** Connection object for server specific parsing. */
     private ConnectionJDBC2 connection;
 
@@ -789,15 +791,96 @@ class SQLParser {
     }
 
     /**
+     * Extract the first table name following the keyword FROM.
+     *
+     * @return the table name as a <code>String</code>
+     */
+    private String getTableName()
+    {
+        StringBuffer name = new StringBuffer(128);
+        char c = (s < len)? in[s]: ' ';
+        while (s < len && Character.isWhitespace(c)) {
+            out[d++] = c; s++; c = (s < len)? in[s]: ' ';
+        }
+        if (c == '{') {
+            // Start of {oj ... } we can assume that there is
+            // more than one table in select and therefore
+            // it would not be updateable.
+            return "";
+        }
+        //
+        // Skip any leading comments before fist table name
+        //
+        while (c == '/' || c == '-') {
+            if ( c == '/') {
+                if (s+1 < len && in[s+1] == '*') {
+                    skipMultiComments();
+                    s++;
+                } else {
+                    break;
+                }
+            } else {
+                if (s+1 < len && in[s+1] == '-') {
+                    skipSingleComments();
+                } else {
+                    break;
+                }
+            }
+            c = (s < len)? in[s]: ' ';
+            while (s < len && Character.isWhitespace(c)) {
+                out[d++] = c; s++; c = (s < len)? in[s]: ' ';
+            }
+        }
+        if (c == '{') {
+            // See comment above
+            return "";
+        }
+        //
+        // Now process table name
+        //
+        while (s < len) {
+            if (c == '[' || c == '"') {
+                int start = d;
+                copyString();
+                name.append(String.valueOf(out, start, d-start));
+                c = (s < len)? in[s]: ' ';
+            } else {
+                int start = d;
+                while (s < len && !Character.isWhitespace(c) && c != '.' && c != ',') {
+                    out[d++] = c; s++;
+                    c = (s < len)? in[s]: ' ';
+                }
+                name.append(String.valueOf(out, start, d-start));
+            }
+            while (s < len && Character.isWhitespace(c)) {
+                out[d++] = c; s++;
+                c = (s < len)? in[s]: ' ';
+            }
+            if (c != '.') {
+                break;
+            }
+            name.append(c);
+            out[d++] = c; s++;
+            c = (s < len)? in[s]: ' ';
+            while (s < len && Character.isWhitespace(c)) {
+                out[d++] = c; s++;
+                c = (s < len)? in[s]: ' ';
+            }
+        }
+        return name.toString();
+    }
+
+    /**
      * Parse the SQL statement processing JDBC escapes and parameter markers.
      *
-     * This version used by the PreparedStatement.getMetaData() method.
-     * @param truncate True if statement should be truncated at WHERE/GROUP/HAVING/ORDER clause.
-     * @return The processed SQL statement, any procedure name and the first
-     * SQL keyword as elements 0 1, and 2 of the returned <code>String[]</code>.
+     * @param extractTable true to return the first table name in the FROM clause of a select
+     * @return The processed SQL statement, any procedure name, the first
+     * SQL keyword and (optionally) the first table name as elements 0 1, 2 and 3 of the
+     * returned <code>String[]</code>.
      * @throws SQLException
      */
-    String[] parse(boolean truncate) throws SQLException {
+    String[] parse(boolean extractTable) throws SQLException {
+        boolean isSelect = false;
         try {
             //
             while (s < len) {
@@ -833,19 +916,18 @@ class SQLParser {
                         if (Character.isLetter(c)) {
                             if (keyWord == null) {
                                 keyWord = copyKeyWord();
+                                if (keyWord.equals("select")) {
+                                    isSelect = true;
+                                    extractTable = true;
+                                }
                                 break;
                             }
-                            if (truncate) {
-                                int start = d;
+                            if (extractTable && isSelect) {
                                 String sqlWord = copyKeyWord();
-
-                                if (sqlWord.equals("where")
-                                    ||  sqlWord.equals("group")
-                                    ||  sqlWord.equals("having")
-                                    || sqlWord.equals("order")) {
-                                        // Terminate the parse before the key word
-                                        d = start;
-                                        s = len;
+                                if (sqlWord.equals("from")) {
+                                    // Ensure only first 'from' is processed
+                                    extractTable = false;
+                                    tableName = getTableName();
                                 }
                                 break;
                             }
@@ -881,13 +963,13 @@ class SQLParser {
                                 Integer.toString(limit)), "22025");
                 }
             }
-            String result[] = new String[3];
+            String result[] = new String[4];
 
             // return sql and procname
             result[0] = new String(out, 0, d);
             result[1] = procName;
             result[2] = (keyWord == null)? "": keyWord;
-
+            result[3] = tableName;
             return result;
         } catch (IndexOutOfBoundsException e) {
             // Should only come here if string is invalid in some way.

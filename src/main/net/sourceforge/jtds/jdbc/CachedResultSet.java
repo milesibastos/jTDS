@@ -21,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * This class implements a memory cached scrollable/updateable result set.
@@ -40,14 +41,18 @@ import java.util.ArrayList;
  * set implemented here is much faster than the server side cursor.
  * <li>Updateable result sets cannot be built from the output of stored procedures.
  * <li>This implementation uses 'select ... for browse' to obtain the column meta
- * data needed to generate update statements etc. For some reason temporary tables
- * do not report the keyed columns correctly and so cannot be used to build scroll
- * sensitive result sets.
+ * data needed to generate update statements etc.
+ * <li>Named forward updateable cursors are also supported in which case positioned updates
+ * and deletes are used referencing a server side declared cursor.
+ * <li>Named forward read only declared cursors can have a larger fetch size specified
+ * allowing a cursor alternative to the default direct select method.
  * <ol>
  *
  * @author Mike Hutchinson
+ * @version $Id: CachedResultSet.java,v 1.8 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
+
     /** Array of rows comprising the result set. */
     protected ArrayList rowData;
     /** Initial size for row array. */
@@ -69,9 +74,31 @@ public class CachedResultSet extends JtdsResultSet {
     protected int initialRowCnt;
     /** True if this is a local temporary result set. */
     protected boolean tempResultSet = false;
+    /** Cursor TdsCore object. */
+    protected TdsCore cursorTds;
+    /** Updates TdsCore object used for positioned updates. */
+    protected TdsCore updateTds;
+    /** Flag to indicate Sybase. */
+    protected boolean isSybase;
+    /** Fetch size has been changed. */
+    protected boolean sizeChanged = false;
+    /** Original SQL statement. */
+    protected String sql;
+    /** Original procedure name. */
+    protected String procName;
+    /** Original parameters. */
+    protected ParamInfo[] procedureParams;
+    /** Table is keyed. */
+    protected boolean isKeyed;
+    /** First table name in select. */
+    protected String tableName;
 
     /**
      * Construct a new cached result set.
+     * <p>
+     * This result set will either be cached in memory or, if the
+     * cursor name is set, can be a forward only server side cursor.
+     * This latter form of cursor can also support positioned updates.
      *
      * @param statement       The parent statement object.
      * @param sql             The SQL statement used to build the result set.
@@ -88,7 +115,22 @@ public class CachedResultSet extends JtdsResultSet {
             int resultSetType,
             int concurrency) throws SQLException {
         super(statement, resultSetType, concurrency, null, false);
-
+        this.cursorTds = statement.getTds();
+        this.sql = sql;
+        this.procName = procName;
+        this.procedureParams = procedureParams;
+        this.updateTds = this.cursorTds;
+        if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && cursorName != null) {
+            if (concurrency == ResultSet.CONCUR_UPDATABLE) {
+                this.updateTds = new TdsCore((ConnectionJDBC2)statement.getConnection(),
+                        statement.getMessages());
+            }
+        }
+        isSybase = Driver.SYBASE ==
+            ((ConnectionJDBC2)statement.getConnection()).getServerType();
+        //
+        // Now create the specified type of cursor
+        //
         cursorCreate(sql, procName, procedureParams);
     }
 
@@ -133,6 +175,7 @@ public class CachedResultSet extends JtdsResultSet {
         this.initialRowCnt = 0;
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
+        this.cursorName    = null;
     }
 
     /**
@@ -150,6 +193,7 @@ public class CachedResultSet extends JtdsResultSet {
         this.initialRowCnt = 0;
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
+        this.cursorName    = null;
     }
 
     /**
@@ -169,6 +213,7 @@ public class CachedResultSet extends JtdsResultSet {
         this.initialRowCnt = 1;
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
+        this.cursorName    = null;
         this.rowData.add(copyRow(data));
     }
 
@@ -183,7 +228,7 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a new scrollable result set in memory.
+     * Create a new scrollable result set in memory or a named server cursor.
      *
      * @param sql        The SQL SELECT statement.
      * @param procName   Optional procedure name for cursors based on a stored procedure.
@@ -194,99 +239,286 @@ public class CachedResultSet extends JtdsResultSet {
                               String procName,
                               ParamInfo[] parameters)
             throws SQLException {
-        TdsCore tds = statement.getTds();
+        //
+        boolean isSelect = false;
+        SQLWarning warning = null;
+        //
+        // Validate the SQL statement to ensure we have a select.
+        //
+        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
+            || concurrency == ResultSet.CONCUR_UPDATABLE
+            || cursorName != null) {
+            //
+            // We are going to need access to a SELECT statement for
+            // this to work. Reparse the SQL now and check.
+            //
+            ArrayList params = new ArrayList();
+            String tmp[] = new SQLParser(sql, params,
+                                (ConnectionJDBC2)statement.getConnection()).parse(true);
 
-        if (concurrency == ResultSet.CONCUR_UPDATABLE ||
-            resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
-            // User is requesting an updateable or sensitive result set
-            // We need to see if the SQL statement is a select
-            // that references only one underlying table.
-            if (procName == null ||
-                procName.startsWith("#jtds") ||
-                TdsCore.isPreparedProcedureName(procName)) {
+            if (tmp[2].equals("select") && tmp[3] != null && tmp[3].length() > 0) {
+                // OK We have a select with at least one table.
+                tableName = tmp[3];
+                isSelect = true;
+            } else {
+                // No good we can't update and we can't declare a cursor
+                cursorName = null;
+                if (concurrency == ResultSet.CONCUR_UPDATABLE) {
+                    concurrency = ResultSet.CONCUR_READ_ONLY;
+                    warning = new SQLWarning(
+                            Messages.get("warning.cursordowngraded", "CONCUR_READ_ONLY"), "01000");
+                }
+                if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+                    resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
+                    SQLWarning warning2 = new SQLWarning(
+                            Messages.get("warning.cursordowngraded", "TYPE_SCROLL_INSENSITIVE"), "01000");
+                    if (warning != null) {
+                        warning.setNextWarning(warning2);
+                    } else {
+                        warning = warning2;
+                    }
+                }
+            }
+        }
+        //
+        // If a cursor name is specified we try and declare a conventional cursor
+        //
+        if (cursorName != null) {
+            //
+            // We need to substitute any parameters now as the prepended DECLARE CURSOR
+            // will throw the parameter positions off.
+            //
+            if (parameters != null && parameters.length > 0) {
+                sql = Support.substituteParameters(sql,
+                                                   parameters,
+                                                   statement.getTds().getTdsVersion());
+            }
+            StringBuffer cursorSQL = new StringBuffer(sql.length() + cursorName.length()+ 128);
+            cursorSQL.append("DECLARE ").append(cursorName).append(" CURSOR FOR ").append(sql);
+            cursorTds.executeSQL(cursorSQL.toString(), procName, parameters, false,
+                    statement.getQueryTimeout(),
+                        statement.getMaxRows(), true);
+            cursorTds.clearResponseQueue();
+            cursorSQL.setLength(0);
+            cursorSQL.append("\r\nOPEN ").append(cursorName);
+            if (fetchSize > 1 && isSybase) {
+                cursorSQL.append("\r\nSET CURSOR ROWS ").append(fetchSize);
+                cursorSQL.append(" FOR ").append(cursorName);
+            }
+            cursorSQL.append("\r\nFETCH ").append(cursorName);
+            //
+            // OK Declare cursor, open it and fetch first (fetchSize) rows.
+            //
+            cursorTds.executeSQL(cursorSQL.toString(), null, null, false,
+                   statement.getQueryTimeout(),
+                       statement.getMaxRows(), true);
+
+            while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
+
+            if (!cursorTds.isResultSet()) {
+                throw new SQLException(Messages.get("error.statement.noresult"), "24000");
+            }
+            columns = cursorTds.getColumns();
+            columnCount = getColumnCount(columns);
+        } else {
+            //
+            // Open a memory cached scrollable or forward only possibly updateable cursor
+            //
+            if (isSelect &&
+                (concurrency == ResultSet.CONCUR_UPDATABLE ||
+                 resultSetType != ResultSet.TYPE_FORWARD_ONLY)) {
+                // Need to execute SELECT .. FOR BROWSE to get
+                // the MetaData we require for updates etc
                 // OK Should have an SQL select statement
                 // append " FOR BROWSE" to obtain table names
                 // NB. We can't use any jTDS temporary stored proc
-                try {
-                    tds.executeSQL(sql + " FOR BROWSE", null, parameters, false,
-                            		statement.getQueryTimeout(),
-                            		statement.getMaxRows(), true);
-                    while (!tds.getMoreResults() && !tds.isEndOfResponse());
-
-                    if (tds.isResultSet()) {
-                        columns = tds.getColumns();
-                        // Check base table names
-                        String tableName = null;
-                        for (int i = 0; i < columns.length; i++) {
-                            if (columns[i].tableName != null) {
-                                if (tableName != null &&
-                                    !tableName.equals(columns[i].tableName)) {
-                                    // Too many table names
-                                    columns = null;
-                                    break;
-                                }
-                                tableName = columns[i].tableName;
-                            }
-                            if (columns[i].isKey) {
-                                hasKeys = true;
-                            }
-                         }
-                        if (tableName == null) {
-                            // No table in select?
-                            columns = null;
-                        }
+                    cursorTds.executeSQL(sql + " FOR BROWSE", null, parameters, false,
+                                    statement.getQueryTimeout(),
+                                    statement.getMaxRows(), true);
+                while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
+                if (!cursorTds.isResultSet()) {
+                    throw new SQLException(Messages.get("error.statement.noresult"), "24000");
+                }
+                columns = cursorTds.getColumns();
+                columnCount = getColumnCount(columns);
+                rowData = new ArrayList(INITIAL_ROW_COUNT);
+                //
+                // Load result set into buffer
+                //
+                while (super.next()) {
+                    rowData.add(copyRow(currentRow));
+                }
+                rowsInResult  = rowData.size();
+                initialRowCnt = rowsInResult;
+                pos = POS_BEFORE_FIRST;
+                //
+                // If cursor is built over one table and the table has
+                // key columns then the result set is updateable and / or
+                // can be used as a scroll sensitive result set.
+                //
+                if (!isCursorUpdateable()) {
+                    // No so downgrade
+                    if (concurrency == ResultSet.CONCUR_UPDATABLE) {
+                        concurrency = ResultSet.CONCUR_READ_ONLY;
+                        statement.addWarning(new SQLWarning(
+                                Messages.get("warning.cursordowngraded",
+                                             "CONCUR_READ_ONLY"), "01000"));
                     }
-                } catch (SQLException e) {
-                    if (statement.getConnection().isClosed()) {
-                        // Serious error rethrow
-                        throw e;
+                    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+                        resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
+                        statement.addWarning(new SQLWarning(
+                                Messages.get("warning.cursordowngraded",
+                                             "TYPE_SCROLL_INSENSITIVE"), "01000"));
                     }
                 }
-            } // else a stored procedure so we can't discover table names
-        }
-        if (columns != null &&
-            resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE &&
-            !isKeyed()) {
+                return;
+            }
             //
-            // We have downgraded to scroll insensitive tell user
+            // Create a read only cursor using direct SQL
             //
-            resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
-            statement.addWarning(new SQLWarning(
-                    Messages.get("warning.cursordowngraded", "TYPE_SCROLL_INSENSITIVE"), "01000"));
-        }
-        //
-        // If we get here and columns is still null we need to execute normally
-        //
-        if (columns == null) {
-            tds.executeSQL(sql, procName, parameters, false,
-                    	   statement.getQueryTimeout(),
-        		           statement.getMaxRows(), true);
-            while (!tds.getMoreResults() && !tds.isEndOfResponse());
+            cursorTds.executeSQL(sql, procName, parameters, false,
+                       statement.getQueryTimeout(),
+                       statement.getMaxRows(), true);
+            while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
-            if (!tds.isResultSet()) {
+            if (!cursorTds.isResultSet()) {
                 throw new SQLException(Messages.get("error.statement.noresult"), "24000");
             }
-            columns = tds.getColumns();
-            if (concurrency == ResultSet.CONCUR_UPDATABLE ) {
-                //
-                // We have downgraded to read only tell user
-                //
-                statement.addWarning(new SQLWarning(
-                        Messages.get("warning.cursordowngraded", "CONCUR_READ_ONLY"), "01000"));
-                concurrency = ResultSet.CONCUR_READ_ONLY;
+            columns = cursorTds.getColumns();
+            columnCount = getColumnCount(columns);
+            rowData = new ArrayList(INITIAL_ROW_COUNT);
+            //
+            // Load result set into buffer
+            //
+            while (super.next()) {
+                rowData.add(copyRow(currentRow));
+            }
+            rowsInResult  = rowData.size();
+            initialRowCnt = rowsInResult;
+            pos = POS_BEFORE_FIRST;
+            if (warning != null) {
+                statement.addWarning(warning);
             }
         }
-        columnCount = getColumnCount(columns);
-        rowData = new ArrayList(INITIAL_ROW_COUNT);
+    }
+
+    /**
+     * Analyse the tables in the result set and determine if
+     * we have the primary key columns needed to make each updateable.
+     * <p>Sybase (and SQL 6.5) will automatically include any additional
+     * key and timestamp columns as hidden fields even if the user does
+     * not reference them in the select statement.
+     * <p>If table is unkeyed but there is an identity column then this
+     * is promoted to a key.
+     * <p>Alternatively we can update, provided all the columns in the
+     * table row have been selected, by regarding all of them as keys.
+     * <p>SQL Server 7+ does not return the correct primary key meta data for
+     * temporary tables so the driver has to query the catalog to locate any keys.
+     * @return <code>boolean<code> true if there is one table and it is keyed.
+     */
+    boolean isCursorUpdateable() throws SQLException
+    {
         //
-        // Load result set into buffer
+        // Get fully qualified table names and check keys
         //
-        while (super.next()) {
-            rowData.add(copyRow(currentRow));
+        isKeyed = false;
+        HashSet tableSet = new HashSet();
+        for (int i = 0; i < columns.length; i++) {
+            ColInfo ci = columns[i];
+            if (ci.isKey) {
+                // If a table lacks a key Sybase flags all columns except timestamps as keys.
+                // This does not make much sense in the case of text or image fields!
+                if (ci.sqlType.equals("text") || ci.sqlType.equals("image")) {
+                    ci.isKey = false;
+                } else {
+                    isKeyed = true;
+                }
+            } else
+            if (ci.isIdentity) {
+                // This is a good choice for a row identifier!
+                ci.isKey = true;
+                isKeyed = true;
+            }
+            if (ci.tableName != null && ci.tableName.length() > 0) {
+                StringBuffer key = new StringBuffer();
+                if (ci.catalog != null) {
+                    key.append(ci.catalog).append('.');
+                    if (ci.schema == null) {
+                        key.append('.');
+                    }
+                }
+                if (ci.schema != null) {
+                    key.append(ci.schema).append('.');
+                }
+                key.append(ci.tableName);
+                tableName = key.toString();
+                tableSet.add(tableName);
+            }
         }
-        rowsInResult  = rowData.size();
-        initialRowCnt = rowsInResult;
-        pos = POS_BEFORE_FIRST;
+        //
+        // MJH - SQL Server 7/2000 does not return key information for temporary tables.
+        // I regard this as a bug!
+        // See if we can find up to the first 8 index columns for ourselves.
+        //
+        if (tableName.startsWith("#") && cursorTds.getTdsVersion() >= Driver.TDS70) {
+            StringBuffer sql = new StringBuffer(1024);
+            sql.append("SELECT ");
+            for (int i = 1; i <= 8; i++) {
+                if (i > 1) {
+                    sql.append(",");
+                }
+                sql.append("index_col('tempdb..").append(tableName);
+                sql.append("', indid, ").append(i).append(")");
+            }
+            sql.append(" FROM tempdb..sysindexes WHERE id = object_id('tempdb..");
+            sql.append(tableName).append("') AND indid > 0 AND ");
+            sql.append("(status & 2048) = 2048");
+            cursorTds.executeSQL(sql.toString(),
+                                 null,
+                                 null,
+                                 false,
+                                 0,
+                                 statement.getMaxRows(),
+                                 true);
+            while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
+
+            if (cursorTds.isResultSet() && cursorTds.getNextRow())
+            {
+                Object row[] = cursorTds.getRowData();
+                for (int i =0 ; i < row.length; i++) {
+                    String name = (String)row[i];
+                    if (name != null) {
+                        for (int c = 0; c < columns.length; c++) {
+                            if (columns[c].realName != null &&
+                                columns[c].realName.equalsIgnoreCase(name)) {
+                                columns[c].isKey = true;
+                                isKeyed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        //
+        // Final fall back make all columns pseudo keys!
+        // Sybase seems to do this automatically.
+        //
+        if (!isKeyed) {
+            for (int i = 0; i < columns.length; i++) {
+                String type = columns[i].sqlType;
+                if (!type.equals("ntext") &&
+                        !type.equals("text") &&
+                        !type.equals("image") &&
+                        !type.equals("timestamp") &&
+                        columns[i].tableName != null) {
+                    columns[i].isKey = true;
+                    isKeyed = true;
+                }
+            }
+        }
+
+        return (tableSet.size() == 1 && isKeyed);
     }
 
     /**
@@ -299,6 +531,48 @@ public class CachedResultSet extends JtdsResultSet {
     private boolean cursorFetch(int rowNum)
             throws SQLException {
         rowUpdated = false;
+        //
+        if (cursorName != null) {
+            //
+            // Using a conventional forward only server cursor
+            //
+            if (!cursorTds.getNextRow()) {
+                // Need to fetch more rows from server
+                StringBuffer sql = new StringBuffer(128);
+                if (isSybase && sizeChanged) {
+                    // Sybase allows us to set a fetch size
+                    sql.append("SET CURSOR ROWS ").append(fetchSize);
+                    sql.append(" FOR ").append(cursorName);
+                    sql.append("\r\n");
+                }
+                sql.append("FETCH ").append(cursorName);
+                // Get the next row or block of rows.
+                cursorTds.executeSQL(sql.toString(),
+                                null,
+                                null,
+                                false,
+                                statement.getQueryTimeout(),
+                                statement.getMaxRows(), true);
+                while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
+
+                sizeChanged = false; // Indicate fetch size updated
+
+                if (!cursorTds.isResultSet() || !cursorTds.getNextRow()) {
+                    pos = POS_AFTER_LAST;
+                    currentRow = null;
+                    return false;
+                }
+            }
+            currentRow = statement.getTds().getRowData();
+            pos++;
+            rowsInResult = pos;
+
+            return currentRow != null;
+
+        }
+        //
+        // JDBC2 style Scrollable and/or Updateable cursor
+        //
         if (rowsInResult == 0) {
             pos = POS_BEFORE_FIRST;
             currentRow = null;
@@ -306,9 +580,7 @@ public class CachedResultSet extends JtdsResultSet {
         }
         if (rowNum == pos) {
             // On current row
-            if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
-                refreshRow();
-            }
+            //
             return true;
         }
         if (rowNum < 1) {
@@ -324,27 +596,32 @@ public class CachedResultSet extends JtdsResultSet {
         pos = rowNum;
         currentRow = (Object[])rowData.get(rowNum-1);
         rowDeleted = currentRow == null;
+
         if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE &&
             currentRow != null) {
             refreshRow();
         }
+
         return true;
     }
 
     /**
      * Close the result set.
      */
-    private void cursorClose() {
+    private void cursorClose() throws SQLException {
+        if (cursorName != null) {
+            statement.clearWarnings();
+            String sql;
+            if (isSybase) {
+                sql = "CLOSE " + cursorName +
+                      "\r\nDEALLOCATE CURSOR " + cursorName;
+            } else {
+                sql = "CLOSE " + cursorName +
+                      "\r\nDEALLOCATE " + cursorName;
+            }
+            cursorTds.submitSQL(sql);
+        }
         rowData = null;
-    }
-
-    /**
-     * Retrieve the keyed status of the result set.
-     *
-     * @return True if result set has one or more keys.
-     */
-    protected boolean isKeyed() {
-        return hasKeys;
     }
 
     /**
@@ -406,6 +683,8 @@ public class CachedResultSet extends JtdsResultSet {
             pi = insertRow[colIndex];
             if (pi == null) {
                 pi = new ParamInfo(-1);
+                pi.collation = ci.collation;
+                pi.charsetInfo = ci.charsetInfo;
                 insertRow[colIndex] = pi;
             }
         } else {
@@ -415,6 +694,8 @@ public class CachedResultSet extends JtdsResultSet {
             pi = updateRow[colIndex];
             if (pi == null) {
                 pi = new ParamInfo(-1);
+                pi.collation = ci.collation;
+                pi.charsetInfo = ci.charsetInfo;
                 updateRow[colIndex] = pi;
             }
         }
@@ -435,9 +716,154 @@ public class CachedResultSet extends JtdsResultSet {
         }
     }
 
+    /**
+     * Build a where clause for update or delete statements.
+     * @param sql The SQL Statement to append the where clause to.
+     * @param params The parameter descriptor array for this statement.
+     * @param select True if this where clause will be used in a select statement.
+     * @return The parameter list as a <code>ParamInfo[]</code>.
+     * @throws SQLException
+     */
+    ParamInfo[] buildWhereClause(StringBuffer sql, ArrayList params, boolean select)
+        throws SQLException
+    {
+        //
+        // Now construct where clause
+        //
+        sql.append(" WHERE ");
+        if (cursorName != null) {
+            //
+            // Use a positioned update
+            //
+            sql.append(" CURRENT OF ").append(cursorName);
+        } else {
+            int count = 0;
+            for (int i = 0; i < columns.length; i++) {
+                if (currentRow[i] == null) {
+                    if (count > 0) {
+                        sql.append(" AND ");
+                    }
+                    sql.append(columns[i].realName);
+                    sql.append(" IS NULL");
+                } else {
+                    if (isKeyed && select)
+                    {
+                        // For refresh select only include key columns
+                        if (columns[i].isKey) {
+                            if (count > 0) {
+                                sql.append(" AND ");
+                            }
+                            sql.append(columns[i].realName);
+                            sql.append("=?");
+                            count++;
+                            params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
+                        }
+                    } else {
+                        // Include all available 'searchable' columns in updates/deletes to protect
+                        // against lost updates.
+                        if (!columns[i].sqlType.equals("text")
+                                && !columns[i].sqlType.equals("ntext")
+                                && !columns[i].sqlType.equals("image")
+                                && columns[i].tableName != null) {
+                            if (count > 0) {
+                                sql.append(" AND ");
+                            }
+                            sql.append(columns[i].realName);
+                            sql.append("=?");
+                            count++;
+                            params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
+                        }
+                    }
+                }
+            }
+        }
+        return (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+    }
+
+    /**
+     * Refresh a result set row from keyed tables.
+     * <p>If all the tables in the result set have primary keys then the
+     * result set row can be refreshed by refetching the individual table rows.
+     * @throws SQLException
+     */
+    protected void refreshKeyedRows() throws SQLException
+    {
+        //
+        // Construct a SELECT statement
+        //
+        StringBuffer sql = new StringBuffer();
+        sql.append("SELECT ");
+        int count = 0;
+        for (int i = 0; i < columns.length; i++) {
+            if (!columns[i].isKey && columns[i].tableName != null) {
+                if (count > 0) {
+                    sql.append(',');
+                }
+                sql.append(columns[i].realName);
+                count++;
+            }
+        }
+        if (count == 0) {
+            // No non key columns in this table?
+            return;
+        }
+        sql.append(" FROM ");
+        sql.append(tableName);
+        //
+        // Construct a where clause using keyed columns only
+        //
+        ArrayList params = new ArrayList();
+        buildWhereClause(sql, params, true);
+        ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+        //
+        // Execute the select
+        //
+        TdsCore tds = statement.getTds();
+        tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+        if (!tds.isEndOfResponse()) {
+            if (tds.getMoreResults() && tds.getNextRow()) {
+                // refresh the row data
+                Object col[] = tds.getRowData();
+                count = 0;
+                for (int i = 0; i < columns.length; i++) {
+                    if (!columns[i].isKey) {
+                        currentRow[i] = col[count++];
+                    }
+                }
+            } else {
+                currentRow = null;
+            }
+        } else {
+            currentRow = null;
+        }
+        tds.clearResponseQueue();
+        statement.getMessages().checkErrors();
+        if (currentRow == null) {
+            rowData.set(pos-1, null);
+            rowDeleted = true;
+        }
+    }
+
+    /**
+     * Refresh the row by rereading the result set.
+     * <p>
+     * Obviously very slow on large result sets but may
+     * be the only option if tables do not have keys.
+     */
+    protected void refreshReRead() throws SQLException
+    {
+        int savePos = pos;
+        cursorCreate(sql, procName, procedureParams);
+        absolute(savePos);
+    }
 //
 //  -------------------- java.sql.ResultSet methods -------------------
 //
+
+     public void setFetchSize(int size) throws SQLException {
+         sizeChanged = size != fetchSize;
+         super.setFetchSize(size);
+     }
 
      public void afterLast() throws SQLException {
          checkOpen();
@@ -494,78 +920,41 @@ public class CachedResultSet extends JtdsResultSet {
          if (onInsertRow) {
              throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
          }
+
          //
          // Construct an SQL DELETE statement
          //
          StringBuffer sql = new StringBuffer(128);
-         String dbName    = columns[0].catalog;
-         String userName  = columns[0].schema;
-         String tableName = columns[0].tableName;
          ArrayList params = new ArrayList();
          sql.append("DELETE FROM ");
-         if (dbName != null) {
-             sql.append(dbName);
-             sql.append('.');
-             if (userName == null) {
-                 sql.append('.');
-             }
-         }
-         if (userName != null) {
-             sql.append(userName);
-             sql.append('.');
-         }
          sql.append(tableName);
          //
          // Create the WHERE clause
          //
-         sql.append(" WHERE ");
-         int count = 0;
-         for (int i = 0; i < columnCount; i++) {
-             if (currentRow[i] == null) {
-                 if (count > 0) {
-                     sql.append(" AND ");
-                 }
-                 sql.append(columns[i].realName);
-                 sql.append(" IS NULL");
-             } else {
-                 // Only include searchable columns in where clause
-                 if (!columns[i].sqlType.equals("text")
-                     && !columns[i].sqlType.equals("ntext")
-                     && !columns[i].sqlType.equals("image")) {
-                     if (count > 0) {
-                         sql.append(" AND ");
-                     }
-                     sql.append(columns[i].realName);
-                     sql.append("=?");
-                     count++;
-                     params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
-                 }
-             }
-         }
-         ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+         ParamInfo parameters[] = buildWhereClause(sql, params, false);
          //
          // Execute the delete statement
          //
-         TdsCore tds = statement.getTds();
-         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+         updateTds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
          int updateCount = 0;
-         while (!tds.isEndOfResponse()) {
-             if (!tds.getMoreResults()) {
-                 if (tds.isUpdateCount()) {
-                     updateCount = tds.getUpdateCount();
+         while (!updateTds.isEndOfResponse()) {
+             if (!updateTds.getMoreResults()) {
+                 if (updateTds.isUpdateCount()) {
+                     updateCount = updateTds.getUpdateCount();
                  }
              }
          }
-         tds.clearResponseQueue();
+         updateTds.clearResponseQueue();
          statement.getMessages().checkErrors();
-         if (updateCount > 0) {
-             // Leave a 'hole' in the result set array.
-             rowDeleted = true;
-             currentRow = null;
-             rowData.set(pos-1, null);
-         } else {
+         if (updateCount == 0) {
              // No delete. Possibly row was changed on database by another user?
              throw new SQLException(Messages.get("error.resultset.deletefail"), "24000");
+         }
+         rowDeleted = true;
+         currentRow = null;
+         if (resultSetType != ResultSet.TYPE_FORWARD_ONLY) {
+             // Leave a 'hole' in the result set array.
+             rowData.set(pos-1, null);
          }
      }
 
@@ -577,6 +966,7 @@ public class CachedResultSet extends JtdsResultSet {
          if (!onInsertRow) {
              throw new SQLException(Messages.get("error.resultset.notinsrow"), "24000");
          }
+
          if (!tempResultSet) {
              //
              // Construct an SQL INSERT statement
@@ -640,17 +1030,16 @@ public class CachedResultSet extends JtdsResultSet {
              //
              // execute the insert statement
              //
-             TdsCore tds = statement.getTds();
-             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+             updateTds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
              int updateCount = 0;
-             while (!tds.isEndOfResponse()) {
-                 if (!tds.getMoreResults()) {
-                     if (tds.isUpdateCount()) {
-                         updateCount = tds.getUpdateCount();
+             while (!updateTds.isEndOfResponse()) {
+                 if (!updateTds.getMoreResults()) {
+                     if (updateTds.isUpdateCount()) {
+                         updateCount = updateTds.getUpdateCount();
                      }
                  }
              }
-             tds.clearResponseQueue();
+             updateTds.clearResponseQueue();
              statement.getMessages().checkErrors();
              if (updateCount < 1) {
                  // No Insert. Probably will not get here as duplicate key etc
@@ -659,17 +1048,21 @@ public class CachedResultSet extends JtdsResultSet {
              }
          }
          //
-         // Now insert copy of row into result set buffer
-         //
-         ConnectionJDBC2 con = (ConnectionJDBC2)statement.getConnection();
-         Object row[] = newRow();
-         for (int i = 0; i < insertRow.length; i++) {
-             if (insertRow[i] != null) {
-                 row[i] = Support.convert(con, insertRow[i].value,
-                                           columns[i].jdbcType, con.getCharset());
+         if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE)
+         {
+             //
+             // Now insert copy of row into result set buffer
+             //
+             ConnectionJDBC2 con = (ConnectionJDBC2)statement.getConnection();
+             Object row[] = newRow();
+             for (int i = 0; i < insertRow.length; i++) {
+                 if (insertRow[i] != null) {
+                     row[i] = Support.convert(con, insertRow[i].value,
+                                               columns[i].jdbcType, con.getCharset());
+                 }
              }
+             rowData.add(row);
          }
-         rowData.add(row);
          rowsInResult++;
          initialRowCnt++;
          //
@@ -703,6 +1096,7 @@ public class CachedResultSet extends JtdsResultSet {
          if (onInsertRow) {
              throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
          }
+
          //
          // If row is being updated discard updates now
          //
@@ -710,86 +1104,24 @@ public class CachedResultSet extends JtdsResultSet {
              cancelRowUpdates();
              rowUpdated = false;
          }
+         if (resultSetType == ResultSet.TYPE_FORWARD_ONLY ||
+             currentRow == null) {
+             // Do not try and refresh the row in these cases.
+             return;
+         }
          //
          // If result set is keyed we can refresh the row data from the
          // database using the key.
-         // NB. #Temporary tables with keys are not identified correctly
+         // NB. MS SQL Server #Temporary tables with keys are not identified correctly
          // in the column meta data sent after 'for browse'. This means that
          // temporary tables can not be used with this logic.
          //
-         if (isKeyed() && currentRow != null){
-             //
-             // Construct a SELECT statement
-             //
-             StringBuffer sql = new StringBuffer();
-             sql.append("SELECT ");
-             for (int i = 0; i < columns.length; i++) {
-                 if (i > 0) {
-                    sql.append(',');
-                 }
-                 sql.append(columns[i].realName);
-             }
-             sql.append(" FROM ");
-             if (columns[0].catalog != null && columns[0].catalog.length() > 0) {
-                 sql.append(columns[0].catalog).append('.');
-                 if (columns[0].schema == null || columns[0].schema.length() == 0) {
-                     sql.append("..");
-                 }
-             }
-             if (columns[0].schema != null && columns[0].schema.length() > 0) {
-                 sql.append(columns[0].schema).append('.');
-             }
-             sql.append(columns[0].tableName);
-             //
-             // Construct a where clause using keyed columns only
-             //
-             sql.append(" WHERE ");
-             ArrayList params = new ArrayList();
-             int count = 0;
-             for (int i = 0; i < columns.length; i++) {
-                 if (columns[i].isKey) {
-                     if (currentRow[i] == null) {
-                         if (count > 0) {
-                             sql.append(" AND ");
-                         }
-                         sql.append(columns[i].realName);
-                         sql.append(" IS NULL");
-                     } else {
-                         if (count > 0) {
-                             sql.append(" AND ");
-                         }
-                         sql.append(columns[i].realName);
-                         sql.append("=?");
-                         params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
-                     }
-                     count++;
-                 }
-             }
-             ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
-             //
-             // Execute the select
-             //
-             TdsCore tds = statement.getTds();
-             tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
-             if (!tds.isEndOfResponse()) {
-                 if (tds.getMoreResults() && tds.getNextRow()) {
-                     // refresh the row data
-                     Object col[] = tds.getRowData();
-                     for (int i = 0; i < col.length; i++) {
-                         currentRow[i] = col[i];
-                     }
-                 } else {
-                     currentRow = null;
-                 }
-             } else {
-                 currentRow = null;
-             }
-             tds.clearResponseQueue();
-             statement.getMessages().checkErrors();
-             if (currentRow == null) {
-                 rowData.set(pos-1, null);
-                 rowDeleted = true;
-             }
+         if (isKeyed) {
+             // OK all tables are keyed
+             refreshKeyedRows();
+         } else {
+             // No good have to use brute force approach
+             refreshReRead();
          }
      }
 
@@ -797,6 +1129,8 @@ public class CachedResultSet extends JtdsResultSet {
          checkOpen();
          checkUpdateable();
 
+         rowUpdated = false;
+         rowDeleted = false;
          if (currentRow == null) {
              throw new SQLException(Messages.get("error.resultset.norow"), "24000");
          }
@@ -809,27 +1143,13 @@ public class CachedResultSet extends JtdsResultSet {
              // Nothing to update
              return;
          }
+         boolean keysChanged = false;
          //
          // Construct an SQL UPDATE statement
          //
          StringBuffer sql = new StringBuffer(128);
-         String dbName    = columns[0].catalog;
-         String userName  = columns[0].schema;
-         String tableName = columns[0].tableName;
          ArrayList params = new ArrayList();
-
          sql.append("UPDATE ");
-         if (dbName != null) {
-             sql.append(dbName);
-             sql.append('.');
-             if (userName == null) {
-                 sql.append('.');
-             }
-         }
-         if (userName != null) {
-             sql.append(userName);
-             sql.append('.');
-         }
          sql.append(tableName);
          //
          // OK now create assign new values
@@ -846,58 +1166,45 @@ public class CachedResultSet extends JtdsResultSet {
                  updateRow[i].markerPos = sql.length()-1;
                  params.add(updateRow[i]);
                  count++;
+                 if (columns[i].isKey) {
+                     // Key is changing so in memory row will need to be deleted
+                     // and reinserted at end of row buffer.
+                     keysChanged = true;
+                 }
              }
+         }
+         if (count == 0) {
+             // There are no columns to update in this table
+             // so bail out now.
+             return;
          }
          //
          // Now construct where clause
          //
-         sql.append(" WHERE ");
-         count = 0;
-         for (int i = 0; i < columnCount; i++) {
-             if (currentRow[i] == null) {
-                 if (count > 0) {
-                     sql.append(" AND ");
-                 }
-                 sql.append(columns[i].realName);
-                 sql.append(" IS NULL");
-             } else {
-                 // Only include 'searchable' columns in where clause
-                 if (!columns[i].sqlType.equals("text")
-                     && !columns[i].sqlType.equals("ntext")
-                     && !columns[i].sqlType.equals("image")) {
-                     if (count > 0) {
-                         sql.append(" AND ");
-                     }
-                     sql.append(columns[i].realName);
-                     sql.append("=?");
-                     count++;
-                     params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
-                 }
-             }
-         }
-         ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+         ParamInfo parameters[] = buildWhereClause(sql, params, false);
          //
          // Now execute update
          //
-         TdsCore tds = statement.getTds();
-         tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+         updateTds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
          int updateCount = 0;
-         while (!tds.isEndOfResponse()) {
-             if (!tds.getMoreResults()) {
-                 if (tds.isUpdateCount()) {
-                     updateCount = tds.getUpdateCount();
+         while (!updateTds.isEndOfResponse()) {
+             if (!updateTds.getMoreResults()) {
+                 if (updateTds.isUpdateCount()) {
+                     updateCount = updateTds.getUpdateCount();
                  }
              }
          }
-         tds.clearResponseQueue();
+         updateTds.clearResponseQueue();
          statement.getMessages().checkErrors();
-         rowUpdated = updateCount > 0;
 
          if (updateCount == 0) {
              // No update. Possibly row was changed on database by another user?
              throw new SQLException(Messages.get("error.resultset.updatefail"), "24000");
          }
-         if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+         //
+         // Update local copy of data
+         //
+         if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
              // Make in memory copy reflect database update
              // Could use refreshRow but this is much faster.
              ConnectionJDBC2 con = (ConnectionJDBC2)statement.getConnection();
@@ -907,6 +1214,19 @@ public class CachedResultSet extends JtdsResultSet {
                                                  columns[i].jdbcType, con.getCharset());
                  }
              }
+         }
+         //
+         // Update state of cached row data
+         //
+         if (keysChanged && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
+             // Leave hole at current position and add updated row to end of set
+             rowData.add(currentRow);
+             rowsInResult = rowData.size();
+             rowData.set(pos-1, null);
+             currentRow = null;
+             rowDeleted = true;
+         } else {
+             rowUpdated = true;
          }
          //
          // Clear update values
@@ -959,13 +1279,15 @@ public class CachedResultSet extends JtdsResultSet {
      public boolean rowInserted() throws SQLException {
          checkOpen();
 
-         return pos > initialRowCnt;
+//         return pos > initialRowCnt;
+         return false; // Same as MSCursorResultSet
      }
 
      public boolean rowUpdated() throws SQLException {
          checkOpen();
 
-         return rowUpdated;
+//         return rowUpdated;
+         return false; // Same as MSCursorResultSet
      }
 
      public boolean absolute(int row) throws SQLException {
@@ -979,6 +1301,7 @@ public class CachedResultSet extends JtdsResultSet {
      }
 
      public boolean relative(int row) throws SQLException {
+         checkScrollable();
          if (pos == POS_AFTER_LAST) {
              return absolute((rowsInResult+1)+row);
          } else {

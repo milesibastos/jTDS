@@ -38,7 +38,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.21 2004-12-19 10:03:06 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.22 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -2726,8 +2726,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsPositionedDelete() throws SQLException {
-        // XXX Could we support it in the future?
-        return false;
+        return true;
     }
 
     /**
@@ -2737,8 +2736,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsPositionedUpdate() throws SQLException {
-        // XXX Could we support it in the future?
-        return false;
+        return true;
     }
 
     /**

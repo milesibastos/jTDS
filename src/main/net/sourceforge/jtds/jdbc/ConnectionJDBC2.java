@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.59 2004-12-20 15:51:17 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.60 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -478,6 +478,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             if (returnKeys) {
                 return null; // Sybase cannot use @@IDENTITY in proc
+            }
+
+            if (pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
+                || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
+                || pstmt.cursorName != null) {
+                //
+                // We are going to use the CachedResultSet so there is
+                // no point in preparing the SQL as it will be discarded
+                // in favour of a version with "FOR BROWSE" appended.
+                //
+                return null;
             }
         }
 

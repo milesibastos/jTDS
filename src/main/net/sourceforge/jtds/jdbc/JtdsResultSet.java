@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.28 2005-01-04 10:22:07 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.29 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -100,6 +100,8 @@ public class JtdsResultSet implements ResultSet {
     protected int fetchDirection = FETCH_FORWARD;
     /** The fetch size (only applies to cursor <code>ResultSet</code>s). */
     protected int fetchSize;
+    /** The cursor name to be used for positioned updates. */
+    protected String cursorName;
     /** True if the resultset should read ahead to ensure return parameters are processed. */
     protected boolean readAhead = true;
     /** Cache to optimize findColumn(String) lookups */
@@ -136,6 +138,7 @@ public class JtdsResultSet implements ResultSet {
         this.columns = columns;
         this.fetchSize = statement.fetchSize;
         this.fetchDirection = statement.fetchDirection;
+        this.cursorName  = statement.cursorName;
 
         if (columns != null) {
             columnCount  = getColumnCount(columns);
@@ -150,13 +153,10 @@ public class JtdsResultSet implements ResultSet {
      * @return The new column count as an <code>int</code>.
      */
     protected int getColumnCount(ColInfo[] columns) {
-        for (int i = columns.length - 1; i >= 0; i--) {
-            if (columns[i].isHidden) {
-                return i;
-            }
-        }
-
-        return columns.length;
+        // MJH - Modified to cope with more than one hidden column
+        int i;
+        for (i = columns.length - 1; i >= 0 && columns[i].isHidden; i--);
+        return i + 1;
     }
 
     /**
@@ -825,6 +825,9 @@ public class JtdsResultSet implements ResultSet {
 
     public String getCursorName() throws SQLException {
         checkOpen();
+        if (cursorName != null) {
+            return this.cursorName;
+        }
         throw new SQLException(Messages.get("error.resultset.noposupdate"), "24000");
     }
 

@@ -20,6 +20,7 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Types;
+import java.sql.ResultSet;
 
 /**
  * This class extends the JtdsResultSet to support scrollable and or
@@ -36,7 +37,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.39 2004-12-19 17:34:53 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.40 2005-01-04 12:43:56 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -311,6 +312,17 @@ public class MSCursorResultSet extends JtdsResultSet {
         TdsCore tds = statement.getTds();
         int prepareSql = statement.connection.getPrepareSql();
 
+        //
+        // If this cursor is going to be a named forward only cursor
+        // force the concurrency to be updateable.
+        // TODO: Cursor is updateable unless user appends FOR READ to the select
+        // but we would need to parse the SQL to discover this.
+        //
+        if (cursorName != null
+            && resultSetType == ResultSet.TYPE_FORWARD_ONLY
+            && concurrency == ResultSet.CONCUR_READ_ONLY) {
+            concurrency = ResultSet.CONCUR_UPDATABLE;
+        }
         //
         // Simplify future tests for parameters
         //
@@ -599,6 +611,27 @@ public class MSCursorResultSet extends JtdsResultSet {
         if (prepareSql == TdsCore.PREPEXEC) {
             prepStmtHandle = (Integer)pStmtHand.getOutValue();
         }
+
+        if ((retVal == null) || (retVal.intValue() != 0)) {
+            throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
+        }
+        //
+        // Set the cursor name if required allowing positioned updates.
+        // We need to do this here as any downgrade warnings will be wiped
+        // out by the executeSQL call.
+        //
+        if (cursorName != null) {
+            ParamInfo params[] = new ParamInfo[3];
+            params[0] = PARAM_CURSOR_HANDLE;
+            PARAM_OPTYPE.value = new Integer(2);
+            params[1] = PARAM_OPTYPE;
+            params[2] = new ParamInfo(Types.VARCHAR, cursorName, ParamInfo.INPUT);
+            tds.executeSQL(null, "sp_cursoroption", params, true, 0, -1, true);
+            tds.clearResponseQueue();
+            if (tds.getReturnStatus().intValue() != 0) {
+                throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
+            }
+        }
         //
         // Check for downgrade of scroll or concurrency options
         //
@@ -648,9 +681,6 @@ public class MSCursorResultSet extends JtdsResultSet {
                     "warning.cursordowngraded", resultSetType + "/" + concurrency), "01000"));
         }
 
-        if ((retVal == null) || (retVal.intValue() != 0)) {
-            throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
-        }
         //
         // TODO: Save the value of the prepStmtHandle for reuse later
         //

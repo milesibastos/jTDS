@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.57 2004-12-16 17:39:21 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.58 2004-12-17 14:33:35 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -296,9 +296,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         try {
             if (namedPipe == true) {
-                socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize,
-                        instanceName, domainName, user, password);
+                if((serverName == null || serverName.equals(".") || serverName.startsWith("127.")
+                        || serverName.equalsIgnoreCase("localhost"))
+                        && System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                    // If server name is null, ".", "127.0.0.1" or "localhost"
+                    // and the OS is Windows, use a local named pipe
+                    socket = new SharedLocalNamedPipe(tdsVersion, serverType);
+                } else {
+                    // Otherwise use a named pipe over TCP/IP
+                    socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize,
+                            instanceName, domainName, user, password);
+                }
             } else {
+                // Use plain TCP/IP socket
                 socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType, tcpNoDelay);
             }
 

@@ -1,6 +1,14 @@
 Changes from jTDS 0.9.1
 =======================
 
+12/17/2004 - Alin Sinpalean
+ o Applied, with some minor changes and corrections, patch [1086173] Windows
+   Local Named Pipe Support. Thanks go to Stardog33.
+ o Fixed failure of JtdsDataSourceUnitTest.testNoUser() with a runtime error
+   caused by inability to load the ntlmauth DLL.
+ o Added one more test for SharedSocket synchronization, only with RPC
+   requests. Still not able to reproduce the locking read.
+
 12/16/2004 - Alin Sinpalean
  o Possible fix for bug [1086156] Hang in driver socketRead under load. Could
    not actually reproduce the exact behavior but found other errors caused by

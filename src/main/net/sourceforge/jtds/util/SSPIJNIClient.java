@@ -17,6 +17,8 @@
 //
 package net.sourceforge.jtds.util;
 
+import java.sql.SQLException;
+
 /**
  * A JNI client to SSPI based CPP program (DLL) that returns the user
  * credentials for NTLM authentication.
@@ -28,6 +30,9 @@ package net.sourceforge.jtds.util;
 public class SSPIJNIClient {
     /** Singleton instance. */
     private static SSPIJNIClient thisInstance = null;
+
+    /** SSPI native library loaded flag. */
+    private static boolean libraryLoaded = false;
 
     /** SSPI client initialized flag. */
     private boolean initialized = false;
@@ -57,7 +62,12 @@ public class SSPIJNIClient {
     private native byte[] prepareSSOSubmit(byte[] buf, long size);
 
     static {
-        System.loadLibrary("ntlmauth");
+        try {
+            System.loadLibrary("ntlmauth");
+            SSPIJNIClient.libraryLoaded = true;
+        } catch (UnsatisfiedLinkError err) {
+            Logger.println("Unable to load library: " + err);
+        }
     }
 
     /**
@@ -70,11 +80,14 @@ public class SSPIJNIClient {
     /**
      * Returns the singleton <code>SSPIJNIClient</code> instance.
      *
-     * @throws Exception if an error occurs during initialization
+     * @throws SQLException if an error occurs during initialization
      */
     public static SSPIJNIClient getInstance() throws Exception {
 
         if (thisInstance == null) {
+            if (!libraryLoaded) {
+                throw new Exception("Native SSPI library not loaded.");
+            }
             thisInstance = new SSPIJNIClient();
             thisInstance.invokeInitialize();
         }
@@ -83,10 +96,8 @@ public class SSPIJNIClient {
 
     /**
      * Calls {@link #initialize()} if the SSPI client is not already inited.
-     *
-     * @throws Exception if an error occurs during the call
      */
-    public void invokeInitialize() throws Exception {
+    public void invokeInitialize() {
         if (!initialized) {
             initialize();
             initialized = true;
@@ -95,10 +106,8 @@ public class SSPIJNIClient {
 
     /**
      * Calls {@link #unInitialize()} if the SSPI client is inited.
-     *
-     * @throws Exception if an error occurs during the call
      */
-    public void invokeUnInitialize() throws Exception {
+    public void invokeUnInitialize() {
         if (initialized) {
             unInitialize();
             initialized = false;

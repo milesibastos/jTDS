@@ -1189,4 +1189,74 @@ public class SAfeTest extends DatabaseTestCase {
 
         assertEquals(0, errors.size());
     }
+
+    public void testSocketConcurrency3() {
+        final Connection con = this.con;
+        final int threadCount = 10, loopCount = 10;
+        final Vector errors = new Vector();
+
+//        DriverManager.setLogStream(System.out);
+
+        // Create a huge query
+        StringBuffer valueBuffer = new StringBuffer(4000);
+        while (valueBuffer.length() < 4000) {
+            valueBuffer.append("0123456789");
+        }
+        final String value = valueBuffer.toString();
+
+        Thread  heavyThreads[] = new Thread[threadCount],
+                lightThreads[] = new Thread[threadCount];
+
+        // Create threadCount heavy threads
+        for (int i = 0; i < threadCount; i++) {
+            heavyThreads[i] = new Thread() {
+                public void run() {
+                    try {
+                        PreparedStatement pstmt = con.prepareStatement(
+                                "SELECT ? AS value1, ? AS value2");
+                        pstmt.setString(1, value);
+                        pstmt.setString(2, value);
+                        for (int i = 0; i < loopCount; i++) {
+                            pstmt.execute();
+                        }
+                        pstmt.close();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        errors.add(ex);
+                    }
+                }
+            };
+        }
+
+        // Create threadCount light threads
+        for (int i = 0; i < threadCount; i++) {
+            lightThreads[i] = new Thread() {
+                public void run() {
+                    try { sleep(100); } catch (InterruptedException ex) {}
+                    try {
+                        CallableStatement cstmt = con.prepareCall("sp_who");
+                        for (int i = 0; i < loopCount; i++) {
+                            cstmt.execute();
+                        }
+                        cstmt.close();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        errors.add(ex);
+                    }
+                }
+            };
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            heavyThreads[i].start();
+            lightThreads[i].start();
+        }
+
+        for (int i = 0; i < threadCount; i++) {
+            try { heavyThreads[i].join(); } catch (InterruptedException ex) {}
+            try { lightThreads[i].join(); } catch (InterruptedException ex) {}
+        }
+
+        assertEquals(0, errors.size());
+    }
 }

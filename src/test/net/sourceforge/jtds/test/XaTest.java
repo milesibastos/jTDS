@@ -28,6 +28,7 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbcx.JtdsXid;
 
@@ -36,7 +37,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  * examples found in the following article at
  * <a href="http://archive.devx.com/java/free/articles/dd_jta/jta-2.asp">DevX</a>.
  *
- * @version $Id: XaTest.java,v 1.3 2004-11-05 12:10:46 alin_sinpalean Exp $
+ * @version $Id: XaTest.java,v 1.4 2004-11-15 13:29:11 alin_sinpalean Exp $
  */
 public class XaTest extends DatabaseTestCase {
 
@@ -52,11 +53,11 @@ public class XaTest extends DatabaseTestCase {
      */
     public XADataSource getDataSource() throws SQLException {
         JtdsDataSource xaDS = new JtdsDataSource();
-        String user = props.getProperty(Messages.get("prop.user"),"");
-        String pwd  = props.getProperty(Messages.get("prop.password"));
-        String host = props.getProperty(Messages.get("prop.servername"));
-        String port = props.getProperty(Messages.get("prop.portnumber"), "1433");
-        String database = props.getProperty(Messages.get("prop.databasename"));
+        String user = props.getProperty(Messages.get(Driver.USER));
+        String pwd  = props.getProperty(Messages.get(Driver.PASSWORD));
+        String host = props.getProperty(Messages.get(Driver.SERVERNAME));
+        String port = props.getProperty(Messages.get(Driver.PORTNUMBER));
+        String database = props.getProperty(Messages.get(Driver.DATABASENAME));
         int portn;
         try {
             portn = Integer.parseInt(port);

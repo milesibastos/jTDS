@@ -12,6 +12,7 @@ import junit.framework.TestSuite;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.Driver;
 
 /**
  * Test case to illustrate use of TDS 5 support.
@@ -23,8 +24,8 @@ public class Tds5Test extends DatabaseTestCase {
 
     public static Test suite() {
 
-        if (!props.getProperty(Messages.get("prop.tds"), DefaultProperties.TDS_VERSION_70).equals(
-                DefaultProperties.TDS_VERSION_50)) {
+        if (!DefaultProperties.TDS_VERSION_50.equals(
+                props.getProperty(Messages.get(Driver.TDS)))) {
 
             return new TestSuite();
         }

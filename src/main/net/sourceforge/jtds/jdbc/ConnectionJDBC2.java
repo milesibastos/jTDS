@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.45 2004-11-15 09:05:27 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.46 2004-11-15 13:29:06 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -726,42 +726,47 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     protected void unpackProperties(Properties info)
             throws SQLException {
 
-        serverName = info.getProperty(Messages.get("prop.servername"));
-        portNumber = parseIntegerProperty(info, "prop.portnumber");
-        serverType = parseIntegerProperty(info, "prop.servertype");
-        databaseName = info.getProperty(Messages.get("prop.databasename"));
-        instanceName = info.getProperty(Messages.get("prop.instance"), "");
-        domainName = info.getProperty(Messages.get("prop.domain"), "");
-        user = info.getProperty(Messages.get("prop.user"));
-        password = info.getProperty(Messages.get("prop.password"));
-        macAddress = info.getProperty(Messages.get("prop.macaddress"));
-        appName = info.getProperty(Messages.get("prop.appname"));
-        progName = info.getProperty(Messages.get("prop.progname"));
-        serverCharset = info.getProperty(Messages.get("prop.charset"));
-        language = info.getProperty(Messages.get("prop.language"), "us_english");
-        prepareSql = parseIntegerProperty(info, "prop.preparesql");
-        lastUpdateCount = info.getProperty(Messages.get("prop.lastupdatecount")).equalsIgnoreCase("true");
-        tcpNoDelay = info.getProperty(Messages.get("prop.tcpnodelay")).equalsIgnoreCase("true");
-        useUnicode = info.getProperty(Messages.get("prop.useunicode")).equalsIgnoreCase("true");
-        namedPipe = info.getProperty(Messages.get("prop.namedpipe")).equalsIgnoreCase("true");
-        charsetSpecified = (serverCharset != null && serverCharset.length() > 0);
+        serverName = info.getProperty(Messages.get(Driver.SERVERNAME));
+        portNumber = parseIntegerProperty(info, Driver.PORTNUMBER);
+        serverType = parseIntegerProperty(info, Driver.SERVERTYPE);
+        databaseName = info.getProperty(Messages.get(Driver.DATABASENAME));
+        instanceName = info.getProperty(Messages.get(Driver.INSTANCE));
+        domainName = info.getProperty(Messages.get(Driver.DOMAIN));
+        user = info.getProperty(Messages.get(Driver.USER));
+        password = info.getProperty(Messages.get(Driver.PASSWORD));
+        macAddress = info.getProperty(Messages.get(Driver.MACADDRESS));
+        appName = info.getProperty(Messages.get(Driver.APPNAME));
+        progName = info.getProperty(Messages.get(Driver.PROGNAME));
+        serverCharset = info.getProperty(Messages.get(Driver.CHARSET));
+        language = info.getProperty(Messages.get(Driver.LANGUAGE));
+        prepareSql = parseIntegerProperty(info, Driver.PREPARESQL);
+        lastUpdateCount = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.LASTUPDATECOUNT)));
+        useUnicode = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE)));
+        namedPipe = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.NAMEDPIPE)));
+        tcpNoDelay = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.TCPNODELAY)));
+
+        charsetSpecified = serverCharset.length() > 0;
 
         // Don't default serverCharset at this point; if none specified,
         // initialize to an empty String & discover value later
-        if (!charsetSpecified) {
-            serverCharset = "";
-        }
+//        if (!charsetSpecified) {
+//            serverCharset = "";
+//        }
 
         Integer parsedTdsVersion =
-                DefaultProperties.getTdsVersion(info.getProperty(Messages.get("prop.tds")));
+                DefaultProperties.getTdsVersion(info.getProperty(Messages.get(Driver.TDS)));
         if (parsedTdsVersion == null) {
             throw new SQLException(
                                   Messages.get("error.connection.badprop",
-                                               Messages.get("prop.tds")), "08001");
+                                               Messages.get(Driver.TDS)), "08001");
         }
         tdsVersion = parsedTdsVersion.intValue();
 
-        packetSize = parseIntegerProperty(info, "prop.packetsize");
+        packetSize = parseIntegerProperty(info, Driver.PACKETSIZE);
 
         if (packetSize < TdsCore.MIN_PKT_SIZE) {
             if (tdsVersion >= Driver.TDS70) {
@@ -779,9 +784,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         packetSize = (packetSize / 512) * 512;
 
-        loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
-        lobBuffer = parseLongProperty(info, "prop.lobbuffer");
-        maxStatements = parseIntegerProperty(info, "prop.maxstatements");
+        loginTimeout = parseIntegerProperty(info, Driver.LOGINTIMEOUT);
+        lobBuffer = parseLongProperty(info, Driver.LOBBUFFER);
+        maxStatements = parseIntegerProperty(info, Driver.MAXSTATEMENTS);
 
         if (maxStatements <= 0) {
         	statementCache = new NonCachingStatementCache();

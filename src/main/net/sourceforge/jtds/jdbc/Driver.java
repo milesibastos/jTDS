@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.41 2004-11-08 20:14:06 bheineman Exp $
+ * @version $Id: Driver.java,v 1.42 2004-11-15 13:29:06 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -54,6 +54,7 @@ public class Driver implements java.sql.Driver {
     static final int MINOR_VERSION = 9;
     /** Driver version miscellanea (e.g "-rc2" or ".1"). */
     static final String MISC_VERSION = null;
+    /** Set if the JDBC specification to implement is 3.0 or greater. */
     public static final boolean JDBC3 =
             "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
     /** TDS 4.2 protocol (SQL Server 6.5 and later and Sybase 9 and later). */
@@ -70,6 +71,33 @@ public class Driver implements java.sql.Driver {
     public static final int SQLSERVER = 1;
     /** Sybase ASE. */
     public static final int SYBASE = 2;
+
+    //
+    // Property name keys
+    //
+    public static final String APPNAME       = "prop.appname";
+    public static final String CHARSET       = "prop.charset";
+    public static final String DATABASENAME  = "prop.databasename";
+    public static final String DOMAIN        = "prop.domain";
+    public static final String INSTANCE      = "prop.instance";
+    public static final String LANGUAGE      = "prop.language";
+    public static final String LASTUPDATECOUNT = "prop.lastupdatecount";
+    public static final String LOBBUFFER     = "prop.lobbuffer";
+    public static final String LOGINTIMEOUT  = "prop.logintimeout";
+    public static final String MACADDRESS    = "prop.macaddress";
+    public static final String MAXSTATEMENTS = "prop.maxstatements";
+    public static final String NAMEDPIPE     = "prop.namedpipe";
+    public static final String PACKETSIZE    = "prop.packetsize";
+    public static final String PASSWORD      = "prop.password";
+    public static final String PORTNUMBER    = "prop.portnumber";
+    public static final String PREPARESQL    = "prop.preparesql";
+    public static final String PROGNAME      = "prop.progname";
+    public static final String SERVERNAME    = "prop.servername";
+    public static final String SERVERTYPE    = "prop.servertype";
+    public static final String TDS           = "prop.tds";
+    public static final String TCPNODELAY    = "prop.tcpnodelay";
+    public static final String USER          = "prop.user";
+    public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";
 
     static {
         try {
@@ -137,8 +165,8 @@ public class Driver implements java.sql.Driver {
             throw new SQLException(Messages.get("error.driver.badurl", url), "08001");
         }
 
-        if (props.getProperty(Messages.get("prop.logintimeout")) == null) {
-            props.setProperty(Messages.get("prop.logintimeout"), Integer.toString(DriverManager.getLoginTimeout()));
+        if (props.getProperty(Messages.get(Driver.LOGINTIMEOUT)) == null) {
+            props.setProperty(Messages.get(Driver.LOGINTIMEOUT), Integer.toString(DriverManager.getLoginTimeout()));
         }
 
         if (JDBC3) {
@@ -208,10 +236,10 @@ public class Driver implements java.sql.Driver {
         final HashMap choicesMap = new HashMap();
 
         final String[] booleanChoices = new String[]{"true", "false"};
-        choicesMap.put(Messages.get("prop.lastupdatecount"), booleanChoices);
-        choicesMap.put(Messages.get("prop.namedpipe"), booleanChoices);
-        choicesMap.put(Messages.get("prop.tcpnodelay"), booleanChoices);
-        choicesMap.put(Messages.get("prop.useunicode"), booleanChoices);
+        choicesMap.put(Messages.get(Driver.LASTUPDATECOUNT), booleanChoices);
+        choicesMap.put(Messages.get(Driver.NAMEDPIPE), booleanChoices);
+        choicesMap.put(Messages.get(Driver.TCPNODELAY), booleanChoices);
+        choicesMap.put(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), booleanChoices);
 
         final String[] prepareSqlChoices = new String[]{
             String.valueOf(TdsCore.UNPREPARED),
@@ -220,13 +248,13 @@ public class Driver implements java.sql.Driver {
             String.valueOf(TdsCore.PREPARE),
             String.valueOf(TdsCore.PREPEXEC),
         };
-        choicesMap.put(Messages.get("prop.preparesql"), prepareSqlChoices);
+        choicesMap.put(Messages.get(Driver.PREPARESQL), prepareSqlChoices);
 
         final String[] serverTypeChoices = new String[]{
             String.valueOf(SQLSERVER),
             String.valueOf(SYBASE),
         };
-        choicesMap.put(Messages.get("prop.servertype"), serverTypeChoices);
+        choicesMap.put(Messages.get(Driver.SERVERTYPE), serverTypeChoices);
 
         final String[] tdsChoices = new String[]{
             DefaultProperties.TDS_VERSION_42,
@@ -234,7 +262,7 @@ public class Driver implements java.sql.Driver {
             DefaultProperties.TDS_VERSION_70,
             DefaultProperties.TDS_VERSION_80,
         };
-        choicesMap.put(Messages.get("prop.tds"), tdsChoices);
+        choicesMap.put(Messages.get(Driver.TDS), tdsChoices);
 
         return choicesMap;
     }
@@ -253,8 +281,8 @@ public class Driver implements java.sql.Driver {
      */
     private Map createRequiredTrueMap() {
         final HashMap requiredTrueMap = new HashMap();
-        requiredTrueMap.put(Messages.get("prop.servername"), null);
-        requiredTrueMap.put(Messages.get("prop.servertype"), null);
+        requiredTrueMap.put(Messages.get(Driver.SERVERNAME), null);
+        requiredTrueMap.put(Messages.get(Driver.SERVERTYPE), null);
         return requiredTrueMap;
     }
 
@@ -300,7 +328,7 @@ public class Driver implements java.sql.Driver {
         if (serverType == null) {
             return null; // Bad server type
         }
-        props.setProperty(Messages.get("prop.servertype"), String.valueOf(serverType));
+        props.setProperty(Messages.get(Driver.SERVERTYPE), String.valueOf(serverType));
 
         pos = nextToken(url, pos, token); // Null token between : and //
 
@@ -312,20 +340,20 @@ public class Driver implements java.sql.Driver {
         String host = token.toString();
 
         if (host.length() == 0) {
-            host = props.getProperty(Messages.get("prop.servername"));
+            host = props.getProperty(Messages.get(Driver.SERVERNAME));
             if (host == null || host.length() == 0) {
                 return null; // Server name missing
             }
         }
 
-        props.setProperty(Messages.get("prop.servername"), host);
+        props.setProperty(Messages.get(Driver.SERVERNAME), host);
 
         if (url.charAt(pos - 1) == ':' && pos < url.length()) {
             pos = nextToken(url, pos, token); // Get port number
 
             try {
                 int port = Integer.parseInt(token.toString());
-                props.setProperty(Messages.get("prop.portnumber"), Integer.toString(port));
+                props.setProperty(Messages.get(Driver.PORTNUMBER), Integer.toString(port));
             } catch(NumberFormatException e) {
                 return null; // Bad port number
             }
@@ -333,7 +361,7 @@ public class Driver implements java.sql.Driver {
 
         if (url.charAt(pos - 1) == '/' && pos < url.length()) {
             pos = nextToken(url, pos, token); // Get database name
-            props.setProperty(Messages.get("prop.databasename"), token.toString());
+            props.setProperty(Messages.get(DATABASENAME), token.toString());
         }
 
         //

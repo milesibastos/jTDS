@@ -28,15 +28,15 @@ import java.util.HashMap;
 
 /**
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.6 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.7 2004-11-15 13:29:11 alin_sinpalean Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name The name of the test.
      */
     public DefaultPropertiesUnitTest(String name) {
@@ -48,10 +48,10 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
      * Tests that
      * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String)}
      * sets a default property if the property is not already set.
-     */ 
+     */
     public void test_addDefaultPropertyIfNotSet_PropertyNotSet() {
         final Properties properties = new Properties();
-        final String key = "prop.databasename";
+        final String key = Driver.DATABASENAME;
         final String defaultValue = "foobar";
         invokeStaticMethod(
                 DefaultProperties.class, "addDefaultPropertyIfNotSet",
@@ -65,10 +65,10 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
      * Tests that
      * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String)}
      * does <em>not</em> set a default property if the property is already set.
-     */ 
+     */
     public void test_addDefaultPropertyIfNotSet_PropertyAlreadySet() {
         final Properties properties = new Properties();
-        final String key = "prop.databasename";
+        final String key = Driver.DATABASENAME;
         final String presetValue = "barbaz";
         final String defaultValue = "foobar";
         properties.setProperty(Messages.get(key), presetValue);
@@ -83,11 +83,11 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
      * Tests that
      * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
      * does <em>not</em> set a default property if the <code>defaultKey</code> is not set.
-     */ 
+     */
     public void test_addDefaultPropertyIfNotSet_DefaultKeyNotSet() {
         final Properties properties = new Properties();
-        final String defaultKey = "prop.servertype";
-        final String key = "prop.portnumber";
+        final String defaultKey = Driver.SERVERTYPE;
+        final String key = Driver.PORTNUMBER;
         final HashMap defaults = new HashMap();
         invokeStaticMethod(DefaultProperties.class, "addDefaultPropertyIfNotSet",
                            new Class[]{Properties.class, String.class, String.class, Map.class},
@@ -100,13 +100,13 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
      * Tests that
      * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
      * sets a default property if the property is not already set.
-     */ 
+     */
     public void test_addDefaultPropertyIfNotSet_DefaultKeySet_PropertyNotSet() {
         final Properties properties = new Properties();
-        final String defaultKey = "prop.servertype";
+        final String defaultKey = Driver.SERVERTYPE;
         final String defaultKeyValue = "foobar";
         properties.put(Messages.get(defaultKey), defaultKeyValue);
-        final String key = "prop.portnumber";
+        final String key = Driver.PORTNUMBER;
         final String defaultValue = "2004";
         final HashMap defaults = new HashMap();
         defaults.put(defaultKeyValue, defaultValue);
@@ -121,13 +121,13 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
      * Tests that
      * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
      * does <em>not</em> set a default property if the property is already set.
-     */ 
+     */
     public void test_addDefaultPropertyIfNotSet_DefaultKeySet_PropertyAlreadySet() {
         final Properties properties = new Properties();
-        final String defaultKey = "prop.servertype";
+        final String defaultKey = Driver.SERVERTYPE;
         final String defaultKeyValue = "foobar";
         properties.put(Messages.get(defaultKey), defaultKeyValue);
-        final String key = "prop.portnumber";
+        final String key = Driver.PORTNUMBER;
         final String presetValue = "2020";
         properties.put(Messages.get(key), presetValue);
         final String defaultValue = "2004";

@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.13 2004-11-08 20:14:06 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.14 2004-11-15 13:29:06 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -54,6 +54,10 @@ public final class DefaultProperties {
     public static final String APP_NAME = "jTDS";
     /** Default <code>databaseName</code> property. */
     public static final String DATABASE_NAME = "";
+    /** Default <code>instance</code> property. */
+    public static final String INSTANCE = "";
+    /** Default <code>domain</code> property. */
+    public static final String DOMAIN = "";
     /** Default <code>lastUpdateCount</code> property. */
     public static final String LAST_UPDATE_COUNT = "true";
     /** Default <code>lobBufferSize</code> property. */
@@ -80,6 +84,10 @@ public final class DefaultProperties {
     public static final String PORT_NUMBER_SQLSERVER = "1433";
     /** Default <code>portNumber</code> property for Sybase. */
     public static final String PORT_NUMBER_SYBASE = "7100";
+    /** Default <code>charset</code> property. */
+    public static final String CHARSET = "";
+    /** Default <code>language</code> property. */
+    public static final String LANGUAGE = "";
     /** Default <code>prepareSql</code> property. */
     public static final String PREPARE_SQL = String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES);
     /** Default <code>progName</code> property. */
@@ -136,32 +144,36 @@ public final class DefaultProperties {
      *         if the <code>serverType</code> property is not set.
      */
     public static Properties addDefaultProperties(final Properties props) {
-        final String serverType = props.getProperty(Messages.get("prop.servertype"));
+        final String serverType = props.getProperty(Messages.get(Driver.SERVERTYPE));
 
         if (serverType == null) {
             return null;
         }
 
-        addDefaultPropertyIfNotSet(props, "prop.tds", "prop.servertype", tdsDefaults);
+        addDefaultPropertyIfNotSet(props, Driver.TDS, Driver.SERVERTYPE, tdsDefaults);
 
-        addDefaultPropertyIfNotSet(props, "prop.portnumber", "prop.servertype", portNumberDefaults);
+        addDefaultPropertyIfNotSet(props, Driver.PORTNUMBER, Driver.SERVERTYPE, portNumberDefaults);
 
-        addDefaultPropertyIfNotSet(props, "prop.user", USER);
-        addDefaultPropertyIfNotSet(props, "prop.password", PASSWORD);
+        addDefaultPropertyIfNotSet(props, Driver.USER, USER);
+        addDefaultPropertyIfNotSet(props, Driver.PASSWORD, PASSWORD);
 
-        addDefaultPropertyIfNotSet(props, "prop.databasename", DATABASE_NAME);
-        addDefaultPropertyIfNotSet(props, "prop.appname", APP_NAME);
-        addDefaultPropertyIfNotSet(props, "prop.lastupdatecount", LAST_UPDATE_COUNT);
-        addDefaultPropertyIfNotSet(props, "prop.lobbuffer", LOB_BUFFER_SIZE);
-        addDefaultPropertyIfNotSet(props, "prop.logintimeout", LOGIN_TIMEOUT);
-        addDefaultPropertyIfNotSet(props, "prop.macaddress", MAC_ADDRESS);
-        addDefaultPropertyIfNotSet(props, "prop.maxstatements", MAX_STATEMENTS);
-        addDefaultPropertyIfNotSet(props, "prop.namedpipe", NAMED_PIPE);
-        addDefaultPropertyIfNotSet(props, "prop.packetsize", "prop.tds", packetSizeDefaults);
-        addDefaultPropertyIfNotSet(props, "prop.preparesql", PREPARE_SQL);
-        addDefaultPropertyIfNotSet(props, "prop.progname", PROG_NAME);
-        addDefaultPropertyIfNotSet(props, "prop.tcpnodelay", TCP_NODELAY);
-        addDefaultPropertyIfNotSet(props, "prop.useunicode", USE_UNICODE);
+        addDefaultPropertyIfNotSet(props, Driver.DATABASENAME, DATABASE_NAME);
+        addDefaultPropertyIfNotSet(props, Driver.INSTANCE, INSTANCE);
+        addDefaultPropertyIfNotSet(props, Driver.DOMAIN, DOMAIN);
+        addDefaultPropertyIfNotSet(props, Driver.APPNAME, APP_NAME);
+        addDefaultPropertyIfNotSet(props, Driver.PROGNAME, PROG_NAME);
+        addDefaultPropertyIfNotSet(props, Driver.LASTUPDATECOUNT, LAST_UPDATE_COUNT);
+        addDefaultPropertyIfNotSet(props, Driver.LOBBUFFER, LOB_BUFFER_SIZE);
+        addDefaultPropertyIfNotSet(props, Driver.LOGINTIMEOUT, LOGIN_TIMEOUT);
+        addDefaultPropertyIfNotSet(props, Driver.MACADDRESS, MAC_ADDRESS);
+        addDefaultPropertyIfNotSet(props, Driver.MAXSTATEMENTS, MAX_STATEMENTS);
+        addDefaultPropertyIfNotSet(props, Driver.NAMEDPIPE, NAMED_PIPE);
+        addDefaultPropertyIfNotSet(props, Driver.PACKETSIZE, Driver.TDS, packetSizeDefaults);
+        addDefaultPropertyIfNotSet(props, Driver.CHARSET, CHARSET);
+        addDefaultPropertyIfNotSet(props, Driver.LANGUAGE, LANGUAGE);
+        addDefaultPropertyIfNotSet(props, Driver.PREPARESQL, PREPARE_SQL);
+        addDefaultPropertyIfNotSet(props, Driver.SENDSTRINGPARAMETERSASUNICODE, USE_UNICODE);
+        addDefaultPropertyIfNotSet(props, Driver.TCPNODELAY, TCP_NODELAY);
 
         return props;
     }

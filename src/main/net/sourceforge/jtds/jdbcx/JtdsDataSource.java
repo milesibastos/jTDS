@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.21 2004-11-10 22:46:13 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.22 2004-11-15 13:29:11 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -77,32 +77,32 @@ public class JtdsDataSource
      */
     public JtdsDataSource() {
         Properties props = new Properties();
-        props.setProperty(Messages.get("prop.servertype"), String.valueOf(Driver.SQLSERVER));
+        props.setProperty(Messages.get(Driver.SERVERTYPE), String.valueOf(Driver.SQLSERVER));
         props = DefaultProperties.addDefaultProperties(props);
 
-        serverName = props.getProperty(Messages.get("prop.servername"));
-        serverType = props.getProperty(Messages.get("prop.servertype"));
-        portNumber = props.getProperty(Messages.get("prop.portnumber"));
-        databaseName = props.getProperty(Messages.get("prop.databasename"));
-        tdsVersion = props.getProperty(Messages.get("prop.tds"));
-        charset = props.getProperty(Messages.get("prop.charset"));
-        language = props.getProperty(Messages.get("prop.language"));
-        domain = props.getProperty(Messages.get("prop.domain"));
-        instance = props.getProperty(Messages.get("prop.instance"));
-        lastUpdateCount = props.getProperty(Messages.get("prop.lastupdatecount"));
-        sendStringParametersAsUnicode = props.getProperty(Messages.get("prop.useunicode"));
-        namedPipe = props.getProperty(Messages.get("prop.namedpipe"));
-        macAddress = props.getProperty(Messages.get("prop.macaddress"));
-        prepareSql = props.getProperty(Messages.get("prop.preparesql"));
-        packetSize = props.getProperty(Messages.get("prop.packetsize"));
-        tcpNoDelay = props.getProperty(Messages.get("prop.tcpnodelay"));
-        user = props.getProperty(Messages.get("prop.user"));
-        password = props.getProperty(Messages.get("prop.password"));
-        loginTimeout = props.getProperty(Messages.get("prop.logintimeout"));
-        lobBuffer = props.getProperty(Messages.get("prop.lobbuffer"));
-        maxStatements = props.getProperty(Messages.get("prop.maxstatements"));
-        appName = props.getProperty(Messages.get("prop.appname"));
-        progName = props.getProperty(Messages.get("prop.progname"));
+        serverName = props.getProperty(Messages.get(Driver.SERVERNAME));
+        serverType = props.getProperty(Messages.get(Driver.SERVERTYPE));
+        portNumber = props.getProperty(Messages.get(Driver.PORTNUMBER));
+        databaseName = props.getProperty(Messages.get(Driver.DATABASENAME));
+        tdsVersion = props.getProperty(Messages.get(Driver.TDS));
+        charset = props.getProperty(Messages.get(Driver.CHARSET));
+        language = props.getProperty(Messages.get(Driver.LANGUAGE));
+        domain = props.getProperty(Messages.get(Driver.DOMAIN));
+        instance = props.getProperty(Messages.get(Driver.INSTANCE));
+        lastUpdateCount = props.getProperty(Messages.get(Driver.LASTUPDATECOUNT));
+        sendStringParametersAsUnicode = props.getProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE));
+        namedPipe = props.getProperty(Messages.get(Driver.NAMEDPIPE));
+        macAddress = props.getProperty(Messages.get(Driver.MACADDRESS));
+        prepareSql = props.getProperty(Messages.get(Driver.PREPARESQL));
+        packetSize = props.getProperty(Messages.get(Driver.PACKETSIZE));
+        tcpNoDelay = props.getProperty(Messages.get(Driver.TCPNODELAY));
+        user = props.getProperty(Messages.get(Driver.USER));
+        password = props.getProperty(Messages.get(Driver.PASSWORD));
+        loginTimeout = props.getProperty(Messages.get(Driver.LOGINTIMEOUT));
+        lobBuffer = props.getProperty(Messages.get(Driver.LOBBUFFER));
+        maxStatements = props.getProperty(Messages.get(Driver.MAXSTATEMENTS));
+        appName = props.getProperty(Messages.get(Driver.APPNAME));
+        progName = props.getProperty(Messages.get(Driver.PROGNAME));
     }
 
     /**
@@ -152,36 +152,36 @@ public class JtdsDataSource
             throw new SQLException(Messages.get("error.connection.nohost"), "08001");
         }
 
-        props.setProperty(Messages.get("prop.servername"), serverName);
-        props.setProperty(Messages.get("prop.portnumber"), portNumber);
-        props.setProperty(Messages.get("prop.databasename"), databaseName);
-        props.setProperty(Messages.get("prop.tds"), tdsVersion);
+        props.setProperty(Messages.get(Driver.SERVERNAME), serverName);
+        props.setProperty(Messages.get(Driver.PORTNUMBER), portNumber);
+        props.setProperty(Messages.get(Driver.DATABASENAME), databaseName);
+        props.setProperty(Messages.get(Driver.TDS), tdsVersion);
         if (charset != null) {
-            props.setProperty(Messages.get("prop.charset"), charset);
+            props.setProperty(Messages.get(Driver.CHARSET), charset);
         }
         if (language != null) {
-            props.setProperty(Messages.get("prop.language"), language);
+            props.setProperty(Messages.get(Driver.LANGUAGE), language);
         }
         if (domain != null) {
-            props.setProperty(Messages.get("prop.domain"), domain);
+            props.setProperty(Messages.get(Driver.DOMAIN), domain);
         }
         if (instance != null) {
-            props.setProperty(Messages.get("prop.instance"), instance);
+            props.setProperty(Messages.get(Driver.INSTANCE), instance);
         }
-        props.setProperty(Messages.get("prop.lastupdatecount"), lastUpdateCount);
-        props.setProperty(Messages.get("prop.useunicode"), sendStringParametersAsUnicode);
-        props.setProperty(Messages.get("prop.namedpipe"), namedPipe);
-        props.setProperty(Messages.get("prop.macaddress"), macAddress);
-        props.setProperty(Messages.get("prop.preparesql"), prepareSql);
-        props.setProperty(Messages.get("prop.packetsize"), packetSize);
-        props.setProperty(Messages.get("prop.tcpnodelay"), tcpNoDelay);
-        props.setProperty(Messages.get("prop.user"), user);
-        props.setProperty(Messages.get("prop.password"), password);
-        props.setProperty(Messages.get("prop.logintimeout"), loginTimeout);
-        props.setProperty(Messages.get("prop.lobbuffer"), lobBuffer);
-        props.setProperty(Messages.get("prop.maxstatements"), maxStatements);
-        props.setProperty(Messages.get("prop.appname"), appName);
-        props.setProperty(Messages.get("prop.progname"), progName);
+        props.setProperty(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount);
+        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode);
+        props.setProperty(Messages.get(Driver.NAMEDPIPE), namedPipe);
+        props.setProperty(Messages.get(Driver.MACADDRESS), macAddress);
+        props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
+        props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
+        props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
+        props.setProperty(Messages.get(Driver.USER), user);
+        props.setProperty(Messages.get(Driver.PASSWORD), password);
+        props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
+        props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
+        props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
+        props.setProperty(Messages.get(Driver.APPNAME), appName);
+        props.setProperty(Messages.get(Driver.PROGNAME), progName);
 
         java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
 
@@ -195,29 +195,29 @@ public class JtdsDataSource
                                       JtdsObjectFactory.class.getName(),
                                       null);
 
-        ref.add(new StringRefAddr(Messages.get("prop.servername"), serverName));
-        ref.add(new StringRefAddr(Messages.get("prop.servertype"), serverType));
-        ref.add(new StringRefAddr(Messages.get("prop.portnumber"), portNumber));
-        ref.add(new StringRefAddr(Messages.get("prop.databasename"), databaseName));
-        ref.add(new StringRefAddr(Messages.get("prop.tds"), tdsVersion));
-        ref.add(new StringRefAddr(Messages.get("prop.charset"), charset));
-        ref.add(new StringRefAddr(Messages.get("prop.language"), language));
-        ref.add(new StringRefAddr(Messages.get("prop.domain"), domain));
-        ref.add(new StringRefAddr(Messages.get("prop.instance"), instance));
-        ref.add(new StringRefAddr(Messages.get("prop.lastupdatecount"), lastUpdateCount));
-        ref.add(new StringRefAddr(Messages.get("prop.useunicode"), sendStringParametersAsUnicode));
-        ref.add(new StringRefAddr(Messages.get("prop.namedpipe"), namedPipe));
-        ref.add(new StringRefAddr(Messages.get("prop.macaddress"), macAddress));
-        ref.add(new StringRefAddr(Messages.get("prop.preparesql"), prepareSql));
-        ref.add(new StringRefAddr(Messages.get("prop.packetsize"), packetSize));
-        ref.add(new StringRefAddr(Messages.get("prop.tcpnodelay"), tcpNoDelay));
-        ref.add(new StringRefAddr(Messages.get("prop.user"), user));
-        ref.add(new StringRefAddr(Messages.get("prop.password"), password));
-        ref.add(new StringRefAddr(Messages.get("prop.logintimeout"), loginTimeout));
-        ref.add(new StringRefAddr(Messages.get("prop.lobbuffer"), lobBuffer));
-        ref.add(new StringRefAddr(Messages.get("prop.maxstatements"), maxStatements));
-        ref.add(new StringRefAddr(Messages.get("prop.appname"), appName));
-        ref.add(new StringRefAddr(Messages.get("prop.progname"), progName));
+        ref.add(new StringRefAddr(Messages.get(Driver.SERVERNAME), serverName));
+        ref.add(new StringRefAddr(Messages.get(Driver.SERVERTYPE), serverType));
+        ref.add(new StringRefAddr(Messages.get(Driver.PORTNUMBER), portNumber));
+        ref.add(new StringRefAddr(Messages.get(Driver.DATABASENAME), databaseName));
+        ref.add(new StringRefAddr(Messages.get(Driver.TDS), tdsVersion));
+        ref.add(new StringRefAddr(Messages.get(Driver.CHARSET), charset));
+        ref.add(new StringRefAddr(Messages.get(Driver.LANGUAGE), language));
+        ref.add(new StringRefAddr(Messages.get(Driver.DOMAIN), domain));
+        ref.add(new StringRefAddr(Messages.get(Driver.INSTANCE), instance));
+        ref.add(new StringRefAddr(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount));
+        ref.add(new StringRefAddr(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode));
+        ref.add(new StringRefAddr(Messages.get(Driver.NAMEDPIPE), namedPipe));
+        ref.add(new StringRefAddr(Messages.get(Driver.MACADDRESS), macAddress));
+        ref.add(new StringRefAddr(Messages.get(Driver.PREPARESQL), prepareSql));
+        ref.add(new StringRefAddr(Messages.get(Driver.PACKETSIZE), packetSize));
+        ref.add(new StringRefAddr(Messages.get(Driver.TCPNODELAY), tcpNoDelay));
+        ref.add(new StringRefAddr(Messages.get(Driver.USER), user));
+        ref.add(new StringRefAddr(Messages.get(Driver.PASSWORD), password));
+        ref.add(new StringRefAddr(Messages.get(Driver.LOGINTIMEOUT), loginTimeout));
+        ref.add(new StringRefAddr(Messages.get(Driver.LOBBUFFER), lobBuffer));
+        ref.add(new StringRefAddr(Messages.get(Driver.MAXSTATEMENTS), maxStatements));
+        ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
+        ref.add(new StringRefAddr(Messages.get(Driver.PROGNAME), progName));
 
         return ref;
     }

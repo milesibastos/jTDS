@@ -18,7 +18,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      * The test suite includes the tests in this class, and adds tests
      * from {@link DefaultPropertiesTestLibrary} after creating an
      * anonymous {@link DefaultPropertiesTester} object.
-     * 
+     *
      * @return The test suite to run.
      */
     public static Test suite() {
@@ -35,7 +35,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name The name of the test.
      */
     public ConnectionJDBC2UnitTest(String name) {
@@ -48,12 +48,12 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      * parsing invalid integer (and long) properties.
      */
     public void test_unpackProperties_invalidIntegerProperty() {
-        assertSQLExceptionForBadWholeNumberProperty("prop.portnumber");
-        assertSQLExceptionForBadWholeNumberProperty("prop.servertype");
-        assertSQLExceptionForBadWholeNumberProperty("prop.preparesql");
-        assertSQLExceptionForBadWholeNumberProperty("prop.packetsize");
-        assertSQLExceptionForBadWholeNumberProperty("prop.logintimeout");
-        assertSQLExceptionForBadWholeNumberProperty("prop.lobbuffer");
+        assertSQLExceptionForBadWholeNumberProperty(Driver.PORTNUMBER);
+        assertSQLExceptionForBadWholeNumberProperty(Driver.SERVERTYPE);
+        assertSQLExceptionForBadWholeNumberProperty(Driver.PREPARESQL);
+        assertSQLExceptionForBadWholeNumberProperty(Driver.PACKETSIZE);
+        assertSQLExceptionForBadWholeNumberProperty(Driver.LOGINTIMEOUT);
+        assertSQLExceptionForBadWholeNumberProperty(Driver.LOBBUFFER);
     }
 
 
@@ -65,18 +65,18 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      * Note that because Java 1.3 is still supported, the
      * {@link RuntimeException} that is caught may not contain the
      * original {@link Throwable} cause, only the original message.
-     * 
+     *
      * @param key The message key used to retrieve the property name.
      */
     private void assertSQLExceptionForBadWholeNumberProperty(final String key) {
 
-        final ConnectionJDBC2 instance = 
+        final ConnectionJDBC2 instance =
                 (ConnectionJDBC2) invokeConstructor(
                         ConnectionJDBC2.class, new Class[]{}, new Object[]{});
 
-        final Properties properties = 
+        final Properties properties =
                 (Properties) invokeStaticMethod(
-                        Driver.class, "parseURL", 
+                        Driver.class, "parseURL",
                         new Class[]{String.class, Properties.class},
                         new Object[]{"jdbc:jtds:sqlserver://servername", new Properties()});
 
@@ -106,7 +106,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
         /**
          * Construct a test suite for this library.
-         * 
+         *
          * @param name The name of the tests.
          * @return The test suite.
          */
@@ -134,12 +134,12 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                 }
                             }
 
-                            Properties parsedProperties = 
+                            Properties parsedProperties =
                                     (Properties) invokeStaticMethod(
                                             Driver.class, "parseURL",
                                             new Class[]{ String.class, Properties.class},
                                             new Object[]{ url, properties});
-                            ConnectionJDBC2 instance = 
+                            ConnectionJDBC2 instance =
                                     (ConnectionJDBC2) invokeConstructor(
                                             ConnectionJDBC2.class, new Class[]{}, new Object[]{});
                             invokeInstanceMethod(

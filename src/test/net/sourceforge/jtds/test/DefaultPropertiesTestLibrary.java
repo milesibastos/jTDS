@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.12 2004-11-10 22:46:19 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.13 2004-11-15 13:29:11 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -90,7 +90,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_serverType() {
         String fieldName = "serverType";
-        String messageKey = "prop.servertype";
+        String messageKey = Driver.SERVERTYPE;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, String.valueOf(Driver.SQLSERVER));
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, String.valueOf(Driver.SYBASE));
@@ -103,7 +103,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_tds() {
         String fieldName = "tdsVersion";
-        String messageKey = "prop.tds";
+        String messageKey = Driver.TDS;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, DefaultProperties.TDS_VERSION_80);
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, DefaultProperties.TDS_VERSION_50);
@@ -119,7 +119,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_portNumber() {
         String fieldName = "portNumber";
-        String messageKey = "prop.portnumber";
+        String messageKey = Driver.PORTNUMBER;
         assertDefaultPropertyByServerType(
                 URL_SQLSERVER, messageKey, fieldName, String.valueOf(DefaultProperties.PORT_NUMBER_SQLSERVER));
         if (!isOnlySqlServerTests()) {
@@ -134,7 +134,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_databaseName() {
         String fieldName = "databaseName";
-        String messageKey = "prop.databasename";
+        String messageKey = Driver.DATABASENAME;
         String expectedValue = DefaultProperties.DATABASE_NAME;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -148,7 +148,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_appName() {
         String fieldName = "appName";
-        String messageKey = "prop.appname";
+        String messageKey = Driver.APPNAME;
         String expectedValue = DefaultProperties.APP_NAME;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -162,7 +162,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_lastUpdateCount() {
         String fieldName = "lastUpdateCount";
-        String messageKey = "prop.lastupdatecount";
+        String messageKey = Driver.LASTUPDATECOUNT;
         String expectedValue = String.valueOf(DefaultProperties.LAST_UPDATE_COUNT);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -176,7 +176,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_lobBuffer() {
         String fieldName = "lobBuffer";
-        String messageKey = "prop.lobbuffer";
+        String messageKey = Driver.LOBBUFFER;
         String expectedValue = String.valueOf(DefaultProperties.LOB_BUFFER_SIZE);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -190,7 +190,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_loginTimeout() {
         String fieldName = "loginTimeout";
-        String messageKey = "prop.logintimeout";
+        String messageKey = Driver.LOGINTIMEOUT;
         String expectedValue = String.valueOf(DefaultProperties.LOGIN_TIMEOUT);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -205,7 +205,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     public void test_macAddress() {
         String fieldName = "macAddress";
-        String messageKey = "prop.macaddress";
+        String messageKey = Driver.MACADDRESS;
         String expectedValue = DefaultProperties.MAC_ADDRESS;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -219,7 +219,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_namedPipe() {
         String fieldName = "namedPipe";
-        String messageKey = "prop.namedpipe";
+        String messageKey = Driver.NAMEDPIPE;
         String expectedValue = String.valueOf(DefaultProperties.NAMED_PIPE);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -234,7 +234,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     public void test_packetSize() {
 
         String fieldName = "packetSize";
-        String messageKey = "prop.packetsize";
+        String messageKey = Driver.PACKETSIZE;
 
         if (!isOnlyTds70Tests()) {
             String expectedValue = String.valueOf(DefaultProperties.PACKET_SIZE_42_50);
@@ -259,7 +259,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_prepareSql() {
         String fieldName = "prepareSql";
-        String messageKey = "prop.preparesql";
+        String messageKey = Driver.PREPARESQL;
         String expectedValue = String.valueOf(DefaultProperties.PREPARE_SQL);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -273,7 +273,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_progName() {
         String fieldName = "progName";
-        String messageKey = "prop.progname";
+        String messageKey = Driver.PROGNAME;
         String expectedValue = DefaultProperties.PROG_NAME;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -287,7 +287,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_sendStringParametersAsUnicode() {
         String fieldName = "sendStringParametersAsUnicode";
-        String messageKey = "prop.useunicode";
+        String messageKey = Driver.SENDSTRINGPARAMETERSASUNICODE;
         String expectedValue = String.valueOf(DefaultProperties.USE_UNICODE);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -301,7 +301,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     public void test_tcpNoDelay() {
         String fieldName = "tcpNoDelay";
-        String messageKey = "prop.tcpnodelay";
+        String messageKey = Driver.TCPNODELAY;
         String expectedValue = String.valueOf(DefaultProperties.TCP_NODELAY);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
@@ -324,7 +324,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
             String url, String tdsVersion, String key, String fieldName, String expected) {
 
         Properties properties = new Properties();
-        properties.setProperty(Messages.get("prop.tds"), tdsVersion);
+        properties.setProperty(Messages.get(Driver.TDS), tdsVersion);
         getTester().assertDefaultProperty("Default property incorrect", url, properties, fieldName, key, expected);
     }
 

@@ -34,9 +34,9 @@ import java.util.Properties;
 
 /**
  * Unit tests for the {@link Driver} class.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.13 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: DriverUnitTest.java,v 1.14 2004-11-15 13:29:11 alin_sinpalean Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -47,7 +47,7 @@ public class DriverUnitTest extends UnitTestBase {
      * The test suite includes the tests in this class, and adds tests
      * from {@link DefaultPropertiesTestLibrary} after creating
      * anonymous {@link DefaultPropertiesTester} objects.
-     * 
+     *
      * @return The test suite to run.
      */
     public static Test suite() {
@@ -66,7 +66,7 @@ public class DriverUnitTest extends UnitTestBase {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name The name of the test.
      */
     public DriverUnitTest(final String name) {
@@ -172,12 +172,12 @@ public class DriverUnitTest extends UnitTestBase {
         };
 
         Map expectedChoicesMap = new HashMap();
-        expectedChoicesMap.put(Messages.get("prop.lastupdatecount"), expectedBooleanChoices);
-        expectedChoicesMap.put(Messages.get("prop.namedpipe"), expectedBooleanChoices);
-        expectedChoicesMap.put(Messages.get("prop.preparesql"), expectedPrepareSqlChoices);
-        expectedChoicesMap.put(Messages.get("prop.servertype"), expectedServerTypeChoices);
-        expectedChoicesMap.put(Messages.get("prop.tds"), expectedTdsChoices);
-        expectedChoicesMap.put(Messages.get("prop.useunicode"), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get(Driver.LASTUPDATECOUNT), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get(Driver.NAMEDPIPE), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get(Driver.PREPARESQL), expectedPrepareSqlChoices);
+        expectedChoicesMap.put(Messages.get(Driver.SERVERTYPE), expectedServerTypeChoices);
+        expectedChoicesMap.put(Messages.get(Driver.TDS), expectedTdsChoices);
+        expectedChoicesMap.put(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), expectedBooleanChoices);
 
         final Map infoMap = new HashMap();
         loadDriverPropertyInfoMap(infoMap);
@@ -206,8 +206,8 @@ public class DriverUnitTest extends UnitTestBase {
     public void test_getPropertyInfo_Required() {
 
         Map requiredTrueMap = new HashMap();
-        requiredTrueMap.put(Messages.get("prop.servername"), Boolean.TRUE);
-        requiredTrueMap.put(Messages.get("prop.servertype"), Boolean.TRUE);
+        requiredTrueMap.put(Messages.get(Driver.SERVERNAME), Boolean.TRUE);
+        requiredTrueMap.put(Messages.get(Driver.SERVERTYPE), Boolean.TRUE);
 
         final Map infoMap = new HashMap();
         loadDriverPropertyInfoMap(infoMap);
@@ -230,7 +230,7 @@ public class DriverUnitTest extends UnitTestBase {
      * Retrieve the {@link DriverPropertyInfo} array from
      * {@link Driver#getPropertyInfo(String, Properties)} and convert it
      * into a {@link Map} using the <code>name</code> property for the keys.
-     * 
+     *
      * @param driverPropertyInfoMap The map of {@link DriverPropertyInfo} objects to be populated.
      */
     private void loadDriverPropertyInfoMap(final Map driverPropertyInfoMap) {
@@ -256,7 +256,7 @@ public class DriverUnitTest extends UnitTestBase {
 
         /**
          * Construct a test suite for this library.
-         * 
+         *
          * @param name The name of the tests.
          * @return The test suite.
          */
@@ -270,11 +270,11 @@ public class DriverUnitTest extends UnitTestBase {
         public Test_Driver_parseURL() {
             setTester(
                     new DefaultPropertiesTester() {
-            
+
                         public void assertDefaultProperty(
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {
-            
+
                             Properties results =
                                     (Properties) invokeStaticMethod(
                                             Driver.class, "parseURL",
@@ -296,7 +296,7 @@ public class DriverUnitTest extends UnitTestBase {
 
         /**
          * Construct a test suite for this library.
-         * 
+         *
          * @param name The name of the tests.
          * @return The test suite.
          */
@@ -310,15 +310,15 @@ public class DriverUnitTest extends UnitTestBase {
         public Test_Driver_getPropertyInfo() {
             setTester(
                     new DefaultPropertiesTester() {
-            
+
                         public void assertDefaultProperty(
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {
-            
+
                             try {
                                 boolean found = false;
                                 String messageKey = Messages.get(key);
-            
+
                                 DriverPropertyInfo[] infoArray = new Driver().getPropertyInfo(url, properties);
                                 for (int i = 0; i < infoArray.length; i++) {
                                     DriverPropertyInfo info = infoArray[i];
@@ -327,7 +327,7 @@ public class DriverUnitTest extends UnitTestBase {
                                         found = true;
                                     }
                                 }
-            
+
                                 if (!found) {
                                     fail("DriverPropertyInfo for '" + messageKey + "' not found!");
                                 }

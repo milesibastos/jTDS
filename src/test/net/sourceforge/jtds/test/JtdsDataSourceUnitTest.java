@@ -8,6 +8,8 @@ import java.sql.SQLException;
 
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.Driver;
+
 import javax.naming.Reference;
 import javax.naming.NamingException;
 
@@ -17,7 +19,7 @@ import javax.naming.NamingException;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.7 2004-10-22 11:24:51 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.8 2004-11-15 13:29:11 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -197,12 +199,12 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          */
         public void testNoHost() {
             JtdsDataSource ds = new JtdsDataSource();
-            ds.setUser(TestBase.props.getProperty(Messages.get("prop.user")));
-            ds.setPassword(TestBase.props.getProperty(Messages.get("prop.password")));
-            ds.setDatabaseName(TestBase.props.getProperty(Messages.get("prop.databasename")));
+            ds.setUser(TestBase.props.getProperty(Messages.get(Driver.USER)));
+            ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
             try {
                 ds.setPortNumber(Integer.parseInt(
-                        TestBase.props.getProperty(Messages.get("prop.portnumber"), "1433")));
+                        TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));
             } catch (Exception ex) {
                 // Ignore
             }
@@ -224,11 +226,11 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          */
         public void testNoUser() {
             JtdsDataSource ds = new JtdsDataSource();
-            ds.setServerName(TestBase.props.getProperty(Messages.get("prop.servername")));
-            ds.setDatabaseName(TestBase.props.getProperty(Messages.get("prop.databasename")));
+            ds.setServerName(TestBase.props.getProperty(Messages.get(Driver.SERVERNAME)));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
             try {
                 ds.setPortNumber(Integer.parseInt(
-                        TestBase.props.getProperty(Messages.get("prop.portnumber"), "1433")));
+                        TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));
             } catch (Exception ex) {
                 // Ignore
             }
@@ -255,13 +257,13 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          */
         public void testNormal() {
             JtdsDataSource ds = new JtdsDataSource();
-            ds.setServerName(TestBase.props.getProperty(Messages.get("prop.servername")));
-            ds.setUser(TestBase.props.getProperty(Messages.get("prop.user")));
-            ds.setPassword(TestBase.props.getProperty(Messages.get("prop.password")));
-            ds.setDatabaseName(TestBase.props.getProperty(Messages.get("prop.databasename")));
+            ds.setServerName(TestBase.props.getProperty(Messages.get(Driver.SERVERNAME)));
+            ds.setUser(TestBase.props.getProperty(Messages.get(Driver.USER)));
+            ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
             try {
                 ds.setPortNumber(Integer.parseInt(
-                        TestBase.props.getProperty(Messages.get("prop.portnumber"), "1433")));
+                        TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));
             } catch (Exception ex) {
                 // Ignore
             }

@@ -7,11 +7,11 @@ import java.util.Hashtable;
  * Helper class to handle server character set conversion.
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
- * @version  $Id: EncodingHelper.java,v 1.5 2004-04-02 18:34:14 bheineman Exp $
+ * @version  $Id: EncodingHelper.java,v 1.6 2004-05-30 19:53:17 bheineman Exp $
  */
 public class EncodingHelper
 {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.5 2004-04-02 18:34:14 bheineman Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.6 2004-05-30 19:53:17 bheineman Exp $";
 
     /**
      * Array containig the bytes 0x00 - 0xFF.
@@ -127,14 +127,22 @@ public class EncodingHelper
         //      cover all the character sets known by SQL Server.
         if (res == null) {
             try {
-                res = new EncodingHelper("Cp" + encodingName);
+                if (encodingName.toLowerCase().startsWith("cp") && encodingName.length() > 2) {
+                    res = new EncodingHelper("Cp" + encodingName.substring(2));
+                } else {
+                    res = new EncodingHelper("Cp" + encodingName);
+                }
             } catch (UnsupportedEncodingException e) {
             }
         }
 
         if (res == null) {
             try {
-                res = new EncodingHelper("MS" + encodingName);
+                if (encodingName.toLowerCase().startsWith("ms") && encodingName.length() > 2) {
+                    res = new EncodingHelper("MS" + encodingName.substring(2));
+                } else {
+                    res = new EncodingHelper("MS" + encodingName);
+                }
             } catch (UnsupportedEncodingException e) {
             }
         }

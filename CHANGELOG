@@ -1,6 +1,10 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+05/30/2004 - Brian Heineman
+ o Corrected bug where "Cp" or "MS" was being appended to strings that already
+   started with a different case of the same sequence of characters.
+
 05/06/2004 - Brian Heineman
  o Corrected bug [946642] No support for 1.4 java.sql.Types.BOOLEAN.
 

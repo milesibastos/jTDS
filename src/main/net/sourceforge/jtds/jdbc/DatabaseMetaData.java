@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.6 2003-01-27 09:24:37 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.7 2003-10-02 18:07:54 matt_brinkley Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.6 2003-01-27 09:24:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.7 2003-10-02 18:07:54 matt_brinkley Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -198,7 +198,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
@@ -310,7 +310,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_column_privileges ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_column_privileges ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_column_privileges ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
@@ -387,7 +387,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_columns ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_columns ?, ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_columns ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, tableNamePattern);
@@ -505,9 +505,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_fkeys ?, ?, ?, ?, ?, ?";
         if( primaryCatalog != null )
-            query = "exec "+primaryCatalog+"..sp_fkeys ?, ?, ?, ?, ?, ?";
+            query = "exec ["+primaryCatalog+"]..sp_fkeys ?, ?, ?, ?, ?, ?";
         else if( foreignCatalog != null )
-            query = "exec "+foreignCatalog+"..sp_fkeys ?, ?, ?, ?, ?, ?";
+            query = "exec ["+foreignCatalog+"]..sp_fkeys ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, primaryTable);
@@ -872,7 +872,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_statistics ?, ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_statistics ?, ?, ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_statistics ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
@@ -1220,7 +1220,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_pkeys ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_pkeys ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_pkeys ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);
@@ -1308,7 +1308,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_sproc_columns ?, ?, ?, ?, 3";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_sproc_columns ?, ?, ?, ?, 3";
+            query = "exec ["+catalog+"]..sp_sproc_columns ?, ?, ?, ?, 3";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, procedureNamePattern);
@@ -1372,7 +1372,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_stored_procedures ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_stored_procedures ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_stored_procedures ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, procedureNamePattern);
@@ -1538,7 +1538,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_table_privileges ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_table_privileges ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_table_privileges ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, tableNamePattern);
@@ -1597,7 +1597,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_tables ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_tables ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_tables ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, tableNamePattern);
@@ -1906,7 +1906,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?";
         if( catalog != null )
-            query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?";
+            query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(query);
         s.setString(1, table);

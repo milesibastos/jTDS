@@ -2,6 +2,7 @@ Changes from jTDS 0.9.1
 =======================
 
 01/04/2005 - Alin Sinpalean
+ o Applied Mike's fix to bug [1094621] Decimal conversion error.
  o Some performance improvements.
 
 12/21/2004 - Alin Sinpalean

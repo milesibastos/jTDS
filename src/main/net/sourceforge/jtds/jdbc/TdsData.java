@@ -23,7 +23,6 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.sql.Timestamp;
 import java.sql.SQLException;
-import java.sql.Connection;
 import java.util.GregorianCalendar;
 
 /**
@@ -47,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.38 2004-12-07 15:11:00 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.39 2005-01-04 10:30:54 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1173,11 +1172,11 @@ public class TdsData {
                 if (pi.value instanceof BigDecimal) {
                     BigDecimal value = (BigDecimal)pi.value;
                     if (connection.getMaxPrecision() > 28) {
-                        if (value.scale() > 10 || value.compareTo(limit38) > 0) {
+                        if (value.scale() > 10 || value.abs().compareTo(limit38) > 0) {
                             pi.sqlType = "decimal(38," + value.scale() + ")";
                         }
                     } else {
-                        if (value.scale() > 10 || value.compareTo(limit28) > 0) {
+                        if (value.scale() > 10 || value.abs().compareTo(limit28) > 0) {
                             pi.sqlType = "decimal(28," + value.scale() + ")";
                         }
                     }

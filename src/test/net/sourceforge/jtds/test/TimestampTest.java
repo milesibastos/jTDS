@@ -1490,7 +1490,7 @@ public class TimestampTest extends DatabaseTestCase
 
         Statement stmt = conn.createStatement();
         stmt.executeUpdate("create table #t0038 ("
-            + " keyfield char(255)     not null, "
+            + " keyField char(255)     not null, "
             + " descField varchar(255)  not null) ");
 
         int count = stmt.executeUpdate("insert into #t0038 values ('value', 'test')");

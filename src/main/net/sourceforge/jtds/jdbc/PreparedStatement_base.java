@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.31 2004-04-16 21:14:11 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.32 2004-04-19 16:24:45 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.31 2004-04-16 21:14:11 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.32 2004-04-19 16:24:45 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -971,9 +971,21 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @return                   the description of a ResultSet's columns
      * @exception  SQLException  if a database access error occurs
      */
-    public java.sql.ResultSetMetaData getMetaData() throws SQLException
-    {
-        NotImplemented();
+    public ResultSetMetaData getMetaData() throws SQLException {
+        ResultSet resultSet = null;
+
+        try {
+            resultSet = executeQuery();
+            return resultSet.getMetaData();
+        } catch (SQLException e) {
+            // Ignore, the specification indicates that a null should be returned
+            // if the ResultSetMetaData cannot be obtained.
+        } finally {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+        }
+
         return null;
     }
 

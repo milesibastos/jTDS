@@ -25,8 +25,8 @@ public class LOBTest extends TestBase {
         StringBuffer newData = new StringBuffer();
 
         for (int i = 0; i < LOB_LENGTH; i++) {
-            data.append((char) (Math.random() * 90) + 32);
-            newData.append((char) (Math.random() * 90) + 32);
+            data.append((char) (Math.random() * 58) + 32);
+            newData.append((char) (Math.random() * 58) + 32);
         }
 
         clobData = data.toString();

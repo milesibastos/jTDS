@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.8 2004-01-29 18:44:22 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.9 2004-01-29 19:42:10 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,11 +53,11 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.8 2004-01-29 18:44:22 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.9 2004-01-29 19:42:10 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
-    SQLWarningChain warningChain; // The warning chain
+    SQLWarningChain warningChain = new SQLWarningChain(); // The warning chain
     TdsResultSet results = null;
 
     private Tds actTds = null;
@@ -79,7 +79,6 @@ public class TdsStatement implements java.sql.Statement
         throws SQLException
     {
         this.connection = con;
-        this.warningChain = new SQLWarningChain();
         this.type = type;
         this.concurrency = concurrency;
     }
@@ -121,7 +120,7 @@ public class TdsStatement implements java.sql.Statement
         }
     }
 
-    private void NotImplemented() throws java.sql.SQLException
+    protected void NotImplemented() throws java.sql.SQLException
     {
         throw new SQLException("Not Implemented");
     }
@@ -619,7 +618,8 @@ public class TdsStatement implements java.sql.Statement
 
     public boolean getMoreResults(int current) throws SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return false;
     }
 
     void handleRetStat(PacketRetStatResult packet)
@@ -915,41 +915,49 @@ public class TdsStatement implements java.sql.Statement
 
     public boolean execute(String str, int param) throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return false;
     }
 
     public boolean execute(String str, String[] str1) throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return false;
     }
 
     public boolean execute(String str, int[] values) throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return false;
     }
 
     public int executeUpdate(String str, String[] str1) throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return Integer.MIN_VALUE;
     }
 
     public int executeUpdate(String str, int[] values) throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return Integer.MIN_VALUE;
     }
 
     public int executeUpdate(String str, int param) throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return Integer.MIN_VALUE;
     }
 
     public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return null;
     }
 
     public int getResultSetHoldability() throws java.sql.SQLException
     {
-        throw new SQLException("Not Implemented");
+        NotImplemented();
+        return Integer.MIN_VALUE;
     }
 }

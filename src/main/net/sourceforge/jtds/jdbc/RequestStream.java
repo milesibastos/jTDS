@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.9 2004-08-28 19:10:01 bheineman Exp $
+ * @version $Id: RequestStream.java,v 1.10 2004-09-01 15:33:59 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -374,20 +374,24 @@ public class RequestStream {
      * @throws IOException
      */
     void writeStreamBytes(InputStream in, int length) throws IOException {
-        while (length-- > 0) {
-            int b = in.read();
+        byte buffer[] = new byte[1024];
 
-            if (b < 0) {
+        while (length > 0) {
+            int res = in.read(buffer);
+
+            if (res < 0) {
                 throw new java.io.IOException(
-                                             "Data in stream less than specified by length");
+                        "Data in stream less than specified by length");
             }
 
-            write((byte) b);
+            write(buffer, 0, res);
+            length -= res;
         }
 
+        // XXX Not sure that this is actually an error
         if (in.read() >= 0) {
             throw new java.io.IOException(
-                                         "More data in stream than specified by length");
+                    "More data in stream than specified by length");
         }
     }
 
@@ -399,21 +403,30 @@ public class RequestStream {
      * @throws IOException
      */
     void writeReaderChars(Reader in, int length) throws IOException {
-        while (length-- > 0) {
-            int b = in.read();
+        char cbuffer[] = new char[512];
+        byte bbuffer[] = new byte[1024];
 
-            if (b < 0) {
+        while (length > 0) {
+            int res = in.read(cbuffer);
+
+            if (res < 0) {
                 throw new java.io.IOException(
-                                             "Data in stream less than specified by length");
+                        "Data in stream less than specified by length");
             }
 
-            write((byte) b);
-            write((byte) (b >> 8));
+            for (int i = 0, j = -1; i < res; i++) {
+                bbuffer[++j] = (byte) cbuffer[i];
+                bbuffer[++j] = (byte) (cbuffer[i] >> 8);
+            }
+
+            write(bbuffer, 0, res * 2);
+            length -= res;
         }
 
+        // XXX Not sure that this is actually an error
         if (in.read() >= 0) {
             throw new java.io.IOException(
-                                         "More data in stream than specified by length");
+                    "More data in stream than specified by length");
         }
     }
 
@@ -429,18 +442,19 @@ public class RequestStream {
     void writeReaderBytes(Reader in, int length) throws IOException {
         char buffer[] = new char[1024];
 
-        for (int i = 0; i < length; i += buffer.length) {
+        for (int i = 0; i < length;) {
             int result = in.read(buffer);
 
-            if (result == -1 && i < length) {
+            if (result == -1) {
                 throw new java.io.IOException(
-                                             "Data in stream less than specified by length");
+                        "Data in stream less than specified by length");
             } else if (i + result > length) {
                 throw new java.io.IOException(
-                                             "More data in stream than specified by length");
+                        "More data in stream than specified by length");
             }
 
             write(Support.encodeString(socket.getCharset(), new String(buffer, 0, result)));
+            i += result;
         }
     }
 

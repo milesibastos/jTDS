@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.21 2004-08-31 17:25:17 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.22 2004-09-01 15:33:59 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -223,12 +223,17 @@ public class ClobImpl implements Clob {
 
         try {
             char[] buffer = new char[length];
+            int bytesRead = 0, res;
 
-            if (reader.read(buffer) != length) {
-                throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
+            while ((res = reader.read(buffer, bytesRead, length - bytesRead)) != -1) {
+                bytesRead += res;
+
+                if (bytesRead == length) {
+                    return new String(buffer);
+                }
             }
 
-            return new String(buffer);
+            throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
         } catch (IOException ioe) {
             throw new SQLException(
                  Messages.get("error.generic.ioread", "String", ioe.getMessage()),
@@ -263,6 +268,7 @@ public class ClobImpl implements Clob {
             long length = length() - searchStr.length();
             boolean reset = true;
 
+            // TODO Implement a better pattern matching algorithm
             for (long i = start; i < length; i++) {
                 boolean found = true;
                 int value;
@@ -505,7 +511,7 @@ public class ClobImpl implements Clob {
 
         /**
          * Checks the size of the in-memory buffer; if a write will
-         * cause the size to exceed <code>MAXIMUM_SIZE</code> than
+         * cause the size to exceed <code>MAXIMUM_SIZE</code> then
          * the data will be removed from memory and written to disk.
          *
          * @param length the length of data to be written
@@ -702,6 +708,7 @@ public class ClobImpl implements Clob {
                 return;
             }
 
+            // FIXME This is not correct. UTF-8 data is variable in length.
             byte[] data = new String(cbuf, off, len).getBytes();
 
             raf.write(data, 0, data.length);

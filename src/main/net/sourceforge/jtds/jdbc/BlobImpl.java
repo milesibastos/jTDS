@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.19 2004-08-31 17:25:17 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.20 2004-09-01 15:33:59 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -104,6 +104,10 @@ public class BlobImpl implements Blob {
 	        	}
 
 	        	outputStream.close();
+
+                if (length != 0) {
+                    throw new IOException(Messages.get("error.generic.ioread", "bytes", "unexpected EOF"));
+                }
         	} catch (SQLException e) {
         		// Should never happen...
         	}
@@ -159,12 +163,17 @@ public class BlobImpl implements Blob {
 
         try {
             byte[] buffer = new byte[length];
+            int bytesRead = 0, res;
 
-            if (inputStream.read(buffer) != length) {
-                throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
+            while ((res = inputStream.read(buffer, bytesRead, length - bytesRead)) != -1) {
+                bytesRead += res;
+
+                if (bytesRead == length) {
+                    return buffer;
+                }
             }
 
-            return buffer;
+            throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
         } catch (IOException e) {
             throw new SQLException(
                  Messages.get("error.generic.ioread", "byte", e.getMessage()),
@@ -199,6 +208,7 @@ public class BlobImpl implements Blob {
             long length = length() - pattern.length();
             boolean reset = true;
 
+            // TODO Implement a better pattern matching algorithm
             for (long i = start; i < length; i++) {
                 boolean found = true;
                 int value;
@@ -257,7 +267,7 @@ public class BlobImpl implements Blob {
     }
 
     public int setBytes(long pos, byte[] bytes, int offset, int len)
-    throws SQLException {
+            throws SQLException {
         OutputStream outputStream = setBinaryStream(pos);
 
         try {

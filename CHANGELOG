@@ -1,6 +1,25 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/01/2004 - Alin Sinpalean
+ o Two simple but very important (in terms of performance) tweaks in Messages
+   (caching the message ResourceBundle and no longer creating and using a
+   MessageFormat instance when the message has no parameters). Before these two
+   changes, over 100k+ allocations were made unnecessarily during a single run
+   of the test suite.
+ o RequestStream.writeStreamBytes() and writeReaderChars() no longer read/write
+   one byte/char at a time, but rather use a buffer. This should considerably
+   improve performance.
+ o Added a simple check and a read loop instead of a single read to BlobImpl
+   and ClobImpl.
+ o Small changes in LargeLOBTest.testLargeBlob1() and
+   TestBase.compareInputStreams()/compareReaders() to improve performance. All
+   three now use buffers instead of reading/writing one byte at a time.
+   LargeLOBTest runs now in just over a minute.
+ o Added a test for bug #1008816 - '"More data in stream ..." error when
+   inserting an image' to LOBTest (testBlobSet8). This seems to have been fixed
+   starting with 0.9-rc1.
+
 08/31/2004 - Alin Sinpalean
  o Improved BlobImpl internal OutputStream write(byte[], int, int)
    implementation. No longer uses write(byte). Also cleaned up somewhat

@@ -23,20 +23,31 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 
-
 /**
  * Support class for <code>Messages.properties</code>.
- * 
+ *
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.6 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: Messages.java,v 1.7 2004-09-01 15:33:59 alin_sinpalean Exp $
  */
 public final class Messages {
 
     /**
-     * Default name for resource bundle containing the messages
+     * Default name for resource bundle containing the messages.
      */
     private static final String DEFAULT_RESOURCE = "net.sourceforge.jtds.jdbc.Messages";
+
+    /**
+     * Cached resource bundle containing the messages.
+     * <p>
+     * <code>ResourceBundle</code> does caching internally but this caching
+     * involves a lot of string operations to generate the keys used for
+     * caching, leading to a lot of <code>StringBuffer</code> reallocation. In
+     * one run through the complete jTDS test suite there were over 60000
+     * allocations and reallocations (about one for each <code>get()</code>
+     * call).
+     */
+    private static ResourceBundle defaultResource = null;
 
 
     /**
@@ -98,8 +109,13 @@ public final class Messages {
         try {
             ResourceBundle bundle = loadResourceBundle();
             String formatString = bundle.getString(key);
-            MessageFormat formatter = new MessageFormat(formatString);
-            return formatter.format(arguments);
+            // No need for any formatting if no parameters are specified
+            if (arguments == null || arguments.length == 0) {
+                return formatString;
+            } else {
+                MessageFormat formatter = new MessageFormat(formatString);
+                return formatter.format(arguments);
+            }
         } catch (java.util.MissingResourceException mre) {
             throw new RuntimeException("No message resource found for message property " + key);
         }
@@ -115,7 +131,7 @@ public final class Messages {
      * <code>descriptionMap</code> are guaranteed to match up as long
      * as the properties defined in <code>Messages.properties</code>
      * are well-formed.
-     * 
+     *
      * @param propertyMap The map of property names to be populated.
      * @param descriptionMap The map of property descriptions to be populated.
      */
@@ -138,15 +154,14 @@ public final class Messages {
 
     /**
      * Load the {@link #DEFAULT_RESOURCE} resource bundle.
-     * <p/>
-     * ResourceBundle does caching so performance should be OK.
-     * (Comment copied from {@link #get(String, Object[])}
-     * in previous revision.)
-     * 
+     *
      * @return The resource bundle.
      */
     private static ResourceBundle loadResourceBundle() {
-        return ResourceBundle.getBundle(DEFAULT_RESOURCE);
+        if (defaultResource == null) {
+            defaultResource = ResourceBundle.getBundle(DEFAULT_RESOURCE);
+        }
+        return defaultResource;
     }
 
 }

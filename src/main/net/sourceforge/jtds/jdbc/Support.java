@@ -44,20 +44,14 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.11 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: Support.java,v 1.12 2004-08-10 14:57:44 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
-    private static final Byte BYTE_ZERO = new Byte((byte) 0);
-    private static final Byte BYTE_ONE = new Byte((byte) 1);
-    private static final Short SHORT_ZERO = new Short((short) 0);
-    private static final Short SHORT_ONE = new Short((short) 1);
     private static final Integer INTEGER_ZERO = new Integer(0);
     private static final Integer INTEGER_ONE = new Integer(1);
     private static final Long LONG_ZERO = new Long(0L);
     private static final Long LONG_ONE = new Long(1L);
-    private static final Float FLOAT_ZERO = new Float(0.0);
-    private static final Float FLOAT_ONE = new Float(1.0);
     private static final Double DOUBLE_ZERO = new Double(0.0);
     private static final Double DOUBLE_ONE = new Double(1.0);
     private static final BigDecimal BIG_DECIMAL_ZERO = new BigDecimal(0.0);
@@ -187,48 +181,19 @@ public class Support {
         try {
             switch (jdbcType) {
                 case java.sql.Types.TINYINT:
-                    if (x == null) {
-                        return BYTE_ZERO;
-                    } else if (x instanceof Byte) {
-                        return x;
-                    } else if (x instanceof Number) {
-                        return new Byte(((Number) x).byteValue());
-                    } else if (x instanceof String) {
-                        return new Byte((String) x);
-                    } else if (x instanceof Boolean) {
-                        return ((Boolean) x).booleanValue() ? BYTE_ONE : BYTE_ZERO;
-                    }
-
-                    break;
-
                 case java.sql.Types.SMALLINT:
-                    if (x == null) {
-                        return SHORT_ZERO;
-                    } else if (x instanceof Short) {
-                        return x;
-                    } else if (x instanceof Number) {
-                        return new Short(((Number) x).shortValue());
-                    } else if (x instanceof String) {
-                        return new Short((String) x);
-                    } else if (x instanceof Boolean) {
-                        return ((Boolean) x).booleanValue() ? SHORT_ONE : SHORT_ZERO;
-                    }
-
-                    break;
-
                 case java.sql.Types.INTEGER:
                     if (x == null) {
                         return INTEGER_ZERO;
-                    } else if (x instanceof Integer) {
-                        return x;
+                    } else if (x instanceof Byte) {
+                        return new Integer(((Byte)x).byteValue() & 0xFF);
                     } else if (x instanceof Number) {
                         return new Integer(((Number) x).intValue());
                     } else if (x instanceof String) {
-                        return new Integer((String) x);
+                        return new Integer(((String) x).trim());
                     } else if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
                     }
-
                     break;
 
                 case java.sql.Types.BIGINT:
@@ -236,10 +201,12 @@ public class Support {
                         return LONG_ZERO;
                     } else if (x instanceof Long) {
                         return x;
+                    } else if (x instanceof Byte) {
+                        return new Long(((Byte)x).byteValue() & 0xFF);
                     } else if (x instanceof Number) {
                         return new Long(((Number) x).longValue());
                     } else if (x instanceof String) {
-                        return new Long((String) x);
+                        return new Long(((String) x).trim());
                     } else if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? LONG_ONE : LONG_ZERO;
                     }
@@ -248,29 +215,17 @@ public class Support {
 
                 case java.sql.Types.REAL:
                 case java.sql.Types.FLOAT:
-                    if (x == null) {
-                        return FLOAT_ZERO;
-                    } else if (x instanceof Float) {
-                        return x;
-                    } else if (x instanceof Number) {
-                        return new Float(((Number) x).floatValue());
-                    } else if (x instanceof String) {
-                        return new Float((String) x);
-                    } else  if (x instanceof Boolean) {
-                        return ((Boolean) x).booleanValue() ? FLOAT_ONE : FLOAT_ZERO;
-                    }
-
-                    break;
-
                 case java.sql.Types.DOUBLE:
                     if (x == null) {
                         return DOUBLE_ZERO;
                     } else if (x instanceof Double) {
                         return x;
+                    } else if (x instanceof Byte) {
+                        return new Double(((Byte)x).byteValue() & 0xFF);
                     } else if (x instanceof Number) {
                         return new Double(((Number) x).doubleValue());
                     } else if (x instanceof String) {
-                        return new Double((String) x);
+                        return new Double(((String) x).trim());
                     } else if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? DOUBLE_ONE : DOUBLE_ZERO;
                     }
@@ -625,11 +580,7 @@ public class Support {
                 return "java.lang.Boolean";
 
             case java.sql.Types.TINYINT:
-                return "java.lang.Byte";
-
             case java.sql.Types.SMALLINT:
-                return "java.lang.Short";
-
             case java.sql.Types.INTEGER:
                 return  "java.lang.Integer";
 
@@ -640,12 +591,10 @@ public class Support {
             case java.sql.Types.DECIMAL:
                 return "java.math.BigDecimal";
 
+            case java.sql.Types.REAL:
             case java.sql.Types.FLOAT:
             case java.sql.Types.DOUBLE:
                 return "java.lang.Double";
-
-            case java.sql.Types.REAL:
-                return "java.lang.Float";
 
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:

@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.9 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.10 2004-08-10 14:57:44 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -405,7 +405,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setByte(int parameterIndex, byte x) throws SQLException {
-        setParameter(parameterIndex, new Short((short) (x & 0xFF)), java.sql.Types.TINYINT, 0, 0);
+        setParameter(parameterIndex, new Integer((int) (x & 0xFF)), java.sql.Types.TINYINT, 0, 0);
     }
 
     public void setDouble(int parameterIndex, double x) throws SQLException {
@@ -413,7 +413,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        setParameter(parameterIndex, new Float(x), java.sql.Types.FLOAT, 0, 0);
+        setParameter(parameterIndex, new Double(x), java.sql.Types.FLOAT, 0, 0);
     }
 
     public void setInt(int parameterIndex, int x) throws SQLException {
@@ -435,7 +435,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setShort(int parameterIndex, short x) throws SQLException {
-        setParameter(parameterIndex, new Short(x), java.sql.Types.SMALLINT, 0, 0);
+        setParameter(parameterIndex, new Integer(x), java.sql.Types.SMALLINT, 0, 0);
     }
 
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {

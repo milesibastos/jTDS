@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.17 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.18 2004-08-10 14:57:44 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -431,9 +431,9 @@ public class TdsData {
             case SYBINTN:
                 switch (in.read()) {
                     case 1:
-                        return new Byte((byte) in.read());
+                        return new Integer(in.read() & 0xFF);
                     case 2:
-                        return new Short((short) in.readShort());
+                        return new Integer(in.readShort());
                     case 4:
                         return new Integer(in.readInt());
                     case 8:
@@ -443,10 +443,10 @@ public class TdsData {
                 break;
 
             case SYBINT1:
-                return new Byte((byte) in.read());
+                return new Integer(in.read() & 0xFF);
 
             case SYBINT2:
-                return new Short((short) in.readShort());
+                return new Integer(in.readShort());
 
             case SYBINT4:
                 return new Integer(in.readInt());
@@ -579,7 +579,7 @@ public class TdsData {
                 break;
 
             case SYBREAL:
-                return new Float(Float.intBitsToFloat(in.readInt()));
+                return new Double(Float.intBitsToFloat(in.readInt()));
 
             case SYBFLT8:
                 return new Double(Double.longBitsToDouble(in.readLong()));
@@ -588,7 +588,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len == 4) {
-                    return new Float(Float.intBitsToFloat(in.readInt()));
+                    return new Double(Float.intBitsToFloat(in.readInt()));
                 } else if (len == 8) {
                     return new Double(Double.longBitsToDouble(in.readLong()));
                 }
@@ -1849,10 +1849,10 @@ public class TdsData {
 
         switch (ci.tdsType) {
             case SYBINT1:
-                return new Byte((byte) in.read());
+                return new Integer(in.read() & 0xFF);
 
             case SYBINT2:
-                return new Short((short) in.readShort());
+                return new Integer(in.readShort());
 
             case SYBINT4:
                 return new Integer(in.readInt());
@@ -1892,7 +1892,7 @@ public class TdsData {
                 return (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
 
             case SYBREAL:
-                return new Float(Float.intBitsToFloat(in.readInt()));
+                return new Double(Float.intBitsToFloat(in.readInt()));
 
             case SYBFLT8:
                 return new Double(Double.longBitsToDouble(in.readLong()));

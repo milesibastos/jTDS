@@ -1,3 +1,10 @@
+Changes from jTDS 0.9-rc1
+=========================
+
+08/10/2004 - Brian Heineman
+ o Applied patch in bug [1006218] getObject returns incorrect Java class;
+   (thanks to Mike Hutchinson for the patch).
+
 ===============================================================================
 08/09/2004 - jTDS 0.9-rc1 released
 ===============================================================================
@@ -12,7 +19,7 @@ Changes from jTDS 0.8.1
    Hutchinson for the fix).
  o Applied patch [1005550] Documentation on sp_cursorprepare etc.; (thanks to
    Mike Hutchinson for the patch).
- 
+
 08/07/2004 - David Kilzer
  o Changed AbstractDataSource.getTdsVersion() and setTdsVersion() back to
    getTds() and setTds() to preserve external interface.  Left private data

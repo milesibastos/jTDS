@@ -65,7 +65,7 @@ public class Tds8Test extends DatabaseTestCase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bigint2 (data) VALUES (?)");
 
         pstmt.setLong(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -91,8 +91,8 @@ public class Tds8Test extends DatabaseTestCase {
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
-        assertTrue(resultSetMetaData != null);
-        assertTrue(resultSetMetaData.getColumnType(1) == Types.BIGINT);
+        assertNotNull(resultSetMetaData);
+        assertEquals(resultSetMetaData.getColumnType(1), Types.BIGINT);
 
         assertTrue(!rs.next());
         stmt2.close();

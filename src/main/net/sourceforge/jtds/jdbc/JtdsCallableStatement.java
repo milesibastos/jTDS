@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.3 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.4 2004-08-10 14:57:44 bheineman Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**
@@ -115,7 +115,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public byte getByte(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Byte) Support.convert(this, pi.value, java.sql.Types.TINYINT, null)).byteValue();
+        return ((Integer) Support.convert(this, pi.value, java.sql.Types.TINYINT, null)).byteValue();
     }
 
     public double getDouble(int parameterIndex) throws SQLException {
@@ -127,7 +127,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public float getFloat(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Float) Support.convert(this, pi.value, java.sql.Types.FLOAT, null)).floatValue();
+        return ((Double) Support.convert(this, pi.value, java.sql.Types.FLOAT, null)).floatValue();
     }
 
     public int getInt(int parameterIndex) throws SQLException {
@@ -145,7 +145,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public short getShort(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Short) Support.convert(this, pi.value, java.sql.Types.SMALLINT, null)).shortValue();
+        return ((Integer) Support.convert(this, pi.value, java.sql.Types.SMALLINT, null)).shortValue();
     }
 
     public boolean getBoolean(int parameterIndex) throws SQLException {

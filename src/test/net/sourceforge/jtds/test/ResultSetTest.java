@@ -23,7 +23,7 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject1 (data) VALUES (?)");
 
         pstmt.setBoolean(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -48,10 +48,10 @@ public class ResultSetTest extends TestBase {
         assertTrue(data == ((Boolean) tmpData).booleanValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
-        
-        assertTrue(resultSetMetaData != null);
-        assertTrue(resultSetMetaData.getColumnType(1) == Types.BIT);
-        
+
+        assertNotNull(resultSetMetaData);
+        assertEquals(resultSetMetaData.getColumnType(1), Types.BIT);
+
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -70,7 +70,7 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject2 (data) VALUES (?)");
 
         pstmt.setByte(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -91,14 +91,14 @@ public class ResultSetTest extends TestBase {
 
         Object tmpData = rs.getObject(1);
 
-        assertTrue(tmpData instanceof Byte);
-        assertTrue(data == ((Byte) tmpData).byteValue());
+        assertTrue(tmpData instanceof Integer);
+        assertTrue(data == ((Integer) tmpData).byteValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
-        
-        assertTrue(resultSetMetaData != null);
-        assertTrue(resultSetMetaData.getColumnType(1) == Types.TINYINT);
-        
+
+        assertNotNull(resultSetMetaData);
+        assertEquals(resultSetMetaData.getColumnType(1), Types.TINYINT);
+
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -117,7 +117,7 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject3 (data) VALUES (?)");
 
         pstmt.setShort(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -138,14 +138,14 @@ public class ResultSetTest extends TestBase {
 
         Object tmpData = rs.getObject(1);
 
-        assertTrue(tmpData instanceof Short);
-        assertTrue(data == ((Short) tmpData).shortValue());
+        assertTrue(tmpData instanceof Integer);
+        assertTrue(data == ((Integer) tmpData).shortValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
-        
-        assertTrue(resultSetMetaData != null);
-        assertTrue(resultSetMetaData.getColumnType(1) == Types.SMALLINT);
-        
+
+        assertNotNull(resultSetMetaData);
+        assertEquals(resultSetMetaData.getColumnType(1), Types.SMALLINT);
+
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -164,7 +164,7 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject4 (data) VALUES (?)");
 
         pstmt.setInt(1, data);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -189,10 +189,10 @@ public class ResultSetTest extends TestBase {
         assertTrue(data == ((Integer) tmpData).intValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
-        
-        assertTrue(resultSetMetaData != null);
-        assertTrue(resultSetMetaData.getColumnType(1) == Types.INTEGER);
-        
+
+        assertNotNull(resultSetMetaData);
+        assertEquals(resultSetMetaData.getColumnType(1), Types.INTEGER);
+
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -211,8 +211,8 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll1 (data) VALUES (?)");
 
         for (int i = 1; i <= count; i++) {
-        	pstmt.setInt(1, i);
-        	assertTrue(pstmt.executeUpdate() == 1);
+            pstmt.setInt(1, i);
+            assertEquals(pstmt.executeUpdate(), 1);
         }
 
         pstmt.close();
@@ -223,7 +223,7 @@ public class ResultSetTest extends TestBase {
 
         assertTrue(rs.last());
         assertEquals(count, rs.getRow());
-        
+
         stmt2.close();
         rs.close();
     }
@@ -239,7 +239,7 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll2 (data) VALUES (?)");
 
         pstmt.setInt(1, 1);
-        assertTrue(pstmt.executeUpdate() == 1);
+        assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
@@ -248,16 +248,16 @@ public class ResultSetTest extends TestBase {
         stmt2.executeQuery("SELECT data FROM #resultSetScroll2");
 
         ResultSet rs = stmt2.getResultSet();
-        
-        assertTrue(rs != null);
+
+        assertNotNull(rs);
         assertTrue(rs.next());
         assertEquals(rs.getInt(1), 1);
         assertTrue(!rs.next());
-        
+
         stmt2.close();
         rs.close();
     }
-    
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

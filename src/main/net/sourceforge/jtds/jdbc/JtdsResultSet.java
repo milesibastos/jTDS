@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.9 2004-08-05 16:25:26 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.10 2004-08-10 14:57:44 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -556,7 +556,7 @@ public class JtdsResultSet implements ResultSet {
     public byte getByte(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
 
-        return ((Byte) Support.convert(this, data.getValue(), java.sql.Types.TINYINT, null)).byteValue();
+        return ((Integer) Support.convert(this, data.getValue(), java.sql.Types.TINYINT, null)).byteValue();
     }
 
     public double getDouble(int columnIndex) throws SQLException {
@@ -568,7 +568,7 @@ public class JtdsResultSet implements ResultSet {
     public float getFloat(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
 
-        return ((Float) Support.convert(this, data.getValue(), java.sql.Types.FLOAT, null)).floatValue();
+        return ((Double) Support.convert(this, data.getValue(), java.sql.Types.FLOAT, null)).floatValue();
     }
 
     public int getInt(int columnIndex) throws SQLException {
@@ -586,7 +586,7 @@ public class JtdsResultSet implements ResultSet {
     public short getShort(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
 
-        return ((Short) Support.convert(this, data.getValue(), java.sql.Types.SMALLINT, null)).shortValue();
+        return ((Integer) Support.convert(this, data.getValue(), java.sql.Types.SMALLINT, null)).shortValue();
     }
 
     public void setFetchDirection(int direction) throws SQLException {
@@ -654,50 +654,34 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateByte(int columnIndex, byte x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
-        updateObject(columnIndex, new Byte(x));
+        updateObject(columnIndex, new Integer(x & 0xFF));
     }
 
     public void updateDouble(int columnIndex, double x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
         updateObject(columnIndex, new Double(x));
     }
 
     public void updateFloat(int columnIndex, float x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
-        updateObject(columnIndex, new Float(x));
+        updateObject(columnIndex, new Double(x));
     }
 
     public void updateInt(int columnIndex, int x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
         updateObject(columnIndex, new Integer(x));
     }
 
     public void updateLong(int columnIndex, long x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
         updateObject(columnIndex, new Long(x));
     }
 
     public void updateShort(int columnIndex, short x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
-        updateObject(columnIndex, new Short(x));
+        updateObject(columnIndex, new Integer(x));
     }
 
     public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
         updateObject(columnIndex, new Boolean(x));
     }
 
     public void updateBytes(int columnIndex, byte[] x) throws SQLException {
-        checkOpen();
-        checkUpdateable();
         updateObject(columnIndex, x);
     }
 
@@ -831,8 +815,6 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-        checkOpen();
-        checkUpdateable();
 
         if (scale < 0 || scale > 28) {
             throw new SQLException(Messages.get("error.generic.badscale"), "HY092");

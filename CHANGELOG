@@ -46,4 +46,8 @@ Changes from jTDS 0.2
 
 08/14/2002 - Alin Sinpalean
 
- o Added support for the UNIQUEIDENTIFIER datatype
+ o Added support for the UNIQUEIDENTIFIER datatype.
+ o Created a com.internetcds.jdbcx.tds package containing a DataSource
+   implementation and an object factory (alpha version, not even tested with
+   JNDI - I tried to do it but it doesn't seem that easy). Anyway, it's a
+   starting point.

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.18 2002-08-14 11:44:21 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -197,18 +197,18 @@ public class Tds implements TdsDefinitions {
         connection = (java.sql.Connection) connection_;
         initialProps = props_;
 
-        host = props_.getProperty("HOST");
-        serverType = Integer.parseInt(props_.getProperty("SERVERTYPE"));
-        port = Integer.parseInt(props_.getProperty("PORT"));
-        database = props_.getProperty("DBNAME");
-        user = props_.getProperty("user");
-        password = props_.getProperty("password");
-        appName = props_.getProperty("APPNAME", "jdbclib");
-        serverName = props_.getProperty("SERVERNAME", host);
-        progName = props_.getProperty("PROGNAME", "java_app");
+        host = props_.getProperty(PROP_HOST);
+        serverType = Integer.parseInt(props_.getProperty(PROP_SERVERTYPE));
+        port = Integer.parseInt(props_.getProperty(PROP_PORT));
+        database = props_.getProperty(PROP_DBNAME);
+        user = props_.getProperty(PROP_USER);
+        password = props_.getProperty(PROP_PASSWORD);
+        appName = props_.getProperty(PROP_APPNAME, "jdbclib");
+        serverName = props_.getProperty(PROP_SERVERNAME, host);
+        progName = props_.getProperty(PROP_PROGNAME, "java_app");
         progMajorVersion = (byte) DriverVersion.getDriverMajorVersion();
         progMinorVersion = (byte) DriverVersion.getDriverMinorVersion();
-        String verString = props_.getProperty("TDS", "7.0");
+        String verString = props_.getProperty(PROP_TDS, "7.0");
         procedureCache = new HashMap(); // new Vector();   // XXX as
         proceduresOfTra = new ArrayList();
 

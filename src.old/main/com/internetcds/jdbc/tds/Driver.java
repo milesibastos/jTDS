@@ -61,7 +61,7 @@ import com.internetcds.jdbc.tds.TdsException;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    March 16, 2001
- *@version    $Id: Driver.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ *@version    $Id: Driver.java,v 1.3 2002-08-14 13:04:30 alin_sinpalean Exp $
  *@see        DriverManager
  *@see        Connection
  */
@@ -69,7 +69,7 @@ public class Driver implements java.sql.Driver {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Driver.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.3 2002-08-14 13:04:30 alin_sinpalean Exp $";
 
     final static boolean debug = false;
     final static String oldSQLServerUrlPrefix = "jdbc:freetds://";
@@ -351,10 +351,10 @@ public class Driver implements java.sql.Driver {
                 if ((!tokenizer.hasMoreTokens())
                          && isValidHostname(host)
                          && database != null) {
-                    result.put("HOST", host);
-                    result.put("SERVERTYPE", "" + serverType);
-                    result.put("PORT", port);
-                    result.put("DBNAME", database);
+                    result.put(Tds.PROP_HOST, host);
+                    result.put(Tds.PROP_SERVERTYPE, "" + serverType);
+                    result.put(Tds.PROP_PORT, port);
+                    result.put(Tds.PROP_DBNAME, database);
                 }
                 else {
                     return false;

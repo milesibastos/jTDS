@@ -9,6 +9,7 @@
     <path>[lib/jaxp.jar]</path>
     <path>[lib/junit.jar]</path>
     <path>[lib/parser.jar]</path>
+    <path>[lib/jdbc2_0-stdext.jar]</path>
   </class>
 </library>
 

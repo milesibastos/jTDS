@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.7 2002-08-14 11:44:21 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.8 2002-08-14 13:04:30 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.7 2002-08-14 11:44:21 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.8 2002-08-14 13:04:30 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -138,4 +138,15 @@ interface TdsDefinitions
    // XXX should SYBMONEY4 be 122 instead of 112?
    static final byte SYBSMALLMONEY  = 122;   // 0x7A
    // end of column types
+
+   public static final String PROP_HOST       = "HOST",
+                              PROP_SERVERTYPE = "SERVERTYPE",
+                              PROP_PORT       = "PORT",
+                              PROP_DBNAME     = "DBNAME",
+                              PROP_USER       = "USER",
+                              PROP_PASSWORD   = "PASSWORD",
+                              PROP_APPNAME    = "APPNAME",
+                              PROP_SERVERNAME = "SERVERNAME",
+                              PROP_PROGNAME   = "PROGNAME",
+                              PROP_TDS        = "TDS";
 }

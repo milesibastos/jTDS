@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2002-08-14 13:04:30 alin_sinpalean Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.6 2002-06-28 18:01:15 alin_sinpalean Exp $
+ *@version    $Id: TdsConnection.java,v 1.7 2002-08-14 13:04:30 alin_sinpalean Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -118,7 +118,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2002-08-14 13:04:30 alin_sinpalean Exp $";
 
     protected int getTdsVer()
     {
@@ -142,30 +142,30 @@ public class TdsConnection implements ConnectionHelper, Connection {
             Properties props_)
              throws SQLException, com.internetcds.jdbc.tds.TdsException
     {
-        host = props_.getProperty("HOST");
-        serverType = Integer.parseInt(props_.getProperty("SERVERTYPE"));
-        port = Integer.parseInt(props_.getProperty("PORT"));
-        database = props_.getProperty("DBNAME");
-        String user = props_.getProperty("user");
-        String password = props_.getProperty("password");
+        host = props_.getProperty(Tds.PROP_HOST);
+        serverType = Integer.parseInt(props_.getProperty(Tds.PROP_SERVERTYPE));
+        port = Integer.parseInt(props_.getProperty(Tds.PROP_PORT));
+        database = props_.getProperty(Tds.PROP_DBNAME);
+        String user = props_.getProperty(Tds.PROP_USER);
+        String password = props_.getProperty(Tds.PROP_PASSWORD);
         initialProps = props_;
 
         warningChain = new SQLWarningChain();
 
         if (user == null) {
-            user = props_.getProperty("USER");
+            user = props_.getProperty(Tds.PROP_USER.toLowerCase());
             if (user == null) {
                 throw new SQLException("Need a username.");
             }
-            props_.put("user", user);
+            props_.put(Tds.PROP_USER, user);
         }
 
         if (password == null) {
-            password = props_.getProperty("PASSWORD");
+            password = props_.getProperty(Tds.PROP_PASSWORD.toLowerCase());
             if (password == null) {
                 throw new SQLException("Need a password.");
             }
-            props_.put("password", password);
+            props_.put(Tds.PROP_PASSWORD, password);
         }
 
         if (tdsPool == null) {

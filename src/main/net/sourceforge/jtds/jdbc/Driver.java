@@ -44,14 +44,14 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.7 2004-02-05 19:00:31 alin_sinpalean Exp $
+ * @version    $Id: Driver.java,v 1.8 2004-02-26 19:00:51 alin_sinpalean Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.7 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.8 2004-02-26 19:00:51 alin_sinpalean Exp $";
 
     static final int MAJOR_VERSION = 0;
-    static final int MINOR_VERSION = 6;
+    static final int MINOR_VERSION = 7;
 
     private final static String DEFAULT_SQL_SERVER_PORT = "1433";
     private final static String DEFAULT_SYBASE_PORT = "7100";

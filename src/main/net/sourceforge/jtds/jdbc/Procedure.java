@@ -40,10 +40,9 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
-import java.util.StringTokenizer;
 
 public class Procedure {
-    public static final String cvsVersion = "$Id: Procedure.java,v 1.9 2004-02-22 20:10:58 bheineman Exp $";
+    public static final String cvsVersion = "$Id: Procedure.java,v 1.10 2004-02-26 19:00:51 alin_sinpalean Exp $";
 
     // next number to return from the getUniqueId() method
     private static long  id = 1;
@@ -177,9 +176,8 @@ public class Procedure {
      * This routine will use that table to track names that are being used.
      *
      * @return the UniqueProcedureName value
-     * @throws SQLException description of exception
      */
-    private String getUniqueProcedureName(Tds tds) throws SQLException {
+    private String getUniqueProcedureName(Tds tds) {
         if (tds.getServerType() == Tds.SYBASE) {
             String id = getNewId();
 
@@ -214,7 +212,7 @@ public class Procedure {
 
     /**
      * Returns a string id that is guaranteed to be as unique at the
-     * {@link java.rmi.dgc.VMID VMID} class.
+     * <code>java.rmi.dgc.VMID</code> class.
      */
     public static String getNewId() {
         String id = new java.rmi.dgc.VMID().toString();
@@ -228,7 +226,7 @@ public class Procedure {
         }
 
         id = id.substring(0, pos) + count;
-         
+
         while ((pos = id.indexOf(':')) != -1) {
             id = id.substring(0, pos) + id.substring(pos + 1, id.length());
         }

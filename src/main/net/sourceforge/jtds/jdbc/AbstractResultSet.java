@@ -17,10 +17,10 @@ import java.util.TimeZone;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.10 2004-02-20 23:57:17 bheineman Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.11 2004-02-26 19:00:51 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.10 2004-02-20 23:57:17 bheineman Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.11 2004-02-26 19:00:51 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
     public static final long HOUR_CONSTANT = 3600000;
@@ -266,23 +266,28 @@ public abstract class AbstractResultSet implements ResultSet {
 
         if (tmp == null) {
             return null;
-        } else if (tmp instanceof byte[]) {
-            // Binary value, generate hex string
+        }
+
+        // Binary value, generate hex string
+        if (tmp instanceof byte[]) {
             byte[] b = (byte[]) tmp;
             StringBuffer buf = new StringBuffer(2 * b.length);
 
             for (int i = 0; i < b.length; i++) {
-                int n =((int) b[i]) & 0xFF, v = n / 16;
+                int n =((int) b[i]) & 0xFF;
+                int v = n >> 4;
                 buf.append((char) (v < 10 ? '0' + v : 'A' + v - 10));
-                v = n % 16;
+                v = n & 0x0F;
                 buf.append((char) (v < 10 ? '0' + v : 'A' + v - 10));
             }
             return buf.toString();
-        } else if (tmp instanceof Boolean) {
-            return((Boolean)tmp).booleanValue() ? "1" : "0";
-        } else {
-            return tmp.toString();
         }
+
+        if (tmp instanceof Boolean) {
+            return((Boolean)tmp).booleanValue() ? "1" : "0";
+        }
+
+        return tmp.toString();
     }
 
     public java.sql.Time getTime(int index) throws SQLException {

@@ -1,6 +1,10 @@
 Changes from jTDS 0.6
 ========================
 
+02/26/2004 - Alin Sinpalean
+ o Applied part of a patch from Christian Ullenboom, with various small
+   optimizations.
+
 02/24/2004 - Alin Sinpalean
  o Applied Mike's changes as a result of testing the cursor-based ResultSets
    with SQL Server 6.5.
@@ -12,6 +16,7 @@ Changes from jTDS 0.6
    treated the same way as VARBINARY and an exception was thrown).
  o Fixed PreparedStatement_base.setByte (it was setting the parameter type to
    SMALLINT instead of TINYINT, which lead to problems with negative values).
+ o Added to the CVS tree a build file customized for JDK 1.3.
 
 02/22/2004 - Brian Heineman
  o Removed usage of NEWID() for Sybase which does not exist in the 11.x

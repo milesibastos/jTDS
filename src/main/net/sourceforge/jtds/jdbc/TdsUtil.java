@@ -30,44 +30,65 @@
 // SUCH DAMAGE.
 //
 
-
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
+public class TdsUtil {
+    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.2 2004-02-26 19:00:51 alin_sinpalean Exp $";
 
-public class TdsUtil
-{
-   public static final String cvsVersion = "$Id: TdsUtil.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    private static char hex[] =
+            {
+                '0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+            };
 
-
-   static public String javaSqlTypeToString(int type)
-   {
-      switch(type)
-      {
-         case java.sql.Types.BIT:              return "BIT";
-         case java.sql.Types.TINYINT:          return "TINYINT";
-         case java.sql.Types.SMALLINT:         return "SMALLINT";
-         case java.sql.Types.INTEGER:          return "INTEGER";
-         case java.sql.Types.BIGINT:           return "BIGINT";
-         case java.sql.Types.FLOAT:            return "FLOAT";
-         case java.sql.Types.REAL:             return "REAL";
-         case java.sql.Types.DOUBLE:           return "DOUBLE";
-         case java.sql.Types.NUMERIC:          return "NUMERIC";
-         case java.sql.Types.DECIMAL:          return "DECIMAL";
-         case java.sql.Types.CHAR:             return "CHAR";
-         case java.sql.Types.VARCHAR:          return "VARCHAR";
-         case java.sql.Types.LONGVARCHAR:      return "LONGVARCHAR";
-         case java.sql.Types.DATE:             return "DATE";
-         case java.sql.Types.TIME:             return "TIME";
-         case java.sql.Types.TIMESTAMP:        return "TIMESTAMP";
-         case java.sql.Types.BINARY:           return "BINARY";
-         case java.sql.Types.VARBINARY:        return "VARBINARY";
-         case java.sql.Types.LONGVARBINARY:    return "LONGVARBINARY";
-         case java.sql.Types.NULL:             return "NULL";
-         case java.sql.Types.OTHER:            return "OTHER";
-         default:                              return "UNKNOWN" + type;
-      }
-   } /* javaSqlTypeToString()  */
+    static public String javaSqlTypeToString(int type) {
+        switch (type) {
+        case java.sql.Types.BIT:
+            return "BIT";
+        case java.sql.Types.TINYINT:
+            return "TINYINT";
+        case java.sql.Types.SMALLINT:
+            return "SMALLINT";
+        case java.sql.Types.INTEGER:
+            return "INTEGER";
+        case java.sql.Types.BIGINT:
+            return "BIGINT";
+        case java.sql.Types.FLOAT:
+            return "FLOAT";
+        case java.sql.Types.REAL:
+            return "REAL";
+        case java.sql.Types.DOUBLE:
+            return "DOUBLE";
+        case java.sql.Types.NUMERIC:
+            return "NUMERIC";
+        case java.sql.Types.DECIMAL:
+            return "DECIMAL";
+        case java.sql.Types.CHAR:
+            return "CHAR";
+        case java.sql.Types.VARCHAR:
+            return "VARCHAR";
+        case java.sql.Types.LONGVARCHAR:
+            return "LONGVARCHAR";
+        case java.sql.Types.DATE:
+            return "DATE";
+        case java.sql.Types.TIME:
+            return "TIME";
+        case java.sql.Types.TIMESTAMP:
+            return "TIMESTAMP";
+        case java.sql.Types.BINARY:
+            return "BINARY";
+        case java.sql.Types.VARBINARY:
+            return "VARBINARY";
+        case java.sql.Types.LONGVARBINARY:
+            return "LONGVARBINARY";
+        case java.sql.Types.NULL:
+            return "NULL";
+        case java.sql.Types.OTHER:
+            return "OTHER";
+        default:
+            return "UNKNOWN" + type;
+        }
+    }
 
     /**
      * Converts a 16-byte array representing a UNIQUEIDENTIFIER value into the
@@ -79,25 +100,19 @@ public class TdsUtil
      *   <li>Character string format: <code>'6F9619FF-8B86-D011-B42D-00C04FC964FF'</code>
      * </ul>
      */
-    public static String uniqueIdToString(byte bin[])
-    {
-        char hex[] =
-        {
-            '0', '1', '2', '3', '4', '5', '6', '7',
-            '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-        };
+    public static String uniqueIdToString(byte bin[]) {
         char buf[] = new char[36];
 
-        buf[0]  = hex[bin[3] >> 4 & 0xf];
-        buf[1]  = hex[bin[3] & 0xf];
-        buf[2]  = hex[bin[2] >> 4 & 0xf];
-        buf[3]  = hex[bin[2] & 0xf];
-        buf[4]  = hex[bin[1] >> 4 & 0xf];
-        buf[5]  = hex[bin[1] & 0xf];
-        buf[6]  = hex[bin[0] >> 4 & 0xf];
-        buf[7]  = hex[bin[0] & 0xf];
-        buf[8]  = '-';
-        buf[9]  = hex[bin[5] >> 4 & 0xf];
+        buf[0] = hex[bin[3] >> 4 & 0xf];
+        buf[1] = hex[bin[3] & 0xf];
+        buf[2] = hex[bin[2] >> 4 & 0xf];
+        buf[3] = hex[bin[2] & 0xf];
+        buf[4] = hex[bin[1] >> 4 & 0xf];
+        buf[5] = hex[bin[1] & 0xf];
+        buf[6] = hex[bin[0] >> 4 & 0xf];
+        buf[7] = hex[bin[0] & 0xf];
+        buf[8] = '-';
+        buf[9] = hex[bin[5] >> 4 & 0xf];
         buf[10] = hex[bin[5] & 0xf];
         buf[11] = hex[bin[4] >> 4 & 0xf];
         buf[12] = hex[bin[4] & 0xf];

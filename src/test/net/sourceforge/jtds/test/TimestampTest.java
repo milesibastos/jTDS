@@ -764,8 +764,8 @@ public class TimestampTest extends DatabaseTestCase
             { "smallint",      "4094",                   new Short((short)4094) },
             // { "tinyint",       "127",                    new Byte((byte)127) },
             // { "tinyint",       "-128",                   new Byte((byte)-128) },
-            { "smallint",       "127",                   new Byte((byte)127) },
-            { "smallint",       "-128",                  new Byte((byte)-128) },
+            { "tinyint",       "127",                    new Byte((byte)127) },
+            { "tinyint",       "128",                    new Short((short)128) },
             { "money",         "19.95",                  new BigDecimal("19.95") },
             { "smallmoney",    "9.97",                   new BigDecimal("9.97") },
             { "bit",           "1",                      Boolean.TRUE },
@@ -817,10 +817,9 @@ public class TimestampTest extends DatabaseTestCase
                         cstmt.setObject(1, datatypes[i][2]);
                 }
 
-                if (!bImage)
-                    assertTrue(!cstmt.execute());
+                assertEquals(bImage, cstmt.execute());
 
-                while (cstmt.getUpdateCount() != -1 && cstmt.getMoreResults()) ;
+                while (cstmt.getUpdateCount() != -1 || cstmt.getMoreResults()) ;
 
                 if (jtype == java.sql.Types.VARBINARY) {
                     assertTrue(compareBytes(cstmt.getBytes(1), (byte[]) datatypes[i][2]) == 0);

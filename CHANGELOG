@@ -1,6 +1,15 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/28/2004 - Brian Heineman
+ o Implemented Savepoint support.
+ o Updated DatabaseMetaData.supportsSavepoints() to return true.
+ o Implemented DatabaseMetaData.supportsMultipleOpenResults(); returns true.
+ o Implemented DatabaseMetaData.supportsNamedParameters(); currently returns
+   false.
+ o Implemented DatabaseMetaData.supportsStatementPooling(); currently returns
+   false.
+
 03/27/2004 - Brian Heineman
  o Corrected parsing bug in EscapeProcesser that occured when { or } was found
    in a quoted string.

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.16 2005-02-04 12:45:31 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.17 2005-02-15 16:28:48 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -948,8 +948,12 @@ class SQLParser {
             }
             //
             // Impose a reasonable maximum limit on the number of parameters
+            // unless the connection is sending statements unprepared (i.e. by
+            // building a plain query) and this is not a procedure call.
             //
-            if (params.size() > 255) {
+            if (params.size() > 255
+                    && connection.getPrepareSql() != TdsCore.UNPREPARED
+                    && procName != null) {
                 int limit = 255; // SQL 6.5 and Sybase < 12.50
                 if (connection.getServerType() == Driver.SYBASE) {
                     if (connection.getDatabaseMajorVersion() > 12 ||

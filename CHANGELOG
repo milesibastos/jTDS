@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.1
 =======================
 
+02/15/2005 - Alin Sinpalean
+ o Altered SQLParser to accept any number of parameters for a PreparedStatement
+   if prepareSql=0, i.e. plain queries rathern than RPC are used to execute the
+   query. Also modified the related test to handle this situation.
+
 02/14/2005 - Alin Sinpalean
  o Applied patch [1120010] Fixed search string escape handling, submitted by
    James P. Moring.

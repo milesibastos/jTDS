@@ -20,6 +20,9 @@ package net.sourceforge.jtds.test;
 import java.math.BigDecimal;
 import java.sql.*;
 
+import net.sourceforge.jtds.jdbc.*;
+import net.sourceforge.jtds.jdbc.Driver;
+
 /**
  * @version 1.0
  */
@@ -419,27 +422,44 @@ public class PreparedStatementTest extends TestBase {
     }
 
     /**
-     * test for bug [ 1047330 ] prep statement with more than 2100 params fails.
+     * Test for bug [1047330] prep statement with more than 2100 params fails.
      */
     public void testManyParametersStatement() throws Exception {
+        final int PARAMS = 2110;
 
         Statement stmt = con.createStatement();
         makeTestTables(stmt);
         makeObjects(stmt, 10);
         stmt.close();
-        StringBuffer sb = new StringBuffer(12000);
-        sb.append("SELECT * FROM #test WHERE f_int in ( ?");
-        for (int j = 0; j < 2110; j++)
-        {
+
+        StringBuffer sb = new StringBuffer(PARAMS * 3 + 100);
+        sb.append("SELECT * FROM #test WHERE f_int in (?");
+        for (int i = 1; i < PARAMS; i++) {
             sb.append(", ?");
         }
         sb.append(")");
+
         try {
-            con.prepareStatement(sb.toString());
-            fail("Too many parameters Exception expected");
-        } catch (SQLException e)
-        {
-            assertTrue(e.getMessage().startsWith("Prepared or callable"));
+            // This can work if prepareSql=0
+            PreparedStatement pstmt = con.prepareStatement(sb.toString());
+
+            // Set the parameters
+            for (int i = 1; i <= PARAMS; i++) {
+                pstmt.setInt(i, i);
+            }
+
+            // Execute query and count rows
+            ResultSet rs = pstmt.executeQuery();
+            int cnt = 0;
+            while (rs.next()) {
+                ++cnt;
+            }
+
+            // Make sure this worked
+            assertEquals(9, cnt);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            assertEquals("22025", ex.getSQLState());
         }
     }
 

@@ -28,6 +28,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
+import java.sql.DriverManager;
+import java.io.PrintWriter;
 
 
 
@@ -185,11 +187,11 @@ public class Tds8Test extends DatabaseTestCase {
     }
 
     /**
-     * Test for bug [1042272] jTDS doesn?t allow null value into Boolean.
+     * Test for bug [1042272] jTDS doesn't allow null value into Boolean.
      */
     public void testNullBoolean() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("create table #testNullBoolean (id int, data boolean)");
+        stmt.execute("create table #testNullBoolean (id int, value bit)");
 
         PreparedStatement pstmt = con.prepareStatement(
                 "insert into #testNullBoolean (id, value) values (?, ?)");

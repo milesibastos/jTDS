@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.4 2001-09-17 09:32:35 skizz Exp $
+ *@version    $Id: TdsComm.java,v 1.5 2002-08-06 10:15:02 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -92,7 +92,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.4 2001-09-17 09:32:35 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.5 2002-08-06 10:15:02 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -547,15 +547,13 @@ public class TdsComm implements TdsDefinitions {
      *@exception  java.io.IOException
      */
     public byte peek()
-             throws com.internetcds.jdbc.tds.TdsException,
-            java.io.IOException
+        throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
-        // XXX RACE CONDITION-  It is possible that two threads
-        // could be modifying inBuffer at the same time.  We need
-        // to synchronized based on inBuffer itself.
-        byte result = getByte();
-        backup();
-        return result;
+        // If out of data, read another physical packet.
+        if( inBufferIndex >= inBufferLen )
+            getPhysicalPacket();
+
+        return inBuffer[inBufferIndex];
     }
 
 
@@ -608,16 +606,25 @@ public class TdsComm implements TdsDefinitions {
     }
 
 
-    public byte[] getBytes( int len )
-             throws com.internetcds.jdbc.tds.TdsException,
-            java.io.IOException
+    public byte[] getBytes(int len)
+        throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
         byte result[] = new byte[len];
         int i;
 
-        for ( i = 0; i < len; i++ ) {
-            result[i] = getByte();
+        for( i=0; i<len; )
+        {
+            if( inBufferIndex >= inBufferLen )
+                getPhysicalPacket();
+
+            int avail = inBufferLen - inBufferIndex;
+            avail = avail>len-i ? len-i : avail;
+
+            System.arraycopy(inBuffer, inBufferIndex, result, i, avail);
+            i += avail;
+            inBufferIndex += avail;
         }
+
         return result;
     }
 

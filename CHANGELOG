@@ -24,3 +24,8 @@ Changes from jTDS 0.2
    in DatabaseMetaData (based on values returned by the JDBC-ODBC and some
    other drivers).
  o Bugfix 587749: Bit to Int conversion works. So does Binary to String.
+
+08/06/2002 - Alin Sinpalean
+
+ o Optimized the implementations of TdsComm.getBytes(int) and TdsComm.peek();
+   they are no longer using TdsComm.getByte(), which was slowing them down.

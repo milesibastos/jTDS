@@ -764,11 +764,13 @@ public class TimestampTest extends DatabaseTestCase
 			{ "smallmoney",    "9.97",                   new BigDecimal("9.97") },
 			{ "bit",           "1",                      Boolean.TRUE },
 //			{ "text",          "'abcedefg'",             new String("abcdefg") },
-//			{ "image",         "0x0a0a0b",               new byte[] { 0x0a, 0x0a, 0x0b } }
-			{ "char(1000)",
+/*			{ "char(1000)",
 			  "'123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'",
 			   new String("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890") },
-			{ "char(1000)",      "'1234567890'",           new String("1234567890") },
+                           */
+//			{ "char(1000)",      "'1234567890'",           new String("1234567890") },
+			{ "image",         "0x0a0a0b",               new byte[] { 0x0a, 0x0a, 0x0b } },
+
 		};
 	}
 
@@ -782,54 +784,60 @@ public class TimestampTest extends DatabaseTestCase
 		Object[][] datatypes = getDatatypes();
 		for (int i = 0; i < datatypes.length; i++)
 		{
+                  String valueToAssign;
+                  if (datatypes[i][0].equals("image")) 
+                    valueToAssign = "";
+                  else valueToAssign = " = " + datatypes[i][1];
+                  String sql = "create procedure #freetds_outputTest "
+                          + "@a1 " + datatypes[i][0] + " = null out "
+                          + "as select @a1 " + valueToAssign; 
+                  stmt.executeUpdate(sql);
                   for (int pass = 0; pass < 2; pass++) {
-			String sql = "create procedure #freetds_outputTest "
-				+ "@a1 " + datatypes[i][0] + " = null out "
-				+ "as select @a1 = " + datatypes[i][1];
-			stmt.executeUpdate(sql);
 
-			CallableStatement cstmt = cx.prepareCall("{call #freetds_outputTest[(?)]}");
-			int jtype = getType(datatypes[i][2]);
+                    CallableStatement cstmt = cx.prepareCall("{call #freetds_outputTest[(?)]}");
 
-                        if (jtype == java.sql.Types.NUMERIC || jtype == java.sql.Types.DECIMAL)
-			{
-		          cstmt.registerOutParameter(1, jtype, 10);
-                          if (pass == 0) 
-                            cstmt.setObject(1,datatypes[i][2],jtype,10);
-			}
-			else if (jtype == java.sql.Types.VARCHAR)
-			{
-			  cstmt.registerOutParameter(1, jtype, 2000);
-                          if (pass == 0) 
-                            cstmt.setObject(1,datatypes[i][2]);
-			}
-			else
-			{
-			  cstmt.registerOutParameter(1, jtype);
-                          if (pass == 0) 
-                            cstmt.setObject(1,datatypes[i][2]);
-			}
+                    int jtype = getType(datatypes[i][2]);
+                    if (pass == 1)
+                      cstmt.setObject(1,null,jtype,10);
+                    if (jtype == java.sql.Types.NUMERIC || jtype == java.sql.Types.DECIMAL)
+                    {
+                      cstmt.registerOutParameter(1, jtype, 10);
+                      if (pass == 0) 
+                        cstmt.setObject(1,datatypes[i][2],jtype,10);
+                    }
+                    else if (jtype == java.sql.Types.VARCHAR)
+                    {
+                      cstmt.registerOutParameter(1, jtype, 2000);
+                      if (pass == 0) 
+                        cstmt.setObject(1,datatypes[i][2]);
+                    }
+                    else
+                    {
+                      cstmt.registerOutParameter(1, jtype);
+                      if (pass == 0) 
+                        cstmt.setObject(1,datatypes[i][2]);
+                    }
 
-			if (!cstmt.execute())
-                          while(cstmt.getUpdateCount() != -1 && cstmt.getMoreResults()) ;
+                    if (!cstmt.execute())
+                      while(cstmt.getUpdateCount() != -1 && cstmt.getMoreResults()) ;
 
-			if (jtype == java.sql.Types.VARBINARY)
-			{
-		          assertTrue(compareBytes(cstmt.getBytes(1), (byte[])datatypes[i][2]) == 0);
-			}
-			else
-                        if (datatypes[i][2] instanceof Number) {
-                          Number n = (Number)cstmt.getObject(1);
-                          assertEquals("Failed on " + datatypes[i][0], ((Number)cstmt.getObject(1)).doubleValue(), ((Number)datatypes[i][2]).doubleValue(),0.001);
-                        }
-                        else
-			{
-			  assertEquals("Failed on " + datatypes[i][0], cstmt.getObject(1), datatypes[i][2]);
-			}
-
-                        cstmt.executeUpdate(" drop procedure #freetds_outputTest");
+                    if (jtype == java.sql.Types.VARBINARY)
+                    {
+                      assertTrue(compareBytes(cstmt.getBytes(1), (byte[])datatypes[i][2]) == 0);
+                    }
+                    else
+                    if (datatypes[i][2] instanceof Number) {
+                      Number n = (Number)cstmt.getObject(1);
+                      assertEquals("Failed on " + datatypes[i][0], ((Number)cstmt.getObject(1)).doubleValue(), ((Number)datatypes[i][2]).doubleValue(),0.001);
+                    }
+                    else
+                    {
+                      assertEquals("Failed on " + datatypes[i][0], cstmt.getObject(1), datatypes[i][2]);
+                    }
 
                   }  // for (pass
+
+                  stmt.executeUpdate(" drop procedure #freetds_outputTest");
 		}  // for (int
 	}
 

@@ -243,13 +243,201 @@ public class AsTest extends DatabaseTestCase {
   {
     boolean passed = false;
     Statement stmt = con.createStatement();
-    stmt.executeUpdate("  if (exists (select * from sysobjects where name = 'spTestExec')) drop procedure Bug457955");
-    stmt.executeUpdate("  create procedure Bug457955 (@par1 VARCHAR(10)) as select @par1");
+    dropProcedure("#Bug457955");
+    stmt.executeUpdate("  create procedure #Bug457955 (@par1 VARCHAR(10)) as select @par1");
     String param = "123456789"; 
-    CallableStatement s = con.prepareCall("exec Bug457955 ?"); 
+    CallableStatement s = con.prepareCall("exec #Bug457955 ?"); 
     s.setString(1, param); 
     ResultSet r = s.executeQuery(); 
     
+  }
+
+
+
+  public void testBugAttTest2() throws Exception
+  {
+    String tabdef = 
+      "CREATE TABLE #ICEributeTest_AttributeTest2( " +
+      "  ICEobjectId NUMERIC(19) " +
+      "     /*CONSTRAINT ICEributeTest_AttributeTest2_PKICEobjectId PRIMARY KEY */ " +
+      "    ,  " +
+      "  ICEtestShort INTEGER  " +
+      "     NULL,  " +
+      "  ICEtestFloat NUMERIC(28,10) " +
+      "     NULL, " +
+      "  ICEtestDecimal NUMERIC(28,10) " +
+      "     NULL, " +
+      "  ICEtestCharacter INTEGER " +
+      "     NULL, " +
+      "  ICEtestInteger INTEGER " +
+      "     NULL, " +
+      "  ICEtestString VARCHAR(20) " +
+      "     NULL, " +
+      "  ICEtestBoolean BIT " +
+      "     NULL, " +
+      "  ICEtestByte INTEGER " +
+      "     NULL, " +
+      "  ICEtestDouble NUMERIC(28,10) " +
+      "     NULL, " +
+      "  ICEtestLong NUMERIC(19) " +
+      "     NULL, " +
+      "  ICEtestCombined1 VARBINARY(8000) " +
+      "     NULL, " +
+      "  ICEtestDate DATETIME " +
+      "     NULL, " +
+      "  testCombined_testFloat NUMERIC(28,10) " +
+      "     NULL, " +
+      "  testCombined_testShort INTEGER " +
+      "     NULL, " +
+      "  testCombined_testDecimal NUMERIC(28,10) " +
+      "     NULL, " +
+      "  testCombined_testCharacter INTEGER " +
+      "     NULL, " +
+      "  testCombined_testInteger INTEGER " +
+      "     NULL, " +
+      "  testCombined_testString VARCHAR(50) " +
+      "     NULL, " +
+      "  testCombined_testBoolean BIT " +
+      "     NULL, " +
+      "  testCombined_testByte INTEGER " +
+      "     NULL, " +
+      "  testCombined_testDouble NUMERIC(28,10) " +
+      "     NULL, " +
+      "  testCombined_testLong NUMERIC(19) " +
+      "     NULL, " +
+      "  testCombined_testDate DATETIME " +
+      "     NULL, " +
+      "  ICEtestContainedArrays VARBINARY(8000) " +
+      "     NULL, " +
+      "  BSF_FILTER_ATTRIBUTE_NAME INTEGER " +
+      "     NOT NULL, " +
+      "  updateCount INTEGER " +
+      "    NOT NULL " +
+      "  ) "; 
+    Statement stmt = con.createStatement();
+    dropTable("#ICEributeTest_AttributeTest2");
+    stmt.executeUpdate(tabdef);
+    PreparedStatement istmt = con.prepareStatement("INSERT INTO #ICEributeTest_AttributeTest2 (" +
+      "ICEobjectId,BSF_FILTER_ATTRIBUTE_NAME,ICEtestShort,ICEtestFloat,ICEtestDecimal,"+
+      "ICEtestCharacter,ICEtestInteger,ICEtestString,ICEtestBoolean,ICEtestByte,"+
+      "ICEtestDouble,ICEtestLong,ICEtestCombined1,ICEtestDate,testCombined_testFloat,"+
+      "testCombined_testShort,testCombined_testDecimal,testCombined_testCharacter,testCombined_testInteger,testCombined_testString,"+
+      "testCombined_testBoolean,testCombined_testByte,testCombined_testDouble,testCombined_testLong"+
+      ",testCombined_testDate,ICEtestContainedArrays,updateCount ) "+
+      "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+    istmt.setLong(1,(long)650002);
+    istmt.setInt(2,(int)-1461101755);
+    istmt.setNull(3,java.sql.Types.INTEGER);
+    istmt.setNull(4,java.sql.Types.REAL);
+    try {
+      istmt.setNull(5,java.sql.Types.NUMERIC);
+    }
+    catch (java.sql.SQLException e) {
+      istmt.setNull(5,java.sql.Types.DECIMAL);
+    }
+    istmt.setNull(6,java.sql.Types.INTEGER);
+    istmt.setNull(7,java.sql.Types.INTEGER);
+    istmt.setNull(8,java.sql.Types.VARCHAR);
+    istmt.setNull(9,java.sql.Types.BIT);
+    istmt.setNull(10,java.sql.Types.INTEGER);
+    istmt.setNull(11,java.sql.Types.DOUBLE);
+    istmt.setNull(12,java.sql.Types.BIGINT);
+    istmt.setNull(13,java.sql.Types.LONGVARBINARY);
+    istmt.setNull(14,java.sql.Types.TIMESTAMP);
+    istmt.setNull(15,java.sql.Types.REAL);
+    istmt.setNull(16,java.sql.Types.INTEGER);
+    try {
+      istmt.setNull(17,java.sql.Types.NUMERIC);
+    }
+    catch (java.sql.SQLException e) {
+      istmt.setNull(17,java.sql.Types.DECIMAL);
+    }
+    istmt.setNull(18,java.sql.Types.INTEGER);
+    istmt.setNull(19,java.sql.Types.INTEGER);
+    istmt.setNull(20,java.sql.Types.VARCHAR);
+    istmt.setNull(21,java.sql.Types.BIT);
+    istmt.setNull(22,java.sql.Types.INTEGER);
+    istmt.setNull(23,java.sql.Types.DOUBLE);
+    istmt.setNull(24,java.sql.Types.BIGINT);
+    istmt.setNull(25,java.sql.Types.TIMESTAMP);
+    istmt.setNull(26,java.sql.Types.LONGVARBINARY);
+    istmt.setInt(27,1);
+    istmt.execute();
+
+  }
+
+  public void testBigInt() throws Throwable
+  {
+    // String crtab = "create table #testBigInt (a bigint)";
+    String crtab = "create table #testBigInt (a NUMERIC(19))";
+    dropTable("#testBigInt");
+    Statement stmt = con.createStatement();
+    stmt.executeUpdate(crtab);
+    PreparedStatement pstmt = con.prepareStatement("insert into #testBigInt values (?)");
+    pstmt.setNull(1,java.sql.Types.BIGINT);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setLong(1,99999999999L);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setLong(1,-99999999999L);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setLong(1,9999999999999L);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setLong(1,-9999999999999L);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setLong(1,(long)99999999999L);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+  }
+  public void testBoolean() throws Throwable
+  {
+    // String crtab = "create table #testBigInt (a bigint)";
+    String crtab = "create table #testBit (a BIT)";
+    dropTable("#testBit");
+    Statement stmt = con.createStatement();
+    stmt.executeUpdate(crtab);
+    stmt.executeUpdate("insert into #testBit values (NULL)");
+    stmt.executeUpdate("insert into #testBit values (0)");
+    stmt.executeUpdate("insert into #testBit values (1)");
+    ResultSet rs = stmt.executeQuery("select * from #testBit where a is NULL");
+    rs.next();
+    rs.getBoolean(1);
+    rs = stmt.executeQuery("select * from #testBit where a  = 0");
+    rs.next();
+    rs.getBoolean(1);
+    rs = stmt.executeQuery("select * from #testBit where a = 1");
+    rs.next();
+    rs.getBoolean(1);
+    PreparedStatement pstmt = con.prepareStatement("insert into #testBit values (?)");
+    pstmt.setBoolean(1,true);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setBoolean(1,false);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+    pstmt.setNull(1,java.sql.Types.BIT);
+    assertTrue(!pstmt.execute());
+    assertTrue(pstmt.getUpdateCount() == 1);        
+  }
+
+  
+  public void testBinary() throws Throwable
+  {
+    String crtab = "create table #testBinary (a varbinary(8000))";
+    dropTable("#testBinary");
+    byte[] ba = new byte[8000];
+    for ( int i = 0; i < ba.length; i++) {
+      ba[i] = (byte)(i % 256);
+    }
+    Statement stmt = con.createStatement();
+    stmt.executeUpdate(crtab);
+    PreparedStatement pstmt = con.prepareStatement("insert into #testBinary values (?)");
+    pstmt.setObject(1,ba);
+    pstmt.execute();
   }
 }
 

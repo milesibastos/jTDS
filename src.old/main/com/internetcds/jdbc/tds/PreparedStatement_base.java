@@ -56,7 +56,7 @@ import java.util.Map;
  *
  * @author Craig Spannring
  * @author The FreeTDS project
- * @version  $Id: PreparedStatement_base.java,v 1.7 2001-09-20 07:14:08 aschoerk Exp $
+ * @version  $Id: PreparedStatement_base.java,v 1.8 2001-09-24 08:45:10 aschoerk Exp $
  *
  * @see Connection#prepareStatement
  * @see ResultSet
@@ -65,7 +65,7 @@ public class PreparedStatement_base
    extends    TdsStatement
    implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.7 2001-09-20 07:14:08 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.8 2001-09-24 08:45:10 aschoerk Exp $";
 
 
    String               rawQueryString     = null;
@@ -819,25 +819,31 @@ public class PreparedStatement_base
    public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
       throws SQLException
    {
-     switch (targetSqlType) {
-       case java.sql.Types.CHAR:
-       case java.sql.Types.VARCHAR:
-         setString(parameterIndex,(String)x);
-         break;
-       case java.sql.Types.REAL:
-         setFloat(parameterIndex,((Float)x).floatValue());
-         break;
-       case java.sql.Types.DOUBLE:
-         setDouble(parameterIndex,((Double)x).doubleValue());
-         break;
-       case java.sql.Types.INTEGER:
-         setInt(parameterIndex,((Integer)x).intValue());
-         break;
-       case java.sql.Types.BIGINT:
-         setLong(parameterIndex,((Integer)x).longValue());
-         break;       
-       default: 
-      setParam(parameterIndex, x, targetSqlType, scale);
+     if (x == null) {
+       setParam(parameterIndex, x, targetSqlType, scale);
+       return ;
+     }
+     else {
+       switch (targetSqlType) {
+         case java.sql.Types.CHAR:
+         case java.sql.Types.VARCHAR:
+           setString(parameterIndex,(String)x);
+           break;
+         case java.sql.Types.REAL:
+           setFloat(parameterIndex,((Float)x).floatValue());
+           break;
+         case java.sql.Types.DOUBLE:
+           setDouble(parameterIndex,((Double)x).doubleValue());
+           break;
+         case java.sql.Types.INTEGER:
+           setInt(parameterIndex,((Integer)x).intValue());
+           break;
+         case java.sql.Types.BIGINT:
+           setLong(parameterIndex,((Integer)x).longValue());
+           break;       
+         default: 
+        setParam(parameterIndex, x, targetSqlType, scale);
+       }
      }
    }
 

@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 public class ParameterUtils
 {
-   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.4 2001-09-18 08:38:07 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.5 2001-09-24 08:45:10 aschoerk Exp $";
 
 
    /**
@@ -304,6 +304,7 @@ public class ParameterUtils
                parameterList[i].formalType = "tinyint";
                break;
             }            
+            case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
             {
                parameterList[i].formalType = "decimal(28,10)";

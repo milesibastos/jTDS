@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.7 2001-09-20 07:14:09 aschoerk Exp $
+ * @version $Id: TdsStatement.java,v 1.8 2001-09-24 08:45:10 aschoerk Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.7 2001-09-20 07:14:09 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.8 2001-09-24 08:45:10 aschoerk Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -288,16 +288,6 @@ public class TdsStatement implements java.sql.Statement
              // XXX
              // ignore this for now
           }
-         Tds tmpTds = actTds;
-         actTds = null;
-         try
-         {
-            ((ConnectionHelper)connection).relinquish(tmpTds);
-         }
-         catch(TdsException e)
-         {
-            throw new SQLException("Internal Error: " + e.getMessage());
-         }
       }
        
       try

@@ -44,6 +44,7 @@ public class TestBase extends TestCase {
              throws SQLException, ClassNotFoundException
     {
         Class.forName( "com.internetcds.jdbc.tds.Driver" );
+        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
         String url = props.getProperty( "url" );
         Connection con = DriverManager.getConnection( url, props );
 
@@ -135,7 +136,7 @@ public class TestBase extends TestCase {
     private void initLanguage(Connection con) throws SQLException
     {
         Statement stmt = con.createStatement();
-        stmt.executeQuery("set LANGUAGE 'us_english'");
+        stmt.executeUpdate("set LANGUAGE 'us_english'");
         stmt.close();
     }
 

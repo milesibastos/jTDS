@@ -10,6 +10,7 @@ public class SqlForwarder
 	String logfile = null;
 	int port = 1433;
 	int listenPort = 1444;
+        int lognum = 0;
 	
 	byte[] readPacket(InputStream input) throws IOException
 	{
@@ -56,10 +57,12 @@ public class SqlForwarder
 				output[1] = client.getOutputStream();
 				
 				PacketLogger log = null;
-				if (logfile != null)
+				if (logfile == null)
 				{
-					log = new PacketLogger("filter.log");
+					log = new PacketLogger("filter" + lognum++ + ".log");
 				}
+                                else 
+                                  log =  new PacketLogger(logfile + lognum++ + ".log");
 				
 				int direction = 0;
 				while (true)

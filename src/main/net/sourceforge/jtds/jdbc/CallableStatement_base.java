@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.19 2004-03-04 17:11:53 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.20 2004-03-27 17:24:58 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.19 2004-03-04 17:11:53 bheineman Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.20 2004-03-27 17:24:58 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -157,7 +157,7 @@ implements java.sql.CallableStatement {
             final char ch = rawQueryString.charAt(i);
 
             // While this parsing does not validate that a quoted identifier ends
-            // with the the same style as it was opened, id does detect the procedure
+            // with the the same style as it was opened, it does detect the procedure
             // name properly and lets the database validate the identifiers
             // (which it does anyway).
             if (inString) {

@@ -82,7 +82,7 @@
   <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}" />
     <!-- Runtime jar only -->
-    <jar jarfile="${dist}/${ant.project.name}-${DSTAMP}${TSTAMP}.jar"
+    <jar jarfile="${dist}/${ant.project.name}-${version}.jar"
         basedir="${build}/classes"
         excludes="**Test/*"
         includes="**/*"
@@ -98,7 +98,7 @@
         dest="${dist}/tmp"
         includes="README,*.bat,*.xml,*.jpx,*.library,src/**/*,lib/**/*,conf/**/*"
     />
-    <zip zipfile="${dist}/${ant.project.name}-${DSTAMP}${TSTAMP}.zip"
+    <zip zipfile="${dist}/${ant.project.name}-${version}-src.zip"
         basedir="${dist}/tmp"
         includes="**/*"
     />
@@ -106,4 +106,5 @@
   </target>
 
 </project>
+
 

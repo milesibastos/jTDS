@@ -56,16 +56,16 @@ import java.util.Calendar;
  *
  * @author Craig Spannring
  * @author The FreeTDS project
- * @version  $Id: PreparedStatement_base.java,v 1.1.1.1 2001-08-10 01:53:25 skizz Exp $
+ * @version  $Id: PreparedStatement_base.java,v 1.2 2001-08-13 00:27:34 skizz Exp $
  *
  * @see Connection#prepareStatement
  * @see ResultSet
  */
 public class PreparedStatement_base
    extends    TdsStatement
-   implements PreparedStatementHelper
+   implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.1.1.1 2001-08-10 01:53:25 skizz Exp $";
+   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.2 2001-08-13 00:27:34 skizz Exp $";
 
 
    String               rawQueryString     = null;

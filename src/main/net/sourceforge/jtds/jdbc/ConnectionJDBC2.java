@@ -60,7 +60,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.39 2004-10-20 12:58:25 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.40 2004-10-20 17:21:58 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -985,13 +985,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (collation[4] != 0) {
             // The charset is determined by the sort order
-            tmp = Support.getCharsetForSortOrder(collation[4]);
+            tmp = Support.getCharsetForSortOrder((int) collation[4] & 0xFF);
         } else {
             // The charset is determined by the LCID
             tmp = Support.getCharsetForLCID(
-                    ((int) collation[2] & 0x0f) << 16
-                    | ((int) collation[1]) << 8
-                    | (int) collation[0]);
+                    ((int) collation[2] & 0x0F) << 16
+                    | ((int) collation[1] & 0xFF) << 8
+                    | ((int) collation[0] & 0xFF));
         }
 
         if (tmp == null) {

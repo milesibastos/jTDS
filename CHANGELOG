@@ -2,6 +2,15 @@ Changes from jTDS 0.9
 =========================
 
 10/20/2004 - Alin Sinpalean
+ o Corrected a bug that was causing Charsets.properties not to be loaded under
+   Db-Visualizer (and in any case when the file could not be loaded via the
+   thread context classloader).
+ o Made some minor modifications to ConnectionJDNC2.setCollation() to correctly
+   translate bytes to ints.
+ o Updated XaTest to drop the test tables on test end. Also prepended "jTDS_"
+   to all non-temporary table names (in all tests) to ensure no conflicts with
+   real tables occur.
+ o Cleaned up Javadoc comments to get rid of build warnings.
  o Corrected a bug that was preventing the ConnectionPoolDataSource
    implementation from working correctly with JNDI, by having JtdsDataSource
    implement this interface, too.

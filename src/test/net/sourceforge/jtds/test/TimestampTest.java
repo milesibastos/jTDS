@@ -2266,7 +2266,9 @@ public class TimestampTest extends DatabaseTestCase {
 
     /**
      * Test for bug [1040475] Possible bug when converting to and from
-     * datetime. jTDS seems to accept dates outside the range accepted by SQL
+     * datetime.
+     * <p>
+     * jTDS seems to accept dates outside the range accepted by SQL
      * Server (i.e. 1753-9999).
      */
     public void testTimestampRange() throws SQLException {

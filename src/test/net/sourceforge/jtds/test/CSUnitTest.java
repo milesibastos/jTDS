@@ -943,25 +943,25 @@ public class CSUnitTest extends DatabaseTestCase {
 
     public void testInsertConflict0049() throws Exception {
         try {
-            dropTable("t0049b");    // important: first drop this because of foreign key
-            dropTable("t0049a");
+            dropTable("jTDS_t0049b");    // important: first drop this because of foreign key
+            dropTable("jTDS_t0049a");
 
             Statement   stmt = con.createStatement();
 
             String query =
-                    "create table t0049a(                    " +
+                    "create table jTDS_t0049a(               " +
                     "  a integer identity(1,1) primary key,  " +
                     "  b char    not null)";
 
             assertEquals(0, stmt.executeUpdate(query));
 
-            query = "create table t0049b(                    " +
+            query = "create table jTDS_t0049b(               " +
                     "  a integer not null,                   " +
                     "  c char    not null,                   " +
-                    "  foreign key (a) references t0049a(a)) ";
+                    "  foreign key (a) references jTDS_t0049a(a)) ";
             assertEquals(0, stmt.executeUpdate(query));
 
-            query = "insert into t0049b (a, c) values (?, ?)";
+            query = "insert into jTDS_t0049b (a, c) values (?, ?)";
             java.sql.PreparedStatement pstmt = con.prepareStatement(query);
 
             try {
@@ -974,7 +974,7 @@ public class CSUnitTest extends DatabaseTestCase {
             }
             pstmt.close();
 
-            assertEquals(1, stmt.executeUpdate("insert into t0049a (b) values ('a')"));
+            assertEquals(1, stmt.executeUpdate("insert into jTDS_t0049a (b) values ('a')"));
 
             pstmt = con.prepareStatement(query);
             pstmt.setInt(1, 1);
@@ -984,8 +984,8 @@ public class CSUnitTest extends DatabaseTestCase {
             stmt.close();
             pstmt.close();
         } finally {
-            dropTable("t0049b");    // important: first drop this because of foreign key
-            dropTable("t0049a");
+            dropTable("jTDS_t0049b");    // important: first drop this because of foreign key
+            dropTable("jTDS_t0049a");
         }
     }
 
@@ -993,26 +993,26 @@ public class CSUnitTest extends DatabaseTestCase {
         try {
             Statement   stmt = con.createStatement();
 
-            dropTable("t0050b");
-            dropTable("t0050a");
+            dropTable("jTDS_t0050b");
+            dropTable("jTDS_t0050a");
 
             String query =
-                    "create table t0050a(                    " +
+                    "create table jTDS_t0050a(               " +
                     "  a integer identity(1,1) primary key,  " +
                     "  b char    not null)";
 
             assertEquals(0, stmt.executeUpdate(query));
 
             query =
-                    "create table t0050b(                    " +
+                    "create table jTDS_t0050b(               " +
                     "  a integer not null,                   " +
                     "  c char    not null,                   " +
-                    "  foreign key (a) references t0050a(a)) ";
+                    "  foreign key (a) references jTDS_t0050a(a)) ";
             assertEquals(0, stmt.executeUpdate(query));
 
             query =
                 "create procedure #p0050 (@a integer, @c char) as " +
-                "   insert into t0050b (a, c) values (@a, @c)    ";
+                "   insert into jTDS_t0050b (a, c) values (@a, @c)";
             assertEquals(0, stmt.executeUpdate(query));
 
             query = "exec #p0050 ?, ?";
@@ -1028,15 +1028,15 @@ public class CSUnitTest extends DatabaseTestCase {
             }
 
             assertEquals(1, stmt.executeUpdate(
-                    "insert into t0050a (b) values ('a')"));
+                    "insert into jTDS_t0050a (b) values ('a')"));
 
             assertEquals(1, cstmt.executeUpdate());
 
             stmt.close();
             cstmt.close();
         } finally {
-            dropTable("t0050b");
-            dropTable("t0050a");
+            dropTable("jTDS_t0050b");
+            dropTable("jTDS_t0050a");
         }
     }
 

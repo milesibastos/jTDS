@@ -50,7 +50,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.25 2004-10-13 13:10:46 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.26 2004-10-20 17:21:58 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -126,6 +126,11 @@ public class Support {
     private static final GregorianCalendar cal = new GregorianCalendar();
 
     /**
+     * Name of the <code>Charsets.properties</code> resource.
+     */
+    private static final String CHARSETS_RESOURCE_NAME = "net/sourceforge/jtds/jdbc/Charsets.properties";
+
+    /**
      * Charset mapping list.
      */
     private static final Properties charsets = new Properties();
@@ -143,18 +148,22 @@ public class Support {
     static {
         // Load character set mappings
         try {
-            InputStream stream;
+            InputStream stream = null;
             // getContextClassLoader needed to ensure driver
             // works with Tomcat class loading rules.
             ClassLoader classLoader =
                     Thread.currentThread().getContextClassLoader();
 
-            if (classLoader == null) {
-                classLoader = Support.class.getClassLoader();
+            if (classLoader != null) {
+                stream = classLoader.getResourceAsStream(
+                        CHARSETS_RESOURCE_NAME);
             }
 
-            stream = classLoader.getResourceAsStream(
-                    "net/sourceforge/jtds/jdbc/Charsets.properties");
+            if (stream == null) {
+                classLoader = Support.class.getClassLoader();
+                stream = classLoader.getResourceAsStream(
+                        CHARSETS_RESOURCE_NAME);
+            }
 
             if (stream != null) {
                 Properties tmp = new Properties();
@@ -186,7 +195,7 @@ public class Support {
     /**
      * Retrieves the Java character set name asociated with the specified
      * server charset, preceded by a numeric value indicating whether it's a
-     * multibyte character set (!=1) or not (1) and a vertical bar (|), E.g.
+     * multibyte character set (&gt;1) or not (1) and a vertical bar (|), e.g
      * "1|Cp1252" or "2|MS936".
      *
      * @param serverCharset the server-specific character set name
@@ -199,7 +208,7 @@ public class Support {
     /**
      * Retrieves the Java character set name asociated with the specified
      * LCID, preceded by a numeric value indicating whether it's a multibyte
-     * character set (!=1) or not (1) and a vertical bar (|), E.g. "1|Cp1252"
+     * character set (&gt;1) or not (1) and a vertical bar (|), e.g "1|Cp1252"
      * or "2|MS936".
      *
      * @param lcid the server LCID
@@ -212,7 +221,7 @@ public class Support {
     /**
      * Retrieves the Java character set name asociated with the specified
      * sort order, preceded by a numeric value indicating whether it's a
-     * multibyte character set (!=1) or not (1) and a vertical bar (|), E.g.
+     * multibyte character set (&gt;1) or not (1) and a vertical bar (|), e.g
      * "1|Cp1252" or "2|MS936".
      *
      * @param sortOrder the server sort order

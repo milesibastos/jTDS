@@ -36,7 +36,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  * examples found in the following article at
  * <a href="http://archive.devx.com/java/free/articles/dd_jta/jta-2.asp">DevX</a>.
  *
- * @version $Id: XaTest.java,v 1.1 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: XaTest.java,v 1.2 2004-10-20 17:22:01 alin_sinpalean Exp $
  */
 public class XaTest extends DatabaseTestCase {
 
@@ -57,7 +57,7 @@ public class XaTest extends DatabaseTestCase {
         String host = props.getProperty(Messages.get("prop.servername"));
         String port = props.getProperty(Messages.get("prop.portnumber"), "1433");
         String database = props.getProperty(Messages.get("prop.databasename"));
-        int portn = 0;
+        int portn;
         try {
             portn = Integer.parseInt(port);
         } catch (NumberFormatException e) {
@@ -77,24 +77,28 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testXaCommit() throws Exception {
-        dropTable("XATEST");
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE XATEST (id int primary key, data varchar(255))");
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST"));
-        stmt.close();
-//      DriverManager.setLogWriter(new PrintWriter(System.out));
-        XADataSource xaDS = getDataSource();
-        XAConnection xaCon;
-        XAResource xaRes;
-        Xid  xid;
-        xaCon = xaDS.getXAConnection();
-        xaRes = xaCon.getXAResource();
-        Connection con2 = xaCon.getConnection();
-        stmt = con2.createStatement();
-        xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+        Connection con2 = null;
+        XAConnection xaCon = null;
+
         try {
+            dropTable("jTDS_XATEST");
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jTDS_XATEST (id int primary key, data varchar(255))");
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST"));
+            stmt.close();
+
+            XADataSource xaDS = getDataSource();
+            XAResource xaRes;
+            Xid  xid;
+            xaCon = xaDS.getXAConnection();
+            xaRes = xaCon.getXAResource();
+            con2 = xaCon.getConnection();
+            stmt = con2.createStatement();
+            xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (1, 'TEST LINE')");
             xaRes.end(xid, XAResource.TMSUCCESS);
             int ret = xaRes.prepare(xid);
             if (ret == XAResource.XA_OK) {
@@ -102,13 +106,19 @@ public class XaTest extends DatabaseTestCase {
             }
             stmt.close();
             stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM XATEST");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST");
             assertNotNull(rs);
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            con2.close();
-            xaCon.close();
+            dropTable("jTDS_XATEST");
+
+            if (con2 != null) {
+                con2.close();
+            }
+            if (xaCon != null) {
+                xaCon.close();
+            }
         }
     }
 
@@ -118,35 +128,45 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testXaOnePhaseCommit() throws Exception {
-        dropTable("XATEST");
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE XATEST (id int primary key, data varchar(255))");
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST"));
-        stmt.close();
-//      DriverManager.setLogWriter(new PrintWriter(System.out));
-        XADataSource xaDS = getDataSource();
-        XAConnection xaCon;
-        XAResource xaRes;
-        Xid  xid;
-        xaCon = xaDS.getXAConnection();
-        xaRes = xaCon.getXAResource();
-        Connection con2 = xaCon.getConnection();
-        stmt = con2.createStatement();
-        xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+        Connection con2 = null;
+        XAConnection xaCon = null;
+
         try {
+            dropTable("jTDS_XATEST");
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jTDS_XATEST (id int primary key, data varchar(255))");
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST"));
+            stmt.close();
+
+            XADataSource xaDS = getDataSource();
+            XAResource xaRes;
+            Xid  xid;
+            xaCon = xaDS.getXAConnection();
+            xaRes = xaCon.getXAResource();
+            con2 = xaCon.getConnection();
+            stmt = con2.createStatement();
+            xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (1, 'TEST LINE')");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes.commit(xid, true);
             stmt.close();
             stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM XATEST");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST");
             assertNotNull(rs);
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            con2.close();
-            xaCon.close();
+            dropTable("jTDS_XATEST");
+
+            if (con2 != null) {
+                con2.close();
+            }
+            if (xaCon != null) {
+                xaCon.close();
+            }
         }
     }
 
@@ -156,35 +176,45 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testXaRollback() throws Exception {
-        dropTable("XATEST");
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE XATEST (id int primary key, data varchar(255))");
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST"));
-        stmt.close();
-//      DriverManager.setLogWriter(new PrintWriter(System.out));
-        XADataSource xaDS = getDataSource();
-        XAConnection xaCon;
-        XAResource xaRes;
-        Xid  xid;
-        xaCon = xaDS.getXAConnection();
-        xaRes = xaCon.getXAResource();
-        Connection con2 = xaCon.getConnection();
-        stmt = con2.createStatement();
-        xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+        Connection con2 = null;
+        XAConnection xaCon = null;
+
         try {
+            dropTable("jTDS_XATEST");
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jTDS_XATEST (id int primary key, data varchar(255))");
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST"));
+            stmt.close();
+
+            XADataSource xaDS = getDataSource();
+            XAResource xaRes;
+            Xid  xid;
+            xaCon = xaDS.getXAConnection();
+            xaRes = xaCon.getXAResource();
+            con2 = xaCon.getConnection();
+            stmt = con2.createStatement();
+            xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (1, 'TEST LINE')");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes.rollback(xid);
             stmt.close();
             stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM XATEST");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST");
             assertNotNull(rs);
             assertFalse(rs.next());
             stmt.close();
         } finally {
-            con2.close();
-            xaCon.close();
+            dropTable("jTDS_XATEST");
+
+            if (con2 != null) {
+                con2.close();
+            }
+            if (xaCon != null) {
+                xaCon.close();
+            }
         }
     }
 
@@ -195,45 +225,56 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testLocalTran() throws Exception {
-        dropTable("XATEST");
-        dropTable("XATEST2");
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE XATEST (id int primary key, data varchar(255))");
-        stmt.execute("CREATE TABLE XATEST2 (id int primary key, data varchar(255))");
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST"));
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST2"));
-        stmt.close();
-//      DriverManager.setLogWriter(new PrintWriter(System.out));
-        XADataSource xaDS = getDataSource();
-        XAConnection xaCon;
-        XAResource xaRes;
-        Xid  xid;
-        xaCon = xaDS.getXAConnection();
-        xaRes = xaCon.getXAResource();
-        Connection con2 = xaCon.getConnection();
-        stmt = con2.createStatement();
-        xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+        Connection con2 = null;
+        XAConnection xaCon = null;
+
         try {
+            dropTable("jTDS_XATEST");
+            dropTable("jTDS_XATEST2");
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jTDS_XATEST (id int primary key, data varchar(255))");
+            stmt.execute("CREATE TABLE jTDS_XATEST2 (id int primary key, data varchar(255))");
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST"));
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST2"));
+            stmt.close();
+
+            XADataSource xaDS = getDataSource();
+            XAResource xaRes;
+            Xid  xid;
+            xaCon = xaDS.getXAConnection();
+            xaRes = xaCon.getXAResource();
+            con2 = xaCon.getConnection();
+            stmt = con2.createStatement();
+            xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (1, 'TEST LINE')");
             xaRes.end(xid, XAResource.TMSUSPEND);
-            stmt.executeUpdate("INSERT INTO XATEST2 VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST2 VALUES (1, 'TEST LINE')");
             xaRes.start(xid, XAResource.TMRESUME);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (2, 'TEST LINE 2')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (2, 'TEST LINE 2')");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes.rollback(xid);
             stmt.close();
             stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM XATEST");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST");
             assertNotNull(rs);
             assertFalse(rs.next());
-            rs = stmt.executeQuery("SELECT * FROM XATEST2");
+            rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST2");
             assertNotNull(rs);
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            con2.close();
-            xaCon.close();
+            dropTable("jTDS_XATEST");
+            dropTable("jTDS_XATEST2");
+
+            if (con2 != null) {
+                con2.close();
+            }
+            if (xaCon != null) {
+                xaCon.close();
+            }
         }
     }
 
@@ -243,36 +284,41 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testXAJoinTran() throws Exception {
-        dropTable("XATEST");
-        dropTable("XATEST2");
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE XATEST (id int primary key, data varchar(255))");
-        stmt.execute("CREATE TABLE XATEST2 (id int primary key, data varchar(255))");
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST"));
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST2"));
-        stmt.close();
-//      DriverManager.setLogWriter(new PrintWriter(System.out));
-        XADataSource xaDS = getDataSource();
-        XAConnection xaCon;
-        XAConnection xaCon2;
-        XAResource xaRes;
-        XAResource xaRes2;
-        Xid  xid;
-        xaCon = xaDS.getXAConnection();
-        xaRes = xaCon.getXAResource();
-        xaCon2 = xaDS.getXAConnection();
-        xaRes2 = xaCon2.getXAResource();
-        Connection con2 = xaCon.getConnection();
-        Connection con3 = xaCon2.getConnection();
-        stmt = con2.createStatement();
-        Statement stmt2 = con3.createStatement();
-        xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+        Connection con2 = null;
+        Connection con3 = null;
+        XAConnection xaCon = null;
+        XAConnection xaCon2 = null;
+
         try {
+            dropTable("jTDS_XATEST");
+            dropTable("jTDS_XATEST2");
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jTDS_XATEST (id int primary key, data varchar(255))");
+            stmt.execute("CREATE TABLE jTDS_XATEST2 (id int primary key, data varchar(255))");
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST"));
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST2"));
+            stmt.close();
+
+            XADataSource xaDS = getDataSource();
+            XAResource xaRes;
+            XAResource xaRes2;
+            Xid  xid;
+            xaCon = xaDS.getXAConnection();
+            xaRes = xaCon.getXAResource();
+            xaCon2 = xaDS.getXAConnection();
+            xaRes2 = xaCon2.getXAResource();
+            con2 = xaCon.getConnection();
+            con3 = xaCon2.getConnection();
+            stmt = con2.createStatement();
+            Statement stmt2 = con3.createStatement();
+            xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (1, 'TEST LINE')");
             assertTrue(xaRes.isSameRM(xaRes2));
             xaRes2.start(xid, XAResource.TMJOIN);
-            stmt2.executeUpdate("INSERT INTO XATEST2 VALUES (1, 'TEST LINE 2')");
+            stmt2.executeUpdate("INSERT INTO jTDS_XATEST2 VALUES (1, 'TEST LINE 2')");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes2.end(xid, XAResource.TMSUCCESS);
 
@@ -283,18 +329,29 @@ public class XaTest extends DatabaseTestCase {
             stmt.close();
             stmt2.close();
             stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM XATEST");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST");
             assertNotNull(rs);
             assertTrue(rs.next());
-            rs = stmt.executeQuery("SELECT * FROM XATEST2");
+            rs = stmt.executeQuery("SELECT * FROM jTDS_XATEST2");
             assertNotNull(rs);
             assertTrue(rs.next());
             stmt.close();
         } finally {
-            con2.close();
-            con3.close();
-            xaCon.close();
-            xaCon2.close();
+            dropTable("jTDS_XATEST");
+            dropTable("jTDS_XATEST2");
+
+            if (con2 != null) {
+                con2.close();
+            }
+            if (con3 != null) {
+                con3.close();
+            }
+            if (xaCon != null) {
+                xaCon.close();
+            }
+            if (xaCon2 != null) {
+                xaCon2.close();
+            }
         }
     }
 
@@ -304,22 +361,26 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testXARecover() throws Exception {
-//      DriverManager.setLogWriter(new PrintWriter(System.out));
-        dropTable("XATEST");
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE XATEST (id int primary key, data varchar(255))");
-        assertNotNull(stmt.executeQuery("SELECT * FROM XATEST"));
-        stmt.close();
-        XADataSource xaDS  = getDataSource();
-        XAConnection xaCon = xaDS.getXAConnection();
-        Connection con2 = xaCon.getConnection();
-        XAResource xaRes  = xaCon.getXAResource();
-        stmt = con2.createStatement();
-        Xid xid;
-        xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+        XAConnection xaCon = null;
+
         try {
+            dropTable("jTDS_XATEST");
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jTDS_XATEST (id int primary key, data varchar(255))");
+            assertNotNull(stmt.executeQuery("SELECT * FROM jTDS_XATEST"));
+            stmt.close();
+
+            XADataSource xaDS  = getDataSource();
+            xaCon = xaDS.getXAConnection();
+            Connection con2 = xaCon.getConnection();
+            XAResource xaRes  = xaCon.getXAResource();
+            stmt = con2.createStatement();
+            Xid xid;
+            xid = new JtdsXid(new byte[]{0x01}, new byte[]{0x02});
+
             xaRes.start(xid, XAResource.TMNOFLAGS);
-            stmt.executeUpdate("INSERT INTO XATEST VALUES (1, 'TEST LINE')");
+            stmt.executeUpdate("INSERT INTO jTDS_XATEST VALUES (1, 'TEST LINE')");
             xaRes.end(xid, XAResource.TMSUCCESS);
             xaRes.prepare(xid);
             stmt.close();
@@ -338,7 +399,11 @@ public class XaTest extends DatabaseTestCase {
                }
            }
         } finally {
-            xaCon.close();
+            dropTable("jTDS_XATEST");
+
+            if (xaCon != null) {
+                xaCon.close();
+            }
         }
     }
 

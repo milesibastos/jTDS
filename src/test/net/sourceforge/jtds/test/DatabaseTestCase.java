@@ -12,17 +12,19 @@ public abstract class DatabaseTestCase extends TestBase {
     }
 
 
-    protected void dropTable(String tablename) throws SQLException {
+    protected void dropTable(String tableName) throws SQLException {
         String sobName = "sysobjects";
+        String tableLike = tableName;
 
-        if (tablename.startsWith("#")) {
+        if (tableName.startsWith("#")) {
             sobName = "tempdb.dbo.sysobjects";
+            tableLike = tableName + "%";
         }
 
         Statement stmt = con.createStatement();
         stmt.executeUpdate(
-                          "if exists (select * from " + sobName + " where name like '" + tablename + "%' and type = 'U') "
-                          + "drop table " + tablename);
+                          "if exists (select * from " + sobName + " where name like '" + tableLike + "' and type = 'U') "
+                          + "drop table " + tableName);
         stmt.close();
     }
 
@@ -57,11 +59,11 @@ public abstract class DatabaseTestCase extends TestBase {
             return 0;
         }
 
-        if (a1 == null && a2 != null) {
+        if (a1 == null) {
             return -1;
         }
 
-        if (a1 != null && a2 == null) {
+        if (a2 == null) {
             return 1;
         }
 

@@ -49,16 +49,16 @@ import java.sql.SQLException;
  * An in-memory representation of character data.
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.3 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.4 2004-02-02 18:19:17 bheineman Exp $";
 
     private String _clob;
 
     /**
      * Constructs a new Clob instance.
      */
-    ClobImpl(String clob) {
+    ClobImpl(String clob) throws SQLException {
         if (clob == null) {
-            throw new IllegalArgumentException("clob cannot be null.");
+            throw new SQLException("clob cannot be null.");
         }
 
         _clob = clob;
@@ -67,7 +67,7 @@ public class ClobImpl implements Clob {
     /**
      * Returns a new ascii stream for the CLOB data.
      */
-    public InputStream getAsciiStream() throws SQLException {
+    public synchronized InputStream getAsciiStream() throws SQLException {
         try {
             return new ByteArrayInputStream(_clob.getBytes("ASCII"));
         } catch (UnsupportedEncodingException e) {
@@ -80,13 +80,13 @@ public class ClobImpl implements Clob {
     /**
      * Returns a new reader for the CLOB data.
      */
-    public Reader getCharacterStream() throws SQLException {
+    public synchronized Reader getCharacterStream() throws SQLException {
         return new StringReader(_clob);
     }
 
-    public String getSubString(long pos, int length) throws SQLException {
+    public synchronized String getSubString(long pos, int length) throws SQLException {
         if (pos > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("pos must be <= " + Integer.MAX_VALUE);
+            throw new SQLException("pos must be <= " + Integer.MAX_VALUE);
         }
 
         return _clob.substring((int) pos, length);
@@ -95,21 +95,21 @@ public class ClobImpl implements Clob {
     /**
      * Returns the length of the value.
      */
-    public long length() throws SQLException {
+    public synchronized long length() throws SQLException {
         return _clob.length();
     }
 
-    public long position(Clob searchStr, long start) throws SQLException {
+    public synchronized long position(Clob searchStr, long start) throws SQLException {
         if (searchStr == null) {
-            throw new IllegalArgumentException("searchStr cannot be null.");
+            throw new SQLException("searchStr cannot be null.");
         } else if (start > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("start must be <= " + Integer.MAX_VALUE);
+            throw new SQLException("start must be <= " + Integer.MAX_VALUE);
         }
 
         long length = searchStr.length();
 
         if (length > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("searchStr.length() must be <= "
+            throw new SQLException("searchStr.length() must be <= "
                                                + Integer.MAX_VALUE);
         }
 
@@ -117,25 +117,25 @@ public class ClobImpl implements Clob {
                              (int) start);
     }
 
-    public long position(String searchStr, long start) throws SQLException {
+    public synchronized long position(String searchStr, long start) throws SQLException {
         if (searchStr == null) {
-            throw new IllegalArgumentException("searchStr cannot be null.");
+            throw new SQLException("searchStr cannot be null.");
         } else if (start < 0) {
-            throw new IllegalArgumentException("start must be >= 0.");
+            throw new SQLException("start must be >= 0.");
         } else if (start > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("start must be <= " + Integer.MAX_VALUE);
+            throw new SQLException("start must be <= " + Integer.MAX_VALUE);
         }
 
         return _clob.indexOf(searchStr, (int) start);
     }
 
-    public OutputStream setAsciiStream(final long pos) throws SQLException {
+    public synchronized OutputStream setAsciiStream(final long pos) throws SQLException {
         if (pos < 0) {
-            throw new IllegalArgumentException("pos must be >= 0.");
+            throw new SQLException("pos must be >= 0.");
         } else if (pos > _clob.length()) {
-            throw new IllegalArgumentException("pos specified is past length of value.");
+            throw new SQLException("pos specified is past length of value.");
         } else if (pos >= Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("pos must be < " + Integer.MAX_VALUE);
+            throw new SQLException("pos must be < " + Integer.MAX_VALUE);
         }
 
         return new ByteArrayOutputStream() {
@@ -168,13 +168,13 @@ public class ClobImpl implements Clob {
                 };
     }
 
-    public Writer setCharacterStream(final long pos) throws SQLException {
+    public synchronized Writer setCharacterStream(final long pos) throws SQLException {
         if (pos < 0) {
-            throw new IllegalArgumentException("pos must be >= 0.");
+            throw new SQLException("pos must be >= 0.");
         } else if (pos > _clob.length()) {
-            throw new IllegalArgumentException("pos specified is past length of value.");
+            throw new SQLException("pos specified is past length of value.");
         } else if (pos >= Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("pos must be < " + Integer.MAX_VALUE);
+            throw new SQLException("pos must be < " + Integer.MAX_VALUE);
         }
 
         return new StringWriter() {
@@ -196,15 +196,16 @@ public class ClobImpl implements Clob {
                 };
     }
 
-    public int setString(long pos, String str) throws SQLException {
+    public synchronized int setString(long pos, String str) throws SQLException {
         if (str == null) {
-            throw new IllegalArgumentException("str cannot be null.");
+            throw new SQLException("str cannot be null.");
         }
 
         return setString(pos, str, 0, str.length());
     }
 
-    public int setString(long pos, String str, int offset, int len) throws SQLException {
+    public synchronized int setString(long pos, String str, int offset, int len)
+    throws SQLException {
         Writer writer = setCharacterStream(pos);
 
         try {
@@ -222,11 +223,11 @@ public class ClobImpl implements Clob {
      * 
      * @param len the length to truncate the value to
      */
-    public void truncate(long len) throws SQLException {
+    public synchronized void truncate(long len) throws SQLException {
         if (len < 0) {
-            throw new IllegalArgumentException("len must be >= 0.");
+            throw new SQLException("len must be >= 0.");
         } else if (len > _clob.length()) {
-            throw new IllegalArgumentException("length specified is more than length of "
+            throw new SQLException("length specified is more than length of "
                                                + "value.");
         }
 
@@ -236,7 +237,7 @@ public class ClobImpl implements Clob {
     /**
      * Returns the string representation of this object.
      */
-    public String toString() {
+    public synchronized String toString() {
         return _clob;
     }
 }

@@ -44,16 +44,16 @@ import java.sql.SQLException;
  * An in-memory representation of binary data.
  */
 public class BlobImpl implements Blob {
-    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.2 2004-01-28 22:01:25 bheineman Exp $";
+    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.3 2004-02-02 18:19:10 bheineman Exp $";
 
     private byte[] _blob;
 
     /**
      * Constructs a new Blob instance.
      */
-    BlobImpl(byte[] blob) {
+    BlobImpl(byte[] blob) throws SQLException {
         if (blob == null) {
-            throw new IllegalArgumentException("blob cannot be null.");
+            throw new SQLException("blob cannot be null.");
         }
 
         _blob = blob;
@@ -62,21 +62,21 @@ public class BlobImpl implements Blob {
     /**
      * Returns a stream for the BLOB data.
      */
-    public InputStream getBinaryStream() throws SQLException {
+    public synchronized InputStream getBinaryStream() throws SQLException {
         return new ByteArrayInputStream(_blob);
     }
 
-    public byte[] getBytes(long pos, int length) throws SQLException {
+    public synchronized byte[] getBytes(long pos, int length) throws SQLException {
         if (pos < 0) {
-            throw new IllegalArgumentException("pos must be >= 0.");
+            throw new SQLException("pos must be >= 0.");
         } else if (pos >= _blob.length - 1) {
-            throw new IllegalArgumentException("pos must be < length of blob.");
+            throw new SQLException("pos must be < length of blob.");
         } else if (pos > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("pos must be <= " + Integer.MAX_VALUE);
+            throw new SQLException("pos must be <= " + Integer.MAX_VALUE);
         } else if (length < 0) {
-            throw new IllegalArgumentException("length must be >= 0.");
+            throw new SQLException("length must be >= 0.");
         } else if (pos + length > _blob.length) {
-            throw new IllegalArgumentException("more bytes requested than exist in blob.");
+            throw new SQLException("more bytes requested than exist in blob.");
         }
 
         byte[] value = new byte[length];
@@ -89,34 +89,34 @@ public class BlobImpl implements Blob {
     /**
      * Returns the length of the value.
      */
-    public long length() throws SQLException {
+    public synchronized long length() throws SQLException {
         return _blob.length;
     }
 
-    public long position(Blob pattern, long start) throws SQLException {
+    public synchronized long position(Blob pattern, long start) throws SQLException {
         if (pattern == null) {
-            throw new IllegalArgumentException("pattern cannot be null.");
+            throw new SQLException("pattern cannot be null.");
         }
 
         long length = pattern.length();
 
         if (length > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("pattern.length() must be <= "
+            throw new SQLException("pattern.length() must be <= "
                                                + Integer.MAX_VALUE);
         }
 
         return position(pattern.getBytes(0, (int) length), start);
     }
 
-    public long position(byte[] pattern, long start) throws SQLException {
+    public synchronized long position(byte[] pattern, long start) throws SQLException {
         int length = _blob.length - pattern.length;
 
         if (pattern == null) {
-            throw new IllegalArgumentException("pattern cannot be null.");
+            throw new SQLException("pattern cannot be null.");
         } else if (start < 0) {
-            throw new IllegalArgumentException("start must be >= 0.");
+            throw new SQLException("start must be >= 0.");
         } else if (start >= Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("start must be < " + Integer.MAX_VALUE);
+            throw new SQLException("start must be < " + Integer.MAX_VALUE);
         }
 
         for (int i = (int) start; i < length; i++) {
@@ -137,13 +137,13 @@ public class BlobImpl implements Blob {
         return -1;
     }
 
-    public OutputStream setBinaryStream(final long pos) throws SQLException {
+    public synchronized OutputStream setBinaryStream(final long pos) throws SQLException {
         if (pos < 0) {
-            throw new IllegalArgumentException("pos must be >= 0.");
+            throw new SQLException("pos must be >= 0.");
         } else if (pos > _blob.length) {
-            throw new IllegalArgumentException("pos specified is past length of value.");
+            throw new SQLException("pos specified is past length of value.");
         } else if (pos >= Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("pos must be < " + Integer.MAX_VALUE);
+            throw new SQLException("pos must be < " + Integer.MAX_VALUE);
         }
 
         return new ByteArrayOutputStream() {
@@ -166,15 +166,16 @@ public class BlobImpl implements Blob {
                 };
     }
 
-    public int setBytes(long pos, byte[] bytes) throws SQLException {
+    public synchronized int setBytes(long pos, byte[] bytes) throws SQLException {
         if (bytes == null) {
-            throw new IllegalArgumentException("bytes cannot be null.");
+            throw new SQLException("bytes cannot be null.");
         }
 
         return setBytes(pos, bytes, 0, bytes.length);
     }
 
-    public int setBytes(long pos, byte[] bytes, int offset, int len) throws SQLException {
+    public synchronized int setBytes(long pos, byte[] bytes, int offset, int len)
+    throws SQLException {
         OutputStream outputStream = setBinaryStream(pos);
 
         try {
@@ -192,11 +193,11 @@ public class BlobImpl implements Blob {
      * 
      * @param len the length to truncate the value to
      */
-    public void truncate(long len) throws SQLException {
+    public synchronized void truncate(long len) throws SQLException {
         if (len < 0) {
-            throw new IllegalArgumentException("len must be >= 0.");
+            throw new SQLException("len must be >= 0.");
         } else if (len > _blob.length) {
-            throw new IllegalArgumentException("length specified is more than length of "
+            throw new SQLException("length specified is more than length of "
                                                + "value.");
         }
 
@@ -211,7 +212,7 @@ public class BlobImpl implements Blob {
     /**
      * Returns the string representation of this object.
      */
-    public String toString() {
+    public synchronized String toString() {
         return _blob.toString();
     }
 }

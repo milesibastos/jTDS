@@ -56,4 +56,26 @@ public class DatabaseMetaDataTest extends TestBase {
         
         rs.close();
     }
+
+    /**
+     * Test for bug [1023984] Protocol error processing table meta data.
+     * <p>
+     * Test to demonstrate failure to process the TDS table name token
+     * correctly. Must be run with TDS=8.0.
+     * @throws Exception
+     */
+    public void testTableMetaData() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM master.dbo.sysdatabases");
+
+        assertNotNull(rs);
+        ResultSetMetaData rsmd = rs.getMetaData();
+
+        assertEquals("master", rsmd.getCatalogName(1));
+        assertEquals("dbo", rsmd.getSchemaName(1));
+        assertEquals("sysdatabases", rsmd.getTableName(1));
+
+        stmt.close();
+        rs.close();
+    }
 }

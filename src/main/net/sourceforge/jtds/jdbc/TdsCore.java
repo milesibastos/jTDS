@@ -50,13 +50,11 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.35 2004-09-05 14:56:18 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.36 2004-09-08 01:39:32 bheineman Exp $
  */
 public class TdsCore {
     /**
      * Inner static class used to hold information about TDS tokens read.
-     *
-     * @author Mike Hutcinson.
      */
     private static class TdsToken {
         /** The current TDS token byte. */
@@ -137,7 +135,17 @@ public class TdsCore {
         }
 
     }
-
+    /**
+     * Inner static class used to hold table meta data.
+     */
+    private static class TableMetaData {
+        /** Table catalog (database) name. */
+        String catalog;
+        /** Table schema (user) name. */
+        String schema;
+        /** Table name. */
+        String name;
+    }
     //
     // Package private constants
     //
@@ -316,7 +324,7 @@ public class TdsCore {
     /** The array of column data objects in the current row. */
     private ColData[] rowData;
     /** The array of table names associated with this result. */
-    private String[] tables;
+    private TableMetaData[] tables;
     /** The descriptor object for the current TDS token. */
     private TdsToken currentToken = new TdsToken();
     /** The stored procedure return status. */
@@ -486,7 +494,7 @@ public class TdsCore {
     }
 
     /**
-     * Get the next result set or update countf rom the TDS stream.
+     * Get the next result set or update count from the TDS stream.
      *
      * @return <code>boolean</code> if the next item is a result set.
      * @throws SQLException
@@ -755,9 +763,21 @@ public class TdsCore {
         setRowCount(maxRows);
         messages.clearWarnings();
         this.returnStatus = null;
+        // 
+        // Normalize the parameters argument to simplify later checks
+        //
+        if (parameters != null && parameters.length == 0) {
+            parameters = null;
+        }
         this.parameters = parameters;
-
-        if (parameters != null && parameters.length > 0 && parameters[0].isRetVal) {
+        //
+        // Normalise the procName argument as well
+        //
+        if (procName != null && procName.length() == 0) {
+            procName = null;
+        }
+        
+        if (parameters != null && parameters[0].isRetVal) {
             returnParam = parameters[0];
             returnParam.isSet = false;
             nextParam = 0;
@@ -870,6 +890,7 @@ public class TdsCore {
             prepParam[1].isSet = true;
             prepParam[1].jdbcType = Types.LONGVARCHAR;
             prepParam[1].value = Support.getParameterDefinitions(params);
+            prepParam[1].length = ((String)prepParam[1].value).length();
             prepParam[1].isUnicode = true;
 
             // Setup sql statemement param
@@ -877,6 +898,7 @@ public class TdsCore {
             prepParam[2].isSet = true;
             prepParam[2].jdbcType = Types.LONGVARCHAR;
             prepParam[2].value = Support.substituteParamMarkers(sql, params);
+            prepParam[2].length = ((String)prepParam[2].value).length();
             prepParam[2].isUnicode = true;
 
             // Setup flag param
@@ -1758,7 +1780,7 @@ public class TdsCore {
         ArrayList colList = new ArrayList();
 
         final int pktLen = in.readShort();
-
+        this.tables = null;
         int bytesRead = 0;
 
         while (bytesRead < pktLen) {
@@ -1839,38 +1861,75 @@ public class TdsCore {
      *
      * @throws IOException
      */
-    private void tdsTableNameToken() throws IOException {
+    private void tdsTableNameToken() throws IOException, ProtocolException {
         final int pktLen = in.readShort();
         int bytesRead = 0;
-
-        String tabName;
         ArrayList tableList = new ArrayList();
 
-        if (tdsVersion >= Driver.TDS70) {
-            while (bytesRead < pktLen) {
-                if (tdsVersion >= Driver.TDS80) {
-                    in.read();  // Not sure what this flag is used for
-                    bytesRead++;
-                }
-
-                int nameLen = in.readShort();
-                bytesRead += 2;
-                tabName = in.readString(nameLen);
-                bytesRead += (nameLen * 2);
-                tableList.add(tabName);
-            }
-        } else {
-            while (bytesRead < pktLen) {
-                int nameLen = in.read();
-
+        while (bytesRead < pktLen) {
+            int    nameLen;
+            String tabName;
+            TableMetaData table = null;
+            if (tdsVersion == Driver.TDS80) {
+                // TDS8 supplies the database.owner.table as three 
+                // separate components which allows us to have names
+                // with embedded periods. 
+                // Can't think why anyone would want that!
+                table = new TableMetaData();
                 bytesRead++;
-                tabName = in.readString(nameLen);
-                bytesRead += nameLen;
-                tableList.add(tabName);
-            }
-        }
+                switch (in.read()) {
+                	case 3: nameLen = in.readShort();
+                			bytesRead += nameLen * 2 + 2;
+                			table.catalog = in.readString(nameLen);
+                	case 2: nameLen = in.readShort();
+        					bytesRead += nameLen * 2 + 2;
+        					table.schema = in.readString(nameLen);
+                	case 1: nameLen = in.readShort();
+        					bytesRead += nameLen * 2 + 2;
+        					table.name = in.readString(nameLen);
+        					break;
+        		    default:
+        		        throw new ProtocolException("Invalid table TAB_NAME_TOKEN");
+                }
+            } else { 
+                if (tdsVersion == Driver.TDS70) {
+                    nameLen = in.readShort();
+                    bytesRead += nameLen * 2 + 2;
+                    tabName  = in.readString(nameLen);
+                } else {
+                    // TDS 4.2 or TDS 5.0
+                    nameLen = in.read();
+                    bytesRead++;
+                    if (nameLen == 0) {
+                        break; // Sybase uses a zero length name to terminate list
+                    }
+                    tabName = in.readString(nameLen);
+                    bytesRead += nameLen;
+                }
+                table = new TableMetaData();
+                // tabName can be a fully qualified name
+                int dotPos = tabName.lastIndexOf('.');
+                if (dotPos > 0) {
+                    table.name = tabName.substring(dotPos + 1);
 
-        this.tables = (String[]) tableList.toArray(new String[tableList.size()]);
+                    int nextPos = tabName.lastIndexOf('.', dotPos-1);
+                    if (nextPos + 1 < dotPos) {
+                        table.schema = tabName.substring(nextPos + 1, dotPos);
+                    }
+                    dotPos = nextPos;
+                    nextPos = tabName.lastIndexOf('.', dotPos-1);
+                    if (nextPos + 1 < dotPos) {
+                        table.catalog = tabName.substring(nextPos + 1, dotPos);
+                    }
+                } else {
+                    table.name = tabName;
+                }
+            }
+            tableList.add(table);
+        }
+        if (tableList.size() > 0) {
+            this.tables = (TableMetaData[]) tableList.toArray(new TableMetaData[tableList.size()]);
+        }
     }
 
     /**
@@ -1906,26 +1965,10 @@ public class TdsCore {
                 bytesRead += 3;
 
                 if (tableIndex != 0) {
-                    String tabName = tables[tableIndex-1];
-
-                    // tabName can be a fully qualified name
-                    int dotPos = tabName.lastIndexOf('.');
-                    if (dotPos > 0) {
-                        col.tableName = tabName.substring(dotPos + 1);
-
-                        int nextPos = tabName.lastIndexOf('.', dotPos-1);
-                        if (nextPos + 1 < dotPos) {
-                            col.schema = tabName.substring(nextPos + 1, dotPos);
-                        }
-
-                        dotPos = nextPos;
-                        nextPos = tabName.lastIndexOf('.', dotPos-1);
-                        if (nextPos + 1 < dotPos) {
-                            col.catalog = tabName.substring(nextPos + 1, dotPos);
-                        }
-                    } else {
-                        col.tableName = tabName;
-                    }
+                    TableMetaData table = tables[tableIndex-1];
+                    col.catalog   = table.catalog;
+                    col.schema    = table.schema;
+                    col.tableName = table.name;
                 }
 
                 col.isKey           = (flags & 0x08) != 0;
@@ -2519,7 +2562,7 @@ public class TdsCore {
                               ParamInfo[] parameters,
                               boolean noMetaData)
         throws IOException, SQLException {
-        if (procName != null && procName.length() > 0) {
+        if (procName != null) {
             // RPC call
             out.setPacketType(RPC_PKT);
             byte[] buf = Support.encodeString(connection.getCharSet(), procName);
@@ -2528,27 +2571,28 @@ public class TdsCore {
             out.write(buf);
             out.write((short) (noMetaData ? 2 : 0));
 
-            for (int i = nextParam + 1; i < parameters.length; i++) {
-                if (parameters[i].name != null) {
-                   buf = Support.encodeString(connection.getCharSet(),
-                           parameters[i].name);
-                   out.write((byte) buf.length);
-                   out.write(buf);
-                } else {
-                   out.write((byte) 0);
+            if (parameters != null) {
+                for (int i = nextParam + 1; i < parameters.length; i++) {
+                    if (parameters[i].name != null) {
+                       buf = Support.encodeString(connection.getCharSet(),
+                               parameters[i].name);
+                       out.write((byte) buf.length);
+                       out.write(buf);
+                    } else {
+                       out.write((byte) 0);
+                    }
+
+                    out.write((byte) (parameters[i].isOutput ? 1 : 0));
+                    TdsData.writeParam(out,
+                                       connection.getCharSet(),
+                                       connection.isWideChar(),
+                                       null,
+                                       parameters[i]);
                 }
-
-                out.write((byte) (parameters[i].isOutput ? 1 : 0));
-                TdsData.writeParam(out,
-                                   connection.getCharSet(),
-                                   connection.isWideChar(),
-                                   null,
-                                   parameters[i]);
             }
-
             out.flush();
         } else if (sql.length() > 0) {
-            if (parameters != null && parameters.length > 0) {
+            if (parameters != null) {
                 sql = Support.substituteParameters(sql, parameters, tdsVersion);
             }
 
@@ -2572,7 +2616,7 @@ public class TdsCore {
                               ParamInfo[] parameters,
                               boolean noMetaData)
         throws IOException, SQLException {
-        boolean haveParams = parameters != null && parameters.length > 0;
+        boolean haveParams = parameters != null;
         boolean useParamNames = false;
 
         // Sybase does not allow text or image parameters
@@ -2601,7 +2645,7 @@ public class TdsCore {
 
         out.setPacketType(SYBQUERY_PKT);
 
-        if (procName == null || procName.length() == 0) {
+        if (procName == null) {
             // Use TDS_LANGUAGE TOKEN with optional parameters
             out.write((byte)TDS_LANG_TOKEN);
 
@@ -2740,12 +2784,14 @@ public class TdsCore {
         throws IOException, SQLException {
         int prepareSql = connection.getPrepareSql();
 
-        if ((parameters == null || parameters.length == 0)
+        if (parameters == null
                 && (prepareSql == EXECUTE_SQL || prepareSql == PREPARE || prepareSql == PREPEXEC)) {
             // Downgrade EXECUTE_SQL, PREPARE and PREPEXEC to UNPREPARED
             // if there are no parameters.
             //
             // Should we downgrade TEMPORARY_STORED_PROCEDURES as well?
+            // No it may be a complex select with no parameters but costly to 
+            // evaluate for each execution.
             prepareSql = UNPREPARED;
         }
 
@@ -2774,37 +2820,7 @@ public class TdsCore {
             // Use sp_execute approach
             procName = "sp_execute";
         } else if (procName == null) {
-            if (prepareSql == EXECUTE_SQL) {
-                ParamInfo[] params;
-
-                if (parameters == null) {
-                    params = new ParamInfo[2];
-                } else {
-                    params = new ParamInfo[2 + parameters.length];
-                    System.arraycopy(parameters, 0, params, 2, parameters.length);
-                }
-
-                params[0] = new ParamInfo();
-                params[0].jdbcType = Types.VARCHAR;
-                params[0].bufferSize = 4000;
-                params[0].isSet = true;
-                params[0].isUnicode = true;
-                params[0].value = Support.substituteParamMarkers(sql, parameters);
-                TdsData.getNativeType(connection, params[0]);
-
-                params[1] = new ParamInfo();
-                params[1].jdbcType = Types.VARCHAR;
-                params[1].bufferSize = 4000;
-                params[1].isSet = true;
-                params[1].isUnicode = true;
-                params[1].value = Support.getParameterDefinitions(parameters);
-                TdsData.getNativeType(connection, params[1]);
-
-                parameters = params;
-
-                // Use sp_executesql approach
-                procName = "sp_executesql";
-            } else if (prepareSql == PREPEXEC) {
+            if (prepareSql == PREPEXEC) {
                 ParamInfo params[] = new ParamInfo[3 + parameters.length];
 
                 System.arraycopy(parameters, 0, params, 3, parameters.length);
@@ -2821,6 +2837,7 @@ public class TdsCore {
                 params[1].isSet = true;
                 params[1].jdbcType = Types.LONGVARCHAR;
                 params[1].value = Support.getParameterDefinitions(parameters);
+                params[1].length = ((String)params[1].value).length();
                 params[1].isUnicode = true;
                 TdsData.getNativeType(connection, params[1]);
 
@@ -2829,6 +2846,7 @@ public class TdsCore {
                 params[2].isSet = true;
                 params[2].jdbcType = Types.LONGVARCHAR;
                 params[2].value = Support.substituteParamMarkers(sql, parameters);
+                params[2].length = ((String)params[2].value).length();
                 params[2].isUnicode = true;
                 TdsData.getNativeType(connection, params[2]);
 
@@ -2836,10 +2854,36 @@ public class TdsCore {
 
                 // Use sp_prepexec approach
                 procName = "sp_prepexec";
+            } else if (prepareSql != TdsCore.UNPREPARED && parameters != null) {
+                ParamInfo[] params;
+
+                params = new ParamInfo[2 + parameters.length];
+                System.arraycopy(parameters, 0, params, 2, parameters.length);
+ 
+                params[0] = new ParamInfo();
+                params[0].jdbcType = Types.VARCHAR;
+                params[0].isSet = true;
+                params[0].isUnicode = true;
+                params[0].value = Support.substituteParamMarkers(sql, parameters);
+                params[0].length = ((String)params[0].value).length();
+                TdsData.getNativeType(connection, params[0]);
+
+                params[1] = new ParamInfo();
+                params[1].jdbcType = Types.VARCHAR;
+                params[1].isSet = true;
+                params[1].isUnicode = true;
+                params[1].value = Support.getParameterDefinitions(parameters);
+                params[1].length = ((String)params[1].value).length();
+                TdsData.getNativeType(connection, params[1]);
+
+                parameters = params;
+
+                // Use sp_executesql approach
+                procName = "sp_executesql";
             }
         }
 
-        if (procName != null && procName.length() > 0) {
+        if (procName != null) {
             // RPC call
             out.setPacketType(RPC_PKT);
             Integer shortcut;
@@ -2877,7 +2921,7 @@ public class TdsCore {
 
             out.flush();
         } else if (sql.length() > 0) {
-            if (parameters != null && parameters.length > 0) {
+            if (parameters != null) {
                 sql = Support.substituteParameters(sql, parameters, tdsVersion);
             }
 
@@ -2886,7 +2930,7 @@ public class TdsCore {
             out.write(sql);
             out.flush();
         }
-    }
+    } 
 
     /**
      * Set the server row count used to limit the number of rows in a result set.
@@ -2942,7 +2986,7 @@ public class TdsCore {
      */
     private static byte[] getMACAddress(String macString) {
         byte[] mac = new byte[6];
-        boolean ok = false;
+        boolean ok = false; 
 
         if (macString != null && macString.length() == 12) {
             try {

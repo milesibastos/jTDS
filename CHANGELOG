@@ -4,6 +4,8 @@ Changes from jTDS 0.9-rc2
 09/07/2004 - Brian Heineman
  o Corrected bug [1022968] Long SQL expression error; (thanks to Mike Hutchinson
    for the patch).
+ o Corrected bug [1023984] Protocol error processing table meta data; (thanks to
+   Mike Hutchinson for the bug report and patch).
 
 09/05/2004 - Alin Sinpalean
  o Fixed some minor issues with LOBs and InputStreams/Readers that don't fill

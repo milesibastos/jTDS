@@ -19,16 +19,15 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Messages;
-import java.sql.SQLException;
 import java.sql.DriverPropertyInfo;
-import java.util.Properties;
-import java.util.ResourceBundle;
-import java.util.Enumeration;
-import java.util.Map;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 
 
 
@@ -36,7 +35,7 @@ import java.util.Iterator;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.6 2004-08-05 23:49:15 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.7 2004-08-06 03:18:15 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -110,35 +109,111 @@ public class DriverUnitTest extends UnitTestBase {
      * Tests that the {@link DriverPropertyInfo} array returned from
      * {@link Driver#getPropertyInfo(String, Properties)}
      * matches the list of properties defined in <code>Messages.properties</code>.
-     */ 
+     */
     public void test_getPropertyInfo_MatchesMessagesProperties() {
 
-        final Map driverPropertyInfoMap = new HashMap();
-        loadDriverPropertyInfoMap(driverPropertyInfoMap);
+        final Map infoMap = new HashMap();
+        loadDriverPropertyInfoMap(infoMap);
 
         final Map propertyMap = new HashMap();
         final Map descriptionMap = new HashMap();
-        loadMessageProperties(propertyMap, descriptionMap);
+        invokeStaticMethod(
+                Messages.class, "loadDriverProperties",
+                new Class[]{Map.class, Map.class},
+                new Object[]{propertyMap, descriptionMap});
 
         assertEquals(
                 "Properties list size (expected) does not equal DriverPropertyInfo array length (actual)",
-                propertyMap.size(), driverPropertyInfoMap.keySet().size());
+                propertyMap.size(), infoMap.keySet().size());
         assertEquals(
                 "Description list size (expected) does not equal DriverPropertyInfo array length (actual)",
-                descriptionMap.size(), driverPropertyInfoMap.keySet().size());
+                descriptionMap.size(), infoMap.keySet().size());
 
         for (Iterator iterator = propertyMap.keySet().iterator(); iterator.hasNext();) {
-
-            String key = (String) iterator.next();
-
-            final DriverPropertyInfo driverPropertyInfo = 
-                    (DriverPropertyInfo) driverPropertyInfoMap.get(propertyMap.get(key));
+            final String key = (String) iterator.next();
+            final DriverPropertyInfo driverPropertyInfo =
+                    (DriverPropertyInfo) infoMap.get(propertyMap.get(key));
             assertNotNull("No DriverPropertyInfo object exists for property '" + key + "'", driverPropertyInfo);
-
-            final String descriptionKey = "prop.desc." + key.substring("prop.".length());
             assertEquals(
                     "Property description (expected) does not match DriverPropertyInfo description (actual)",
-                    descriptionMap.get(descriptionKey), driverPropertyInfo.description);
+                    descriptionMap.get(key), driverPropertyInfo.description);
+        }
+    }
+
+
+    /**
+     * Tests that the {@link DriverPropertyInfo} array returned from
+     * {@link Driver#getPropertyInfo(String, Properties)} contains
+     * the correct <code>choices</code> value on each of the objects.
+     */
+    public void test_getPropertyInfo_Choices() {
+
+        String[] expectedServerTypeChoices = new String[]{
+            String.valueOf(Driver.SQLSERVER),
+            String.valueOf(Driver.SYBASE),
+        };
+        String[] expectedTdsChoices = new String[]{
+            DefaultProperties.TDS_VERSION_42,
+            DefaultProperties.TDS_VERSION_50,
+            DefaultProperties.TDS_VERSION_70,
+            DefaultProperties.TDS_VERSION_80,
+        };
+        String[] expectedBooleanChoices = new String[]{
+            String.valueOf(true),
+            String.valueOf(false),
+        };
+
+        Map expectedChoicesMap = new HashMap();
+        expectedChoicesMap.put(Messages.get("prop.servertype"), expectedServerTypeChoices);
+        expectedChoicesMap.put(Messages.get("prop.tds"), expectedTdsChoices);
+        expectedChoicesMap.put(Messages.get("prop.lastupdatecount"), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get("prop.namedpipe"), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get("prop.preparesql"), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get("prop.useunicode"), expectedBooleanChoices);
+
+        final Map infoMap = new HashMap();
+        loadDriverPropertyInfoMap(infoMap);
+
+        final Iterator iterator = infoMap.keySet().iterator();
+        while (iterator.hasNext()) {
+            String key = (String) iterator.next();
+            DriverPropertyInfo info = (DriverPropertyInfo) infoMap.get(key);
+            if (expectedChoicesMap.containsKey(key)) {
+                assertEquals("Choices did not match for key " + key,
+                             ((String[]) expectedChoicesMap.get(key)), info.choices);
+            }
+            else {
+                assertNull("Expected choices to be null for key " + key,
+                           expectedChoicesMap.get(key));
+            }
+        }
+    }
+
+
+    /**
+     * Tests that the {@link DriverPropertyInfo} array returned from
+     * {@link Driver#getPropertyInfo(String, Properties)} contains
+     * the correct <code>required</code> value on each of the objects.
+     */
+    public void test_getPropertyInfo_Required() {
+
+        Map requiredTrueMap = new HashMap();
+        requiredTrueMap.put(Messages.get("prop.servername"), Boolean.TRUE);
+        requiredTrueMap.put(Messages.get("prop.servertype"), Boolean.TRUE);
+        
+        final Map infoMap = new HashMap();
+        loadDriverPropertyInfoMap(infoMap);
+
+        final Iterator iterator = infoMap.keySet().iterator();
+        while (iterator.hasNext()) {
+            String key = (String) iterator.next();
+            DriverPropertyInfo info = (DriverPropertyInfo) infoMap.get(key);
+            if (requiredTrueMap.containsKey(key)) {
+                assertTrue("The 'required' field is not true for key " + key, info.required);
+            }
+            else {
+                assertFalse("The 'required' field is not false for key " + key, info.required);
+            }
         }
     }
 
@@ -151,38 +226,16 @@ public class DriverUnitTest extends UnitTestBase {
      * @param driverPropertyInfoMap The map of {@link DriverPropertyInfo} objects to be populated.
      */
     private void loadDriverPropertyInfoMap(final Map driverPropertyInfoMap) {
-        final DriverPropertyInfo[] driverPropertyInfoArray = (DriverPropertyInfo[]) invokeInstanceMethod(
-                new Driver(), "getPropertyInfo",
-                new Class[]{String.class, Properties.class},
-                new Object[]{"jdbc:jtds:sqlserver://servername/databasename", new Properties()});
-        for (int i = 0; i < driverPropertyInfoArray.length; i++) {
-            DriverPropertyInfo driverPropertyInfo = driverPropertyInfoArray[i];
-            driverPropertyInfoMap.put(driverPropertyInfo.name, driverPropertyInfo);
-        }
-    }
-
-
-    /**
-     * Retrieve the list of property names and property descriptions from
-     * <code>Messages.properties</code> and populate them into
-     * {@link Map} objects.
-     * 
-     * @param propertyMap The map of property names to be populated.
-     * @param descriptionMap The map of property descriptions to be populated. 
-     */ 
-    private void loadMessageProperties(Map propertyMap, Map descriptionMap) {
-
-        final ResourceBundle bundle = (ResourceBundle) invokeStaticMethod(
-                Messages.class, "loadResourceBundle", new Class[]{}, new Object[]{});
-
-        final Enumeration keys = bundle.getKeys();
-        while (keys.hasMoreElements()) {
-            String key = (String) keys.nextElement();
-            if (key.startsWith("prop.desc.")) {
-                descriptionMap.put(key, bundle.getString(key));
-            } else if (key.startsWith("prop.")) {
-                propertyMap.put(key, bundle.getString(key));
+        try {
+            final DriverPropertyInfo[] driverPropertyInfoArray = new Driver().getPropertyInfo(
+                                "jdbc:jtds:sqlserver://servername/databasename", new Properties());
+            for (int i = 0; i < driverPropertyInfoArray.length; i++) {
+                DriverPropertyInfo driverPropertyInfo = driverPropertyInfoArray[i];
+                driverPropertyInfoMap.put(driverPropertyInfo.name, driverPropertyInfo);
             }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -190,7 +243,7 @@ public class DriverUnitTest extends UnitTestBase {
 
     /**
      * Class use to test {@link Driver#parseURL(String, Properties)}.
-     */ 
+     */
     public static class DefaultPropertiesTestLibrary_Driver_parseURL extends DefaultPropertiesTestLibrary {
 
         private static DefaultPropertiesTester tester;
@@ -206,13 +259,15 @@ public class DriverUnitTest extends UnitTestBase {
 
             DefaultPropertiesTestLibrary_Driver_parseURL.tester = new DefaultPropertiesTester() {
 
-                public void assertDefaultProperty(String message, String url, Properties properties, String fieldName,
+                public void assertDefaultProperty(
+                        String message, String url, Properties properties, String fieldName,
                         String key, String expected) {
 
                     Properties results =
-                            (Properties) invokeStaticMethod(Driver.class, "parseURL",
-                                                            new Class[]{String.class, Properties.class},
-                                                            new Object[]{url, properties});
+                            (Properties) invokeStaticMethod(
+                                    Driver.class, "parseURL",
+                                    new Class[]{String.class, Properties.class},
+                                    new Object[]{url, properties});
                     assertEquals(message, expected, results.getProperty(Messages.get(key)));
                 }
             };
@@ -225,7 +280,7 @@ public class DriverUnitTest extends UnitTestBase {
          * Get the <code>tester</code> object.
          * 
          * @return The <code>tester</code> object to be used in the tests.
-         */ 
+         */
         protected DefaultPropertiesTester getTester() {
             return tester;
         }
@@ -235,7 +290,7 @@ public class DriverUnitTest extends UnitTestBase {
 
     /**
      * Class use to test {@link Driver#getPropertyInfo(String, Properties)}.
-     */ 
+     */
     public static class DefaultPropertiesTestLibrary_Driver_getPropertyInfo extends DefaultPropertiesTestLibrary {
 
         private static DefaultPropertiesTester tester;
@@ -251,7 +306,8 @@ public class DriverUnitTest extends UnitTestBase {
 
             DefaultPropertiesTestLibrary_Driver_getPropertyInfo.tester = new DefaultPropertiesTester() {
 
-                public void assertDefaultProperty(String message, String url, Properties properties, String fieldName,
+                public void assertDefaultProperty(
+                        String message, String url, Properties properties, String fieldName,
                         String key, String expected) {
 
                     try {
@@ -285,7 +341,7 @@ public class DriverUnitTest extends UnitTestBase {
          * Get the <code>tester</code> object.
          * 
          * @return The <code>tester</code> object to be used in the tests.
-         */ 
+         */
         protected DefaultPropertiesTester getTester() {
             return tester;
         }

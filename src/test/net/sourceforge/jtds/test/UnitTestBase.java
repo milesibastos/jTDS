@@ -17,17 +17,18 @@
 //
 package net.sourceforge.jtds.test;
 
+import junit.framework.Assert;
 import junit.framework.TestCase;
-import java.lang.reflect.Method;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 
 /**
  * Base class for unit tests which do not connect to a database.
  * 
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.5 2004-08-06 03:18:15 ddkilzer Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 
@@ -144,4 +145,89 @@ public abstract class UnitTestBase extends TestCase {
             throw new RuntimeException(e.getMessage());
         }
     }
+
+
+    /**
+     * Compare two arrays element-by-element.
+     * <p/>
+     * The default JUnit {@link Assert#assertEquals(Object, Object)} method
+     * does not handle them properly.
+     * 
+     * @param expected The expected value.
+     * @param actual The actual value.
+     */
+    protected void assertEquals(Object[] expected, Object[] actual) {
+        assertEquals(null, expected, actual);
+    }
+
+
+    /**
+     * Compare two arrays element-by-element.
+     * <p/>
+     * The default JUnit {@link Assert#assertEquals(String, Object, Object)} method
+     * does not handle them properly.
+     *
+     * @param message The message to print upon failure.
+     * @param expected The expected value.
+     * @param actual The actual value.
+     */
+    protected void assertEquals(String message, Object[] expected, Object[] actual) {
+
+        if (expected == null && actual == null) {
+            return;
+        }
+
+        if (expected == null || actual == null) {
+            failNotEquals(message, expected, actual);
+        }
+
+        if (expected.length != actual.length) {
+            failNotEquals(message, expected, actual);
+        }
+
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] == null || !expected[i].equals(actual[i])) {
+                failNotEquals(message, expected, actual);
+            }
+        }
+    }
+
+
+    /**
+     * @see Assert#failNotEquals(java.lang.String, java.lang.Object, java.lang.Object)
+     */ 
+    private void failNotEquals(String message, Object[] expected, Object[] actual) {
+        fail((String) invokeStaticMethod(Assert.class, "format",
+                                         new Class[]{String.class, Object.class, Object.class},
+                                         new Object[]{message, format(expected), format(actual)}));
+    }
+
+
+    /**
+     * Format an <code>Object[]</code> object to a <code>String</code>.
+     * 
+     * @param object The object to be formatted.
+     * @return Formatted string representing the object.
+     */ 
+    private String format(Object[] object) {
+        StringBuffer buf = new StringBuffer();
+        if (object == null || object.length < 1) {
+            buf.append(object);
+        } else {
+            buf.append('{');
+            buf.append(object[0]);
+            for (int i = 1; i < object.length; i++) {
+                buf.append(',');
+                if (object[i] instanceof Object[]) {
+                    buf.append(format((Object[]) object[i]));
+                }
+                else {
+                    buf.append(object[i]);
+                }
+            }
+            buf.append('}');
+        }
+        return buf.toString();
+    }
+
 }

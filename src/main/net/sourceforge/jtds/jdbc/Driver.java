@@ -18,11 +18,14 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.util.Properties;
-import java.sql.DriverManager;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * jTDS implementation of the java.sql.Driver interface.
@@ -40,7 +43,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.29 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.30 2004-08-06 03:18:10 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -112,109 +115,82 @@ public class Driver implements java.sql.Driver {
         return new ConnectionJDBC2(url, props);
     }
 
-    public DriverPropertyInfo[] getPropertyInfo(String url, Properties props)
+    public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties props)
             throws SQLException {
-        DriverPropertyInfo[] dpi = new DriverPropertyInfo[] {
-            new DriverPropertyInfo(Messages.get("prop.servertype"), null),
-            new DriverPropertyInfo(Messages.get("prop.servername"), null),
-            new DriverPropertyInfo(Messages.get("prop.portnumber"), null),
-            new DriverPropertyInfo(Messages.get("prop.databasename"), null),
-            new DriverPropertyInfo(Messages.get("prop.user"), null),
-            new DriverPropertyInfo(Messages.get("prop.password"), null),
-            new DriverPropertyInfo(Messages.get("prop.charset"), null),
-            new DriverPropertyInfo(Messages.get("prop.tds"), null),
-            new DriverPropertyInfo(Messages.get("prop.domain"), null),
-            new DriverPropertyInfo(Messages.get("prop.instance"), null),
-            new DriverPropertyInfo(Messages.get("prop.language"), null),
-            new DriverPropertyInfo(Messages.get("prop.lastupdatecount"), null),
-            new DriverPropertyInfo(Messages.get("prop.logintimeout"), null),
-            new DriverPropertyInfo(Messages.get("prop.useunicode"), null),
-            new DriverPropertyInfo(Messages.get("prop.namedpipe"), null),
-            new DriverPropertyInfo(Messages.get("prop.macaddress"), null),
-            new DriverPropertyInfo(Messages.get("prop.packetsize"), null),
-            new DriverPropertyInfo(Messages.get("prop.preparesql"), null),
-            new DriverPropertyInfo(Messages.get("prop.lobbuffer"), null),
-            new DriverPropertyInfo(Messages.get("prop.appname"), null),
-            new DriverPropertyInfo(Messages.get("prop.progname"), null),
-        };
 
-        Properties info = parseURL(url, (props == null ? new Properties() : props));
+        final Properties info = parseURL(url, (props == null ? new Properties() : props));
 
         if (info == null) {
             throw new SQLException(
                         Messages.get("error.driver.badurl", url), "08001");
         }
 
-        for (int i = 0; i < dpi.length; i++) {
-            String name = dpi[i].name;
-            String value = info.getProperty(name);
+        final Map propertyMap = new HashMap();
+        final Map descriptionMap = new HashMap();
+        Messages.loadDriverProperties(propertyMap, descriptionMap);
 
-            if (value != null) {
-                dpi[i].value = value;
-            }
-
-            if (name.equals(Messages.get("prop.servertype"))) {
-                dpi[i].description = Messages.get("prop.desc.servertype");
-                dpi[i].required = true;
-                dpi[i].choices = new String[] {
-                    String.valueOf(SQLSERVER),
-                    String.valueOf(SYBASE)
-                };
-            } else if (name.equals(Messages.get("prop.servername"))) {
-                dpi[i].description = Messages.get("prop.desc.servername");
-                dpi[i].required = true;
-            } else if (name.equals(Messages.get("prop.portnumber"))) {
-                dpi[i].description = Messages.get("prop.desc.portnumber");
-            } else if (name.equals(Messages.get("prop.databasename"))) {
-                dpi[i].description = Messages.get("prop.desc.databasename");
-            } else if (name.equals(Messages.get("prop.user"))) {
-                dpi[i].description = Messages.get("prop.desc.user");
-            } else if (name.equals(Messages.get("prop.password"))) {
-                dpi[i].description = Messages.get("prop.desc.password");
-            } else if (name.equals(Messages.get("prop.charset"))) {
-                dpi[i].description = Messages.get("prop.desc.charset");
-            } else if (name.equals(Messages.get("prop.language"))) {
-                dpi[i].description = Messages.get("prop.desc.language");
-            } else if (name.equals(Messages.get("prop.tds"))) {
-                dpi[i].description = Messages.get("prop.desc.tds");
-                dpi[i].choices = new String[] {
-                    DefaultProperties.TDS_VERSION_42,
-                    DefaultProperties.TDS_VERSION_50,
-                    DefaultProperties.TDS_VERSION_70,
-                    DefaultProperties.TDS_VERSION_80,
-                };
-            } else if (name.equals(Messages.get("prop.domain"))) {
-                dpi[i].description = Messages.get("prop.desc.domain");
-            } else if (name.equals(Messages.get("prop.instance"))) {
-                dpi[i].description = Messages.get("prop.desc.instance");
-            } else if (name.equals(Messages.get("prop.lastupdatecount"))) {
-                dpi[i].description = Messages.get("prop.desc.lastupdatecount");
-                dpi[i].choices = new String[] {"true", "false"};
-            } else if (name.equals(Messages.get("prop.logintimeout"))) {
-                dpi[i].description = Messages.get("prop.desc.logintimeout");
-            } else if (name.equals(Messages.get("prop.useunicode"))) {
-                dpi[i].description = Messages.get("prop.desc.useunicode");
-                dpi[i].choices = new String[] {"true","false"};
-            } else if (name.equals(Messages.get("prop.namedpipe"))) {
-                dpi[i].description = Messages.get("prop.desc.namedpipe");
-                dpi[i].choices = new String[] {"true","false"};
-            } else if (name.equals(Messages.get("prop.macaddress"))) {
-                dpi[i].description = Messages.get("prop.desc.macaddress");
-            } else if (name.equals(Messages.get("prop.packetsize"))) {
-                dpi[i].description = Messages.get("prop.desc.packetsize");
-            } else if (name.equals(Messages.get("prop.preparesql"))) {
-                dpi[i].description = Messages.get("prop.desc.preparesql");
-                dpi[i].choices = new String[] {"true", "false"};
-            } else if (name.equals(Messages.get("prop.lobbuffer"))) {
-                dpi[i].description = Messages.get("prop.desc.lobbuffer");
-            } else if (name.equals(Messages.get("prop.appname"))) {
-                dpi[i].description = Messages.get("prop.desc.appname");
-            } else if (name.equals(Messages.get("prop.progname"))) {
-                dpi[i].description = Messages.get("prop.desc.progname");
-            }
+        final Map driverPropertyInfoMap = new HashMap();
+        for (Iterator iterator = propertyMap.keySet().iterator(); iterator.hasNext(); ) {
+            final String key = (String) iterator.next();
+            final String name = (String) propertyMap.get(key);
+            final DriverPropertyInfo driverPropertyInfo = new DriverPropertyInfo(name, info.getProperty(name));
+            driverPropertyInfo.description = (String) descriptionMap.get(key);
+            driverPropertyInfoMap.put(name, driverPropertyInfo);
         }
 
-        return dpi;
+        assignDriverPropertyInfoRequired(driverPropertyInfoMap, "prop.servername", true);
+        assignDriverPropertyInfoRequired(driverPropertyInfoMap, "prop.servertype", true);
+
+        final String[] serverTypeChoices = new String[]{
+                            String.valueOf(SQLSERVER),
+                            String.valueOf(SYBASE),
+                        };
+        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.servertype", serverTypeChoices);
+
+        final String[] tdsChoices = new String[] {
+                            DefaultProperties.TDS_VERSION_42,
+                            DefaultProperties.TDS_VERSION_50,
+                            DefaultProperties.TDS_VERSION_70,
+                            DefaultProperties.TDS_VERSION_80,
+                        };
+        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.tds", tdsChoices);
+
+        final String[] booleanChoices = new String[] {"true", "false"};
+        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.lastupdatecount", booleanChoices);
+        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.namedpipe", booleanChoices);
+        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.preparesql", booleanChoices);
+        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.useunicode", booleanChoices);
+
+        return (DriverPropertyInfo[]) driverPropertyInfoMap.values().toArray(
+                new DriverPropertyInfo[driverPropertyInfoMap.size()]);
+    }
+
+    /**
+     * Assigns the <code>choices</code> value to a {@link DriverPropertyInfo}
+     * object stored in a <code>Map</code>.
+     * 
+     * @param infoMap The map of {@link DriverPropertyInfo} objects.
+     * @param messageKey The message key used to retrieve the object.
+     * @param choices The value to set on the <code>choices</code> field of the object.
+     */ 
+    private void assignDriverPropertyInfoChoice(
+            final Map infoMap, final String messageKey, final String[] choices) {
+
+        ((DriverPropertyInfo) infoMap.get(Messages.get(messageKey))).choices = choices;
+    }
+
+    /**
+     * Assigns the <code>required</code> value to a {@link DriverPropertyInfo}
+     * object stored in a <code>Map</code>.
+     * 
+     * @param infoMap The map of {@link DriverPropertyInfo} objects.
+     * @param messageKey The message key used to retrieve the object.
+     * @param required The value to set on the <code>required</code> field of the object.
+     */ 
+    private void assignDriverPropertyInfoRequired(
+            final Map infoMap, final String messageKey, final boolean required) {
+
+        ((DriverPropertyInfo) infoMap.get(Messages.get(messageKey))).required = required;
     }
 
     /**

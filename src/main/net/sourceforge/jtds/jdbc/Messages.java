@@ -17,8 +17,10 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.util.ResourceBundle;
 import java.text.MessageFormat;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 
 
@@ -27,7 +29,7 @@ import java.text.MessageFormat;
  * 
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.2 2004-08-05 23:49:11 ddkilzer Exp $
+ * @version $Id: Messages.java,v 1.3 2004-08-06 03:18:11 ddkilzer Exp $
  */
 public final class Messages {
 
@@ -65,7 +67,6 @@ public final class Messages {
      */
     static String get(String key, Object param1) {
         Object args[] = {param1};
-
         return get(key, args);
     }
 
@@ -81,7 +82,6 @@ public final class Messages {
      */
     static String get(String key, Object param1, Object param2) {
         Object args[] = {param1, param2};
-
         return get(key, args);
     }
 
@@ -95,21 +95,39 @@ public final class Messages {
      * @return The selected error message as a <code>String</code>.
      */
     private static String get(String key, Object[] arguments) {
-
-        ResourceBundle rb = loadResourceBundle();
-
-        String formatString;
-
         try {
-            formatString = rb.getString(key);
+            ResourceBundle bundle = loadResourceBundle();
+            String formatString = bundle.getString(key);
+            MessageFormat formatter = new MessageFormat(formatString);
+            return formatter.format(arguments);
         } catch (java.util.MissingResourceException mre) {
-            throw new RuntimeException("no message resource found for message property "
-                                       + key);
+            throw new RuntimeException("No message resource found for message property " + key);
         }
+    }
 
-        MessageFormat formatter = new MessageFormat(formatString);
 
-        return formatter.format(arguments);
+    /**
+     * Retrieve the list of driver property names and driver property
+     * descriptions from <code>Messages.properties</code> and populate
+     * them into {@link Map} objects.
+     * 
+     * @param propertyMap The map of property names to be populated.
+     * @param descriptionMap The map of property descriptions to be populated.
+     */
+    static void loadDriverProperties(Map propertyMap, Map descriptionMap) {
+        final ResourceBundle bundle = loadResourceBundle();
+        final Enumeration keys = bundle.getKeys();
+        while (keys.hasMoreElements()) {
+            final String key = (String) keys.nextElement();
+            final String descriptionPrefix = "prop.desc.";
+            final String propertyPrefix = "prop.";
+            if (key.startsWith(descriptionPrefix)) {
+                descriptionMap.put(key.substring(descriptionPrefix.length()), bundle.getString(key));
+            }
+            else if (key.startsWith(propertyPrefix)) {
+                propertyMap.put(key.substring(propertyPrefix.length()), bundle.getString(key));
+            }
+        }
     }
 
 

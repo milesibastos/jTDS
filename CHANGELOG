@@ -5,6 +5,10 @@ Changes from jTDS 0.8.1
  o Added missing javadoc to DriverUnitTest methods.
  o Renamed Messages.defaultResource to Messages.DEFAULT_RESOURCE to reflect its
    use.
+ o Refactored Driver.getPropertyInfo() so that properties are not hard-coded.
+   Added Messages.loadDriverProperties() method.  Wrote additional unit tests
+   for Driver.getPropertyInfo() in DriverUnitTest.  Added more utility methods
+   to UnitTestBase.
 
 08/05/2004 - Brian Heineman
  o Applied Mike Hutchinson's patch for [996631] Refactoring and some performance

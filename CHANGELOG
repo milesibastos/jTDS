@@ -2,6 +2,9 @@
 Changes from jTDS 0.5.2
 =======================
 
+12/16/2003 - Alin Sinpalean
+ o A lot of code cleanup.
+
 12/11/2003 - Alin Sinpalean
  o Fixed bug #694541 (ResultSet getDate & getTimestamp). Dates and Times are
    now normalized (by resetting the hour/minute/second/ms, respectively the

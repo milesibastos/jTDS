@@ -1,12 +1,16 @@
 Changes from jTDS 1.0.1
 =======================
 
+02/14/2005 - Alin Sinpalean
+ o Applied patch [1120010] Fixed search string escape handling, submitted by
+   James P. Moring.
+
 02/12/2005 - Alin Sinpalean
  o Corrected bug [1120442] Statement hangs in socket read after
    Statement.cancel().
  o Applied Mike's fix for bug [1120825] Can't open scrollable ResultSet with
    Sybase 11.9.
- o Applied Mike's fix to my fix to bug [1120442] Statement hangs in socket read 
+ o Applied Mike's fix to my fix to bug [1120442] Statement hangs in socket read
    after Statement.cancel(). :o)
 
 02/10/2005 - Alin Sinpalean

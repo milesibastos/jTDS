@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.24 2005-01-17 14:28:24 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.25 2005-02-14 12:15:42 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -312,7 +312,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setString(1, table);
         s.setString(2, schema);
         s.setString(3, catalog);
-        s.setString(4, columnNamePattern);
+        s.setString(4, processEscapes(columnNamePattern));
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
 
@@ -409,10 +409,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
-        s.setString(1, tableNamePattern);
-        s.setString(2, schemaPattern);
+        s.setString(1, processEscapes(tableNamePattern));
+        s.setString(2, processEscapes(schemaPattern));
         s.setString(3, catalog);
-        s.setString(4, columnNamePattern);
+        s.setString(4, processEscapes(columnNamePattern));
         s.setInt(5, 3); // ODBC version 3
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
@@ -590,10 +590,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         CallableStatement s = connection.prepareCall(query);
 
         s.setString(1, primaryTable);
-        s.setString(2, primarySchema);
+        s.setString(2, processEscapes(primarySchema));
         s.setString(3, primaryCatalog);
         s.setString(4, foreignTable);
-        s.setString(5, foreignSchema);
+        s.setString(5, processEscapes(foreignSchema));
         s.setString(6, foreignCatalog);
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
@@ -755,7 +755,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * @param catalog a catalog name; "" retrieves those without a
      *        <code>null</code> means drop catalog name from the selection criteria
-     * @param schema a schema name pattern; "" retrieves those without a schema
+     * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet - each row is a foreign key column description
      * @throws SQLException if a database-access error occurs.
@@ -858,7 +858,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * @param catalog a catalog name; "" retrieves those without a
      *        <code>null</code> means drop catalog name from the selection criteria
-     * @param schema a schema name pattern; "" retrieves those without a schema
+     * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet - each row is a primary key column description
      * @throws SQLException if a database-access error occurs.
@@ -915,7 +915,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * @param catalog a catalog name; "" retrieves those without a
      *        <code>null</code> means drop catalog name from the selection criteria
-     * @param schema a schema name pattern; "" retrieves those without a schema
+     * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @param unique when <code>true</code>, return only indices for unique
      *        values; when <code>false</code>, return indices regardless of
@@ -1260,7 +1260,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * @param catalog a catalog name; "" retrieves those without a
      *        <code>null</code> means drop catalog name from the selection criteria
-     * @param schema a schema name pattern; "" retrieves those without a schema
+     * @param schema a schema name; "" retrieves those without a schema
      * @param table a table name
      * @return ResultSet - each row is a primary key column description
      * @throws SQLException if a database-access error occurs.
@@ -1384,10 +1384,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         CallableStatement s = connection.prepareCall(syscall(catalog,query));
 
-        s.setString(1, procedureNamePattern);
-        s.setString(2, schemaPattern);
+        s.setString(1, processEscapes(procedureNamePattern));
+        s.setString(2, processEscapes(schemaPattern));
         s.setString(3, catalog);
-        s.setString(4, columnNamePattern);
+        s.setString(4, processEscapes(columnNamePattern));
         s.setInt(5, 3); // ODBC version 3
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
@@ -1481,8 +1481,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
-        s.setString(1, procedureNamePattern);
-        s.setString(2, schemaPattern);
+        s.setString(1, processEscapes(procedureNamePattern));
+        s.setString(2, processEscapes(schemaPattern));
         s.setString(3, catalog);
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
@@ -1684,8 +1684,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
 
-        s.setString(1, tableNamePattern);
-        s.setString(2, schemaPattern);
+        s.setString(1, processEscapes(tableNamePattern));
+        s.setString(2, processEscapes(schemaPattern));
         s.setString(3, catalog);
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
@@ -1759,8 +1759,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         CallableStatement cstmt = connection.prepareCall(syscall(catalog, query));
 
-        cstmt.setString(1, tableNamePattern);
-        cstmt.setString(2, schemaPattern);
+        cstmt.setString(1, processEscapes(tableNamePattern));
+        cstmt.setString(2, processEscapes(schemaPattern));
         cstmt.setString(3, catalog);
 
         if (types == null) {
@@ -1941,9 +1941,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return ResultSet - each row is a type description
      * @throws SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getUDTs(String catalog, String schemaPattern,
-                                      String typeNamePattern, int[] types)
-    throws SQLException {
+    public java.sql.ResultSet getUDTs(String catalog,
+                                      String schemaPattern,
+                                      String typeNamePattern,
+                                      int[] types)
+            throws SQLException {
         String colNames[] = {"TYPE_CAT",    "TYPE_SCHEM",
                              "TYPE_NAME",   "CLASS_NAME",
                              "DATA_TYPE",   "REMARKS",
@@ -3112,7 +3114,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    public java.sql.ResultSet getAttributes(String str, String str1, String str2, String str3) throws SQLException {
+    public java.sql.ResultSet getAttributes(String catalog,
+                                            String schemaPattern,
+                                            String typeNamePattern,
+                                            String attributeNamePattern)
+            throws SQLException {
         String colNames[] = {"TYPE_CAT",        "TYPE_SCHEM",
                              "TYPE_NAME",       "ATTR_NAME",
                              "DATA_TYPE",       "ATTR_TYPE_NAME",
@@ -3181,7 +3187,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         return sqlStateXOpen;
     }
 
-    public java.sql.ResultSet getSuperTables(String str, String str1, String str2) throws SQLException {
+    public java.sql.ResultSet getSuperTables(String catalog,
+                                             String schemaPattern,
+                                             String tableNamePattern)
+            throws SQLException {
         String colNames[] = {"TABLE_CAT",   "TABLE_SCHEM",
                              "TABLE_NAME",  "SUPERTABLE_NAME"};
         int    colTypes[] = {Types.VARCHAR, Types.VARCHAR,
@@ -3195,8 +3204,10 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         return rs;
     }
 
-    public java.sql.ResultSet getSuperTypes(String str, String str1, String str2) throws SQLException {
-
+    public java.sql.ResultSet getSuperTypes(String catalog,
+                                            String schemaPattern,
+                                            String typeNamePattern)
+            throws SQLException {
         String colNames[] = {"TYPE_CAT",        "TYPE_SCHEM",
                              "TYPE_NAME",       "SUPERTYPE_CAT",
                              "SUPERTYPE_SCHEM", "SUPERTYPE_NAME"};
@@ -3266,6 +3277,39 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsStatementPooling() throws SQLException {
         return true;
+    }
+
+    /**
+     * Format the supplied search pattern to transform the escape \x into [x].
+     *
+     * @param pattern the pattern to tranform
+     * @return the transformed pattern as a <code>String</code>
+     */
+    private String processEscapes(String pattern) {
+        final char escChar = '\\';
+
+        if (pattern == null || pattern.indexOf(escChar) == -1) {
+            return pattern;
+        }
+
+        StringBuffer buf = new StringBuffer();
+
+        int len = pattern.length();
+
+        for (int i = 0; i < len; i++) {
+            if (pattern.charAt(i) != escChar) {
+                buf.append(pattern.charAt(i));
+            } else if (i < len - 1) {
+                buf.append('[');
+                buf.append(pattern.charAt(++i));
+                buf.append(']');
+            } else {
+                // Ignore final \
+            }
+
+        }
+
+        return buf.toString();
     }
 
     /**

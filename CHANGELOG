@@ -1,4 +1,12 @@
 
+Changes from jTDS 0.4
+=======================
+
+10/16/2002 - Alin Sinpalean
+
+ o I think I fixed the 'cursor not found' issue with cursor result sets. Still
+   need some testing to make sure it works fine, but it looks quite good. ;o)
+
 ===============================================================================
 10/14/2002 - jTDS 0.4 released
 ===============================================================================

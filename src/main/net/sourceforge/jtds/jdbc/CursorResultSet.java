@@ -1,10 +1,6 @@
 package net.sourceforge.jtds.jdbc;
 
-import java.math.BigDecimal;
-import java.io.*;
 import java.sql.*;
-import java.util.Calendar;
-import java.util.Map;
 
 /**
  * @created    March 16, 2001
@@ -48,8 +44,6 @@ public class CursorResultSet extends AbstractResultSet
 
     private int pos = POS_BEFORE_FIRST;
 
-    private SQLWarning warnings;
-
     private String cursorName;
 
     private String sql;
@@ -89,6 +83,7 @@ public class CursorResultSet extends AbstractResultSet
     {
         this.stmt = stmt;
         this.sql = sql;
+        warningChain = new SQLWarningChain();
 
         createCursor();
         loadContext();
@@ -187,7 +182,7 @@ public class CursorResultSet extends AbstractResultSet
 
     public SQLWarning getWarnings() throws SQLException
     {
-        return warnings;
+        return warningChain.getWarnings();
     }
 
     public boolean next() throws SQLException
@@ -212,7 +207,7 @@ public class CursorResultSet extends AbstractResultSet
 
         synchronized( stmt )
         {
-            if( !stmt.internalExecute(sql) )
+            if( !stmt.internalExecute(sql, stmt.getTds(true), warningChain) )
                 throw new SQLException("No ResultSet was produced.");
 
             rs = (TdsResultSet)stmt.getResultSet();
@@ -223,7 +218,7 @@ public class CursorResultSet extends AbstractResultSet
                 context = rs.getContext();
 
             current = rs.next() ? rs.currentRow() : null;
-            warnings = rs.getWarnings();
+            warningChain.addWarning(rs.getWarnings());
             rs.close();
         }
 
@@ -236,7 +231,7 @@ public class CursorResultSet extends AbstractResultSet
 
     public void clearWarnings() throws SQLException
     {
-        warnings = null;
+        warningChain.clearWarnings();
     }
 
     public void beforeFirst() throws SQLException
@@ -315,8 +310,7 @@ public class CursorResultSet extends AbstractResultSet
 
     private int getRowStat() throws SQLException
     {
-        return (int)current.getLong(
-            getContext().getColumnInfo().realColumnCount());
+        return (int)current.getLong(getColumnInfo().realColumnCount());
     }
 
     public boolean rowInserted() throws SQLException

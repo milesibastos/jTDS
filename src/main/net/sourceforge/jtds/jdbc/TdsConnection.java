@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -103,19 +103,27 @@ public class TdsConnection implements Connection
     private String database = null;
     private Properties initialProps = null;
 
-    private Vector tdsPool = null;
+    private final Vector tdsPool = new Vector();
+    private final Vector allStatements = new Vector();
     private DatabaseMetaData databaseMetaData = null;
-    private Vector allStatements = null;
 
     private boolean autoCommit = true;
     private int transactionIsolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
     private boolean isClosed = false;
 
     private SQLWarningChain warningChain;
+
+    /**
+     * <code>true</code> if the first <code>Tds</code> instance (the one at position 0 in <code>tdsPool</code>) is being
+     * used for running <code>CursorResultSet</code> requests. In this case, all cursors will be created on this
+     * <code>Tds</code>. If <code>false</code> it means no <code>CursorResultSet</code> were created on this connection.
+     */
+    private boolean haveMainTds = false;
+
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -154,15 +162,7 @@ public class TdsConnection implements Connection
             props_.put(Tds.PROP_PASSWORD, password);
         }
 
-        if (tdsPool == null) {
-            tdsPool = new Vector(20);
-        }
-
-        if (allStatements == null) {
-            allStatements = new Vector(2);
-        }
-
-        Tds tmpTds = this.allocateTds();
+        Tds tmpTds = this.allocateTds(false);
         tdsVer = tmpTds.getTdsVer();
         database = tmpTds.getDatabase();
         freeTds(tmpTds);
@@ -241,7 +241,7 @@ public class TdsConnection implements Connection
         if( database.equals(catalog) )
             return;
 
-        /** @todo: Maybe find a smarter implementation for this */
+        /** @todo Maybe find a smarter implementation for this */
         for( int i=0; i<tdsPool.size(); i++ )
         {
             Tds tds = ((TdsInstance)tdsPool.get(i)).tds;
@@ -582,22 +582,29 @@ public class TdsConnection implements Connection
             }
         allStatements.clear();
 
-        /*
-        ** MJH Need to do roll back for manual commit connections.
-        */
+        // MJH Need to rollback if in manual commit mode
         for( i=0; i<tdsPool.size(); i++ )
+        {
             try
             {
-                if( !autoCommit )
-                    ((TdsInstance)tdsPool.elementAt(i)).tds.rollback(); // MJH
-                ((TdsInstance)tdsPool.elementAt(i)).tds.close();
+                // SAfe Maybe we should commit regardless of the fact that we're in manual commit mode or not. There
+                //      might be uncommited statements, anyway (e.g. we were in manual commit mode, executed some
+                //      queries, went into auto commit mode but did not commit them).
+                Tds tds = ((TdsInstance)tdsPool.elementAt(i)).tds;
+                synchronized( tds )
+                {
+                    if( !autoCommit )
+                        tds.rollback(); // MJH
+                    tds.close();
+                }
             }
             catch( SQLException ex )
             {
-                // SAfe Add the old exceptions to the chain
-                ex.setNextException(exception);
-                exception = ex;
+                // SAfe Add the exception to the chain
+                exception.setNextException(ex);
             }
+        }
+
         tdsPool.clear();
 
         clearWarnings();
@@ -628,10 +635,10 @@ public class TdsConnection implements Connection
      * it allows the default result set type and result set concurrency type to
      * be overridden.
      *
-     * @param resultSetType        a result set type; see ResultSet.TYPE_XXX
-     * @param resultSetConcurrency a concurrency type; see ResultSet.CONCUR_XXX
-     * @return                     a new Statement object
-     * @exception SQLException     if a database access error occurs
+     * @param type        a result set type; see ResultSet.TYPE_XXX
+     * @param concurrency a concurrency type; see ResultSet.CONCUR_XXX
+     * @return            a new Statement object
+     * @exception SQLException if a database access error occurs
      */
     public synchronized java.sql.Statement createStatement(int type, int concurrency)
         throws SQLException
@@ -711,48 +718,57 @@ public class TdsConnection implements Connection
      * The routine tries to reuse an available tds instance. If there are no
      * tds instances that aren't in use it will create a new instance.
      *
-     * @return                 A Tds instance to use for database
-     *     communications.
+     * @return    A Tds instance to use for database communications.
      * @exception SQLException
      */
-    synchronized Tds allocateTds() throws java.sql.SQLException
+    synchronized Tds allocateTds(boolean mainTds) throws java.sql.SQLException
     {
         Tds result;
         int i;
 
-        try {
-            i = findAnAvailableTds();
-            if (i == -1) {
-                Tds tmpTds = null;
-                try {
-                    tmpTds = new Tds(this, initialProps);
-                }
-                catch (SQLException e) {
-                    throw new SQLException(e.getMessage() + "\n" + tdsPool.size()
-                             + " connections are in use by the driver");
-                }
-                TdsInstance tmp = new TdsInstance(tmpTds);
-                tdsPool.addElement(tmp);
+        try
+        {
+            if( mainTds && haveMainTds )
+                i = 0;
+            else
+            {
                 i = findAnAvailableTds();
+                if( i == -1 )
+                {
+                    Tds tmpTds = new Tds(this, initialProps);
+                    TdsInstance tmp = new TdsInstance(tmpTds);
+                    tdsPool.addElement(tmp);
+                    i = findAnAvailableTds();
+                }
+
+                if( i == -1 )
+                    throw new TdsException("Internal Error. Couldn't get Tds instance.");
+
+                if( mainTds )
+                {
+                    Object o = tdsPool.remove(i);
+                    tdsPool.insertElementAt(o, 0);
+                    haveMainTds = true;
+                }
             }
-            if (i == -1) {
-                throw new TdsException("Internal Error.  Couldn't get tds instance");
-            }
-            if (((TdsInstance) tdsPool.elementAt(i)).inUse) {
-                throw new TdsException("Internal Error.  tds " + i
-                         + " is already allocated");
-            }
-            ((TdsInstance) tdsPool.elementAt(i)).inUse = true;
-            result = ((TdsInstance) (tdsPool.elementAt(i))).tds;
+
+            if( ((TdsInstance)tdsPool.elementAt(i)).inUse )
+                throw new TdsException("Internal Error. Tds "+i+" is already allocated.");
+
+            ((TdsInstance)tdsPool.elementAt(i)).inUse = true;
+            result = ((TdsInstance)(tdsPool.elementAt(i))).tds;
 
             result.changeSettings(autoCommit, transactionIsolationLevel);
         }
-        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+        catch( net.sourceforge.jtds.jdbc.TdsException e )
+        {
             throw new SQLException(e.getMessage());
         }
-        catch (java.io.IOException e) {
+        catch( java.io.IOException e )
+        {
             throw new SQLException(e.getMessage());
         }
+
         return result;
     }
 
@@ -766,21 +782,18 @@ public class TdsConnection implements Connection
      */
     private int findAnAvailableTds()
     {
-        int i;
+        int i, min = haveMainTds ? 1 : 0;
 
-        for( i=tdsPool.size()-1;
-            i>=0 && ((TdsInstance)tdsPool.elementAt(i)).inUse; i-- );
+        for( i=tdsPool.size()-1; i>=min && ((TdsInstance)tdsPool.elementAt(i)).inUse; i-- );
 
         return i;
     }
 
 
     /**
-     * Return a <code>Tds</code> instance back to the <code>Tds</code> pool for
-     * reuse.
+     * Return a <code>Tds</code> instance back to the <code>Tds</code> pool for reuse.
      * <p>
-     * Note: This is not synchronized because it's only supposed to be called
-     *       by synchronized methods.
+     * Note: This is not synchronized because it's only supposed to be called by synchronized methods.
      *
      * @param  tds               Description of Parameter
      * @exception  TdsException  Description of Exception
@@ -789,23 +802,26 @@ public class TdsConnection implements Connection
     void freeTds(Tds tds) throws TdsException
     {
         int i;
+        TdsInstance inst;
 
-        i = -1;
-        do {
-            i++;
-        } while( i<tdsPool.size()
-                 && tds!=((TdsInstance)tdsPool.elementAt(i)).tds );
+        i = tdsPool.size();
+        do
+            inst = (TdsInstance)tdsPool.elementAt(--i);
+        while( i>=0 && tds!=inst.tds );
 
-        if( i < tdsPool.size() )
+        if( i >= 0 && inst.inUse )
         {
-            ((TdsInstance)tdsPool.elementAt(i)).inUse = false;
-            tds.setStatement(null);
+            inst.inUse = false;
+            inst.tds.setStatement(null);
 
-            // XXX Should also send a cancel to the server and throw out any
-            // data that has already been sent.
+            // XXX Should also send a cancel to the server and throw out any data that has already been sent.
+
+            // SAfe Not so sure about that. I think that if you cancel the execution of multiple statements sent at the
+            //      same time, the last ones will simply not be executed. We don't want that. If the user explicitly
+            //      cancels thir execution, it's his business. We could, however, consume the data.
         }
         else
-            throw new TdsException("Tried to free a tds that wasn't in use");
+            throw new TdsException("Tried to free a tds that wasn't in use.");
     }
 
     /**
@@ -851,8 +867,9 @@ public class TdsConnection implements Connection
             }
         }
 
-        // MJH Commit or Rollback Tds connections directly rather
-        //     than mess with TdsStatement
+        // MJH  Commit or Rollback Tds connections directly rather than mess with TdsStatement
+        // SAfe We'll have to consume all outstanding data before we do this or we risk to crash. We also need
+        //      some synchronization here.
         for( i=0; i<tdsPool.size(); i++ )
         {
             try

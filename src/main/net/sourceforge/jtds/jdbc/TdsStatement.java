@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -86,7 +86,7 @@ public class TdsStatement implements java.sql.Statement
      * Constructor for a Statement.  It simply sets the connection
      * that created us.
      *
-     * @param connection_ the Connection instantation that creates us
+     * @param  con  the Connection instance that creates us
      */
     public TdsStatement(TdsConnection con)
         throws SQLException
@@ -162,7 +162,7 @@ public class TdsStatement implements java.sql.Statement
     public final synchronized boolean internalExecute(String sql) throws SQLException
     {
         checkClosed();
-        return executeImpl(getTds(sql), sql, warningChain);
+        return executeImpl(getTds(false), sql, warningChain);
     }
 
     public final synchronized boolean internalExecute(String sql, Tds tds, SQLWarningChain wChain) throws SQLException
@@ -223,9 +223,6 @@ public class TdsStatement implements java.sql.Statement
         boolean result;
 
         try {
-            SQLException exception = null;
-            PacketResult tmp = null;
-
             // execute the stored procedure.
             tds.executeProcedure(name, formalParameterList, actualParameterList, this, wChain, getQueryTimeout());
 
@@ -254,8 +251,8 @@ public class TdsStatement implements java.sql.Statement
      * for warnings of the form "LAST_INSERTED_ID = 'some number',
      * COMMAND = 'your sql'".
      *
-     * @param Sql a SQL statement
-     * @return either a row count, or 0 for SQL commands
+     * @param  sql  an SQL statement
+     * @return      either a row count, or 0 for SQL commands
      * @exception SQLException if a database access error occurs
      */
 
@@ -551,13 +548,13 @@ public class TdsStatement implements java.sql.Statement
         return internalExecute(sql);
     }
 
-    synchronized Tds getTds(String sql) throws SQLException
+    synchronized Tds getTds(boolean mainTds) throws SQLException
     {
         if( actTds != null )
             return actTds;
         else
         {
-            actTds=connection.allocateTds();
+            actTds=connection.allocateTds(false);
             actTds.setStatement(this);
             return actTds;
         }

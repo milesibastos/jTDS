@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.2 2002-10-16 17:37:58 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -139,7 +139,7 @@ public class PreparedStatement_base
     */
     public boolean execute() throws SQLException
     {
-        Tds tds = getTds( rawQueryString );
+        Tds tds = getTds(false);
         return execute( tds );
     }
 
@@ -235,7 +235,7 @@ public class PreparedStatement_base
     {
 //        closeResults(false);
 
-        Tds tds = getTds( rawQueryString );
+        Tds tds = getTds(false);
 
         if( !execute(tds) )
         {
@@ -261,7 +261,7 @@ public class PreparedStatement_base
     {
 //        closeResults(false);
 
-        Tds tds = getTds( "UPDATE " );
+        Tds tds = getTds(false);
         if ( execute( tds ) ) {
             skipToEnd();
             releaseTds();

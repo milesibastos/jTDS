@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.23 2004-08-31 17:25:17 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.24 2004-09-02 15:04:45 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1110,7 +1110,9 @@ public class TdsData {
 
                 if (pi.value != null) {
                     if (pi.value instanceof Long) {
-                        value = new BigDecimal(((Long) pi.value).longValue());
+                        // Long to BigDecimal conversion is buggy. It's actually
+                        // long to double to BigDecimal.
+                        value = new BigDecimal(pi.value.toString());
                     } else {
                         value = (BigDecimal) pi.value;
                     }
@@ -1757,20 +1759,26 @@ public class TdsData {
                         ((java.sql.Timestamp)value).getNanos() / 1000000);
             }
 
-            if (value instanceof java.sql.Time) {
-                daysSince1900 = 0;
-            } else {
-                daysSince1900 = calendarToSybase(cal.get(Calendar.YEAR),
-                                                 cal.get(Calendar.MONTH) + 1,
-                                                 cal.get(Calendar.DAY_OF_MONTH));
-            }
-
             time = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
             time += cal.get(Calendar.MINUTE) * 18000;
             time += cal.get(Calendar.SECOND) * 300;
 
             if (value instanceof java.sql.Timestamp) {
                 time += Math.round(cal.get(Calendar.MILLISECOND) * 300f / 1000);
+            }
+            if (time > 25919999) {
+                // Time field has overflowed need to increment days
+                // Sybase does not allow invalid time component
+                time = 0;
+                cal.add(Calendar.DATE, 1);
+            }
+
+            if (value instanceof java.sql.Time) {
+                daysSince1900 = 0;
+            } else {
+                daysSince1900 = calendarToSybase(cal.get(Calendar.YEAR),
+                                                 cal.get(Calendar.MONTH) + 1,
+                                                 cal.get(Calendar.DAY_OF_MONTH));
             }
 
             out.write((int) daysSince1900);

@@ -36,7 +36,7 @@ import java.sql.*;
 import java.util.HashMap;
 
 public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.12 2004-03-25 20:23:50 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.13 2004-03-27 17:26:48 bheineman Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -45,10 +45,6 @@ public class EscapeProcessor {
     private static final String ESCAPE_PREFIX_FUNCTION = "fn ";
     private static final String ESCAPE_PREFIX_CALL = "call ";
     private static final String ESCAPE_PREFIX_ESCAPE_CHAR = "escape ";
-
-    private static final int NORMAL = 0;
-    private static final int IN_STRING = 1;
-    private static final int IN_ESCAPE = 2;
 
     // Map of JDBC function names to database function names
     private static HashMap _functionMap = new HashMap();
@@ -98,14 +94,6 @@ public class EscapeProcessor {
      * <p>
      * NOTE: This method is now structured the way it is for optimization purposes.
      * <p>
-     * if (state==NORMAL) else if (state==IN_STRING) else
-     * replaces the
-     * switch (state) case NORMAL: case IN_STRING
-     * as it is faster when there are few case statements.
-     * <p>
-     * Also, IN_ESCAPE is not checked for and a simple 'else' is used instead as it is the
-     * only other state that can exist.
-     * <p>
      * char ch = chars[i] is used in conjunction with sql.toCharArray() to avoid the
      * getfield opcode.
      * <p>
@@ -121,8 +109,10 @@ public class EscapeProcessor {
     public static int parameterNativeSQL(String sql, StringBuffer result, boolean substitute)
     throws SQLException {
         final char[] chars = sql.toCharArray(); // avoid getfield opcode
+        StringBuffer currentResult = result;
         StringBuffer escape = null;
-        int state = NORMAL;
+        boolean inEscape = false;
+        boolean inString = false;
         int parameters = 0;
 
         if (sql == null) {
@@ -138,55 +128,58 @@ public class EscapeProcessor {
         for (int i = 0; i < chars.length; i++) {
             final char ch = chars[i]; // avoid getfield opcode
 
-            if (state == NORMAL) {
+            if (inString) {
+                currentResult.append(ch);
+
+                // NOTE: This works even if a single quote is being used as an escape
+                // character since the next single quote found will force the state
+                // to be inString == true again.
+                if (ch == '\'') {
+                    inString = false;
+                }
+            } else {
                 if (ch == '{') {
-                    state = IN_ESCAPE;
+                    if (inEscape) {
+                        throw new SQLException("Syntax error in SQL escape syntax; found '{' without '}'");
+                    }
+
+                    inEscape = true;
 
                     if (escape == null) {
                         escape = new StringBuffer();
                     } else {
                         escape.delete(0, escape.length());
                     }
-                } else {
-                    if (ch == '?') {
-                        parameters++;
-                        if (substitute) {
-                            result.append("@P");
-                            result.append(parameters);
-                        } else {
-                            result.append(ch);
-                        }
-                    } else if (ch == '\'') {
-                        state = IN_STRING;
-                        result.append(ch);
+
+                    currentResult = escape;
+                } else if (ch == '}') {
+                    if (!inEscape) {
+                        throw new SQLException("Syntax error in SQL escape syntax; found '}' without '{'");
+                    }
+
+                    inEscape = false;
+                    currentResult = result;
+                    translateEscape(escape.toString(), currentResult);
+                } else if (ch == '?') {
+                    parameters++;
+
+                    if (substitute) {
+                        currentResult.append("@P");
+                        currentResult.append(parameters);
                     } else {
-                        result.append(ch);
+                        currentResult.append(ch);
                     }
-                }
-            } else if (state == IN_STRING) {
-                result.append(ch);
-
-                // NOTE: This works even if a single quote is being used as an escape
-                // character since the next single quote found will force the state
-                // to be == to IN_STRING again.
-                if (ch == '\'') {
-                    state = NORMAL;
-                }
-            } else { // state == IN_ESCAPE
-                if (ch == '}') {
-                    translateEscape(escape.toString(), result);
-                    state = NORMAL;
                 } else {
-                    if (ch == '?') {
-                        parameters++;
-                    }
+                    currentResult.append(ch);
 
-                    escape.append(ch);
+                    if (ch == '\'') {
+                        inString = true;
+                    }
                 }
             }
         }
 
-        if (state == IN_ESCAPE) {
+        if (inEscape) {
             throw new SQLException("Syntax error in SQL escape syntax");
         }
 

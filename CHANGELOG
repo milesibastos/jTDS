@@ -1,6 +1,11 @@
 Changes from jTDS 1.0
 =======================
 
+02/09/2005 - Alin Sinpalean
+ o Applied Mike's patch [1118912] Small enhancements. Extended DataTruncation
+   support, better transaction isolation support for Sybase and a fixed NPE in
+   Logger.
+
 02/08/2005 - Alin Sinpalean
  o Synchronized JtdsStatement.close(); a race condition could occur between a
    pool implementation closing Statements after a timeout and finalize().

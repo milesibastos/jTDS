@@ -1303,10 +1303,13 @@ public class SAfeTest extends DatabaseTestCase {
         }
     }
 
+    /**
+     * Test for bug #1116046 {fn } escape can't handle nested functions.
+     */
     public void testFnEscapeNesting() throws Exception {
         Statement stmt = con.createStatement();
         ResultSet rs = stmt.executeQuery(
-                "select {fn ifnull(max(id), 0)} from sysobjects");
+                "select {fn ifnull({fn max(id)}, 0)} from sysobjects");
         assertNotNull(rs);
         assertTrue(rs.next());
         assertNotNull(rs.getObject(1));
@@ -1316,5 +1319,42 @@ public class SAfeTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertNotNull(rs.getObject(1));
         stmt.close();
+    }
+
+    /**
+     * Test <code>DataTruncation</code> exception.
+     */
+    public void testDataTruncException() throws Exception {
+        con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        Statement stmt = con.createStatement();
+        if (!con.getMetaData().getDatabaseProductName().
+                toLowerCase().startsWith("microsoft")) {
+            // By default Sybase will silently truncate strings,
+            // set an option to ensure that an exception is thrown.
+            stmt.execute("SET STRING_RTRUNCATION ON");
+        }
+
+        stmt.execute("CREATE TABLE #TESTTRUNC (i tinyint, n numeric(2), c char(2))");
+
+        try {
+            stmt.execute("INSERT INTO #TESTTRUNC VALUES(1111, 1, 'X')");
+            fail("Expected data truncation on tinyint");
+        } catch (DataTruncation e) {
+            // Expected DataTruncation
+        }
+
+        try {
+            stmt.execute("INSERT INTO #TESTTRUNC VALUES(1, 1111, 'X')");
+            fail("Expected data truncation on numeric");
+        } catch (DataTruncation e) {
+            // Expected DataTruncation
+        }
+
+        try {
+            stmt.execute("INSERT INTO #TESTTRUNC VALUES(1, 1, 'XXXXX')");
+            fail("Expected data truncation on char");
+        } catch (DataTruncation e) {
+            // Expected DataTruncation
+        }
     }
 }

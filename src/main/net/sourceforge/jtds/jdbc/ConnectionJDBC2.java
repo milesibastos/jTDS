@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.66 2005-02-05 22:12:32 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.67 2005-02-09 08:28:50 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -96,7 +96,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             + " where config=1123 and id = value)";
 
     /** Sybase initial connection string. */
-    private String SYBASE_INITIAL_SQL     = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
+    private String SYBASE_INITIAL_SQL     = "SET TRANSACTION ISOLATION LEVEL 1\r\n" +
                                             "SET CHAINED OFF\r\n" +
                                             "SET QUOTED_IDENTIFIER ON\r\n"+
                                             "SET TEXTSIZE 2147483647";
@@ -1529,19 +1529,20 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         String sql = "SET TRANSACTION ISOLATION LEVEL ";
+        boolean sybase = serverType == Driver.SYBASE;
 
         switch (level) {
-            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                sql += "READ COMMITTED";
-                break;
             case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                sql += "READ UNCOMMITTED";
+                sql += (sybase)? "0": "READ UNCOMMITTED";
+                break;
+            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                sql += (sybase)? "1": "READ COMMITTED";
                 break;
             case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                sql += "REPEATABLE READ";
+                sql += (sybase)? "2": "REPEATABLE READ";
                 break;
             case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                sql += "SERIALIZABLE";
+                sql += (sybase)? "3": "SERIALIZABLE";
                 break;
             case java.sql.Connection.TRANSACTION_NONE:
                 throw new SQLException(Messages.get("error.generic.optvalue",

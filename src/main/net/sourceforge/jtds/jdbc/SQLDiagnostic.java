@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.6 2005-02-01 06:28:37 alin_sinpalean Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.7 2005-02-09 08:28:51 alin_sinpalean Exp $
  */
 class SQLDiagnostic {
     /**
@@ -361,15 +361,26 @@ class SQLDiagnostic {
                        String procName,
                        int line) {
         if (serverity > 10) {
-            if (serverType == Driver.SQLSERVER && number == 8152) {
-                DataTruncation e = new DataTruncation(-1, false, false, -1, -1);
-                addException(e);
-            } else {
-                SQLException e = new SQLException(message,
-                                                  getStateCode(number, serverType, "S1000"),
-                                                  number);
-                addException(e);
+            SQLException e = new SQLException(message,
+                                              getStateCode(number, serverType, "S1000"),
+                                              number);
+            //
+            // See if the driver should return a DataTrunction exception
+            //
+            if ((serverType == Driver.SQLSERVER &&
+                    (number == 8152 ||
+                     number == 8115 ||
+                     number == 220)) ||
+                (serverType == Driver.SYBASE &&
+                    (number == 247 ||
+                     number == 9502))) {
+                SQLException tmp = e;
+                e = new DataTruncation(-1, false, false, -1, -1);
+                // Chain the original exception as this has useful info.
+                e.setNextException(tmp);
             }
+
+            addException(e);
         } else {
             if (number == 0) {
                 // Output from a TransactSQL print statement.

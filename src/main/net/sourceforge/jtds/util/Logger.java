@@ -33,7 +33,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.9 2005-02-02 00:43:14 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.10 2005-02-09 08:28:59 alin_sinpalean Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
@@ -42,7 +42,7 @@ public class Logger {
     /**
      * Set the logging PrintWriter stream.
      *
-     * @param out The PrintWriter stream.
+     * @param out the PrintWriter stream
      */
     public static void setLogWriter(PrintWriter out) {
         log = out;
@@ -51,7 +51,7 @@ public class Logger {
     /**
      * Get the logging PrintWriter Stream.
      *
-     * @return The logging stream as a <code>PrintWriter</code>.
+     * @return the logging stream as a <code>PrintWriter</code>
      */
     public static PrintWriter getLogWriter() {
         return log;
@@ -60,7 +60,7 @@ public class Logger {
     /**
      * Retrieve the active status of the logger.
      *
-     * @return <code>boolean</code> true if logging enabled.
+     * @return <code>boolean</code> true if logging enabled
      */
     public static boolean isActive() {
         return(log != null || DriverManager.getLogWriter() != null);
@@ -70,7 +70,7 @@ public class Logger {
      * Print a diagnostic message to the output stream provided by
      * the DataSource or the DriverManager.
      *
-     * @param message The diagnostic message to print.
+     * @param message the diagnostic message to print
      */
     public static void println(String message) {
         if (log != null) {
@@ -85,9 +85,9 @@ public class Logger {
     /**
      * Print a dump of the current input or output network packet.
      *
-     * @param streamId The owner of this packet.
-     * @param in True if this is an input packet.
-     * @param pkt The packet data.
+     * @param streamId the owner of this packet
+     * @param in       true if this is an input packet
+     * @param pkt      the packet data
      */
     public static void logPacket(int streamId, boolean in, byte[] pkt) {
         int len = ((pkt[2] & 0xFF) << 8)| (pkt[3] & 0xFF);
@@ -190,14 +190,14 @@ public class Logger {
     }
 
     /**
-     * Print an IO or Protocol Exception stack trace to the log.
+     * Print an Exception stack trace to the log.
      *
-     * @param e The exception to log.
+     * @param e the exception to log
      */
     public static void logException(Exception e) {
         if (log != null) {
             e.printStackTrace(log);
-        } else {
+        } else if (DriverManager.getLogWriter() != null) {
             e.printStackTrace(DriverManager.getLogWriter());
         }
     }
@@ -209,7 +209,7 @@ public class Logger {
      * Turn the logging on or off.
      *
      * @deprecated Use the JDBC standard mechanisms to enable logging.
-     * @param value  True to turn on logging.
+     * @param value  true to turn on logging
      */
     public static void setActive(boolean value) {
         if (value && log == null) {

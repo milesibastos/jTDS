@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.28 2004-03-25 20:23:50 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.29 2004-04-03 19:59:05 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.28 2004-03-25 20:23:50 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.29 2004-04-03 19:59:05 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -335,24 +335,21 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setAsciiStream(int parameterIndex,
                                java.io.InputStream inputStream,
-                               int length )
-        throws SQLException
-    {
-        if( inputStream == null )
+                               int length)
+        throws SQLException {
+        if (inputStream == null) {
             setCharacterStream(parameterIndex, null, 0);
-        else
-            try
-            {
+        } else {
+            try {
                 setCharacterStream(parameterIndex,
                     new java.io.InputStreamReader(inputStream, "ASCII"),
                     length);
-            }
-            catch( java.io.UnsupportedEncodingException e )
-            {
+            } catch (java.io.UnsupportedEncodingException e) {
                 // This should never happen...
                 throw new SQLException("Unexpected encoding exception: "
                     + e.getMessage());
             }
+        }
     }
 
     /**
@@ -382,39 +379,15 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  length            the number of bytes in the stream
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setBinaryStream( int parameterIndex,
-            java.io.InputStream x,
-            int length )
-             throws SQLException
-    {
-        if ( length == 0 ) {
-            setBytes( parameterIndex, null );
+    public void setBinaryStream(int parameterIndex,
+                                java.io.InputStream x,
+                                int length)
+             throws SQLException {
+        if (x == null || length == 0) {
+            setParam(parameterIndex, null, java.sql.Types.BLOB, -1);
+        } else {
+            setParam(parameterIndex, x, java.sql.Types.BLOB, length);
         }
-        byte[] bs = new byte[length];
-        int actlen;
-        try {
-            actlen = x.read( bs );
-        }
-        catch ( java.io.IOException e ) {
-            SQLException newE = new SQLException( "setBinaryStream: IO-Exception occured reading Stream" + e.toString() );
-            throw newE;
-        }
-        if ( actlen != length ) {
-            throw new SQLException( "SetBinaryStream parameterized Length: " + Integer.toString( length ) + " got length: " + Integer.toString( actlen ) );
-        }
-        else {
-            try {
-                actlen = x.read( bs );
-            }
-            catch ( java.io.IOException e ) {
-                SQLException newE = new SQLException( "setBinaryStream: IO-Exception occured reading Stream" + e.toString() );
-                throw newE;
-            }
-            if ( actlen != -1 ) {
-                throw new SQLException( "SetBinaryStream parameterized Length: " + Integer.toString( length ) + " got more than that " );
-            }
-        }
-        this.setBytes( parameterIndex, bs );
     }
 
     /**
@@ -453,15 +426,15 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  x                 the parameter value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setBytes(int parameterIndex, byte x[]) throws SQLException
-    {
+    public void setBytes(int parameterIndex, byte x[]) throws SQLException {
         // when this method creates the parameter the formal type should
         // be a varbinary if the length of 'x' is <=255, image if length>255.
-        if( x==null || x.length<=255 || (x.length<=8000 &&
-            ((TdsConnection)getConnection()).getTdsVer()==Tds.TDS70) )
-            setParam( parameterIndex, x, java.sql.Types.VARBINARY, -1 );
-        else
-            setParam( parameterIndex, x, java.sql.Types.LONGVARBINARY, -1 );
+        if (x == null || x.length <= 255 || (x.length <= 8000
+            && ((TdsConnection) getConnection()).getTdsVer() == Tds.TDS70)) {
+            setParam(parameterIndex, x, java.sql.Types.VARBINARY, -1);
+        } else {
+            setParam(parameterIndex, x, java.sql.Types.LONGVARBINARY, -1);
+        }
     }
 
     /**
@@ -558,8 +531,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  x                 The object containing the input parameter value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setObject(int parameterIndex, Object x) throws SQLException
-    {
+    public void setObject(int parameterIndex, Object x) throws SQLException {
         if( x == null )
             setNull( parameterIndex, java.sql.Types.VARCHAR );
         else
@@ -620,9 +592,9 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setObject( int parameterIndex, Object x, int targetSqlType ) throws SQLException
-    {
-        setObject( parameterIndex, x, targetSqlType, 0 );
+    public void setObject(int parameterIndex, Object x, int targetSqlType)
+    throws SQLException {
+        setObject(parameterIndex, x, targetSqlType, 0);
     }
 
     /**
@@ -837,23 +809,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     public void setUnicodeStream(int parameterIndex,
                                  java.io.InputStream inputStream,
                                  int length)
-        throws SQLException
-    {
-        if( inputStream == null )
+        throws SQLException {
+        if (inputStream == null) {
             setCharacterStream(parameterIndex, null, 0);
-        else
-            try
-            {
+        } else {
+            try {
                 setCharacterStream(parameterIndex,
                     new java.io.InputStreamReader(inputStream, "UTF-8"),
                     length);
-            }
-            catch( java.io.UnsupportedEncodingException e )
-            {
+            } catch (java.io.UnsupportedEncodingException e) {
                 // This should never happen...
                 throw new SQLException("Unexpected encoding exception: "
                     + e.getMessage());
             }
+        }
     }
 
     //--------------------------JDBC 2.0-----------------------------
@@ -918,22 +887,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      */
     public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length)
-        throws SQLException
-    {
-        if( reader==null || length<0 )
+        throws SQLException {
+        if (reader == null || length < 0) {
             setString(parameterIndex, null);
+        }
 
         StringBuffer value = new StringBuffer(length);
         char[] buffer = new char[1024];
         int bytes;
 
-        try
-        {
-            while( (bytes = reader.read(buffer, 0, buffer.length)) != -1 )
+        try {
+            while ((bytes = reader.read(buffer, 0, buffer.length)) != -1) {
                 value.append(buffer, 0, bytes);
-        }
-        catch( java.io.IOException e )
-        {
+            }
+        } catch (java.io.IOException e) {
             throw new SQLException("Error reading stream: " + e.getMessage());
         }
 
@@ -959,17 +926,17 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  blob              an object representing a BLOB
      * @exception  SQLException  if a database access error occurs
      */
-    public void setBlob( int parameterIndex, java.sql.Blob blob )
-        throws SQLException
-    {
-        if( blob == null )
+    public void setBlob(int parameterIndex, java.sql.Blob blob)
+    throws SQLException {
+        if (blob == null) {
             setBinaryStream(parameterIndex, null, 0);
-        else {
+        } else {
             long length = blob.length();
 
-            if( length > Integer.MAX_VALUE )
+            if (length > Integer.MAX_VALUE) {
                 throw new SQLException("Blob lengths greater than " + Integer.MAX_VALUE
                     + " are not suported.");
+            }
 
             setBinaryStream(parameterIndex, blob.getBinaryStream(), (int) length);
         }
@@ -982,17 +949,17 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  clob              an object representing a CLOB
      * @exception  SQLException  if a database access error occurs
      */
-    public void setClob( int parameterIndex, java.sql.Clob clob )
-        throws SQLException
-    {
-        if( clob == null )
+    public void setClob(int parameterIndex, java.sql.Clob clob)
+        throws SQLException {
+        if (clob == null) {
             setCharacterStream(parameterIndex, null, 0);
-        else {
+        } else {
             long length = clob.length();
 
-            if( length > Integer.MAX_VALUE )
+            if (length > Integer.MAX_VALUE) {
                 throw new SQLException("Clob lengths greater than " + Integer.MAX_VALUE
                     + " are not suported.");
+            }
 
             setCharacterStream(parameterIndex, clob.getCharacterStream(), (int) length);
         }

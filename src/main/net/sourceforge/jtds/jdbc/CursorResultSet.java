@@ -872,12 +872,26 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
 
                     if (param[crtCol].value instanceof Blob) {
                         Blob blob = (Blob) param[crtCol].value;
+                        long length = blob.length();
 
-                        param[crtCol].value = blob.getBytes(1, (int) blob.length());
+                        if (length > Integer.MAX_VALUE) {
+                            throw new SQLException("Blob lengths greater than " + Integer.MAX_VALUE
+                                + " are not suported.");
+                        }
+
+                        param[crtCol].value = blob.getBinaryStream();
+                        param[crtCol].scale = (int) length;
                     } else if (param[crtCol].value instanceof Clob) {
                         Clob clob = (Clob) param[crtCol].value;
+                        long length = clob.length();
+
+                        if (length > Integer.MAX_VALUE) {
+                            throw new SQLException("Clob lengths greater than " + Integer.MAX_VALUE
+                                + " are not suported.");
+                        }
 
                         param[crtCol].value = clob.getSubString(1, (int) clob.length());
+                        param[crtCol].scale = (int) length;
                     }
 
                     // This is only for Tds.executeProcedureInternal to

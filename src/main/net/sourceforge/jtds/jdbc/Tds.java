@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.46 2004-04-02 18:39:59 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.47 2004-04-03 19:59:05 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.46 2004-04-02 18:39:59 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.47 2004-04-03 19:59:05 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -536,7 +536,13 @@ public class Tds implements TdsDefinitions {
                     {
                         comm.appendByte(nativeType);
 
-                        sendSybImage((byte[]) actualParameterList[i].value);
+                        if (actualParameterList[i].value instanceof java.io.InputStream) {
+                            sendSybImage((java.io.InputStream) actualParameterList[i].value,
+                                         actualParameterList[i].scale);
+                        } else {
+                            sendSybImage((byte[]) actualParameterList[i].value);
+                        }
+
                         break;
                     }
                 case SYBTEXT:
@@ -2774,6 +2780,38 @@ public class Tds implements TdsDefinitions {
         // send the data
         if (value != null) {
             comm.appendBytes(value);
+        }
+    }
+
+    private void sendSybImage(final java.io.InputStream value, int length)
+            throws java.io.IOException {
+        length = (value == null ? 0 : length);
+
+        // send the lenght of this piece of data
+        comm.appendTdsInt(length);
+
+        // send the length of this piece of data again
+        comm.appendTdsInt(length);
+
+        if (value != null) {
+            byte[] buffer = new byte[1024];
+
+            for (int i = 0; i < length; i += buffer.length) {
+                int result = value.read(buffer);
+
+                if (result == -1 && i < length) {
+                    throw new java.io.IOException("Data in stream less than specified by length");
+                } else if (i + result > length) {
+                    throw new java.io.IOException("More data in stream than specified with length");
+                } else if (result < buffer.length) {
+                    byte[] tmpBuffer = new byte[result];
+
+                    System.arraycopy(buffer, 0, tmpBuffer, 0, result);
+                    buffer = tmpBuffer;
+                }
+
+                comm.appendBytes(buffer);
+            }
         }
     }
 

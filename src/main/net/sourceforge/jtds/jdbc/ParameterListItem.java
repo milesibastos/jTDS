@@ -35,7 +35,7 @@ package net.sourceforge.jtds.jdbc;
 
 
 public class ParameterListItem implements Cloneable {
-    public static final String cvsVersion = "$Id: ParameterListItem.java,v 1.3 2004-02-17 19:56:15 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterListItem.java,v 1.4 2004-04-03 19:59:05 bheineman Exp $";
 
     /************************************************************
      * Information about the formal parameter
@@ -60,7 +60,9 @@ public class ParameterListItem implements Cloneable {
     public String formalType = null;
 
     /**
-     * Scale for NUMERIC and DECIMAL values. N/A for other types.
+     * Scale for NUMERIC and DECIMAL values.
+     * The length for BLOB and CLOB values.
+     * N/A for other types.
      */
     public int scale = -1;
 

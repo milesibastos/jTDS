@@ -6,6 +6,7 @@ Changes from jTDS 0.8.1
    ResultSetMetaData.getColumnType(int) now returns Types.BIGINT if the
    TDS 8.0 protocol is being used with a 1.4+ JRE.  Added tests to ensure
    this functionality continues to work in the future.
+ o Added test for bug [989399] bug? blob.getBytes() from 0
 
 07/12/2004 - Brian Heineman
  o Removed JNetDirect performance results to comply with their licensing.

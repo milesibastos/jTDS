@@ -1072,6 +1072,191 @@ public class LOBTest extends TestBase {
         stmt2.close();
         rs2.close();
     }
+
+    /**
+     * Test for bug [989399] bug? blob.getBytes() from 0
+     */
+    public void testBlobGetBytes1() throws Exception {       
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobgetbytes1 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobgetbytes1 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobgetbytes1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBlob()
+        Blob blob = rs.getBlob(1);
+        
+        assertTrue(blob != null);
+        
+        // Test Blob.getBytes()
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobGetBytes2() throws Exception {       
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobgetbytes2 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobgetbytes2 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobgetbytes2");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBlob()
+        Blob blob = rs.getBlob(1);
+        
+        assertTrue(blob != null);
+        
+        byte[] tmpData = new byte[data.length / 2];
+        
+        System.arraycopy(data, 0, tmpData, 0, tmpData.length);
+        
+        // Test Blob.getBytes()
+        assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, tmpData.length)));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobGetBytes3() throws Exception {       
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobgetbytes3 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobgetbytes3 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobgetbytes3");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBlob()
+        Blob blob = rs.getBlob(1);
+        
+        assertTrue(blob != null);
+        
+        byte[] tmpData = new byte[data.length / 2];
+        
+        // Offset data copy by 1
+        System.arraycopy(data, 1, tmpData, 0, tmpData.length);
+        
+        // Test Blob.getBytes()
+        assertTrue(Arrays.equals(tmpData, blob.getBytes(2L, tmpData.length)));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobLength1() throws Exception {       
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #bloblength1 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bloblength1 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #bloblength1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBlob()
+        Blob blob = rs.getBlob(1);
+        
+        assertTrue(blob != null);
+        
+        // Test Blob.length()
+        assertTrue(data.length == blob.length());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobTruncate1() throws Exception {       
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobtruncate1 (data IMAGE)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobtruncate1 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobtruncate1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBlob()
+        Blob blob = rs.getBlob(1);
+        
+        assertTrue(blob != null);
+
+        byte[] tmpData = new byte[data.length / 2];
+        
+        System.arraycopy(data, 0, tmpData, 0, tmpData.length);
+        
+        // Test Blob.truncate()
+        blob.truncate(tmpData.length);
+        assertTrue(tmpData.length == blob.length());
+        
+        // Test Blob.getBytes()
+        assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, (int) blob.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
     
     /*************************************************************************
      *************************************************************************
@@ -2401,6 +2586,177 @@ public class LOBTest extends TestBase {
         rs2.close();
     }
 
+    public void testClobGetSubString1() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobgetsubstring1 (data TEXT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring1 (data) VALUES (?)");
+
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobgetsubstring1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getClob()
+        Clob clob = rs.getClob(1);
+
+        assertTrue(clob != null);
+
+        // Test Clob.getSubString()
+        assertTrue(data.equals(clob.getSubString(1L, (int) clob.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobGetSubString2() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobgetsubstring2 (data TEXT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring2 (data) VALUES (?)");
+
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobgetsubstring2");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getClob()
+        Clob clob = rs.getClob(1);
+
+        assertTrue(clob != null);
+
+        String tmpData = data.substring(0, data.length() / 2);
+        
+        // Test Clob.getSubString()
+        assertTrue(tmpData.equals(clob.getSubString(1L, tmpData.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobGetSubString3() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobgetsubstring3 (data TEXT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobgetsubstring3 (data) VALUES (?)");
+
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobgetsubstring3");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getClob()
+        Clob clob = rs.getClob(1);
+
+        assertTrue(clob != null);
+
+        // Offset data by 1
+        String tmpData = data.substring(1, data.length() / 2);
+        
+        // Test Clob.getSubString()
+        assertTrue(tmpData.equals(clob.getSubString(2L, tmpData.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobLength1() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #cloblength1 (data TEXT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #cloblength1 (data) VALUES (?)");
+
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #cloblength1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getClob()
+        Clob clob = rs.getClob(1);
+
+        assertTrue(clob != null);
+        
+        // Test Clob.length()
+        assertTrue(data.length() == clob.length());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobTruncate1() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobtruncate1 (data TEXT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobtruncate1 (data) VALUES (?)");
+
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobtruncate1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getClob()
+        Clob clob = rs.getClob(1);
+
+        assertTrue(clob != null);
+
+        String tmpData = data.substring(0, data.length() / 2);
+        
+        // Test Clob.truncate()
+        clob.truncate(tmpData.length());
+        assertTrue(tmpData.length() == clob.length());
+        
+        // Test Clob.getSubString()
+        assertTrue(tmpData.equals(clob.getSubString(1L, (int) clob.length())));
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+    
     private byte[] getBlobTestData() {
         return blobData;
     }

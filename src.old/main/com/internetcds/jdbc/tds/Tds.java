@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2001-09-27 14:21:05 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -3173,6 +3173,7 @@ public class Tds implements TdsDefinitions {
    private void writeDecimalValue(byte nativeType, Object o, int scalePar, int precision)
       throws TdsException, java.io.IOException
    {
+     
       comm.appendByte((byte)SYBDECIMAL);
       if (o == null) {
         comm.appendByte((byte)0);
@@ -3200,14 +3201,40 @@ public class Tds implements TdsDefinitions {
             value >>>= 8;
           }
         }
-        else {
-          BigDecimal bd = (BigDecimal)o;
-          byte scale = (byte)bd.scale();
+        else {  
+          BigDecimal bd;
+          
+          if (o instanceof BigDecimal) {
+            bd = (BigDecimal)o;
+          }
+          else 
+          if (o instanceof Number) {
+           bd = new BigDecimal(((Number)o).doubleValue());
+          }
+          else 
+            throw new TdsException("Invalid decimal value");
+          boolean repeat = false;
+          byte scale;
           byte signum = (byte)(bd.signum() < 0 ? 0 : 1);
-          BigInteger bi = bd.unscaledValue();
-          long l = bi.longValue();
-          byte[] mantisse = bi.abs().toByteArray();
-          byte len = (byte)(mantisse.length + 1);
+          byte[] mantisse;
+          byte len;
+          do {
+            scale = (byte)bd.scale();
+            BigInteger bi = bd.unscaledValue();
+            long l = bi.longValue();
+            mantisse = bi.abs().toByteArray();
+            len = (byte)(mantisse.length + 1);
+            if (len > 13) {   // diminish scale as long as len is to much
+              int dif = len - 13;
+              scale -= dif * 2;
+              if (scale < 0)
+                throw new TdsException("can´t sent this BigDecimal");
+              bd = bd.setScale(scale,BigDecimal.ROUND_HALF_UP);
+              repeat = true;
+            }
+            else break;
+          }
+          while (repeat);
           byte prec = 28;
           comm.appendByte(len);
           comm.appendByte(prec);
@@ -3219,7 +3246,7 @@ public class Tds implements TdsDefinitions {
           }                                
         }
       }
-                      /*
+       /*               
        BigDecimal d;
        if (value == null || value instanceof BigDecimal)
        {
@@ -3240,6 +3267,7 @@ public class Tds implements TdsDefinitions {
 
        byte[] data;
        int signum;
+       byte scale = (byte)d.scale();
        if (value == null)
        {
            data = null;
@@ -3284,7 +3312,7 @@ public class Tds implements TdsDefinitions {
            comm.appendByte(signum < 0 ? (byte)0 : (byte)1);
            comm.appendBytes(data);
        }
-                       */
+      */
    }
 
     private Object readFloatN(int len)

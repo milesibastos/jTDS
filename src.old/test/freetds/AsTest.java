@@ -468,5 +468,37 @@ public class AsTest extends DatabaseTestCase {
     checkTime(420000000000L);   // sent in 4 Bytes
     checkTime(840000000000L);   
   }
+
+  public void testBigDecimal() throws Throwable
+  {    String crtab = "create table #testBigDecimal (a decimal(28,10))";
+    dropTable("#testBigDecimal");
+    Statement stmt = con.createStatement();
+    stmt.executeUpdate(crtab);
+    PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal values (?)");
+    pstmt.setObject(1,new BigDecimal("10.200"));
+    pstmt.execute();
+    pstmt.setObject(1,new BigDecimal(10.200));
+    pstmt.execute();
+    pstmt.setObject(1,null);
+    pstmt.execute();
+    pstmt.setObject(1,new Integer(20));
+    pstmt.execute();
+    pstmt.setObject(1,new Double(2.10));
+    pstmt.execute();
+    pstmt.setObject(1,new BigDecimal(-10.200));
+    pstmt.execute();
+    pstmt.setObject(1,new Long(200));
+    pstmt.execute();
+    pstmt.setByte(1,(byte)1);
+    pstmt.execute();
+    pstmt.setInt(1,200);
+    pstmt.execute();
+    pstmt.setLong(1,200L);
+    pstmt.execute();
+    pstmt.setFloat(1,(float)1.1);
+    pstmt.execute();
+    pstmt.setDouble(1,1.1);
+    pstmt.execute();
+  }
 }
 

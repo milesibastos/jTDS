@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.26 2004-11-30 15:38:26 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.27 2004-12-01 13:51:52 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -646,20 +646,32 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                     return null; // Sorry still no go
                 }
             } else {
-                // For Microsoft we need to knock off the where clause which hopefully
-                // is the only bit with parameter markers and execute the query.
-                // SET FMTONLY ON asks the server just to return only meta data.
-                ArrayList params = new ArrayList();
-                String[] parsedSql = new SQLParser(sql, params, connection).parse(true);
+                // For Microsoft set all parameters to null and execute the query.
+                // SET FMTONLY ON asks the server just to return meta data.
                 // This only works for select statements
-                if (!parsedSql[2].equals("select")) {
+                if (!sqlWord.equals("select")) {
                     return null;
                 }
 
-                String query = "SET FMTONLY ON\r\n" + parsedSql[0] + "\r\nSET FMTONLY OFF";
+                // Copy parameters to avoid corrupting any values already set
+                // by the user as we need to set a flag and null out the data.
+                ParamInfo[] params = new ParamInfo[parameters.length];
+                for (int i = 0; i < params.length; i++) {
+                    params[i] = new ParamInfo(parameters[i].markerPos);
+                    params[i].isSet = true;
+                }
+
+                // Substitute nulls into SQL String
+                StringBuffer testSql = new StringBuffer(sql.length() + 128);
+                testSql.append("SET FMTONLY ON ");
+                testSql.append(
+                        Support.substituteParameters(sql,
+                                params,
+                                connection.getTdsVersion()));
+                testSql.append(" SET FMTONLY OFF");
 
                 try {
-                    tds.submitSQL(query);
+                    tds.submitSQL(testSql.toString());
                     colMetaData = tds.getColumns();
                 } catch (SQLException e) {
                     // Ensure FMTONLY is switched off!

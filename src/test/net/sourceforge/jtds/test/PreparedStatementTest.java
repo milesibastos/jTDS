@@ -17,7 +17,7 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.math.*;
+import java.math.BigDecimal;
 import java.sql.*;
 
 /**
@@ -512,6 +512,58 @@ public class PreparedStatementTest extends TestBase {
         assertFalse(rs.next());
 
         rs.close();
+        pstmt.close();
+    }
+
+    /**
+     * Test for bad truncation in prepared statements on metadata retrieval
+     * (patch [1076383] ResultSetMetaData for more complex statements for SQL
+     * Server).
+     */
+    public void testMetaData() throws Exception {
+        Statement stmt = con.createStatement(
+                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate("CREATE TABLE #metaData (id int, data varchar(8000))");
+        stmt.executeUpdate("INSERT INTO #metaData (id, data)"
+                + " VALUES (1, 'Data1')");
+        stmt.executeUpdate("INSERT INTO #metaData (id, data)"
+                + " VALUES (1, 'Data2')");
+        stmt.executeUpdate("INSERT INTO #metaData (id, data)"
+                + " VALUES (2, 'Data3')");
+        stmt.executeUpdate("INSERT INTO #metaData (id, data)"
+                + " VALUES (2, 'Data4')");
+        stmt.close();
+
+        // test simple statement
+        PreparedStatement pstmt = con.prepareStatement("SELECT id " +
+                "FROM #metaData " +
+                "WHERE data=? GROUP BY id");
+
+        ResultSetMetaData rsmd = pstmt.getMetaData();
+
+        assertNotNull("No meta data returned for simple statement", rsmd);
+
+        assertEquals(1, rsmd.getColumnCount());
+        assertEquals("id", rsmd.getColumnName(1));
+
+        pstmt.close();
+        pstmt = null;
+        rsmd = null;
+
+        // test more complex statement
+        pstmt = con.prepareStatement("SELECT id, count(*) as count " +
+                "FROM #metaData " +
+                "WHERE data=? GROUP BY id");
+
+        rsmd = pstmt.getMetaData();
+
+        assertNotNull("No metadata returned for complex statement", rsmd);
+
+        assertEquals(2, rsmd.getColumnCount());
+        assertEquals("id", rsmd.getColumnName(1));
+        assertEquals("count", rsmd.getColumnName(2));
+
         pstmt.close();
     }
 

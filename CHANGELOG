@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+12/01/2004 - Alin Sinpalean
+ o Applied patch [1076383] ResultSetMetaData for more complex statements for
+   SQL Server.
+
 11/30/2004 - Alin Sinpalean
  o Corrected bug [1075977] setObject() causes SQLException.
 

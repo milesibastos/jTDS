@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.9 2002-08-06 16:38:12 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.10 2002-08-08 08:35:41 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.9 2002-08-06 16:38:12 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.10 2002-08-08 08:35:41 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -311,13 +311,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
       Tds           tds_)
    {
       // TODO: Figure out other specializations
-      if (tds_.getDatabaseProductName().indexOf("Microsoft") >= 0)
-      {
-         if (tds_.getDatabaseProductVersion().startsWith("7."))
-         {
-            return new com.internetcds.jdbc.tds.Microsoft7MetaData(connection_, tds_);
-         }
-      }
+      if( tds_.getTdsVer() >= Tds.TDS70 )
+         // Return a Microsoft7MetaData only if we're using TDS 7.0 or later
+         // (otherwise the limitations of the TDS version apply).
+         return new com.internetcds.jdbc.tds.Microsoft7MetaData(connection_, tds_);
 
       return new com.internetcds.jdbc.tds.DatabaseMetaData(connection_, tds_);
    }

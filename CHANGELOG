@@ -31,3 +31,8 @@ Changes from jTDS 0.2
    they are no longer using TdsComm.getByte(), which was slowing them down.
  o Implemented getExportedKeys.
  o TDS 7.0 is now the default protocol used by jTDS.
+
+08/08/2002 - Alin Sinpalean
+
+ o DatabaseMetaData.getInstance() now returns a DatabaseMetaData or
+   Microsoft7MetaData based on the TDS version rather than the server version.

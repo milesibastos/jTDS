@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.16 2002-08-06 16:38:12 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.16 2002-08-06 16:38:12 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.16 2002-08-06 16:38:12 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -155,7 +155,7 @@ public class Tds implements TdsDefinitions {
     private boolean moreResults2 = true;
 
     // Added 2000-06-07.  Used to control TDS version-specific behavior.
-    private int tdsVer = Tds.TDS42;
+    private int tdsVer = Tds.TDS70;
 
     // RMK 2000-06-08.
     private boolean showWarnings = false;
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.16 2002-08-06 16:38:12 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.17 2002-08-08 08:35:41 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -214,7 +214,7 @@ public class Tds implements TdsDefinitions {
 
         // XXX This driver doesn't properly support TDS 5.0, AFAIK.
         // Added 2000-06-07.
-        tdsVer = TDS70;
+
         if (verString.equals("5.0")) {
             tdsVer = Tds.TDS50;
         }

@@ -818,4 +818,41 @@ public class SAfeTest extends DatabaseTestCase
         stmt.close();
         pstmt.close();
     }
+
+    /**
+     * Test bug #926620 - Too long value for VARCHAR field.
+     */
+    public void testCursorLargeCharInsert0017() throws Exception {
+        Statement stmt = con.createStatement(
+                ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        stmt.execute("CREATE TABLE #SAfe0017(value VARCHAR(10) PRIMARY KEY)");
+
+        // Create the updateable ResultSet
+        ResultSet rs = stmt.executeQuery(
+                "SELECT value FROM #SAfe0017");
+
+        // Try inserting a character string less than 10 characters long
+        rs.moveToInsertRow();
+        rs.updateString(1, "Test");
+        rs.insertRow();
+        rs.moveToCurrentRow();
+        rs.last();
+        // Check that we do indeed have one row in the ResultSet now
+        assertEquals(1, rs.getRow());
+
+        // Try inserting a character string more than 10 characters long
+        rs.moveToInsertRow();
+        rs.updateString(1, "Testing: 1, 2, 3...");
+        try {
+            rs.insertRow();
+            fail("Should cause an SQLException with native error number 8152"
+                 + "and SQL state 22001");
+        } catch (SQLException ex) {
+            assertEquals("22001", ex.getSQLState());
+        }
+
+        // Close everything
+        rs.close();
+        stmt.close();
+    }
 }

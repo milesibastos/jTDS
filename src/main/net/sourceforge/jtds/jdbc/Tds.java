@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.44 2004-03-27 04:48:52 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.45 2004-03-31 21:40:37 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.44 2004-03-27 04:48:52 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.45 2004-03-31 21:40:37 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -419,6 +419,15 @@ public class Tds implements TdsDefinitions {
                         final int len = val != null ? val.length() : 0;
                         final int max = actualParameterList[i].maxLength;
 
+                        // Test that the data isn't actually larger than the
+                        // maximum size. Otherwise SQL Server will consider this
+                        // an invalid packet and close the connection.
+                        if (len > max) {
+                            throw new SQLException(
+                                    "String or binary data would be truncated.",
+                                    "22001", 8152);
+                        }
+
                         // MJH - 14/03/04 OK to use actual parameter list as this is now
                         // always created in PreparedStatement_base prior to the call.
                         if (actualParameterList[i].formalType != null
@@ -572,6 +581,15 @@ public class Tds implements TdsDefinitions {
                             comm.appendByte((byte) (maxLength));
                             comm.appendByte((byte) 0);
                         } else {
+                            // Test that the data isn't actually larger than the
+                            // maximum size. Otherwise SQL Server will consider
+                            // this an invalid packet and close the connection.
+                            if (value.length > maxLength) {
+                                throw new SQLException(
+                                        "String or binary data would be truncated.",
+                                        "22001", 8152);
+                            }
+
                             if (value.length > 255) {
                                 if (tdsVer != TDS70) {
                                     throw new java.io.IOException("Field too long");
@@ -613,7 +631,6 @@ public class Tds implements TdsDefinitions {
             waitForDataOrTimeout(wChain, timeout);
 
         } catch (java.io.IOException e) {
-            e.printStackTrace();
             throw new SQLException("Network error-  " + e.getMessage(), "08S01");
         } finally {
             comm.packetType = 0;

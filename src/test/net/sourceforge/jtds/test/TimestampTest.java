@@ -1099,7 +1099,7 @@ public class TimestampTest extends DatabaseTestCase
         PreparedStatement  pStmtB = cx.prepareStatement(
             "insert into #t0022b values (?, getdate())");
 
-        final int rowsToAdd = 1000;
+        final int rowsToAdd = 100;
         int count = 0;
         for (int i = 1; i <= rowsToAdd; i++)
         {
@@ -1375,7 +1375,7 @@ public class TimestampTest extends DatabaseTestCase
         PreparedStatement  pStmtB = cx.prepareStatement(
             "insert into #t0026b values (?, getdate())");
 
-        final int rowsToAdd = 1000;
+        final int rowsToAdd = 100;
         int count = 0;
         for (int i = 1; i <= rowsToAdd; i++)
         {

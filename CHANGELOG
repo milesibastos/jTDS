@@ -1,6 +1,16 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+03/31/2004 - Alin Sinpalean
+ o Added a test for bug #926620 (Too long value for VARCHAR field) and fixed it
+   by adding a test in Tds.executeProcedureInternal().
+ o Added code to set the maximum length of BINARY/VARBINARY fields in
+   ParameterUtils.createParameterMapping(), because the test added to Tds was
+   causing binary parameters throw exceptions every time.
+ o Reduced the size of the TimestampTest.testNestedStatements0022() and
+   TimestampTest.testNestedStatements0026(), because they were running
+   incredibly slow on my development machine and did not help at all.
+
 03/30/2004 - Alin Sinpalean
  o Silently updated the JUnit and Ant jars in the 0.8-rc1 source packet.
  o Moved the Savepoint-related methods from TdsConnection into a new class,

@@ -35,7 +35,7 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.13 2004-03-25 20:23:50 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.14 2004-03-31 21:40:37 alin_sinpalean Exp $";
 
     /**
      * Check that all items in parameterList have been given a value
@@ -192,8 +192,10 @@ public class ParameterUtils {
                 {
                     if (tdsVer == Tds.TDS70) {
                         parameterList[i].formalType = "varbinary(8000)";
+                        parameterList[i].maxLength = 8000;
                     } else {
                         parameterList[i].formalType = "varbinary(255)";
+                        parameterList[i].maxLength = 255;
                     }
                     break;
                 }

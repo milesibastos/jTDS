@@ -1,6 +1,15 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/13/2004 - Alin Sinpalean
+ o Applied a patch by jarek_woloszyn fixing the behavior of lastUpdateCount
+   when set.
+ o Fixed yet another bug (#914069) which prevented cursor-based ResultSets from
+   working with PreparedStatements (an update count was returned, which caused
+   an exception to be thrown). Updated SAfeTest to test this.
+ o Fixed and simplified current row and total row count handling in
+   CursorResultSet.
+
 03/08/2004 - Alin Sinpalean
  o Split up table name from TDS_TABNAME packet into catalog, schema and table,
    if fully qualified.

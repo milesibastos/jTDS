@@ -640,7 +640,6 @@ public class SAfeTest extends DatabaseTestCase
      * <code>PreparedStatement</code>s and <code>CallableStatement</code>s.
      */
     public void testPreparedAndCallableCursors0014() throws Exception {
-        Logger.setActive(true);
         Statement stmt = con.createStatement();
         stmt.executeUpdate("CREATE TABLE #SAfe0014(id INT PRIMARY KEY)");
         stmt.executeUpdate("INSERT INTO #SAfe0014 VALUES (1)");
@@ -663,6 +662,14 @@ public class SAfeTest extends DatabaseTestCase
         ResultSetMetaData rsmd = resultSet.getMetaData();
         assertEquals("id", rsmd.getColumnName(1));
         assertEquals("#SAfe0014", rsmd.getTableName(1));
+        // Insert row
+        resultSet.moveToInsertRow();
+        resultSet.updateInt(1, 2);
+        resultSet.insertRow();
+        resultSet.moveToCurrentRow();
+        // Check correct row count
+        resultSet.last();
+        assertEquals(2, resultSet.getRow());
         resultSet.close();
         ps.close();
 

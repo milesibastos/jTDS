@@ -63,8 +63,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
      */
     public static final int SQL_ROW_ERROR = 6;
 
-    private static final int POS_BEFORE_FIRST = -100000;
-    private static final int POS_AFTER_LAST = -200000;
+    private static final int POS_BEFORE_FIRST = 0;
+    private static final int POS_AFTER_LAST = -1;
 
     private int pos = POS_BEFORE_FIRST;
 
@@ -110,6 +110,13 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
      */
     private PacketRowResult insertRow;
 
+    /**
+     * Internal <code>Statement</code> used to execute the cursor API calls
+     * without affecting the (external) <code>Statement</code>, that created
+     * this <code>ResultSet</code>.
+     */
+    private TdsStatement internalStmt;
+
     public CursorResultSet(TdsStatement stmt, String sql, int fetchDir,
                            ParameterListItem[] parameters)
             throws SQLException {
@@ -120,6 +127,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
 
         this.type = stmt.getResultSetType();
         this.concurrency = stmt.getResultSetConcurrency();
+
+        // Create the internal Statement
+        internalStmt = new TdsStatement(conn);
+        internalStmt.outParamHandler = this;
 
         // SAfe Until we're actually created use the Statement's warning chain.
         warningChain = stmt.warningChain;
@@ -145,7 +156,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         switch (direction) {
         case FETCH_UNKNOWN:
         case FETCH_REVERSE:
-            if (type != ResultSet.TYPE_FORWARD_ONLY) {
+            if (type == ResultSet.TYPE_FORWARD_ONLY) {
                 throw new SQLException("ResultSet is forward-only.");
             }
             // Fall through
@@ -179,7 +190,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     public boolean isLast() throws SQLException {
-        return pos == rowsInResult;
+        return (pos == rowsInResult) && (rowsInResult != 0);
     }
 
     public int getRow() throws SQLException {
@@ -217,6 +228,12 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 open = false;
                 stmt = null;
                 conn = null;
+                try {
+                    internalStmt.close();
+                } catch (SQLException ex) {
+                    warningChain.addException(ex);
+                    internalStmt = null;
+                }
             }
         }
 
@@ -229,7 +246,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
 
     public boolean next() throws SQLException {
         if (cursorFetch(FETCH_NEXT, 0)) {
-            pos += (pos < 0) ? (1-pos) : 1;
+            pos += 1;
             return true;
         } else {
             pos = POS_AFTER_LAST;
@@ -250,6 +267,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
 
     public void afterLast() throws SQLException {
         if (pos != POS_AFTER_LAST) {
+            // SAfe -1 should work just as well
             cursorFetch(FETCH_ABSOLUTE, rowsInResult + 1);
             pos = POS_AFTER_LAST;
         }
@@ -295,13 +313,9 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
             return false;
         }
 
-        // If less than 0, it can only be POS_BEFORE_FIRST or POS_AFTER_LAST
+        // If less than 0, it can only be POS_AFTER_LAST
         if( pos < 0 ) {
-            if( pos == POS_BEFORE_FIRST ) {
-                pos = 0;
-            } else {
-                pos = rowsInResult;
-            }
+            pos = rowsInResult + 1;
         }
         pos += rows;
         return true;
@@ -419,7 +433,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     private void cursorCreate(ParameterListItem[] procedureParams) throws SQLException {
-        warningChain.clearWarnings();
         parameterList = new ParameterListItem[5];
         int scrollOpt, ccOpt;
 
@@ -548,32 +561,32 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
-            stmt.outParamHandler = this;
-
             Tds tds = conn.allocateTds(true);
             try {
-                tds.executeProcedure("sp_cursoropen", param, param, stmt,
+                tds.executeProcedure("sp_cursoropen", param, param, internalStmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
-                // @todo Should maybe use a different statement here
-                if (stmt.getMoreResults(tds, warningChain, true)) {
-                    context = stmt.results.context;
+                if (internalStmt.getMoreResults(tds, warningChain, true)) {
+                    context = internalStmt.results.context;
 
                     // Hide rowstat column.
                     context.getColumnInfo().setFakeColumnCount(
                             context.getColumnInfo().realColumnCount() - 1);
 
-                    stmt.results.close();
+                    internalStmt.results.close();
                 } else {
                     warningChain.addException(new SQLException(
                             "Expected a ResultSet."));
                 }
 
-                if (stmt.getMoreResults(tds, warningChain, true)
-                        || (stmt.getUpdateCount() != -1)) {
+                if (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1)) {
                     warningChain.addException(new SQLException(
                             "No more results expected."));
+                    internalStmt.skipToEnd();
                 }
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
             } finally {
                 try {
                     conn.freeTds(tds);
@@ -581,10 +594,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
-
-                stmt.outParamHandler = null;
             }
         }
+
+        warningChain.checkForExceptions();
 
         cursorHandle = (Integer) param[0].value;
         rowsInResult = ((Number) param[4].value).intValue();
@@ -633,7 +646,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 }
             }
 
-            // @todo This warning should somehow go to the Statement
+            // SAfe This warning goes to the Statement, not the ResultSet
             warningChain.addWarning(new SQLWarning(
                     "ResultSet type/concurrency downgraded."));
         }
@@ -692,20 +705,18 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
-            stmt.outParamHandler = this;
-
             Tds tds = conn.allocateTds(true);
             try {
-                tds.executeProcedure("sp_cursorfetch", param, param, stmt,
+                tds.executeProcedure("sp_cursorfetch", param, param, internalStmt,
                                      warningChain, stmt.getQueryTimeout(), true);
 
-                current = tds.fetchRow(stmt, warningChain, context);
+                current = tds.fetchRow(internalStmt, warningChain, context);
 
-                // @todo Should maybe use a different statement here
-                if (stmt.getMoreResults(tds, warningChain, true)
-                        || (stmt.getUpdateCount() != -1)) {
+                if (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1)) {
                     warningChain.addException(new SQLException(
                             "No results expected."));
+                    internalStmt.skipToEnd();
                 }
 
                 // SAfe Removed on Mike's suggestion. Indeed it seems like
@@ -715,6 +726,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 //     warningChain.addException(
                 //             new SQLException("Cursor fetch failed."));
                 // }
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
             } finally {
                 try {
                     conn.freeTds(tds);
@@ -722,12 +735,16 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
-
-                stmt.outParamHandler = null;
             }
         }
 
         warningChain.checkForExceptions();
+
+        if (isInfo) {
+            pos = ((Integer) param[2].value).intValue();
+            rowsInResult = ((Integer) param[3].value).intValue();
+        }
+
         return current != null;
     }
 
@@ -750,24 +767,24 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
-            stmt.outParamHandler = this;
-
             Tds tds = conn.allocateTds(true);
             try {
-                tds.executeProcedure("sp_cursorclose", param, param, stmt,
+                tds.executeProcedure("sp_cursorclose", param, param, internalStmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
-                // @todo Should maybe use a different statement here
-                if (stmt.getMoreResults(tds, warningChain, true)
-                        || (stmt.getUpdateCount() != -1)) {
+                if (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1)) {
                     warningChain.addException(new SQLException(
                             "No results expected."));
+                    internalStmt.skipToEnd();
                 }
 
                 if ((retVal == null) || (retVal.intValue() != 0)) {
                     warningChain.addException(
                             new SQLException("Cursor close failed."));
                 }
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
             } finally {
                 try {
                     conn.freeTds(tds);
@@ -775,8 +792,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
-
-                stmt.outParamHandler = null;
             }
         }
 
@@ -893,24 +908,24 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
-            stmt.outParamHandler = this;
-
             Tds tds = conn.allocateTds(true);
             try {
-                tds.executeProcedure("sp_cursor", param, param, stmt,
+                tds.executeProcedure("sp_cursor", param, param, internalStmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
-                // @todo Should maybe use a different statement here
-                if (stmt.getMoreResults(tds, warningChain, true)
-                        || (stmt.getUpdateCount() != -1)) {
+                if (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1)) {
                     warningChain.addException(new SQLException(
                             "No results expected."));
+                    internalStmt.skipToEnd();
                 }
 
                 if ((retVal == null) || (retVal.intValue() != 0)) {
                     warningChain.addException(
                             new SQLException("Cursor operation failed."));
                 }
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
             } finally {
                 try {
                     conn.freeTds(tds);
@@ -918,8 +933,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
-
-                stmt.outParamHandler = null;
             }
         }
 

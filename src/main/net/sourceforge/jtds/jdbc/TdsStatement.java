@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.24 2004-03-07 23:03:32 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.25 2004-03-13 23:34:39 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,12 +66,13 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.24 2004-03-07 23:03:32 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.25 2004-03-13 23:34:39 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
     SQLWarningChain warningChain = new SQLWarningChain(); // The warning chain
     TdsResultSet results = null;
+    // @todo Should be removed now as it can cause memory leaks (and there's no need for it)
     protected Vector cursorResults = new Vector();
 
     private Tds actTds = null;
@@ -329,16 +330,10 @@ public class TdsStatement implements java.sql.Statement
      * SQL statements that return nothing such as SQL DDL statements
      * can be executed
      *
-     * Any IDs generated for AUTO_INCREMENT fields can be retrieved
-     * by looking through the SQLWarning chain of this statement
-     * for warnings of the form "LAST_INSERTED_ID = 'some number',
-     * COMMAND = 'your sql'".
-     *
      * @param  sql  an SQL statement
      * @return      either a row count, or 0 for SQL commands
      * @exception SQLException if a database access error occurs
      */
-
     public synchronized int executeUpdate(String sql) throws SQLException {
         try {
             checkClosed();
@@ -352,18 +347,26 @@ public class TdsStatement implements java.sql.Statement
             } else {
                 int res;
 
-                while (((res = getUpdateCount()) != -1)
-                        && connection.returnLastUpdateCount()) {
+                if (connection.returnLastUpdateCount()) {
+                    int lastUpdateCount = 0;
 
-                    // If we found a ResultSet, there's a problem.
-                    if (getMoreResults()) {
-                        skipToEnd();
-                        throw new SQLException("executeUpdate can't return a result set");
+                    while ((res = getUpdateCount()) != -1) {
+                        lastUpdateCount = res;
+
+                        // If we found a ResultSet, there's a problem.
+                        if (getMoreResults()) {
+                            skipToEnd();
+                            throw new SQLException(
+                                    "executeUpdate can't return a result set");
+                        }
                     }
-                }
 
-                // We should return 0 (at least that's what the javadoc above says)
-                return (res == -1) ? 0 : res;
+                    return lastUpdateCount;
+                } else {
+                    res = getUpdateCount();
+                    // We should return 0 (at least that's what the javadoc above says)
+                    return (res == -1) ? 0 : res;
+                }
             }
         } finally {
             releaseTds();

@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.25 2004-03-07 14:33:20 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.26 2004-03-13 23:34:39 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.25 2004-03-07 14:33:20 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.26 2004-03-13 23:34:39 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -286,21 +286,29 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         try {
             if ( execute( tds ) ) {
                 tds.skipToEnd();
-                throw new SQLException( "executeUpdate can't return a result set" );
-            }
-            else {
+                throw new SQLException("executeUpdate can't return a result set");
+            } else {
                 int res;
-                while (((res = getUpdateCount()) != -1)
-                    && ((TdsConnection) getConnection()).returnLastUpdateCount()) {
 
-                    // If we found a ResultSet, there's a problem.
-                    if( getMoreResults() ) {
-                        skipToEnd();
-                        throw new SQLException("executeUpdate can't return a result set");
+                if (((TdsConnection) getConnection()).returnLastUpdateCount()) {
+                    int lastUpdateCount = 0;
+
+                    while ((res = getUpdateCount()) != -1) {
+                        lastUpdateCount = res;
+
+                        // If we found a ResultSet, there's a problem.
+                        if (getMoreResults()) {
+                            skipToEnd();
+                            throw new SQLException(
+                                    "executeUpdate can't return a result set");
+                        }
                     }
-                }
 
-                return res==-1 ? 0 : res;
+                    return lastUpdateCount;
+                } else {
+                    res = getUpdateCount();
+                    return (res==-1) ? 0 : res;
+                }
             }
         } finally {
             releaseTds();

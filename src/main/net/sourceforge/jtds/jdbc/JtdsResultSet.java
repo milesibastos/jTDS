@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.31 2005-02-16 22:15:30 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.32 2005-02-27 11:01:08 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -120,21 +120,16 @@ public class JtdsResultSet implements ResultSet {
      * @param resultSetType one of FORWARD_ONLY, SCROLL_INSENSITIVE, SCROLL_SENSITIVE.
      * @param concurrency One of CONCUR_READ_ONLY, CONCUR_UPDATE.
      * @param columns The array of column descriptors for the result set row.
-     * @param readAhead True if the next() method should read ahead to ensure that
-     *        stored procedure return parameters are processed. NB. This is
-     *        only possible when the cursor is created by executeQuery().
      * @throws SQLException
      */
     JtdsResultSet(JtdsStatement statement,
                   int resultSetType,
                   int concurrency,
-                  ColInfo[] columns,
-                  boolean readAhead)
+                  ColInfo[] columns)
         throws SQLException {
         this.statement = statement;
         this.resultSetType = resultSetType;
         this.concurrency = concurrency;
-        this.readAhead = readAhead;
         this.columns = columns;
         this.fetchSize = statement.fetchSize;
         this.fetchDirection = statement.fetchDirection;
@@ -518,11 +513,13 @@ public class JtdsResultSet implements ResultSet {
     public boolean next() throws SQLException {
         checkOpen();
 
+        if (pos == POS_AFTER_LAST) {
+            // Make sure nothing will happen after the end has been reached
+            return false;
+        }
+
         if (!statement.getTds().getNextRow()) {
-            if (readAhead) {
-                // Process rest of response to set output variables.
-                statement.getTds().clearResponseQueue();
-            }
+            statement.cacheResults();
 
             pos = POS_AFTER_LAST;
             currentRow = null;

@@ -26,7 +26,7 @@ import java.sql.ResultSet;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.3 2005-02-24 12:56:47 alin_sinpalean Exp $
+ * @version $Id: BatchTest.java,v 1.4 2005-02-27 11:01:27 alin_sinpalean Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -282,9 +282,7 @@ public class BatchTest extends DatabaseTestCase {
      */
     public void testLargeBatch() throws Exception {
         final int n = 5000;
-        java.sql.DriverManager.setLogStream(System.out);
         getConnection().close();
-        java.sql.DriverManager.setLogStream(null);
 
         Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #testLargeBatch (val int)");

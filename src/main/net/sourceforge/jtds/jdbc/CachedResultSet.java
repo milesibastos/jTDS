@@ -49,7 +49,7 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.12 2005-02-17 21:48:50 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.13 2005-02-27 11:01:07 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -114,7 +114,7 @@ public class CachedResultSet extends JtdsResultSet {
             ParamInfo[] procedureParams,
             int resultSetType,
             int concurrency) throws SQLException {
-        super(statement, resultSetType, concurrency, null, false);
+        super(statement, resultSetType, concurrency, null);
         this.cursorTds = statement.getTds();
         this.sql = sql;
         this.procName = procName;
@@ -143,7 +143,7 @@ public class CachedResultSet extends JtdsResultSet {
      */
     CachedResultSet(JtdsStatement statement,
                     String[] colName, int[] colType) throws SQLException {
-        super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null, false);
+        super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, null);
         //
         // Construct the column descriptor array
         //
@@ -180,7 +180,7 @@ public class CachedResultSet extends JtdsResultSet {
     CachedResultSet(JtdsResultSet rs, boolean load) throws SQLException {
         super((JtdsStatement)rs.getStatement(),
                 rs.getStatement().getResultSetType(),
-                rs.getStatement().getResultSetConcurrency(), null, false);
+                rs.getStatement().getResultSetConcurrency(), null);
         //
         JtdsStatement stmt = ((JtdsStatement)rs.getStatement());
         //
@@ -233,7 +233,7 @@ public class CachedResultSet extends JtdsResultSet {
      */
     CachedResultSet(JtdsStatement statement,
             ColInfo columns[], Object data[]) throws SQLException {
-        super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, null, false);
+        super(statement, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, null);
         this.columns       = columns;
         this.columnCount   = getColumnCount(columns);
         this.rowData       = new ArrayList(1);

@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.37 2005-02-09 09:57:35 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.38 2005-02-27 11:01:08 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -387,6 +387,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public int executeUpdate() throws SQLException {
         checkOpen();
+        initialize();
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
@@ -400,7 +401,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             executeSQL(sql, procName, sqlWord, parameters, returnKeys, true);
         }
 
-        return getUpdateCount(0);
+        int res = getUpdateCount();
+        return res == -1 ? 0 : res;
     }
 
     public synchronized void addBatch() throws SQLException {
@@ -438,8 +440,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public boolean execute() throws SQLException {
         checkOpen();
-        resultQueue.clear();
-        genKeyResultSet = null;
+        initialize();
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
@@ -654,9 +655,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public ResultSet executeQuery() throws SQLException {
         checkOpen();
-        resultQueue.clear();
-        genKeyResultSet = null;
-        boolean isCallableStatement = this instanceof JtdsCallableStatement;
+        initialize();
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
@@ -664,10 +663,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             // when it's executed.
             synchronized (connection) {
                 String spName = connection.prepareSQL(this, sql, parameters, false);
-                return executeSQLQuery(sql, spName, parameters, isCallableStatement);
+                return executeSQLQuery(sql, spName, parameters);
             }
         } else {
-            return executeSQLQuery(sql, procName, parameters, isCallableStatement);
+            return executeSQLQuery(sql, procName, parameters);
         }
     }
 

@@ -529,37 +529,6 @@ public class ResultSetTest extends TestBase {
     }
 
     /**
-     * Test for [1017164] - CallableStatement.executeQuery fails
-     * when procedure returns more than one result set.
-     *
-     * @throws Exception
-     */
-    public void testTwoSelectCall() throws Exception {
-        Statement stmt = con.createStatement();
-
-        stmt.execute("CREATE PROC #TESTP @p1 INT OUTPUT AS\r\n"
-        		     + "BEGIN\r\n"
-					 + "SELECT 'RS ONE' as ID\r\n"
-					 + "SELECT 'RS TWO' as ID\r\n"
-					 + "SELECT @p1 = 100\r\n"
-					 + "END\r\n");
-        stmt.close();
-
-        CallableStatement cstmt = con.prepareCall("{call #TESTP (?)}");
-        cstmt.registerOutParameter(1, java.sql.Types.INTEGER);
-
-        ResultSet rs = cstmt.executeQuery();
-
-        assertTrue(rs.next());
-        assertEquals("RS ONE", rs.getString(1));
-        assertFalse(rs.next());
-        assertEquals(100, cstmt.getInt(1));
-
-        rs.close();
-        cstmt.close();
-    }
-
-    /**
      * Test for bug [1022445] Cursor downgrade warning not raised.
      */
     public void testCursorWarning() throws Exception

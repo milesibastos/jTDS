@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.42 2005-02-16 22:15:30 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.43 2005-02-27 11:01:08 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -142,7 +142,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                       int resultSetType,
                       int concurrency)
             throws SQLException {
-        super(statement, resultSetType, concurrency, null, false);
+        super(statement, resultSetType, concurrency, null);
 
         rowCache = new Object[fetchSize][];
 

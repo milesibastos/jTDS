@@ -406,12 +406,12 @@ public class CallableStatementTest extends TestBase {
      */
     public void testCallableRegisterOutParameter4() throws Exception {
         CallableStatement cstmt = con.prepareCall("{call sp_addtype T_INTEGER, int, 'NULL'}");
+        Statement stmt = con.createStatement();
 
         try {
             cstmt.execute();
             cstmt.close();
 
-            Statement stmt = con.createStatement();
             stmt.execute("create procedure rop4 @data T_INTEGER OUTPUT as\r\n "
                          + "begin\r\n"
                          + "set @data = 1\r\n"
@@ -426,11 +426,11 @@ public class CallableStatementTest extends TestBase {
             assertEquals(cstmt.getInt(1), 1);
             assertTrue(!cstmt.wasNull());
             cstmt.close();
-
+        } finally {
             stmt = con.createStatement();
             stmt.execute("drop procedure rop4");
             stmt.close();
-        } finally {
+
             cstmt = con.prepareCall("{call sp_droptype 'T_INTEGER'}");
             cstmt.execute();
             cstmt.close();
@@ -563,10 +563,138 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
+     * Test that procedure outputs are available immediately after processing
+     * the last ResultSet returned by the procedure (i.e that update counts
+     * are cached) even if getMoreResults() is not called.
+     */
+    public void testProcessUpdateCounts3() throws SQLException {
+        Statement stmt = con.createStatement();
+        assertFalse(stmt.execute("CREATE TABLE #testProcessUpdateCounts3 (val INT)"));
+        assertFalse(stmt.execute("CREATE PROCEDURE #procTestProcessUpdateCounts3"
+                + " @res INT OUT AS"
+                + " INSERT INTO #testProcessUpdateCounts3 VALUES (1)"
+                + " UPDATE #testProcessUpdateCounts3 SET val = 2"
+                + " SELECT * FROM #testProcessUpdateCounts3"
+                + " INSERT INTO #testProcessUpdateCounts3 VALUES (1)"
+                + " UPDATE #testProcessUpdateCounts3 SET val = 3"
+                + " SET @res = 13"
+                + " RETURN 14"));
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall(
+                "{?=call #procTestProcessUpdateCounts3(?)}");
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.registerOutParameter(2, Types.INTEGER);
+
+        assertFalse(cstmt.execute());
+        try {
+            assertEquals(14, cstmt.getInt(1));
+            assertEquals(13, cstmt.getInt(2));
+            // Don't fail the test if we got here. Another driver or a future
+            // version could cache all the results and obtain the output
+            // parameter values from the beginning.
+        } catch (SQLException ex) {
+            assertEquals("HY010", ex.getSQLState());
+            assertTrue(ex.getMessage().indexOf("getMoreResults()") >= 0);
+        }
+
+        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(1, cstmt.getUpdateCount()); // UPDATE
+
+        assertTrue(cstmt.getMoreResults()); // SELECT
+        ResultSet rs = cstmt.getResultSet();
+        assertNotNull(rs);
+        // Close the ResultSet; this should cache the following update counts
+        rs.close();
+
+        assertEquals(14, cstmt.getInt(1));
+        assertEquals(13, cstmt.getInt(2));
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(2, cstmt.getUpdateCount()); // UPDATE
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(-1, cstmt.getUpdateCount());
+
+        cstmt.close();
+    }
+
+    /**
+     * Test that procedure outputs are available immediately after processing
+     * the last ResultSet returned by the procedure (i.e that update counts
+     * are cached) even if getMoreResults() and ResultSet.close() are not
+     * called.
+     */
+    public void testProcessUpdateCounts4() throws SQLException {
+        Statement stmt = con.createStatement();
+        assertFalse(stmt.execute("CREATE TABLE #testProcessUpdateCounts4 (val INT)"));
+        assertFalse(stmt.execute("CREATE PROCEDURE #procTestProcessUpdateCounts4"
+                + " @res INT OUT AS"
+                + " INSERT INTO #testProcessUpdateCounts4 VALUES (1)"
+                + " UPDATE #testProcessUpdateCounts4 SET val = 2"
+                + " SELECT * FROM #testProcessUpdateCounts4"
+                + " INSERT INTO #testProcessUpdateCounts4 VALUES (1)"
+                + " UPDATE #testProcessUpdateCounts4 SET val = 3"
+                + " SET @res = 13"
+                + " RETURN 14"));
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall(
+                "{?=call #procTestProcessUpdateCounts4(?)}");
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.registerOutParameter(2, Types.INTEGER);
+
+        assertFalse(cstmt.execute());
+        try {
+            assertEquals(14, cstmt.getInt(1));
+            assertEquals(13, cstmt.getInt(2));
+            // Don't fail the test if we got here. Another driver or a future
+            // version could cache all the results and obtain the output
+            // parameter values from the beginning.
+        } catch (SQLException ex) {
+            assertEquals("HY010", ex.getSQLState());
+            assertTrue(ex.getMessage().indexOf("getMoreResults()") >= 0);
+        }
+
+        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(1, cstmt.getUpdateCount()); // UPDATE
+
+        assertTrue(cstmt.getMoreResults()); // SELECT
+        ResultSet rs = cstmt.getResultSet();
+        assertNotNull(rs);
+        // Process all rows; this should cache the following update counts
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+
+        assertEquals(14, cstmt.getInt(1));
+        assertEquals(13, cstmt.getInt(2));
+
+        // Only close the ResultSet now
+        rs.close();
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(2, cstmt.getUpdateCount()); // UPDATE
+
+        assertFalse(cstmt.getMoreResults());
+        assertEquals(-1, cstmt.getUpdateCount());
+
+        cstmt.close();
+    }
+
+    /**
      * Test for bug [ 1062671 ] SQLParser unable to parse CONVERT(char,{ts ?},102)
      */
-    public void testTsEscape() throws Exception
-    {
+    public void testTsEscape() throws Exception {
         Timestamp ts = Timestamp.valueOf("2004-01-01 23:56:56");
         Statement stmt = con.createStatement();
         assertFalse(stmt.execute("CREATE TABLE #testTsEscape (val DATETIME)"));
@@ -581,8 +709,7 @@ public class CallableStatementTest extends TestBase {
     /**
      * Test for separation of IN and INOUT/OUT parameter values
      */
-    public void testInOutParameters() throws Exception
-    {
+    public void testInOutParameters() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
         CallableStatement cstmt = con.prepareCall("{ call #testInOut ( ?,? ) }");
@@ -598,8 +725,7 @@ public class CallableStatementTest extends TestBase {
     /**
      * Test that procedure names containing semicolons are parsed correctly.
      */
-    public void testSemicolonProcedures() throws Exception
-    {
+    public void testSemicolonProcedures() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
         CallableStatement cstmt = con.prepareCall("{call #testInOut;1(?,?)}");
@@ -616,8 +742,7 @@ public class CallableStatementTest extends TestBase {
      * Test that procedure calls with both literal parameters and parameterr
      * markers are executed correctly (bug [1078927] Callable statement fails).
      */
-    public void testNonRpcProc1() throws Exception
-    {
+    public void testNonRpcProc1() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute(
                 "create proc #testsp1 @p1 int, @p2 int out as set @p2 = @p1");
@@ -633,8 +758,7 @@ public class CallableStatementTest extends TestBase {
      * Test that procedure calls with both literal parameters and parameterr
      * markers are executed correctly (bug [1078927] Callable statement fails).
      */
-    public void testNonRpcProc2() throws Exception
-    {
+    public void testNonRpcProc2() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("create proc #testsp2 @p1 int, @p2 int as return 99");
         stmt.close();

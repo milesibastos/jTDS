@@ -24,8 +24,13 @@ import java.sql.Statement;
 
 /**
  * Simple test suite to exercise batch execution.
+ *
+ * @version $Id: BatchTest.java,v 1.2 2004-12-20 17:14:20 alin_sinpalean Exp $
  */
 public class BatchTest extends DatabaseTestCase {
+    // Constants to use instead of the JDBC 3.0-only Statement constants
+    private static int SUCCESS_NO_INFO = -2;
+    private static int EXECUTE_FAILED  = -3;
 
     public BatchTest(String name) {
         super(name);
@@ -61,7 +66,7 @@ public class BatchTest extends DatabaseTestCase {
         stmt.addBatch("insert into #testbatch VALUES(1, 'Test line')");
         int x[] = stmt.executeBatch();
         assertEquals(2, x.length);
-        assertEquals(Statement.SUCCESS_NO_INFO, x[0]);
+        assertEquals(SUCCESS_NO_INFO, x[0]);
         assertEquals(1, x[1]);
     }
 
@@ -90,12 +95,12 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(3, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(Statement.EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[2]);
         } else {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(Statement.EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[2]);
             assertEquals(1, x[3]);
             assertEquals(1, x[4]);
         }
@@ -140,12 +145,12 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(3, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(Statement.EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[2]);
         } else {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(Statement.EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[2]);
             assertEquals(1, x[3]);
             assertEquals(1, x[4]);
         }
@@ -195,7 +200,7 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(3, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(Statement.EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[2]);
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
             for (int i = 0; i < 5; i++) {
@@ -248,7 +253,7 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(3, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
-            assertEquals(Statement.EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[2]);
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
             for (int i = 0; i < 5; i++) {

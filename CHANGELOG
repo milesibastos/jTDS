@@ -5,6 +5,9 @@ Changes from jTDS 0.8.1
  o Partial application of patch [997595] SQL 6.5 Test suite.; general test clean
    up.
  o Updated tests so that they compile with the 1.3 JDK.
+ o Updated BlobImpl and ClobImpl so that they compile with the 1.3 JDK.
+ o Corrected bug in Blob and Clob file writes where a NullPointerException was
+   thrown if close() was called twice on a stream.
 
 07/30/2004 - Brian Heineman
  o Updated build process to correct bug [999702] LICENSE file not included in

@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.15 2004-07-22 17:09:57 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.16 2004-08-01 18:20:16 bheineman Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -237,7 +237,7 @@ public class BlobImpl implements Blob {
     }
 
     public synchronized OutputStream setBinaryStream(final long pos) throws SQLException {
-        final long length = length();
+        long length = length();
 
         if (pos < 1) {
             throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
@@ -245,220 +245,7 @@ public class BlobImpl implements Blob {
             throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
         }
 
-        return new OutputStream() {
-            OutputStream outputStream;
-            long curPos = pos - 1;
-            boolean securityFailure = false;
-
-            {
-                try {
-                    if (length > _connection.getLobBuffer()) {
-                        if (_blobFile == null) {
-                            writeToDisk(getBinaryStream());
-                        }
-                    } else if (_jtdsInputStream != null) {
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream((int) length);
-
-                        byte[] buffer = new byte[1024];
-                        int result = -1;
-
-                        while ((_jtdsInputStream.read(buffer)) != -1) {
-                            baos.write(buffer, 0, result);
-                        }
-
-                        _blob = baos.toByteArray();
-                        _jtdsInputStream = null;
-                    }
-
-                    updateOuputStream();
-                } catch (IOException e) {
-                    throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
-                                           "HY000");
-                }
-            }
-
-            public void write(int b) throws IOException {
-                synchronized (BlobImpl.this) {
-                    checkSize(1);
-                    outputStream.write(b);
-                    curPos++;
-                }
-            }
-
-            public void write(byte[] b, int off, int len) throws IOException {
-                synchronized (BlobImpl.this) {
-                    checkSize(len);
-                    outputStream.write(b, off, len);
-                    curPos += len;
-                }
-            }
-
-            /**
-             * Checks the size of the in-memory buffer; if a write will
-             * cause the size to exceed <code>MAXIMUM_SIZE</code> than
-             * the data will be removed from memory and written to disk.
-             *
-             * @param length the length of data to be written
-             */
-            private void checkSize(long length) throws IOException {
-                // Return if the data has already exceeded the maximum size
-                if (curPos > _connection.getLobBuffer()) {
-                    return;
-                }
-
-                // Return if a file is already being used to store the data
-                if (_blobFile != null) {
-                    return;
-                }
-
-                // Return if there was a security failure attempting to
-                // create a buffer file
-                if (securityFailure) {
-                    return;
-                }
-
-                // Return if the length will not exceed the maximum in-memory
-                // value
-                if (curPos + length <= _connection.getLobBuffer()) {
-                    return;
-                }
-
-                if (_blob != null) {
-                    writeToDisk(new ByteArrayInputStream(_blob));
-                    updateOuputStream();
-                }
-            }
-
-            void writeToDisk(InputStream inputStream) throws IOException {
-                OutputStream os = null;
-
-                try {
-                    _blobFile = File.createTempFile("jtds", ".tmp");
-                    _blobFile.deleteOnExit();
-
-                    os = new BufferedOutputStream(new FileOutputStream(_blobFile));
-                } catch (SecurityException e) {
-                    // Unable to write to disk
-                    securityFailure = true;
-
-                    os = new ByteArrayOutputStream();
-
-                    if (Logger.isActive()) {
-                        Logger.println("Blob: Unable to buffer data to disk: " + e.getMessage());
-                    }
-                }
-
-                try {
-                    byte[] buffer = new byte[1024];
-                    int result = -1;
-
-                    while ((result = inputStream.read(buffer)) != -1) {
-                        os.write(buffer, 0, result);
-                    }
-                } finally {
-                    os.flush();
-
-                    if (os instanceof ByteArrayOutputStream) {
-                    	if (_blobFile != null) {
-                    		_blobFile = null;
-                    		_blobFile.delete();
-                    	}
-                    	
-                        _blob = ((ByteArrayOutputStream) os).toByteArray();
-                    } else {
-                        _blob = null;
-                    }
-
-                    os.close();
-                }
-            }
-
-            /**
-             * Updates the <code>outputStream</code> member by creating the
-             * approperiate type of output stream based upon the current
-             * storage mechanism.
-             *
-             * @throws IOException if any failure occure while creating the
-             *         output stream
-             */
-            void updateOuputStream() throws IOException {
-                if (_blob != null) {
-                    final long startPos = curPos;
-
-                    outputStream = new OutputStream() {
-                        int curPos = (int) startPos;
-                        boolean closed = false;
-
-                        public void write(int b) throws IOException {
-                            if (closed) {
-                                throw new IOException("stream closed");
-                            } else if (_blob == null) {
-                                throw new IOException(
-                                        Support.getMessage("error.generic.iowrite", "byte", "_blob = NULL"));
-                            } else if (curPos > _blob.length) {
-                                throw new IOException(
-                                        Support.getMessage("error.generic.iowrite", "byte", "_blob.length changed"));
-                            }
-
-                            if (curPos + 1 > _blob.length) {
-                                byte[] buffer = new byte[curPos + 1];
-
-                                System.arraycopy(_blob, 0, buffer, 0, _blob.length);
-                                _blob = buffer;
-                            }
-
-                            _blob[curPos++] = (byte) b;
-                        }
-
-                        public void write(byte[] b, int off, int len) throws IOException {
-                            // FIXME - write an optimized version of this method
-                            super.write(b, off, len);
-                        }
-                        
-                        public void close() throws IOException {
-                            closed = true;
-                        }
-                    };
-                } else {
-                    outputStream = new OutputStream() {
-                        RandomAccessFile raf = new RandomAccessFile(_blobFile, "rw");
-
-                        {
-                            raf.seek(curPos);
-                        }
-
-                        public void write(int b) throws IOException {
-                            if (raf == null) {
-                                throw new IOException("stream closed");
-                            }
-                            
-                            raf.write(b);
-                        }
-
-                        public void write(byte b[], int off, int len) throws IOException {
-                            if (raf == null) {
-                                throw new IOException("stream closed");
-                            }
-                            
-                            raf.write(b, off, len);
-                        }
-
-                        public void close() throws IOException {
-                            raf.close();
-                            raf = null;
-                        }
-                    };
-                }
-            }
-
-            public void flush() throws IOException {
-                outputStream.flush();
-            }
-
-            public void close() throws IOException {
-                outputStream.close();
-            }
-        };
+        return new BlobOutputStream(pos, length);
     }
 
     public int setBytes(long pos, byte[] bytes) throws SQLException {
@@ -595,5 +382,238 @@ public class BlobImpl implements Blob {
     		_blobFile.delete();
     	}
     }
+
+    /**
+     * Class to manage any Blob write.
+     */
+    class BlobOutputStream extends OutputStream {
+        private OutputStream outputStream;
+        private long curPos;
+        private boolean securityFailure = false;
+
+        BlobOutputStream(long pos, long length) throws SQLException {
+            curPos = pos - 1;
+
+            try {
+                if (length > _connection.getLobBuffer()) {
+                    if (_blobFile == null) {
+                        writeToDisk(getBinaryStream());
+                    }
+                } else if (_jtdsInputStream != null) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream((int) length);
+
+                    byte[] buffer = new byte[1024];
+                    int result = -1;
+
+                    while ((_jtdsInputStream.read(buffer)) != -1) {
+                        baos.write(buffer, 0, result);
+                    }
+
+                    _blob = baos.toByteArray();
+                    _jtdsInputStream = null;
+                }
+
+                updateOuputStream();
+            } catch (IOException e) {
+                throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                                       "HY000");
+            }
+        }
+
+        public void write(int b) throws IOException {
+            synchronized (BlobImpl.this) {
+                checkSize(1);
+                outputStream.write(b);
+                curPos++;
+            }
+        }
+
+        public void write(byte[] b, int off, int len) throws IOException {
+            synchronized (BlobImpl.this) {
+                checkSize(len);
+                outputStream.write(b, off, len);
+                curPos += len;
+            }
+        }
+
+        /**
+         * Checks the size of the in-memory buffer; if a write will
+         * cause the size to exceed <code>MAXIMUM_SIZE</code> than
+         * the data will be removed from memory and written to disk.
+         *
+         * @param length the length of data to be written
+         */
+        private void checkSize(long length) throws IOException {
+            // Return if the data has already exceeded the maximum size
+            if (curPos > _connection.getLobBuffer()) {
+                return;
+            }
+
+            // Return if a file is already being used to store the data
+            if (_blobFile != null) {
+                return;
+            }
+
+            // Return if there was a security failure attempting to
+            // create a buffer file
+            if (securityFailure) {
+                return;
+            }
+
+            // Return if the length will not exceed the maximum in-memory
+            // value
+            if (curPos + length <= _connection.getLobBuffer()) {
+                return;
+            }
+
+            if (_blob != null) {
+                writeToDisk(new ByteArrayInputStream(_blob));
+                updateOuputStream();
+            }
+        }
+
+        void writeToDisk(InputStream inputStream) throws IOException {
+            OutputStream os = null;
+
+            try {
+                _blobFile = File.createTempFile("jtds", ".tmp");
+                _blobFile.deleteOnExit();
+
+                os = new BufferedOutputStream(new FileOutputStream(_blobFile));
+            } catch (SecurityException e) {
+                // Unable to write to disk
+                securityFailure = true;
+
+                os = new ByteArrayOutputStream();
+
+                if (Logger.isActive()) {
+                    Logger.println("Blob: Unable to buffer data to disk: " + e.getMessage());
+                }
+            }
+
+            try {
+                byte[] buffer = new byte[1024];
+                int result = -1;
+
+                while ((result = inputStream.read(buffer)) != -1) {
+                    os.write(buffer, 0, result);
+                }
+            } finally {
+                os.flush();
+
+                if (os instanceof ByteArrayOutputStream) {
+                    if (_blobFile != null) {
+                            _blobFile = null;
+                            _blobFile.delete();
+                    }
+
+                    _blob = ((ByteArrayOutputStream) os).toByteArray();
+                } else {
+                    _blob = null;
+                }
+
+                os.close();
+            }
+        }
+
+        /**
+         * Updates the <code>outputStream</code> member by creating the
+         * approperiate type of output stream based upon the current
+         * storage mechanism.
+         *
+         * @throws IOException if any failure occure while creating the
+         *         output stream
+         */
+        void updateOuputStream() throws IOException {
+            if (_blob != null) {
+                final long startPos = curPos;
+
+                outputStream = new OutputStream() {
+                    int curPos = (int) startPos;
+                    boolean closed = false;
+
+                    public void write(int b) throws IOException {
+                        if (closed) {
+                            throw new IOException("stream closed");
+                        } else if (_blob == null) {
+                            throw new IOException(
+                                    Support.getMessage("error.generic.iowrite", "byte", "_blob = NULL"));
+                        } else if (curPos > _blob.length) {
+                            throw new IOException(
+                                    Support.getMessage("error.generic.iowrite", "byte", "_blob.length changed"));
+                        }
+
+                        if (curPos + 1 > _blob.length) {
+                            byte[] buffer = new byte[curPos + 1];
+
+                            System.arraycopy(_blob, 0, buffer, 0, _blob.length);
+                            _blob = buffer;
+                        }
+
+                        _blob[curPos++] = (byte) b;
+                    }
+
+                    public void write(byte[] b, int off, int len) throws IOException {
+                        // FIXME - write an optimized version of this method
+                        if (closed) {
+                            throw new IOException("stream closed");
+                        }
+
+                        super.write(b, off, len);
+                    }
+
+                    public void close() throws IOException {
+                        closed = true;
+                    }
+                };
+            } else {
+                outputStream = new BlobFileOutputStream(curPos);
+            }
+        }
+
+        public void flush() throws IOException {
+            outputStream.flush();
+        }
+
+        public void close() throws IOException {
+            outputStream.close();
+        }
+    };
+
+
+    /**
+     * Class to manage Blob file writes.
+     */
+    class BlobFileOutputStream extends OutputStream {
+        RandomAccessFile raf;
+
+        BlobFileOutputStream(long curPos) throws IOException {
+            raf = new RandomAccessFile(_blobFile, "rw");
+            raf.seek(curPos);
+        }
+
+        public void write(int b) throws IOException {
+            if (raf == null) {
+                throw new IOException("stream closed");
+            }
+
+            raf.write(b);
+        }
+
+        public void write(byte b[], int off, int len) throws IOException {
+            if (raf == null) {
+                throw new IOException("stream closed");
+            }
+
+            raf.write(b, off, len);
+        }
+
+        public void close() throws IOException {
+            if (raf != null) {
+                raf.close();
+                raf = null;
+            }
+        }
+    };
 }
 

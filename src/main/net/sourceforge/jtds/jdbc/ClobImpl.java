@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.16 2004-07-29 00:14:52 ddkilzer Exp $
+ * @version $Id: ClobImpl.java,v 1.17 2004-08-01 18:20:16 bheineman Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -305,7 +305,7 @@ public class ClobImpl implements Clob {
     }
 
     public synchronized Writer setCharacterStream(final long pos) throws SQLException {
-        final long length = length();
+        long length = length();
         
         if (pos < 1) {
             throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
@@ -313,248 +313,7 @@ public class ClobImpl implements Clob {
             throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY024");
         }
 
-        return new Writer() {
-            Writer writer;
-            long curPos = pos - 1;
-            boolean securityFailure = false;
-
-            {
-                try {
-                    if (length > _connection.getLobBuffer()) {
-                        if (_clobFile == null) {
-                            writeToDisk(getCharacterStream());
-                        }
-                    } else if (_jtdsReader != null) {
-                        StringWriter sw  = new StringWriter((int) length);
-
-                        char[] buffer = new char[1024];
-                        int result = -1;
-
-                        while ((_jtdsReader.read(buffer)) != -1) {
-                            sw.write(buffer, 0, result);
-                        }
-
-                        _clob = sw.toString();
-                        _jtdsReader = null;
-                    }
-
-                    updateWriter();
-                } catch (IOException e) {
-                    throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
-                                           "HY000");
-                }
-            }
-
-            public void write(int c) throws IOException {
-                synchronized (ClobImpl.this) {
-                    checkSize(1);
-                    writer.write(c);
-                    curPos++;
-                }
-            }
-
-            public void write(char[] cbuf, int off, int len) throws IOException {
-                synchronized (ClobImpl.this) {
-                    checkSize(len);
-                    writer.write(cbuf, off, len);
-                    curPos += len;
-                }
-            }
-
-            /**
-             * Checks the size of the in-memory buffer; if a write will
-             * cause the size to exceed <code>MAXIMUM_SIZE</code> than
-             * the data will be removed from memory and written to disk.
-             *
-             * @param length the length of data to be written
-             */
-            private void checkSize(long length) throws IOException {
-                // Return if the data has already exceeded the maximum size
-                if (curPos > _connection.getLobBuffer()) {
-                    return;
-                }
-
-                // Return if a file is already being used to store the data
-                if (_clobFile != null) {
-                    return;
-                }
-
-                // Return if there was a security failure attempting to
-                // create a buffer file
-                if (securityFailure) {
-                    return;
-                }
-
-                // Return if the length will not exceed the maximum in-memory
-                // value
-                if (curPos + length <= _connection.getLobBuffer()) {
-                    return;
-                }
-
-                if (_clob != null) {
-                    writeToDisk(new StringReader(_clob));
-                    updateWriter();
-                }
-            }
-
-            void writeToDisk(Reader reader) throws IOException {
-                Writer wtr = null;
-
-                try {
-                    _clobFile = File.createTempFile("jtds", ".tmp");
-                    _clobFile.deleteOnExit();
-
-                    wtr = new BufferedWriter(new FileWriter(_clobFile));
-                } catch (SecurityException e) {
-                    // Unable to write to disk
-                    securityFailure = true;
-
-                    wtr = new StringWriter();
-
-                    if (Logger.isActive()) {
-                        Logger.println("Clob: Unable to buffer data to disk: " + e.getMessage());
-                    }
-                }
-
-                try {
-                    char[] buffer = new char[1024];
-                    int result = -1;
-
-                    while ((result = reader.read(buffer)) != -1) {
-                        wtr.write(buffer, 0, result);
-                    }
-                } finally {
-                    wtr.flush();
-
-                    if (wtr instanceof StringWriter) {
-                    	if (_clobFile != null) {
-                    		_clobFile.delete();
-                    		_clobFile = null;
-                    	}
-                    	
-                        _clob = ((StringWriter) wtr).toString();
-                    } else {
-                        _clob = null;
-                    }
-
-                    wtr.close();
-                }
-            }
-
-            /**
-             * Updates the <code>outputStream</code> member by creating the
-             * approperiate type of output stream based upon the current
-             * storage mechanism.
-             *
-             * @throws IOException if any failure occure while creating the
-             *         output stream
-             */
-            void updateWriter() throws IOException {
-                if (_clob != null) {
-                    final long startPos = curPos;
-
-                    writer = new Writer() {
-                        int curPos = (int) startPos;
-                        boolean closed = false;
-                        char[] singleChar = new char[1];
-
-                        public void write(int c) throws IOException {
-                            singleChar[0] = (char) c;
-                            write(singleChar, 0, 1);
-                        }
-
-                        public void write(char[] cbuf, int off, int len) throws IOException {
-                            if (closed) {
-                                throw new IOException("stream closed");
-                            } else if (cbuf == null) {
-                                throw new NullPointerException();
-                            } else if (off < 0
-                                       || len < 0
-                                       || off > cbuf.length
-                                       || off + len > cbuf.length) {
-                                throw new ArrayIndexOutOfBoundsException();
-                            } else if (len == 0) {
-                                return;
-                            }
-                            
-                            // FIXME - Optimize writes; reduce memory allocation
-                            // by creating fewer objects.
-                            if (curPos + 1 > _clob.length()) {
-                                _clob += new String(cbuf, off, len);
-                            } else {
-                                String tmpClob = _clob;
-                                
-                                _clob = tmpClob.substring(0, curPos) + new String(cbuf, off, len);
-                                
-                                if (_clob.length() < tmpClob.length()) {
-                                    _clob += tmpClob.substring(curPos + len);
-                                }
-                            }
-                            
-                            curPos += len;
-                        }
-                        
-                        public void flush() throws IOException {
-                        }
-                        
-                        public void close() throws IOException {
-                            closed = true;
-                        }
-                    };
-                } else {
-                    writer = new Writer() {
-                        RandomAccessFile raf = new RandomAccessFile(_clobFile, "rw");
-                        char[] singleChar = new char[1];
-
-                        {
-                            raf.seek(curPos);
-                        }
-
-                        public void write(int c) throws IOException {
-                            singleChar[0] = (char) c;
-                            write(singleChar, 0, 1);
-                        }
-
-                        public void write(char cbuf[], int off, int len) throws IOException {
-                            if (raf == null) {
-                                throw new IOException("stream closed");
-                            }
-                            
-                            if (cbuf == null) {
-                                throw new NullPointerException();
-                            } else if (off < 0
-                                       || len < 0
-                                       || off > cbuf.length
-                                       || off + len > cbuf.length) {
-                                throw new ArrayIndexOutOfBoundsException();
-                            } else if (len == 0) {
-                                return;
-                            }
-                            
-                            byte[] data = new String(cbuf, off, len).getBytes();
-                            
-                            raf.write(data, 0, data.length);
-                        }
-
-                        public void flush() throws IOException {
-                        }
-                        
-                        public void close() throws IOException {
-                            raf.close();
-                            raf = null;
-                        }
-                    };
-                }
-            }
-
-            public void flush() throws IOException {
-                writer.flush();
-            }
-
-            public void close() throws IOException {
-                writer.close();
-            }
-        };
+        return new ClobWriter(pos, length);
     }
 
     public int setString(long pos, String str) throws SQLException {
@@ -690,4 +449,260 @@ public class ClobImpl implements Clob {
     		_clobFile.delete();
     	}
     }
+
+    /**
+     * Class to manage any Clob write.
+     */
+    class ClobWriter extends Writer {
+        Writer writer;
+        long curPos;
+        boolean securityFailure = false;
+
+        ClobWriter(long pos, long length) throws SQLException {
+            curPos = pos - 1;
+
+            try {
+                if (length > _connection.getLobBuffer()) {
+                    if (_clobFile == null) {
+                        writeToDisk(getCharacterStream());
+                    }
+                } else if (_jtdsReader != null) {
+                    StringWriter sw  = new StringWriter((int) length);
+
+                    char[] buffer = new char[1024];
+                    int result = -1;
+
+                    while ((_jtdsReader.read(buffer)) != -1) {
+                        sw.write(buffer, 0, result);
+                    }
+
+                    _clob = sw.toString();
+                    _jtdsReader = null;
+                }
+
+                updateWriter();
+            } catch (IOException e) {
+                throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                                       "HY000");
+            }
+        }
+
+        public void write(int c) throws IOException {
+            synchronized (ClobImpl.this) {
+                checkSize(1);
+                writer.write(c);
+                curPos++;
+            }
+        }
+
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            synchronized (ClobImpl.this) {
+                checkSize(len);
+                writer.write(cbuf, off, len);
+                curPos += len;
+            }
+        }
+
+        /**
+         * Checks the size of the in-memory buffer; if a write will
+         * cause the size to exceed <code>MAXIMUM_SIZE</code> than
+         * the data will be removed from memory and written to disk.
+         *
+         * @param length the length of data to be written
+         */
+        private void checkSize(long length) throws IOException {
+            // Return if the data has already exceeded the maximum size
+            if (curPos > _connection.getLobBuffer()) {
+                return;
+            }
+
+            // Return if a file is already being used to store the data
+            if (_clobFile != null) {
+                return;
+            }
+
+            // Return if there was a security failure attempting to
+            // create a buffer file
+            if (securityFailure) {
+                return;
+            }
+
+            // Return if the length will not exceed the maximum in-memory
+            // value
+            if (curPos + length <= _connection.getLobBuffer()) {
+                return;
+            }
+
+            if (_clob != null) {
+                writeToDisk(new StringReader(_clob));
+                updateWriter();
+            }
+        }
+
+        void writeToDisk(Reader reader) throws IOException {
+            Writer wtr = null;
+
+            try {
+                _clobFile = File.createTempFile("jtds", ".tmp");
+                _clobFile.deleteOnExit();
+
+                wtr = new BufferedWriter(new FileWriter(_clobFile));
+            } catch (SecurityException e) {
+                // Unable to write to disk
+                securityFailure = true;
+
+                wtr = new StringWriter();
+
+                if (Logger.isActive()) {
+                    Logger.println("Clob: Unable to buffer data to disk: " + e.getMessage());
+                }
+            }
+
+            try {
+                char[] buffer = new char[1024];
+                int result = -1;
+
+                while ((result = reader.read(buffer)) != -1) {
+                    wtr.write(buffer, 0, result);
+                }
+            } finally {
+                wtr.flush();
+
+                if (wtr instanceof StringWriter) {
+                    if (_clobFile != null) {
+                            _clobFile.delete();
+                            _clobFile = null;
+                    }
+
+                    _clob = ((StringWriter) wtr).toString();
+                } else {
+                    _clob = null;
+                }
+
+                wtr.close();
+            }
+        }
+
+        /**
+         * Updates the <code>outputStream</code> member by creating the
+         * approperiate type of output stream based upon the current
+         * storage mechanism.
+         *
+         * @throws IOException if any failure occure while creating the
+         *         output stream
+         */
+        void updateWriter() throws IOException {
+            if (_clob != null) {
+                final long startPos = curPos;
+
+                writer = new Writer() {
+                    int curPos = (int) startPos;
+                    boolean closed = false;
+                    char[] singleChar = new char[1];
+
+                    public void write(int c) throws IOException {
+                        singleChar[0] = (char) c;
+                        write(singleChar, 0, 1);
+                    }
+
+                    public void write(char[] cbuf, int off, int len) throws IOException {
+                        if (closed) {
+                            throw new IOException("stream closed");
+                        } else if (cbuf == null) {
+                            throw new NullPointerException();
+                        } else if (off < 0
+                                   || len < 0
+                                   || off > cbuf.length
+                                   || off + len > cbuf.length) {
+                            throw new ArrayIndexOutOfBoundsException();
+                        } else if (len == 0) {
+                            return;
+                        }
+
+                        // FIXME - Optimize writes; reduce memory allocation
+                        // by creating fewer objects.
+                        if (curPos + 1 > _clob.length()) {
+                            _clob += new String(cbuf, off, len);
+                        } else {
+                            String tmpClob = _clob;
+
+                            _clob = tmpClob.substring(0, curPos) + new String(cbuf, off, len);
+
+                            if (_clob.length() < tmpClob.length()) {
+                                _clob += tmpClob.substring(curPos + len);
+                            }
+                        }
+
+                        curPos += len;
+                    }
+
+                    public void flush() throws IOException {
+                    }
+
+                    public void close() throws IOException {
+                        closed = true;
+                    }
+                };
+            } else {
+                writer = new ClobFileWriter(curPos);
+            }
+        }
+
+        public void flush() throws IOException {
+            writer.flush();
+        }
+
+        public void close() throws IOException {
+            writer.close();
+        }
+    };
+
+    /**
+     * Class to manage Clob file writes.
+     */
+    class ClobFileWriter extends Writer {
+        RandomAccessFile raf;
+        char[] singleChar = new char[1];
+
+        ClobFileWriter(long curPos) throws IOException {
+            raf = new RandomAccessFile(_clobFile, "rw");
+            raf.seek(curPos);
+        }
+
+        public void write(int c) throws IOException {
+            singleChar[0] = (char) c;
+            write(singleChar, 0, 1);
+        }
+
+        public void write(char cbuf[], int off, int len) throws IOException {
+            if (raf == null) {
+                throw new IOException("stream closed");
+            }
+
+            if (cbuf == null) {
+                throw new NullPointerException();
+            } else if (off < 0
+                       || len < 0
+                       || off > cbuf.length
+                       || off + len > cbuf.length) {
+                throw new ArrayIndexOutOfBoundsException();
+            } else if (len == 0) {
+                return;
+            }
+
+            byte[] data = new String(cbuf, off, len).getBytes();
+
+            raf.write(data, 0, data.length);
+        }
+
+        public void flush() throws IOException {
+        }
+
+        public void close() throws IOException {
+            if (raf != null) {
+                raf.close();
+                raf = null;
+            }
+        }
+    };
 }

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.71 2005-02-24 12:56:46 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.72 2005-02-25 21:31:36 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1271,6 +1271,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     void setClosed() {
         closed = true;
+
+        // Make sure we release the socket and all data buffered at the socket
+        // level
+        try {
+            socket.close();
+        } catch (IOException e) {
+            // Ignore; shouldn't happen anyway
+        }
     }
 
     /**

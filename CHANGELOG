@@ -1,6 +1,13 @@
 Changes from jTDS 1.0.2
 =======================
 
+02/25/2005 - Alin Sinpalean
+ o Added code to close the socket and release any data buffered at the socket
+   level when Connection.setClosed() is called (usually on I/O or protocol
+   errors).
+ o Disabled warning messages on database and language change; these were always
+   generated during login, sometimes causing confusion.
+
 02/24/2005 - Alin Sinpalean
  o Corrected bug [1150880] Character Set getting overwritten. Collation
    envchange packets altered the charset specified on connection creation.

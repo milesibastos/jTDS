@@ -45,7 +45,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.30 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.31 2004-11-18 13:54:03 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -933,7 +933,7 @@ public class Support {
      * @return the unique statement key
      */
     static String getStatementKey(String sql, ParamInfo[] params, int serverType, String catalog) {
-        StringBuffer key = new StringBuffer(sql.length() + 64);
+        StringBuffer key = new StringBuffer(sql.length() + catalog.length() + 10 * params.length);
 
         key.append(catalog); // Not sure if this is required for sybase
         key.append(sql);
@@ -957,7 +957,7 @@ public class Support {
      * @return a parameter definition string
      */
     static String getParameterDefinitions(ParamInfo[] parameters) {
-        StringBuffer sql = new StringBuffer(parameters.length * 10);
+        StringBuffer sql = new StringBuffer(parameters.length * 15);
 
         // Build parameter descriptor
         for (int i = 0; i < parameters.length; i++) {
@@ -988,7 +988,7 @@ public class Support {
      * @return The modified SQL as a <code>String</code>.
      */
     static String substituteParamMarkers(String sql, ParamInfo[] list){
-        StringBuffer buf = new StringBuffer(sql.length() + list.length * 4);
+        StringBuffer buf = new StringBuffer(sql.length() + list.length * 6);
         int start = 0;
 
         for (int i = 0; i < list.length; i++) {
@@ -1057,7 +1057,7 @@ public class Support {
             }
         }
 
-        StringBuffer buf = new StringBuffer(len + 10);
+        StringBuffer buf = new StringBuffer(len + 16);
         int start = 0;
 
         for (int i = 0; i < list.length; i++) {

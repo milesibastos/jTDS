@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.47 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.48 2004-11-18 13:54:04 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -862,7 +862,7 @@ public class TdsCore {
         int prepareSql = connection.getPrepareSql();
 
         if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
-            StringBuffer spSql = new StringBuffer(sql.length() + 64);
+            StringBuffer spSql = new StringBuffer(sql.length() + 32 + params.length * 15);
             String procName = connection.getProcName();
 
             spSql.append("create proc ");

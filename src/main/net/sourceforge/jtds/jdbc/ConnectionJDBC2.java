@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.47 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.48 2004-11-18 13:54:03 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1068,7 +1068,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     ((JtdsPreparedStatement) statement).handles);
 
             if (handles != null) {
-                StringBuffer cleanupSql = new StringBuffer(handles.size() * 15);
+                StringBuffer cleanupSql = new StringBuffer(handles.size() * 32);
 
                 for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
                     String handle = iterator.next().toString();

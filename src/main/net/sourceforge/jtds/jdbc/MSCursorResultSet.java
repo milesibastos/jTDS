@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.29 2004-11-17 16:58:39 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.30 2004-11-18 13:54:03 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -301,7 +301,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (procName != null) {
             if (procName.startsWith("#jtds")) {
-                StringBuffer buf = new StringBuffer(64);
+                StringBuffer buf = new StringBuffer(procName.length() + 16 + parameters.length * 5);
                 buf.append("EXEC ").append(procName).append(' ');
                 for (int i = 0; parameters != null && i < parameters.length; i++) {
                     if (i != 0) {

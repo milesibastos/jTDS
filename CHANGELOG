@@ -2,6 +2,8 @@ Changes from jTDS 0.9
 =========================
 
 11/18/2004 - Alin Sinpalean
+ o Tweaked initial StringBuffer sizes to prevent reallocation as much as
+   possible.
  o Corrected a bug that was causing Date values to be inserted just like
    Timestamps (i.e. including the time component).
 

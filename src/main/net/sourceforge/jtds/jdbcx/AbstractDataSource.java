@@ -21,9 +21,9 @@ import java.io.Serializable;
 import java.io.PrintWriter;
 import java.sql.SQLException;
 import javax.sql.DataSource;
-import javax.naming.Referenceable;
-import javax.naming.Reference;
 import javax.naming.NamingException;
+import javax.naming.Reference;
+import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
 
 import net.sourceforge.jtds.jdbc.Driver;
@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.9 2004-08-03 17:44:59 ddkilzer Exp $
+* @version $Id: AbstractDataSource.java,v 1.10 2004-08-03 17:48:39 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {

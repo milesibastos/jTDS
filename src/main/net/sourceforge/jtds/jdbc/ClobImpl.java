@@ -32,14 +32,30 @@
 
 package net.sourceforge.jtds.jdbc;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.sql.Clob;
 import java.sql.SQLException;
 
+/**
+ * An in-memory representation of character data.
+ */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.1 2004-01-22 23:49:15 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.2 2004-01-28 22:01:25 bheineman Exp $";
 
     private String _clob;
 
+    /**
+     * Constructs a new Clob instance.
+     */
     ClobImpl(String clob) {
         if (clob == null) {
             throw new IllegalArgumentException("clob cannot be null.");
@@ -48,22 +64,24 @@ public class ClobImpl implements Clob {
         _clob = clob;
     }
 
-    public long length() throws SQLException {
-        return _clob.length();
-    }
-
-    public java.io.InputStream getAsciiStream() throws SQLException {
+    /**
+     * Returns a new ascii stream for the CLOB data.
+     */
+    public InputStream getAsciiStream() throws SQLException {
         try {
-            return new java.io.ByteArrayInputStream(_clob.getBytes("ASCII"));
-        } catch (java.io.UnsupportedEncodingException e) {
+            return new ByteArrayInputStream(_clob.getBytes("ASCII"));
+        } catch (UnsupportedEncodingException e) {
             // This should never happen...
             throw new SQLException("Unexpected encoding exception: "
                                    + e.getMessage());
         }
     }
 
-    public java.io.Reader getCharacterStream() throws SQLException {
-        return new java.io.StringReader(_clob);
+    /**
+     * Returns a new reader for the CLOB data.
+     */
+    public Reader getCharacterStream() throws SQLException {
+        return new StringReader(_clob);
     }
 
     public String getSubString(long pos, int length) throws SQLException {
@@ -74,16 +92,11 @@ public class ClobImpl implements Clob {
         return _clob.substring((int) pos, length);
     }
 
-    public long position(String searchStr, long start) throws SQLException {
-        if (searchStr == null) {
-            throw new IllegalArgumentException("searchStr cannot be null.");
-        } else if (start < 0) {
-            throw new IllegalArgumentException("start must be >= 0.");
-        } else if (start > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("start must be <= " + Integer.MAX_VALUE);
-        }
-
-        return _clob.indexOf(searchStr, (int) start);
+    /**
+     * Returns the length of the value.
+     */
+    public long length() throws SQLException {
+        return _clob.length();
     }
 
     public long position(Clob searchStr, long start) throws SQLException {
@@ -104,35 +117,124 @@ public class ClobImpl implements Clob {
                              (int) start);
     }
 
-    public int setString(long pos, String str, int offset, int len) throws SQLException {
-        NotImplemented();
-        return 0;
+    public long position(String searchStr, long start) throws SQLException {
+        if (searchStr == null) {
+            throw new IllegalArgumentException("searchStr cannot be null.");
+        } else if (start < 0) {
+            throw new IllegalArgumentException("start must be >= 0.");
+        } else if (start > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("start must be <= " + Integer.MAX_VALUE);
+        }
+
+        return _clob.indexOf(searchStr, (int) start);
     }
 
-    public java.io.Writer setCharacterStream(long pos) throws SQLException {
-        NotImplemented();
-        return null;
+    public OutputStream setAsciiStream(final long pos) throws SQLException {
+        if (pos < 0) {
+            throw new IllegalArgumentException("pos must be >= 0.");
+        } else if (pos > _clob.length()) {
+            throw new IllegalArgumentException("pos specified is past length of value.");
+        } else if (pos >= Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("pos must be < " + Integer.MAX_VALUE);
+        }
+
+        return new ByteArrayOutputStream() {
+                    {
+                        try {
+                            byte[] clob = _clob.getBytes("ASCII");
+                            write(clob, 0, (int) pos);
+                        } catch (UnsupportedEncodingException e) {
+                            // This should never happen...
+                            throw new SQLException("Unexpected encoding exception: "
+                                                   + e.getMessage());
+                        }
+                    }
+
+                    public void flush() throws IOException {
+                        String clob = new String(toByteArray(), "ASCII");
+
+                        if (clob.length() < _clob.length()) {
+                            _clob = clob + _clob.substring(clob.length());
+                        } else {
+                            _clob = clob;
+                        }
+                    }
+
+                    public void close() throws IOException {
+                        flush();
+                    }
+                };
+    }
+
+    public Writer setCharacterStream(final long pos) throws SQLException {
+        if (pos < 0) {
+            throw new IllegalArgumentException("pos must be >= 0.");
+        } else if (pos > _clob.length()) {
+            throw new IllegalArgumentException("pos specified is past length of value.");
+        } else if (pos >= Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("pos must be < " + Integer.MAX_VALUE);
+        }
+
+        return new StringWriter() {
+                    {write(_clob, 0, (int) pos);}
+
+                    public void flush() {
+                        String clob = toString();
+
+                        if (clob.length() < _clob.length()) {
+                            _clob = clob + _clob.substring(clob.length());
+                        } else {
+                            _clob = clob;
+                        }
+                    }
+
+                    public void close() throws IOException {
+                        flush();
+                    }
+                };
     }
 
     public int setString(long pos, String str) throws SQLException {
-        NotImplemented();
-        return 0;
+        if (str == null) {
+            throw new IllegalArgumentException("str cannot be null.");
+        }
+
+        return setString(pos, str, 0, str.length());
     }
 
-    public java.io.OutputStream setAsciiStream(long pos) throws SQLException {
-        NotImplemented();
-        return null;
+    public int setString(long pos, String str, int offset, int len) throws SQLException {
+        Writer writer = setCharacterStream(pos);
+
+        try {
+            writer.write(str, offset, len);
+            writer.close();
+        } catch (IOException e) {
+            throw new SQLException("Unable to write value: " + e.getMessage());
+        }
+
+        return len;
     }
 
+    /**
+     * Truncates the value to the length specified.
+     * 
+     * @param len the length to truncate the value to
+     */
     public void truncate(long len) throws SQLException {
-        NotImplemented();
+        if (len < 0) {
+            throw new IllegalArgumentException("len must be >= 0.");
+        } else if (len > _clob.length()) {
+            throw new IllegalArgumentException("length specified is more than length of "
+                                               + "value.");
+        }
+
+        _clob = _clob.substring(0, (int) len);
     }
 
+    /**
+     * Returns the string representation of this object.
+     */
     public String toString() {
         return _clob;
-    }
-
-    private void NotImplemented() throws java.sql.SQLException {
-        throw new SQLException("Not Implemented");
     }
 }

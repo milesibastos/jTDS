@@ -10,9 +10,34 @@ import java.util.*;
  */
 
 public class LOBTest extends TestBase {
+    private static final int LOB_LENGTH = 8000;
+    private static final byte[] blobData = new byte[LOB_LENGTH];
+    private static final String clobData;
+
+    static {
+        for (int i = 0; i < blobData.length; i++) {
+            blobData[i] = (byte) (Math.random() * 255);
+        }
+
+        StringBuffer data = new StringBuffer();
+
+        for (int i = 0; i < LOB_LENGTH; i++) {
+            data.append((char) (Math.random() * 90) + 32);
+        }
+
+        clobData = data.toString();
+
+    }
+
     public LOBTest(String name) {
         super(name);
     }
+
+    /*************************************************************************
+     *************************************************************************
+     **                          BLOB TESTS                                 **
+     *************************************************************************
+     *************************************************************************/
 
     public void testBlobGet1() throws Exception {
         byte[] data = getBlobTestData();
@@ -390,6 +415,212 @@ public class LOBTest extends TestBase {
         stmt3.close();
         rs2.close();
     }
+
+    public void testBlobUpdate1() throws Exception {
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobupdate1 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobupdate1 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobupdate1");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateBytes()
+        rs.updateBytes(2, data);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobupdate1");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBytes()
+        assertTrue(Arrays.equals(data, rs2.getBytes(1)));
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testBlobUpdate2() throws Exception {
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobupdate2 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobupdate2 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobupdate2");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateBinaryStream()
+        rs.updateBinaryStream(2, new ByteArrayInputStream(data), data.length);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobupdate2");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBytes()
+        assertTrue(Arrays.equals(data, rs2.getBytes(1)));
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testBlobUpdate3() throws Exception {
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobupdate3 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobupdate3 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobupdate3 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobupdate3");
+
+        assertTrue(rs.next());
+
+        Blob blob = rs.getBlob(1);
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte) (Math.random() * 255);
+        }
+
+        // Test Blob.setBytes()
+        blob.setBytes((long) 1, data);
+
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
+
+        assertTrue(!rs.next());
+
+        Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #blobupdate3");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.updateBlob()
+        rs2.updateBlob(2, blob);
+
+        rs2.updateRow();
+
+        assertTrue(!rs2.next());
+
+        stmt2.close();
+        rs.close();
+
+        stmt3.close();
+        rs2.close();
+    
+        Statement stmt4 = con.createStatement();
+        ResultSet rs3 = stmt4.executeQuery("SELECT data FROM #blobupdate3");
+
+        assertTrue(rs3.next());
+
+        // Test ResultSet.getBytes()
+        assertTrue(Arrays.equals(data, rs3.getBytes(1)));
+
+        assertTrue(!rs3.next());
+        stmt4.close();
+        rs3.close();
+    }
+
+    public void testBlobUpdate4() throws Exception {
+        byte[] data = getBlobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobupdate4 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobupdate4 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobupdate4 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobupdate4");
+
+        assertTrue(rs.next());
+
+        Blob blob = rs.getBlob(1);
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte) (Math.random() * 255);
+        }
+
+        // Test Blob.setBytes()
+        blob.setBytes((long) 1, data);
+
+        assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
+
+        assertTrue(!rs.next());
+
+        Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #blobupdate4");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.updateBlob()
+        rs2.updateObject(2, blob);
+
+        rs2.updateRow();
+
+        assertTrue(!rs2.next());
+
+        stmt2.close();
+        rs.close();
+
+        stmt3.close();
+        rs2.close();
+    
+        Statement stmt4 = con.createStatement();
+        ResultSet rs3 = stmt4.executeQuery("SELECT data FROM #blobupdate4");
+
+        assertTrue(rs3.next());
+
+        // Test ResultSet.getBytes()
+        assertTrue(Arrays.equals(data, rs3.getBytes(1)));
+
+        assertTrue(!rs3.next());
+        stmt4.close();
+        rs3.close();
+    }
+
+    /*************************************************************************
+     *************************************************************************
+     **                          CLOB TESTS                                 **
+     *************************************************************************
+     *************************************************************************/
 
     public void testClobGet1() throws Exception {
         String data = getClobTestData();
@@ -826,24 +1057,250 @@ public class LOBTest extends TestBase {
         rs2.close();
     }
 
-    private byte[] getBlobTestData() {
-        byte[] data = new byte[8000];
+    public void testClobUpdate1() throws Exception {
+        String data = getClobTestData();
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (Math.random() * 255);
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobupdate1 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobupdate1 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobupdate1");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateString()
+        rs.updateString(2, data);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobupdate1");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getString()
+        assertTrue(data.equals(rs2.getString(1)));
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobUpdate2() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobupdate2 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobupdate2 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobupdate2");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateAsciiStream()
+        rs.updateAsciiStream(2, new ByteArrayInputStream(data.getBytes("ASCII")), data.length());
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobupdate2");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getString()
+        assertTrue(data.equals(rs2.getString(1)));
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobUpdate3() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobupdate3 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobupdate3 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobupdate3");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateCharacterStream()
+        rs.updateCharacterStream(2, new StringReader(data), data.length());
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobupdate3");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getString()
+        assertTrue(data.equals(rs2.getString(1)));
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobUpdate4() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobupdate4 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobupdate4 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobupdate4 (data) VALUES (?)");
+
+        // Test PreparedStatement.setString()
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobupdate4");
+
+        assertTrue(rs.next());
+
+        Clob clob = rs.getClob(1);
+        int length = data.length();
+
+        data = "";
+
+        for (int i = 0; i < length; i++) {
+            data += (char) (Math.random() * 90) + 32;
         }
 
-        return data;
+        // Test Clob.setBytes()
+        clob.setString((long) 1, data);
+
+        assertTrue(data.equals(clob.getSubString(1, (int) clob.length())));
+
+        assertTrue(!rs.next());
+
+        Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #clobupdate4");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.updateClob()
+        rs2.updateClob(2, clob);
+
+        rs2.updateRow();
+
+        assertTrue(!rs2.next());
+
+        stmt2.close();
+        rs.close();
+
+        stmt3.close();
+        rs2.close();
+    
+        Statement stmt4 = con.createStatement();
+        ResultSet rs3 = stmt4.executeQuery("SELECT data FROM #clobupdate4");
+
+        assertTrue(rs3.next());
+
+        // Test ResultSet.getString()
+        assertTrue(data.equals(rs3.getString(1)));
+
+        assertTrue(!rs3.next());
+        stmt4.close();
+        rs3.close();
+    }
+
+    public void testClobUpdate5() throws Exception {
+        String data = getClobTestData();
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobupdate5 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobupdate5 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobupdate5 (data) VALUES (?)");
+
+        // Test PreparedStatement.setString()
+        pstmt.setString(1, data);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobupdate5");
+
+        assertTrue(rs.next());
+
+        Clob clob = rs.getClob(1);
+        int length = data.length();
+
+        data = "";
+
+        for (int i = 0; i < length; i++) {
+            data += (char) (Math.random() * 90) + 32;
+        }
+
+        // Test Clob.setBytes()
+        clob.setString((long) 1, data);
+
+        assertTrue(data.equals(clob.getSubString(1, (int) clob.length())));
+
+        assertTrue(!rs.next());
+
+        Statement stmt3 = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs2 = stmt3.executeQuery("SELECT id, data FROM #clobupdate5");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.updateClob()
+        rs2.updateClob(2, clob);
+
+        rs2.updateRow();
+
+        assertTrue(!rs2.next());
+
+        stmt2.close();
+        rs.close();
+
+        stmt3.close();
+        rs2.close();
+    
+        Statement stmt4 = con.createStatement();
+        ResultSet rs3 = stmt4.executeQuery("SELECT data FROM #clobupdate5");
+
+        assertTrue(rs3.next());
+
+        // Test ResultSet.getString()
+        assertTrue(data.equals(rs3.getString(1)));
+
+        assertTrue(!rs3.next());
+        stmt4.close();
+        rs3.close();
+    }
+
+    private byte[] getBlobTestData() {
+        return blobData;
     }
 
     private String getClobTestData() {
-        StringBuffer data = new StringBuffer();
-
-        for (int i = 0; i < 8000; i++) {
-            data.append((char) (Math.random() * 90) + 32);
-        }
-
-        return data.toString();
+        return clobData;
     }
 
     public static void main(String[] args) {

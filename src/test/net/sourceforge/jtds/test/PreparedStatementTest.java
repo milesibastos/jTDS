@@ -20,9 +20,6 @@ package net.sourceforge.jtds.test;
 import java.math.BigDecimal;
 import java.sql.*;
 
-import net.sourceforge.jtds.jdbc.*;
-import net.sourceforge.jtds.jdbc.Driver;
-
 /**
  * @version 1.0
  */
@@ -166,6 +163,19 @@ public class PreparedStatementTest extends TestBase {
 
         pstmt.close();
         rs.close();
+    }
+
+    /**
+     * Test for "invalid parameter index" error.
+     */
+    public void testPreparedStatementParsing3() throws Exception {
+        PreparedStatement pstmt = con.prepareStatement(
+                "UPDATE dbo.DEPARTMENTS SET DEPARTMENT_NAME=? WHERE DEPARTMENT_ID=?");
+
+        pstmt.setString(1, "TEST");
+        pstmt.setString(2, "TEST");
+
+        pstmt.close();
     }
 
     /**

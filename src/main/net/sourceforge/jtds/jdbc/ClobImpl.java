@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.31 2005-02-28 16:52:07 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.32 2005-03-18 13:55:54 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -204,7 +204,7 @@ public class ClobImpl implements Clob {
     /**
      * Returns a new reader for the CLOB data.
      */
-    public synchronized Reader getCharacterStream() throws SQLException {
+    public Reader getCharacterStream() throws SQLException {
         try {
             if (_clob != null) {
                 return new StringReader(_clob);
@@ -264,7 +264,7 @@ public class ClobImpl implements Clob {
     /**
      * Returns the length of the value.
      */
-    public synchronized long length() throws SQLException {
+    public long length() throws SQLException {
     	if (_clob != null) {
             return _clob.length();
     	} else if (_clobFile != null) {
@@ -330,7 +330,7 @@ public class ClobImpl implements Clob {
         return new WriterOutputStream(setCharacterStream(pos), "ASCII");
     }
 
-    public synchronized Writer setCharacterStream(final long pos) throws SQLException {
+    public Writer setCharacterStream(final long pos) throws SQLException {
         long length = length();
 
         if (pos < 1) {
@@ -371,7 +371,7 @@ public class ClobImpl implements Clob {
      *
      * @param len the length to truncate the value to
      */
-    public synchronized void truncate(long len) throws SQLException {
+    public void truncate(long len) throws SQLException {
         long currentLength = length();
 
         if (len < 0) {
@@ -481,19 +481,15 @@ public class ClobImpl implements Clob {
         }
 
         public void write(int c) throws IOException {
-            synchronized (ClobImpl.this) {
-                checkSize(1);
-                writer.write(c);
-                curPos++;
-            }
+            checkSize(1);
+            writer.write(c);
+            curPos++;
         }
 
         public void write(char[] cbuf, int off, int len) throws IOException {
-            synchronized (ClobImpl.this) {
-                checkSize(len);
-                writer.write(cbuf, off, len);
-                curPos += len;
-            }
+            checkSize(len);
+            writer.write(cbuf, off, len);
+            curPos += len;
         }
 
         /**

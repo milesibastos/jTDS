@@ -62,6 +62,8 @@
           benchmark I can run myself?</a></li>
         <li><a href="#features">Which JDBC features are and which features are
           not supported by jTDS?</a></li>
+        <li><a href="#multithreading">Can jTDS be used in a multi threaded
+          application?</a></li>
       </ul>
       <p class="question">Error Conditions</p>
       <ul>
@@ -371,6 +373,21 @@
         implementations available, probably much better than anything we could
         come up with. Check out the jTDS <a href="features.html">feature
         matrix</a> for more details.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="multithreading"></a>Can jTDS be used in a
+        multi threaded application?</p>
+      <p>As a general principle we try and keep synchronization to a minimum
+        both for performance and deadlock reasons. The only part of jTDS we
+        guarantee is thread safe is the <code>Connection</code> object, and
+        multi threaded access to <code>Statement</code>s is discouraged (except
+        for issuing cancels).</p>
+      <p>As a conclusion the only safe multithreading scenarios are these: (i)
+        one <code>Connection</code> with multiple <code>Statement</code>s, each
+        <code>Statement</code> used by a single thread and (ii) a
+        <code>Statement</code> used by one thread and cancelled by some other
+        thread. Scenario (i), while it does work, is not necessarily a good
+        solution because it requires a lot of locking and waiting on the same
+        network connection plus (last but not least) a lot of caching.
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Error Conditions</p>

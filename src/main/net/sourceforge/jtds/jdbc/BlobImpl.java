@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.26 2005-02-28 16:52:07 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.27 2005-03-18 13:55:53 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -131,7 +131,7 @@ public class BlobImpl implements Blob {
     /**
      * Returns an InputStream for the BLOB data.
      */
-    public synchronized InputStream getBinaryStream() throws SQLException {
+    public InputStream getBinaryStream() throws SQLException {
         try {
         	if (_blob != null) {
                 return new ByteArrayInputStream(_blob);
@@ -189,7 +189,7 @@ public class BlobImpl implements Blob {
     /**
      * Returns the length of the value.
      */
-    public synchronized long length() throws SQLException {
+    public long length() throws SQLException {
     	if (_blob != null) {
             return _blob.length;
     	} else if (_blobFile != null) {
@@ -251,7 +251,7 @@ public class BlobImpl implements Blob {
         return -1;
     }
 
-    public synchronized OutputStream setBinaryStream(final long pos) throws SQLException {
+    public OutputStream setBinaryStream(final long pos) throws SQLException {
         long length = length();
 
         if (pos < 1) {
@@ -293,7 +293,7 @@ public class BlobImpl implements Blob {
      *
      * @param len the length to truncate the value to
      */
-    public synchronized void truncate(long len) throws SQLException {
+    public void truncate(long len) throws SQLException {
         long currentLength = length();
 
         if (len < 0) {
@@ -403,19 +403,15 @@ public class BlobImpl implements Blob {
         }
 
         public void write(int b) throws IOException {
-            synchronized (BlobImpl.this) {
-                checkSize(1);
-                outputStream.write(b);
-                curPos++;
-            }
+            checkSize(1);
+            outputStream.write(b);
+            curPos++;
         }
 
         public void write(byte[] b, int off, int len) throws IOException {
-            synchronized (BlobImpl.this) {
-                checkSize(len);
-                outputStream.write(b, off, len);
-                curPos += len;
-            }
+            checkSize(len);
+            outputStream.write(b, off, len);
+            curPos += len;
         }
 
         /**

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.16 2002-08-20 13:26:10 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.17 2002-08-23 09:37:07 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.16 2002-08-20 13:26:10 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.17 2002-08-23 09:37:07 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -63,7 +63,6 @@ public class TdsStatement implements java.sql.Statement
 
    protected TdsResultSet          results     = null;
    protected Tds actTds = null;
-   private   java.sql.ResultSetMetaData  metaResults = null;
 
    private   boolean            escapeProcessing = true;
 

@@ -1,6 +1,20 @@
 Changes from jTDS 0.3
 =====================
 
+08/23/2002 - Alin Sinpalean
+
+ o Improved NULL, 0-length and single-space string handling (both when sending
+   parameters and receiving values.
+ o Tds.rollback() just drops all procedures submitted during the last
+   transaction rather than resubmitting them (no one can guarantee they will be
+   used again, so better just drop them).
+ o Removed TdsComm.backup() - wasn't used anymore and was pretty dangerous
+   anyway.
+ o Changes to AsTest and CSUnitTest to reflect the way update counts are
+   returned from PreparedStatements and CallableStatements.
+ o Added a freetds.SAfeTest test to test the NULL, 0-length and single-space
+   string handling.
+
 08/21/2002 - Alin Sinpalean
 
  o jTDS officially became "jTDS Type 4 JDBC 2.0 driver for MS SQL Server", as

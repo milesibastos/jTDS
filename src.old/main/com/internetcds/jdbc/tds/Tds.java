@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.22 2002-08-20 13:26:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -768,6 +768,8 @@ public class Tds implements TdsDefinitions {
                         catch (ClassCastException e) {
                           val = actualParameterList[i].value.toString();
                         }
+                        if( tdsVer<TDS70 && val!=null && val.length()==0 )
+                            val = " ";
                         int len = val != null ? val.length() : 0;
                         int max = formalParameterList[i].maxLength;
 
@@ -1080,9 +1082,6 @@ public class Tds implements TdsDefinitions {
         }
     }
 
-    /**
-     * @deprecated
-     */
     public synchronized void discardResultSetOld( Context context )
              throws SQLException, java.io.IOException, TdsException
     {
@@ -1920,10 +1919,12 @@ public class Tds implements TdsDefinitions {
 
       boolean shortLen = (tdsVer == Tds.TDS70) && (wideChars || !outputParam);
       int len = shortLen ? comm.getTdsShort() : (comm.getByte() & 0xFF);
-      if (len == 0 || tdsVer == Tds.TDS70 && len == 0xFFFF) {
+      // SAfe 2002-08-23
+      // TDS 7.0 no longer uses 0 length values as NULL
+      if( tdsVer<TDS70 && len==0 || tdsVer==TDS70 && len==0xFFFF ) {
           result = null;
       }
-      else if (len > 0) {
+      else if (len >= 0) {
           if (wideChars) {
               result = comm.getString(len / 2);
           }
@@ -1931,7 +1932,9 @@ public class Tds implements TdsDefinitions {
               result = encoder.getString(comm.getBytes(len));
           }
 
-          if (result.equals(" ")) {
+          // SAfe 2002-08-23
+          // TDS 7.0 does not use the same logic, one space is one space
+          if( tdsVer<TDS70 && " ".equals(result) ) {
               // In SQL trailing spaces are stripped from strings
               // MS SQLServer denotes a zero length string
               // as a single space.
@@ -1981,7 +1984,9 @@ public class Tds implements TdsDefinitions {
                     result = encoder.getString(comm.getBytes(len));
                 }
 
-                if (" ".equals(result)) {
+                // SAfe 2002-08-23
+                // TDS 7.0 does not use the same logic, one space is one space
+                if( tdsVer<TDS70 && " ".equals(result) ) {
                     // In SQL trailing spaces are stripped from strings
                     // MS SQLServer denotes a zero length string
                     // as a single space.
@@ -3466,33 +3471,38 @@ public class Tds implements TdsDefinitions {
             int maxLength)
              throws java.io.IOException
     {
-
         byte[] converted;
-        if (value == null) {
-            converted = new byte[0];
+        if( value == null )
+        {
+            comm.appendByte(SYBVARCHAR);
+            comm.appendByte((byte)(maxLength>255 ? 255 : maxLength));
+            comm.appendByte((byte)0);
+            return;
         }
-        else {
+        else
             converted = encoder.getBytes(value);
-        }
-
 
         // set the type of the column
         // set the maximum length of the field
         // set the actual lenght of the field.
-        if (maxLength > 255 || converted.length > 255) {
-            if (tdsVer != TDS70)
-            {
-               throw new java.io.IOException("String too long");
-            }
-
+        if( tdsVer == TDS70 ) {
             comm.appendByte((byte) (SYBVARCHAR | 0x80));
             comm.appendTdsShort((short) (maxLength));
             comm.appendTdsShort((short) (converted.length));
         }
         else {
+            if( maxLength>255 || converted.length>255 )
+               throw new java.io.IOException("String too long");
+
             comm.appendByte(SYBVARCHAR);
             comm.appendByte((byte) (maxLength));
-            comm.appendByte((byte) (converted.length));
+            if( converted.length != 0 )
+                comm.appendByte((byte) (converted.length));
+            else
+            {
+                comm.appendByte((byte)1);
+                comm.appendByte((byte)32);
+            }
         }
 
         comm.appendBytes(converted);
@@ -3646,7 +3656,7 @@ public class Tds implements TdsDefinitions {
                 // Text and image columns have 4-byte size fields.
                 colSize = comm.getTdsInt();
 
-                // Swallow table name.
+                // Get table name.
                 tableName = comm.getString(comm.getTdsShort());
             }
 
@@ -4031,37 +4041,27 @@ public class Tds implements TdsDefinitions {
         }
         return new String(chars);
     }
+
+    /**
+     * All procedures of the current transaction were subitted.
+     */
     void commit()
     {
       proceduresOfTra.clear();
     }
 
-    boolean rollback()
+    /**
+     * All procedures of the current transaction were rolled back.
+     */
+    void rollback()
     {
-      boolean oncemore = false;
-      try {
-        Iterator it = proceduresOfTra.iterator();
-        while (it.hasNext()) {
-          Procedure p = (Procedure)it.next();
-          String sql  = p.getPreparedSqlString();
-          submitProcedure(sql, new SQLWarningChain());
-          oncemore = true;
-        }
-        if (oncemore)
-          submitProcedure("IF @@TRANCOUNT > 0 COMMIT TRAN ", new SQLWarningChain());
-        proceduresOfTra.clear();
-      }
-      catch (Exception e) {
         Iterator it = proceduresOfTra.iterator();
         while (it.hasNext()) {
           Procedure p = (Procedure)it.next();
           String sql  = p.getPreparedSqlString();
           procedureCache.remove(p.rawQueryString);
         }
-        oncemore = false;
         proceduresOfTra.clear();
-      }
-      return oncemore;
     }
 
     void skipToEnd()
@@ -4069,15 +4069,17 @@ public class Tds implements TdsDefinitions {
         com.internetcds.jdbc.tds.TdsUnknownPacketSubType,
         com.internetcds.jdbc.tds.TdsException
     {
-       boolean       done;
-       PacketResult  tmp;
-        if (moreResults)
-       do
-       {
-          tmp = processSubPacket();
-          done = (tmp instanceof PacketEndTokenResult)
-             && (! ((PacketEndTokenResult)tmp).moreResults());
-       } while (! done);
+        boolean done;
+        PacketResult tmp;
+
+        if( moreResults )
+            do
+            {
+                tmp = processSubPacket();
+                done = (tmp instanceof PacketEndTokenResult)
+                    && !((PacketEndTokenResult)tmp).moreResults();
+            }
+            while( !done );
     }
 
     private String sqlStatementToInitialize()

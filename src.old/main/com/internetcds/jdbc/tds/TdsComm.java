@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.5 2002-08-06 10:15:02 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.6 2002-08-23 09:37:07 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -92,7 +92,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.5 2002-08-06 10:15:02 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.6 2002-08-23 09:37:07 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -554,26 +554,6 @@ public class TdsComm implements TdsDefinitions {
             getPhysicalPacket();
 
         return inBuffer[inBufferIndex];
-    }
-
-
-    /**
-     *  put the most recently read byte of data back in the inBuffer. <p>
-     *
-     *  This function effectivly ungets the last byte read. It is guaranteed to
-     *  be able to unget the last byte read. Trying to unget multiple bytes is
-     *  not recomended and will only work so long as all the bytes were in the
-     *  same physical TDS network packet.
-     *
-     *@author    Craig Spannring
-     */
-    public void backup()
-    {
-        inBufferIndex--;
-
-        // make sure we have fallen of the beginning of the buffer
-        // throw an array out of bounds error if we've gone back too far.
-        byte b = inBuffer[inBufferIndex];
     }
 
 

@@ -1541,9 +1541,8 @@ public class CSUnitTest extends DatabaseTestCase {
     assertTrue(passed);
   }
 
-  public void testxx0057() throws Exception {
-    boolean    passed = true;
-
+  public void testxx0057() throws Exception
+  {
     output.println("test putting a zero length string into a parameter");
 
     // open the database
@@ -1567,7 +1566,7 @@ public class CSUnitTest extends DatabaseTestCase {
     if (count != 1)
     {
        output.println("Failed to add rows");
-       passed = false;
+       fail();
     }
     else
     {
@@ -1577,20 +1576,19 @@ public class CSUnitTest extends DatabaseTestCase {
        ResultSet  rs = pStmt.executeQuery();
        if (!rs.next())
        {
-          passed = false;
           output.println("Couldn't read rows from table.");
+          fail();
        }
        else
        {
           output.println("a is |" + rs.getString("a") + "|");
           output.println("b is |" + rs.getString("b") + "|");
-          passed = passed && (rs.getString("a").equals(""));
-          passed = passed && (rs.getString("b").equals("          "));
+          assertEquals("", rs.getString("a"));
+          assertEquals("          ", rs.getString("b"));
        }
     }
-    assertTrue(passed);
-
   }
+
   public void testxx0059() throws Exception
   {
     boolean passed = true;

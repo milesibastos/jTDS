@@ -59,18 +59,18 @@ public class AsTest extends DatabaseTestCase {
         "insert #tmp execute #spTestExec2 " +
         "select * from #tmp");
     CallableStatement cstmt = con.prepareCall("#spTestExec");
-    assertTrue(!cstmt.execute());
+    assertTrue(cstmt.execute());
 
 //    The JDBC-ODBC driver does not return update counts from stored procedures
 //    so we won't, either.
-    assertTrue(cstmt.getUpdateCount() == 0);  // set
-    assertTrue(!cstmt.getMoreResults());
-    assertTrue(cstmt.getUpdateCount() == 0);  // create
-    assertTrue(!cstmt.getMoreResults());
-    assertTrue(cstmt.getUpdateCount() == 0);  // execute
-    assertTrue(!cstmt.getMoreResults());
-    assertTrue(cstmt.getUpdateCount() == 1);  // insert
-    assertTrue(cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 0);  // set
+//    assertTrue(!cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 0);  // create
+//    assertTrue(!cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 0);  // execute
+//    assertTrue(!cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 1);  // insert
+//    assertTrue(cstmt.getMoreResults());
 
     ResultSet rs = cstmt.getResultSet();
     while (rs.next()) {
@@ -88,7 +88,7 @@ public class AsTest extends DatabaseTestCase {
     Statement stmt = con.createStatement();
     String sqlwithcount1 =
       "if (exists(select * from sysobjects where name = '#multi1withcount' and xtype = 'P'))" +
-      "  drop procedure multi1withcount ";
+      "  drop procedure #multi1withcount ";
     String sqlwithcount2 =
       "create procedure #multi1withcount as " +
       "  set nocount off " +
@@ -141,10 +141,14 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(!rs.next());
     assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == -1);
     cstmt = con.prepareCall("#multi1withcount");
-    assertTrue(!cstmt.execute());   // because of set nocount off
+
+//    The JDBC-ODBC driver does not return update counts from stored procedures
+//    so we won't, either.
+//    assertTrue(!cstmt.execute());   // because of set nocount off
+    assertTrue(cstmt.execute());   // because of set nocount off
     s2 = cstmt;
-    assertTrue(s2.getMoreResults());
-    rs = cstmt.getResultSet();
+//    assertTrue(s2.getMoreResults());
+    rs = s2.getResultSet();
     assertTrue(rs.next());
     assertTrue(rs.getString(1).equals("a"));
     assertTrue(!rs.next());
@@ -152,10 +156,12 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(rs.next());
     assertTrue(rs.getString(1).equals("b"));
     assertTrue(!rs.next());
-    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 0);  // create
-    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 1);  // insert
-    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 1);  // insert
-    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 1);  // insert
+//    The JDBC-ODBC driver does not return update counts from stored procedures
+//    so we won't, either.
+//    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 0);  // create
+//    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 1);  // insert
+//    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 1);  // insert
+//    assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == 1);  // insert
     assertTrue(s2.getMoreResults());    // select
     rs = s2.getResultSet();
     assertTrue(rs.next());

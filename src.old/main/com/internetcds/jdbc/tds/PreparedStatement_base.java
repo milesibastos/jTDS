@@ -65,13 +65,12 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.11 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.12 2002-08-23 09:37:06 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
     ParameterListItem[] parameterList = null;
     static Map typemap = null;
-
 
     public PreparedStatement_base(
             TdsConnection conn_,
@@ -890,16 +889,7 @@ public class PreparedStatement_base
      */
     public void setString( int index, String str ) throws SQLException
     {
-        int len = ( str == null ? -1 : str.length() );
-        if ( len == 0 ) {
-            // In SQL trailing spaces aren't significant.  SQLServer uses
-            // strings with a single space (" ") to represent a zero length
-            // string.
-            setParam( index, " ", java.sql.Types.VARCHAR, 1 );
-        }
-        else {
-            setParam( index, str, java.sql.Types.VARCHAR, len );
-        }
+        setParam(index, str, java.sql.Types.VARCHAR, str==null ? -1 : str.length());
     }
 
 

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * An in-memory representation of binary data.
  */
 public class BlobImpl implements Blob {
-    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.5 2004-03-04 16:08:23 bheineman Exp $";
+    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.6 2004-03-21 01:53:44 bheineman Exp $";
 
     private byte[] _blob;
 
@@ -75,13 +75,13 @@ public class BlobImpl implements Blob {
             throw new SQLException("pos must be <= " + Integer.MAX_VALUE);
         } else if (length < 0) {
             throw new SQLException("length must be >= 0.");
-        } else if (pos + length > _blob.length) {
+        } else if (--pos + length > _blob.length) {
             throw new SQLException("more bytes requested than exist in blob.");
         }
 
         byte[] value = new byte[length];
 
-        System.arraycopy(_blob, (int) --pos, value, 0, length);
+        System.arraycopy(_blob, (int) pos, value, 0, length);
 
         return value;
     }

@@ -8,6 +8,8 @@ Changes from jTDS 0.9-rc1
    Mike Hutchinson for the bug report and patch).
  o Corrected bug [1017164] executeQuery fails with > 2 resultsets; (thanks to
    Mike Hutchinson for the patch).
+ o Applied patch attached to bug [1017616] 0.9-RC1 Threading problem; (thanks to
+   Mike Hutchinson for the patch).
 
 08/24/2004 - Brian Heineman
  o Corrected JDBC compliance test files per Mike Hutchinson's recommendations:

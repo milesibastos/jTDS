@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.26 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.27 2004-08-28 17:59:54 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1042,31 +1042,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     void setClosed() {
         closed = true;
-
-        //
-        // Close any open statements
-        //
-        ArrayList tmpList;
-
-        synchronized (statements) {
-            tmpList = new ArrayList(statements);
-        }
-
-        for (int i = 0; i < tmpList.size(); i++) {
-            try {
-                WeakReference wr = (WeakReference) tmpList.get(i);
-
-                if (wr != null) {
-                    JtdsStatement stmt = (JtdsStatement) wr.get();
-
-                    if (stmt != null) {
-                        stmt.setClosed();
-                    }
-                }
-            } catch (SQLException e) {
-                // Ignore
-            }
-        }
     }
 
     //

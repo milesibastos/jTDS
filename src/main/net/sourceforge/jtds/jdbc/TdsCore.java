@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.31 2004-08-28 15:46:50 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.32 2004-08-28 17:59:54 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -353,7 +353,7 @@ public class TdsCore {
      * @throws SQLException
      */
     private void checkOpen() throws SQLException {
-        if (isClosed) {
+        if (connection.isClosed()) {
             throw new SQLException(
                 Messages.get("error.generic.closed", "Connection"),
                     "HY010");
@@ -486,6 +486,7 @@ public class TdsCore {
      * @throws SQLException
      */
     boolean getMoreResults() throws SQLException {
+        checkOpen();
         nextToken();
         messages.checkErrors();
 
@@ -509,7 +510,6 @@ public class TdsCore {
                     x = (byte)in.peek();
                 }
             } catch (IOException e) {
-                isClosed = true;
                 connection.setClosed();
 
                 throw Support.linkException(
@@ -580,6 +580,7 @@ public class TdsCore {
      * @throws SQLException
      */
     void clearResponseQueue() throws SQLException {
+        checkOpen();
         while (!endOfResponse) {
             nextToken();
         }
@@ -594,7 +595,7 @@ public class TdsCore {
         if (endOfResponse || endOfResults) {
             return false;
         }
-
+        checkOpen();
         nextToken();
 
         // Will either be first or next data row or end.
@@ -634,7 +635,6 @@ public class TdsCore {
 
             messages.checkErrors();
         } catch (IOException e) {
-            isClosed = true;
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
@@ -675,7 +675,6 @@ public class TdsCore {
         } catch (Exception e) {
             // Ignore any exceptions as this connection
             // is closing anyway.
-            isClosed = true;
         }
     }
 
@@ -692,7 +691,6 @@ public class TdsCore {
                out.close();
                in.close();
            } catch (IOException ioe) {
-               isClosed = true;
                connection.setClosed();
                throw Support.linkException(
                    new SQLException(
@@ -797,7 +795,6 @@ public class TdsCore {
             endOfResults  = true;
             wait(timeOut);
         } catch (IOException ioe) {
-            isClosed = true;
             connection.setClosed();
 
             throw Support.linkException(
@@ -913,6 +910,7 @@ public class TdsCore {
      */
     String sybasePrepare(String sql, ParamInfo[] params)
         throws SQLException {
+        checkOpen();
         if (sql == null || sql.length() == 0) {
             throw new IllegalArgumentException(
                     "sql parameter must be at least 1 character long.");
@@ -954,7 +952,6 @@ public class TdsCore {
             clearResponseQueue();
             messages.checkErrors();
         } catch (IOException ioe) {
-            isClosed = true;
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
@@ -988,6 +985,7 @@ public class TdsCore {
      */
     Object readText(String tabName, String colName, TextPtr textPtr, int offset, int length)
         throws SQLException {
+        checkOpen();
         if (colName == null || colName.length() == 0
             || tabName == null || tabName.length() == 0) {
             throw new SQLException(Messages.get("error.tdscore.badtext"), "HY000");
@@ -1046,6 +1044,7 @@ public class TdsCore {
      * @throws SQLException
      */
     int dataLength(String tabName, String colName) throws SQLException {
+        checkOpen();
         if (colName == null || colName.length() == 0
             || tabName == null || tabName.length() == 0) {
             throw new SQLException(Messages.get("error.tdscore.badtext"), "HY000");
@@ -1647,7 +1646,6 @@ public class TdsCore {
                                 Integer.toHexString(currentToken.token));
             }
         } catch (IOException ioe) {
-            isClosed = true;
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(
@@ -1655,7 +1653,6 @@ public class TdsCore {
                                 "error.generic.ioerror", ioe.getMessage()),
                                     "08S01"), ioe);
         } catch (ProtocolException pe) {
-            isClosed = true;
             connection.setClosed();
             throw Support.linkException(
                 new SQLException(

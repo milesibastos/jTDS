@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.14 2004-08-28 15:46:50 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.15 2004-08-28 17:59:54 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -202,16 +202,6 @@ public class JtdsStatement implements java.sql.Statement {
         throw new SQLException(
                 Messages.get("error.statement.badbatch",
                         value.toString()), "HYC00");
-    }
-
-    /**
-     * Force the statement to close following an IO error.
-     *
-     * @throws SQLException
-     */
-    void setClosed() throws SQLException {
-        tds = null;
-        close();
     }
 
     /**
@@ -487,15 +477,15 @@ public class JtdsStatement implements java.sql.Statement {
             try {
                 closeCurrentResultSet();
                 
-                if (tds != null) {
+                if (!connection.isClosed()) {
                     tds.clearResponseQueue();
                     tds.close();
                 }
             } finally {
+                closed = true;
                 tds = null;
                 connection.removeStatement(this);
                 connection = null;
-                closed = true;
             }
         }
     }

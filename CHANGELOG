@@ -1,6 +1,12 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/25/2004 - Alin Sinpalean
+ o Fixed bug #922802 (TdsStatement.executeBatch() throws exception if no
+   statements added). Indeed other drivers work just fine with empty batches and
+   the spec doesn't mention anything about throwing an exception if no batch was
+   added.
+
 03/24/2004 - Alin Sinpalean
  o Applied Mike's "Streamlined stored proc processing" patch (#916084). Seems
    like all I'm doing lately is answering forum questions and applying Mike's

@@ -715,4 +715,44 @@ public class SAfeTest extends DatabaseTestCase
         resultSet.close();
         cs.close();
     }
+
+    /**
+     * Test batch updates for both plain and prepared statements.
+     */
+    public void testBatchUpdates0015() throws Exception {
+        Connection localConn = getConnection();
+        Statement stmt = localConn.createStatement();
+        stmt.execute("CREATE TABLE #SAfe0015(value VARCHAR(255) PRIMARY KEY)");
+
+        // Execute prepared batch
+        PreparedStatement insStmt = localConn.prepareStatement(
+                "INSERT INTO #SAfe0015(value) values (?)");
+        insStmt.setString(1, "Row 1");
+        insStmt.addBatch();
+        insStmt.setString(1, "Row 2");
+        insStmt.addBatch();
+        int[] res = insStmt.executeBatch();
+        assertEquals(2, res.length);
+        assertEquals(1, res[0]);
+        assertEquals(1, res[1]);
+
+        // Execute an empty batch
+        res = insStmt.executeBatch();
+        assertEquals(0, res.length);
+
+        // Execute plain batch
+        stmt.addBatch("UPDATE #SAfe0015 SET value='R1' WHERE value='Row 1'");
+        stmt.addBatch("UPDATE #SAfe0015 SET value='R2' WHERE value='Row 2'");
+        res = stmt.executeBatch();
+        assertEquals(2, res.length);
+        assertEquals(1, res[0]);
+        assertEquals(1, res[1]);
+
+        // Execute an empty batch
+        res = stmt.executeBatch();
+        assertEquals(0, res.length);
+
+        // Close the connection first
+        localConn.close();
+    }
 }

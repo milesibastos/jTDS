@@ -29,3 +29,5 @@ Changes from jTDS 0.2
 
  o Optimized the implementations of TdsComm.getBytes(int) and TdsComm.peek();
    they are no longer using TdsComm.getByte(), which was slowing them down.
+ o Implemented getExportedKeys.
+ o TDS 7.0 is now the default protocol used by jTDS.

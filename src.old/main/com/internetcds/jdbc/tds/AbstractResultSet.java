@@ -432,9 +432,9 @@ public abstract class AbstractResultSet
             StringBuffer buf = new StringBuffer(2*b.length);
             for( int i=0; i<b.length; i++ )
             {
-                int v = b[i]/16;
+                int n=((int)b[i])&0xFF, v=n/16;
                 buf.append((char)(v<10 ? '0'+v : 'A'+v-10));
-                v = b[i]%16;
+                v = n%16;
                 buf.append((char)(v<10 ? '0'+v : 'A'+v-10));
             }
             return buf.toString();

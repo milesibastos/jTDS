@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.8 2002-08-05 14:14:33 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.9 2002-08-06 16:38:12 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.8 2002-08-05 14:14:33 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.9 2002-08-06 16:38:12 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -1082,11 +1082,81 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *@exception  SQLException  if a database-access error occurs.
      *@see                      #getImportedKeys
      */
-    public java.sql.ResultSet getExportedKeys( String catalog, String schema,
-            String table ) throws SQLException
+    public java.sql.ResultSet getExportedKeys(
+        String catalog,
+        String schema,
+        String table)
+        throws SQLException
     {
-        NotImplemented();
-        return null;
+        String sql = null;
+        java.sql.Statement statement = connection.createStatement();
+
+        java.sql.ResultSet rs;
+
+        if(catalog == null)
+        {
+            rs = statement.executeQuery("SELECT DB_NAME()");
+            rs.next();
+
+            catalog = rs.getString(1);
+
+            rs.close();
+        }
+
+        // XXX Security risk.  It 'might' be possible to create
+        // a catalog name that when inserted into this sql statement could
+        // do other commands.
+        sql =
+            "select                                                         " +
+            "  '" + catalog + "' as PKTABLE_CAT,                            " +
+            "  PKTABLE_SCHEM=                                               " +
+            "    (select USER_NAME(uid) from                                " +
+            "    " + catalog + ".dbo.sysobjects                             " +
+            "    where f.rkeyid=id),                                        " +
+            "  OBJECT_NAME(f.rkeyid) as PKTABLE_NAME,                       " +
+            "  PKCOLUMN_NAME=                                               " +
+            "    (select name from                                          " +
+            "    " + catalog + ".dbo.syscolumns                             " +
+            "    where f.rkeyid=id and f.rkey=colid),                       " +
+            "  '" + catalog + "'  as FKTABLE_CAT,                           " +
+            "  USER_NAME(o.uid) as FKTABLE_SCHEM,                           " +
+            "  OBJECT_NAME(o.parent_obj) as FKTABLE_NAME,                   " +
+            "  FKCOLUMN_NAME=                                               " +
+            "    (select name from                                          " +
+            "    " + catalog + ".dbo.syscolumns                             " +
+            "    where f.fkeyid=id and f.fkey=colid),                       " +
+            "  f.keyno as KEY_SEQ,                                          " +
+            "  UPDATE_RULE=                                                 " +
+            "    CASE OBJECTPROPERTY(f.constid, 'CnstIsUpdateCascade')      " +
+            "    WHEN 1 THEN 0                                              " +
+            "    ELSE 1                                                     " +
+            "    END,                                                       " +
+            " DELETE_RULE=                                                  " +
+            "    CASE OBJECTPROPERTY(f.constid, 'CnstIsDeleteCascade')      " +
+            "    WHEN 1 THEN 0                                              " +
+            "    ELSE 1                                                     " +
+            "    END,                                                       " +
+            "  o.name as FK_NAME,                                           " +
+            "  PK_NAME=                                                     " +
+            "    (select name from                                          " +
+            "    " + catalog + ".dbo.sysobjects                             " +
+            "    where parent_obj=f.rkeyid and xtype='PK'),                 " +
+            "  7 as DEFERRABILITY                                           " +
+            "from                                                           " +
+            "  " + catalog + ".dbo.sysobjects as o,                         " +
+            "  " + catalog + ".dbo.sysforeignkeys as f                      " +
+            "where                                                          " +
+            "  OBJECT_NAME(f.rkeyid)='" + table + "' and                    " +
+            "  o.xtype = 'F' and                                            " +
+            "  o.id=f.constid                                               " ;
+
+        if(schema != null) sql += " and USER_NAME(o.uid) LIKE '" + schema + "'" ;
+
+        sql += " order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ";
+
+        rs = statement.executeQuery(sql);
+
+        return rs;
     }
 
 
@@ -1213,9 +1283,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             rs.close();
         }
 
-         // XXX Security risk.  It 'might' be possible to create
-         // a catalog name that when inserted into this sql statement could
-         // do other commands.
+        // XXX Security risk.  It 'might' be possible to create
+        // a catalog name that when inserted into this sql statement could
+        // do other commands.
         sql =
             "select                                                         " +
             "  '" + catalog + "' as PKTABLE_CAT,                            " +
@@ -1256,7 +1326,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "  " + catalog + ".dbo.sysobjects as o,                         " +
             "  " + catalog + ".dbo.sysforeignkeys as f                      " +
             "where                                                          " +
-            "  OBJECT_NAME(o.parent_obj)='" + table + "' and                " +
+            "  OBJECT_NAME(f.fkeyid)='" + table + "' and                    " +
             "  o.xtype = 'F' and                                            " +
             "  o.id=f.constid                                               " ;
 
@@ -1371,7 +1441,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "          WHEN INDEXPROPERTY(o.id, i.name, 'IsClustered')=1 THEN 1                     " +
             "          ELSE 3                                                                       " +
             "          END,                                                                         " +
-            "  ORDINAL_POSITION=                                                                   " +
+            "  ORDINAL_POSITION=                                                                    " +
             "          CASE                                                                         " +
             "          WHEN INDEXPROPERTY(o.id, i.name, 'IsStatistics')=1 THEN 0                    " +
             "          ELSE k.keyno                                                                 " +
@@ -1379,10 +1449,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "  c.name as COLUMN_NAME,                                                               " +
             "  ASC_OR_DESC=                                                                         " +
             (tds.getDatabaseMajorVersion()>=8 && tds.getServerType()==Tds.SQLSERVER ?
-               ("          CASE                                                                         " +
-                "          WHEN INDEXKEY_PROPERTY(o.id, i.indid, k.keyno, 'IsDescending')=1 THEN 'DESC' " +
-                "          ELSE 'ASC'                                                                   " +
-                "          END,                                                                         ")
+               ("          CASE                                                                     " +
+                "          WHEN INDEXKEY_PROPERTY(o.id, i.indid, k.keyno, 'IsDescending')=1 THEN 'DESC'" +
+                "          ELSE 'ASC'                                                               " +
+                "          END,                                                                     ")
                : "NULL,") +
             "  i.rowcnt as CARDINALITY,                                                             " +
             "  i.dpages as PAGES,                                                                   " +

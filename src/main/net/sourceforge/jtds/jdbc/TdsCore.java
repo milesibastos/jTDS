@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.21 2004-08-06 20:37:59 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.22 2004-08-06 21:07:41 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -2774,67 +2774,71 @@ public class TdsCore {
         throws IOException, SQLException {
         int prepareSql = connection.getPrepareSql();
 
-        if (parameters != null && parameters.length > 0) {
-            if (procName == null && prepareSql == EXECUTE_SQL) {
-                // Use sp_executesql approach
-                procName = "sp_executesql";
+        if (procName == null && parameters != null && parameters.length > 0
+                && prepareSql == EXECUTE_SQL) {
+            // Use sp_executesql approach
+            procName = "sp_executesql";
 
-                ParamInfo params[] = new ParamInfo[parameters.length + 2];
+            ParamInfo params[] = new ParamInfo[parameters.length + 2];
 
-                System.arraycopy(parameters, 0, params, 2, parameters.length);
+            System.arraycopy(parameters, 0, params, 2, parameters.length);
 
-                params[0] = new ParamInfo();
-                params[0].jdbcType = Types.VARCHAR;
-                params[0].bufferSize = 4000;
-                params[0].isSet = true;
-                params[0].isUnicode = true;
-                params[0].value = Support.substituteParamMarkers(sql, parameters);
+            params[0] = new ParamInfo();
+            params[0].jdbcType = Types.VARCHAR;
+            params[0].bufferSize = 4000;
+            params[0].isSet = true;
+            params[0].isUnicode = true;
+            params[0].value = Support.substituteParamMarkers(sql, parameters);
 
-                TdsData.getNativeType(connection, params[0]);
-                StringBuffer paramDef = new StringBuffer(80);
+            TdsData.getNativeType(connection, params[0]);
+            StringBuffer paramDef = new StringBuffer(80);
 
-                for (int i = 0; i < parameters.length; i++) {
-                    paramDef.append("@P");
-                    paramDef.append(i);
-                    paramDef.append(' ');
-                    paramDef.append(parameters[i].sqlType);
+            for (int i = 0; i < parameters.length; i++) {
+                paramDef.append("@P");
+                paramDef.append(i);
+                paramDef.append(' ');
+                paramDef.append(parameters[i].sqlType);
 
-                    if (i + 1 < parameters.length) {
-                        paramDef.append(',');
-                    }
+                if (i + 1 < parameters.length) {
+                    paramDef.append(',');
                 }
-
-                params[1] = new ParamInfo();
-                params[1].jdbcType = Types.VARCHAR;
-                params[1].bufferSize = 4000;
-                params[1].isSet = true;
-                params[1].isUnicode = true;
-                params[1].value = paramDef.toString();
-
-                TdsData.getNativeType(connection, params[1]);
-
-                parameters = params;
-            } else if (procName != null && procName.length() > 0
-                    && Character.isDigit(procName.charAt(0))
-                    && (prepareSql == PREPARE || prepareSql == PREPEXEC)) {
-                ParamInfo params[] = new ParamInfo[parameters.length + 1];
-
-                System.arraycopy(parameters, 0, params, 1, parameters.length);
-
-                params[0] = new ParamInfo();
-                params[0].jdbcType = Types.INTEGER;
-                params[0].bufferSize = 4;
-                params[0].isSet = true;
-                params[0].isUnicode = false;
-                params[0].value = new Integer(procName);
-
-                TdsData.getNativeType(connection, params[0]);
-
-                parameters = params;
-
-                // Use sp_execute approach
-                procName = "sp_execute";
             }
+
+            params[1] = new ParamInfo();
+            params[1].jdbcType = Types.VARCHAR;
+            params[1].bufferSize = 4000;
+            params[1].isSet = true;
+            params[1].isUnicode = true;
+            params[1].value = paramDef.toString();
+
+            TdsData.getNativeType(connection, params[1]);
+
+            parameters = params;
+        } else if (procName != null && procName.length() > 0
+                && Character.isDigit(procName.charAt(0))
+                && (prepareSql == PREPARE || prepareSql == PREPEXEC)) {
+            
+            if (parameters == null) {
+                parameters = new ParamInfo[0];
+            }
+            
+            ParamInfo params[] = new ParamInfo[parameters.length + 1];
+
+            System.arraycopy(parameters, 0, params, 1, parameters.length);
+
+            params[0] = new ParamInfo();
+            params[0].jdbcType = Types.INTEGER;
+            params[0].bufferSize = 4;
+            params[0].isSet = true;
+            params[0].isUnicode = false;
+            params[0].value = new Integer(procName);
+
+            TdsData.getNativeType(connection, params[0]);
+
+            parameters = params;
+
+            // Use sp_execute approach
+            procName = "sp_execute";
         }
 
         if (procName != null && procName.length() > 0) {

@@ -11,6 +11,9 @@ Changes from jTDS 0.8.1
      3 - sp_prepare is used in conjunction with sp_execute
      4 (not implemented) - sp_prepexec is used in conjunction with sp_execute
    Update the FAQ to include this new information.
+ o Corrected bug with sp_prepare/sp_execute logic where statements without
+   parameters were being sent as raw SQL even though the SQL was prepared with
+   sp_prepare.
 
 08/05/2004 - David Kilzer
  o Added missing javadoc to DriverUnitTest methods.

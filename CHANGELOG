@@ -1,3 +1,23 @@
+Changes from jTDS 0.8-rc1
+=========================
+
+03/28/2004 - Brian Heineman
+ o Implemented Savepoint support.
+ o Updated DatabaseMetaData.supportsSavepoints() to return true.
+ o Implemented DatabaseMetaData.supportsMultipleOpenResults(); returns true.
+ o Implemented DatabaseMetaData.supportsNamedParameters(); currently returns
+   false.
+ o Implemented DatabaseMetaData.supportsStatementPooling(); currently returns
+   false.
+
+03/27/2004 - Brian Heineman
+ o Added test to demonstrate bug [924030] EscapeProcesser problem with "{}"
+   brackets
+
+===============================================================================
+03/30/2004 - jTDS 0.8-rc1 released
+===============================================================================
+
 Changes from jTDS 0.7.1
 ========================
 
@@ -15,20 +35,9 @@ Changes from jTDS 0.7.1
  o Modified property names in TdsDefinitions and TdsDataSource to match the
    documentation.
 
-03/28/2004 - Brian Heineman
- o Implemented Savepoint support.
- o Updated DatabaseMetaData.supportsSavepoints() to return true.
- o Implemented DatabaseMetaData.supportsMultipleOpenResults(); returns true.
- o Implemented DatabaseMetaData.supportsNamedParameters(); currently returns
-   false.
- o Implemented DatabaseMetaData.supportsStatementPooling(); currently returns
-   false.
-
 03/27/2004 - Brian Heineman
- o Corrected parsing bug in EscapeProcesser that occured when { or } was found
-   in a quoted string.
- o Added test to demonstrate bug [924030] EscapeProcesser problem with "{}"
-   brackets
+ o Corrected parsing bug in EscapeProcessor that occured when "{" or "}" were
+   found in a quoted string.
 
 03/26/2004 - Alin Sinpalean
  o Fixed the fix for bug #922802. ;o) There was a NPE thrown if the batch was

@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.26 2005-02-14 20:11:54 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.27 2005-03-04 00:11:10 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -74,6 +74,7 @@ public class JtdsDataSource
     protected String xaEmulation;
     protected String logFile;
     protected String ssl;
+    protected String batchSize;
 
     protected String description;
 
@@ -224,6 +225,9 @@ public class JtdsDataSource
         if (ssl != null) {
             props.setProperty(Messages.get(Driver.SSL), ssl);
         }
+        if (batchSize != null) {
+            props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
+        }
 
         String url;
 
@@ -277,6 +281,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.PROGNAME), progName));
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
+        ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
 
         ref.add(new StringRefAddr("description", description));
 
@@ -560,5 +565,16 @@ public class JtdsDataSource
 
     public String getSsl() {
         return ssl;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = String.valueOf(batchSize);
+    }
+
+    public int getBatchSize() {
+        if (batchSize == null) {
+            return 0;
+        }
+        return Integer.parseInt(batchSize);
     }
 }

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.72 2005-02-25 21:31:36 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.73 2005-03-04 00:10:55 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -219,8 +219,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean xaEmulation = true;
     /** Mutual exclusion lock to control access to connection. */
     private Semaphore mutex = new Semaphore(1);
-    /** SSL setting */
+    /** SSL setting. */
     private String ssl;
+    /** The maximum size of a batch. */
+    private int batchSize;
 
     /**
      * Default constructor.
@@ -686,6 +688,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the batch size to be used internally.
+     *
+     * @return the batch size as an <code>int</code>
+     */
+    int getBatchSize() {
+        return this.batchSize;
+    }
+
+    /**
      * Transfers the properties to the local instance variables.
      *
      * @param info The connection properties Object.
@@ -707,7 +718,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         progName = info.getProperty(Messages.get(Driver.PROGNAME));
         serverCharset = info.getProperty(Messages.get(Driver.CHARSET));
         language = info.getProperty(Messages.get(Driver.LANGUAGE));
-        prepareSql = parseIntegerProperty(info, Driver.PREPARESQL);
         lastUpdateCount = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.LASTUPDATECOUNT)));
         useUnicode = "true".equalsIgnoreCase(
@@ -723,14 +733,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         Integer parsedTdsVersion =
                 DefaultProperties.getTdsVersion(info.getProperty(Messages.get(Driver.TDS)));
         if (parsedTdsVersion == null) {
-            throw new SQLException(
-                                  Messages.get("error.connection.badprop",
-                                               Messages.get(Driver.TDS)), "08001");
+            throw new SQLException(Messages.get("error.connection.badprop",
+                    Messages.get(Driver.TDS)), "08001");
         }
         tdsVersion = parsedTdsVersion.intValue();
 
         packetSize = parseIntegerProperty(info, Driver.PACKETSIZE);
-
         if (packetSize < TdsCore.MIN_PKT_SIZE) {
             if (tdsVersion >= Driver.TDS70) {
                 // Default of 0 means let the server specify packet size
@@ -740,17 +748,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 packetSize = TdsCore.MIN_PKT_SIZE;
             }
         }
-
         if (packetSize > TdsCore.MAX_PKT_SIZE) {
             packetSize = TdsCore.MAX_PKT_SIZE;
         }
-
         packetSize = (packetSize / 512) * 512;
 
         loginTimeout = parseIntegerProperty(info, Driver.LOGINTIMEOUT);
         lobBuffer = parseLongProperty(info, Driver.LOBBUFFER);
-        maxStatements = parseIntegerProperty(info, Driver.MAXSTATEMENTS);
 
+        maxStatements = parseIntegerProperty(info, Driver.MAXSTATEMENTS);
         if (maxStatements <= 0) {
         	statementCache = new NonCachingStatementCache();
         } else if (maxStatements == Integer.MAX_VALUE) {
@@ -759,6 +765,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         	statementCache = new DefaultStatementCache(maxStatements);
         }
 
+        prepareSql = parseIntegerProperty(info, Driver.PREPARESQL);
         // The TdsCore.PREPEXEC method is only available with TDS 8.0+ (SQL
         // Server 2000+); downgrade to TdsCore.PREPARE if an invalid option
         // is selected.
@@ -775,6 +782,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         ssl = info.getProperty(Messages.get(Driver.SSL));
+
+        batchSize = parseIntegerProperty(info, Driver.BATCHSIZE);
+        if (batchSize < 0) {
+            throw new SQLException(Messages.get("error.connection.badprop",
+                    Messages.get(Driver.BATCHSIZE)), "08001");
+        }
     }
 
     /**

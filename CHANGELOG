@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/03/2005 - Alin Sinpalean
+ o Added a batchSize parameter to control how many statements should be sent at
+   once in a batch execution. Batches are now broken up into pieces on
+   execution if they exceed this size limit.
+
 03/01/2005 - Alin Sinpalean
  o Following Mike's suggestion, reduced the chunk of code synchronized with
    cancelMonitor to only TdsCore.cancelPending assignments, to ensure these are

@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.14 2005-02-14 20:11:54 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.15 2005-03-04 00:11:11 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -104,6 +104,10 @@ public class JtdsObjectFactory implements ObjectFactory {
             }
             ds.setLogFile((String) ref.get(Messages.get(Driver.LOGFILE)).getContent());
             ds.setSsl((String) ref.get(Messages.get(Driver.SSL)).getContent());
+            final Object batchSize = ref.get(Messages.get(Driver.BATCHSIZE)).getContent();
+            if (batchSize != null) {
+                ds.setBatchSize(Integer.parseInt((String) batchSize));
+            }
 
             ds.setDescription((String) ref.get("description").getContent());
 

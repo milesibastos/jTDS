@@ -11,7 +11,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author David D. Kilzer
  * @author Alin Sinpalean
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.5 2005-02-14 20:12:13 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.6 2005-03-04 00:11:11 alin_sinpalean Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
     /**
@@ -54,6 +54,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         boolean xaEmulation = false;
         String logFile = "logFile";
         String ssl = "ssl";
+        int batchSize = 123;
         String description = "description";
 
         JtdsDataSource ds = new JtdsDataSource();
@@ -83,6 +84,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         ds.setXaEmulation(xaEmulation);
         ds.setLogFile(logFile);
         ds.setSsl(ssl);
+        ds.setBatchSize(batchSize);
         ds.setDescription(description);
 
         Reference dsRef = ds.getReference();
@@ -122,6 +124,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertEquals(xaEmulation, ds.getXaEmulation());
         assertEquals(logFile, ds.getLogFile());
         assertEquals(ssl, ds.getSsl());
+        assertEquals(batchSize, ds.getBatchSize());
         assertEquals(description, ds.getDescription());
     }
 
@@ -170,6 +173,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertEquals(false, ds.getXaEmulation());
         assertNull(ds.getLogFile());
         assertNull(ds.getSsl());
+        assertEquals(0, ds.getBatchSize());
         assertNull(ds.getDescription());
     }
 }

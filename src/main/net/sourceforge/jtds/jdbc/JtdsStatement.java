@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.32 2005-02-27 11:01:08 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.33 2005-03-04 00:11:10 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -628,24 +628,69 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         int size = batchValues.size();
+        int executeSize = connection.getBatchSize();
+        executeSize = (executeSize == 0) ? Integer.MAX_VALUE : executeSize;
+        int[] updateCounts = null;
+        if (executeSize < size) {
+            updateCounts = new int[size];
+        }
 
         try {
             tds.startBatch();
             for (int i = 0; i < size;) {
                 Object value = batchValues.get(i);
                 ++i;
+                // Execute batch now if max size reached or end of batch
+                boolean executeNow = (i % executeSize == 0) || i == size;
 
                 if (value instanceof String) {
                     tds.executeSQL((String)value, null, null, true, 0, -1, -1,
-                            i == size);
+                            executeNow);
                 } else {
-                    executeBatchOther(value, i == size);
+                    executeBatchOther(value, executeNow);
+                }
+
+                // If the batch has been sent, process the results
+                if (executeNow) {
+                    int[] partialCounts = null;
+                    BatchUpdateException err = null;
+                    try {
+                        // Will throw a BatchUpdateException with the partial
+                        // update counts if an error occurs and consume the
+                        // whole response
+                        partialCounts = tds.getBatchCounts();
+                    } catch (BatchUpdateException ex) {
+                        err = ex;
+                        partialCounts = ex.getUpdateCounts();
+                    }
+
+                    if (executeSize < size) {
+                        // Copy over update counts
+                        System.arraycopy(partialCounts, 0, updateCounts,
+                                ((i - 1) / executeSize) * executeSize,
+                                partialCounts.length);
+                    } else {
+                        updateCounts = partialCounts;
+                    }
+
+                    if (err != null) {
+                        // If an error occurred, truncate the update counts and
+                        // "rethrow" the exception
+                        // TODO Should probably continue for Sybase to keep compatible
+                        if (i > executeSize) {
+                            int[] tmp = new int[((i - 1) / executeSize) * executeSize
+                                    + partialCounts.length];
+                            System.arraycopy(updateCounts, 0, tmp, 0, tmp.length);
+                            updateCounts = tmp;
+                        }
+                        throw new BatchUpdateException(
+                                err.getMessage(), err.getSQLState(),
+                                err.getErrorCode(), updateCounts);
+                    }
                 }
             }
 
-            // Will throw a BatchUpdateException with the partial update counts
-            // if an error occurs and consume the whole response
-            return tds.getBatchCounts();
+            return updateCounts;
         } catch (BatchUpdateException ex) {
             // If it's a BatchUpdateException let it go
             throw ex;

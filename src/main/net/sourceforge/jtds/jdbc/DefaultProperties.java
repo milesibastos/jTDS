@@ -46,12 +46,16 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.17 2005-02-02 13:42:37 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.18 2005-03-04 00:10:56 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
     /** Default <code>appName</code> property. */
     public static final String APP_NAME = "jTDS";
+    /** Default <code>batchSize</code> property for SQL Server. */
+    public static final String BATCH_SIZE_SQLSERVER = "0";
+    /** Default <code>batchSize</code> property for Sybase. */
+    public static final String BATCH_SIZE_SYBASE = "1000";
     /** Default <code>databaseName</code> property. */
     public static final String DATABASE_NAME = "";
     /** Default <code>instance</code> property. */
@@ -126,6 +130,8 @@ public final class DefaultProperties {
     private static final HashMap portNumberDefaults;
     /** Default packet size based on TDS version */
     private static final HashMap packetSizeDefaults;
+    /** Default max batch size based on server type */
+    private static final HashMap batchSizeDefaults;
 
     static {
         tdsDefaults = new HashMap(2);
@@ -141,6 +147,12 @@ public final class DefaultProperties {
         packetSizeDefaults.put(TDS_VERSION_50, PACKET_SIZE_42_50);
         packetSizeDefaults.put(TDS_VERSION_70, PACKET_SIZE_70_80);
         packetSizeDefaults.put(TDS_VERSION_80, PACKET_SIZE_70_80);
+
+        batchSizeDefaults = new HashMap(2);
+        batchSizeDefaults.put(String.valueOf(Driver.SQLSERVER),
+                BATCH_SIZE_SQLSERVER);
+        batchSizeDefaults.put(String.valueOf(Driver.SYBASE),
+                BATCH_SIZE_SYBASE);
     }
 
     /**
@@ -169,6 +181,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.DOMAIN, DOMAIN);
         addDefaultPropertyIfNotSet(props, Driver.APPNAME, APP_NAME);
         addDefaultPropertyIfNotSet(props, Driver.PROGNAME, PROG_NAME);
+        addDefaultPropertyIfNotSet(props, Driver.BATCHSIZE, Driver.SERVERTYPE, batchSizeDefaults);
         addDefaultPropertyIfNotSet(props, Driver.LASTUPDATECOUNT, LAST_UPDATE_COUNT);
         addDefaultPropertyIfNotSet(props, Driver.LOBBUFFER, LOB_BUFFER_SIZE);
         addDefaultPropertyIfNotSet(props, Driver.LOGINTIMEOUT, LOGIN_TIMEOUT);

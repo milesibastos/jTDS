@@ -33,7 +33,7 @@ existence of jTDS.
 Status
 ======
 
-Production, Beta.
+Production, Stable.
 
 Stable for concurrent usage (Connections are multithread-safe, Statements are
 completely independent). Full support is provided for forward-only and
@@ -81,8 +81,7 @@ To Do
 =====
 
 1. Locator-based Blob/Clob implementation.
-2. Native batch update support (not simulated).
-3. Minor features, such as Single Sign-On and failover support.
+2. Minor features, such as failover support.
 
 
 Contacts

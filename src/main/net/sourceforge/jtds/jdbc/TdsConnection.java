@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2004-01-29 18:44:22 bheineman Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.7 2004-01-29 18:44:22 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2004-01-29 18:44:22 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -497,14 +497,13 @@ public class TdsConnection implements Connection
      * grammar prior to sending it; nativeSQL returns the native form of the
      * statement that the driver would have sent.
      *
-     * @param sql              a SQL statement that may contain one or more '?'
-     *     parameter placeholders
-     * @return                 the native form of this statement
-     * @exception SQLException if a database access error occurs
+     * @param sql a SQL statement that may contain one or more '?' parameter
+     *        placeholders
+     * @return the native form of this statement
+     * @throws SQLException if a database access error occurs
      */
-    public String nativeSQL(String sql) throws SQLException
-    {
-        return Tds.toNativeSql(sql, serverType);
+    public String nativeSQL(String sql) throws SQLException {
+        return EscapeProcessor.nativeSQL(sql);
     }
 
     /**

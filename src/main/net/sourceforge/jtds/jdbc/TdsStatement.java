@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.8 2004-01-29 18:44:22 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.8 2004-01-29 18:44:22 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -174,8 +174,7 @@ public class TdsStatement implements java.sql.Statement
     }
 
     private final boolean executeImpl(Tds tds, String sql, SQLWarningChain wChain)
-        throws SQLException
-    {
+        throws SQLException {
         // Clear warnings, otherwise the last exception will be thrown.
         wChain.clearWarnings();
         updateCount = -1;
@@ -184,19 +183,15 @@ public class TdsStatement implements java.sql.Statement
         // crash or return results from the previous query.
         skipToEnd();
 
-        try
-        {
-            if( escapeProcessing )
-                sql = Tds.toNativeSql(sql, tds.getServerType());
+        try {
+            if (escapeProcessing) {
+                sql = EscapeProcessor.nativeSQL(sql);;
+            }
 
             tds.executeQuery(sql, this, wChain, timeout);
-        }
-        catch(java.io.IOException e)
-        {
+        } catch(java.io.IOException e) {
             throw new SQLException("Network error: " + e.getMessage());
-        }
-        catch(net.sourceforge.jtds.jdbc.TdsException e)
-        {
+        } catch(net.sourceforge.jtds.jdbc.TdsException e) {
             throw new SQLException("TDS error: " + e.getMessage());
         }
 

@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.34 2005-03-06 09:42:04 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.35 2005-03-26 22:10:58 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -111,6 +111,8 @@ public class JtdsStatement implements java.sql.Statement {
      * <code>ResultSet</code>).
      */
     protected LinkedList resultQueue = new LinkedList();
+    /** List of open result sets. */
+    protected ArrayList openResultSets;
 
     /**
      * Construct a new Statement object.
@@ -230,6 +232,25 @@ public class JtdsStatement implements java.sql.Statement {
             // Ignore
         } finally {
             currentResult = null;
+        }
+    }
+
+    /**
+     * Close all result sets.
+     */
+    void closeAllResultSets() throws SQLException {
+        try {
+            if (openResultSets != null) {
+                for (int i = 0; i < openResultSets.size(); i++) {
+                    JtdsResultSet rs = (JtdsResultSet) openResultSets.get(i);
+                    if (rs != null) {
+                        rs.close();
+                    }
+                }
+            }
+            closeCurrentResultSet();
+        } finally {
+            openResultSets = null;
         }
     }
 
@@ -498,7 +519,7 @@ public class JtdsStatement implements java.sql.Statement {
         resultQueue.clear();
         genKeyResultSet = null;
         tds.clearResponseQueue();
-        closeCurrentResultSet();
+        closeAllResultSets();
     }
 
     /**
@@ -598,7 +619,7 @@ public class JtdsStatement implements java.sql.Statement {
     public synchronized void close() throws SQLException {
         if (!closed) {
             try {
-                closeCurrentResultSet();
+                closeAllResultSets();
 
                 if (!connection.isClosed()) {
                     tds.clearResponseQueue();
@@ -616,7 +637,7 @@ public class JtdsStatement implements java.sql.Statement {
     public boolean getMoreResults() throws SQLException {
         checkOpen();
 
-        return getMoreResults(CLOSE_CURRENT_RESULT);
+        return getMoreResults(CLOSE_ALL_RESULTS);
     }
 
     /**
@@ -822,15 +843,34 @@ public class JtdsStatement implements java.sql.Statement {
 
         switch (current) {
             case CLOSE_ALL_RESULTS:
+                updateCount = -1;
+                closeAllResultSets();
+                break;
             case CLOSE_CURRENT_RESULT:
                 updateCount = -1;
                 closeCurrentResultSet();
                 break;
             case KEEP_CURRENT_RESULT:
-                throw new SQLException(Messages.get("error.generic.optvalue",
-                                                          "KEEP_CURRENT_RESULT",
-                                                          "getMoreResults"),
-                                       "HYC00");
+                updateCount = -1;
+                // If there is an open result set it is transferred to
+                // the list of open result sets. For JtdsResultSet
+                // result sets we cache the remaining data. For CachedResultSet
+                // result sets the data is already cached.
+                if (openResultSets == null) {
+                    openResultSets = new ArrayList();
+                }
+                if (currentResult instanceof MSCursorResultSet
+                        || currentResult instanceof CachedResultSet) {
+                    // NB. Due to restrictions on the way API cursors are
+                    // created, MSCursorResultSet can never be followed by
+                    // any other result sets, update counts or return variables.
+                    openResultSets.add(currentResult);
+                } else if (currentResult instanceof JtdsResultSet) {
+                    currentResult.cacheResultSetRows();
+                    openResultSets.add(currentResult);
+                }
+                currentResult = null;
+                break;
             default:
                 throw new SQLException(Messages.get("error.generic.badoption",
                                                           Integer.toString(current),

@@ -2,6 +2,15 @@ Changes from jTDS 1.0.2
 =======================
 
 03/26/2005 - Alin Sinpalean
+ o Applied Mike's patch [1166594] JDBC3 Multiple open result sets. The
+   getMoreResults(int) method is fully implemented and the JtdsResultSet class
+   has been enhanced so that it can cache the remaining result set rows when
+   required by the KEEP_CURRENT_RESULT option. Result sets returned by
+   Statement.execute() are only cached by when required by the getMoreResults()
+   method. A couple of minor bugs in the CachedResultSet class are also fixed;
+   a where clause for updates could include text or image columns which is not
+   allowed and the Sybase syntax for inserting rows containing all default
+   values was incorrect.
  o Corrected bug [1170777] resultSet.updateRow() fails if no row has been
    changed. Thanks go to Brett Wooldridge for signalling the bug and providing
    a fix.

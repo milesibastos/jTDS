@@ -49,14 +49,10 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.14 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.15 2005-03-26 22:10:58 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
-    /** Array of rows comprising the result set. */
-    protected ArrayList rowData;
-    /** Initial size for row array. */
-    protected final static int INITIAL_ROW_COUNT = 1000;
     /** Indicates currently inserting. */
     protected boolean onInsertRow;
     /** Buffer row used for inserts. */
@@ -374,9 +370,7 @@ public class CachedResultSet extends JtdsResultSet {
                 //
                 // Load result set into buffer
                 //
-                while (super.next()) {
-                    rowData.add(copyRow(currentRow));
-                }
+                cacheResultSetRows();
                 rowsInResult  = rowData.size();
                 initialRowCnt = rowsInResult;
                 pos = POS_BEFORE_FIRST;
@@ -419,9 +413,7 @@ public class CachedResultSet extends JtdsResultSet {
             //
             // Load result set into buffer
             //
-            while (super.next()) {
-                rowData.add(copyRow(currentRow));
-            }
+            cacheResultSetRows();
             rowsInResult  = rowData.size();
             initialRowCnt = rowsInResult;
             pos = POS_BEFORE_FIRST;
@@ -759,11 +751,16 @@ public class CachedResultSet extends JtdsResultSet {
             int count = 0;
             for (int i = 0; i < columns.length; i++) {
                 if (currentRow[i] == null) {
-                    if (count > 0) {
-                        sql.append(" AND ");
+                    if (!columns[i].sqlType.equals("text")
+                            && !columns[i].sqlType.equals("ntext")
+                            && !columns[i].sqlType.equals("image")
+                            && columns[i].tableName != null) {
+                        if (count > 0) {
+                            sql.append(" AND ");
+                        }
+                        sql.append(columns[i].realName);
+                        sql.append(" IS NULL");
                     }
-                    sql.append(columns[i].realName);
-                    sql.append(" IS NULL");
                 } else {
                     if (isKeyed && select)
                     {
@@ -1031,7 +1028,11 @@ public class CachedResultSet extends JtdsResultSet {
              if (count == 0) {
                  // Empty insert
                  sql.setLength(sqlLen);
-                 sql.append(" DEFAULT VALUES");
+                 if (isSybase) {
+                     sql.append(" VALUES()");
+                 } else {
+                     sql.append(" DEFAULT VALUES");
+                 }
              }
              ParamInfo parameters[] = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
              //

@@ -39,6 +39,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.ArrayList;
 import java.text.NumberFormat;
 import java.io.UnsupportedEncodingException;
 import java.io.InputStreamReader;
@@ -57,7 +58,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.32 2005-02-27 11:01:08 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.33 2005-03-26 22:10:58 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -68,6 +69,9 @@ public class JtdsResultSet implements ResultSet {
 
     protected static final int POS_BEFORE_FIRST = 0;
     protected static final int POS_AFTER_LAST = -1;
+
+    /** Initial size for row array. */
+    protected final static int INITIAL_ROW_COUNT = 1000;
 
     /*
      * Protected Instance variables.
@@ -88,6 +92,10 @@ public class JtdsResultSet implements ResultSet {
     protected ColInfo[] columns;
     /** The current result set row. */
     protected Object[] currentRow = null;
+    /** Cached row data for forward only result set. */
+    protected ArrayList rowData;
+    /** Index of current row in rowData. */
+    protected int rowPtr;
     /** True if last column retrieved was null. */
     protected boolean wasNull = false;
     /** The parent statement or null if this is a dummy result set. */
@@ -365,6 +373,31 @@ public class JtdsResultSet implements ResultSet {
     {
         return this.currentRow;
     }
+
+    /**
+     * Cache the remaining results to free up connection.
+     * @throws SQLException
+     */
+    protected void cacheResultSetRows() throws SQLException {
+        if (rowData == null) {
+            rowData = new ArrayList(INITIAL_ROW_COUNT);
+        }
+        if (currentRow != null) {
+            // Need to create local copy of currentRow
+            // as this is currently a reference to the
+            // row defined in TdsCore
+            currentRow = copyRow(currentRow);
+        }
+        //
+        // Now load the remaining result set rows into memory
+        //
+        while (statement.getTds().getNextRow()) {
+            rowData.add(copyRow(statement.getTds().getRowData()));
+        }
+        // Allow statement to process output vars etc
+        statement.cacheResults();
+    }
+
 //
 // -------------------- java.sql.ResultSet methods -------------------
 //
@@ -518,15 +551,31 @@ public class JtdsResultSet implements ResultSet {
             return false;
         }
 
-        if (!statement.getTds().getNextRow()) {
-            statement.cacheResults();
-
-            pos = POS_AFTER_LAST;
-            currentRow = null;
+        if (rowData != null) {
+            // The rest of the result rows have been cached so
+            // return the next row from the buffer.
+            if (rowPtr < rowData.size()) {
+                currentRow = (Object[])rowData.get(rowPtr);
+                // This is a forward only result set so null out the buffer ref
+                // to allow for garbage collection (we can never access the row
+                // again once we have moved on).
+                rowData.set(rowPtr++, null);
+                pos++;
+                rowsInResult = pos;
+            } else {
+                pos = POS_AFTER_LAST;
+            }
         } else {
-            currentRow = statement.getTds().getRowData();
-            pos++;
-            rowsInResult = pos;
+            // Need to read from server response
+            if (!statement.getTds().getNextRow()) {
+                statement.cacheResults();
+                pos = POS_AFTER_LAST;
+                currentRow = null;
+            } else {
+                currentRow = statement.getTds().getRowData();
+                pos++;
+                rowsInResult = pos;
+            }
         }
 
         return currentRow != null;

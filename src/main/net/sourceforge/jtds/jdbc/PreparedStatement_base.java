@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.3 2002-10-18 15:21:07 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.4 2003-01-27 09:55:44 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.3 2002-10-18 15:21:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.4 2003-01-27 09:55:44 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -382,8 +382,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *@param  value             the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
-    public void setDate( int parameterIndex, java.sql.Date value )
-             throws SQLException
+    public void setDate( int parameterIndex, java.sql.Date value ) throws SQLException
     {
         setParam( parameterIndex, value, java.sql.Types.DATE, -1 );
     }
@@ -482,63 +481,54 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *@param  x                 The object containing the input parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
-    public void setObject( int parameterIndex, Object x ) throws SQLException
+    public void setObject(int parameterIndex, Object x) throws SQLException
     {
-        if ( x == null ) {
+        if( x == null )
             setNull( parameterIndex, java.sql.Types.VARCHAR );
-        }
         else
-                if ( x instanceof java.lang.String ) {
-            setString( parameterIndex, ( String ) x );
-        }
+            if( x instanceof java.lang.String )
+                setString( parameterIndex, (String)x );
         else
-                if ( x instanceof java.math.BigDecimal ) {
-            setBigDecimal( parameterIndex, ( BigDecimal ) x );
-        }
+            if( x instanceof java.math.BigDecimal )
+                setBigDecimal( parameterIndex, (BigDecimal) x );
         else
-                if ( x instanceof java.lang.Integer ) {
-            setInt( parameterIndex, ( ( Number ) x ).intValue() );
-        }
+            if( x instanceof java.lang.Integer )
+                setInt( parameterIndex, ((Number)x).intValue() );
         else
-                if ( x instanceof java.lang.Long ) {
-            setLong( parameterIndex, ( ( Number ) x ).longValue() );
-        }
+            if( x instanceof java.lang.Long )
+                setLong( parameterIndex, ((Number)x).longValue() );
         else
-                if ( x instanceof java.lang.Byte ) {
-            setByte( parameterIndex, ( ( Number ) x ).byteValue() );
-        }
+            if( x instanceof java.lang.Byte )
+                setByte( parameterIndex, ((Number)x).byteValue() );
         else
-                if ( x instanceof java.lang.Short ) {
-            setShort( parameterIndex, ( ( Number ) x ).shortValue() );
-        }
+            if( x instanceof java.lang.Short )
+                setShort( parameterIndex, ((Number)x).shortValue() );
         else
-                if ( x instanceof java.lang.Boolean ) {
-            setBoolean( parameterIndex, ( ( Boolean ) x ).booleanValue() );
-        }
+            if( x instanceof java.lang.Boolean )
+                setBoolean( parameterIndex, ((Boolean)x).booleanValue() );
         else
-                if ( x instanceof java.lang.Double ) {
-            setDouble( parameterIndex, ( ( Number ) x ).doubleValue() );
-        }
+            if( x instanceof java.lang.Double )
+                setDouble( parameterIndex, ((Number)x).doubleValue() );
         else
-                if ( x instanceof java.lang.Float ) {
-            setFloat( parameterIndex, ( ( Number ) x ).floatValue() );
-        }
+            if( x instanceof java.lang.Float )
+                setFloat( parameterIndex, ((Number)x).floatValue() );
         else
-                if ( x instanceof java.sql.Date ) {
-            setDate( parameterIndex, ( java.sql.Date ) x );
-        }
+            if( x instanceof java.sql.Date )
+                setDate( parameterIndex, (java.sql.Date)x );
         else
-                if ( x instanceof java.util.Date ) {
-            setTimestamp( parameterIndex, new Timestamp( ( ( java.util.Date ) x ).getTime() ) );
-        }
-        else {
+            if( x instanceof java.sql.Time )
+                setTime( parameterIndex, (java.sql.Time)x );
+        else
+            if( x instanceof java.sql.Timestamp )
+                setTimestamp( parameterIndex, (java.sql.Timestamp)x );
+        else
+        {
             Class c = x.getClass();
-            if ( c.isArray() && c.getComponentType().equals( byte.class ) ) {
-                setBytes( parameterIndex, ( byte[] ) x );
-            }
-            else {
-                throw new SQLException( "Not implemented" );
-            }
+
+            if( c.isArray() && c.getComponentType().equals( byte.class ) )
+                setBytes( parameterIndex, (byte[])x );
+            else
+                throw new SQLException("Not implemented");
         }
     }
 

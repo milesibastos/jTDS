@@ -6,6 +6,9 @@ Changes from jTDS 0.5
  o Fixed bug #664507: DatabaseMetaData.getIndexInfo() called sp_statistics with
    5 parameters instead of 6 (@index_name was missing). Thanks to Simon Kelly
    (simonkelly) for submitting the bug and the solution.
+ o Fixed bug #644391: When using PreparedStatement.setObject(Timestamp), the
+   date in database in off by a little more than a second, because the nanos
+   are disregarded (the Timestamp is treated as Date).
 
 01/20/2003 - Alin Sinpalean
 
@@ -615,13 +618,13 @@ Changes from jTDS 0.2
    other drivers).
  o Bugfix 587749: Bit to Int conversion works. So does Binary to String.
 
-08/05/2002 - Jason Banes (patch)
+08/05/2002 - Jerason Banes (patch)
 
  o Fixed the following methods in DatabaseMetaData: getSchemas, getTables,
    getColumns, supportSchemasInTableDefinitions.
  o Implemented the following methods of DatabaseMetaData: getIndexes,
    getPrimaryKeys, getImportedKeys.
 
-07/xx/2002
+07/xx/2002 - Alin Sinpalean
  o TdsStatement checks if it isn't already closed on a call to close() and the
    allocated Tds object isn't freed until no more results are available

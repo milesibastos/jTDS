@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2003-01-27 09:55:44 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -2228,8 +2228,8 @@ public class Tds implements TdsDefinitions {
     }
 
     /**
-     * @deprecated use loadRow() - its much more efficient as it
-     * doesn't create a new PacketRowResult for each row...
+     * Creates a <code>PacketRowResult</code> and calls <code>loadRow(PacketRowResult)</code> with
+     * it.
      */
     private synchronized PacketRowResult getRow(Context context)
              throws SQLException, TdsException, java.io.IOException

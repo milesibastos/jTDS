@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.24 2005-01-14 06:02:24 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.25 2005-02-02 13:42:49 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -78,39 +78,17 @@ public class JtdsDataSource
     protected String description;
 
     /**
+     * Driver instance used for obtaining connections.
+     */
+    private static Driver driver = new Driver();
+
+    /**
      * Constructs a new datasource.
      */
     public JtdsDataSource() {
-        Properties props = new Properties();
-        props.setProperty(Messages.get(Driver.SERVERTYPE), String.valueOf(Driver.SQLSERVER));
-        props = DefaultProperties.addDefaultProperties(props);
-
-        serverName = props.getProperty(Messages.get(Driver.SERVERNAME));
-        serverType = props.getProperty(Messages.get(Driver.SERVERTYPE));
-        portNumber = props.getProperty(Messages.get(Driver.PORTNUMBER));
-        databaseName = props.getProperty(Messages.get(Driver.DATABASENAME));
-        tdsVersion = props.getProperty(Messages.get(Driver.TDS));
-        charset = props.getProperty(Messages.get(Driver.CHARSET));
-        language = props.getProperty(Messages.get(Driver.LANGUAGE));
-        domain = props.getProperty(Messages.get(Driver.DOMAIN));
-        instance = props.getProperty(Messages.get(Driver.INSTANCE));
-        lastUpdateCount = props.getProperty(Messages.get(Driver.LASTUPDATECOUNT));
-        sendStringParametersAsUnicode = props.getProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE));
-        namedPipe = props.getProperty(Messages.get(Driver.NAMEDPIPE));
-        macAddress = props.getProperty(Messages.get(Driver.MACADDRESS));
-        prepareSql = props.getProperty(Messages.get(Driver.PREPARESQL));
-        packetSize = props.getProperty(Messages.get(Driver.PACKETSIZE));
-        tcpNoDelay = props.getProperty(Messages.get(Driver.TCPNODELAY));
-        user = props.getProperty(Messages.get(Driver.USER));
-        password = props.getProperty(Messages.get(Driver.PASSWORD));
-        loginTimeout = props.getProperty(Messages.get(Driver.LOGINTIMEOUT));
-        lobBuffer = props.getProperty(Messages.get(Driver.LOBBUFFER));
-        maxStatements = props.getProperty(Messages.get(Driver.MAXSTATEMENTS));
-        appName = props.getProperty(Messages.get(Driver.APPNAME));
-        progName = props.getProperty(Messages.get(Driver.PROGNAME));
-        xaEmulation = props.getProperty(Messages.get(Driver.XAEMULATION));
-        logFile = props.getProperty(Messages.get(Driver.LOGFILE));
-        ssl = props.getProperty(Messages.get(Driver.SSL));
+        // Do not set default property values here. Properties whose default
+        // values depend on server type will likely be incorrect unless the
+        // user specified them explicitly.
     }
 
     /**
@@ -173,10 +151,19 @@ public class JtdsDataSource
             }
         }
 
+        //
+        // Set the non-null properties
+        //
         props.setProperty(Messages.get(Driver.SERVERNAME), serverName);
-        props.setProperty(Messages.get(Driver.PORTNUMBER), portNumber);
-        props.setProperty(Messages.get(Driver.DATABASENAME), databaseName);
-        props.setProperty(Messages.get(Driver.TDS), tdsVersion);
+        if (portNumber != null) {
+            props.setProperty(Messages.get(Driver.PORTNUMBER), portNumber);
+        }
+        if (databaseName != null) {
+            props.setProperty(Messages.get(Driver.DATABASENAME), databaseName);
+        }
+        if (tdsVersion != null) {
+            props.setProperty(Messages.get(Driver.TDS), tdsVersion);
+        }
         if (charset != null) {
             props.setProperty(Messages.get(Driver.CHARSET), charset);
         }
@@ -189,27 +176,73 @@ public class JtdsDataSource
         if (instance != null) {
             props.setProperty(Messages.get(Driver.INSTANCE), instance);
         }
-        props.setProperty(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount);
-        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode);
-        props.setProperty(Messages.get(Driver.NAMEDPIPE), namedPipe);
-        props.setProperty(Messages.get(Driver.MACADDRESS), macAddress);
-        props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
-        props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
-        props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
-        props.setProperty(Messages.get(Driver.XAEMULATION), xaEmulation);
-        props.setProperty(Messages.get(Driver.USER), user);
-        props.setProperty(Messages.get(Driver.PASSWORD), password);
-        props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
-        props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
-        props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
-        props.setProperty(Messages.get(Driver.APPNAME), appName);
-        props.setProperty(Messages.get(Driver.PROGNAME), progName);
-        props.setProperty(Messages.get(Driver.SSL), ssl);
+        if (lastUpdateCount != null) {
+            props.setProperty(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount);
+        }
+        if (sendStringParametersAsUnicode != null) {
+            props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode);
+        }
+        if (namedPipe != null) {
+            props.setProperty(Messages.get(Driver.NAMEDPIPE), namedPipe);
+        }
+        if (macAddress != null) {
+            props.setProperty(Messages.get(Driver.MACADDRESS), macAddress);
+        }
+        if (prepareSql != null) {
+            props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
+        }
+        if (packetSize != null) {
+            props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
+        }
+        if (tcpNoDelay != null) {
+            props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
+        }
+        if (xaEmulation != null) {
+            props.setProperty(Messages.get(Driver.XAEMULATION), xaEmulation);
+        }
+        if (user != null) {
+            props.setProperty(Messages.get(Driver.USER), user);
+        }
+        if (password != null) {
+            props.setProperty(Messages.get(Driver.PASSWORD), password);
+        }
+        if (loginTimeout != null) {
+            props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
+        }
+        if (lobBuffer != null) {
+            props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
+        }
+        if (maxStatements != null) {
+            props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
+        }
+        if (appName != null) {
+            props.setProperty(Messages.get(Driver.APPNAME), appName);
+        }
+        if (progName != null) {
+            props.setProperty(Messages.get(Driver.PROGNAME), progName);
+        }
+        if (ssl != null) {
+            props.setProperty(Messages.get(Driver.SSL), ssl);
+        }
 
-        java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
+        String url;
 
-        String url = "jdbc:jtds:" + DefaultProperties.getServerType(Integer.parseInt(serverType)) + ":";
+        try {
+            // Determine the server type (for the URL stub) or use the default
+            int serverTypeDef = (serverType == null) ? 0
+                    : Integer.parseInt(serverType);
+            url = "jdbc:jtds:"
+                    + DefaultProperties.getServerTypeWithDefault(serverTypeDef)
+                    + ":";
+        } catch (RuntimeException ex) {
+            ex.printStackTrace();
+            throw new SQLException(
+                    Messages.get("error.connection.servertype", ex.toString()),
+                    "08001");
+        }
 
+        // Connect with the URL stub and set properties. The defaults will be
+        // filled in by connect().
         return driver.connect(url, props);
     }
 

@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.16 2005-01-04 17:12:53 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.17 2005-02-02 13:42:37 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -238,8 +238,8 @@ public final class DefaultProperties {
     /**
      * Converts an integer server type to its string representation.
      *
-     * @param serverType The server type as an integer.
-     * @return The server type as a string if known, or <code>null</code> if unknown.
+     * @param serverType the server type as an <code>int</code>
+     * @return the server type as a string if known, or <code>null</code> if unknown
      */
     public static String getServerType(int serverType) {
         if (serverType == Driver.SQLSERVER) {
@@ -254,8 +254,9 @@ public final class DefaultProperties {
     /**
      * Converts a string server type to its integer representation.
      *
-     * @param serverType The server type as a string.
-     * @return The server type as an integer if known, or <code>null</code> if unknown.
+     * @param serverType the server type as a string
+     * @return the server type as an integer if known or <code>null</code> if
+     *         unknown
      */
     public static Integer getServerType(String serverType) {
         if (DefaultProperties.SERVER_TYPE_SQLSERVER.equals(serverType)) {
@@ -265,6 +266,26 @@ public final class DefaultProperties {
         }
 
         return null;
+    }
+
+    /**
+     * Same as {@link #getServerType(int)}, only it returns the default server
+     * type (<code>"sqlserver"</code>) if <code>serverType</code> is 0.
+     *
+     * @param serverType integer server type or 0 for default
+     * @return the server type as a string if known or <code>"sqlserver"</code>
+     *         if unknown
+     */
+    public static String getServerTypeWithDefault(int serverType) {
+        if (serverType == 0) {
+            return DefaultProperties.SERVER_TYPE_SQLSERVER;
+        } else if (serverType == Driver.SQLSERVER
+                || serverType == Driver.SYBASE) {
+            return getServerType(serverType);
+        } else {
+            throw new IllegalArgumentException(
+                    "Only 0, 1 and 2 accepted for serverType");
+        }
     }
 
     /**

@@ -19,7 +19,7 @@ import javax.naming.NamingException;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.10 2005-01-24 14:10:04 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.11 2005-02-02 13:42:49 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -262,6 +262,42 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
             ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
             ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
             ds.setTds(TestBase.props.getProperty(Messages.get(Driver.TDS)));
+            ds.setServerType("2".equals(TestBase.props.getProperty(Messages.get(Driver.SERVERTYPE))) ? 2 : 1);
+            try {
+                ds.setPortNumber(Integer.parseInt(
+                        TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));
+            } catch (Exception ex) {
+                // Ignore
+            }
+            try {
+                Connection c = ds.getConnection();
+                assertNotNull(c);
+                c.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                fail("SQLException caught: " + ex.getMessage() + " SQLState=" + ex.getSQLState());
+            } catch (Throwable t) {
+                t.printStackTrace();
+                fail(t.getClass().getName() + " caught while testing JtdsDataSource.getConnection(): " + t);
+            }
+        }
+
+        /**
+         * Test connecting without specifying TDS version.
+         * <p/>
+         * Test for bug [1113709] Connecting via DataSource. Issue was caused
+         * by JtdsDataSource setting the default values in the constructor, so
+         * the TDS version was always set to 8.0 unless explicitly modified.
+         * <p/>
+         * The incorrect behavior occured when connecting to Sybase (when the
+         * TDS version should have been 5.0 by default).
+         */
+        public void testDefaultTdsVersion() {
+            JtdsDataSource ds = new JtdsDataSource();
+            ds.setServerName(TestBase.props.getProperty(Messages.get(Driver.SERVERNAME)));
+            ds.setUser(TestBase.props.getProperty(Messages.get(Driver.USER)));
+            ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
+            ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
             ds.setServerType("2".equals(TestBase.props.getProperty(Messages.get(Driver.SERVERTYPE))) ? 2 : 1);
             try {
                 ds.setPortNumber(Integer.parseInt(

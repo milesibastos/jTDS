@@ -8,6 +8,10 @@ Changes from jTDS 1.0
  o Applied a modified version of patch [1107090] Revised query timeout logic,
    submitted by Mike. Timeouts should now have millisecond precision, using a
    single timer thread per VM.
+ o Fixed bug [1113709] Connecting via DataSource. Invalid default TDS version
+   was used by JtdsDataSource when connecting to Sybase. Breaks all default
+   property tests (which relied on DataSource setting default values in the
+   constructor), but the previous behavior was incorrect.
  o Fixed bug [1113040] Small bug in net.sourceforge.jtds.jdbcx.PooledConnection
    Thanks go to Marcus Nylander for finding the bug and providing a fix.
 

@@ -3,8 +3,8 @@
 if "%JAVA_HOME%" == "" goto error
 
 echo.
-echo SSABSA Build System
-echo -------------------
+echo Building jTDS...
+echo ----------------
 
 set LOCALCLASSPATH=%JAVA_HOME%\lib\tools.jar
 REM set LOCALCLASSPATH=%LOCALCLASSPATH%;%ANT_HOME%\lib\ant.jar

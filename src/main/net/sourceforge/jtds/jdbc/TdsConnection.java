@@ -1,33 +1,19 @@
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
 //
-// Copyright 1998, 1999 CDS Networks, Inc., Medford Oregon
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// All rights reserved.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-//      This product includes software developed by CDS Networks, Inc.
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
-//    products derived from this software without specific prior
-//    written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
 package net.sourceforge.jtds.jdbc;
@@ -58,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.21 2004-03-28 18:35:15 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.22 2004-03-30 19:54:53 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -77,7 +63,6 @@ public class TdsConnection implements Connection
 
     private final Vector tdsPool = new Vector();
     private DatabaseMetaData databaseMetaData = null;
-    private ArrayList savepoints = null;
 
     private boolean autoCommit = true;
     private int transactionIsolationLevel = Connection.TRANSACTION_READ_COMMITTED;
@@ -121,7 +106,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.21 2004-03-28 18:35:15 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.22 2004-03-30 19:54:53 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -825,7 +810,7 @@ public class TdsConnection implements Connection
                 "Method not Implemented: Connection." + method, "HY000");
     }
 
-    private void checkClosed() throws SQLException {
+    /*package*/ void checkClosed() throws SQLException {
         if (isClosed) {
             throw new SQLException("Connection closed", "HY000");
         }
@@ -1052,121 +1037,30 @@ public class TdsConnection implements Connection
         NotImplemented("setHoldability");
     }
 
-    public synchronized void releaseSavepoint(Savepoint savepoint)
-            throws SQLException {
-        checkClosed();
-
-        if (savepoints == null) {
-            throw new SQLException("savepoint is not valid for this transaction");
-        }
-
-        int index = savepoints.indexOf(savepoint);
-
-        if (index == -1) {
-            throw new SQLException("savepoint is not valid for this transaction");
-        }
-
-        savepoints.remove(index);
-
-        if (savepoint instanceof SavepointImpl) {
-            ((SavepointImpl) savepoint).release();
-        }
+    public void releaseSavepoint(java.sql.Savepoint savepoint)
+            throws java.sql.SQLException {
+        NotImplemented("releaseSavepoint");
     }
 
-    public synchronized void rollback(Savepoint savepoint) throws SQLException {
-        checkClosed();
-
-        if (savepoints == null) {
-            throw new SQLException("savepoint is not valid for this transaction");
-        }
-
-        int index = savepoints.indexOf(savepoint);
-
-        if (index == -1) {
-            throw new SQLException("savepoint is not valid for this transaction");
-        } else if (getAutoCommit()) {
-            throw new SQLException("savepoints cannot be rolled back in auto-commit mode");
-        }
-
-        Statement statement = null;
-         
-        try {
-            statement = createStatement();
-            statement.execute("ROLLBACK TRANSACTION s" + ((SavepointImpl) savepoint).getId());
-        } finally {
-            statement.close();
-        }
-
-        int size = savepoints.size();
-
-        for (int i = size - 1; i >= index; i--) {
-            savepoints.remove(i);
-        }
+    public void rollback(Savepoint savepoint) throws SQLException {
+        NotImplemented("rollback(java.sql.Savepoint)");
     }
 
-    public synchronized Savepoint setSavepoint() throws SQLException {
-        checkClosed();
-
-        if (getAutoCommit()) {
-            throw new SQLException("savepoints cannot be set in auto-commit mode");
-        }
-
-        if (savepoints == null) {
-            savepoints = new ArrayList();
-        }
-
-        SavepointImpl savepoint = new SavepointImpl(savepoints.size() + 1);
-
-        setSavepoint(savepoint);
-
-        return savepoint;
+    public Savepoint setSavepoint() throws SQLException {
+        NotImplemented("setSavepoint");
+        return null;
     }
 
-    public synchronized Savepoint setSavepoint(String name) throws SQLException {
-        checkClosed();
-
-        if (getAutoCommit()) {
-            throw new SQLException("savepoints cannot be set in auto-commit mode");
-        } else if (name == null) {
-            throw new SQLException("savepoint name cannot be null");
-        }
-
-        if (savepoints == null) {
-            savepoints = new ArrayList();
-        }
-
-        SavepointImpl savepoint = new SavepointImpl(savepoints.size() + 1, name);
-
-        setSavepoint(savepoint);
-
-        return savepoint;
+    public Savepoint setSavepoint(String str) throws SQLException {
+        NotImplemented("setSavepoint(String)");
+        return null;
     }
 
-    private void setSavepoint(SavepointImpl savepoint) throws SQLException {
-        Statement statement = null;
-         
-        try {
-            statement = createStatement();
-            statement.execute("SAVE TRANSACTION s" + savepoint.getId());
-        } finally {
-            statement.close();
-        }
-
-        savepoints.add(savepoint);
-    }
-
-    private synchronized void clearSavepoints() {
-        if (savepoints == null) {
-            return;
-        }
-
-        for (Iterator iterator = savepoints.iterator(); iterator.hasNext();) {
-            SavepointImpl savepoint = (SavepointImpl) iterator.next();
-
-            savepoint.release();
-        }
-
-        savepoints.clear();
+    /**
+     * Overridden by {@link TdsConnectionJDBC3} to implement release of all
+     * savepoints on commit or rollback.
+     */
+    /*package*/ void clearSavepoints() {
     }
 
     protected void setCharset(String charset) {

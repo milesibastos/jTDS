@@ -1,8 +1,20 @@
-/*
- * SAfeTest.java
- *
- * Created on 08/23/2002
- */
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
 
 package net.sourceforge.jtds.test;
 
@@ -768,6 +780,12 @@ public class SAfeTest extends DatabaseTestCase
             "1983-10-30 02:00:00",
             "1983-10-30 01:59:59",
             "1940-06-14 23:59:59",
+            "1911-03-11 00:51:39",
+            "1911-03-11 00:51:38",
+            "1900-01-01 01:00:00",
+            "1900-01-01 00:59:59",
+            "1900-01-01 00:09:21",
+            "1900-01-01 00:09:20",
             "1753-01-01 00:00:00"
         };
 

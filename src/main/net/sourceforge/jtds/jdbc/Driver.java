@@ -1,33 +1,19 @@
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
 //
-// Copyright 1998 CDS Networks, Inc., Medford Oregon
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// All rights reserved.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-//      This product includes software developed by CDS Networks, Inc.
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
-//    products derived from this software without specific prior
-//    written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
 package net.sourceforge.jtds.jdbc;
@@ -44,14 +30,17 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.12 2004-03-29 20:30:35 alin_sinpalean Exp $
+ * @version    $Id: Driver.java,v 1.13 2004-03-30 19:54:52 alin_sinpalean Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.12 2004-03-29 20:30:35 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.13 2004-03-30 19:54:52 alin_sinpalean Exp $";
 
     static final int MAJOR_VERSION = 0;
     static final int MINOR_VERSION = 8;
+
+    public static final boolean JDBC3 =
+            "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
 
     private final static String DEFAULT_SQL_SERVER_PORT = "1433";
     private final static String DEFAULT_SYBASE_PORT = "7100";
@@ -67,7 +56,7 @@ public class Driver implements java.sql.Driver {
     /**
      * Constructs a new driver instance.
      */
-    public Driver() throws SQLException {
+    public Driver() {
     }
 
     /**
@@ -109,7 +98,11 @@ public class Driver implements java.sql.Driver {
         }
 
         try {
-            return new TdsConnection(properties);
+            if (JDBC3) {
+                return new TdsConnectionJDBC3(properties);
+            } else {
+                return new TdsConnection(properties);
+            }
         } catch (NumberFormatException e) {
             throw new SQLException("NumberFormatException converting port number.");
         } catch (TdsException e) {

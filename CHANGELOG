@@ -1,6 +1,14 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+03/30/2004 - Alin Sinpalean
+ o Silently updated the JUnit and Ant jars in the 0.8-rc1 source packet.
+ o Moved the Savepoint-related methods from TdsConnection into a new class,
+   TdsConnectionJDBC3. Now new Connections are dynamically created from one of
+   the two classes depending on the Java specification version of the JVM.
+ o Added some more old date tests, still haven't been able to reproduce anything
+   on my machine.
+
 03/28/2004 - Brian Heineman
  o Implemented Savepoint support.
  o Updated DatabaseMetaData.supportsSavepoints() to return true.

@@ -1,6 +1,13 @@
 Changes from jTDS 0.3
 =====================
 
+08/26/2002 - Alin Sinpalean
+
+ o Database name is no longer explicitly required in the URL for the driver or
+   to be set for the DataSource. The default value for it (if not specified) is
+   "master", which is ok for SQL Server, but of which I'm not so sure of for
+   Sybase (Bug #598886).
+
 08/23/2002 - Alin Sinpalean
 
  o Improved NULL, 0-length and single-space string handling (both when sending

@@ -61,7 +61,7 @@ import com.internetcds.jdbc.tds.TdsException;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    March 16, 2001
- *@version    $Id: Driver.java,v 1.3 2002-08-14 13:04:30 alin_sinpalean Exp $
+ *@version    $Id: Driver.java,v 1.4 2002-08-26 08:44:43 alin_sinpalean Exp $
  *@see        DriverManager
  *@see        Connection
  */
@@ -69,7 +69,7 @@ public class Driver implements java.sql.Driver {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Driver.java,v 1.3 2002-08-14 13:04:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.4 2002-08-26 08:44:43 alin_sinpalean Exp $";
 
     final static boolean debug = false;
     final static String oldSQLServerUrlPrefix = "jdbc:freetds://";
@@ -307,43 +307,46 @@ public class Driver implements java.sql.Driver {
                 String port = (serverType == Tds.SYBASE
                          ? defaultSybasePort
                          : defaultSQLServerPort);
-                String database = null;
+                String database = "master";
                 String tdsVer = "42";
 
                 // Get the hostname
                 host = tokenizer.nextToken();
 
-                // Find the port if it has one.
-                tmp = tokenizer.nextToken();
-                if (tmp.equals(":")) {
-                    port = tokenizer.nextToken();
-                    // Skip the '/' character
+                if( tokenizer.hasMoreTokens() )
+                {
+                    // Find the port if it has one.
                     tmp = tokenizer.nextToken();
-                }
-
-                if (tmp.equals("/")) {
-                    // find the database name
-                    database = tokenizer.nextToken();
-                    if (tokenizer.hasMoreTokens()) {
+                    if (tmp.equals(":")) {
+                        port = tokenizer.nextToken();
+                        // Skip the '/' character
                         tmp = tokenizer.nextToken();
                     }
-                }
 
-                // XXX The next loop is a bit too permisive.
-                while (tmp.equals(";")) {
-                    // Extract the additional attribute.
-                    String extra = tokenizer.nextToken();
-                    StringTokenizer tok2 = new StringTokenizer(extra, "=", false);
-                    String key = tok2.nextToken().toUpperCase();
-                    if (tok2.hasMoreTokens()) {
-                        result.put(key, tok2.nextToken());
+                    if (tmp.equals("/")) {
+                        // find the database name
+                        database = tokenizer.nextToken();
+                        if (tokenizer.hasMoreTokens()) {
+                            tmp = tokenizer.nextToken();
+                        }
                     }
 
-                    if (tokenizer.hasMoreTokens()) {
-                        tmp = tokenizer.nextToken();
-                    }
-                    else {
-                        break;
+                    // XXX The next loop is a bit too permisive.
+                    while (tmp.equals(";")) {
+                        // Extract the additional attribute.
+                        String extra = tokenizer.nextToken();
+                        StringTokenizer tok2 = new StringTokenizer(extra, "=", false);
+                        String key = tok2.nextToken().toUpperCase();
+                        if (tok2.hasMoreTokens()) {
+                            result.put(key, tok2.nextToken());
+                        }
+
+                        if (tokenizer.hasMoreTokens()) {
+                            tmp = tokenizer.nextToken();
+                        }
+                        else {
+                            break;
+                        }
                     }
                 }
 

@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.4 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.5 2004-09-28 12:12:51 alin_sinpalean Exp $
  */
 class SQLDiagnostic {
     /**
@@ -216,6 +216,7 @@ class SQLDiagnostic {
         mssqlStates.put(new Integer(17308), "42000");
         mssqlStates.put(new Integer(17571), "42000");
         mssqlStates.put(new Integer(18002), "42000");
+        mssqlStates.put(new Integer(18452), "28000");
         mssqlStates.put(new Integer(18456), "28000");
         mssqlStates.put(new Integer(18833), "42S12");
         mssqlStates.put(new Integer(20604), "42000");

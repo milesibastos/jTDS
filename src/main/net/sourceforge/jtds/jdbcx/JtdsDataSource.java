@@ -37,7 +37,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.14 2004-09-23 14:27:00 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.15 2004-09-28 12:12:55 alin_sinpalean Exp $
  */
 public class JtdsDataSource
 implements DataSource, Referenceable, Serializable {
@@ -115,18 +115,29 @@ implements DataSource, Referenceable, Serializable {
      * @throws SQLException if an error occurs
      */
     public Connection getConnection(String user, String password)
-    throws SQLException {
+            throws SQLException {
         Properties props = new Properties();
 
+        if (serverName == null) {
+            throw new SQLException(Messages.get("error.connection.nohost"), "08001");
+        }
+
         props.setProperty(Messages.get("prop.servername"), serverName);
-        props.setProperty(Messages.get("prop.servertype"), serverType);
         props.setProperty(Messages.get("prop.portnumber"), portNumber);
         props.setProperty(Messages.get("prop.databasename"), databaseName);
         props.setProperty(Messages.get("prop.tds"), tdsVersion);
-        props.setProperty(Messages.get("prop.charset"), charset);
-        props.setProperty(Messages.get("prop.language"), language);
-        props.setProperty(Messages.get("prop.domain"), domain);
-        props.setProperty(Messages.get("prop.instance"), instance);
+        if (charset != null) {
+            props.setProperty(Messages.get("prop.charset"), charset);
+        }
+        if (language != null) {
+            props.setProperty(Messages.get("prop.language"), language);
+        }
+        if (domain != null) {
+            props.setProperty(Messages.get("prop.domain"), domain);
+        }
+        if (instance != null) {
+            props.setProperty(Messages.get("prop.instance"), instance);
+        }
         props.setProperty(Messages.get("prop.lastupdatecount"), lastUpdateCount);
         props.setProperty(Messages.get("prop.useunicode"), sendStringParametersAsUnicode);
         props.setProperty(Messages.get("prop.namedpipe"), namedPipe);
@@ -142,7 +153,7 @@ implements DataSource, Referenceable, Serializable {
 
         java.sql.Driver driver = new net.sourceforge.jtds.jdbc.Driver();
 
-        String url = "jdbc:jtds:" + DefaultProperties.getServerType(serverType) + ":";
+        String url = "jdbc:jtds:" + DefaultProperties.getServerType(Integer.parseInt(serverType)) + ":";
 
         return driver.connect(url, props);
     }

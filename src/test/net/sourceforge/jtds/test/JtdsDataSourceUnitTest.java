@@ -3,6 +3,9 @@ package net.sourceforge.jtds.test;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import java.util.Properties;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbc.Messages;
 import javax.naming.Reference;
@@ -12,9 +15,9 @@ import javax.naming.NamingException;
 
 /**
  * Unit tests for the {@link JtdsDataSource} class.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.5 2004-08-16 18:43:05 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.6 2004-09-28 12:12:55 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -24,7 +27,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
      * The test suite includes the tests in this class, and adds tests
      * from {@link DefaultPropertiesTestLibrary} after creating an
      * anonymous {@link DefaultPropertiesTester} object.
-     * 
+     *
      * @return The test suite to run.
      */
     public static Test suite() {
@@ -39,13 +42,17 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
                 JtdsDataSourceUnitTest.Test_JtdsDataSource_getReference.suite(
                         "test_getReference_DefaultProperties"));
 
+        testSuite.addTest(
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.suite(
+                        "test_getConnection"));
+
         return testSuite;
     }
 
 
     /**
      * Constructor.
-     * 
+     *
      * @param name The name of the test.
      */
     public JtdsDataSourceUnitTest(String name) {
@@ -57,7 +64,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
      * Tests that the public constructor works.
      * <p/>
      * Needed so that this class has at least one test.
-     */ 
+     */
     public void testPublicConstructor() {
         assertNotNull(new JtdsDataSource());
     }
@@ -72,7 +79,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         /**
          * Construct a test suite for this library.
-         * 
+         *
          * @param name The name of the tests.
          * @return The test suite.
          */
@@ -106,7 +113,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
                             }
 
                             JtdsDataSource dataSource = new JtdsDataSource();
-                            String actual = 
+                            String actual =
                                     String.valueOf(
                                             invokeInstanceMethod(
                                                     dataSource,
@@ -129,7 +136,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         /**
          * Construct a test suite for this library.
-         * 
+         *
          * @param name The name of the tests.
          * @return The test suite.
          */
@@ -167,4 +174,89 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
         }
     }
 
+    public static class Test_JtdsDataSource_getConnection extends UnitTestBase {
+        // TODO Specify host name separately in the properties so that testing can be more accurate
+        public Test_JtdsDataSource_getConnection(String name) {
+            super(name);
+        }
+
+        /**
+         * Construct a test suite for this library.
+         *
+         * @param name The name of the tests.
+         * @return The test suite.
+         */
+        public static Test suite(String name) {
+            return new TestSuite(
+                    JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.class, name);
+        }
+
+        /**
+         * Test connecting without specifying a host. Should get an SQL state
+         * of 08001 (SQL client unable to establish SQL connection).
+         */
+        public void testNoHost() {
+            JtdsDataSource ds = new JtdsDataSource();
+            ds.setUser("x");
+            ds.setPassword("y");
+            try {
+                assertNotNull(ds.getConnection());
+                fail("What the?...");
+            } catch (SQLException ex) {
+                assertEquals("Expecting SQL state 08001. Got " + ex.getSQLState(), "08001", ex.getSQLState());
+            } catch (Throwable t) {
+                t.printStackTrace();
+                fail(t.getClass().getName() + " caught while testing JtdsDataSource.getConnection(): " + t);
+            }
+        }
+
+        /**
+         * Test connecting without specifying a user. Should get an SQL state
+         * of either 28000 (invalid authorization specification) or 08S01 (bad
+         * host name).
+         */
+        public void testNoUser() {
+            JtdsDataSource ds = new JtdsDataSource();
+            ds.setServerName("localhost");
+            try {
+                assertNotNull(ds.getConnection());
+                fail("What the?...");
+            } catch (SQLException ex) {
+                String sqlState = ex.getSQLState();
+                if (!"28000".equals(sqlState) && !"08S01".equals(sqlState)) {
+                    ex.printStackTrace();
+                    fail("Expecting SQL state 28000 or 08S01. Got " + ex.getSQLState());
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+                fail(t.getClass().getName() + " caught while testing JtdsDataSource.getConnection(): " + t);
+            }
+        }
+
+        /**
+         * Test connecting specifying "sa" as user. Should either succeed or
+         * get an SQL state of 28000 (invalid authorization specification) or
+         * 08S01 (bad host name).
+         */
+        public void testNormal() {
+            JtdsDataSource ds = new JtdsDataSource();
+            ds.setServerName("localhost");
+            ds.setUser("sa");
+            ds.setPassword("");
+            try {
+                Connection c = ds.getConnection();
+                assertNotNull(c);
+                c.close();
+            } catch (SQLException ex) {
+                String sqlState = ex.getSQLState();
+                if (!"28000".equals(sqlState) && !"08S01".equals(sqlState)) {
+                    ex.printStackTrace();
+                    fail("Expecting SQL state 28000 or 08S01. Got " + ex.getSQLState());
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+                fail(t.getClass().getName() + " caught while testing JtdsDataSource.getConnection(): " + t);
+            }
+        }
+    }
 }

@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/28/2004 - Alin Sinpalean
+ o Corrected bug [1036058] DataSource implementation broken. Thanks, Mike for
+   finding this before the new release.
+
 09/27/2004 - Alin Sinpalean
  o Update counts are read and cached completely (either until the end of the
    response or until a ResultSet is encountered) and exceptions are thrown when

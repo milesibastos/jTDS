@@ -8,10 +8,10 @@ import java.util.Hashtable;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  *
- * @version  $Id: EncodingHelper.java,v 1.3 2002-09-06 13:55:37 alin_sinpalean Exp $
+ * @version  $Id: EncodingHelper.java,v 1.4 2002-09-06 14:33:47 alin_sinpalean Exp $
  */
 public class EncodingHelper {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.3 2002-09-06 13:55:37 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.4 2002-09-06 14:33:47 alin_sinpalean Exp $";
 
     /**
      * The name of the encoding.
@@ -30,12 +30,14 @@ public class EncodingHelper {
     /**
      * private so only the static accessor can be used.
      */
-    private EncodingHelper(String name, boolean wideChars) {
+    private EncodingHelper(String name) throws UnsupportedEncodingException
+    {
         this.name = name;
-        this.wideChars = wideChars;
-        if (!wideChars) {
-            converted = getString(convArray);
-        }
+        converted = new String(convArray, name);
+        wideChars = converted.length()!=convArray.length;
+
+        if( wideChars )
+            converted = null;
     }
 
     /**
@@ -113,9 +115,7 @@ public class EncodingHelper {
         if( res == null )
             try
             {
-                // This will throw an UnsupportedEncodingException if the encodingName is wrong
-                new String(convArray, encodingName);
-                res = new EncodingHelper(encodingName, false);
+                res = new EncodingHelper(encodingName);
                 knownEncodings.put(encodingName, res);
             }
             catch( UnsupportedEncodingException ex )
@@ -153,7 +153,12 @@ public class EncodingHelper {
 
         knownEncodings = new Hashtable();
         // SAfe: SQL Server returns iso_1, but it's actually Cp1252
-        knownEncodings.put("iso_1", new EncodingHelper("Cp1252", false));
+        try
+        {
+            knownEncodings.put("iso_1", new EncodingHelper("Cp1252"));
+        }
+        catch( UnsupportedEncodingException ex )
+        {}
         initialized = true;
     }
 

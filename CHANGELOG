@@ -3,6 +3,10 @@ Changes from jTDS 0.3
 
 09/06/2002 - Alin Sinpalean
 
+ o The modifications to EncodingHelper did not take into account multiple-byte
+   charsets (they were hardcoded before). Now this is automagically determined
+   based on the size of the resulting String (if same, then it's a single-byte
+   charset).
  o Modifications to the EncodingHelper and Tds for a better encoder management
    and changed the default encoding to Cp1252 (when SQL Server responds with
    'iso_1' - that's inexact, SQL Server is, in fact, using Cp1252).

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.25 2002-08-30 10:27:18 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.26 2002-08-30 14:13:51 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -2566,11 +2566,10 @@ public class Tds implements TdsDefinitions {
      *      otherwise
      *@exception  java.sql.SQLException  Description of Exception
      */
-    private synchronized boolean changeDB(String database)
+    protected synchronized boolean changeDB(String database)
              throws java.sql.SQLException
     {
         boolean isOkay = true;
-        ;
 
         try {
             PacketResult result;
@@ -2633,7 +2632,7 @@ public class Tds implements TdsDefinitions {
             throw new SQLException("Network problem. " + e.getMessage());
         }
         catch (com.internetcds.jdbc.tds.TdsException e) {
-            throw new SQLException(e.getMessage());
+            throw new SQLException(e.toString());
         }
 
         return isOkay;
@@ -3768,18 +3767,19 @@ public class Tds implements TdsDefinitions {
         // Set table name (and catalog and schema, if available)
         if( tableName != null )
         {
-            int pos = tableName.indexOf('.');
-
-            if( pos >=0 )
-            // The table name also contains a catalog/schema
+            int pos = tableName.lastIndexOf('.');
+            col.setTableName(tableName.substring(pos+1));
+            pos = pos==-1 ? 0 : pos;
+            tableName = tableName.substring(0, pos);
+            if( pos > 0 )
             {
-                int p2 = tableName.indexOf('.', pos+1);
-                col.setCatalog(tableName.substring(0, pos));
-                col.setSchema(tableName.substring(pos+1, p2));
-                col.setTableName(tableName.substring(p2+1));
+                pos = tableName.lastIndexOf('.');
+                col.setSchema(tableName.substring(pos+1));
+                pos = pos==-1 ? 0 : pos;
+                tableName = tableName.substring(0, pos);
             }
-            else
-                col.setTableName(tableName);
+            if( pos > 0 )
+                col.setCatalog(tableName);
         }
 
         // Set scale

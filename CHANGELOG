@@ -6,6 +6,10 @@ Changes from jTDS 0.3
  o TdsResultSetMetaData.get* fixed (Bug #598911). Still a couple of
    incompatibilities with the JDBC-ODBC bridge, due to the fact that I consider
    their implementation to be incorrect.
+ o Synchronized TdsConnection. Still need to do some similar work on Statements
+   and ResultSets, but it's a good job, anyway (I hope no deadlocks were
+   introduced because of this).
+ o Implemented TdsConnection.setCatalog. The dirty way, but it works.
 
 08/28/2002 - Alin Sinpalean
 

@@ -407,6 +407,26 @@ public class CallableStatementTest extends TestBase {
         
         cstmt.close();
     }
+
+    /**
+     * Test for bug [994888] Callable statement and Float output parameter
+     */
+    public void testCallableRegisterOutParameter4() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure #rop4 @data float OUTPUT as\r\n "
+                     + "begin\r\n"
+                     + "set @data = 1.1\r\n"
+                     + "end");
+        stmt.close();
+        
+        CallableStatement cstmt = con.prepareCall("{call #rop4(?)}");
+
+        cstmt.registerOutParameter(1, Types.FLOAT);
+        cstmt.execute();
+
+        assertTrue(cstmt.getFloat(1) == 1.1f);
+        cstmt.close();
+    }
     
     /**
      * Test for bug [991640] java.sql.Date error and RAISERROR problem

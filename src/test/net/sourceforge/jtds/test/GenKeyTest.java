@@ -4,7 +4,7 @@ import java.sql.*;
 
 /**
  * Test case to illustrate JDBC 3 GetGeneratedKeys() function.
- * 
+ *
  * @version    1.0
  */
 public class GenKeyTest extends TestBase {
@@ -28,7 +28,7 @@ public class GenKeyTest extends TestBase {
 		//
 		// Test PrepareStatement(sql, int) option
 		//
-		PreparedStatement pstmt = 
+		PreparedStatement pstmt =
 			con.prepareStatement("INSERT INTO #gktemp (dummyx) VALUES (?)", Statement.RETURN_GENERATED_KEYS);
 		pstmt.setString(1, "TEST01");
 		assertEquals("First Insert failed", 1, pstmt.executeUpdate());
@@ -42,7 +42,7 @@ public class GenKeyTest extends TestBase {
 		//
 		int cols[] = new int[1];
 		cols[0] = 1;
-		pstmt = 
+		pstmt =
 			con.prepareStatement("INSERT INTO #gktemp (dummyx) VALUES (?)", cols);
 		pstmt.setString(1, "TEST02");
 		assertEquals("Second Insert failed", 1, pstmt.executeUpdate());
@@ -56,7 +56,7 @@ public class GenKeyTest extends TestBase {
 		//
 		String colNames[] = new String[1];
 		colNames[0] = "ID";
-		pstmt = 
+		pstmt =
 			con.prepareStatement("INSERT INTO #gktemp (dummyx) VALUES (?)", colNames);
 		pstmt.setString(1, "TEST03");
 		pstmt.execute();
@@ -70,9 +70,9 @@ public class GenKeyTest extends TestBase {
 		// Test CreateStatement()
 		//
 		stmt = con.createStatement();
-		assertEquals("Fourth Insert failed", 1, 
+		assertEquals("Fourth Insert failed", 1,
 			stmt.executeUpdate("INSERT INTO #gktemp (dummyx) VALUES ('TEST04')",
-				Statement.RETURN_GENERATED_KEYS)); 
+				Statement.RETURN_GENERATED_KEYS));
 		rs = stmt.getGeneratedKeys();
 		assertTrue("ResultSet 4 empty", rs.next());
 		assertEquals("Bad inserted row ID ", 4, rs.getInt(1));

@@ -269,6 +269,14 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
             return false;
         }
 
+        // If less than 0, it can only be POS_BEFORE_FIRST or POS_AFTER_LAST
+        if( pos < 0 ) {
+            if( pos == POS_BEFORE_FIRST ) {
+                pos = 0;
+            } else {
+                pos = rowsInResult;
+            }
+        }
         pos += rows;
         return true;
     }

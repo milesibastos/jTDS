@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2004-02-06 17:50:24 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2004-02-09 23:52:13 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -67,27 +67,25 @@ class TdsInstance
 
 
 /**
- *  <P>
+ * A Connection represents a session with a specific database. Within the
+ * context of a Connection, SQL statements are executed and results are
+ * returned. <P>
  *
- *  A Connection represents a session with a specific database. Within the
- *  context of a Connection, SQL statements are executed and results are
- *  returned. <P>
+ * A Connection's database is able to provide information describing its
+ * tables, its supported SQL grammar, its stored procedures, the capabilities
+ * of this connection, etc. This information is obtained with the getMetaData
+ * method. <P>
  *
- *  A Connection's database is able to provide information describing its
- *  tables, its supported SQL grammar, its stored procedures, the capabilities
- *  of this connection, etc. This information is obtained with the getMetaData
- *  method. <P>
- *
- *  <B>Note:</B> By default the Connection automatically commits changes after
- *  executing each statement. If auto commit has been disabled, an explicit
- *  commit must be done or database changes will not be saved.
+ * <B>Note:</B> By default the Connection automatically commits changes after
+ * executing each statement. If auto commit has been disabled, an explicit
+ * commit must be done or database changes will not be saved.
  *
  * @author     Craig Spannring
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.10 2004-02-06 17:50:24 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.11 2004-02-09 23:52:13 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -125,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2004-02-06 17:50:24 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2004-02-09 23:52:13 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -444,7 +442,7 @@ public class TdsConnection implements Connection
      * generate additional (unexpected) update counts.
      *
      * @return the value of <code>lastUpdateCount</code>
-     */ 
+     */
     public boolean returnLastUpdateCount() {
         return lastUpdateCount;
     }
@@ -747,6 +745,7 @@ public class TdsConnection implements Connection
                     Object o = tdsPool.remove(i);
                     tdsPool.insertElementAt(o, 0);
                     haveMainTds = true;
+                    i = 0;
                 }
             }
 
@@ -764,10 +763,6 @@ public class TdsConnection implements Connection
 
             inst.inUse = true;
             result = inst.tds;
-
-            // SAfe This is no longer needed, as settings are changed for all
-            //      Tds instances every time, now
-            // result.changeSettings(autoCommit, transactionIsolationLevel);
         }
         catch( net.sourceforge.jtds.jdbc.TdsException e )
         {
@@ -887,9 +882,9 @@ public class TdsConnection implements Connection
     //
     public PreparedStatement prepareStatement(String sql, int param) throws SQLException {
         checkClosed();
-        
+
         boolean returnKeys = false;
-        
+
         if (param == Statement.RETURN_GENERATED_KEYS
             && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             StringBuffer tmpSQL = new StringBuffer(sql);
@@ -901,7 +896,7 @@ public class TdsConnection implements Connection
             }
 
             tmpSQL.append("\r\nSELECT @@IDENTITY AS ID");
-            sql = tmpSQL.toString();            
+            sql = tmpSQL.toString();
             returnKeys = true;
         }
 
@@ -913,11 +908,11 @@ public class TdsConnection implements Connection
 
     //
     // MJH - Add option to request return of generated keys.
-    // NB. SQL Server only allows one IDENTITY column per table so 
+    // NB. SQL Server only allows one IDENTITY column per table so
     // cheat here and don't process the column parameter in detail.
     //
     public PreparedStatement prepareStatement(String sql, int[] values)
-    throws SQLException {
+            throws SQLException {
         if (values == null) {
             throw new SQLException("values cannot be null.");
         } else  if (values.length != 1) {
@@ -929,11 +924,11 @@ public class TdsConnection implements Connection
 
     //
     // MJH - Add option to request return of generated keys.
-    // NB. SQL Server only allows one IDENTITY column per table so 
+    // NB. SQL Server only allows one IDENTITY column per table so
     // cheat here and don't process the column parameter in detail.
     //
     public PreparedStatement prepareStatement(String sql, String[] str1)
-    throws SQLException {
+            throws SQLException {
         if (str1 == null) {
             throw new SQLException("str1 cannot be nulll.");
         } else if (str1.length != 1) {
@@ -972,5 +967,4 @@ public class TdsConnection implements Connection
     {
         throw new UnsupportedOperationException();
     }
-
 }

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.15 2004-02-07 17:30:08 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.16 2004-02-09 23:52:14 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.15 2004-02-07 17:30:08 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.16 2004-02-09 23:52:14 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -106,7 +106,7 @@ public class TdsStatement implements java.sql.Statement
 
     /**
      * MJH - Set the return generated keys flag.
-     * 
+     *
      * @param value <code>true</code if generated keys should be retrieved;
      *              <code>false</code> otherwise.
      */
@@ -181,7 +181,7 @@ public class TdsStatement implements java.sql.Statement
     public final synchronized boolean internalExecute(String sql) throws SQLException {
         // checkClosed();
         // MJH - Invoke other method to simplify get gen keys logic
-        return internalExecute(sql, getTds(), warningChain); 
+        return internalExecute(sql, getTds(), warningChain);
         // return executeImpl(getTds(), sql, warningChain);
     }
 
@@ -249,7 +249,7 @@ public class TdsStatement implements java.sql.Statement
                                  this, wChain, getQueryTimeout(), false);
 
     //        return getMoreResults(tds, wChain, true);
-            // MJH - We do not want to free the Tds before checking to 
+            // MJH - We do not want to free the Tds before checking to
             // see if we need to get the generated keys.
             result = getMoreResults(tds, warningChain, false);
 
@@ -347,38 +347,6 @@ public class TdsStatement implements java.sql.Statement
 
         if (actTds != null) {
             actTds.skipToEnd();
-//            releaseTds();
-
-            // SAfe This is the only place we should send a CANCEL packet
-            //      ourselves. We can't do that in Tds.discardResultSet because
-            //      we could cancel other results when what we want is to only
-            //      close the ResultSet in order to get the other results.
-
-            // SAfe On a second thought, we'd better not cancel the execution.
-            //      Someone could run a big update script and not process all
-            //      the results, thinking that as long as there were no
-            //      exceptions, all went right, but we would cancel the script.
-            //      Anyway, this was a good test for the cancel mechanism. :o)
-//            try
-//            {
-//                if( actTds.moreResults() )
-//                    actTds.cancel();
-//            }
-//            catch( java.io.IOException ex )
-//            {
-//                throw new SQLException(ex.toString());
-//            }
-//            catch( TdsException ex )
-//            {
-//                throw new SQLException(ex.toString());
-//            }
-
-            // SAfe And now, keep consuming data and hope the server cancels
-            //      this as soon as possible (I'm not so sure, however, that
-            //      this will happen; I think that even if the data amount is
-            //      huge, the server sends it as soon as possible so the cancel
-            //      could come too late; or not?)
-//            while( getMoreResults(actTds, warningChain, false) || updateCount!=-1 );
         }
     }
 
@@ -595,7 +563,7 @@ public class TdsStatement implements java.sql.Statement
     public synchronized boolean execute(String sql) throws SQLException {
         checkClosed();
 
-        // MJH - Block return keys action for this type of execute       
+        // MJH - Block return keys action for this type of execute
         this.returnKeys = false;
 
         return internalExecute(sql);
@@ -911,9 +879,10 @@ public class TdsStatement implements java.sql.Statement
 
         return internalExecute(str);
     }
+
     //
     // MJH - Add option to request return of generated keys.
-    // NB. SQL Server only allows one IDENTITY column per table so 
+    // NB. SQL Server only allows one IDENTITY column per table so
     // cheat here and don't process the column parameter in detail.
     //
     public boolean execute(String str, String[] str1) throws SQLException {
@@ -925,9 +894,10 @@ public class TdsStatement implements java.sql.Statement
 
         return execute(str, Statement.RETURN_GENERATED_KEYS);
     }
+
     //
     // MJH - Add option to request return of generated keys.
-    // NB. SQL Server only allows one IDENTITY column per table so 
+    // NB. SQL Server only allows one IDENTITY column per table so
     // cheat here and don't process the column parameter in detail.
     //
     public boolean execute(String str, int[] values) throws SQLException {
@@ -942,7 +912,7 @@ public class TdsStatement implements java.sql.Statement
 
     //
     // MJH - Add option to request return of generated keys.
-    // NB. SQL Server only allows one IDENTITY column per table so 
+    // NB. SQL Server only allows one IDENTITY column per table so
     // cheat here and don't process the column parameter in detail.
     //
     public int executeUpdate(String str, String[] str1) throws SQLException {
@@ -957,7 +927,7 @@ public class TdsStatement implements java.sql.Statement
 
     //
     // MJH - Add option to request return of generated keys.
-    // NB. SQL Server only allows one IDENTITY column per table so 
+    // NB. SQL Server only allows one IDENTITY column per table so
     // cheat here and don't process the column parameter in detail.
     //
     public int executeUpdate(String str, int[] values) throws SQLException {
@@ -969,6 +939,7 @@ public class TdsStatement implements java.sql.Statement
 
         return executeUpdate(str, Statement.RETURN_GENERATED_KEYS);
     }
+
     //
     // MJH - Add option to request return of generated keys.
     //
@@ -991,7 +962,7 @@ public class TdsStatement implements java.sql.Statement
             return (res == -1) ? 0 : res;
         }
     }
-    
+
     //
     // MJH - At last! Return the special result set containing the
     // key generated by the last insert statement.
@@ -1013,18 +984,18 @@ public class TdsStatement implements java.sql.Statement
     //
     private void internalGetGeneratedKeys(Tds tds, boolean result) throws SQLException {
         this.lastGeneratedKey = null;
-    
+
         if (this.returnKeys
             && !(this instanceof CallableStatement_base)
             && !(this instanceof CallableStatement_base)
             && !result
             && !tds.moreResults()) {
-    
+
             //
             // Routine only used by Statement
             //
             int saveCount = this.updateCount; // Original value will be reset to -1 by getMoreResults()
-    
+
             try {
                 SQLWarningChain tmpWarnings = new SQLWarningChain();
                 // SCOPE_IDENTITY() is prefered as it avoids problems with
@@ -1032,13 +1003,13 @@ public class TdsStatement implements java.sql.Statement
                 // @@IDENTITY is required for SQL 6.5 / Sybase in all cases.
                 //
                 String sql;
-    
+
                 if (tds.getTdsVer() == Tds.TDS70) {
                     sql = "SELECT SCOPE_IDENTITY() AS ID";
                 } else {
                     sql = "SELECT @@IDENTITY AS ID";
                 }
-    
+
                 if (executeImpl(tds, sql, tmpWarnings)) {
                     // Construct a special result set.
                     this.lastGeneratedKey = new GenKeyResultSet(this, this.results);

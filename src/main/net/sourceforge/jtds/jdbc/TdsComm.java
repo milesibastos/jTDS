@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.7 2004-02-09 23:52:13 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -66,7 +66,7 @@ public class TdsComm implements TdsDefinitions {
 
     // The type of the TDS packet that is being constructed
     // in outBuffer.
-    int packetType = 0;
+    volatile int packetType = 0; // MJH - 06/02/04 Made volatile to ensure thread safe
 
     // Place to store the incoming data from the DB server.
     byte inBuffer[];
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.7 2004-02-09 23:52:13 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -169,12 +169,10 @@ public class TdsComm implements TdsDefinitions {
         id = ++nextId;
     }
 
-
     public void close()
     {
         // nop for now.
     }
-
 
     /*
      *  private void clearInputStream() throws IOException
@@ -226,10 +224,10 @@ public class TdsComm implements TdsDefinitions {
             throw new TdsException("Unprocessed data in input buffer.");
         }
 
-        // Only one thread at a time can be building an outboudn packet.
+        // Only one thread at a time can be building an outbound packet.
         // This is primarily a concern with building cancel packets.
         //  XXX: as why should more than one thread work with the same tds-stream ??? would be fatal anyway
-        while ( someThreadIsBuildingPacket() ) {
+        while ( packetType != 0 ) {
             try {
                 wait();
             }
@@ -242,26 +240,14 @@ public class TdsComm implements TdsDefinitions {
         nextOutBufferIndex = headerLength;
     }
 
-
     /**
-     *  Is some thread currently building a logical TDS packet?
+     * Append a byte onto the end of the logical TDS packet. <p>
      *
-     *@return    true iff a packet is being built.
-     */
-    public boolean someThreadIsBuildingPacket()
-    {
-        return packetType != 0;
-    }
-
-
-    /**
-     *  append a byte onto the end of the logical TDS packet. <p>
+     * Append a byte onto the end of the logical TDS packet. When a physical
+     * packet is full send it to the server.
      *
-     *  Append a byte onto the end of the logical TDS packet. When a physical
-     *  packet is full send it to the server.
-     *
-     *@param  b                        byte to add to the TDS packet
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  b                        byte to add to the TDS packet
+     * @exception  java.io.IOException
      */
     public void appendByte( byte b )
              throws java.io.IOException
@@ -276,31 +262,26 @@ public class TdsComm implements TdsDefinitions {
         storeByte( nextOutBufferIndex, b );
         nextOutBufferIndex++;
     }
-    // appendByte()
-
 
     /**
-     *  append an array of bytes onto the end of the logical TDS packet.
+     * Append an array of bytes onto the end of the logical TDS packet.
      *
-     *@param  b                        bytes to add to the TDS packet
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  b                        bytes to add to the TDS packet
+     * @exception  java.io.IOException
      */
     public void appendBytes( byte[] b )
              throws java.io.IOException
     {
         appendBytes( b, b.length, ( byte ) 0 );
     }
-    // appendBytes()
-
-
 
     /**
-     *  append an array of bytes onto the end of the logical TDS packet.
+     * Append an array of bytes onto the end of the logical TDS packet.
      *
-     *@param  b                        bytes to add to the TDS packet
-     *@param  len                      maximum number of bytes to transmit
-     *@param  pad                      fill with this byte until len is reached
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  b                        bytes to add to the TDS packet
+     * @param  len                      maximum number of bytes to transmit
+     * @param  pad                      fill with this byte until len is reached
+     * @exception  java.io.IOException
      */
     public void appendBytes( byte[] b, int len, byte pad )
              throws java.io.IOException
@@ -314,14 +295,12 @@ public class TdsComm implements TdsDefinitions {
         }
     }
 
-
     /**
-     *  append a short int onto the end of the logical TDS packet. <p>
+     * Append a short int onto the end of the logical TDS packet. <p>
      *
      *
-     *
-     *@param  s                        short int to add to the TDS packet
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  s                        short int to add to the TDS packet
+     * @exception  java.io.IOException
      */
     public void appendShort( short s )
              throws java.io.IOException
@@ -330,14 +309,11 @@ public class TdsComm implements TdsDefinitions {
         appendByte( ( byte ) ( ( s >> 0 ) & 0xff ) );
     }
 
-
     /**
-     *  Appends a short int onto the end of the logical TDS packet. <p>
+     * Appends a short int onto the end of the logical TDS packet. <p>
      *
-     *
-     *
-     *@param  s                        short int to add to the TDS packet
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  s                        short int to add to the TDS packet
+     * @exception  java.io.IOException
      */
     public void appendTdsShort( short s )
              throws java.io.IOException
@@ -346,14 +322,11 @@ public class TdsComm implements TdsDefinitions {
         appendByte( ( byte ) ( ( s >> 8 ) & 0xff ) );
     }
 
-
     /**
-     *  append a Double onto the end of the logical TDS packet. <p>
+     * Append the Double value onto the end of the TDS packet as a SYBFLT8.
      *
-     *  Append the Double value onto the end of the TDS packet as a SYBFLT8.
-     *
-     *@param  value                    Double to add to the TDS packet
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  value                    Double to add to the TDS packet
+     * @exception  java.io.IOException
      */
     public void appendFlt8( Double value )
              throws java.io.IOException
@@ -370,7 +343,6 @@ public class TdsComm implements TdsDefinitions {
         appendByte( ( byte ) ( ( l >> 56 ) & 0xff ) );
     }
 
-
     public void appendInt( int i )
              throws java.io.IOException
     {
@@ -380,7 +352,6 @@ public class TdsComm implements TdsDefinitions {
         appendByte( ( byte ) ( ( i >> 0 ) & 0xff ) );
     }
 
-
     public void appendTdsInt( int i )
              throws java.io.IOException
     {
@@ -389,7 +360,6 @@ public class TdsComm implements TdsDefinitions {
         appendByte( ( byte ) ( ( i >> 16 ) & 0xff ) );
         appendByte( ( byte ) ( ( i >> 24 ) & 0xff ) );
     }
-
 
     public void appendInt64( long i )
              throws java.io.IOException
@@ -404,15 +374,14 @@ public class TdsComm implements TdsDefinitions {
         appendByte( ( byte ) ( ( i >> 0 ) & 0xff ) );
     }
 
-
     /**
-     *  Appends the 16-bit characters from the caller's string, without
-     *  narrowing the characters. Sybase let's the client decide what byte order
-     *  to use but it \ appears that SQLServer 7.0 little-endian byte order.
-     *  Added 2000-06-05
+     * Appends the 16-bit characters from the caller's string, without
+     * narrowing the characters. Sybase let's the client decide what byte order
+     * to use but it \ appears that SQLServer 7.0 little-endian byte order.
+     * Added 2000-06-05
      *
-     *@param  s                        @todo Description of Parameter
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @param  s                        @todo Description of Parameter
+     * @exception  java.io.IOException
      */
     public void appendChars( String s ) throws java.io.IOException
     {
@@ -425,13 +394,12 @@ public class TdsComm implements TdsDefinitions {
         }
     }
 
-
     /**
-     *  Send the logical packet. <p>
+     * Send the logical packet. <p>
      *
-     *  Send the logical packet the has been constructed.
+     * Send the logical packet the has been constructed.
      *
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @exception  java.io.IOException
      */
     public synchronized void sendPacket()
              throws java.io.IOException
@@ -442,12 +410,11 @@ public class TdsComm implements TdsDefinitions {
         notify();
     }
 
-
     /**
-     *  store a byte of data at a particular location in the outBuffer.
+     * store a byte of data at a particular location in the outBuffer.
      *
-     *@param  index  position in outBuffer to store data
-     *@param  value  value to store in the outBuffer.
+     * @param  index  position in outBuffer to store data
+     * @param  value  value to store in the outBuffer.
      */
     private void storeByte(
             int index,
@@ -456,12 +423,11 @@ public class TdsComm implements TdsDefinitions {
         outBuffer[index] = value;
     }
 
-
     /**
-     *  store a short integer of data at a particular location in the outBuffer.
+     * Store a short integer of data at a particular location in the outBuffer.
      *
-     *@param  index  position in outBuffer to store data
-     *@param  s      @todo Description of Parameter
+     * @param  index  position in outBuffer to store data
+     * @param  s      @todo Description of Parameter
      */
     private void storeShort(
             int index,
@@ -471,16 +437,15 @@ public class TdsComm implements TdsDefinitions {
         outBuffer[index + 1] = ( byte ) ( ( s >> 0 ) & 0xff );
     }
 
-
     /**
-     *  send the data in the outBuffer. <p>
+     * Send the data in the outBuffer. <p>
      *
-     *  Fill in the TDS packet header data and send the data in outBuffer to the
-     *  DB server.
+     * Fill in the TDS packet header data and send the data in outBuffer to the
+     * DB server.
      *
-     *@param  isLastSegment            is this the last physical packet that
+     * @param  isLastSegment            is this the last physical packet that
      *      makes up the physical packet?
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @exception  java.io.IOException
      */
     private void sendPhysicalPacket( boolean isLastSegment )
              throws java.io.IOException
@@ -508,21 +473,20 @@ public class TdsComm implements TdsDefinitions {
         }
     }
 
-
     /**
-     *  peek at the next byte of data. <p>
+     * Peek at the next byte of data. <p>
      *
-     *  This returns the next byte of data that would be returned by getByte(),
-     *  but does not actually consume the data. <b>Note-</b> We can't
-     *  synchronize this method (or most of the other methods in this class)
-     *  because of the way cancels are handled. If a thread is waiting for a
-     *  response from the server the cancelController class must be able to call
-     *  sendPacket() to cancel the request.
+     * This returns the next byte of data that would be returned by getByte(),
+     * but does not actually consume the data. <b>Note-</b> We can't
+     * synchronize this method (or most of the other methods in this class)
+     * because of the way cancels are handled. If a thread is waiting for a
+     * response from the server the cancelController class must be able to call
+     * sendPacket() to cancel the request.
      *
-     *@return                                            The next byte of data
+     * @return                                            The next byte of data
      *      that will be returned by getByte()
-     *@exception  net.sourceforge.jtds.jdbc.TdsException
-     *@exception  java.io.IOException
+     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  java.io.IOException
      */
     public byte peek()
         throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -534,18 +498,17 @@ public class TdsComm implements TdsDefinitions {
         return inBuffer[inBufferIndex];
     }
 
-
     /**
-     *  read a byte of data from the DB server. <p>
+     * Read a byte of data from the DB server. <p>
      *
-     *  This will return the next byte of data from the DB server. <p>
+     * This will return the next byte of data from the DB server. <p>
      *
-     *  <B>Warning</B> If there is not data available this method will block.
+     * <B>Warning</B> If there is not data available this method will block.
      *
-     *@return                                            The Byte value
-     *@exception  net.sourceforge.jtds.jdbc.TdsException  @todo Description of
+     * @return                                            The Byte value
+     * @exception  net.sourceforge.jtds.jdbc.TdsException  @todo Description of
      *      Exception
-     *@exception  java.io.IOException                    @todo Description of
+     * @exception  java.io.IOException                    @todo Description of
      *      Exception
      */
     public byte getByte()
@@ -603,20 +566,19 @@ public class TdsComm implements TdsDefinitions {
         return result;
     }
 
-
     /**
-     *  Reads bytes or characters (depending on TDS version) and constructs a
-     *  string with them. Sybase will let the client choose byte ordering, but
-     *  SQLServer 7.0 wants little endian only. In the interest of simplicity,
-     *  just use little endian regardless of the type of server. Added
-     *  2000-06-05.
+     * Reads bytes or characters (depending on TDS version) and constructs a
+     * string with them. Sybase will let the client choose byte ordering, but
+     * SQLServer 7.0 wants little endian only. In the interest of simplicity,
+     * just use little endian regardless of the type of server. Added
+     * 2000-06-05.
      *
-     *@param  len                                        @todo Description of
+     * @param  len                                        @todo Description of
      *      Parameter
-     *@return                                            The String value
-     *@exception  net.sourceforge.jtds.jdbc.TdsException  @todo Description of
+     * @return                                            The String value
+     * @exception  net.sourceforge.jtds.jdbc.TdsException  @todo Description of
      *      Exception
-     *@exception  java.io.IOException                    @todo Description of
+     * @exception  java.io.IOException                    @todo Description of
      *      Exception
      */
     public String getString(int len, EncodingHelper enc) throws TdsException, java.io.IOException
@@ -638,7 +600,6 @@ public class TdsComm implements TdsDefinitions {
             return enc.getString(getBytes(len, false), 0, len);
     }
 
-
     public void skip( int i )
              throws net.sourceforge.jtds.jdbc.TdsException,
             java.io.IOException
@@ -647,8 +608,6 @@ public class TdsComm implements TdsDefinitions {
             getByte();
         }
     }
-    // skip()
-
 
     public int getNetShort()
              throws TdsException, java.io.IOException
@@ -659,7 +618,6 @@ public class TdsComm implements TdsDefinitions {
         return ntohs( tmp, 0 );
     }
 
-
     public int getTdsShort()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
     {
@@ -667,7 +625,6 @@ public class TdsComm implements TdsDefinitions {
         int hi = ( ( int ) getByte() & 0xff ) << 8;
         return lo | hi;
     }
-
 
     public int getTdsInt()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
@@ -684,7 +641,6 @@ public class TdsComm implements TdsDefinitions {
         return result;
     }
 
-
     public long getTdsInt64()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
     {
@@ -699,7 +655,6 @@ public class TdsComm implements TdsDefinitions {
         return b1 | b2 | b3 | b4 | b5 | b6 | b7 | b8;
     }
 
-
     /**
      * Read a physical packet.<p>
      * <B>Warning</B> This method will block until it gets all of the input.
@@ -708,8 +663,8 @@ public class TdsComm implements TdsDefinitions {
      * <code>this</code> object) because it would prevent us from sending
      * CANCEL packets, which are sent asynchronously.
      *
-     * @exception  TdsException         @todo Description of Exception
-     * @exception  java.io.IOException  @todo Description of Exception
+     * @exception  TdsException
+     * @exception  java.io.IOException
      */
     private void getPhysicalPacket()
         throws TdsException, java.io.IOException
@@ -744,8 +699,10 @@ public class TdsComm implements TdsDefinitions {
         // figure out how many bytes are remaining in this packet.
         int len = ntohs( tmpBuf, 2 ) - 8;
 
-        // Added 2000-06-05
-        if ( len >= inBuffer.length ) {
+        // MJH - 06/02/04 changed from >= to > because the buffer
+        // was being reallocated with the same size every time a full
+        // packet was received.
+        if ( len > inBuffer.length ) {
             inBuffer = new byte[len];
         }
 
@@ -778,7 +735,6 @@ public class TdsComm implements TdsDefinitions {
         }
     }
 
-
     void resizeOutbuf( int newsize )
     {
         if ( newsize > outBufferLen ) {
@@ -789,14 +745,13 @@ public class TdsComm implements TdsDefinitions {
         }
     }
 
-
     /**
-     *  convert two bytes in a byte array into a Java short integer.
+     * Convert two bytes in a byte array into a Java short integer.
      *
-     *@param  buf     array of data
-     *@param  offset  index into the buf array where the short integer is
+     * @param  buf     array of data
+     * @param  offset  index into the buf array where the short integer is
      *      stored.
-     *@return         @todo Description of the Returned Value
+     * @return         @todo Description of the Returned Value
      */
     private static int ntohs( byte buf[], int offset )
     {

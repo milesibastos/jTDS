@@ -37,62 +37,20 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.sql.*;
 import java.util.*;
+import java.io.InterruptedIOException;
 
 import net.sourceforge.jtds.util.Logger;
 
 /**
  * Implement the TDS protocol.
  *
- *@author     Craig Spannring
- *@author     Igor Petrovski
- *@author     The FreeTDS project
- *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.26 2004-02-05 23:57:55 alin_sinpalean Exp $
+ * @author     Craig Spannring
+ * @author     Igor Petrovski
+ * @author     The FreeTDS project
+ * @created    March 17, 2001
+ * @version    $Id: Tds.java,v 1.27 2004-02-09 23:52:13 alin_sinpalean Exp $
  */
-public class Tds implements TdsDefinitions
-{
-    /**
-     * Cancel the current SQL if the timeout expires.
-     *
-     * @author     Craig Spannring
-     * @created    March 17, 2001
-     */
-    private class TimeoutHandler extends Thread
-    {
-        private Tds tds;
-        private SQLWarningChain wChain;
-        private int timeout;
-
-        TimeoutHandler(Tds tds, SQLWarningChain wChain, int timeout)
-        {
-            this.tds = tds;
-            this.wChain = wChain;
-            this.timeout = timeout;
-        }
-
-        public void run()
-        {
-            try
-            {
-                sleep(timeout * 1000);
-                // SAfe The java.sql.Statement.cancel() javadoc says an SQLException
-                //      must be thrown if the execution timed out, so that's what
-                //      we're going to do.
-                wChain.addException(new SQLException("Query has timed out."));
-                tds.cancel();
-            }
-            // Ignore interrupts (this is how we know all was ok)
-            catch( java.lang.InterruptedException e )
-            {
-                // nop
-            }
-            // SAfe Add an exception if anything else goes wrong
-            catch( Exception ex )
-            {
-                wChain.addException(new SQLException(ex.toString()));
-            }
-        }
-    }
+public class Tds implements TdsDefinitions {
 
     private Socket sock = null;
     private TdsComm comm = null;
@@ -102,39 +60,39 @@ public class Tds implements TdsDefinitions
     private int databaseMajorVersion;
     private int databaseMinorVersion;
 
-    private TdsConnection connection;
+    private final TdsConnection connection;
 
     /** Tds version we're using. */
     private int tdsVer = Tds.TDS70;
 
-    private String host;
+    private final String host;
     private int serverType = -1; // either Tds.SYBASE or Tds.SQLSERVER
     private int port;            // Port numbers are _unsigned_ 16 bit, short is too small
     private String database;
-    private String user;
-    private String password;
-    private String appName;
-    private String serverName;
-    private String progName;
-    private String domain;   //mdb: used for NTLM authentication; if blank, then use sql auth.
+    private final String user;
+    private final String password;
+    private final String appName;
+    private final String serverName;
+    private final String progName;
+    private final String domain;   //mdb: used for NTLM authentication; if blank, then use sql auth.
 
     /**
      * If set, character parameters are sent as Unicode (NTEXT, NVARCHAR),
      * otherwise they are sent using the default encoding.
      */
-    private boolean useUnicode;
+    private final boolean useUnicode;
 
     /**
      * If set, only return the last update count. For example, if set update
      * counts from triggers will not be returned to the application.
      */
-    private boolean lastUpdateCount;
+    private final boolean lastUpdateCount;
 
     // SAfe Access to both of these fields is synchronized on procedureCache
     private HashMap   procedureCache = null;
     private ArrayList proceduresOfTra = null;
 
-    private CancelController cancelController = null;
+    private Boolean cancelActive = Boolean.FALSE;
 
     private EncodingHelper encoder = null;
     private String charset = null;
@@ -152,7 +110,7 @@ public class Tds implements TdsDefinitions
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.26 2004-02-05 23:57:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.27 2004-02-09 23:52:13 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -169,7 +127,7 @@ public class Tds implements TdsDefinitions
      */
     private Context currentContext;
 
-    public Tds(TdsConnection connection, Properties props)
+    public Tds(final TdsConnection connection, final Properties props)
             throws java.io.IOException, SQLException, TdsException {
         this.connection = connection;
 
@@ -183,7 +141,7 @@ public class Tds implements TdsDefinitions
         appName = props.getProperty(PROP_APPNAME, "jTDS");
         serverName = props.getProperty(PROP_SERVERNAME, host);
         progName = props.getProperty(PROP_PROGNAME, "jTDS");
-        String verString = props.getProperty(PROP_TDS, "7.0");
+        final String verString = props.getProperty(PROP_TDS, "7.0");
         useUnicode = "true".equalsIgnoreCase(props.getProperty(PROP_USEUNICODE, "true"));
         lastUpdateCount = "true".equalsIgnoreCase(
                 props.getProperty(PROP_LAST_UPDATE_COUNT, "false"));
@@ -195,9 +153,9 @@ public class Tds implements TdsDefinitions
         domain = props.getProperty(PROP_DOMAIN, "");
 
         //mdb: get the instance port, if it is specified...
-        String instanceName = props.getProperty(PROP_INSTANCE, "");
+        final String instanceName = props.getProperty(PROP_INSTANCE, "");
         if (instanceName.length() > 0) {
-            MSSqlServerInfo info = new MSSqlServerInfo(host);
+            final MSSqlServerInfo info = new MSSqlServerInfo(host);
             port = info.getPortForInstance(instanceName);
             if (port == -1) {
                 throw new SQLException("Server " + host + " has no instance named " + instanceName);
@@ -214,14 +172,12 @@ public class Tds implements TdsDefinitions
             tdsVer = Tds.TDS42;
         }
 
-        cancelController = new CancelController();
-
         // Send the logon packet to the server
         sock = new Socket(host, port);
         sock.setTcpNoDelay(true);
         comm = new TdsComm(sock, tdsVer);
 
-        String cs = props.getProperty(PROP_CHARSET);
+        final String cs = props.getProperty(PROP_CHARSET);
         // Adellera
         charsetSpecified = setCharset(cs);
 
@@ -281,19 +237,19 @@ public class Tds implements TdsDefinitions
             // Since Sybase does not support temporary stored procedures, construct
             // permenant stored procedures with a UUID as the name.
             // Since I do not have access to Sybase I was unable to test this...
-            Statement stmt = connection.createStatement();
+            final Statement stmt = connection.createStatement();
 
             if (!stmt.execute("SELECT NEWID()")) {
                 throw new SQLException("Confused.  Was expecting a result set.");
             }
 
-            ResultSet rs = stmt.getResultSet();
+            final ResultSet rs = stmt.getResultSet();
 
             if (!rs.next()) {
                 throw new SQLException("Couldn't get stored proc name [NEWID()]");
             }
 
-            String result = rs.getString(1);
+            final String result = rs.getString(1);
 
             stmt.close();
             rs.close();
@@ -322,27 +278,13 @@ public class Tds implements TdsDefinitions
      */
     public synchronized boolean isResultSet()
             throws TdsException, java.io.IOException {
-        byte type = comm.peek();
+        final byte type = comm.peek();
 
         /*
          * XXX to support 5.0 we need to expand our view of what a result
          * set is.
          */
         return type == TDS_COL_NAME_TOKEN || type == TDS_COLMETADATA;
-    }
-
-    /**
-     * Determine if the next subpacket is a ret stat.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return     true if the next piece of data to read is a return status.
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-    public synchronized boolean isRetStat()
-            throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_RETURNSTATUS;
     }
 
     /**
@@ -354,9 +296,9 @@ public class Tds implements TdsDefinitions
      * @exception  net.sourceforge.jtds.jdbc.TdsException
      * @exception  java.io.IOException
      */
-    public synchronized boolean isResultRow()
+    private synchronized boolean isResultRow()
             throws TdsException, java.io.IOException {
-        byte type = comm.peek();
+        final byte type = comm.peek();
 
         return type == TDS_ROW /*|| type == TDS_CMP_ROW_TOKEN*/;
     }
@@ -370,116 +312,10 @@ public class Tds implements TdsDefinitions
      * @exception  net.sourceforge.jtds.jdbc.TdsException
      * @exception  java.io.IOException
      */
-    public synchronized boolean isEndOfResults()
+    private synchronized boolean isEndOfResults()
             throws TdsException, java.io.IOException {
-        byte type = comm.peek();
+        final byte type = comm.peek();
         return type == TDS_DONE || type == TDS_DONEPROC || type == TDS_DONEINPROC;
-    }
-
-    /**
-     * Determine if the next subpacket is a DONEINPROC marker.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return    <code>true</code> if the next packet is a DONEINPROC packet
-     * @exception net.sourceforge.jtds.jdbc.TdsException
-     * @exception java.io.IOException
-     */
-    public synchronized boolean isDoneInProc()
-            throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_DONEINPROC;
-    }
-
-    /**
-     * Determine if the next subpacket is a message packet.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return     true if the next piece of data to read is message
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-    public synchronized boolean isMessagePacket()
-            throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_INFO;
-    }
-
-    /**
-     * Determine if the next subpacket is an output parameter from a stored proc.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return true if the next piece of data to read is an output parameter
-     *
-     * @exception net.sourceforge.jtds.jdbc.TdsException
-     * @exception java.io.IOException
-     */
-    public synchronized boolean isParamResult()
-            throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_PARAM;
-    }
-
-    /**
-     * Determine if the next subpacket is a text update packet.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return     true if the next piece of data to read is text update
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-     /* strange replaced by paramToken
-    public synchronized boolean isTextUpdate()
-             throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
-    {
-        byte type = comm.peek();
-        return type == TDS_TEXT_UPD_TOKEN;
-    }
-      */
-
-
-    /**
-     * Determine if the next subpacket is an error packet.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return     true if the next piece of data to read is an error
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-    public synchronized boolean isErrorPacket()
-             throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_ERROR;
-    }
-
-
-    /**
-     * Determine if the next subpacket is an procid subpacket.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return     true if the next piece of data to read is a procedure id.
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-    public synchronized boolean isProcId()
-             throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_PROCID;
-    }
-
-    /**
-     * Determine if the next subpacket is an environment change subpacket.
-     * <p>
-     * This does not eat any input.
-     *
-     * @return     true if the next piece of data to read is an environment
-     *             change token.
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
-     * @exception  java.io.IOException
-     */
-    public synchronized boolean isEnvChange()
-            throws TdsException, java.io.IOException {
-        return comm.peek() == TDS_ENVCHANGE;
     }
 
     public void close() {
@@ -502,7 +338,7 @@ public class Tds implements TdsDefinitions
      *
      * @param   database  the database name to change to
      */
-    private void initSettings(String database, SQLWarningChain wChain) {
+    private void initSettings(final String database, final SQLWarningChain wChain) {
         try {
             if (database.length() > 0) {
                 changeDB(database, wChain);
@@ -516,12 +352,20 @@ public class Tds implements TdsDefinitions
 
     public void cancel()
              throws java.io.IOException, TdsException {
-        // This is synched by the CancelController and, respectively, TdsComm,
-        // so there is no need to synchronize it here especially since it has
-        // to be asynchronous anyway. ;)
-        cancelController.doCancel(comm);
+        // MJH - 06/02/04 Replace use of the cancel controller by direct
+        // Send of cancel packet. If no query is active we should still
+        // get a cancel ack from the server so send anyway as long as there
+        // are not cancels outstanding.
+        // If this method() is invoked from a different thread from the one
+        // that created the statement things should still work OK.
+        synchronized (cancelActive) {
+            if (!cancelActive.booleanValue()) {
+                comm.startPacket(TdsComm.CANCEL);
+                comm.sendPacket();
+                cancelActive = Boolean.TRUE;
+            }
+        }
     }
-
 
     public boolean moreResults() {
         return moreResults;
@@ -533,16 +377,15 @@ public class Tds implements TdsDefinitions
      *                           into
      * @exception  SQLException  Description of Exception
      */
-    public synchronized void submitProcedure(String sql, SQLWarningChain wChain)
+    public synchronized void submitProcedure(final String sql, final SQLWarningChain wChain)
             throws SQLException {
-        PacketResult res = null;
 
         try {
             executeQuery(sql, null, wChain, 0);
 
             // Skip to end
             do {
-                res = processSubPacket();
+                final PacketResult res = processSubPacket();
                 if (res instanceof PacketMsgResult)
                     wChain.addOrReturn((PacketMsgResult) res);
             } while (moreResults);
@@ -568,13 +411,13 @@ public class Tds implements TdsDefinitions
      * @exception  java.sql.SQLException
      */
     public void executeProcedure(
-            String procedureName,
-            ParameterListItem[] formalParameterList,
-            ParameterListItem[] actualParameterList,
-            TdsStatement stmt,
-            SQLWarningChain wChain,
-            int timeout,
-            boolean noMetaData)
+            final String procedureName,
+            final ParameterListItem[] formalParameterList,
+            final ParameterListItem[] actualParameterList,
+            final TdsStatement stmt,
+            final SQLWarningChain wChain,
+            final int timeout,
+            final boolean noMetaData)
             throws java.sql.SQLException
     {
         try {
@@ -608,19 +451,19 @@ public class Tds implements TdsDefinitions
      * @exception  net.sourceforge.jtds.jdbc.TdsException
      */
     private synchronized void executeProcedureInternal(
-            String procedureName,
-            ParameterListItem[] formalParameterList,
-            ParameterListItem[] actualParameterList,
-            TdsStatement stmt,
-            SQLWarningChain wChain,
-            int timeout,
-            boolean noMetaData)
+            final String procedureName,
+            final ParameterListItem[] formalParameterList,
+            final ParameterListItem[] actualParameterList,
+            final TdsStatement stmt,
+            final SQLWarningChain wChain,
+            final int timeout,
+            final boolean noMetaData)
             throws java.sql.SQLException, TdsException, java.io.IOException {
         // SAfe We need to check if all cancel requests were processed and wait
         //      for any outstanding cancel. It could happen that we sent the
         //      CANCEL after the server sent us all the data, so the answer is
         //      going to come in a packet of its own.
-        while( cancelController.outstandingCancels() > 0 ) {
+        while (cancelActive.booleanValue()) {
             waitForDataOrTimeout(wChain, timeout);
             // @todo Make sure the statement/resultset are not left in an inconsistent state.
             processSubPacket();
@@ -648,7 +491,7 @@ public class Tds implements TdsDefinitions
         // N1 + 10          4           length of param 1 (duplicated?)
         // N1 + 7           N2          parameter 1 data
         // ...
-        checkMaxRows(stmt);
+        checkMaxRows(stmt, wChain);
 
         int i;
 
@@ -665,7 +508,7 @@ public class Tds implements TdsDefinitions
                 comm.appendChars(procedureName);
             }
             else {
-                byte[] nameBytes = encoder.getBytes(procedureName);
+                final byte[] nameBytes = encoder.getBytes(procedureName);
                 comm.appendByte((byte) nameBytes.length);
                 comm.appendBytes(nameBytes,
                         nameBytes.length,
@@ -715,8 +558,8 @@ public class Tds implements TdsDefinitions
                         if (tdsVer < TDS70 && val != null && val.length() == 0) {
                             val = " ";
                         }
-                        int len = val != null ? val.length() : 0;
-                        int max = formalParameterList[i].maxLength;
+                        final int len = val != null ? val.length() : 0;
+                        final int max = formalParameterList[i].maxLength;
 
                         // MJH - Do not use the formalType from the actual parameters as
                         // this will be null where a cached stored procedure is reused by a
@@ -811,8 +654,8 @@ public class Tds implements TdsDefinitions
                             comm.appendByte((byte) 8);
                             comm.appendByte((byte) 0);
                         } else {
-                            Number n = (Number) (actualParameterList[i].value);
-                            Double d = new Double(n.doubleValue());
+                            final Number n = (Number) (actualParameterList[i].value);
+                            final Double d = new Double(n.doubleValue());
 
                             comm.appendByte(SYBFLT8);
                             comm.appendFlt8(d);
@@ -821,7 +664,7 @@ public class Tds implements TdsDefinitions
                     }
                 case SYBDATETIMN:
                     {
-                        writeDatetimeValue(actualParameterList[i].value, SYBDATETIMN);
+                        writeDatetimeValue(actualParameterList[i].value);
                         break;
                     }
                 case SYBIMAGE:
@@ -866,8 +709,8 @@ public class Tds implements TdsDefinitions
                 case SYBBINARY:
                 case SYBVARBINARY:
                     {
-                        byte[] value = (byte[]) actualParameterList[i].value;
-                        int maxLength = formalParameterList[i].maxLength;
+                        final byte[] value = (byte[]) actualParameterList[i].value;
+                        final int maxLength = formalParameterList[i].maxLength;
                         if (value == null) {
                             comm.appendByte(SYBVARBINARY);
                             comm.appendByte((byte) (maxLength));
@@ -909,9 +752,6 @@ public class Tds implements TdsDefinitions
                 }
             }
 
-            // mark that we are performing a query
-            cancelController.setQueryInProgressFlag();
-
             moreResults = true;
             comm.sendPacket();
             waitForDataOrTimeout(wChain, timeout);
@@ -923,15 +763,15 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    void checkMaxRows(java.sql.Statement stmt)
-             throws java.sql.SQLException, TdsException
+    private void checkMaxRows(final java.sql.Statement stmt, final SQLWarningChain wChain)
+             throws java.sql.SQLException
     {
         if (stmt == null) { // internal usage
             return;
         }
-        int maxRows = stmt.getMaxRows();
+        final int maxRows = stmt.getMaxRows();
         if ( maxRows != this.maxRows) {
-            submitProcedure("set rowcount " + maxRows, new SQLWarningChain());
+            submitProcedure("set rowcount " + maxRows, wChain);
             this.maxRows = maxRows;
         }
     }
@@ -944,8 +784,8 @@ public class Tds implements TdsDefinitions
      * @param  timeout
      * @exception  java.sql.SQLException
      */
-    public void executeQuery(String sql, TdsStatement stmt,
-                             SQLWarningChain wChain, int timeout)
+    public void executeQuery(final String sql, final TdsStatement stmt,
+                             final SQLWarningChain wChain, final int timeout)
             throws SQLException {
         try {
             executeQueryInternal(sql, stmt, wChain, timeout);
@@ -975,19 +815,19 @@ public class Tds implements TdsDefinitions
      * @exception  java.sql.SQLException
      * @exception  TdsException
      */
-    private synchronized void executeQueryInternal(String sql, TdsStatement stmt, SQLWarningChain wChain, int timeout)
+    private synchronized void executeQueryInternal(final String sql, final TdsStatement stmt, final SQLWarningChain wChain, final int timeout)
             throws java.io.IOException, java.sql.SQLException, TdsException {
         // SAfe We need to check if all cancel requests were processed and wait
         //      for any outstanding cancel. It could happen that we sent the
         //      CANCEL after the server sent us all the data, so the answer is
         //      going to come in a packet of its own.
-        while (cancelController.outstandingCancels() > 0) {
+        while (cancelActive.booleanValue()) {
             waitForDataOrTimeout(wChain, timeout);
             // @todo Make sure the statement/resultset are not left in an inconsistent state.
             processSubPacket();
         }
 
-        checkMaxRows(stmt);
+        checkMaxRows(stmt, wChain);
 
         // If the query has length 0, the server doesn't answer, so we'll hang
         if (sql.length() > 0) {
@@ -996,11 +836,11 @@ public class Tds implements TdsDefinitions
                 if (tdsVer == Tds.TDS70) {
                     comm.appendChars(sql);
                 } else {
-                    byte[] sqlBytes = encoder.getBytes(sql);
+                    final byte[] sqlBytes = encoder.getBytes(sql);
                     comm.appendBytes(sqlBytes, sqlBytes.length, (byte) 0);
                 }
                 moreResults = true;
-                cancelController.setQueryInProgressFlag();
+
                 //JJ 1999-01-10
                 comm.sendPacket();
 
@@ -1011,25 +851,20 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    public synchronized byte peek()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        return comm.peek();
-    }
-
     /**
      * Eats up all tokens until the next relevant token (TDS_COLMETADATA or
      * TDS_DONE for regular Statements or TDS_COLMETADATA, TDS_DONE or
      * TDS_DONEINPROC for PreparedStatements).
      */
-    protected synchronized void goToNextResult(SQLWarningChain warningChain, TdsStatement stmt)
+    protected synchronized void goToNextResult(final SQLWarningChain warningChain, final TdsStatement stmt)
             throws TdsException, java.io.IOException, SQLException {
-        boolean isPreparedStmt = stmt instanceof PreparedStatement;
-        boolean isCallableStmt = stmt instanceof CallableStatement;
+        final boolean isPreparedStmt = stmt instanceof PreparedStatement;
+        final boolean isCallableStmt = stmt instanceof CallableStatement;
 
         // SAfe Need to process messages, output parameters and return values
         //      here, or even better, in the processXXX methods.
         while (moreResults) {
-            byte next = peek();
+            final byte next = comm.peek();
 
             // SAfe If the next packet is a rowcount or ResultSet, break
             if (next == TDS_DONE || next == TDS_COLMETADATA || next == TDS_COL_NAME_TOKEN ||
@@ -1037,7 +872,7 @@ public class Tds implements TdsDefinitions
                 break;
             }
 
-            PacketResult res = processSubPacket();
+            final PacketResult res = processSubPacket();
 
             if (res instanceof PacketMsgResult) {
                 warningChain.addOrReturn((PacketMsgResult) res);
@@ -1129,10 +964,10 @@ public class Tds implements TdsDefinitions
         comm.getString(comm.getByte() & 0xff, encoder); // Column name
         comm.skip(5);
 
-        byte colType = comm.getByte();
+        final byte colType = comm.getByte();
 
         /** @todo Refactor to combine this code with that in getRow() */
-        Object element;
+        final Object element;
         switch (colType) {
         case SYBINTN:
             comm.getByte(); // Column size
@@ -1199,7 +1034,7 @@ public class Tds implements TdsDefinitions
 
         case SYBFLTN:
             comm.getByte(); // Column size
-            int actual_size = comm.getByte();
+            final int actual_size = comm.getByte();
             element = readFloatN(actual_size);
             break;
 
@@ -1214,7 +1049,7 @@ public class Tds implements TdsDefinitions
         case SYBDECIMAL:
             comm.getByte(); // Column size
             comm.getByte(); // Precision
-            int scale = comm.getByte();
+            final int scale = comm.getByte();
             element = getDecimalValue(scale);
             break;
 
@@ -1245,7 +1080,7 @@ public class Tds implements TdsDefinitions
             break;
 
         case SYBBIT:
-            int column_size = comm.getByte();
+            final int column_size = comm.getByte();
             element = new Boolean((column_size != 0) ? true : false);
             break;
 
@@ -1255,7 +1090,6 @@ public class Tds implements TdsDefinitions
             break;
 
         default:
-            element = null;
             throw new TdsNotImplemented("Don't now how to handle " +
                                         "column type 0x" +
                                         Integer.toHexString(colType));
@@ -1295,7 +1129,7 @@ public class Tds implements TdsDefinitions
      * @exception  java.io.IOException
      * @exception  TdsException
      */
-    private synchronized PacketResult processSubPacket(Context context)
+    private synchronized PacketResult processSubPacket(final Context context)
             throws TdsUnknownPacketSubType, SQLException,
             java.io.IOException, TdsException {
         // NOTE!!! Before adding anything to this list you must
@@ -1307,9 +1141,7 @@ public class Tds implements TdsDefinitions
         // acknowledgment.  It assumes that any results of the call
         // can be discarded.
 
-        PacketResult result = null;
-
-        byte packetSubType = comm.getByte();
+        final byte packetSubType = comm.getByte();
 
         if (Logger.isActive()) {
             Logger.println("processSubPacket: " +
@@ -1319,90 +1151,72 @@ public class Tds implements TdsDefinitions
 
         switch (packetSubType) {
         case TDS_ENVCHANGE:
-            result = processEnvChange();
-            break;
+            return processEnvChange();
 
         case TDS_ERROR:
         case TDS_INFO:
         case TDS_MSG50_TOKEN:
-            result = processMsg(packetSubType);
-            break;
+            return processMsg(packetSubType);
 
         case TDS_PARAM:
-            result = processOutputParam();
-            break;
+            return processOutputParam();
 
         case TDS_LOGINACK:
-            result = processLoginAck();
-            break;
+            return processLoginAck();
 
         case TDS_RETURNSTATUS:
-            result = processRetStat();
-            break;
+            return processRetStat();
 
         case TDS_PROCID:
-            result = processProcId();
-            break;
+            return processProcId();
 
         case TDS_DONE:
         case TDS_DONEPROC:
         case TDS_DONEINPROC:
-            result = processEndToken(packetSubType);
+            final PacketResult result = processEndToken(packetSubType);
             moreResults = ((PacketEndTokenResult) result).moreResults();
-            break;
+            return result;
 
         case TDS_COL_NAME_TOKEN:
-            result = processColumnNames();
-            break;
+            return processColumnNames();
 
         case TDS_COL_INFO_TOKEN:
-            result = processColumnInfo();
-            break;
+            return processColumnInfo();
 
         case TDS_UNKNOWN_0xA5:
         case TDS_UNKNOWN_0xA7:
         case TDS_UNKNOWN_0xA8:
             // XXX Need to figure out what this packet is
             comm.skip(comm.getTdsShort());
-            result = new PacketUnknown(packetSubType);
-            break;
+            return new PacketUnknown(packetSubType);
 
         case TDS_TABNAME:
-            result = processTabName();
-            break;
+            return processTabName();
 
         case TDS_ORDER:
             int len = comm.getTdsShort();
             comm.skip(len);
-
-            result = new PacketColumnOrderResult();
-            break;
+            return new PacketColumnOrderResult();
 
         case TDS_CONTROL:
             len = comm.getTdsShort();
             comm.skip(len);
             // FIXME - I'm just ignoring this
-            result = new PacketControlResult();
-            break;
+            return new PacketControlResult();
 
         case TDS_ROW:
-            result = getRow(context);
-            break;
+            return getRow(context);
 
         case TDS_COLMETADATA:
-            result = processTds7Result();
-            break;
+            return processTds7Result();
 
             //mdb
         case TDS_AUTH_TOKEN:
-            result = processNtlmChallenge();
-            break;
+            return processNtlmChallenge();
 
         default:
             throw new TdsUnknownPacketSubType(packetSubType);
         }
-
-        return result;
     }
 
     private boolean setCharset(String charset) {
@@ -1446,7 +1260,7 @@ public class Tds implements TdsDefinitions
      *
      * @return    name we will use as the client.
      */
-    private String getClientName() {
+    private static String getClientName() {
         // This method is thread safe.
         String tmp;
         try {
@@ -1455,7 +1269,7 @@ public class Tds implements TdsDefinitions
             tmp = "";
         }
 
-        StringTokenizer st = new StringTokenizer(tmp, ".");
+        final StringTokenizer st = new StringTokenizer(tmp, ".");
 
         if (!st.hasMoreTokens()) {
             // This means hostname wasn't found for this machine.
@@ -1505,7 +1319,7 @@ public class Tds implements TdsDefinitions
      * @exception  TdsException if the <code>nativeColumnType</code> is not a
      *                          known datatype.
      */
-    private boolean isFixedSizeColumn(byte nativeColumnType)
+    private static boolean isFixedSizeColumn(final byte nativeColumnType)
             throws net.sourceforge.jtds.jdbc.TdsException {
         switch (nativeColumnType) {
         case SYBINT1:
@@ -1545,10 +1359,9 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private Object getMoneyValue(int type)
+    private Object getMoneyValue(final int type)
             throws java.io.IOException, TdsException {
-        int len;
-        Object result;
+        final int len;
 
         switch (type) {
         case SYBSMALLMONEY:
@@ -1569,22 +1382,22 @@ public class Tds implements TdsDefinitions
         }
 
         if (len == 0) {
-            result = null;
+            return null;
         } else {
-            BigInteger x = null;
+            final BigInteger x;
 
             if (len == 4) {
                 x = BigInteger.valueOf(comm.getTdsInt());
             } else if (len == 8) {
-                byte b4 = comm.getByte();
-                byte b5 = comm.getByte();
-                byte b6 = comm.getByte();
-                byte b7 = comm.getByte();
-                byte b0 = comm.getByte();
-                byte b1 = comm.getByte();
-                byte b2 = comm.getByte();
-                byte b3 = comm.getByte();
-                long l = (long) (b0 & 0xff) + ((long) (b1 & 0xff) << 8)
+                final byte b4 = comm.getByte();
+                final byte b5 = comm.getByte();
+                final byte b6 = comm.getByte();
+                final byte b7 = comm.getByte();
+                final byte b0 = comm.getByte();
+                final byte b1 = comm.getByte();
+                final byte b2 = comm.getByte();
+                final byte b3 = comm.getByte();
+                final long l = (long) (b0 & 0xff) + ((long) (b1 & 0xff) << 8)
                         + ((long) (b2 & 0xff) << 16) + ((long) (b3 & 0xff) << 24)
                         + ((long) (b4 & 0xff) << 32) + ((long) (b5 & 0xff) << 40)
                         + ((long) (b6 & 0xff) << 48) + ((long) (b7 & 0xff) << 56);
@@ -1593,9 +1406,8 @@ public class Tds implements TdsDefinitions
                 throw new TdsConfused("Don't know what to do with len of "
                                       + len);
             }
-            result = new BigDecimal(x, 4);
+            return new BigDecimal(x, 4);
         }
-        return result;
     }
 
     /**
@@ -1617,7 +1429,7 @@ public class Tds implements TdsDefinitions
      * @exception  java.io.IOException
      * @exception  NumberFormatException
      */
-    private Object getDecimalValue(int scale)
+    private Object getDecimalValue(final int scale)
             throws TdsException, java.io.IOException, NumberFormatException {
         int len = comm.getByte() & 0xff;
         if (--len < 1) {
@@ -1625,24 +1437,24 @@ public class Tds implements TdsDefinitions
         }
 
         // RMK 2000-06-10.  Deduced from some testing/packet sniffing.
-        byte[] bytes = new byte[len];
-        int signum = comm.getByte() == 0 ? -1 : 1;
+        final byte[] bytes = new byte[len];
+        final int signum = comm.getByte() == 0 ? -1 : 1;
         while (len > 0) {
             bytes[--len] = comm.getByte();
         }
-        BigInteger bigInt = new BigInteger(signum, bytes);
+        final BigInteger bigInt = new BigInteger(signum, bytes);
         return new BigDecimal(bigInt, scale);
     }
 
-    private Object getDatetimeValue(int type)
+    private Object getDatetimeValue(final int type)
              throws java.io.IOException, TdsException {
         // Some useful constants
         final long SECONDS_PER_DAY = 24L * 60L * 60L;
         final long DAYS_BETWEEN_1900_AND_1970 = 25567L;
 
         int len;
-        Object result;
-        long tdsDays, tdsTime, sqlDays, minutes, seconds, millis, micros;
+        final long tdsDays, tdsTime, sqlDays, minutes, seconds, micros;
+        long millis;
 
         if (type == SYBDATETIMN) {
             len = comm.getByte();
@@ -1655,8 +1467,7 @@ public class Tds implements TdsDefinitions
 
         switch (len) {
         case 0:
-            result = null;
-            break;
+            return null;
 
         case 8:
             // It appears that a datetime is made of of 2 32bit ints
@@ -1677,8 +1488,7 @@ public class Tds implements TdsDefinitions
                 millis++;
             }
 
-            result = new Timestamp(millis - getDstOffset(millis));
-            break;
+            return new Timestamp(millis - getDstOffset(millis));
 
         case 4:
             // Accroding to Transact SQL Reference
@@ -1693,16 +1503,13 @@ public class Tds implements TdsDefinitions
             seconds = sqlDays * SECONDS_PER_DAY + minutes * 60L;
             millis = seconds * 1000L - zoneOffset;
 
-            result = new Timestamp(millis - getDstOffset(millis));
-            break;
+            return new Timestamp(millis - getDstOffset(millis));
 
         default:
-            result = null;
             throw new TdsNotImplemented("Don't now how to handle "
                                         + "date with size of "
                                         + len);
         }
-        return result;
     }
 
     /**
@@ -1717,16 +1524,16 @@ public class Tds implements TdsDefinitions
      * @return       The DstOffset value
      * @todo SAfe Try to find a better way to do this, because it doubles the time it takes to process datetime values!!!
      */
-    private long getDstOffset(long time) {
-        Calendar cal = Calendar.getInstance();
+    private static long getDstOffset(final long time) {
+        final Calendar cal = Calendar.getInstance();
         cal.setTime(new java.util.Date(time));
         return cal.get(Calendar.DST_OFFSET);
     }
 
-    private Object getIntValue(int type)
+    private Object getIntValue(final int type)
             throws java.io.IOException, TdsException {
-        Object result;
-        int len;
+        final Object result;
+        final int len;
 
         switch (type) {
         case SYBINTN:
@@ -1774,12 +1581,12 @@ public class Tds implements TdsDefinitions
         return result;
     }
 
-    private Object getCharValue(boolean wideChars, boolean outputParam)
+    private Object getCharValue(final boolean wideChars, final boolean outputParam)
             throws TdsException, java.io.IOException {
         Object result;
 
-        boolean shortLen = (tdsVer == Tds.TDS70) && (wideChars || !outputParam);
-        int len = shortLen ? comm.getTdsShort() : (comm.getByte() & 0xFF);
+        final boolean shortLen = (tdsVer == Tds.TDS70) && (wideChars || !outputParam);
+        final int len = shortLen ? comm.getTdsShort() : (comm.getByte() & 0xFF);
         // SAfe 2002-08-23
         // TDS 7.0 no longer uses 0 length values as NULL
         if (tdsVer < TDS70 && len == 0 || tdsVer == TDS70 && len == 0xFFFF) {
@@ -1806,11 +1613,11 @@ public class Tds implements TdsDefinitions
         return result;
     }
 
-    private Object getTextValue(boolean wideChars)
+    private Object getTextValue(final boolean wideChars)
             throws TdsException, java.io.IOException {
         String result;
 
-        byte hasValue = comm.getByte();
+        final byte hasValue = comm.getByte();
 
         if (hasValue == 0) {
             result = null;
@@ -1819,7 +1626,7 @@ public class Tds implements TdsDefinitions
             // 2000-06-06 RMK They are the TEXTPTR (16 bytes) and the TIMESTAMP.
             comm.skip(24);
 
-            int len = comm.getTdsInt();
+            final int len = comm.getTdsInt();
 
             // RMK 2000-06-11
             // The logic immediately below does not agree with test t0031,
@@ -1854,9 +1661,9 @@ public class Tds implements TdsDefinitions
     }
 
     private Object getImageValue() throws TdsException, java.io.IOException {
-        byte[] result;
+        final byte[] result;
 
-        byte hasValue = comm.getByte();
+        final byte hasValue = comm.getByte();
 
         if (hasValue == 0) {
             result = null;
@@ -1865,7 +1672,7 @@ public class Tds implements TdsDefinitions
             // 2000-06-06 RMK They are the TEXTPTR (16 bytes) and the TIMESTAMP.
             comm.skip(24);
 
-            int len = comm.getTdsInt();
+            final int len = comm.getTdsInt();
 
             // RMK 2000-06-11
             // The logic immediately below does not agree with test t0031,
@@ -1898,15 +1705,15 @@ public class Tds implements TdsDefinitions
      * @exception  java.io.IOException
      *
      */
-    private PacketRowResult loadRow(PacketRowResult result)
+    private PacketRowResult loadRow(final PacketRowResult result)
             throws SQLException, TdsException, java.io.IOException {
         int i;
 
-        Columns columnsInfo = result.getContext().getColumnInfo();
+        final Columns columnsInfo = result.getContext().getColumnInfo();
 
         for (i = 1; i <= columnsInfo.realColumnCount(); i++) {
-            Object element;
-            int colType = columnsInfo.getNativeType(i);
+            final Object element;
+            final int colType = columnsInfo.getNativeType(i);
 
             if (Logger.isActive())
                 Logger.println("colno=" + i +
@@ -1974,7 +1781,7 @@ public class Tds implements TdsDefinitions
 
             case SYBVARBINARY:
             case SYBBINARY:
-                int len = tdsVer == Tds.TDS70
+                int len = (tdsVer == Tds.TDS70)
                         ? comm.getTdsShort()
                         : (comm.getByte() & 0xff);
                 if (tdsVer == Tds.TDS70 && len == 0xffff) {
@@ -1999,7 +1806,6 @@ public class Tds implements TdsDefinitions
                 break;
 
             default:
-                element = null;
                 throw new TdsNotImplemented("Don't now how to handle " +
                                             "column type 0x" +
                                             Integer.toHexString(colType));
@@ -2015,9 +1821,9 @@ public class Tds implements TdsDefinitions
      * Creates a <code>PacketRowResult</code> and calls
      * <code>loadRow(PacketRowResult)</code> with it.
      */
-    private PacketRowResult getRow(Context context)
+    private PacketRowResult getRow(final Context context)
             throws SQLException, TdsException, java.io.IOException {
-        PacketRowResult result = new PacketRowResult(context);
+        final PacketRowResult result = new PacketRowResult(context);
         return loadRow(result);
     }
 
@@ -2090,8 +1896,8 @@ public class Tds implements TdsDefinitions
     private void logon(String database)
             throws SQLException, TdsUnknownPacketSubType,
             java.io.IOException, TdsException {
-        byte pad = (byte) 0;
-        byte[] empty = new byte[0];
+        final byte pad = (byte) 0;
+        final byte[] empty = new byte[0];
 
         try {
             // Added 2000-06-07.
@@ -2252,11 +2058,11 @@ public class Tds implements TdsDefinitions
             comm.packetType = 0;
         }
 
-        SQLWarningChain wChain = new SQLWarningChain();
+        final SQLWarningChain wChain = new SQLWarningChain();
 
         // Get the reply to the logon packet.
         while (moreResults) {
-            PacketResult res = processSubPacket();
+            final PacketResult res = processSubPacket();
 
             if (res instanceof PacketMsgResult) {
                 wChain.addOrReturn((PacketMsgResult) res);
@@ -2282,16 +2088,16 @@ public class Tds implements TdsDefinitions
      *
      * Added 2000-06-05.
      */
-    private void send70Login(String _database)
+    private void send70Login(final String _database)
             throws java.io.IOException, TdsException {
-        String libName = this.progName;
-        byte pad = (byte) 0;
-        byte[] empty = new byte[0];
-        String appName = this.appName;
-        String clientName = getClientName();
+        final String libName = this.progName;
+        final byte pad = (byte) 0;
+        final byte[] empty = new byte[0];
+        final String appName = this.appName;
+        final String clientName = getClientName();
 
         //mdb
-        boolean ntlmAuth = (domain.length() > 0);
+        final boolean ntlmAuth = (domain.length() > 0);
 
         //mdb:begin-change
         short packSize = (short) (86 + 2 *
@@ -2300,7 +2106,7 @@ public class Tds implements TdsDefinitions
                 serverName.length() +
                 libName.length() +
                 _database.length()));
-        short authLen = 0;
+        final short authLen;
         //NOTE(mdb): ntlm includes auth block; sql auth includes uname and pwd.
         if (ntlmAuth) {
             authLen = (short) (32 + domain.length());
@@ -2399,7 +2205,7 @@ public class Tds implements TdsDefinitions
         // Pack up the login values.
         //mdb: for ntlm auth, uname and pwd aren't sent up...
         if (!ntlmAuth) {
-            String scrambledPw = tds7CryptPass(password);
+            final String scrambledPw = tds7CryptPass(password);
             comm.appendChars(user);
             comm.appendChars(scrambledPw);
         }
@@ -2412,10 +2218,10 @@ public class Tds implements TdsDefinitions
         //mdb: add the ntlm auth info...
         if (ntlmAuth) {
             // host and domain name are _narrow_ strings.
-            byte[] domainBytes = domain.getBytes("UTF8");
+            final byte[] domainBytes = domain.getBytes("UTF8");
             //byte[] hostBytes   = localhostname.getBytes("UTF8");
 
-            byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
+            final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
             comm.appendBytes(header); //header is ascii "NTLMSSP\0"
             comm.appendTdsInt(1);          //sequence number = 1
             comm.appendTdsInt(0xb201);     //flags (???)
@@ -2441,7 +2247,7 @@ public class Tds implements TdsDefinitions
      *
      * @param  database                   Name of the database to use.
      */
-    protected synchronized void changeDB(String database, SQLWarningChain wChain) {
+    protected synchronized void changeDB(final String database, final SQLWarningChain wChain) {
         int i;
 
         // XXX Check to make sure the database name
@@ -2453,7 +2259,7 @@ public class Tds implements TdsDefinitions
         }
 
         for (i = 0; i < database.length(); i++) {
-            char ch;
+            final char ch;
             ch = database.charAt(i);
             if (!
                     ((ch == '_' && i != 0)
@@ -2465,7 +2271,7 @@ public class Tds implements TdsDefinitions
             }
         }
 
-        String query = tdsVer == TDS70 ?
+        final String query = tdsVer == TDS70 ?
                 ("use [" + database + ']') : "use " + database;
 
         try {
@@ -2488,9 +2294,9 @@ public class Tds implements TdsDefinitions
      * @exception  java.io.IOException
      * @exception  TdsException
      */
-    private PacketMsgResult processMsg(byte packetSubType)
+    private PacketMsgResult processMsg(final byte packetSubType)
             throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        SqlMessage msg = new SqlMessage();
+        final SqlMessage msg = new SqlMessage();
 
         getSubPacketLength(); // Packet length
 
@@ -2498,15 +2304,15 @@ public class Tds implements TdsDefinitions
         msg.state = comm.getByte();
         msg.severity = comm.getByte();
 
-        int msgLen = comm.getTdsShort();
+        final int msgLen = comm.getTdsShort();
         msg.message = comm.getString(msgLen, encoder);
 
-        int srvNameLen = comm.getByte() & 0xFF;
+        final int srvNameLen = comm.getByte() & 0xFF;
         msg.server = comm.getString(srvNameLen, encoder);
 
         if (packetSubType == TDS_INFO || packetSubType == TDS_ERROR) {
             // nop
-            int procNameLen = comm.getByte() & 0xFF;
+            final int procNameLen = comm.getByte() & 0xFF;
             msg.procName = comm.getString(procNameLen, encoder);
         } else {
             throw new TdsConfused("Was expecting a msg or error token.  " +
@@ -2534,14 +2340,14 @@ public class Tds implements TdsDefinitions
      */
     private PacketResult processEnvChange()
             throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        int len = getSubPacketLength();
-        int type = comm.getByte();
+        final int len = getSubPacketLength();
+        final int type = comm.getByte();
 
         switch (type) {
         case TDS_ENV_BLOCKSIZE:
             {
-                String blocksize;
-                int clen = comm.getByte() & 0xFF;
+                final String blocksize;
+                final int clen = comm.getByte() & 0xFF;
                 if (tdsVer == TDS70) {
                     blocksize = comm.getString(clen, encoder);
                     comm.skip(len - 2 - clen * 2);
@@ -2558,8 +2364,8 @@ public class Tds implements TdsDefinitions
             break;
         case TDS_ENV_CHARSET:
             {
-                int clen = comm.getByte() & 0xFF;
-                String charset;
+                final int clen = comm.getByte() & 0xFF;
+                final String charset;
                 if (tdsVer == TDS70) {
                     charset = comm.getString(clen, encoder);
                     comm.skip(len - 2 - clen * 2);
@@ -2577,9 +2383,9 @@ public class Tds implements TdsDefinitions
         case TDS_ENV_DATABASE:
             {
                 int clen = comm.getByte() & 0xFF;
-                String newDb = comm.getString(clen, encoder);
+                final String newDb = comm.getString(clen, encoder);
                 clen = comm.getByte() & 0xFF;
-                String oldDb = comm.getString(clen, encoder);
+                final String oldDb = comm.getString(clen, encoder);
 
                 if (database != null && !oldDb.equalsIgnoreCase(database)) {
                     throw new TdsException("Old database mismatch.");
@@ -2615,15 +2421,15 @@ public class Tds implements TdsDefinitions
      */
     private PacketColumnNamesResult processColumnNames()
             throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        Columns columns = new Columns();
+        final Columns columns = new Columns();
 
-        int totalLen = comm.getTdsShort();
+        final int totalLen = comm.getTdsShort();
 
         int bytesRead = 0;
         int i = 0;
         while (bytesRead < totalLen) {
-            int colNameLen = comm.getByte();
-            String colName = encoder.getString(
+            final int colNameLen = comm.getByte();
+            final String colName = encoder.getString(
                     comm.getBytes(colNameLen, false), 0, colNameLen);
             bytesRead = bytesRead + 1 + colNameLen;
             i++;
@@ -2648,11 +2454,11 @@ public class Tds implements TdsDefinitions
      */
     private PacketColumnInfoResult processColumnInfo()
             throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        Columns columns = new Columns();
+        final Columns columns = new Columns();
         int precision;
         int scale;
 
-        int totalLen = comm.getTdsShort();
+        final int totalLen = comm.getTdsShort();
 
         int bytesRead = 0;
         int numColumns = 0;
@@ -2660,21 +2466,22 @@ public class Tds implements TdsDefinitions
             scale = -1;
             precision = -1;
 
-            int bufLength = -1, dispSize = -1;
+            final int bufLength;
+            final int dispSize = -1;
 
-            byte flagData[] = new byte[4];
+            final byte[] flagData = new byte[4];
             for (int i = 0; i < 4; i++) {
                 flagData[i] = comm.getByte();
                 bytesRead++;
             }
-            boolean nullable = (flagData[2] & 0x01) > 0;
-            boolean caseSensitive = (flagData[2] & 0x02) > 0;
-            boolean writable = (flagData[2] & 0x0C) > 0;
-            boolean autoIncrement = (flagData[2] & 0x10) > 0;
+            final boolean nullable = (flagData[2] & 0x01) > 0;
+            final boolean caseSensitive = (flagData[2] & 0x02) > 0;
+            final boolean writable = (flagData[2] & 0x0C) > 0;
+            final boolean autoIncrement = (flagData[2] & 0x10) > 0;
             String tableName = "";
 
             // Get the type of column
-            byte columnType = comm.getByte();
+            final byte columnType = comm.getByte();
             bytesRead++;
 
             if (columnType == SYBTEXT || columnType == SYBIMAGE) {
@@ -2683,7 +2490,7 @@ public class Tds implements TdsDefinitions
                 comm.skip(4);
                 bytesRead += 4;
 
-                int tableNameLen = comm.getTdsShort();
+                final int tableNameLen = comm.getTdsShort();
                 bytesRead += 2;
                 tableName = encoder.getString(comm.getBytes(tableNameLen, false), 0, tableNameLen);
                 bytesRead += tableNameLen;
@@ -2712,7 +2519,7 @@ public class Tds implements TdsDefinitions
         }
 
         // Don't know what the rest is except that the
-        int skipLen = totalLen - bytesRead;
+        final int skipLen = totalLen - bytesRead;
         if (skipLen != 0) {
             throw new TdsException(
                     "skipping " + skipLen + " bytes");
@@ -2725,7 +2532,7 @@ public class Tds implements TdsDefinitions
 
     private PacketTabNameResult processTabName()
             throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        int totalLen = comm.getTdsShort();
+        final int totalLen = comm.getTdsShort();
 
         // RMK 2000-06-11.  Not sure why the original code is bothering
         // to extract the bytes with such meticulous care if it isn't
@@ -2765,11 +2572,11 @@ public class Tds implements TdsDefinitions
      *                                 reading bytes from the network.
      */
     private PacketEndTokenResult processEndToken(
-            byte packetType)
+            final byte packetType)
             throws TdsException, java.io.IOException {
-        byte status = comm.getByte();
+        final byte status = comm.getByte();
         comm.getByte();
-        byte op = comm.getByte();
+        final byte op = comm.getByte();
         comm.getByte();
         // comm.skip(3);
         int rowCount = comm.getTdsInt();
@@ -2779,14 +2586,16 @@ public class Tds implements TdsDefinitions
         if (packetType == TdsDefinitions.TDS_DONEPROC)
             rowCount = -1;
 
-        PacketEndTokenResult result =
+        final PacketEndTokenResult result =
                 new PacketEndTokenResult(packetType, status, rowCount);
 
-        // XXX If we executed something that returns multiple result
-        // sets then we don't want to clear the query in progress flag.
-        // See the CancelController class for details.
-        cancelController.finishQuery(result.wasCanceled(),
-                                     result.moreResults());
+        // MJH - 06/02/04 We will send a cancel anyway as long as there are
+        // none outstanding
+        if (result.wasCanceled()) {
+            synchronized (cancelActive) {
+                cancelActive = Boolean.FALSE;
+            }
+        }
 
         // XXX Problem handling cancels that were sent after the server
         //     send the endToken packet
@@ -2801,7 +2610,7 @@ public class Tds implements TdsDefinitions
      * @exception TdsException thrown if the given type either doesn't exist or
      *                         is a variable sized data type.
      */
-    private int lookupBufferSize(byte nativeColumnType)
+    private static int lookupBufferSize(final byte nativeColumnType)
             throws net.sourceforge.jtds.jdbc.TdsException {
         switch (nativeColumnType) {
         case SYBINT1:
@@ -2841,7 +2650,7 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private int lookupDisplaySize(byte nativeColumnType)
+    private static int lookupDisplaySize(final byte nativeColumnType)
             throws net.sourceforge.jtds.jdbc.TdsException {
         switch (nativeColumnType) {
         case SYBINT1:
@@ -2881,9 +2690,9 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private void writeDatetimeValue(Object value_in, int nativeType)
+    private void writeDatetimeValue(final Object value_in)
             throws java.io.IOException {
-        comm.appendByte((byte) nativeType);
+        comm.appendByte(SYBDATETIMN);
 
         if (value_in == null) {
             comm.appendByte((byte) 8);
@@ -2898,10 +2707,10 @@ public class Tds implements TdsDefinitions
             final int epochsDifference = 25567;
 
             // ms is the number of milliseconds into unix epoch
-            long ms = 0;
+            long ms;
 
             if (value_in instanceof java.sql.Timestamp) {
-                Timestamp value = (Timestamp) value_in;
+                final Timestamp value = (Timestamp) value_in;
                 ms = value.getTime();
 
                 // SAfe If the value contains only an integral number of seconds, add the nanoseconds,
@@ -2932,7 +2741,7 @@ public class Tds implements TdsDefinitions
                 daysIntoUnixEpoch = 0;
             }
 
-            int daysIntoSybaseEpoch = (int) daysIntoUnixEpoch + epochsDifference;
+            final int daysIntoSybaseEpoch = (int) daysIntoUnixEpoch + epochsDifference;
 
             // If the number of seconds and milliseconds are set to zero, then
             // pass this as a smalldatetime parameter.  Otherwise, pass it as
@@ -2948,7 +2757,7 @@ public class Tds implements TdsDefinitions
             } else {
                 // SAfe Rounding problem: without the +100, 'Jan 4 2003 2:22:39:803' would get passed as
                 //                        'Jan 4 2003 2:22:39:800'. Should we use +500 instead?
-                int jiffies = (int) ((msIntoCurrentDay * 300 + 100) / 1000);
+                final int jiffies = (int) ((msIntoCurrentDay * 300 + 100) / 1000);
 
                 comm.appendByte((byte) 8);
                 comm.appendByte((byte) 8);
@@ -2958,10 +2767,10 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private void writeDecimalValue(Object o, int jdbcType, int reqScale)
+    private void writeDecimalValue(final Object o, final int jdbcType, final int reqScale)
             throws TdsException, java.io.IOException {
-        byte prec = connection.getMaxPrecision();
-        byte maxLen = (prec <= 28) ? (byte)13 : (byte)17;
+        final byte prec = connection.getMaxPrecision();
+        final byte maxLen = (prec <= 28) ? (byte)13 : (byte)17;
 
         comm.appendByte(SYBDECIMAL);
 
@@ -2973,7 +2782,7 @@ public class Tds implements TdsDefinitions
             if (o == null) {
                 comm.appendByte((byte) 0);
             } else {
-                comm.appendByte((o == null) ? 0 : (byte) 9);
+                comm.appendByte((byte) 9);
 
                 long value = ((Number) o).longValue();
 
@@ -3017,28 +2826,27 @@ public class Tds implements TdsDefinitions
                     bd = bd.setScale(prec, BigDecimal.ROUND_HALF_UP);
                 }
 
-                boolean repeat = false;
                 byte scale;
-                byte signum = (byte) (bd.signum() < 0 ? 0 : 1);
+                final byte signum = (byte) (bd.signum() < 0 ? 0 : 1);
                 byte[] mantisse;
                 byte len;
                 do {
                     scale = (byte) bd.scale();
-                    BigInteger bi = bd.unscaledValue();
+                    final BigInteger bi = bd.unscaledValue();
                     mantisse = bi.abs().toByteArray();
                     len = (byte) (mantisse.length + 1);
 
                     if (len > maxLen) {   // diminish scale as long as len is to much
-                        int dif = len - maxLen;
+                        final int dif = len - maxLen;
                         scale -= dif * 2;
                         if (scale < 0) {
                             throw new TdsException("can't sent this BigDecimal");
                         }
                         bd = bd.setScale(scale, BigDecimal.ROUND_HALF_UP);
-                        repeat = true;
+                        continue;
                     } else
                         break;
-                } while (repeat);
+                } while (true);
 
                 comm.appendByte(scale);
                 comm.appendByte(len);
@@ -3051,18 +2859,18 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private Object readFloatN(int len)
+    private Object readFloatN(final int len)
             throws TdsException, java.io.IOException {
-        Object tmp;
+        final Object tmp;
 
         switch (len) {
         case 8:
-            long l = comm.getTdsInt64();
+            final long l = comm.getTdsInt64();
             tmp = new Double(Double.longBitsToDouble(l));
             break;
 
         case 4:
-            int i = comm.getTdsInt();
+            final int i = comm.getTdsInt();
             tmp = new Float(Float.intBitsToFloat(i));
             break;
 
@@ -3078,10 +2886,10 @@ public class Tds implements TdsDefinitions
         return tmp;
     }
 
-    private void sendSybImage(byte[] value)
+    private void sendSybImage(final byte[] value)
             throws java.io.IOException {
         int i;
-        int length = (value == null ? 0 : value.length);
+        final int length = (value == null ? 0 : value.length);
 
         // send the lenght of this piece of data
         comm.appendTdsInt(length);
@@ -3095,9 +2903,9 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private void sendSybChar(String value, int maxLength)
+    private void sendSybChar(final String value, final int maxLength)
             throws java.io.IOException {
-        byte[] converted;
+        final byte[] converted;
         if (value == null) {
             comm.appendByte(SYBVARCHAR);
             comm.appendByte((byte) (maxLength > 255 ? 255 : maxLength));
@@ -3144,14 +2952,14 @@ public class Tds implements TdsDefinitions
 
         if (tdsVer == Tds.TDS70) {
             comm.skip(5);
-            int nameLen = comm.getByte();
+            final int nameLen = comm.getByte();
             databaseProductName = comm.getString(nameLen, encoder);
             databaseProductVersion = ("0" + (databaseMajorVersion = comm.getByte()) + ".0"
                     + (databaseMinorVersion = comm.getByte()) + ".0"
                     + ((256 * ((int) comm.getByte() + 1)) + comm.getByte()));
         } else {
             comm.skip(5);
-            short nameLen = comm.getByte();
+            final short nameLen = comm.getByte();
             databaseProductName = comm.getString(nameLen, encoder);
             comm.skip(1);
             databaseProductVersion = ("" + (databaseMajorVersion = comm.getByte()) +
@@ -3161,7 +2969,7 @@ public class Tds implements TdsDefinitions
 
         if (databaseProductName.length() > 1
                 && -1 != databaseProductName.indexOf('\0')) {
-            int last = databaseProductName.indexOf('\0');
+            final int last = databaseProductName.indexOf('\0');
             databaseProductName = databaseProductName.substring(0, last);
         }
 
@@ -3208,8 +3016,8 @@ public class Tds implements TdsDefinitions
      */
     private PacketResult processTds7Result()
             throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
-        int numColumns = comm.getTdsShort();
-        Columns columns = new Columns(numColumns);
+        final int numColumns = comm.getTdsShort();
+        final Columns columns = new Columns(numColumns);
 
         for (int colNum = 1; colNum <= numColumns; ++colNum) {
 
@@ -3219,14 +3027,14 @@ public class Tds implements TdsDefinitions
              * that they serve the same purpose as the flag bytes read by the
              * Java code for 4.2 column information.
              */
-            byte flagData[] = new byte[4];
+            final byte[] flagData = new byte[4];
             for (int i = 0; i < 4; i++) {
                 flagData[i] = comm.getByte();
             }
-            boolean nullable = (flagData[2] & 0x01) > 0;
-            boolean caseSensitive = (flagData[2] & 0x02) > 0;
-            boolean writable = (flagData[2] & 0x0C) > 0;
-            boolean autoIncrement = (flagData[2] & 0x10) > 0;
+            final boolean nullable = (flagData[2] & 0x01) > 0;
+            final boolean caseSensitive = (flagData[2] & 0x02) > 0;
+            final boolean writable = (flagData[2] & 0x0C) > 0;
+            final boolean autoIncrement = (flagData[2] & 0x10) > 0;
 
             /*
              * Get the type of column.  Large types have 2-byte size fields and
@@ -3246,7 +3054,8 @@ public class Tds implements TdsDefinitions
             }
 
             // Determine the column size.
-            int dispSize = -1, bufLength;
+            final int dispSize = -1;
+            final int bufLength;
             String tableName = "";
             if (isBlobType(columnType)) {
 
@@ -3277,8 +3086,8 @@ public class Tds implements TdsDefinitions
              * NB: under 7.0 lengths are number of characters, not number of
              * bytes.  The getString() method handles this.
              */
-            int colNameLen = comm.getByte();
-            String columnName = comm.getString(colNameLen, encoder);
+            final int colNameLen = comm.getByte();
+            final String columnName = comm.getString(colNameLen, encoder);
 
             // Populate the Column object.
             populateColumn(columns.getColumn(colNum), columnType, columnName,
@@ -3291,10 +3100,11 @@ public class Tds implements TdsDefinitions
         return new PacketColumnNamesResult(columns);
     }
 
-    private void populateColumn(Column col, int columnType, String columnName,
-                                int dispSize, int bufLength, boolean nullable, boolean autoIncrement,
-                                boolean writable, boolean caseSensitive, String tableName,
-                                int precision, int scale) {
+    private static void populateColumn(
+            final Column col, final int columnType, final String columnName, int dispSize,
+            final int bufLength, final boolean nullable, final boolean autoIncrement,
+            final boolean writable, final boolean caseSensitive, String tableName,
+            int precision, final int scale) {
         if (columnName != null) {
             col.setName(columnName);
             col.setLabel(columnName);
@@ -3454,24 +3264,23 @@ public class Tds implements TdsDefinitions
         col.setPrecision(precision);
     }
 
-    private void waitForDataOrTimeout(SQLWarningChain wChain, int timeout) throws java.io.IOException, TdsException {
+    private void waitForDataOrTimeout(final SQLWarningChain wChain, final int timeout) throws java.io.IOException, TdsException {
         // SAfe No synchronization needed, this is only used internally so it's
         //      already synched.
         if (timeout == 0 || wChain == null)
             comm.peek();
         else {
-            // start the timeout thread
-            TimeoutHandler t = new TimeoutHandler(this, wChain, timeout);
-
-            t.start();
-
-            // wait until there is at least one byte of data
-            comm.peek();
-
-            // kill the timeout thread
-            t.interrupt();
-
-            t = null;
+            // MJH - 06/02/04 Use the socket time out option
+            // rather than the timeout handler.
+            sock.setSoTimeout(timeout * 1000);
+            try {
+                comm.peek();
+            } catch (InterruptedIOException e) {
+                wChain.addException(new SQLException("Query has timed out."));
+                cancel();
+            } finally {
+                sock.setSoTimeout(0); // restore default no time out
+            }
         }
     }
 
@@ -3483,75 +3292,59 @@ public class Tds implements TdsDefinitions
      * @return          The corresponding SQLServer type identifier.
      * @exception  TdsNotImplemented
      */
-    public static byte cvtJdbcTypeToNativeType(int jdbcType)
+    public static byte cvtJdbcTypeToNativeType(final int jdbcType)
             throws TdsNotImplemented {
         // This function is thread safe.
-        byte result = 0;
         switch (jdbcType) {
         case java.sql.Types.CHAR:
         case java.sql.Types.VARCHAR:
         case java.sql.Types.LONGVARCHAR:
-            result = SYBCHAR;
-            break;
+            return SYBCHAR;
 
         case java.sql.Types.TINYINT:
-            result = SYBINT1;
-            break;
+            return SYBINT1;
 
         case java.sql.Types.SMALLINT:
-            result = SYBINT2;
-            break;
+            return SYBINT2;
 
         case java.sql.Types.INTEGER:
-            result = SYBINT4;
-            break;
+            return SYBINT4;
 
         case java.sql.Types.BIT:
-            result = SYBBIT;
-            break;
+            return SYBBIT;
 
         case java.sql.Types.FLOAT:
         case java.sql.Types.REAL:
         case java.sql.Types.DOUBLE:
-            result = SYBFLT8;
-            break;
+            return SYBFLT8;
 
         case java.sql.Types.DATE:
         case java.sql.Types.TIME:
         case java.sql.Types.TIMESTAMP:
-            result = SYBDATETIMN;
-            break;
+            return SYBDATETIMN;
 
         case java.sql.Types.BINARY:
-            result = SYBBINARY;
-            break;
+            return SYBBINARY;
 
         case java.sql.Types.VARBINARY:
-            result = SYBVARBINARY;
-            break;
+            return SYBVARBINARY;
 
         case java.sql.Types.LONGVARBINARY:
-            result = SYBIMAGE;
-            break;
+            return SYBIMAGE;
 
         case java.sql.Types.BIGINT:
-            result = SYBDECIMAL;
-            break;
+            return SYBDECIMAL;
 
         case java.sql.Types.NUMERIC:
-            result = SYBNUMERIC;
-            break;
+            return SYBNUMERIC;
 
         case java.sql.Types.DECIMAL:
-            result = SYBDECIMAL;
-            break;
+            return SYBDECIMAL;
 
         default:
             throw new TdsNotImplemented("cvtJdbcTypeToNativeType ("
                                         + TdsUtil.javaSqlTypeToString(jdbcType) + ")");
         }
-
-        return result;
     }
 
     /**
@@ -3563,158 +3356,123 @@ public class Tds implements TdsDefinitions
      * @return            yhe corresponding JDBC type identifier.
      * @exception  TdsException
      */
-    public static int cvtNativeTypeToJdbcType(int nativeType, int size)
+    public static int cvtNativeTypeToJdbcType(final int nativeType, final int size)
             throws TdsException {
         // This function is thread safe.
 
-        int result = java.sql.Types.OTHER;
         switch (nativeType) {
         // XXX We need to figure out how to map _all_ of these types
         case SYBBINARY:
-            result = java.sql.Types.BINARY;
-            break;
+            return java.sql.Types.BINARY;
 
         case SYBBIT:
-            result = java.sql.Types.BIT;
-            break;
+            return java.sql.Types.BIT;
 
         case SYBBITN:
-            result = java.sql.Types.BIT;
-            break;
+            return java.sql.Types.BIT;
 
         case SYBCHAR:
-            result = java.sql.Types.CHAR;
-            break;
+            return java.sql.Types.CHAR;
 
         case SYBNCHAR:
-            result = java.sql.Types.CHAR;
-            break;
+            return java.sql.Types.CHAR;
 
         case SYBDATETIME4:
-            result = java.sql.Types.TIMESTAMP;
-            break;
+            return java.sql.Types.TIMESTAMP;
 
         case SYBDATETIME:
-            result = java.sql.Types.TIMESTAMP;
-            break;
+            return java.sql.Types.TIMESTAMP;
 
         case SYBDATETIMN:
-            result = java.sql.Types.TIMESTAMP;
-            break;
+            return java.sql.Types.TIMESTAMP;
 
         case SYBDECIMAL:
-            result = java.sql.Types.DECIMAL;
-            break;
+            return java.sql.Types.DECIMAL;
 
         case SYBNUMERIC:
-            result = java.sql.Types.NUMERIC;
-            break;
+            return java.sql.Types.NUMERIC;
 
         case SYBFLT8:
-            result = java.sql.Types.FLOAT;
-            break;
+            return java.sql.Types.FLOAT;
 
         case SYBFLTN:
             switch (size) {
             case 4:
-                result = java.sql.Types.REAL;
-                break;
+                return java.sql.Types.REAL;
 
             case 8:
-                result = java.sql.Types.FLOAT;
-                break;
+                return java.sql.Types.FLOAT;
 
             default:
                 throw new TdsException("Bad size of SYBFLTN");
             }
-            break;
 
         case SYBINT1:
-            result = java.sql.Types.TINYINT;
-            break;
+            return java.sql.Types.TINYINT;
 
         case SYBINT2:
-            result = java.sql.Types.SMALLINT;
-            break;
+            return java.sql.Types.SMALLINT;
 
         case SYBINT4:
-            result = java.sql.Types.INTEGER;
-            break;
+            return java.sql.Types.INTEGER;
 
         case SYBINTN:
             switch (size) {
             case 1:
-                result = java.sql.Types.TINYINT;
-                break;
+                return java.sql.Types.TINYINT;
 
             case 2:
-                result = java.sql.Types.SMALLINT;
-                break;
+                return java.sql.Types.SMALLINT;
 
             case 4:
-                result = java.sql.Types.INTEGER;
-                break;
+                return java.sql.Types.INTEGER;
 
             default:
                 throw new TdsException("Bad size of SYBINTN");
             }
-            break;
 
         case SYBSMALLMONEY:
-            result = java.sql.Types.DECIMAL;
-            break;
+            return java.sql.Types.DECIMAL;
 
         case SYBMONEY4:
-            result = java.sql.Types.DECIMAL;
-            break;
+            return java.sql.Types.DECIMAL;
 
         case SYBMONEY:
-            result = java.sql.Types.DECIMAL;
-            break;
+            return java.sql.Types.DECIMAL;
 
         case SYBMONEYN:
-            result = java.sql.Types.DECIMAL;
-            break;
+            return java.sql.Types.DECIMAL;
 
         case SYBREAL:
-            result = java.sql.Types.REAL;
-            break;
+            return java.sql.Types.REAL;
 
         case SYBTEXT:
-            result = java.sql.Types.LONGVARCHAR;
-            break;
+            return java.sql.Types.LONGVARCHAR;
 
         case SYBNTEXT:
-            result = java.sql.Types.LONGVARCHAR;
-            break;
+            return java.sql.Types.LONGVARCHAR;
 
         case SYBIMAGE:
             // should be : result = java.sql.Types.LONGVARBINARY;
-            result = java.sql.Types.VARBINARY;   // work around XXXX
-            break;
+            return java.sql.Types.VARBINARY;   // work around XXXX
 
         case SYBVARBINARY:
-            result = java.sql.Types.VARBINARY;
-            break;
+            return java.sql.Types.VARBINARY;
 
         case SYBVARCHAR:
-            result = java.sql.Types.VARCHAR;
-            break;
+            return java.sql.Types.VARCHAR;
 
         case SYBNVARCHAR:
-            result = java.sql.Types.VARCHAR;
-            break;
+            return java.sql.Types.VARCHAR;
 
         case SYBUNIQUEID:
-            result = java.sql.Types.VARCHAR;
-            break;
+            return java.sql.Types.VARCHAR;
 
         default:
             throw new TdsException("Unknown native data type "
                                    + Integer.toHexString(
                                            nativeType & 0xff));
         }
-        return result;
     }
 
     /**
@@ -3725,7 +3483,7 @@ public class Tds implements TdsDefinitions
      * @param type SQL Server type
      * @return     <code>true</code> if the type is a LOB
      */
-    private static boolean isBlobType(int type) {
+    private static boolean isBlobType(final int type) {
         return type == SYBTEXT || type == SYBIMAGE || type == SYBNTEXT;
     }
 
@@ -3735,12 +3493,12 @@ public class Tds implements TdsDefinitions
      * @param type SQL Server type
      * @return     <code>true</code> if the type uses a 2-byte size value
      */
-    private static boolean isLargeType(int type) {
+    private static boolean isLargeType(final int type) {
         return type == SYBNCHAR || type > 128;
     }
 
-    private static int toUInt(byte b) {
-        int result = ((int) b) & 0x00ff;
+    private static int toUInt(final byte b) {
+        final int result = ((int) b) & 0x00ff;
         return result;
     }
 
@@ -3750,14 +3508,14 @@ public class Tds implements TdsDefinitions
      * @param  pw  password to encrypt
      * @return     encrypted password
      */
-    private static String tds7CryptPass(String pw) {
-        int xormask = 0x5A5A;
-        int len = pw.length();
-        char[] chars = new char[len];
+    private static String tds7CryptPass(final String pw) {
+        final int xormask = 0x5A5A;
+        final int len = pw.length();
+        final char[] chars = new char[len];
         for (int i = 0; i < len; ++i) {
-            int c = (int) (pw.charAt(i)) ^ xormask;
-            int m1 = (c >> 4) & 0x0F0F;
-            int m2 = (c << 4) & 0xF0F0;
+            final int c = (int) (pw.charAt(i)) ^ xormask;
+            final int m1 = (c >> 4) & 0x0F0F;
+            final int m2 = (c << 4) & 0xF0F0;
             chars[i] = (char) (m1 | m2);
         }
         return new String(chars);
@@ -3803,9 +3561,9 @@ public class Tds implements TdsDefinitions
             // SAfe No need to reinstate procedures. This ONLY leads to performance
             //      benefits if the statement is reused. The overhead is the same
             //      (plus some memory that's freed and reallocated).
-            Iterator it = proceduresOfTra.iterator();
+            final Iterator it = proceduresOfTra.iterator();
             while (it.hasNext()) {
-                Procedure p = (Procedure) it.next();
+                final Procedure p = (Procedure) it.next();
                 // MJH Use signature (includes parameters)
                 // rather than rawSqlQueryString
                 procedureCache.remove(p.getSignature());
@@ -3839,7 +3597,7 @@ public class Tds implements TdsDefinitions
     }
 
     private String sqlStatementToInitialize() throws SQLException {
-        StringBuffer statement = new StringBuffer(150);
+        final StringBuffer statement = new StringBuffer(150);
 
         statement.append("SET QUOTED_IDENTIFIER ON ");
 
@@ -3862,7 +3620,7 @@ public class Tds implements TdsDefinitions
         return statement.toString();
     }
 
-    private void sqlStatementToSetTransactionIsolationLevel(StringBuffer sql)
+    private void sqlStatementToSetTransactionIsolationLevel(final StringBuffer sql)
             throws SQLException {
         sql.append("SET TRANSACTION ISOLATION LEVEL ");
 
@@ -3889,7 +3647,7 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private void sqlStatementToSetCommit(StringBuffer sql) {
+    private void sqlStatementToSetCommit(final StringBuffer sql) {
         if (serverType == Tds.SYBASE) {
             if (autoCommit) {
                 sql.append("SET CHAINED OFF");
@@ -3906,8 +3664,8 @@ public class Tds implements TdsDefinitions
     }
 
     private String sqlStatementForSettings(
-            boolean autoCommit, int transactionIsolationLevel) throws SQLException {
-        StringBuffer res = new StringBuffer(64);
+            final boolean autoCommit, final int transactionIsolationLevel) throws SQLException {
+        final StringBuffer res = new StringBuffer(64);
         // SAfe The javadoc for setAutoCommit states that "if the method is
         //      called during a transaction, the transaction is committed"
         // @todo SAfe Only execute this when setAutoCommit is called, not for
@@ -3916,11 +3674,6 @@ public class Tds implements TdsDefinitions
 
         if (autoCommit != this.autoCommit) {
             this.autoCommit = autoCommit;
-            // SAfe We must *NOT* do this! The user must do this himself or
-            //      otherwise it will be rolled back when the connection is
-            //      closed.
-//            if( autoCommit )
-//                res.append("if @@trancount>0 commit tran ");
             sqlStatementToSetCommit(res);
             res.append(' ');
         }
@@ -3936,8 +3689,8 @@ public class Tds implements TdsDefinitions
     }
 
     protected synchronized void changeSettings(
-            boolean autoCommit, int transactionIsolationLevel) throws SQLException {
-        String query = sqlStatementForSettings(autoCommit, transactionIsolationLevel);
+            final boolean autoCommit, final int transactionIsolationLevel) throws SQLException {
+        final String query = sqlStatementForSettings(autoCommit, transactionIsolationLevel);
         if (query != null)
             try {
                 skipToEnd();
@@ -3949,12 +3702,12 @@ public class Tds implements TdsDefinitions
             }
     }
 
-    private void changeSettings(String query) throws SQLException {
+    private void changeSettings(final String query) throws SQLException {
         if (query.length() == 0) {
             return;
         }
 
-        SQLWarningChain wChain = new SQLWarningChain();
+        final SQLWarningChain wChain = new SQLWarningChain();
         submitProcedure(query, wChain);
         wChain.checkForExceptions();
     }
@@ -3966,7 +3719,7 @@ public class Tds implements TdsDefinitions
      */
     private PacketResult processNtlmChallenge()
             throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException {
-        int packetLength = getSubPacketLength(); // Packet length
+        final int packetLength = getSubPacketLength(); // Packet length
 
         final int headerLength = 40;
 
@@ -3974,13 +3727,13 @@ public class Tds implements TdsDefinitions
             throw new TdsException("NTLM challenge: packet is too small:" + packetLength);
 
         comm.skip(8);  //header "NTLMSSP\0"
-        int seq = comm.getTdsInt(); //sequence number (2)
+        final int seq = comm.getTdsInt(); //sequence number (2)
         if (seq != 2)
             throw new TdsException("NTLM challenge: got unexpected sequence number:" + seq);
         comm.skip(4); //domain length (repeated 2x)
         comm.skip(4); //domain offset
         comm.skip(4); //flags
-        byte[] nonce = comm.getBytes(8, true); // this is what we really care about
+        final byte[] nonce = comm.getBytes(8, true); // this is what we really care about
         comm.skip(8); //?? unknown
 
         //skip the end, which may include the domain name, among other things...
@@ -3989,7 +3742,7 @@ public class Tds implements TdsDefinitions
         return new PacketAuthTokenResult(nonce);
     }
 
-    private void sendNtlmChallengeResponse(PacketAuthTokenResult authToken)
+    private void sendNtlmChallengeResponse(final PacketAuthTokenResult authToken)
             throws TdsException, java.io.IOException {
         try {
             comm.startPacket(TdsComm.NTLMAUTH);
@@ -3998,14 +3751,14 @@ public class Tds implements TdsDefinitions
             //byte[] domainBytes = domain.getBytes("UTF8");
             //byte[] user        = user.getBytes("UTF8");
 
-            byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
+            final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
             comm.appendBytes(header); //header is ascii "NTLMSSP\0"
             comm.appendTdsInt(3);          //sequence number = 3
 
-            int domainLenInBytes = domain.length() * 2;
-            int userLenInBytes = user.length() * 2;
+            final int domainLenInBytes = domain.length() * 2;
+            final int userLenInBytes = user.length() * 2;
             //mdb: not sending hostname; I hope this is ok!
-            int hostLenInBytes = 0; //localhostname.length()*2;
+            final int hostLenInBytes = 0; //localhostname.length()*2;
 
             int pos = 64 + domainLenInBytes + userLenInBytes + hostLenInBytes;
 
@@ -4055,8 +3808,8 @@ public class Tds implements TdsDefinitions
             //comm.appendChars(localhostname);
 
             //the response to the challenge...
-            byte[] lmAnswer = NtlmAuth.answerLmChallenge(password, authToken.getNonce());
-            byte[] ntAnswer = NtlmAuth.answerNtChallenge(password, authToken.getNonce());
+            final byte[] lmAnswer = NtlmAuth.answerLmChallenge(password, authToken.getNonce());
+            final byte[] ntAnswer = NtlmAuth.answerNtChallenge(password, authToken.getNonce());
             comm.appendBytes(lmAnswer);
             comm.appendBytes(ntAnswer);
 
@@ -4070,13 +3823,13 @@ public class Tds implements TdsDefinitions
         return currentContext;
     }
 
-    public Procedure findCompatibleStoredProcedure(String signature) {
+    public Procedure findCompatibleStoredProcedure(final String signature) {
         synchronized (procedureCache) {
             return (Procedure) procedureCache.get(signature);
         }
     }
 
-    public void addStoredProcedure(Procedure procedure)
+    public void addStoredProcedure(final Procedure procedure)
             throws SQLException {
         synchronized (procedureCache) {
             // store the procedure in the procedureCache
@@ -4098,10 +3851,10 @@ public class Tds implements TdsDefinitions
         return lastUpdateCount;
     }
 
-    synchronized void startResultSet(SQLWarningChain wChain) {
+    synchronized void startResultSet(final SQLWarningChain wChain) {
         try {
             while (!isResultRow() && !isEndOfResults()) {
-                PacketResult res = processSubPacket();
+                final PacketResult res = processSubPacket();
                 if (res instanceof PacketMsgResult) {
                     wChain.addOrReturn((PacketMsgResult) res);
                 }
@@ -4117,11 +3870,10 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    synchronized PacketRowResult fetchRow(TdsStatement stmt,
-                                          SQLWarningChain wChain,
-                                          Context context)
-            throws SQLException {
-        PacketResult res = null;
+    synchronized PacketRowResult fetchRow(final TdsStatement stmt,
+                                          final SQLWarningChain wChain,
+                                          final Context context) {
+        PacketResult res;
 
         try {
             // Keep eating garbage and warnings until we reach the next result

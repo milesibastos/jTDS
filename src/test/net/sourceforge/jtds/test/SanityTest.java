@@ -93,19 +93,14 @@ public class SanityTest extends TestBase {
         assertEquals(false, rs.isLast());
         assertEquals(false, rs.isAfterLast());
 
-        // Try to move 3 rows ahead (should still be in the same position,
-        // according to the javadoc of relative -- the spec, however says that
-        // relative(1) is identical to next() and relative(-1) is identical to
-        // previous()). Weird stuff...
+        // Try to move 3 rows ahead (should end up on row 3 -- the spec,
+        // says that relative(1) is identical to next() and relative(-1) is
+        // identical to previous(), but the Javadoc says that they are
+        // different). Weird stuff...
         rs.relative(3);
-        assertEquals(0, rs.getRow());
-        try {
-            rs.getInt(1);
-            fail("There should be no current row.");
-        } catch (SQLException ex) {
-            // This is ok, there's no row
-        }
-        assertEquals(true, rs.isBeforeFirst());
+        assertEquals(3, rs.getRow());
+        assertEquals(2, rs.getInt(1));
+        assertEquals(false, rs.isBeforeFirst());
         assertEquals(false, rs.isFirst());
         assertEquals(false, rs.isLast());
         assertEquals(false, rs.isAfterLast());

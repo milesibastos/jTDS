@@ -1,6 +1,18 @@
 Changes from jTDS 0.6
 ========================
 
+02/10/2004 - Alin Sinpalean
+ o Applied Mike Hutchinson's patch to Tds and TdsComm, replacing
+   CancelController with a boolean flag and fixing some other issues (see
+   developer forum).
+ o Removed unused local variables, made some local variables and class members
+   final in Tds, cleaned up code.
+ o Fixed a subtle bug in TdsConnection.allocateTds() (thanks Mike Hutchinson
+   for pointing it out.
+ o CursorResultSet.relative() now works according to the spec (i.e. same as
+   next/previous), even if the cursor is positioned before the first row or
+   after the last one.
+
 02/09/2004 - Alin Sinpalean
  o Implemented CursorResultSet.isLast() and added a check to currentRow() to
    see if there is actually a current row (otherwise a NPE was thrown).

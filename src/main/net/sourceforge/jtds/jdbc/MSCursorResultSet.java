@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.23 2004-10-27 14:57:43 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.24 2004-11-17 09:52:02 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -203,6 +203,10 @@ public class MSCursorResultSet extends JtdsResultSet {
                 break;
         }
 
+        // If using sp_cursoropen need to set a flag on scrollOpt.
+        // The 0x1000 tells the server that there is a parameter
+        // definition and user parameters present. If this flag is
+        // not set the driver will ignore the additional parameters.
         if (parameterized) {
             scrollOpt |= CURSOR_TYPE_PARAMETERIZED;
         }
@@ -336,15 +340,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         int scrollOpt = getCursorScrollOpt(resultSetType, parameters != null);
         int ccOpt = getCursorConcurrencyOpt(concurrency);
 
-        //
-        // If using sp_cursoropen need to set a flag on scrollOpt.
-        // The 0x1000 tells the server that there is a parameter
-        // definition and user parameters present. If this flag is
-        // not set the driver will ignore the additional parameters.
-        //
-        if (parameters != null) {
-            scrollOpt |= 0x1000;
-        }
         //
         // Create parameter objects
         //
@@ -760,14 +755,22 @@ public class MSCursorResultSet extends JtdsResultSet {
             param[3].value = "";
 
             int colCnt = columnCount;
-            // Current column; we should only update/insert columns
-            // that are not read-only (such as identity columns)
+            // Current column; we will only update/insert columns for which
+            // values were specified
             int crtCol = 4;
+            // Name of the table to insert default values into (if necessary)
+            String tableName = null;
 
             for (int i = 0; i < colCnt; i++) {
-                // Only send non-read-only columns
-                if (columns[i].isWriteable && row[i].isUpdated()) {
-                    ColInfo col = columns[i];
+                ColInfo col = columns[i];
+
+                if (row[i].isUpdated()) {
+                    if (!columns[i].isWriteable) {
+                        // Column is read-only but was updated
+                        throw new SQLException(Messages.get("error.resultset.insert",
+                                Integer.toString(i + 1), columns[i].realName), "24000");
+                    }
+
                     ParamInfo pi = new ParamInfo();
                     param[crtCol] = pi;
                     pi.isSet = true;
@@ -780,16 +783,30 @@ public class MSCursorResultSet extends JtdsResultSet {
                     pi.tdsType = col.tdsType;
                     pi.collation = col.collation;
                     crtCol++;
-                } else {
-                    if (opType == CURSOR_OP_INSERT && row[i].getValue() != null)
-                        throw new SQLException(Messages.get("error.resultset.insert",
-                                Integer.toString(i + 1), columns[i].realName), "24000");
+                }
+                if (col.tableName != null) {
+                    tableName = (col.catalog != null ? col.catalog : "") + "."
+                            + (col.schema != null ? col.schema : "") + "."
+                            + col.tableName;
                 }
             }
 
             if (crtCol == 4) {
-                // No column to update so bail out!
-                return;
+                if (opType == CURSOR_OP_INSERT) {
+                    // Insert default values for all columns.
+                    // There seem to be two forms of sp_cursor: one with
+                    // parameter names and values and one w/o names and with
+                    // expressions (this is where 'default' comes in).
+                    ParamInfo pi = new ParamInfo();
+                    param[crtCol] = pi;
+                    pi.isSet = true;
+                    pi.jdbcType = Types.VARCHAR;
+                    pi.value = "insert " + tableName + " default values";
+                    crtCol++;
+                } else {
+                    // No column to update so bail out!
+                    return;
+                }
             }
 
             // If the count is different (i.e. there were read-only
@@ -853,8 +870,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkScrollable();
 
         if (pos != POS_AFTER_LAST) {
-            // SAfe -1 should work just as well
-            cursorFetch(FETCH_ABSOLUTE, rowsInResult + 1);
+            // SAfe Just fetch a very large absolute value
+            cursorFetch(FETCH_ABSOLUTE, Integer.MAX_VALUE);
             pos = POS_AFTER_LAST;
         }
     }
@@ -919,7 +936,12 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         cursor(CURSOR_OP_INSERT, insertRow);
         // Update the number of rows and the cursor position
-        cursorFetch(FETCH_INFO, 1);
+//        cursorFetch(FETCH_INFO, 1);
+        // SAfe On SQL Server own inserts show up at the end of the ResultSet
+        //      in scroll sensitive ResultSets. The position remains the same.
+        if (resultSetType == TYPE_SCROLL_SENSITIVE) {
+            rowsInResult++;
+        }
 
         insertRow = newRow();
     }
@@ -964,7 +986,13 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         cursor(CURSOR_OP_UPDATE, currentRow);
         // Update the number of rows and the cursor position
-        cursorFetch(FETCH_INFO, 1);
+//        cursorFetch(FETCH_INFO, 1);
+        // SAfe On SQL Server own updates delete the row and a new row shows up
+        //      at the end of the ResultSet in scroll sensitive ResultSets. The
+        //      position remains the same.
+        if (resultSetType == TYPE_SCROLL_SENSITIVE) {
+            rowsInResult++;
+        }
         refreshRow();
     }
 
@@ -979,6 +1007,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         return res;
     }
 
+    // FIXME Make the isXXX() methods work with forward-only cursors (rowsInResult == -1)
     public boolean isLast() throws SQLException {
         checkOpen();
 

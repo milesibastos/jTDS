@@ -613,6 +613,148 @@ public class ResultSetTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test that <code>insertRow()</code> works with no values set.
+     */
+    public void testEmptyInsertRow() throws Exception
+    {
+        int rows = 10;
+        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "create table #emptyInsertRow (id int identity, val int default 10)");
+        ResultSet rs = stmt.executeQuery("select * from #emptyInsertRow");
+
+        for (int i=0; i<rows; i++) {
+            rs.moveToInsertRow();
+            rs.insertRow();
+        }
+        rs.close();
+
+        rs = stmt.executeQuery("select count(*) from #emptyInsertRow");
+        assertTrue(rs.next());
+        assertEquals(rows, rs.getInt(1));
+        rs.close();
+
+        rs = stmt.executeQuery("select * from #emptyInsertRow order by id");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals(10, rs.getInt(2));
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that inserted rows are visible in a scroll sensitive
+     * <code>ResultSet</code>.
+     */
+    public void testInsertRowVisible() throws Exception
+    {
+        int rows = 10;
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "create table #insertRowNotVisible (val int primary key)");
+        ResultSet rs = stmt.executeQuery("select * from #insertRowNotVisible");
+
+        for (int i = 1; i <= rows; i++) {
+            rs.moveToInsertRow();
+            rs.updateInt(1, i);
+            rs.insertRow();
+            rs.moveToCurrentRow();
+            rs.last();
+            assertEquals(i, rs.getRow());
+        }
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that updated rows are indeed deleted, and the new values inserted
+     * at the end of the <code>ResultSet</code>.
+     */
+    public void testUpdateRowDuplicatesRow() throws Exception
+    {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "create table #testUpdateRowDuplicatesRow (val int primary key)");
+        stmt.executeUpdate(
+                "insert into #testUpdateRowDuplicatesRow (val) values (1)");
+        stmt.executeUpdate(
+                "insert into #testUpdateRowDuplicatesRow (val) values (2)");
+        stmt.executeUpdate(
+                "insert into #testUpdateRowDuplicatesRow (val) values (3)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select val from #testUpdateRowDuplicatesRow order by val");
+
+        for (int i = 0; i < 3; i++) {
+            assertTrue(rs.next());
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertFalse(rs.rowDeleted());
+            rs.updateInt(1, rs.getInt(1) + 10);
+            rs.updateRow();
+            rs.refreshRow();
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertTrue(rs.rowDeleted());
+        }
+
+        for (int i = 11; i <= 13; i++) {
+            assertTrue(rs.next());
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertFalse(rs.rowDeleted());
+            assertEquals(i, rs.getInt(1));
+        }
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that deleted rows are not removed but rather marked as deleted.
+     */
+    public void testDeleteRowMarksDeleted() throws Exception
+    {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "create table #testUpdateRowDuplicatesRow (val int primary key)");
+        stmt.executeUpdate(
+                "insert into #testUpdateRowDuplicatesRow (val) values (1)");
+        stmt.executeUpdate(
+                "insert into #testUpdateRowDuplicatesRow (val) values (2)");
+        stmt.executeUpdate(
+                "insert into #testUpdateRowDuplicatesRow (val) values (3)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select val from #testUpdateRowDuplicatesRow order by val");
+
+        for (int i = 0; i < 3; i++) {
+            assertTrue(rs.next());
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertFalse(rs.rowDeleted());
+            rs.deleteRow();
+            rs.refreshRow();
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertTrue(rs.rowDeleted());
+        }
+
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.1 2004-06-27 17:00:50 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.2 2004-06-29 15:55:45 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1070,17 +1070,20 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     synchronized public void commit() throws SQLException {
         checkOpen();
+
         baseTds.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
         procInTran.clear();
+        clearSavepoints();
     }
 
     synchronized public void rollback() throws SQLException {
         checkOpen();
+
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
 
         synchronized (procedures) {
             for (int i = 0; i < procInTran.size(); i++) {
-                String key = (String)procInTran.get(i);
+                String key = (String) procInTran.get(i);
 
                 if (key != null && tdsVersion != TdsCore.TDS50) {
                     procedures.remove(key);
@@ -1089,6 +1092,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             procInTran.clear();
         }
+
+        clearSavepoints();
     }
 
     public boolean getAutoCommit() throws SQLException {
@@ -1424,4 +1429,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return prepareStatement(sql, JtdsStatement.RETURN_GENERATED_KEYS);
     }
 
+
+    /**
+     * Releases all savepoints. Used internally when committing or rolling back
+     * a transaction.
+     */
+    void clearSavepoints() {
+    }
 }

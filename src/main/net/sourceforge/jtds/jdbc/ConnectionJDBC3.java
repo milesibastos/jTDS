@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.1 2004-06-27 17:00:51 bheineman Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.2 2004-06-29 15:55:45 bheineman Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -77,11 +77,10 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
      * a transaction.
      */
     synchronized void clearSavepoints() {
-        if (savepoints == null) {
-            return;
+        if (savepoints != null) {
+            savepoints.clear();
         }
 
-        savepoints.clear();
         savepointId = 0;
     }
 

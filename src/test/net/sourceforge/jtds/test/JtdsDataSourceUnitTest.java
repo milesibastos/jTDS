@@ -59,8 +59,15 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     public static class DefaultPropertiesTestLibrary_JtdsDataSource
             extends DefaultPropertiesTestLibrary {
 
-        private static DefaultPropertiesTester tester;
-
+        /**
+         * Construct a test suite for this library.
+         * 
+         * @param name The name of the tests.
+         * @return The test suite.
+         */
+        public static Test suite(String name) {
+            return new TestSuite(JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource.class, name);
+        }
 
         /**
          * Default constructor.
@@ -69,56 +76,36 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          * so flags are set to make sure only that configuration is tested.
          */
         public DefaultPropertiesTestLibrary_JtdsDataSource() {
+
             setOnlySqlServerTests(true);
             setOnlyTds70Tests(true);
-        }
 
+            setTester(
+                    new DefaultPropertiesTester() {
 
-        /**
-         * Construct a test suite for this library.
-         * 
-         * @param name The name of the tests.
-         * @return The test suite.
-         */
-        public static Test suite(String name) {
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
 
-            JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource.tester = 
-            new DefaultPropertiesTester() {
+                            JtdsDataSource dataSource = new JtdsDataSource();
+                            String actual = 
+                                    String.valueOf(
+                                            invokeInstanceMethod(
+                                                    dataSource,
+                                                    "get" + ucFirst(fieldName),
+                                                    new Class[]{}, new Object[]{}));
+                            assertEquals(message, expected, actual);
+                        }
 
-                public void assertDefaultProperty(
-                        String message, String url, Properties properties, String fieldName,
-                        String key, String expected) {
-
-                    JtdsDataSource dataSource = new JtdsDataSource();
-                    String actual = 
-                            String.valueOf(
-                                    invokeInstanceMethod(
-                                            dataSource,
-                                            "get" + ucFirst(fieldName),
-                                            new Class[]{}, new Object[]{}));
-                    assertEquals(message, expected, actual);
-                }
-
-                private String ucFirst(String s) {
-                    if (s == null || s.length() == 0) return s;
-                    if (s.length() == 1) {
-                        return s.toUpperCase();
+                        private String ucFirst(String s) {
+                            if (s == null || s.length() == 0) return s;
+                            if (s.length() == 1) {
+                                return s.toUpperCase();
+                            }
+                            return s.substring(0, 1).toUpperCase() + s.substring(1);
+                        }
                     }
-                    return s.substring(0, 1).toUpperCase() + s.substring(1);
-                }
-            };
-
-            return new TestSuite(JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource.class, name);
-        }
-
-
-        /**
-         * Get the <code>tester</code> object.
-         * 
-         * @return The <code>tester</code> object to be used in the tests.
-         */
-        protected DefaultPropertiesTester getTester() {
-            return tester;
+            );
         }
     }
 
@@ -130,8 +117,16 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     public static class DefaultPropertiesTestLibrary_JtdsDataSource_getReference
             extends DefaultPropertiesTestLibrary {
 
-        private static DefaultPropertiesTester tester;
-
+        /**
+         * Construct a test suite for this library.
+         * 
+         * @param name The name of the tests.
+         * @return The test suite.
+         */
+        public static Test suite(String name) {
+            return new TestSuite(
+                    JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource_getReference.class, name);
+        }
 
         /**
          * Default constructor.
@@ -142,46 +137,23 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
         public DefaultPropertiesTestLibrary_JtdsDataSource_getReference() {
             setOnlySqlServerTests(true);
             setOnlyTds70Tests(true);
-        }
+            setTester(
+                    new DefaultPropertiesTester() {
 
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
 
-        /**
-         * Construct a test suite for this library.
-         * 
-         * @param name The name of the tests.
-         * @return The test suite.
-         */
-        public static Test suite(String name) {
-
-            JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource_getReference.tester = 
-            new DefaultPropertiesTester() {
-
-                public void assertDefaultProperty(
-                        String message, String url, Properties properties, String fieldName,
-                        String key, String expected) {
-
-                    try {
-                        Reference reference = new JtdsDataSource().getReference();
-                        assertEquals(message, expected, reference.get(Messages.get(key)).getContent());
+                            try {
+                                Reference reference = new JtdsDataSource().getReference();
+                                assertEquals(message, expected, reference.get(Messages.get(key)).getContent());
+                            }
+                            catch (NamingException e) {
+                                throw new RuntimeException(e.getMessage());
+                            }
+                        }
                     }
-                    catch (NamingException e) {
-                        throw new RuntimeException(e.getMessage());
-                    }
-                }
-            };
-
-            return new TestSuite(
-                    JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource_getReference.class, name);
-        }
-
-
-        /**
-         * Get the <code>tester</code> object.
-         * 
-         * @return The <code>tester</code> object to be used in the tests.
-         */
-        protected DefaultPropertiesTester getTester() {
-            return tester;
+            );
         }
     }
 

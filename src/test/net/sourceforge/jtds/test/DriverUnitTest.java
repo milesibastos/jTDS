@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.10 2004-08-07 01:37:43 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.11 2004-08-07 02:09:02 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -254,9 +254,6 @@ public class DriverUnitTest extends UnitTestBase {
      */
     public static class DefaultPropertiesTestLibrary_Driver_parseURL extends DefaultPropertiesTestLibrary {
 
-        private static DefaultPropertiesTester tester;
-
-
         /**
          * Construct a test suite for this library.
          * 
@@ -264,33 +261,29 @@ public class DriverUnitTest extends UnitTestBase {
          * @return The test suite.
          */
         public static Test suite(String name) {
-
-            DefaultPropertiesTestLibrary_Driver_parseURL.tester = new DefaultPropertiesTester() {
-
-                public void assertDefaultProperty(
-                        String message, String url, Properties properties, String fieldName,
-                        String key, String expected) {
-
-                    Properties results =
-                            (Properties) invokeStaticMethod(
-                                    Driver.class, "parseURL",
-                                    new Class[]{String.class, Properties.class},
-                                    new Object[]{url, properties});
-                    assertEquals(message, expected, results.getProperty(Messages.get(key)));
-                }
-            };
-
             return new TestSuite(DefaultPropertiesTestLibrary_Driver_parseURL.class, name);
         }
 
-
         /**
-         * Get the <code>tester</code> object.
-         * 
-         * @return The <code>tester</code> object to be used in the tests.
+         * Default constructor.
          */
-        protected DefaultPropertiesTester getTester() {
-            return tester;
+        public DefaultPropertiesTestLibrary_Driver_parseURL() {
+            setTester(
+                    new DefaultPropertiesTester() {
+            
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
+            
+                            Properties results =
+                                    (Properties) invokeStaticMethod(
+                                            Driver.class, "parseURL",
+                                            new Class[]{String.class, Properties.class},
+                                            new Object[]{url, properties});
+                            assertEquals(message, expected, results.getProperty(Messages.get(key)));
+                        }
+                    }
+            );
         }
     }
 
@@ -301,9 +294,6 @@ public class DriverUnitTest extends UnitTestBase {
      */
     public static class DefaultPropertiesTestLibrary_Driver_getPropertyInfo extends DefaultPropertiesTestLibrary {
 
-        private static DefaultPropertiesTester tester;
-
-
         /**
          * Construct a test suite for this library.
          * 
@@ -311,47 +301,44 @@ public class DriverUnitTest extends UnitTestBase {
          * @return The test suite.
          */
         public static Test suite(String name) {
-
-            DefaultPropertiesTestLibrary_Driver_getPropertyInfo.tester = new DefaultPropertiesTester() {
-
-                public void assertDefaultProperty(
-                        String message, String url, Properties properties, String fieldName,
-                        String key, String expected) {
-
-                    try {
-                        boolean found = false;
-                        String messageKey = Messages.get(key);
-
-                        DriverPropertyInfo[] infoArray = new Driver().getPropertyInfo(url, properties);
-                        for (int i = 0; i < infoArray.length; i++) {
-                            DriverPropertyInfo info = infoArray[i];
-                            if (info.name.equals(messageKey)) {
-                                assertEquals(message, expected, info.value);
-                                found = true;
-                            }
-                        }
-
-                        if (!found) {
-                            fail("DriverPropertyInfo for '" + messageKey + "' not found!");
-                        }
-                    }
-                    catch (SQLException e) {
-                        throw new RuntimeException(e.getMessage());
-                    }
-                }
-            };
-
             return new TestSuite(DefaultPropertiesTestLibrary_Driver_getPropertyInfo.class, name);
         }
 
-
         /**
-         * Get the <code>tester</code> object.
-         * 
-         * @return The <code>tester</code> object to be used in the tests.
+         * Default constructor.
          */
-        protected DefaultPropertiesTester getTester() {
-            return tester;
+        public DefaultPropertiesTestLibrary_Driver_getPropertyInfo() {
+            setTester(
+                    new DefaultPropertiesTester() {
+            
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
+            
+                            try {
+                                boolean found = false;
+                                String messageKey = Messages.get(key);
+            
+                                DriverPropertyInfo[] infoArray = new Driver().getPropertyInfo(url, properties);
+                                for (int i = 0; i < infoArray.length; i++) {
+                                    DriverPropertyInfo info = infoArray[i];
+                                    if (info.name.equals(messageKey)) {
+                                        assertEquals(message, expected, info.value);
+                                        found = true;
+                                    }
+                                }
+            
+                                if (!found) {
+                                    fail("DriverPropertyInfo for '" + messageKey + "' not found!");
+                                }
+                            }
+                            catch (SQLException e) {
+                                throw new RuntimeException(e.getMessage());
+                            }
+                        }
+                    }
+            );
         }
     }
+
 }

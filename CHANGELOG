@@ -16,6 +16,7 @@ Changes from jTDS 0.8.1
  o Updated DefaultPropertiesTestLibrary to contain flags for only testing a
    default setup of SQL Server and/or TDS 7.0.
  o Updated DriverPropertyInfo choices for prepareSql property.
+ o Cleaned up DefaultPropertiesTestLibrary so it is easier to extend.
 
 08/06/2004 - Brian Heineman
  o Update the usage of the prepareSql parameter.  This parameter is now used to

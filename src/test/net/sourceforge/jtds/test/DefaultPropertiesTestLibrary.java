@@ -34,16 +34,15 @@ import java.util.Properties;
  * <p/>
  * To extend this class, the programmer must implement the following items:
  * <ol>
- * <li>A <code>private static DefaultPropertiesTester tester</code> field.</li>
- * <li>The {@link #getTester()} method that returns <code>tester</code>.</li>
+ * <li>Set the {@link #tester} field in a <code>public</code> default
+ *     constructor that takes no arguments.</li>
  * <li>A <code>public static Test suite()</code> method that takes one or more
- *     arguments and sets the <code>tester</code> field.  (The
- *     <code>suite()</code> method in this class should <em>not</em> be
- *     overridden.)</li>
+ *     arguments.  (The {@link #suite()} method in this class should
+ *     <em>not</em> be overridden.)</li>
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.6 2004-08-07 01:32:16 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.7 2004-08-07 02:09:02 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -54,10 +53,13 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     private static final String URL_SYBASE = 
             "jdbc:jtds:" + DefaultProperties.SERVER_TYPE_SYBASE + "://servername";
 
+    /** Object used to run all of the tests. */
+    private DefaultPropertiesTester tester;
     /** If true, only run tests for SQL Server, not Sybase. */
     private boolean onlySqlServerTests = false;
     /** If true, only run tests for TDS 7.0. */
     private boolean onlyTds70Tests = false;
+
 
     /**
      * Provides a null test suite so that JUnit will not try to instantiate
@@ -73,8 +75,8 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     /**
      * Default constructor.
      * <p/>
-     * Used by <code>suite()</code> method in a subclass to construct a
-     * test suite.
+     * The extender of this class is required to set the {@link #tester}
+     * field in a <code>public</code> default constructor.
      */
     public DefaultPropertiesTestLibrary() {
     }
@@ -295,14 +297,6 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
 
     /**
-     * Get the <code>tester</code> object.
-     * 
-     * @return The <code>tester</code> object to be used in the tests.
-     */ 
-    protected abstract DefaultPropertiesTester getTester();
-
-
-    /**
      * Assert that the <code>expected</code> property value is set using
      * a given <code>url</code> and <code>tdsVersion</code> property.
      * 
@@ -332,6 +326,26 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */ 
     private void assertDefaultPropertyByServerType(String url, String key, String fieldName, String expected) {
         getTester().assertDefaultProperty("Default property incorrect", url, new Properties(), fieldName, key, expected);
+    }
+
+
+    /**
+     * Getter for {@link #tester}.
+     * 
+     * @return Value of {@link #tester}.
+     */
+    protected DefaultPropertiesTester getTester() {
+        return tester;
+    }
+
+
+    /**
+     * Setter for {@link #tester}.
+     * 
+     * @param tester The value to set {@link #tester} to.
+     */
+    public void setTester(DefaultPropertiesTester tester) {
+        this.tester = tester;
     }
 
 

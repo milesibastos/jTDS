@@ -579,12 +579,9 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                             "Expected a ResultSet."));
                 }
 
-                if (internalStmt.getMoreResults(tds, warningChain, true)
-                        || (internalStmt.getUpdateCount() != -1)) {
-                    warningChain.addException(new SQLException(
-                            "No more results expected."));
-                    internalStmt.skipToEnd();
-                }
+                // There are some TDS_DONEINPROC packets that need to be handled
+                while (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1));
             } catch (SQLException ex) {
                 warningChain.addException(ex);
             } finally {
@@ -594,10 +591,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
+
+                warningChain.checkForExceptions();
             }
         }
-
-        warningChain.checkForExceptions();
 
         cursorHandle = (Integer) param[0].value;
         rowsInResult = ((Number) param[4].value).intValue();
@@ -712,20 +709,9 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
 
                 current = tds.fetchRow(internalStmt, warningChain, context);
 
-                if (internalStmt.getMoreResults(tds, warningChain, true)
-                        || (internalStmt.getUpdateCount() != -1)) {
-                    warningChain.addException(new SQLException(
-                            "No results expected."));
-                    internalStmt.skipToEnd();
-                }
-
-                // SAfe Removed on Mike's suggestion. Indeed it seems like
-                //      error messages are also returned when something goes
-                //      wrong, so there's no need for this.
-                // if ((retVal == null) || (retVal.intValue() != 0)) {
-                //     warningChain.addException(
-                //             new SQLException("Cursor fetch failed."));
-                // }
+                // There are some TDS_DONEINPROC packets that need to be handled
+                while (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1));
             } catch (SQLException ex) {
                 warningChain.addException(ex);
             } finally {
@@ -735,10 +721,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
+
+                warningChain.checkForExceptions();
             }
         }
-
-        warningChain.checkForExceptions();
 
         if (isInfo) {
             pos = ((Integer) param[2].value).intValue();
@@ -772,12 +758,9 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 tds.executeProcedure("sp_cursorclose", param, param, internalStmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
-                if (internalStmt.getMoreResults(tds, warningChain, true)
-                        || (internalStmt.getUpdateCount() != -1)) {
-                    warningChain.addException(new SQLException(
-                            "No results expected."));
-                    internalStmt.skipToEnd();
-                }
+                // There are some TDS_DONEINPROC packets that need to be handled
+                while (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1));
 
                 if ((retVal == null) || (retVal.intValue() != 0)) {
                     warningChain.addException(
@@ -792,10 +775,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
+
+                warningChain.checkForExceptions();
             }
         }
-
-        warningChain.checkForExceptions();
     }
 
     private void cursor(int opType, PacketRowResult row) throws SQLException {
@@ -938,12 +921,9 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 tds.executeProcedure("sp_cursor", param, param, internalStmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
-                if (internalStmt.getMoreResults(tds, warningChain, true)
-                        || (internalStmt.getUpdateCount() != -1)) {
-                    warningChain.addException(new SQLException(
-                            "No results expected."));
-                    internalStmt.skipToEnd();
-                }
+                // There are some TDS_DONEINPROC packets that need to be handled
+                while (internalStmt.getMoreResults(tds, warningChain, true)
+                        || (internalStmt.getUpdateCount() != -1));
 
                 if ((retVal == null) || (retVal.intValue() != 0)) {
                     warningChain.addException(
@@ -958,10 +938,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException(ex.getMessage()));
                 }
+
+                warningChain.checkForExceptions();
             }
         }
-
-        warningChain.checkForExceptions();
     }
 
     /**

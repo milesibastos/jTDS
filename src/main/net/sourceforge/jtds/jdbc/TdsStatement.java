@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.27 2004-03-26 21:15:49 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.28 2004-04-04 22:12:03 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,7 +66,7 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.27 2004-03-26 21:15:49 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.28 2004-04-04 22:12:03 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -725,11 +725,13 @@ public class TdsStatement implements java.sql.Statement
                         return true;
                     }
 
-                    // SAfe It's a row count. Only TDS_DONE for Statements and
-                    //      TDS_DONEINPROC for PreparedStatements are row counts
+                    // SAfe It's an end token.
                     PacketEndTokenResult end =
                         (PacketEndTokenResult) tds.processSubPacket();
                     updateCount = end.getRowCount();
+                    if (Tds.handleEndToken(end, wChain)) {
+                        wChain.checkForExceptions();
+                    }
 
                     // SAfe Eat up all packets until the next result or the end
                     tds.goToNextResult(wChain, this);

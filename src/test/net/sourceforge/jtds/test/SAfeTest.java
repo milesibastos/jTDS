@@ -369,6 +369,9 @@ public class SAfeTest extends DatabaseTestCase
             cs.registerOutParameter(3, Types.VARCHAR);
             cs.executeQuery().close();
 
+            assertFalse(cs.getMoreResults());
+            assertEquals(-1, cs.getUpdateCount());
+
             assertEquals(myVal+1, cs.getInt(1));
             assertEquals(String.valueOf(myVal-1), cs.getString(3));
 
@@ -381,6 +384,9 @@ public class SAfeTest extends DatabaseTestCase
             cs.registerOutParameter(3, Types.VARCHAR);
             assertTrue(cs.execute());
             cs.getResultSet().close();
+
+            assertFalse(cs.getMoreResults());
+            assertEquals(-1, cs.getUpdateCount());
 
             assertEquals(myVal+1, cs.getInt(1));
             assertEquals(String.valueOf(myVal-1), cs.getString(3));
@@ -543,6 +549,9 @@ public class SAfeTest extends DatabaseTestCase
         assertTrue(rs.next());
         String rsVal = rs.getString(1);
         rs.close();
+
+        assertFalse(cs.getMoreResults());
+        assertEquals(-1, cs.getUpdateCount());
 
         assertEquals(myVal.length() * 8, cs.getInt(1));
         assertEquals(rsVal, cs.getString(2));

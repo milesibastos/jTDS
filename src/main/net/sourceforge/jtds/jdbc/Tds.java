@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.50 2004-04-04 00:42:01 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.51 2004-04-04 22:12:03 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.50 2004-04-04 00:42:01 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.51 2004-04-04 22:12:03 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -228,8 +228,11 @@ public class Tds implements TdsDefinitions {
             // Skip to end
             do {
                 final PacketResult res = processSubPacket();
-                if (res instanceof PacketMsgResult)
+                if (res instanceof PacketMsgResult) {
                     wChain.addOrReturn((PacketMsgResult) res);
+                } else if (res instanceof PacketEndTokenResult) {
+                    handleEndToken(res, wChain);
+                }
             } while (moreResults);
         } catch (java.io.IOException e) {
             wChain.addException(new SQLException(
@@ -731,17 +734,14 @@ public class Tds implements TdsDefinitions {
      */
     protected synchronized void goToNextResult(final SQLWarningChain warningChain, final TdsStatement stmt)
             throws TdsException, java.io.IOException, SQLException {
-        final boolean isPreparedStmt = stmt instanceof PreparedStatement;
-        final boolean isCallableStmt = stmt instanceof CallableStatement;
-
         // SAfe Need to process messages, output parameters and return values
         //      here, or even better, in the processXXX methods.
         while (moreResults) {
             final byte next = comm.peek();
 
             // SAfe If the next packet is a rowcount or ResultSet, break
-            if (next == TDS_DONE || next == TDS_COLMETADATA || next == TDS_COL_NAME_TOKEN ||
-                    (next == TDS_DONEINPROC && isPreparedStmt && !isCallableStmt)) {
+            if (next == TDS_DONE || next == TDS_DONEINPROC
+                    || next == TDS_COLMETADATA || next == TDS_COL_NAME_TOKEN) {
                 break;
             }
 
@@ -754,10 +754,7 @@ public class Tds implements TdsDefinitions {
             } else if (res instanceof PacketRetStatResult) {
                 stmt.handleRetStat((PacketRetStatResult) res);
             } else if (res instanceof PacketEndTokenResult) {
-                if (((PacketEndTokenResult) res).wasCanceled()) {
-                    warningChain.addException(
-                            new SQLException("Query was cancelled or timed out.", "HY008"));
-                }
+                handleEndToken(res, warningChain);
             }
         }
     }
@@ -1871,13 +1868,12 @@ public class Tds implements TdsDefinitions {
 
             if (res instanceof PacketMsgResult) {
                 wChain.addOrReturn((PacketMsgResult) res);
-            }
-            // XXX Should really process some more types of packets.
-
-            //mdb: handle ntlm challenge by sending a response...
-            if (res instanceof PacketAuthTokenResult) {
+            } else if (res instanceof PacketAuthTokenResult) {
+                //mdb: handle ntlm challenge by sending a response...
                 sendNtlmChallengeResponse(
                         (PacketAuthTokenResult) res, user, password, domain);
+            } else if (res instanceof PacketEndTokenResult) {
+                handleEndToken(res, wChain);
             }
         }
         wChain.checkForExceptions();
@@ -2453,32 +2449,33 @@ public class Tds implements TdsDefinitions {
     private PacketEndTokenResult processEndToken(
             final byte packetType)
             throws TdsException, java.io.IOException {
-        final byte status = comm.getByte();
-        comm.getByte();
-        final byte op = comm.getByte();
-        comm.getByte();
-        // comm.skip(3);
+        final int status = comm.getTdsShort();
+        final int opcode = comm.getTdsShort();
         int rowCount = comm.getTdsInt();
-        // If it was a SELECT or an END PROCEDURE, ignore it
-        if (op == (byte) 0xC1 || op == (byte) 0xE0)
-            rowCount = -1;
 
-        if (packetType == TdsDefinitions.TDS_DONEPROC)
-            rowCount = -1;
+        // If it isn't a valid row count or it was a SELECT, ignore it
+        if ((status & 0x10) == 0 || packetType == TdsDefinitions.TDS_DONEPROC) {
+            // DDL statements should return 0
+            if (opcode == OPCODE_CREATE_TABLE
+                    || opcode == OPCODE_DROP_TABLE
+                    || opcode == OPCODE_ALTER_TABLE
+                    || opcode == OPCODE_CREATE_PROC
+                    || opcode == OPCODE_DROP_PROC) {
+                rowCount = 0;
+            } else {
+                // Other statements should not return update counts
+                rowCount = -1;
+            }
+        } else {
+            // Only INSERT, UPDATE and DELETE should return update counts
+            if (opcode == OPCODE_SELECT) {
+                rowCount = -1;
+            }
+        }
 
         final PacketEndTokenResult result =
                 new PacketEndTokenResult(packetType, status, rowCount);
 
-        // MJH - 06/02/04 We will send a cancel anyway as long as there are
-        // none outstanding
-        //if (result.wasCanceled()) {
-        //     synchronized (cancelActive) {
-        //       cancelActive = Boolean.FALSE;
-        //    }
-        //}
-
-        // XXX Problem handling cancels that were sent after the server
-        //     send the endToken packet
         return result;
     }
 
@@ -3749,11 +3746,6 @@ public class Tds implements TdsDefinitions {
                     stmt.handleParamResult((PacketOutputParamResult) res);
                 } else if (res instanceof PacketRetStatResult) {
                     stmt.handleRetStat((PacketRetStatResult) res);
-                } else if (res instanceof PacketEndTokenResult) {
-                    if (((PacketEndTokenResult) res).wasCanceled()) {
-                        wChain.addException(
-                                new SQLException("Query was cancelled or timed out.", "HYT00"));
-                    }
                 }
             }
         } catch (java.io.IOException e) {
@@ -3791,10 +3783,7 @@ public class Tds implements TdsDefinitions {
                 case TDS_DONE:
                 case TDS_DONEINPROC:
                 case TDS_DONEPROC:
-                    if (((PacketEndTokenResult) res).wasCanceled()) {
-                        wChain.addException(
-                                new SQLException("Query was cancelled or timed out.", "HYT00"));
-                    }
+                    handleEndToken(res, wChain);
                     goToNextResult(wChain, stmt);
                     return null;
 
@@ -3834,6 +3823,33 @@ public class Tds implements TdsDefinitions {
         }
 
         return null;
+    }
+
+    /**
+     * Handle a <code>TDS_DONE</code>, <code>TDS_DONEPROC</code> or
+     * <code>TDS_DONEINPROC</code> packet, checking for the cancel and error
+     * flags.
+     *
+     * @param res    a <code>PacketEndTokenResult</code> instance
+     * @param wChain <code>SQLWarningChain</code> to add any exceptions to
+     * @return       <code>true</code> if an exception was generated
+     */
+    static boolean handleEndToken(PacketResult res, SQLWarningChain wChain) {
+        PacketEndTokenResult pack = (PacketEndTokenResult) res;
+
+        if (pack.wasCanceled()) {
+            wChain.addException(
+                    new SQLException("Query was cancelled or timed out.", "HYT00"));
+            return true;
+        }
+
+        if (pack.wasError()) {
+            wChain.addException(
+                    new SQLException("Unspecified error returned.", "HY000"));
+            return true;
+        }
+
+        return false;
     }
 
     private static byte[] getMACAddress(String macString) {

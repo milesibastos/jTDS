@@ -38,13 +38,13 @@ package net.sourceforge.jtds.jdbc;
 /**
  * Constants from the TDS protocol.
  *
- * @version  $Id: TdsDefinitions.java,v 1.10 2004-03-28 21:31:42 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.11 2004-04-04 22:12:03 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   String cvsVersion = "$Id: TdsDefinitions.java,v 1.10 2004-03-28 21:31:42 alin_sinpalean Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.11 2004-04-04 22:12:03 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -155,4 +155,13 @@ interface TdsDefinitions
           PROP_LAST_UPDATE_COUNT = "LASTUPDATECOUNT",
           PROP_USEUNICODE = "SENDSTRINGPARAMETERSASUNICODE",
           PROP_MAC_ADDR   = "MACADDRESS";
+
+    // Opcodes returned by TDS_DONE/TDS_DONEPROC/TDS_DONEINPROC
+    int OPCODE_SELECT       = 0xC1;
+    int OPCODE_CREATE_TABLE = 0xC6;
+    int OPCODE_DROP_TABLE   = 0xC7;
+    int OPCODE_ALTER_TABLE  = 0xD8;
+    int OPCODE_CREATE_PROC  = 0xDE;
+    int OPCODE_DROP_PROC    = 0xDF;
+    int OPCODE_END_PROC     = 0xE0;
 }

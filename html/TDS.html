@@ -117,7 +117,7 @@ the stored procedure has output parameters).</p>
   <td class="length">2</td>
   <td class="value">XX XX</td>
   <td class="description">Column flags (0x01=is nullable, 0x02=case sensitive, 0x04|0x08=is
-   writable, 0x10=auto increment)
+   writable, 0x10=auto increment, 0x20=computed)
   </td>
  </tr>
  <tr>
@@ -345,7 +345,7 @@ packet. Returned by SELECT .. FOR BROWSE queries.</p>
   <td class="offset repeat">XX</td>
   <td class="length">1</td>
   <td class="value">XX</td>
-  <td class="description">Column flags (0x08=read-only(?), 0x10=hidden, 0x20=name present)</td>
+  <td class="description">Column flags (0x04=expression, 0x08=key, 0x10=hidden, 0x20=name present)</td>
  </tr>
  <tr>
   <td class="offset repeat">XX</td>
@@ -795,7 +795,7 @@ VARCHAR).</p>
   <td class="offset">01</td>
   <td class="length">2</td>
   <td class="value">XX XX</td>
-  <td class="description">Status flags (0x01=more results, 0x02=error, 0x10=SELECT/INSERT/UPDATE(?),
+  <td class="description">Status flags (0x01=more results, 0x02=error, 0x10=valid update count,
    0x20=cancel ack)
   </td>
  </tr>
@@ -836,6 +836,10 @@ VARCHAR).</p>
    <td class="description">INSERT</td>
   </tr>
   <tr>
+   <td class="offset">C4</td>
+   <td class="description">DELETE</td>
+  </tr>
+  <tr>
    <td class="offset">C5</td>
    <td class="description">UPDATE</td>
   </tr>
@@ -858,6 +862,10 @@ VARCHAR).</p>
   <tr>
    <td class="offset">D5</td>
    <td class="description">COMMIT</td>
+  </tr>
+  <tr>
+   <td class="offset">D8</td>
+   <td class="description">ALTER TABLE</td>
   </tr>
   <tr>
    <td class="offset">DE</td>

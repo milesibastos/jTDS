@@ -30,32 +30,25 @@
 // SUCH DAMAGE.
 //
 
-
 package net.sourceforge.jtds.jdbc;
 
-
 public class PacketEndTokenResult extends PacketResult {
-    public static final String cvsVersion = "$Id: PacketEndTokenResult.java,v 1.2 2004-02-12 23:07:57 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: PacketEndTokenResult.java,v 1.3 2004-04-04 22:12:03 alin_sinpalean Exp $";
 
-
-    private byte status;
+    /**
+     * Packet status flags.
+     */
+    private int status;
+    /**
+     * Affected rows (0 for DDL statements, -1 for SELECT or no valid row count,
+     * i.e. <code>flags & 0x10 == 0</code>).
+     */
     private int rowCount;
 
-    public PacketEndTokenResult(
-            byte type,
-            byte _status,
-            int _rowCount)
-            throws TdsConfused {
+    public PacketEndTokenResult(byte type, int status, int rowCount) {
         super(type);
-        /*
-        if(type == TdsDefinitions.TDS_DONEINPROC)
-        {
-           // NOTE-  TDS_DONEINPROC is not a end marker.
-           throw new TdsConfused("Internal error-\nTDS_DONEINPROC is not an end of packet.");
-        }
-         */
-        status = _status;
-        rowCount = _rowCount;
+        this.status = status;
+        this.rowCount = rowCount;
     }
 
     public int getRowCount() {
@@ -70,13 +63,16 @@ public class PacketEndTokenResult extends PacketResult {
         return (status & 0x02) != 0;
     }
 
+    public boolean isRowCountValid() {
+        return (status & 0x10) != 0;
+    }
+
     public boolean wasCanceled() {
         return (status & 0x20) != 0;
     }
 
     public String toString() {
-        return ""
-                + "token type- " + Integer.toHexString(getPacketType() & 0xff)
+        return "token type- " + Integer.toHexString(getPacketType() & 0xff)
                 + ", rowCount- " + getRowCount()
                 + ", moreResults- " + moreResults()
                 + ", wasCanceled- " + wasCanceled()

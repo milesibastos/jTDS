@@ -43,7 +43,7 @@ import java.sql.Timestamp;
  * @author     Craig Spannring
  * @author     Igor Petrovski
  * @created    14 September 2001
- * @version    $Id: TdsComm.java,v 1.12 2004-04-04 00:42:01 alin_sinpalean Exp $
+ * @version    $Id: TdsComm.java,v 1.13 2004-04-04 22:12:03 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -100,7 +100,7 @@ public class TdsComm implements TdsDefinitions {
      */
     byte resBuffer[] = new byte[256];
 
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.12 2004-04-04 00:42:01 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.13 2004-04-04 22:12:03 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -257,6 +257,8 @@ public class TdsComm implements TdsDefinitions {
      */
     public void appendBytes(byte[] b, int len, byte pad) throws java.io.IOException {
         int i = 0;
+        // TODO Use System.arraycopy() instead of moving bytes one by one,
+        //      maybe only for larger lengths to justify the overhead.
         for (; i < b.length && i < len; i++) {
             appendByte(b[i]);
         }

@@ -8,6 +8,19 @@ Changes from jTDS 0.8-rc1
    as parameters.
  o Moved output logging before the call to TdsSocket.sendNetPacket() to avoid
    logging zeros (if the method returned a new buffer and buffered the old one).
+ o Created the Tds.handleEndToken() static method to have a unified handling of
+   end token status flags. It's now called for all the end tokens processed.
+ o Modified row count handling in Tds. Now the "valid row count" flag and the
+   operation code flag are checked and only valid update counts not from SELECTs
+   are kept; row counts for DDL statements are always set to 0. Also, update
+   counts are returned for CallableStatements too, as Mike suggested. This seems
+   to be more or less the behavior of the other SQL Server drivers.
+ o CursorResultSet now consumes update counts returned by the sp_cursor stored
+   procedures rather than throwing exceptions.
+ o Updated the TDS documentation with some new information on end token status
+   flags and operation codes.
+ o Updated the unit tests that were failing because of the new way update counts
+   are managed.
 
 04/03/2004 - Brian Heineman
  o Updated binary data support so that data set via a stream or Blob is not

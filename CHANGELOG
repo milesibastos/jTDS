@@ -8,6 +8,11 @@ Changes from jTDS 0.3.1
    thanks to Dale Anderson (entraspan), author of the bug, and ultimately,
    solver. I'm not sure this works on SQL Server 6.5, but it seems like no one
    is using that anymore.
+ o Implemented CursorResultSet.beforeFirst() and CursorResultSet.afterLast().
+   There's an even bigger problem with CursorResultSet: a different Tds could
+   be allocated to the Statement than the one on which the cursor was created,
+   which will inevitably lead to a crash. Now I start to understand what the
+   mainTds thing was for. :o)
 
 09/11/2002 - Alin Sinpalean
 

@@ -248,15 +248,23 @@ public class CursorResultSet extends AbstractResultSet {
 
     public void beforeFirst() throws SQLException
     {
-
-        throw new java.lang.UnsupportedOperationException("Method beforeFirst() not yet implemented.");
+        if( pos != POS_BEFORE_FIRST )
+        {
+            pos = POS_BEFORE_FIRST;
+            internalFetch("FETCH FIRST FROM "+cursorName);
+            internalFetch("FETCH PRIOR FROM "+cursorName);
+        }
     }
 
 
     public void afterLast() throws SQLException
     {
-
-        throw new java.lang.UnsupportedOperationException("Method afterLast() not yet implemented.");
+        if( pos != POS_AFTER_LAST )
+        {
+            pos = POS_AFTER_LAST;
+            internalFetch("FETCH LAST FROM "+cursorName);
+            internalFetch("FETCH NEXT FROM "+cursorName);
+        }
     }
 
 

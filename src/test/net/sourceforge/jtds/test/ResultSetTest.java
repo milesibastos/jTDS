@@ -229,7 +229,7 @@ public class ResultSetTest extends TestBase {
      * Test for bug [961594] ResultSet.
      */
     public void testResultSetScroll1() throws Exception {
-    	int count = 100;
+    	int count = 125;
     	
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #resultSetScroll1 (data INT)");

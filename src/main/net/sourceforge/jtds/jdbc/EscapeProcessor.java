@@ -36,9 +36,8 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.5 2004-01-22 23:49:38 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.6 2004-01-27 23:16:22 bheineman Exp $";
 
-    String   input;
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
     private static final String ESCAPE_PREFIX_TIMESTAMP = "ts ";
@@ -46,6 +45,12 @@ abstract public class EscapeProcessor
     private static final String ESCAPE_PREFIX_FUNCTION = "fn ";
     private static final String ESCAPE_PREFIX_CALL = "call ";
     private static final String ESCAPE_PREFIX_ESCAPE_CHAR = "escape ";
+
+    private static final int NORMAL = 0;
+    private static final int IN_STRING = 1;
+    private static final int IN_ESCAPE = 2;
+
+    private String input;
 
     public EscapeProcessor(String sql)
     {
@@ -256,7 +261,8 @@ abstract public class EscapeProcessor
 
     public String expandEscape(String escapeSequence) throws SQLException
     {
-        String str    = new String(escapeSequence);
+        // XXX Is it always okay to trim leading and trailing blanks?
+        String str    = escapeSequence.trim();
         String result = null;
 
         if( startsWithIgnoreCase(str, ESCAPE_PREFIX_FUNCTION) )
@@ -270,16 +276,38 @@ abstract public class EscapeProcessor
             if( result == null )
                 result = str;
         }
-        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_CALL) ||
-            (str.startsWith("?=") && startsWithIgnoreCase(str.substring(2).trim(), ESCAPE_PREFIX_CALL)) )
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_CALL) || str.startsWith("?") )
         {
-            boolean returnsVal = str.startsWith("?=");
-            str = str.substring(str.indexOf("call")+4).trim();
+            boolean returnsVal = str.startsWith("?");
+
+            if (returnsVal) {
+                int i = skipWhitespace(str, 1);
+
+                if (str.charAt(i) != '=') {
+                    throw new SQLException("Malformed procedure call, '=' expected at "
+                                           + i + ": " + escapeSequence);
+                }
+
+                i = skipWhitespace(str, i + 1);
+
+                str = str.substring(i);
+
+                if (!startsWithIgnoreCase(str, ESCAPE_PREFIX_CALL)) {
+                    throw new SQLException("Malformed procedure call, '"
+                                           + ESCAPE_PREFIX_CALL + "' expected at "
+                                           + i + ": " + escapeSequence);
+                }
+            }
+
+            str = str.substring(ESCAPE_PREFIX_CALL.length()).trim();
+
             int pPos = str.indexOf('(');
             if( pPos >= 0 )
             {
                 if( str.charAt(str.length()-1) != ')' )
-                    throw new SQLException("Malformed procedure call: "+str);
+                    throw new SQLException("Malformed procedure call, ')' expected at "
+                                           + (escapeSequence.length() - 1) + ": "
+                                           + escapeSequence);
                 result = "exec "+(returnsVal ? "?=" : "")+str.substring(0, pPos)+
                     " "+str.substring(pPos+1, str.length()-1);
             }
@@ -311,10 +339,15 @@ abstract public class EscapeProcessor
         int pPos = str.indexOf('(');
 
         if( pPos < 0 )
-            throw new SQLException("Malformed function escape: "+str);
+            throw new SQLException("Malformed function escape, expected '(': " + str);
+        else if (str.charAt(str.length() - 1) != ')')
+            throw new SQLException("Malformed function escape, expected ')' at"
+                                   + (str.length() - 1) + ": " + str);
+
         String fName = str.substring(0, pPos).trim();
 
         // @todo Implement this in a smarter way
+        // ??Can we use HashMaps or are we trying to be java 1.0 / 1.1 compliant??
         if( fName.equalsIgnoreCase("user") )
             result = "user_name" + str.substring(pPos);
         else if( fName.equalsIgnoreCase("database") )
@@ -337,8 +370,67 @@ abstract public class EscapeProcessor
             result = "lower" + str.substring(pPos);
         else if( fName.equalsIgnoreCase("ucase") )
             result = "upper" + str.substring(pPos);
+        else if (fName.equalsIgnoreCase("concat"))
+            result = getConcat(str.substring(pPos));
 
         return result;
+    }
+
+    /**
+     * Returns the JDBC function CONCAT as a database concatenation string.
+     * <p>
+     * Per the specification, concatenation uses double quotes instead of single quotes
+     * for string literals:
+     * {fn CONCAT("Hot", "Java")}
+     * {fn CONCAT(column1, "Java")}
+     * {fn CONCAT("Hot", column2)}
+     * {fn CONCAT(column1, column2)}
+     * <p>
+     * See: http://java.sun.com/j2se/1.3/docs/guide/jdbc/spec/jdbc-spec.frame11.html
+     */
+    private String getConcat(String str) throws SQLException {
+        char[] chars = str.toCharArray();
+        StringBuffer result = new StringBuffer(chars.length);
+        boolean inString = false;
+
+        for (int i = 0; i < chars.length; i++ ) {
+            char ch = chars[i];
+
+            if (inString) {
+                if (ch == '\'') {
+                    // Single quotes must be escaped with another single quote
+                    result.append("''");
+                } else if (ch == '"' && chars[i] + 1 != '"') {
+                    // What happens when ch = '"' && chars[i] + 1 == '"'
+                    // Is this a case where a double quote is escaping a double quote?
+                    result.append("'");
+                    inString = false;
+                } else {
+                    result.append(ch);
+                }
+            } else {
+                if (ch == ',') {
+                    // {fn CONCAT("Hot", "Java")}
+                    // The comma       ^  separating the parameters was found, simply
+                    // replace if with a '+'.
+                    result.append('+');
+                } else if (ch == '"') {
+                    result.append("'");
+                    inString = true;
+                } else if (ch == '(' || ch == ')') {
+                    result.append(ch);
+                } else if (Character.isWhitespace(ch)) {
+                    // Just ignore whitespace, there is no reason to make the database
+                    // parse this data as well.
+                } else {
+                    throw new SQLException("Malformed concat function, charcter '"
+                                           + ch + "' was not expected at " + i + ": "
+                                           + str);
+                }
+            }
+        }
+
+        return result.toString();
     }
 
     /**
@@ -348,93 +440,90 @@ abstract public class EscapeProcessor
     {
         String tmpStr = str.substring(ESCAPE_PREFIX_ESCAPE_CHAR.length()).trim();
 
-        if( tmpStr.length()!=3 ||
-            tmpStr.charAt(0)!='\'' ||
-            tmpStr.charAt(2)!='\'' )
+        // Escape string should be 3 characters long unless a single quote is being used
+        // (which is probably a bad idea but the ANSI specification allows it) as an
+        // escape character in which case the length should be 4.  The escape
+        // sequence needs to be handled in this manner (with two single quotes) or else
+        // parameters will not be counted properly as the string will remain open.
+        if( !((tmpStr.length()==3 && tmpStr.charAt(1)!='\'')
+              || (tmpStr.length()==4 && tmpStr.charAt(1)=='\'' && tmpStr.charAt(2)=='\''))
+            || tmpStr.charAt(0)!='\''
+            || tmpStr.charAt(tmpStr.length() - 1)!='\'' )
             throw new SQLException("Malformed escape: " + str);
-
-        // If the escape character is a single quote then it must be escaped using another
-        // single quote
-        if( tmpStr.charAt(1) == '\'' )
-            tmpStr = "''''";
 
         return "ESCAPE " + tmpStr;
     }
 
-    public String nativeString() throws SQLException
-    {
-        StringBuffer result = new StringBuffer(input.length());
+    /**
+     * Converts JDBC escape syntax to native SQL.
+     * <p>
+     * NOTE: This method is now structured the way it is for optimization purposes.
+     * <p>
+     * if (state==NORMAL) else if (state==IN_STRING) else
+     * replaces the
+     * switch (state) case NORMAL: case IN_STRING
+     * as it is faster when there are few case statements.
+     * <p>
+     * Also, IN_ESCAPE is not checked for and a simple 'else' is used instead as it is the
+     * only other state that can exist.
+     * <p>
+     * char ch = chars[i] is used in conjunction with input.toCharArray() to avoid
+     * getfield opcode.
+     * <p>
+     * If any changes are made to this method, please test the performance of the change
+     * to ensure that there is no degradation.  The cost of parsing SQL for JDBC escapes
+     * needs to be as close to zero as possible.
+     */
+    public String nativeString() throws SQLException {
+        char[] chars = input.toCharArray(); /* avoid getfield opcode */
+        StringBuffer result = new StringBuffer(chars.length);
         StringBuffer escape = null;
+        int state = NORMAL;
 
-        // Simple finite state machine.  Bonehead, but it works.
-        final int   normal                        = 0;
-        final int   inString                      = 1;
-        final int   inEscape                      = 2;
+        for (int i = 0; i < chars.length; i++ ) {
+            char ch = chars[i]; /* avoid getfield opcode */
 
-        int         state = normal;
+            if (state == NORMAL) {
+                if (ch == '{') {
+                    state = IN_ESCAPE;
 
-        for (int i = 0; i < input.length(); i++ )
-        {
-            char ch = input.charAt(i);
-
-            switch( state )
-            {
-                case normal:
-                {
-                    if( ch == '{' )
-                    {
-                        state = inEscape;
-
-                        if (escape == null) {
-                            escape = new StringBuffer();
-                        } else {
-                            escape.delete(0, escape.length());
-                        }
+                    if (escape == null) {
+                        escape = new StringBuffer();
+                    } else {
+                        escape.delete(0, escape.length());
                     }
-                    else
-                    {
-                       result.append(ch);
-                       if( ch == '\'' )
-                           state = inString;
-                    }
-                    break;
+                } else {
+                   result.append(ch);
+
+                   if (ch == '\'') {
+                       state = IN_STRING;
+                   }
                 }
-                case inString:
-                {
-                    result.append(ch);
+            } else if (state == IN_STRING) {
+                result.append(ch);
 
-                    // NOTE: This works even if a single quote is being used as an escape
-                    // character since the next single quote found will force the state
-                    // to be == to inString again.
-                    if( ch == '\'')
-                        state = normal;
-
-                    break;
+                // NOTE: This works even if a single quote is being used as an escape
+                // character since the next single quote found will force the state
+                // to be == to IN_STRING again.
+                if (ch == '\'') {
+                    state = NORMAL;
                 }
-                case inEscape:
-                {
-                    if( ch == '}' )
-                    {
-                        // XXX Is it always okay to trim leading and trailing blanks?
-                        result.append(expandEscape(escape.toString().trim()));
-                        state = normal;
-                    }
-                    else
-                    {
-                        escape.append(ch);
-                    }
-                    break;
+            } else { // state == IN_ESCAPE
+                if (ch == '}') {
+                    result.append(expandEscape(escape.toString()));
+                    state = NORMAL;
+                } else {
+                    escape.append(ch);
                 }
-                default:
-                    throw new SQLException("Internal error.  Unknown state in FSM");
             }
         }
 
-        if( state!=normal && state!=inString )
-           throw new SQLException("Syntax error in SQL escape syntax");
+        if (state == IN_ESCAPE) {
+            throw new SQLException("Syntax error in SQL escape syntax");
+        }
 
         return result.toString();
-    } // nativeString()
+    }
 
 
     public static boolean startsWithIgnoreCase(String s, String prefix)

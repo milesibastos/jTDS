@@ -1,11 +1,19 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/26/2004 - David Kilzer
+ o Made SharedNamedPipe constructor package-private to match SharedSocket
+   constructor.
+
 07/26/2004 - Brian Heineman
  o Removed extraneous methods from SharedSocket and SharedNamedPipe.
 
 07/25/2004 - David Kilzer
- o Fixed bug when using instances with named pipes.
+ o Fixed bug when using instances with named pipes.  ConnectJDBC2 constructor
+   was trying to determine the correct serverPort by creating a MSSqlServerInfo
+   object, which is not necessary for named pipes.
+ o Fixed bad message key in ConnectJDBC2.unpackProperties().  Changed
+   "prop.portservertype" to "prop.servertype".
 
 07/25/2004 - Brian Heineman
  o Applied patch [991684] Implement named pipe IPC for SQL Server 6.5; (Thanks

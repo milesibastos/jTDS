@@ -23,3 +23,4 @@ Changes from jTDS 0.2
  o Added implementations to methods without parameters returning boolean values
    in DatabaseMetaData (based on values returned by the JDBC-ODBC and some
    other drivers).
+ o Bugfix 587749: Bit to Int conversion works. So does Binary to String.

@@ -16,6 +16,11 @@ Changes from jTDS 0.3
    etc.
  o DatabaseMetaData changes: implemented getCrossReference(), changed
    getCatalogs() implementation, removed makeTypeTable() -- no longer used.
+ o Changed the implementation of almost all methods in DatabaseMetaData to use
+   standard stored procedures instead of the custom but unsafe code. Only a
+   couple of methods are still using the old way (getColumns because of custom
+   types and getSchemas because the result would be the second column and it's
+   currently impossible to hide any columns but the last ones).
 
 08/26/2002 - Alin Sinpalean
 

@@ -363,16 +363,15 @@ public class CursorResultSet extends AbstractResultSet {
         cursorName = getNewCursorName();
         String options = "";
 
-        if ( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY ) {
-            options += " FAST_FORWARD ";
-        }
-        else if ( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE ) {
-            options += " SCROLL ";
-        }
+        if ( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY )
+            options = "FAST_FORWARD ";
+        else if ( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE )
+            options = "SCROLL INSENSITIVE ";
+        else
+            options = "SCROLL ";
 
-        if ( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY ) {
-            options += " READ_ONLY ";
-        }
+        if ( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY )
+            options += "READ_ONLY ";
 
         stmt.execute("DECLARE " + cursorName + " CURSOR " + options + " FOR " + sql);
         stmt.execute("OPEN " + cursorName);

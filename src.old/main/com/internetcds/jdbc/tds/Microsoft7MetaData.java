@@ -40,12 +40,12 @@ import java.sql.*;
 
 public class Microsoft7MetaData extends DatabaseMetaData
 {
-   public static final String cvsVersion = "$Id: Microsoft7MetaData.java,v 1.3 2002-08-28 07:44:24 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: Microsoft7MetaData.java,v 1.4 2002-08-28 14:19:37 alin_sinpalean Exp $";
 
 
    protected Microsoft7MetaData(
       Object        connection_,
-      Tds           tds_)
+      Tds           tds_) throws SQLException
    {
       super(connection_, tds_);
       sysnameLength = 128;

@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.12 2002-08-28 14:19:37 alin_sinpalean Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.11 2002-08-28 07:44:24 alin_sinpalean Exp $
+ *@version    $Id: TdsConnection.java,v 1.12 2002-08-28 14:19:37 alin_sinpalean Exp $
  *@see        Statement
  *@see        ResultSet
  *@see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.12 2002-08-28 14:19:37 alin_sinpalean Exp $";
 
     protected int getTdsVer()
     {
@@ -340,12 +340,16 @@ public class TdsConnection implements ConnectionHelper, Connection {
             }
             return databaseMetaData;
         }
-        catch( Exception/*TdsException*/ e )
+        catch( SQLException e )
         {
-            // This is not going to happen, the exception should be thrown by
-            // freeTds if the tds is not really allocated.
-            throw new SQLException(e.getMessage());
+            throw e;
         }
+//        catch( TdsException e )
+//        {
+//            // This is not going to happen, the exception should be thrown by
+//            // freeTds if the tds is not really allocated.
+//            throw new SQLException(e.getMessage());
+//        }
     }
 
 

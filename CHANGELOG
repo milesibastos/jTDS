@@ -12,6 +12,8 @@ Changes from jTDS 0.7.1
  o Added ResultSet.getObject() support for IMAGE, TEXT and NTEXT fields to return
    Blob and Clob objects.  Added tests for new functionality.
  o Added Blob and Clob support to ResultSetMetaData.getColumnClassName().
+ o Corrected bug [887508] getObject returns Integer-Object on Types.Smallint and
+   added test to ensure functionality continues to work in the future.
 
 03/25/2004 - Alin Sinpalean
  o Fixed bug #922802 (TdsStatement.executeBatch() throws exception if no

@@ -52,7 +52,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.7 2004-03-27 04:48:52 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.8 2004-03-27 05:26:14 bheineman Exp $";
 
     public PacketRowResult(Context context) {
         super(TdsDefinitions.TDS_ROW);
@@ -223,75 +223,101 @@ public class PacketRowResult extends PacketResult {
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
             case java.sql.Types.LONGVARCHAR:
-                if (tmp instanceof String)
+                if (tmp instanceof String) {
                     return tmp;
-                else
+                } else {
                     return tmp.toString();
+                }
 
             case java.sql.Types.CLOB:
-                if (tmp instanceof Clob)
+                if (tmp instanceof Clob) {
                     return tmp;
-                else
+                } else {
                     return new ClobImpl(tmp.toString());
+                }
             case java.sql.Types.TINYINT:
-            case java.sql.Types.SMALLINT:
-            case java.sql.Types.INTEGER:
-                if (tmp instanceof Integer)
+                if (tmp instanceof Byte) {
                     return tmp;
-                if (!(tmp instanceof Number))
+                } else if (!(tmp instanceof Number)) {
+                    throw new SQLException("Can't convert " + tmp.getClass().getName() +
+                                           " to Byte.");
+                }
+
+                return new Byte(((Number) tmp).byteValue());
+            case java.sql.Types.SMALLINT:
+                if (tmp instanceof Short) {
+                    return tmp;
+                } else if (!(tmp instanceof Number)) {
+                    throw new SQLException("Can't convert " + tmp.getClass().getName() +
+                                           " to Short.");
+                }
+
+                return new Short(((Number) tmp).shortValue());
+            case java.sql.Types.INTEGER:
+                if (tmp instanceof Integer) {
+                    return tmp;
+                } else if (!(tmp instanceof Number)) {
                     throw new SQLException("Can't convert " + tmp.getClass().getName() +
                                            " to Integer.");
+                }
+
                 return new Integer(((Number) tmp).intValue());
 
             case java.sql.Types.BIGINT:
-                if (tmp instanceof Long)
+                if (tmp instanceof Long) {
                     return tmp;
-                if (!(tmp instanceof Number))
+                } else if (!(tmp instanceof Number)) {
                     throw new SQLException("Internal error");
+                }
 
                 return new Long(((Number) tmp).longValue());
 
             case java.sql.Types.REAL:
-                if (tmp instanceof Float)
+                if (tmp instanceof Float) {
                     return tmp;
-                else if (tmp instanceof Number)
+                } else if (tmp instanceof Number) {
                     return new Float(((Number) tmp).doubleValue());
-                else
+                } else {
                     throw new SQLException("Was expecting Numeric data.  Got"
                                            + tmp.getClass().getName());
+                }
 
             case java.sql.Types.FLOAT:
             case java.sql.Types.DOUBLE:
-                if (tmp instanceof Double)
+                if (tmp instanceof Double) {
                     return tmp;
-                else if (tmp instanceof Number)
+                } else if (tmp instanceof Number) {
                     return new Double(((Number) tmp).doubleValue());
-                else
+                } else {
                     throw new SQLException("Was expecting Numeric data.  Got"
                                            + tmp.getClass().getName());
+                }
 
             case java.sql.Types.DATE:
                 if (tmp instanceof Date) {
                     return tmp;
-                }
-                if (tmp instanceof java.util.Date)
+                } else  if (tmp instanceof java.util.Date) {
                     return new Date(((java.util.Date) tmp).getTime());
+                }
+
                 throw new SQLException("Internal error");
 
             case java.sql.Types.TIME:
                 if (tmp instanceof Time) {
                     return tmp;
-                }
-                if (tmp instanceof java.util.Date)
+                } else if (tmp instanceof java.util.Date) {
                     return new Time(((java.util.Date) tmp).getTime());
+                }
+
                 throw new SQLException("Internal error");
 
             case java.sql.Types.TIMESTAMP:
                 if (tmp instanceof Timestamp) {
                     return tmp;
-                }
-                if (tmp instanceof java.util.Date)
+                } else if (tmp instanceof java.util.Date) {
                     return new Timestamp(((java.util.Date) tmp).getTime());
+                }
+
                 throw new SQLException("Internal error");
 
             case java.sql.Types.BINARY:
@@ -318,18 +344,20 @@ public class PacketRowResult extends PacketResult {
                 }
 
             case java.sql.Types.NULL:
+                // Shouldn't we just "return null;" here?
                 throw new SQLException("Not implemented");
 
             case java.sql.Types.OTHER:
                 throw new SQLException("Not implemented");
 
             case java.sql.Types.BIT:
-                if (tmp instanceof Boolean)
+                if (tmp instanceof Boolean) {
                     return tmp;
-                else
+                } else {
                     throw new SQLException("Was expecting BIT data. "
                                            + "Got"
                                            + tmp.getClass().getName());
+                }
 
             default:
                 throw new SQLException("Unknown datatype "
@@ -394,8 +422,7 @@ public class PacketRowResult extends PacketResult {
                     }
                 case java.sql.Types.BIT:
                     {
-                        // XXX according to JDBC spec we need to handle these
-                        // for now just fall through
+                        return ((Boolean) obj).booleanValue() ? 1 : 0;
                     }
                 default:
                     {
@@ -403,7 +430,7 @@ public class PacketRowResult extends PacketResult {
                                                + "Don't know how to convert from "
                                                + "java.sql.Types." +
                                                TdsUtil.javaSqlTypeToString(getColumnType(columnIndex))
-                                               + " to an Dboule");
+                                               + " to an Dobule");
                     }
                 }
             } catch (ClassCastException e) {
@@ -499,25 +526,26 @@ public class PacketRowResult extends PacketResult {
             return null;
         }
 
-        BigDecimal result = null;
-
         if (tmp instanceof java.lang.Double) {
-            result = new BigDecimal(((Double) tmp).doubleValue());
+            return new BigDecimal(((Double) tmp).doubleValue());
         } else if (tmp instanceof java.lang.Float) {
-            result = new BigDecimal(((Float) tmp).doubleValue());
+            return new BigDecimal(((Float) tmp).doubleValue());
         } else if (tmp instanceof BigDecimal) {
-            result = (BigDecimal) tmp;
+            return (BigDecimal) tmp;
         } else if (tmp instanceof java.lang.Number) {
             // This handles Byte, Short, Integer, and Long
-            result = BigDecimal.valueOf(((Number) tmp).longValue());
+            return BigDecimal.valueOf(((Number) tmp).longValue());
         } else if (tmp instanceof java.lang.String) {
             try {
-                result = new BigDecimal((String) tmp);
+                return new BigDecimal((String) tmp);
             } catch (NumberFormatException e) {
                 throw new SQLException(e.getMessage());
             }
+        } else if (tmp instanceof Boolean) {
+            return ((Boolean) tmp).booleanValue() ? new BigDecimal(1) : new BigDecimal(0);
+        } else {
+            return null;
         }
-        return result;
     }
 
     public BigDecimal getBigDecimal(int columnIndex, int scale)
@@ -593,10 +621,10 @@ public class PacketRowResult extends PacketResult {
                     }
 
                     String v = obj.toString().trim();
-                    if (v.equalsIgnoreCase("0") || v.equalsIgnoreCase("false")) {
+                    if (v.equals("0") || v.equalsIgnoreCase("false")) {
                         result = false;
                         break;
-                    } else if (v.equalsIgnoreCase("1") || v.equalsIgnoreCase("true")) {
+                    } else if (v.equals("1") || v.equalsIgnoreCase("true")) {
                         result = true;
                         break;
                     }

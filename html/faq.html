@@ -69,6 +69,9 @@
           when calling <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</a></li>
         <li><a href="#noSuitableDriver">Why do I get a <code>java.sql.SQLException:
           &quot;No suitable driver&quot;</code> when trying to get a connection?</a></li>
+        <li><a href="#connectionRefused">Why do I get <code>java.sql.SQLException:
+          &quot;Network error IOException: Connection refused: connect&quot;</code>
+          when trying to get a connection?</a></li>
         <li><a href="#instanceName">Where does one place an instance name in the
           connect string? Connecting with <code>"jdbc:jtds:sqlserver://host\instance:port/database"</code>
           gives an SQLException with the message "Logon failed".</a></li>
@@ -389,6 +392,25 @@
         (e.g. <code>"jdbc:jtds:sqlserver://server/db;TDS=7.0;"</code> is wrong!).
       <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="connectionRefused"></a>Why do I get
+        <code>java.sql.SQLException: &quot;Network error IOException: Connection
+        refused: connect&quot;</code> when trying to get a connection?</p>
+      <p>The <code>&quot;Connection refused&quot;</code> exception is thrown by
+        jTDS when it is unable to connect to the server. There may be a number
+        of reasons why this could happen:</p>
+      <ol>
+        <li>The server name is misspelled or the port number is incorrect.</li>
+        <li>SQL Server is not configured to use TCP/IP. Either enable TCP/IP
+          from SQL Server's Network Utility app or have jTDS connect via named
+          pipes (see the <a href="#urlFormat">URL format</a> for information on
+          how to do this).</li>
+        <li>There is a firewall blocking port 1433 on the server.</li>
+      </ol>
+      <p>To check whether TCP/IP is enabled and the port is not blocked you can
+        use "telnet &lt;server_host&gt; 1433". Until telnet doesn't connect,
+        jTDS won't either. If you can't figure out why, ask your network
+        administrator for help.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="instanceName"></a>Where does one place an instance
         name in the connect string? Connecting with

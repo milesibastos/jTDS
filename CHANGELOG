@@ -1,6 +1,9 @@
 Changes from jTDS 1.0
 =======================
 
+02/07/2005 - Alin Sinpalean
+ o Added the explanation for the "Connection refused" error message to the FAQ.
+
 02/05/2005 - Alin Sinpalean
  o Applied patch [117010] Instance parameter support for local named pipes,
    submitted by Matthias Germann.

@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.14 2003-12-11 07:48:55 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.14 2003-12-11 07:48:55 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.14 2003-12-11 07:48:55 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -164,7 +164,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2003-12-11 07:33:28 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.14 2003-12-11 07:48:55 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1572,7 +1572,7 @@ public class Tds implements TdsDefinitions {
         if (charset == null || charset.length() > 30)
             charset = "iso_1";
 
-        if( charset.toLowerCase.startsWith("cp") )
+        if( charset.toLowerCase().startsWith("cp") )
             charset = "Cp" + charset.substring(2);
 
         if( !charset.equals(this.charset) )

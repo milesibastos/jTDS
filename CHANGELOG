@@ -16,6 +16,8 @@ Changes from jTDS 0.6
 02/10/2004 - Brian Heineman
  o Corrected bug in Statement.executeBatch() where batch values were not being
    cleared after execution.
+ o Numerous (minor) optimizations to underlying Tds communication logic:
+   reduced memory allocations and assignments; reduced cost of control logic.
 
 02/09/2004 - Alin Sinpalean
  o Implemented CursorResultSet.isLast() and added a check to currentRow() to

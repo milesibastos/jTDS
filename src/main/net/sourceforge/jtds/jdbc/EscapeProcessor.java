@@ -36,7 +36,7 @@ import java.sql.*;
 import java.util.HashMap;
 
 public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.10 2004-02-14 01:02:46 bheineman Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.11 2004-03-04 17:11:54 bheineman Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -107,7 +107,7 @@ public class EscapeProcessor {
      */
     public static int parameterNativeSQL(String sql, StringBuffer result)
     throws SQLException {
-        char[] chars = sql.toCharArray(); // avoid getfield opcode
+        final char[] chars = sql.toCharArray(); // avoid getfield opcode
         StringBuffer escape = null;
         int state = NORMAL;
         int parameters = 0;
@@ -123,7 +123,7 @@ public class EscapeProcessor {
         }
 
         for (int i = 0; i < chars.length; i++) {
-            char ch = chars[i]; // avoid getfield opcode
+            final char ch = chars[i]; // avoid getfield opcode
 
             if (state == NORMAL) {
                 if (ch == '{') {
@@ -181,12 +181,13 @@ public class EscapeProcessor {
      */
     private static void translateEscape(String escapeSequence, StringBuffer result)
     throws SQLException {
-        String str = escapeSequence.trim();
+        final String str = escapeSequence.trim();
         int i = 0;
         int length = str.length();
 
         while (!Character.isWhitespace(str.charAt(i++)) && i < length);
-        String escape = str.substring(0, i).toLowerCase();
+
+        final String escape = str.substring(0, i).toLowerCase();
 
         if (escape.equals(ESCAPE_PREFIX_FUNCTION)) {
             translateFunction(str, result);
@@ -516,7 +517,7 @@ public class EscapeProcessor {
      *
      * @return true if the string has only digits, false otherwise.
      */
-    private static boolean validDigits(String str) {
+    private static boolean validDigits(final String str) {
         for (int i = 0; i < str.length(); i++) {
             if (!Character.isDigit(str.charAt(i))) {
                 return false;
@@ -532,7 +533,7 @@ public class EscapeProcessor {
      *
      * @return index of next non-whitespace character.
      */
-    private static int skipWhitespace(String str, int i) {
+    private static int skipWhitespace(final String str, int i) {
         while (i < str.length() && Character.isWhitespace(str.charAt(i))) {
             i++;
         }
@@ -547,7 +548,7 @@ public class EscapeProcessor {
      * @return the next position in the string iff the current character is a
      *         quote
      */
-    private static int skipQuote(String str, int i) {
+    private static int skipQuote(final String str, int i) {
         // skip over the leading quote if it exists
         if (i < str.length() && (str.charAt(i) == '\'' || str.charAt(i) == '"')) {
             // XXX Note-  The spec appears to prohibit the quote character,
@@ -559,7 +560,7 @@ public class EscapeProcessor {
         return i;
     }
 
-    private static boolean startsWithIgnoreCase(String s, String prefix) {
+    private static boolean startsWithIgnoreCase(final String s, final String prefix) {
         if (s.length() < prefix.length()) {
             return false;
         }

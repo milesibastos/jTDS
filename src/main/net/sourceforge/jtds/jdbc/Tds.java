@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.35 2004-03-03 22:14:13 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.36 2004-03-04 17:11:54 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.35 2004-03-03 22:14:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.36 2004-03-04 17:11:54 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -1034,12 +1034,12 @@ public class Tds implements TdsDefinitions {
             if (comm.getByte() == 0) {
                 element = null;
             } else {
-                element = new Boolean((comm.getByte() != 0) ? true : false);
+                element = (comm.getByte() != 0) ? Boolean.TRUE : Boolean.FALSE;
             }
             break;
 
         case SYBBIT:
-            element = new Boolean((comm.getByte() != 0) ? true : false);
+            element = (comm.getByte() != 0) ? Boolean.TRUE : Boolean.FALSE;
             break;
 
         case SYBUNIQUEID:
@@ -1492,7 +1492,6 @@ public class Tds implements TdsDefinitions {
 
     private Object getIntValue(final int type)
             throws java.io.IOException, TdsException {
-        final Object result;
         final int len;
 
         switch (type) {
@@ -1519,39 +1518,34 @@ public class Tds implements TdsDefinitions {
 
         switch (len) {
         case 4:
-            result = new Integer(comm.getTdsInt());
-            break;
+            return new Integer(comm.getTdsInt());
 
         case 2:
-            result = new Integer((short) comm.getTdsShort());
-            break;
+            return new Integer((short) comm.getTdsShort());
 
         case 1:
-            result = new Integer(comm.getByte() & 0xff);
-            break;
+            return new Integer(comm.getByte() & 0xff);
 
         case 0:
-            result = null;
-            break;
+            return null;
 
         default:
             throw new TdsConfused("Bad SYBINTN length of " + len);
         }
-
-        return result;
     }
 
     private Object getCharValue(final boolean wideChars, final boolean outputParam)
             throws TdsException, java.io.IOException {
-        Object result;
-
         final boolean shortLen = (tdsVer == Tds.TDS70) && (wideChars || !outputParam);
         final int len = shortLen ? comm.getTdsShort() : (comm.getByte() & 0xFF);
+
         // SAfe 2002-08-23
         // TDS 7.0 no longer uses 0 length values as NULL
         if (tdsVer < TDS70 && len == 0 || tdsVer == TDS70 && len == 0xFFFF) {
-            result = null;
+            return null;
         } else if (len >= 0) {
+            Object result;
+
             if (wideChars) {
                 result = comm.getString(len >> 1, encoder);
             } else {
@@ -1564,24 +1558,24 @@ public class Tds implements TdsDefinitions {
                 // In SQL trailing spaces are stripped from strings
                 // MS SQLServer denotes a zero length string
                 // as a single space.
-                result = "";
+                return "";
             }
+
+            return result;
         } else {
             throw new TdsConfused("String with length<0");
         }
-
-        return result;
     }
 
     private Object getTextValue(final boolean wideChars)
             throws TdsException, java.io.IOException {
-        String result;
-
         final byte hasValue = comm.getByte();
 
         if (hasValue == 0) {
-            result = null;
+            return null;
         } else {
+            String result;
+
             // XXX Have no idea what these 24 bytes are
             // 2000-06-06 RMK They are the TEXTPTR (16 bytes) and the TIMESTAMP.
             comm.skip(24);
@@ -1611,22 +1605,21 @@ public class Tds implements TdsDefinitions {
                     // In SQL trailing spaces are stripped from strings
                     // MS SQLServer denotes a zero length string
                     // as a single space.
-                    result = "";
+                    return "";
                 }
             } else {
                 throw new TdsConfused("String with length<0");
             }
+
+            return result;
         }
-        return result;
     }
 
     private Object getImageValue() throws TdsException, java.io.IOException {
-        final byte[] result;
-
         final byte hasValue = comm.getByte();
 
         if (hasValue == 0) {
-            result = null;
+            return null;
         } else {
             // XXX Have no idea what these 24 bytes are
             // 2000-06-06 RMK They are the TEXTPTR (16 bytes) and the TIMESTAMP.
@@ -1645,12 +1638,11 @@ public class Tds implements TdsDefinitions {
             //}
             //else
             if (len >= 0) {
-                result = comm.getBytes(len, true);
+                return comm.getBytes(len, true);
             } else {
                 throw new TdsConfused("String with length<0");
             }
         }
-        return result;
     }
 
     /**
@@ -1667,11 +1659,9 @@ public class Tds implements TdsDefinitions {
      */
     private PacketRowResult loadRow(final PacketRowResult result)
             throws SQLException, TdsException, java.io.IOException {
-        int i;
-
         final Columns columnsInfo = result.getContext().getColumnInfo();
 
-        for (i = 1; i <= columnsInfo.realColumnCount(); i++) {
+        for (int i = 1; i <= columnsInfo.realColumnCount(); i++) {
             final Object element;
             final int colType = columnsInfo.getNativeType(i);
 
@@ -1756,7 +1746,7 @@ public class Tds implements TdsDefinitions {
                 if (colType == SYBBITN && comm.getByte() == 0) {
                     element = null;
                 } else {
-                    element = new Boolean((comm.getByte() != 0) ? true : false);
+                    element = (comm.getByte() != 0) ? Boolean.TRUE : Boolean.FALSE;
                 }
                 break;
 
@@ -2208,8 +2198,6 @@ public class Tds implements TdsDefinitions {
      * @param  database                   Name of the database to use.
      */
     protected synchronized void changeDB(final String database, final SQLWarningChain wChain) {
-        int i;
-
         // XXX Check to make sure the database name
         // doesn't have funny characters.
 
@@ -2218,9 +2206,9 @@ public class Tds implements TdsDefinitions {
                     new SQLException("Name too long - " + database));
         }
 
-        for (i = 0; i < database.length(); i++) {
-            final char ch;
-            ch = database.charAt(i);
+        for (int i = 0; i < database.length(); i++) {
+            final char ch = database.charAt(i);
+
             if (!
                     ((ch == '_' && i != 0)
                     || (ch >= 'a' && ch <= 'z')
@@ -2876,29 +2864,23 @@ public class Tds implements TdsDefinitions {
 
     private Object readFloatN(final int len)
             throws TdsException, java.io.IOException {
-        final Object tmp;
-
         switch (len) {
         case 8:
             final long l = comm.getTdsInt64();
-            tmp = new Double(Double.longBitsToDouble(l));
-            break;
+            return new Double(Double.longBitsToDouble(l));
 
         case 4:
             final int i = comm.getTdsInt();
-            tmp = new Float(Float.intBitsToFloat(i));
-            break;
+            return new Float(Float.intBitsToFloat(i));
 
         case 0:
-            tmp = null;
-            break;
+            return null;
 
         default:
             throw new TdsNotImplemented(
                     "Don't now how to handle float with size of " + len
                     + "(0x" + Integer.toHexString(len & 0xff) + ")");
         }
-        return tmp;
     }
 
     private void sendSybImage(final byte[] value)
@@ -3410,14 +3392,11 @@ public class Tds implements TdsDefinitions {
             return java.sql.Types.FLOAT;
 
         case SYBFLTN:
-            switch (size) {
-            case 4:
+            if (size == 4) {
                 return java.sql.Types.REAL;
-
-            case 8:
+            } else if (size == 8) {
                 return java.sql.Types.FLOAT;
-
-            default:
+            } else {
                 throw new TdsException("Bad size of SYBFLTN");
             }
 
@@ -3431,17 +3410,13 @@ public class Tds implements TdsDefinitions {
             return java.sql.Types.INTEGER;
 
         case SYBINTN:
-            switch (size) {
-            case 1:
+            if (size == 1) {
                 return java.sql.Types.TINYINT;
-
-            case 2:
+            } else if (size == 2) {
                 return java.sql.Types.SMALLINT;
-
-            case 4:
+            } else if (size == 4) {
                 return java.sql.Types.INTEGER;
-
-            default:
+            } else {
                 throw new TdsException("Bad size of SYBINTN");
             }
 

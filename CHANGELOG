@@ -19,6 +19,7 @@ Changes from jTDS 0.9-rc1
  o Corrected bug [1012318] 0.9-rc1 throw NullPointerException if user/password
    passed; if a null user or password was passed the driver would throw a
    NullPointerException.
+ o Corrected stored prcedure cursor parameter definitions.
 
 08/17/2004 - Brian Heineman
  o Additional corrections for bug [966274] Trusted Connections no longer work;

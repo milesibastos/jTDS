@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.11 2004-08-17 23:53:49 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.12 2004-08-21 18:44:26 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -380,7 +380,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                         if (parameters[i].name != null) {
                             buf.append(parameters[i].name);
                         } else {
-                            buf.append("@P").append(i + 1);
+                            buf.append("@P").append(i);
                         }
 
                         // SAfe Doesn't actually work, because if the stored procedure

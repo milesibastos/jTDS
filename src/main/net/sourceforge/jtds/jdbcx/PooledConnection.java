@@ -26,9 +26,9 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 
 /**
  *
- * @version $Id: PooledConnection.java,v 1.4 2004-07-23 12:08:39 bheineman Exp $
+ * @version $Id: PooledConnection.java,v 1.5 2004-07-23 12:19:08 bheineman Exp $
  */
-public class PooledConnection implements PooledConnection {
+public class PooledConnection implements javax.sql.PooledConnection {
     private final ArrayList _listeners = new ArrayList();
     private Connection _connection;
     private ConnectionProxy _connectionProxy = null;

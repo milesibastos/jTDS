@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.14 2004-07-30 01:05:20 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.15 2004-08-03 17:09:39 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -134,8 +134,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private String serverCharset;
     /** The application name. */
     private String appName;
-    /** The library name. */
-    private String libName;
+    /** The program name. */
+    private String progName;
     /** The server message language. */
     private String language;
     /** The client MAC Address. */
@@ -270,7 +270,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                           domainName,
                           serverCharset,
                           appName,
-                          libName,
+                          progName,
                           language,
                           macAddress,
                           packetSize);
@@ -672,7 +672,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         password = info.getProperty(Support.getMessage("prop.password"));
         macAddress = info.getProperty(Support.getMessage("prop.macaddress"), "");
         appName = info.getProperty(Support.getMessage("prop.appname"), "java.exe");
-        libName = info.getProperty(Support.getMessage("prop.libname"), "jTDS");
+        progName = info.getProperty(Support.getMessage("prop.progname"), "jTDS");
         serverCharset = info.getProperty(Support.getMessage("prop.charset"));
         language = info.getProperty(Support.getMessage("prop.language"), "us_english");
         prepareSql = info.getProperty(Support.getMessage("prop.preparesql"), "true").equalsIgnoreCase("true");

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.13 2004-07-30 01:05:20 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.14 2004-08-03 17:09:39 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -417,7 +417,7 @@ public class TdsCore {
      * @param domain The Windows NT domain (or null).
      * @param charset The required server character set.
      * @param appName The application name.
-     * @param libName The library name.
+     * @param progName The program name.
      * @param language The language to use for server messages.
      * @param macAddress The client network MAC address.
      * @param packetSize The required network packet size.
@@ -430,7 +430,7 @@ public class TdsCore {
                final String domain,
                final String charset,
                final String appName,
-               final String libName,
+               final String progName,
                final String language,
                final String macAddress,
                final int packetSize)
@@ -438,15 +438,15 @@ public class TdsCore {
         try {
             if (tdsVersion >= Driver.TDS70) {
                 sendMSLoginPkt(serverName, database, user, password,
-                                domain, appName, libName, language,
+                                domain, appName, progName, language,
                                 macAddress, packetSize);
             } else if (tdsVersion == Driver.TDS50) {
                 send50LoginPkt(serverName, user, password,
-                                charset, appName, libName,
+                                charset, appName, progName,
                                 language, packetSize);
             } else {
                 send42LoginPkt(serverName, user, password,
-                                charset, appName, libName,
+                                charset, appName, progName,
                                 language, packetSize);
             }
 
@@ -1068,7 +1068,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @param password The user password.
      * @param charset The required server character set.
      * @param appName The application name.
-     * @param libName The library name.
+     * @param progName The program name.
      * @param language The server language for messages
      * @param packetSize The required network packet size.
      * @throws IOException
@@ -1078,7 +1078,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                                 final String password,
                                 final String charset,
                                 final String appName,
-                                final String libName,
+                                final String progName,
                                 final String language,
                                 final int    packetSize)
         throws IOException
@@ -1118,7 +1118,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         out.write((byte) 0);
         out.write((byte) 0);
-        putLoginString(libName, 10); // prog name
+        putLoginString(progName, 10); // prog name
 
         out.write((byte) 6);  // prog version
         out.write((byte) 0);
@@ -1156,7 +1156,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @param password The user password.
      * @param charset The required server character set.
      * @param appName The application name.
-     * @param libName The library name.
+     * @param progName The program name.
      * @param language The server language for messages
      * @param packetSize The required network packet size.
      * @throws IOException
@@ -1166,7 +1166,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                               final String password,
                               final String charset,
                               final String appName,
-                              final String libName,
+                              final String progName,
                               final String language,
                               final int    packetSize)
         throws IOException
@@ -1205,7 +1205,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         out.write((byte) 0);
         out.write((byte) 0);
-        putLoginString(libName, 10); // prog name
+        putLoginString(progName, 10); // prog name
 
         out.write((byte) 5);  // prog version
         out.write((byte) 0);
@@ -1252,7 +1252,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * @param password The user password.
      * @param domain The Windows NT domain (or null).
      * @param appName The application name.
-     * @param libName The library name.
+     * @param progName The program name.
      * @param language The server language for messages
      * @param macAddress The client network MAC address.
      * @throws IOException
@@ -1263,7 +1263,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                         final String password,
                         final String domain,
                         final String appName,
-                        final String libName,
+                        final String progName,
                         final String language,
                         final String macAddress,
                         final int    netPacketSize)
@@ -1281,7 +1281,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                 (clientName.length() +
                 appName.length() +
                 serverName.length() +
-                libName.length() +
+                progName.length() +
                 database.length() +
                 language.length()));
         final short authLen;
@@ -1370,10 +1370,10 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         out.write((short) 0);
         out.write((short) 0);
 
-        // Library name
+        // Program name
         out.write((short)curPos);
-        out.write((short) libName.length());
-        curPos += libName.length() * 2;
+        out.write((short) progName.length());
+        curPos += progName.length() * 2;
 
         // Server language
         out.write((short)curPos);
@@ -1407,7 +1407,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         out.write(appName);
         out.write(serverName);
-        out.write(libName);
+        out.write(progName);
         out.write(language);
         out.write(database);
 

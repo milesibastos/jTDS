@@ -1,6 +1,12 @@
 Changes from jTDS 0.8.1
 =========================
 
+08/03/2004 - David Kilzer
+ o Swapped descriptions of appName and progName in FAQ.
+ o Renamed internal libName variable to progName to match external property.
+ o Cleaned up Messages.properties to remove prop.libname (prop.progname already
+   existed) and to add prop.desc.appname and prop.desc.progname properties.
+
 08/01/2004 - Brian Heineman
  o Partial application of patch [997595] SQL 6.5 Test suite.; general test clean
    up.

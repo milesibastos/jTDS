@@ -1,5 +1,8 @@
 Changes from jTDS 0.6
 =========================
+02/06/2004 - Brian Heineman
+ o Applied patch [884180] Implement getGeneratedKeys() (thanks to Mike 
+   Hutchinson for the patch)
 
 02/02/2004 - Brian Heineman
  o Synchronized Blob and Clob methods for thread safety.
@@ -8,7 +11,7 @@ Changes from jTDS 0.6
  o Removed extranous DriverVersion class which was only being used to hold
    two variables.
  o Added Driver.toString() method that returns the current version per
-   enhancement request [887120] DriverVersion.getDriverVersion().
+   enhancement request [887120] DriverVersion.getDriverVersion(). 
  o TdsDataSource now implements ConnectionPoolDataSource.
 
 01/31/2004 - Brian Heineman
@@ -48,8 +51,8 @@ Changes from jTDS 0.6
    to do this as the database must check it anyhow.
  o Significant optimization to SQL parsing; new implementation is more than 10x
    faster.
- o Applied patch [851982] Client name not set in send70Login().  This also
-   fixed the following issues:
+ o Applied patch [851982] Client name not set in send70Login(). (thanks to
+   mhilpert for the fix) This also fixed the following issues:
      [708727] hostname not set
      [886897] jTDS 0.6: Hostname still not set 
  o Added missing "exec" per bug [822544] Issue connecting using alias on Sybase

@@ -110,7 +110,7 @@ Longvarbinary_Tab_Drop=drop table Longvarbinary_Tab
 #The SQL Statements for creating, inserting and dropping the tables which are 
 #used in testing the scalar functions and outer joins using escape syntax
 #*****************************************************************************
-Fnschema_Tab1_Create=CREATE TABLE ctstable3(STRING1 VARCHAR(20), STRING2 VARCHAR(20), STRING3 VARCHAR(20), NUMCOL NUMERIC, FLOATCOL FLOAT, DATECOL DATETIME, TIMECOL DATETIME, TSCOL1 DATETIME, TSCOL2 DATETIME)
+Fnschema_Tab1_Create=CREATE TABLE ctstable3(STRING1 VARCHAR(20), STRING2 VARCHAR(20), STRING3 VARCHAR(20), NUMCOL INTEGER, FLOATCOL FLOAT, DATECOL DATETIME, TIMECOL DATETIME, TSCOL1 DATETIME, TSCOL2 DATETIME)
 Fnschema_Tab2_Create=CREATE TABLE ctstable4(STRING4 VARCHAR(20), NUMCOL NUMERIC)
 
 Fnschema_Tab1_Drop=DROP TABLE ctstable3

@@ -444,7 +444,7 @@ Full_Oj_Query=SELECT * FROM {OJ ctstable3 FULL OUTER JOIN ctstable4 ON ctstable3
 #used in testing the scalar functions and outer joins using escape syntax
 #*****************************************************************************
 
-Fnschema_Tab1_Insert=INSERT INTO ctstable3 VALUES ('Java',' HotJava ','JAVA',100,0.5,{d '1993-07-13'},{t '10:30:55'},{ts '1994-06-12 11:20:10'},{ts '1996-05-10 10:07:05'})
+Fnschema_Tab1_Insert=INSERT INTO ctstable3 VALUES ('Java',' HotJava ','JAVA',100,0.5,{d '1993-07-13'},{t '10:30:55'},{ts ‘1996-05-12 11:20:10’},{ts '1996-05-10 10:07:05'})
 Fnschema_Tab2_Insert=INSERT INTO ctstable4 VALUES ('STRING3',100)
 
 Fnschema_Tab1_Delete=delete from ctstable3

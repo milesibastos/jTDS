@@ -35,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer.
- * @version $Id: SharedNamedPipe.java,v 1.4 2004-07-27 03:05:33 ddkilzer Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.5 2004-07-27 20:20:06 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
 
@@ -46,7 +46,14 @@ public class SharedNamedPipe extends SharedSocket {
 
 
     /**
-     * Constructed a SharedNamedPipe to the server.
+     * Default constructor.
+     */
+    private SharedNamedPipe() {
+    }
+
+
+    /**
+     * Construct a SharedNamedPipe to the server.
      * 
      * @param host The SQL Server host name.
      * @param tdsVersion The TDS protocol version.
@@ -59,14 +66,15 @@ public class SharedNamedPipe extends SharedSocket {
      * @throws IOException If named pipe or its input or output streams do not open.
      * @throws UnknownHostException If host cannot be found for the named pipe.
      */
-    SharedNamedPipe(
-            String host, int tdsVersion, int serverType,
-            int packetSize, String instance, String domain, String user,
-            String password)
+    static SharedNamedPipe instance(
+            String host, int tdsVersion, int serverType, int packetSize, String instance,
+            String domain, String user, String password)
             throws IOException, UnknownHostException {
 
-        this.tdsVersion = tdsVersion;
-        this.serverType = serverType;
+        SharedNamedPipe newInstance = new SharedNamedPipe();
+
+        newInstance.setTdsVersion(tdsVersion);
+        newInstance.setServerType(serverType);
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(domain, user, password);
 
@@ -84,13 +92,20 @@ public class SharedNamedPipe extends SharedSocket {
 
         url.append("/sql/query");
 
-        pipe = new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth);
+        newInstance.setPipe(
+                new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth));
 
-        this.out = new DataOutputStream(pipe.getNamedPipeOutputStream());
-        this.in = new DataInputStream(
-                new BufferedInputStream(
-                        pipe.getNamedPipeInputStream(),
-                        calculateBufferSize(tdsVersion, packetSize)));
+        newInstance.setOut(
+                new DataOutputStream(
+                        newInstance.getPipe().getNamedPipeOutputStream()));
+
+        newInstance.setIn(
+                new DataInputStream(
+                        new BufferedInputStream(
+                                newInstance.getPipe().getNamedPipeInputStream(),
+                                newInstance.calculateBufferSize(tdsVersion, packetSize))));
+
+        return newInstance;
     }
 
 
@@ -100,7 +115,7 @@ public class SharedNamedPipe extends SharedSocket {
      * @return True if the underlying socket is connected.
      */
     boolean isConnected() {
-        return this.pipe != null;
+        return getPipe() != null;
     }
 
 
@@ -109,9 +124,9 @@ public class SharedNamedPipe extends SharedSocket {
      */
     void close() throws IOException {
         super.close();
-        this.out.close();
-        this.in.close();
-        //this.pipe.close();
+        getOut().close();
+        getIn().close();
+        //getPipe().close();
     }
 
 
@@ -121,26 +136,46 @@ public class SharedNamedPipe extends SharedSocket {
      */
     void forceClose() {
         try {
-            this.out.close();
+            getOut().close();
         }
         catch (IOException e) {
             // Ignore
         }
         finally {
-            this.out = null;
+            setOut(null);
         }
 
         try {
-            this.in.close();
+            getIn().close();
         }
         catch (IOException e) {
             // Ignore
         }
         finally {
-            this.in = null;
+            setIn(null);
         }
 
-        this.pipe = null;
+        setPipe(null);
+    }
+
+
+    /**
+     * Getter for {@link SharedNamedPipe#pipe} field.
+     * 
+     * @return The {@link SmbNamedPipe} used for communication.
+     */ 
+    private SmbNamedPipe getPipe() {
+        return pipe;
+    }
+
+
+    /**
+     * Setter for {@link SharedNamedPipe#pipe} field.
+     * 
+     * @param pipe The {@link SmbNamedPipe} to be used for communication.
+     */ 
+    private void setPipe(SmbNamedPipe pipe) {
+        this.pipe = pipe;
     }
 
 
@@ -164,7 +199,7 @@ public class SharedNamedPipe extends SharedSocket {
      * @param packetSize The requested packet size for the connection.
      * @return minimum default packet size if <code>packetSize == 0</code>, else <code>packetSize</code>
      */
-    private static int calculateBufferSize(final int tdsVersion, final int packetSize) {
+    private int calculateBufferSize(final int tdsVersion, final int packetSize) {
 
         if (packetSize == 0) {
             if (tdsVersion >= TdsCore.TDS70) {

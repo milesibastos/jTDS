@@ -22,10 +22,11 @@ import net.sourceforge.jtds.jdbc.SharedNamedPipe;
 import net.sourceforge.jtds.jdbc.TdsCore;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 
 
 
-public class SharedNamedPipeTest extends TestCase {
+public class NamedPipeUnitTest extends TestCase {
 
 
     public void testCalculateBufferSize_TDS42() {
@@ -56,6 +57,9 @@ public class SharedNamedPipeTest extends TestCase {
 
         try {
             Class klass = SharedNamedPipe.class;
+            Constructor constructor = klass.getDeclaredConstructor(new Class[]{});
+            constructor.setAccessible(true);
+            Object newInstance = constructor.newInstance(new Object[]{});
             Method method =
                     klass.getDeclaredMethod(
                             "calculateBufferSize",
@@ -65,7 +69,7 @@ public class SharedNamedPipeTest extends TestCase {
                     new Object[]{
                         new Integer(tdsVersion),
                         new Integer(packetSize)};
-            return ((Integer) method.invoke(klass, args)).intValue();
+            return ((Integer) method.invoke(newInstance, args)).intValue();
         }
         catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
@@ -74,6 +78,9 @@ public class SharedNamedPipeTest extends TestCase {
             throw new RuntimeException(e);
         }
         catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+        catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
     }

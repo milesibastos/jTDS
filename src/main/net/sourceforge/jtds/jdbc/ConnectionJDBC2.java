@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.10 2004-07-27 03:05:33 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.11 2004-07-27 20:20:06 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -242,7 +242,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         try {
             if (namedPipe == true) {
-                socket = new SharedNamedPipe(serverName, tdsVersion, serverType, packetSize, instanceName, domainName, user, password);
+                socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize, instanceName, domainName, user, password);
             } else {
                 socket = new SharedSocket(serverName, serverPort, tdsVersion, serverType);
             }

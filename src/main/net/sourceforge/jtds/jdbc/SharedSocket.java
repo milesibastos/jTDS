@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.5 2004-07-26 18:45:26 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.6 2004-07-27 20:20:06 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -128,11 +128,11 @@ class SharedSocket {
     /**
      * Output stream for network socket.
      */
-    protected DataOutputStream out = null;
+    private DataOutputStream out = null;
     /**
      * Input stream for network socket.
      */
-    protected DataInputStream in = null;
+    private DataInputStream in = null;
     /**
      * Current maxium input buffer size.
      */
@@ -184,11 +184,11 @@ class SharedSocket {
     /**
      * Tds protocol version
      */
-    protected int tdsVersion;
+    private int tdsVersion;
     /**
      * The servertype one of TdsCore.SYBASE TdsCore.SQLSERVER
      */
-    protected int serverType;
+    private int serverType;
     /**
      * The character set to use for converting strings to/from bytes
      */
@@ -215,11 +215,11 @@ class SharedSocket {
      */
     SharedSocket(String host, int port, int tdsVersion, int serverType)
             throws IOException, UnknownHostException {
-        this.tdsVersion = tdsVersion;
-        this.serverType = serverType;
+        setTdsVersion(tdsVersion);
+        setServerType(serverType);
         this.socket = new Socket(host, port);
-        this.out = new DataOutputStream(socket.getOutputStream());
-        this.in = new DataInputStream(socket.getInputStream());
+        setOut(new DataOutputStream(socket.getOutputStream()));
+        setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(true);
     }
 
@@ -300,26 +300,43 @@ class SharedSocket {
     }
 
     /**
-     * Retrive the TDS version that is active on the connection
+     * Retrieve the TDS version that is active on the connection
      * supported by this socket.
      * 
-     * @return The TDS Version as an <code>int</code>.
+     * @return The TDS version as an <code>int</code>.
      */
     int getTdsVersion() {
         return tdsVersion;
     }
 
     /**
-     * Retrive the SQL Server type that is associated with the connection
+     * Set the TDS version field.
+     * @param tdsVersion The TDS version as an <code>int</code>.
+     */ 
+    protected void setTdsVersion(int tdsVersion) {
+        this.tdsVersion = tdsVersion;
+    }
+
+    /**
+     * Retrieve the SQL Server type that is associated with the connection
      * supported by this socket.
      * <ol>
      * <li>Microsoft SQL Server.
      * <li>Sybase SQL Server.
      * </ol>
-     * @return The server type as an <code>int</code>.
+     * @return The SQL Server type as an <code>int</code>.
      */
     int getServerType() {
         return serverType;
+    }
+
+    /**
+     * Set the SQL Server type field.
+     * 
+     * @param serverType The SQL Server type as an <code>int</code>.
+     */ 
+    protected void setServerType(int serverType) {
+        this.serverType = serverType;
     }
 
     /**
@@ -542,12 +559,12 @@ class SharedSocket {
                 byte[] tmpBuf = dequeueOutput(vsock);
                 
                 while (tmpBuf != null) {
-                    out.write(tmpBuf, 0, getPktLen(tmpBuf, 2));
+                    getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
                     tmpBuf = dequeueOutput(vsock);
                 }
 
                 // Now we can safely send this packet too
-                out.write(buffer, 0, getPktLen(buffer, 2));
+                getOut().write(buffer, 0, getPktLen(buffer, 2));
                 
                 if (buffer[1] != 0) {
                     // This means the TDS Packet is complete
@@ -572,8 +589,6 @@ class SharedSocket {
      * @param buffer The data buffer to receive the object (may be replaced)
      * @return The data in a <code>byte[]</code> buffer.
      * @throws IOException
-     * @throws TdsUnknownPacketType
-     * @throws TdsException
      */
     byte[] getNetPacket(int streamId, byte buffer[]) throws IOException {
         synchronized (socketTable) {
@@ -623,7 +638,7 @@ class SharedSocket {
                 }
                 
                 while (tmpBuf != null) {
-                    out.write(tmpBuf, 0, getPktLen(tmpBuf, 2));
+                    getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
                     tmpBuf = dequeueOutput(vsock);
                 }
                 
@@ -795,7 +810,7 @@ class SharedSocket {
             
             while (len == 0) {
                 try {
-                    len = in.read(hdrBuf, 0, 1);
+                    len = getIn().read(hdrBuf, 0, 1);
                 } catch (InterruptedIOException e) {
                     queryTimedOut = true;
                     sendCancel(vsock.owner);
@@ -816,7 +831,7 @@ class SharedSocket {
             //
             // Read rest of header
             try {
-                in.readFully(hdrBuf, 1, 7);
+                getIn().readFully(hdrBuf, 1, 7);
             } catch (EOFException e) {
                 throw new IOException("DB server closed connection.");
             }
@@ -850,7 +865,7 @@ class SharedSocket {
             System.arraycopy(hdrBuf, 0, buffer, 0, 8);
 
             try {
-                in.readFully(buffer, 8, len - 8);
+                getIn().readFully(buffer, 8, len - 8);
             } catch (EOFException e) {
                 throw new IOException("DB server closed connection.");
             }
@@ -908,9 +923,9 @@ class SharedSocket {
         cancel[3] = 8;
         cancel[4] = 0;
         cancel[5] = 0;
-        cancel[6] = (tdsVersion >= TdsCore.TDS70) ? (byte) 1 : 0;
+        cancel[6] = (getTdsVersion() >= TdsCore.TDS70) ? (byte) 1 : 0;
         cancel[7] = 0;
-        out.write(cancel, 0, 8);
+        getOut().write(cancel, 0, 8);
         
         if (Logger.isActive()) {
             Logger.logPacket(streamId, false, cancel);
@@ -956,5 +971,41 @@ class SharedSocket {
      */
     protected void setTimeout(int timeout) throws SocketException {
         socket.setSoTimeout(timeout);
+    }
+
+    /**
+     * Getter for {@link SharedSocket#in} field.
+     * 
+     * @return {@link InputStream} used for communication.
+     */ 
+    protected DataInputStream getIn() {
+        return in;
+    }
+
+    /**
+     * Setter for {@link SharedSocket#in} field.
+     * 
+     * @param in The {@link InputStream} to be used for communication.
+     */ 
+    protected void setIn(DataInputStream in) {
+        this.in = in;
+    }
+
+    /**
+     * Getter for {@link SharedSocket#out} field.
+     * 
+     * @return {@link OutputStream} used for communication.
+     */ 
+    protected DataOutputStream getOut() {
+        return out;
+    }
+
+    /**
+     * Setter for {@link SharedSocket#out} field.
+     * 
+     * @param out The {@link OutputStream} to be used for communication.
+     */ 
+    protected void setOut(DataOutputStream out) {
+        this.out = out;
     }
 }

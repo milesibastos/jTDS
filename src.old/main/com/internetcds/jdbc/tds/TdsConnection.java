@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2002-08-20 09:11:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,8 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.10 2002-08-20 09:11:13 alin_sinpalean Exp $
- *@see        DriverManager#getConnection
+ *@version    $Id: TdsConnection.java,v 1.11 2002-08-28 07:44:24 alin_sinpalean Exp $
  *@see        Statement
  *@see        ResultSet
  *@see        DatabaseMetaData
@@ -118,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2002-08-20 09:11:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.11 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
     protected int getTdsVer()
     {
@@ -327,17 +326,21 @@ public class TdsConnection implements ConnectionHelper, Connection {
                 // The DatabaseMetaData may need the tds connection
                 // at some later time.  Therefore we shouldn't relinquish the
                 // tds.
-                Tds tds = this.allocateTds();
+//                Tds tds = this.allocateTds();
                 // SAfe: We will, we will, because the DatabaseMetaData doesn't
                 // do anything with the Tds except for calling some
                 // getVersion-like methods, that don't need database access or
                 // exclusive access.
-                freeTds(tds);
-                databaseMetaData = DatabaseMetaData.getInstance(this,tds);
+//                freeTds(tds);
+
+                // SAfe: There always exists one Tds in the connection pool (we
+                // don't need exclusive access to it.
+                databaseMetaData = DatabaseMetaData.getInstance(this,
+                    ((TdsInstance)tdsPool.get(0)).tds);
             }
             return databaseMetaData;
         }
-        catch( TdsException e )
+        catch( Exception/*TdsException*/ e )
         {
             // This is not going to happen, the exception should be thrown by
             // freeTds if the tds is not really allocated.
@@ -429,7 +432,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
      *
      *@param  tds               Description of Parameter
      *@exception  TdsException  Description of Exception
-     *@see                      allocateTds
+     *@see                      #allocateTds
      */
     public void relinquish(Tds tds)
              throws TdsException
@@ -764,7 +767,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
      *
      *@param  tds               Description of Parameter
      *@exception  TdsException  Description of Exception
-     *@see                      allocateTds
+     *@see                      #allocateTds
      */
     void freeTds(Tds tds)
              throws TdsException

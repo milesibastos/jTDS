@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.13 2002-08-21 15:26:37 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.14 2002-08-28 07:44:24 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.13 2002-08-21 15:26:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.14 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -489,50 +489,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getCatalogs()
              throws SQLException
     {
-      return getCatalogs(null);
-   }
-   private java.sql.ResultSet getCatalogs(String catalog)
-      throws SQLException
-   {
-        // XXX We should really clean up all these temporary tables.
-        String tmpName = "#t#" + UniqueId.getUniqueId();
-      String sql =
-                " create table " + tmpName + "                                   " +
-                " (                                                              " +
-         "    q  sysname not null,                                        " +
-         "    o  sysname null,                                            " +
-         "    n  sysname null,                                            " +
-         "    t  sysname null,                                            " +
-                "    r  varchar(255) null                                        " +
-                " )                                                              " +
-         "                                                                " +
-         " insert into " + tmpName + " EXEC sp_tables ' ', ' ', '%', null " +
-         "                                                                " +
-         " select q TABLE_CAT from " + tmpName + "                        " +
-         "";
+        String query = "exec sp_tables '', '', '%', NULL";
+        Statement s = connection.createStatement();
+        TdsResultSet rs = (TdsResultSet)s.executeQuery(query);
+        Columns col = rs.getContext().getColumnInfo();
 
-      if (catalog != null)
-      {
-         sql = sql + " where q = ? ";
-      }
-      else
-      {
-         catalog = " ";
-         sql = sql + " where q != ? ";
-      }
+        col.setFakeColumnCount(1);
+        col.setName(1, "TABLE_CAT");
+        col.setLabel(1, "TABLE_CAT");
 
-      java.sql.ResultSet rs = null;
-
-      java.sql.PreparedStatement ps = connection.prepareStatement(sql);
-      ps.setString(1, catalog);
-      ps.execute();
-
-      while ((rs = ps.getResultSet()) == null)
-      {
-        }
         return rs;
     }
-
 
 
     /**
@@ -556,10 +523,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getCatalogTerm() throws SQLException
     {
-
         return "database";
     }
-
 
 
     /**
@@ -688,90 +653,44 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 tableNamePattern, columnNamePattern );
     }
 
-   private static String makeTypeTable(java.sql.Statement tmpTableStmt)
-      throws SQLException
-   {
-      // Create a lookup table for mapping between native and jdbc types
-      // This table can be reused for all FreeTDS drivers of the same version
+    private static String makeTypeSQL(String colName)
+    throws SQLException
+    {
+        // Create a lookup table for mapping between native and jdbc types
+        // This table can be reused for all FreeTDS drivers of the same version
 
-      String lookup   = "##freetds#typemap#" + UniqueId.getUniqueId();
+        String sql =
+            "CASE " + colName + " " +
+            "WHEN  31 THEN 1111 " +   // VOID
+            "WHEN  34 THEN 1111 " +   // IMAGE
+            "WHEN  35 THEN   -1 " +   // TEXT
+            "WHEN  37 THEN   -3 " +   // VARBINARY
+            "WHEN  38 THEN    4 " +   // INTN
+            "WHEN  39 THEN   12 " +   // VARCHAR
+            "WHEN  45 THEN   -2 " +   // BINARY
+            "WHEN  47 THEN    1 " +   // CHAR
+            "WHEN  48 THEN   -6 " +   // INT1
+            "WHEN  50 THEN   -7 " +   // BIT
+            "WHEN  52 THEN    5 " +   // INT2
+            "WHEN  56 THEN    4 " +   // INT4
+            "WHEN  58 THEN   93 " +   // DATETIME4
+            "WHEN  59 THEN    7 " +   // REAL
+            "WHEN  60 THEN 1111 " +   // MONEY
+            "WHEN  61 THEN   93 " +   // DATETIME
+            "WHEN  62 THEN    8 " +   // FLT8
+            "WHEN  63 THEN    2 " +   // NUMERIC
+            "WHEN 106 THEN    3 " +   // DECIMAL
+            "WHEN 108 THEN    2 " +   // NUMERIC
+            "WHEN 109 THEN    8 " +   // FLTN
+            "WHEN 110 THEN 1111 " +   // MONEYN
+            "WHEN 111 THEN   93 " +   // DATETIMN
+            "WHEN 112 THEN 1111 " +   // MONEY4
+            "WHEN 122 THEN 1111 " +   // SMALLMONEY
+            "ELSE 0             " +   // Unknown
+            "END";
 
-      String sql =
-         "create table " + lookup + " (       " +
-         "   native_type integer primary key, " +
-         "   jdbc_type   integer not null)    ";
-      tmpTableStmt.execute(sql);
-
-      sql =
-         "insert into " + lookup + " values ( 31, 1111) " +   // VOID
-         "insert into " + lookup + " values ( 34, 1111) " +   // IMAGE
-         "insert into " + lookup + " values ( 35,   -1) " +   // TEXT
-         "insert into " + lookup + " values ( 37,   -3) " +   // VARBINARY
-         "insert into " + lookup + " values ( 38,    4) " +   // INTN
-         "insert into " + lookup + " values ( 39,   12) " +   // VARCHAR
-         "insert into " + lookup + " values ( 45,   -2) " +   // BINARY
-         "insert into " + lookup + " values ( 47,    1) " +   // CHAR
-         "insert into " + lookup + " values ( 48,   -6) " +   // INT1
-         "insert into " + lookup + " values ( 50,   -7) " +   // BIT
-         "insert into " + lookup + " values ( 52,    5) " +   // INT2
-         "insert into " + lookup + " values ( 56,    4) " +   // INT4
-         "insert into " + lookup + " values ( 58,   93) " +   // DATETIME4
-         "insert into " + lookup + " values ( 59,    7) " +   // REAL
-         "insert into " + lookup + " values ( 60, 1111) " +   // MONEY
-         "insert into " + lookup + " values ( 61,   93) " +   // DATETIME
-         "insert into " + lookup + " values ( 62,    8) " +   // FLT8
-         "insert into " + lookup + " values ( 63,    2) " +   // NUMERIC
-         "insert into " + lookup + " values (106,    3) " +   // DECIMAL
-         "insert into " + lookup + " values (108,    2) " +   // NUMERIC
-         "insert into " + lookup + " values (109,    8) " +   // FLTN
-         "insert into " + lookup + " values (110, 1111) " +   // MONEYN
-         "insert into " + lookup + " values (111,   93) " +   // DATETIMN
-         "insert into " + lookup + " values (112, 1111) " +   // MONEY4
-         "insert into " + lookup + " values (122, 1111) " +   // SMALLMONEY
-         "";
-      tmpTableStmt.execute(sql);
-
-      return lookup;
-   }
-
-   private static String makeTypeSQL(String colName)
-      throws SQLException
-   {
-      // Create a lookup table for mapping between native and jdbc types
-      // This table can be reused for all FreeTDS drivers of the same version
-
-      String sql =
-         "CASE " + colName + " " +
-         "WHEN  31 THEN 1111 " +   // VOID
-         "WHEN  34 THEN 1111 " +   // IMAGE
-         "WHEN  35 THEN   -1 " +   // TEXT
-         "WHEN  37 THEN   -3 " +   // VARBINARY
-         "WHEN  38 THEN    4 " +   // INTN
-         "WHEN  39 THEN   12 " +   // VARCHAR
-         "WHEN  45 THEN   -2 " +   // BINARY
-         "WHEN  47 THEN    1 " +   // CHAR
-         "WHEN  48 THEN   -6 " +   // INT1
-         "WHEN  50 THEN   -7 " +   // BIT
-         "WHEN  52 THEN    5 " +   // INT2
-         "WHEN  56 THEN    4 " +   // INT4
-         "WHEN  58 THEN   93 " +   // DATETIME4
-         "WHEN  59 THEN    7 " +   // REAL
-         "WHEN  60 THEN 1111 " +   // MONEY
-         "WHEN  61 THEN   93 " +   // DATETIME
-         "WHEN  62 THEN    8 " +   // FLT8
-         "WHEN  63 THEN    2 " +   // NUMERIC
-         "WHEN 106 THEN    3 " +   // DECIMAL
-         "WHEN 108 THEN    2 " +   // NUMERIC
-         "WHEN 109 THEN    8 " +   // FLTN
-         "WHEN 110 THEN 1111 " +   // MONEYN
-         "WHEN 111 THEN   93 " +   // DATETIMN
-         "WHEN 112 THEN 1111 " +   // MONEY4
-         "WHEN 122 THEN 1111 " +   // SMALLMONEY
-         "ELSE 0             " +   // Unknown
-         "END";
-
-      return sql;
-   }
+        return sql;
+    }
 
     private java.sql.ResultSet getColumns_SQLServer65(
         String catalog,
@@ -945,9 +864,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String foreignCatalog, String foreignSchema, String foreignTable
              ) throws SQLException
     {
-        // See sp_fkeys
-        NotImplemented();
-        return null;
+        String query = "exec sp_fkeys ?, ?, ?, ?, ?, ?";
+
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, primaryTable);
+        s.setString(2, primarySchema);
+        s.setString(3, primaryCatalog);
+        s.setString(4, foreignTable);
+        s.setString(5, foreignSchema);
+        s.setString(6, foreignCatalog);
+
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
+
+        col.setName(1, "PKTABLE_CAT");
+        col.setLabel(1, "PKTABLE_CAT");
+        col.setName(2, "PKTABLE_SCHEM");
+        col.setLabel(2, "PKTABLE_SCHEM");
+        col.setName(5, "FKTABLE_CAT");
+        col.setLabel(5, "FKTABLE_CAT");
+        col.setName(6, "FKTABLE_SCHEM");
+        col.setLabel(6, "FKTABLE_SCHEM");
+
+        return rs;
     }
 
 
@@ -1540,7 +1479,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxCatalogNameLength() throws SQLException
     {
-//      NotImplemented();
         return sysnameLength;
     }
 
@@ -1735,7 +1673,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxSchemaNameLength() throws SQLException
     {
-//      NotImplemented();
         return sysnameLength;
     }
 
@@ -1764,8 +1701,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxStatements() throws SQLException
     {
-        return 0; // XXX: as NotImplemented();
-        // return 0;
+        return 0;
     }
 
 
@@ -1979,106 +1915,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String columnNamePattern )
              throws SQLException
     {
-      int                  i;
+        String query = "exec sp_sproc_columns ?, ?, ?, ?, 3";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_sproc_columns ?, ?, ?, ?, 3";
 
-      String              sql = null;
-      java.sql.Statement  tmpTableStmt = connection.createStatement();
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, procedureNamePattern);
+        s.setString(2, schemaPattern);
+        s.setString(3, catalog);
+        s.setString(4, columnNamePattern);
 
-      // XXX We need to come up with something better than a global temporary
-      // table.  It could cause problems if two people try to getColumns().
-      // (note- it is _unlikely_, not impossible)
-      String              tmpTableName = "##t#" + UniqueId.getUniqueId();
-      String              lookup       = makeTypeTable(tmpTableStmt);
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
 
-      // create a temporary table
-      sql =
-         "create table " + tmpTableName + " (           " +
-         "    PROCEDURE_CAT     sysname null,           " +
-         "    PROCEDURE_SCHEM   sysname null,           " +
-         "    PROCEDURE_NAME    sysname null,           " +
-         "    COLUMN_NAME       sysname null,           " +
-         "    COLUMN_TYPE       sysname null,           " +
-         "    DATA_TYPE         integer null,           " +
-         "    TYPE_NAME         sysname null,           " +
-         "    [PRECISION]       integer null,           " +
-         "    LENGTH            integer null,           " +
-         "    SCALE             integer null,           " +
-         "    RADIX             integer null,           " +
-         "    NULLABLE          integer null,           " +
-         "    REMARKS           char(255) null,         " +
-         "    ORDINAL_POSITION  integer null            " +
-         ")";
-      tmpTableStmt.execute(sql);
+        col.setName(1, "PROCEDURE_CAT");
+        col.setLabel(1, "PROCEDURE_CAT");
+        col.setName(2, "PROCEDURE_SCHEM");
+        col.setLabel(2, "PROCEDURE_SCHEM");
 
-      // For each procedure in the system add its columns
-      // Note-  We have to do them one at a time in case
-      // there are databases we don't have access to.
-      java.sql.ResultSet          rs = getCatalogs(catalog);
-      while(rs.next())
-      {
-         String cat = rs.getString(1);
-
-         // XXX Security risk.  It 'might' be possible to create
-         // a catalog name that when inserted into this sql statement could
-         // do other commands.
-         sql =
-            "insert into  " + tmpTableName + "                " +
-            "select                                           " +
-            "   PROCEDURE_CAT='" + cat + "',                  " +
-            "   PROCEDURE_SCHEM=USER_NAME(o.uid),             " +
-            "   PROCEDURE_NAME=o.name,                        " +
-            "   COLUMN_NAME=c.name,                           " +
-            "   COLUMN_TYPE=1 + convert(integer,              " +
-            "                     convert(bit, c.status&64)), " +
-            "   DATA_TYPE=l.jdbc_type,                        " +
-            "   TYPE_NAME=t.name,                             " +
-            "   [PRECISION]=c.prec,                           " +
-            "   LENGTH=0,                                     " +
-            "   SCALE=c.scale,                                " +
-            "   RADIX=10,                                     " +
-            "   NULLABLE=convert(integer,                     " +
-            "                    convert(bit, c.status&8)),   " +
-            "   REMARKS=null,                                 " +
-            "   ORDINAL_POSITION=c.colid                      " +
-            "from                                             " +
-            "   " + cat + ".dbo.sysobjects o,                 " +
-            "   " + cat + ".dbo.syscolumns c,                 " +
-            "   " + lookup + " l,                             " +
-            "   " + cat + ".dbo.systypes t                    " +
-            "where o.type = 'P' and o.id=c.id                 " +
-            "      and t.usertype=c.usertype                  " +
-            "      and l.native_type=c.type                   " +
-            "      and o.name like ? and c.name like ?        " +
-            "";
-         try
-         {
-            java.sql.PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setString(1, procedureNamePattern);
-            ps.setString(2, columnNamePattern);
-            ps.executeUpdate();
-            ps.close();
-         }
-         catch (SQLException e)
-         {
-         }
-      }
-      rs.close();
-
-
-      sql =
-         "select distinct * from " + tmpTableName +
-         " where PROCEDURE_SCHEM like ?    " +
-         "order by PROCEDURE_SCHEM, PROCEDURE_NAME, ORDINAL_POSITION " ;
-
-      java.sql.PreparedStatement ps = connection.prepareStatement(sql);
-
-      ps.setString(1, schemaPattern);
-      rs = ps.executeQuery();
-
-      // We need to do something about deleting the global temporary table
-      tmpTableStmt.close();
-
-      return rs;
+        return rs;
     }
 
 
@@ -2125,87 +1980,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String procedureNamePattern )
              throws SQLException
     {
-      /*
-        debugPrintln( "Inside of getProcedures" );
-        debugPrintln( "  catalog is |" + catalog + "|" );
-        debugPrintln( "  schemaPattern is " + schemaPattern );
-        debugPrintln( "  procedurePattern is " + procedureNamePattern );
-       */
+        String query = "exec sp_stored_procedures ?, ?, ?";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_stored_procedures ?, ?, ?";
 
-      int                 paramIndex;
-      int                 i;
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, procedureNamePattern);
+        s.setString(2, schemaPattern);
+        s.setString(3, catalog);
 
-      String              sql = null;
-      java.sql.Statement  tmpTableStmt = connection.createStatement();
-
-      // XXX We need to come up with something better than a global temporary
-      // table.  It could cause problems if two people try to getProcedures().
-      // (note- it is unlikely to cause any problems, but it is possible)
-      String              tmpTableName = "##t#" + UniqueId.getUniqueId();
-      String              schemaCriteria;
-      String              tableCriteria;
-      String              typesCriteria;
-
-
-      // create a temporary table
-      sql =
-         "create table " + tmpTableName + " ( " +
-         "    cat    sysname null,            " +
-         "    schem  sysname null,            " +
-         "    name   sysname null,            " +
-         "    type   smallint null,           " +
-         "    rem    char(255) null)          ";
-      tmpTableStmt.execute(sql);
-
-      // For each database in the system add its tables
-      // Note-  We have to do them one at a time in case
-      // there are databases we don't have access to.
-      java.sql.ResultSet rs = getCatalogs(catalog);
-      while(rs.next())
-      {
-         String cat = rs.getString(1);
-
-         sql =
-            "insert into " + tmpTableName + "                            " +
-            "    select '" + cat + "', USER_NAME(uid), name, 0, null     " +
-            "        from " + cat + ".dbo.sysobjects                     " +
-            "        where type = 'P'                                    ";
-         try
-         {
-            tmpTableStmt.executeUpdate(sql);
-         }
-         catch (SQLException e)
-         {
-            // We might not have access to certain tables.  Just ignore the
-            // error if this is the case.
-         }
-      }
-      rs.close();
-
-      sql = "select "
-         + "  PROCEDURE_CAT=cat,     "
-         + "  PROCEDURE_SCHEM=schem, "
-         + "  PROCEDURE_NAME=name,   "
-         + "  -1 NUM_INPUT_PARAMS,   "
-         + "  -1 NUM_OUTPUT_PARAMS,  "
-         + "  -1 NUM_RESULT_SETS,    "
-         + "  REMARKS=rem,           "
-         + "  PROCEDURE_TYPE=type    "
-         + " from " + tmpTableName
-         + " where schem like ?  and "
-         + " name like ?   ";
-
-      java.sql.PreparedStatement ps = connection.prepareStatement(sql);
-
-
-      ps.setString(1, schemaPattern);
-      ps.setString(2, procedureNamePattern);
-      rs = ps.executeQuery();
-
-      // We need to do something about deleting the global temporary table
-      tmpTableStmt.close();
-
-            return rs;
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        return rs;
     }
 
 
@@ -3146,7 +2931,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *@param  toType            the type to convert to
      *@return                   true if so
      *@exception  SQLException  if a database-access error occurs.
-     *@see                      Types
      */
     public boolean supportsConvert( int fromType, int toType ) throws SQLException
     {
@@ -3971,7 +3755,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean supportsBatchUpdates() throws SQLException
     {
         // It doesn't so why throw an exception?
-//        NotImplemented();
         return false;
     }
 

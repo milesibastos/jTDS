@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.23 2002-08-23 09:37:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.24 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -295,7 +295,7 @@ public class Tds implements TdsDefinitions {
      *  procedures. The table name will be of the form
      *  database.user.jdbc_temp_stored_proc_names. The table will be defined as
      *  <code>CREATE TABLE database.user.jdbc_temp_stored_proc_names ( id
-     *  NUMERIC(10, 0) IDENTITY; session int not null; name char(29) ) <code>
+     *  NUMERIC(10, 0) IDENTITY; session int not null; name char(29) )</code>
      *  This routine will use that table to track names that are being used.
      *
      *@return                            The UniqueProcedureName value
@@ -421,9 +421,9 @@ public class Tds implements TdsDefinitions {
      *
      *  This does not eat any input.
      *
-     *@return
-     *@exception  com.internetcds.jdbc.tds.TdsException
-     *@exception  java.io.IOException
+     *@return    <code>true</code> if the next packet is a DONEINPROC packet
+     *@exception com.internetcds.jdbc.tds.TdsException
+     *@exception java.io.IOException
      */
     public synchronized boolean isDoneInProc()
              throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
@@ -1152,10 +1152,10 @@ public class Tds implements TdsDefinitions {
     * This routine assumes that the TDS_PARAM_TOKEN byte has already
     * been read.
     *
-    * @return
+    * @return a <code>PacketOutputParamResult</code> wrapping an output
+    *         parameter
     *
     * @exception com.internetcds.jdbc.tds.TdsException
-    *
     * @exception java.io.IOException
     * Thrown if some sort of error occured reading bytes from the network.
     */
@@ -1595,8 +1595,6 @@ public class Tds implements TdsDefinitions {
     {
         return comm.getTdsShort();
     }
-    // lookupColumnSize()
-
 
 
     /**
@@ -1663,11 +1661,20 @@ public class Tds implements TdsDefinitions {
         int len;
         Object result;
 
-        if (type == SYBMONEYN) {
-            len = comm.getByte();
-        }
-        else {
-            len = lookupColumnSize((byte) type);
+        switch( type )
+        {
+            case SYBSMALLMONEY:
+            case SYBMONEY4:
+                len = 4;
+                break;
+            case SYBMONEY:
+                len = 8;
+                break;
+            case SYBMONEYN:
+                len = comm.getByte();
+                break;
+            default:
+                throw new TdsException("Not a money value.");
         }
 
         if (len == 0) {
@@ -2957,7 +2964,8 @@ public class Tds implements TdsDefinitions {
      *
      *@param  packetType                                 Description of
      *      Parameter
-     *@return
+     *@return a <code>PacketEndTokenResult</code> for the next DONEINPROC,
+     *        DONEPROC or DONE packet
      *@exception  com.internetcds.jdbc.tds.TdsException
      *@exception  java.io.IOException                    Thrown if some sort of
      *      error occured reading bytes from the network.
@@ -3057,31 +3065,31 @@ public class Tds implements TdsDefinitions {
         switch (nativeColumnType) {
             case SYBINT1:
             {
-                return 1;
+                return 3;
             }
             case SYBINT2:
             {
-                return 2;
+                return 6;
             }
             case SYBINT4:
             {
-                return 4;
+                return 11;
             }
             case SYBREAL:
             {
-                return 4;
+                return 0;
             }
             case SYBFLT8:
             {
-                return 8;
+                return 0;
             }
             case SYBDATETIME:
             {
-                return 8;
+                return 23;
             }
             case SYBDATETIME4:
             {
-                return 8;
+                return 16;
             }
             case SYBBIT:
             {
@@ -3089,12 +3097,12 @@ public class Tds implements TdsDefinitions {
             }
             case SYBMONEY:
             {
-                return 8;
+                return 21;
             }
             case SYBMONEY4:
             case SYBSMALLMONEY:
             {
-                return 4;
+                return 12;
             }
             default:
             {

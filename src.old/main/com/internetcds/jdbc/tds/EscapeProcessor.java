@@ -38,7 +38,7 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-   public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.4 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
    String   input;
 
@@ -47,7 +47,7 @@ abstract public class EscapeProcessor
       input = sql;
    } // EscapeProcessor()
 
-   abstract public String expandDBSpecificFunction(String escapeSequence) 
+   abstract public String expandDBSpecificFunction(String escapeSequence)
       throws SQLException;
 
    /**
@@ -60,7 +60,7 @@ abstract public class EscapeProcessor
    private static boolean validDigits(String str)
    {
       boolean  result = true;
-      int      i; 
+      int      i;
 
       for(i=0, result = true; result && i<str.length(); i++)
       {
@@ -72,7 +72,7 @@ abstract public class EscapeProcessor
    /**
     * Given a string and an index into that string return the index
     * of the next non-whitespace character.
-    * 
+    *
     * @return index of next non-whitespace character.
     */
    private static int skipWhitespace(String str, int i)
@@ -88,8 +88,9 @@ abstract public class EscapeProcessor
    /**
     * Given a string and an index into that string, advanvance the index
     * iff it is on a quote character.
-    * 
-    * @return 
+    *
+    * @return the next position in the string iff the current character is a
+    *         quote
     */
    private static int skipQuote(String str, int i)
    {
@@ -97,8 +98,8 @@ abstract public class EscapeProcessor
       // skip over the leading quote if it exists
       if (i<str.length() && (str.charAt(i)=='\'' || str.charAt(i)=='"'))
       {
-         // XXX Note-  The spec appears to prohibit the quote character, 
-         // but many drivers allow it.  We should probably control this 
+         // XXX Note-  The spec appears to prohibit the quote character,
+         // but many drivers allow it.  We should probably control this
          // with a flag.
          i++;
       }
@@ -106,7 +107,7 @@ abstract public class EscapeProcessor
    } // skipQuote()
 
    /**
-    * Convert a JDBC SQL escape date sequence into a datestring recognized 
+    * Convert a JDBC SQL escape date sequence into a datestring recognized
     * by SQLServer.
     *
     */
@@ -115,9 +116,9 @@ abstract public class EscapeProcessor
    {
       int   i;
 
-      // skip over the "d " 
+      // skip over the "d "
       i = 2;
-      
+
       // skip any additional spaces
       i = skipWhitespace(str, i);
 
@@ -150,13 +151,13 @@ abstract public class EscapeProcessor
       {
          throw new SQLException("Malformed date");
       }
-      
+
       return "'" + year + month + day + "'";
    } // getDate()
 
 
    /**
-    * Convert a JDBC SQL escape time sequence into a time string recognized 
+    * Convert a JDBC SQL escape time sequence into a time string recognized
     * by SQLServer.
     *
     */
@@ -165,9 +166,9 @@ abstract public class EscapeProcessor
    {
       int   i;
 
-      // skip over the "t " 
+      // skip over the "t "
       i = 2;
-      
+
       // skip any additional spaces
       i = skipWhitespace(str, i);
 
@@ -200,7 +201,7 @@ abstract public class EscapeProcessor
       {
          throw new SQLException("Malformed time");
       }
-      
+
       return "'" + hour + ":" + minute + ":" + second + "'";
    } // getTime()
 
@@ -215,9 +216,9 @@ abstract public class EscapeProcessor
    {
       int   i;
 
-      // skip over the "d " 
+      // skip over the "d "
       i = 2;
-      
+
       // skip any additional spaces
       i = skipWhitespace(str, i);
 
@@ -246,11 +247,11 @@ abstract public class EscapeProcessor
       {
          throw new SQLException("Malformed date");
       }
-      
+
       // skip the whitespace
       i = skipWhitespace(str, i);
 
-      // see if it could be a time 
+      // see if it could be a time
       if (((str.length()-i) < 8)
           || str.charAt(i+2)!=':' || str.charAt(i+5)!=':')
       {
@@ -280,10 +281,10 @@ abstract public class EscapeProcessor
             {
                fraction = fraction + "0";
             }
-         }         
+         }
       }
 
-      
+
       // Make sure there isn't any garbage after the time
       i = skipWhitespace(str, i);
       i = skipQuote(str, i);
@@ -293,8 +294,8 @@ abstract public class EscapeProcessor
       {
          throw new SQLException("Malformed date");
       }
-      
-      return ("'" + year + month + day + " " 
+
+      return ("'" + year + month + day + " "
               + hour + ":" + minute + ":" + second + "." + fraction + "'");
    } // getTimestamp()
 
@@ -319,7 +320,7 @@ abstract public class EscapeProcessor
          }
       }
       else if (str.startsWith("call ")
-               || (str.startsWith("?=") 
+               || (str.startsWith("?=")
                    && str.substring(2).trim().startsWith("call ")))
       {
          throw new SQLException("Not implemented yet");
@@ -342,10 +343,10 @@ abstract public class EscapeProcessor
       }
       else
       {
-         throw new SQLException("Unrecognized escape sequence-\n" + 
+         throw new SQLException("Unrecognized escape sequence-\n" +
                                 escapeSequence);
       }
-      
+
       return result;
    } // expandEscape()
 
@@ -358,7 +359,7 @@ abstract public class EscapeProcessor
    {
       String result = null;
 
-      
+
       if (str.equalsIgnoreCase("user()"))
       {
          result = " user_name() ";
@@ -370,7 +371,7 @@ abstract public class EscapeProcessor
       return result;
    } // expandCommonFunction()
 
-      
+
    public String nativeString()
       throws SQLException
    {
@@ -383,9 +384,9 @@ abstract public class EscapeProcessor
       StringBuffer            result = new StringBuffer(sql.length());
 
       String            escape = "";
-      int               i; 
+      int               i;
 
-     
+
       // Simple finite state machine.  Bonehead, but it works.
       final int   normal                        = 0;
 
@@ -409,16 +410,16 @@ abstract public class EscapeProcessor
          {
             case normal:
             {
-               if (ch == '{') 
+               if (ch == '{')
                {
                   escapeStartedAt = i;
                   state = inEscape;
                   escape = "";
                }
-               else 
+               else
                {
                   result.append(ch);
-                  
+
                   if (ch == '\'') state = inString;
                }
                break;
@@ -426,7 +427,7 @@ abstract public class EscapeProcessor
             case inString:
             case inStringWithBackquote:
             {
-               if ((i+1)<sql.length() 
+               if ((i+1)<sql.length()
                    && ch == escapeCharacter
                    && (sql.charAt(i+1)=='_'
                        || sql.charAt(i+1)=='%'))
@@ -478,7 +479,7 @@ abstract public class EscapeProcessor
                      }
 
 
-                     // parse the sql again, this time without the 
+                     // parse the sql again, this time without the
                      // ending string but with the escape character
                      // set
 
@@ -496,7 +497,7 @@ abstract public class EscapeProcessor
                      escapeStartedAt = -1;
                   }
                }
-               else 
+               else
                {
                   escape = escape + ch;
                   if (ch == '\'')
@@ -528,7 +529,7 @@ abstract public class EscapeProcessor
          }
            i++;
       }
-      
+
       if (state!=normal && state!=inString)
       {
          throw new SQLException("Syntax error in SQL escape syntax");
@@ -540,14 +541,14 @@ abstract public class EscapeProcessor
       throws SQLException
    {
       String str = new String(original_str);
-      
+
        str = str.trim();
       if (str.charAt(0)!='{' || str.charAt(str.length()-1)!='}'
          || str.length()<12)
       {
          throw new SQLException("Internal Error");
       }
-      
+
       str = str.substring(1, str.length()-1);
       str = str.trim();
 
@@ -560,7 +561,7 @@ abstract public class EscapeProcessor
       str = str.trim();
       if (str.length()!=3 || str.charAt(0)!='\'' || str.charAt(2)!='\'')
       {
-         throw new SQLException("Malformed escape clause- |" + 
+         throw new SQLException("Malformed escape clause- |" +
                                 original_str + "|");
       }
 

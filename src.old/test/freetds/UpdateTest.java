@@ -4,11 +4,8 @@ import java.sql.*;
 import junit.framework.TestCase;
 
 /**
- *  Title: Description: Copyright: Copyright (c) 2001 Company:
- *
- *@author
- *@created    March 17, 2001
- *@version    1.0
+ * @created    March 17, 2001
+ * @version    1.0
  */
 
 public class UpdateTest

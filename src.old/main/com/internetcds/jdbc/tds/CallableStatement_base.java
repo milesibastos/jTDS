@@ -74,7 +74,7 @@ import java.util.Calendar;
 public class CallableStatement_base
          extends com.internetcds.jdbc.tds.PreparedStatement_base
          implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.8 2001-09-26 07:06:22 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.9 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -362,7 +362,6 @@ public class CallableStatement_base
      *@return                   A java.lang.Object holding the OUT parameter
      *      value.
      *@exception  SQLException  if a database-access error occurs.
-     *@see                      Types
      */
     public Object getObject( int parameterIndex ) throws SQLException
     {
@@ -458,7 +457,6 @@ public class CallableStatement_base
      *      parameters of type Numeric or Decimal use the version of
      *      registerOutParameter that accepts a scale value
      *@exception  SQLException  if a database-access error occurs.
-     *@see                      Type
      */
     public void registerOutParameter( int parameterIndex, int sqlType )
              throws SQLException
@@ -482,7 +480,6 @@ public class CallableStatement_base
      *      representing the desired number of digits to the right of the
      *      decimal point
      *@exception  SQLException  if a database-access error occurs.
-     *@see                      Type
      */
     public void registerOutParameter( int parameterIndex, int sqlType, int scale )
              throws SQLException
@@ -656,11 +653,10 @@ public class CallableStatement_base
      *  parameter's registered SQL type.
      *
      *@param  parameterIndex    the first parameter is 1, the second is 2,...
-     *@param  sqlType           a value from {@link java.sql.Types}
+     *@param  sqlType           a value from <code>java.sql.Types</code>
      *@param  typeName          the fully-qualified name of an SQL structured
      *      type
      *@exception  SQLException  if a database-access error occurs
-     *@see                      Types
      */
     public void registerOutParameter( int paramIndex, int sqlType, String typeName )
              throws SQLException

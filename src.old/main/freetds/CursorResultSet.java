@@ -8,11 +8,8 @@ import java.util.Calendar;
 import java.util.Map;
 
 /**
- *  Title: Description: Copyright: Copyright (c) 2001 Company:
- *
- *@author
- *@created    March 16, 2001
- *@version    1.0
+ * @created    March 16, 2001
+ * @version    1.0
  */
 
 public class CursorResultSet extends AbstractResultSet {

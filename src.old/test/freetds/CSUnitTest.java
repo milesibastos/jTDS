@@ -16,7 +16,7 @@ import java.lang.reflect.*;
 /**
  *
  * @author  builder
- * @version
+ * @version 1.0
  */
 public class CSUnitTest extends DatabaseTestCase {
 

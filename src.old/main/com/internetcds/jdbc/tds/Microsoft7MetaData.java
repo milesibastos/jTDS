@@ -40,7 +40,7 @@ import java.sql.*;
 
 public class Microsoft7MetaData extends DatabaseMetaData
 {
-   public static final String cvsVersion = "$Id: Microsoft7MetaData.java,v 1.2 2002-08-19 11:25:30 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: Microsoft7MetaData.java,v 1.3 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
    protected Microsoft7MetaData(
@@ -124,114 +124,5 @@ public class Microsoft7MetaData extends DatabaseMetaData
    public boolean supportsAlterTableWithDropColumn() throws SQLException
    {
       return true;
-   }
-
-
-   /**
-    * Get a description of stored procedures available in a
-    * catalog.
-    *
-    * <P>Only procedure descriptions matching the schema and
-    * procedure name criteria are returned.  They are ordered by
-    * PROCEDURE_SCHEM, and PROCEDURE_NAME.
-    *
-    * <P>Each procedure description has the the following columns:
-    *  <OL>
-    *   <LI><B>PROCEDURE_CAT</B> String => procedure catalog (may be null)
-    *   <LI><B>PROCEDURE_SCHEM</B> String => procedure schema (may be null)
-    *   <LI><B>PROCEDURE_NAME</B> String => procedure name
-    *  <LI> reserved for future use
-    *  <LI> reserved for future use
-    *  <LI> reserved for future use
-    *   <LI><B>REMARKS</B> String => explanatory comment on the procedure
-    *   <LI><B>PROCEDURE_TYPE</B> short => kind of procedure:
-    *      <UL>
-    *      <LI> procedureResultUnknown - May return a result
-    *      <LI> procedureNoResult - Does not return a result
-    *      <LI> procedureReturnsResult - Returns a result
-    *      </UL>
-    *  </OL>
-    *
-    * @param catalog a catalog name; "" retrieves those without a
-    * catalog; null means drop catalog name from the selection criteria
-    * @param schemaPattern a schema name pattern; "" retrieves those
-    * without a schema
-    * @param procedureNamePattern a procedure name pattern
-    * @return ResultSet - each row is a procedure description
-    * @exception SQLException if a database-access error occurs.
-    * @see #getSearchStringEscape
-    */
-   public java.sql.ResultSet getProcedures(String catalog,
-                                           String schemaPattern,
-                                           String procedureNamePattern)
-      throws SQLException
-   {
-     /*
-      debugPrintln("Inside of getProcedures");
-      debugPrintln("  catalog is |" + catalog + "|");
-      debugPrintln("  schemaPattern is " + schemaPattern);
-      debugPrintln("  procedurePattern is " + procedureNamePattern);
-      */
-
-      if( schemaPattern != null )
-         schemaPattern = schemaPattern.trim();
-
-      String query;
-
-      query = ("select PROCEDURE_CAT=?, "
-               + " PROCEDURE_SCHEM=substring(u.name, 1, 32), "
-               + " PROCEDURE_NAME=substring(o.name, 1, 32), "
-               + " '', '', '', "
-               + " REMARKS='', PROCEDURE_TYPE="
-               + java.sql.DatabaseMetaData.procedureResultUnknown
-               + " from ");
-      if (catalog != null && (!catalog.equals("")))
-      {
-         // XXX need to make sure user doesn't pass in funky strings
-         query = query + catalog + ".";
-      }
-      query = query + "dbo.sysobjects o,  ";
-
-      if (catalog != null && (!catalog.equals("")))
-      {
-         // XXX need to make sure user doesn't pass in funky strings
-         query = query + catalog + ".";
-      }
-      query = query + "dbo.sysusers u ";
-
-      query = query + " where o.uid=u.uid and xtype='P' ";
-      query = query + " and u.name like ? "; // schema name
-      query = query + " and o.name like ? ";   // procedure name
-
-      // debugPrintln("Query is |" + query + "|");
-
-      java.sql.PreparedStatement ps = connection.prepareStatement(query);
-
-      // debugPrintln("ps.setString(1, \"" + catalog + "\")");
-      ps.setString(1, catalog);
-      if (schemaPattern==null || schemaPattern.equals(""))
-      {
-         // debugPrintln("ps.setString(2, \"%\");");
-         ps.setString(2, "%");
-      }
-      else
-      {
-         // debugPrintln("ps.setString(2, \"" + schemaPattern + "\")");
-         ps.setString(2, schemaPattern);
-      }
-      if (procedureNamePattern==null || procedureNamePattern.equals(""))
-      {
-         // debugPrintln("ps.setString(3, \"%\");");
-         ps.setString(3, "%");
-      }
-      else
-      {
-         // debugPrintln("ps.setString(3, \"" + procedureNamePattern + "\")");
-         ps.setString(3, procedureNamePattern);
-      }
-
-      java.sql.ResultSet rs = ps.executeQuery();
-
-      return rs;
    }
 }

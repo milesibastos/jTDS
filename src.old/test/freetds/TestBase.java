@@ -11,8 +11,8 @@ import java.util.*;
 import junit.framework.TestCase;
 
 /**
- *@author     builder
- *@version
+ * @author  builder
+ * @version 1.0
  */
 public class TestBase extends TestCase {
 

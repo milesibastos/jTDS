@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.8 2002-08-19 11:25:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.9 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -79,7 +79,6 @@ public class PacketRowResult extends PacketResult {
      *@param  obj               The object to store
      *@param  index             Index to store the element at. First element is
      *      at index 1
-     *@exception  TdsException  @todo Description of Exception
      */
     public void setElementAt( int index, Object obj )
         throws SQLException

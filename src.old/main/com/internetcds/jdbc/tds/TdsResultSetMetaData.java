@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.5 2002-08-20 13:26:10 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.6 2002-08-28 07:44:24 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.5 2002-08-20 13:26:10 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.6 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
    /**
@@ -151,7 +151,6 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     * @param column the first column is 1, the second is 2, ...
     * @return SQL type
     * @exception SQLException if a database-access error occurs.
-    * @see Types
     */
    public int getColumnType(int column) throws SQLException
    {
@@ -172,30 +171,30 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 
       switch (columnsInfo.getNativeType(column))
       {
-         case Tds.SYBVOID: {result = "VOID"; break;}
-         case Tds.SYBIMAGE: {result = "IMAGE"; break;}
-         case Tds.SYBTEXT: {result = "TEXT"; break;}
-         case Tds.SYBUNIQUEID: {result = "UNIQUEIDENTIFIER"; break;}
-         case Tds.SYBVARBINARY: {result = "VARBINARY"; break;}
+         case Tds.SYBVOID: {result = "void"; break;}
+         case Tds.SYBIMAGE: {result = "image"; break;}
+         case Tds.SYBTEXT: {result = "text"; break;}
+         case Tds.SYBUNIQUEID: {result = "uniqueidentifier"; break;}
+         case Tds.SYBVARBINARY: {result = "varbinary"; break;}
          case Tds.SYBINTN: {result = "INTN"; break;}
-         case Tds.SYBVARCHAR: {result = "VARCHAR"; break;}
-         case Tds.SYBBINARY: {result = "BINARY"; break;}
-         case Tds.SYBCHAR: {result = "CHAR"; break;}
-         case Tds.SYBINT1: {result = "INT1"; break;}
-         case Tds.SYBBIT: {result = "BIT"; break;}
-         case Tds.SYBINT2: {result = "INT2"; break;}
-         case Tds.SYBINT4: {result = "INT4"; break;}
-         case Tds.SYBDATETIME4: {result = "DATETIME4"; break;}
-         case Tds.SYBREAL: {result = "REAL"; break;}
-         case Tds.SYBMONEY: {result = "MONEY"; break;}
-         case Tds.SYBDATETIME: {result = "DATETIME"; break;}
-         case Tds.SYBFLT8: {result = "FLT8"; break;}
-         case Tds.SYBDECIMAL: {result = "DECIMAL"; break;}
-         case Tds.SYBNUMERIC: {result = "NUMERIC"; break;}
+         case Tds.SYBVARCHAR: {result = "varchar"; break;}
+         case Tds.SYBBINARY: {result = "binary"; break;}
+         case Tds.SYBCHAR: {result = "char"; break;}
+         case Tds.SYBINT1: {result = "tinyint"; break;}
+         case Tds.SYBBIT: {result = "bit"; break;}
+         case Tds.SYBINT2: {result = "smallint"; break;}
+         case Tds.SYBINT4: {result = "int"; break;}
+         case Tds.SYBDATETIME4: {result = "smalldatetime"; break;}
+         case Tds.SYBREAL: {result = "real"; break;}
+         case Tds.SYBMONEY: {result = "money"; break;}
+         case Tds.SYBDATETIME: {result = "datetime"; break;}
+         case Tds.SYBFLT8: {result = "float"; break;}
+         case Tds.SYBDECIMAL: {result = "decimal"; break;}
+         case Tds.SYBNUMERIC: {result = "numeric"; break;}
          case Tds.SYBFLTN: {result = "FLTN"; break;}
          case Tds.SYBMONEYN: {result = "MONEYN"; break;}
          case Tds.SYBDATETIMN: {result = "DATETIMN"; break;}
-         case Tds.SYBMONEY4: {result = "MONEY4"; break;}
+         case Tds.SYBMONEY4: {result = "smallmoney"; break;}
          default:
          {
             throw new SQLException("Unknown native type for column " + column);

@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.12 2002-08-23 09:37:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.13 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -829,7 +829,6 @@ public class PreparedStatement_base
      *      java.sql.Types.NUMERIC types this is the number of digits after the
      *      decimal. For all other types this value will be ignored,
      *@exception  SQLException  if a database-access error occurs.
-     *@see                      Types
      */
     public void setObject( int parameterIndex, Object x, int targetSqlType, int scale )
              throws SQLException

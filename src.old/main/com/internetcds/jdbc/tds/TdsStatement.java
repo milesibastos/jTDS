@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.17 2002-08-23 09:37:07 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.18 2002-08-28 07:44:24 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.17 2002-08-23 09:37:07 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.18 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -191,6 +191,7 @@ public class TdsStatement implements java.sql.Statement
    final public TdsResultSet internalExecuteQuery(Tds tds, String sql)
    throws SQLException
    {
+    System.out.println(this+" >>> "+tds+" >>> "+tds.comm+" >>> "+sql);
       if (execute(tds, sql))
       {
          startResultSet(tds);
@@ -402,7 +403,7 @@ public class TdsStatement implements java.sql.Statement
     *
     * @param max the new max rows limit; zero means unlimited
     * @exception SQLException if a database access error occurs
-    * @see getMaxRows
+    * @see #getMaxRows
     */
 
    public void setMaxRows(int max) throws SQLException

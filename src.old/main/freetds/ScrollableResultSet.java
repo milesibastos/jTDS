@@ -3,11 +3,8 @@ package freetds;
 import java.sql.*;
 
 /**
- *  Title: Description: Copyright: Copyright (c) 2001 Company:
- *
- *@author
- *@created    March 16, 2001
- *@version    1.0
+ * @created    March 16, 2001
+ * @version    1.0
  */
 
 public class ScrollableResultSet {

@@ -1,12 +1,31 @@
 Changes from jTDS 0.3
 =====================
 
+08/28/2002 - Alin Sinpalean
+
+ o Modifications to the javadoc comments in a lot of places (warnings were
+   thrown by javasoc).
+ o Beautification of TdsDefinitions.
+ o TdsConnection.getMetaData() no longer allocates a Tds, because it didn't use
+   it anyway. The Tds instance DatabaseMetaData contains is used only for calls
+   to methods returning constant values (for that Tds instance).
+ o Started fixing Bug #598911 (ResultSetMetaData.get* incorrect):
+   Tds.lookupColumnSize() returns the display size rather than the length in
+   bytes for fixed size columns, TdsResultSetMetaData.getColumnTypeName()
+   returns the SQL Server-specific names of columns, rather than INT1, INT2
+   etc.
+ o DatabaseMetaData changes: implemented getCrossReference(), changed
+   getCatalogs() implementation, removed makeTypeTable() -- no longer used.
+
 08/26/2002 - Alin Sinpalean
 
  o Database name is no longer explicitly required in the URL for the driver or
    to be set for the DataSource. The default value for it (if not specified) is
    "master", which is ok for SQL Server, but of which I'm not so sure of for
    Sybase (Bug #598886).
+ o Changed the implementation of DatabaseMetaData methods getProcedures,
+   getProcedureColumns and ... to use SQL Server-defined stored procedures, for
+   increased performance and better compatibility with other drivers.
 
 08/23/2002 - Alin Sinpalean
 

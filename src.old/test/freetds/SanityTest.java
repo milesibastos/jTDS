@@ -6,11 +6,10 @@ import java.util.*;
 import junit.framework.TestCase;
 
 /**
- *  Some simple tests just to make sure everything is working properly
+ * Some simple tests just to make sure everything is working properly
  *
- *@author
- *@created    9 August 2001
- *@version    1.0
+ * @created    9 August 2001
+ * @version    1.0
  */
 
 public class SanityTest extends TestBase {

@@ -60,7 +60,7 @@ public class Columns {
     /**
      *@todo    Description of the Field
      */
-    public final static String cvsVersion = "$Id: Columns.java,v 1.4 2002-08-20 13:26:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.5 2002-08-28 07:44:24 alin_sinpalean Exp $";
 
 
     public Columns()
@@ -257,7 +257,7 @@ public class Columns {
      *  the ResultSetMetaData class.
      *
      *@param  other
-     *@return
+     *@return <code>this</code> object
      *@exception  TdsException  thrown if the two instances of Columns can't be
      *      merged. This can happen if the number of columns isn't identical or
      *      if there is conflicting data.

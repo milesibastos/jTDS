@@ -47,7 +47,7 @@
     <mkdir dir="${build}/doc"/>
     <javadoc sourcepath="${build}/src" destdir="${build}/doc" packagenames="com.*,freetds" Author="true"
              Doctitle="jTDS API Documentation" Use="true" Version="true" bottom="Generated on ${TODAY}"
-             Windowtitle="jTDS API"/>
+             Windowtitle="jTDS API" Private="true"/>
   </target>
 
   <target name="test" depends="compile">

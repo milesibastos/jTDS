@@ -21,6 +21,8 @@ import java.io.InterruptedIOException;
 import java.sql.SQLException;
 import java.net.*;
 
+import net.sourceforge.jtds.util.Logger;
+
 /**
  * This class communicates with SQL Server 2k to determine what ports its
  * instances are listening to. It does this by sending a UDP packet with the
@@ -46,7 +48,7 @@ import java.net.*;
  * </pre>
  *
  * @author Matt Brinkley
- * @version $Id: MSSqlServerInfo.java,v 1.6 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: MSSqlServerInfo.java,v 1.7 2005-01-13 10:31:57 alin_sinpalean Exp $
  */
 public class MSSqlServerInfo {
     private int m_numRetries = 3;
@@ -75,10 +77,15 @@ public class MSSqlServerInfo {
 
                     return;
                 } catch (InterruptedIOException toEx) {
+                    if (Logger.isActive()) {
+                        Logger.logException(toEx);
+                    }
                 }
             }
         } catch (Exception e) {
-            // Ignore...
+            if (Logger.isActive()) {
+                Logger.logException(e);
+            }
         }
 
         throw new SQLException(

@@ -1,6 +1,9 @@
 Changes from jTDS 0.9.1
 =======================
 
+01/13/2005 - Alin Sinpalean
+ o Added logging to MSSqlServerInfo if an exception occurs.
+
 01/10/2005 - Alin Sinpalean
  o Optimization in Support.substituteParamMarkers(): a StringBuffer is used for
    converting parameter numbers to strings, in order to avoid unnecessary

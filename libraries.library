@@ -5,12 +5,12 @@
   <fullname>libraries</fullname>
   <class>
     <path>[lib/ant.jar]</path>
-    <path>[lib/jakarta-ant-1.3-optional.jar]</path>
+    <path>[lib/crimson.jar]</path>
+    <path>[lib/jakarta-ant-1.4-optional.jar]</path>
     <path>[lib/jaxp.jar]</path>
-    <path>[lib/junit.jar]</path>
-    <path>[lib/parser.jar]</path>
     <path>[lib/jdbc2_0-stdext.jar]</path>
     <path>[lib/jdbc3_0-ext.jar]</path>
+    <path>[lib/junit.jar]</path>
   </class>
 </library>
 

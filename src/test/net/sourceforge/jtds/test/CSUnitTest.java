@@ -270,16 +270,16 @@ public class CSUnitTest extends DatabaseTestCase {
     BigDecimal          money[] = {
       new BigDecimal("922337203685477.5807"),
       new BigDecimal("-922337203685477.5807"),
-      new BigDecimal("1.00"),
-      new BigDecimal("0.00"),
-      new BigDecimal("-1.00")
+      new BigDecimal("1.0000"),
+      new BigDecimal("0.0000"),
+      new BigDecimal("-1.0000")
     };
     BigDecimal          smallmoney[] = {
       new BigDecimal("214748.3647"),
       new BigDecimal("-214748.3648"),
-      new BigDecimal("1.00"),
-      new BigDecimal("0.00"),
-      new BigDecimal("-1.00")
+      new BigDecimal("1.0000"),
+      new BigDecimal("0.0000"),
+      new BigDecimal("-1.0000")
     };
 
     if (smallmoney.length != money.length) {
@@ -316,11 +316,8 @@ public class CSUnitTest extends DatabaseTestCase {
       m = (BigDecimal)rs.getObject("mymoney");
       sm = (BigDecimal)rs.getObject("mysmallmoney");
 
-      money[i].setScale(2, BigDecimal.ROUND_DOWN);
-      smallmoney[i].setScale(2, BigDecimal.ROUND_DOWN);
-
-      assertTrue(m.equals(money[i].setScale(2, BigDecimal.ROUND_DOWN)));
-      assertTrue(sm.equals(smallmoney[i].setScale(2, BigDecimal.ROUND_DOWN)));
+      assertEquals(m, money[i]);
+      assertEquals(sm, smallmoney[i]);
 
       output.println(m + ", " + sm);
     }

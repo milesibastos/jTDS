@@ -1,6 +1,14 @@
 Changes from jTDS 0.5
 =======================
 
+01/29/2003 - Alin Sinpalean
+
+ o Fixed CSUnitTest (had a problem because of the MONEY/SMALLMONEY precision
+   issue) and modified build.xml (have no idea why it wouldn't work anymore,
+   some problem with classpaths, had to execute the tests in the same JVM).
+   Removed jakarta-ant-1.3-optional.jar and parser.jar, because they were not
+   needed (jakarta-ant-1.4-optional.jar and crimson.jar contain just the same).
+
 01/27/2003 - Alin Sinpalean
 
  o Fixed bug #664507: DatabaseMetaData.getIndexInfo() called sp_statistics with

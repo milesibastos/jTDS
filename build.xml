@@ -53,11 +53,10 @@
   <target name="test" depends="compile">
     <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"/>
 
-    <junit fork="yes" haltonfailure="no" printsummary="yes">
-      <jvmarg line="-Xint -Xbatch"/>
+    <junit fork="no" haltonfailure="no" printsummary="yes">
       <classpath>
         <pathelement location="build/classes"/>
-        <pathelement path="${java.class.path}"/>
+        <path refid="libs"/>
       </classpath>
       <formatter type="plain"/>
       <batchtest>

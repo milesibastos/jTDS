@@ -439,5 +439,33 @@ public class AsTest extends DatabaseTestCase {
     pstmt.setObject(1,ba);
     pstmt.execute();
   }
+
+  private void checkTime(long time) throws Throwable
+  {
+    PreparedStatement pstmt = con.prepareStatement("insert into #testTimestamp values (?)");
+    Statement stmt = con.createStatement();
+    java.sql.Timestamp ts = new java.sql.Timestamp(time);
+    pstmt.setTimestamp(1,ts);
+    pstmt.execute();
+    ResultSet rs = stmt.executeQuery("select * from #testTimestamp");
+    rs.next();
+    java.sql.Timestamp tsres = rs.getTimestamp(1);
+    assertTrue(ts.equals(tsres));
+    stmt.executeUpdate("truncate table #testTimestamp");
+  }
+
+  public void testSpecTime() throws Throwable
+  {
+    String crtab = "create table #testTimestamp (a datetime)";
+    dropTable("#testTimestamp");
+    Statement stmt = con.createStatement();
+    stmt.executeUpdate(crtab);
+    checkTime(92001000);
+    checkTime(4200000);  // sent in 4 Bytes 
+    checkTime(4201000);
+    checkTime(1234567000);
+    checkTime(420000000000L);   // sent in 4 Bytes
+    checkTime(840000000000L);   
+  }
 }
 

@@ -84,7 +84,7 @@ import java.io.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.6 2001-09-18 08:38:08 aschoerk Exp $
+ *@version    $Id: TdsResultSet.java,v 1.7 2001-09-25 15:20:19 aschoerk Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -109,7 +109,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.6 2001-09-18 08:38:08 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.7 2001-09-25 15:20:19 aschoerk Exp $";
 
     public Context getContext()
     {
@@ -866,8 +866,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     {
       if (rowCount == 0) {
         internalFetchRows();
-        if (hitEndOfData) return;
       }
+      if (hitEndOfData) return;
       if (rowIndex > 0 && rowIndex < rowCount) {
         System.arraycopy(rowCache,rowIndex,rowCache,0,rowCount-rowIndex);
         rowCount -= rowIndex;

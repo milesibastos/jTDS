@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.10 2001-09-24 08:45:10 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.10 2001-09-24 08:45:10 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.10 2001-09-24 08:45:10 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.10 2001-09-24 08:45:10 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2001-09-25 15:20:19 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -3107,9 +3107,9 @@ public class Tds implements TdsDefinitions {
    {
       comm.appendByte((byte)nativeType);
       
-      comm.appendByte((byte)8);
       if (value_in == null)
       {
+         comm.appendByte((byte)8);
          comm.appendByte((byte)0);
       }
       else
@@ -3155,11 +3155,13 @@ public class Tds implements TdsDefinitions {
             && daysIntoSybaseEpoch < Short.MAX_VALUE)
          {
             comm.appendByte((byte)4);
+            comm.appendByte((byte)4);
             comm.appendTdsShort((short)daysIntoSybaseEpoch);
             comm.appendTdsShort((short)(msIntoCurrentDay / msPerMinute));
          }
          else
          {
+            comm.appendByte((byte)8);
             comm.appendByte((byte)8);
             comm.appendTdsInt(daysIntoSybaseEpoch);
             comm.appendTdsInt(jiffies);

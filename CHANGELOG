@@ -4,6 +4,8 @@ Changes from jTDS 1.0.1
 02/12/2005 - Alin Sinpalean
  o Corrected bug [1120442] Statement hangs in socket read after
    Statement.cancel().
+ o Applied Mike's fix for bug [1120825] Can't open scrollable ResultSet with 
+   Sybase 11.9.
 
 02/10/2005 - Alin Sinpalean
  o Improved test for bug [1116046] {fn } escape can't handle nested functions.

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.69 2005-02-12 19:40:51 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.70 2005-02-12 20:11:20 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2554,7 +2554,7 @@ public class TdsCore {
                     nameLen = in.read();
                     bytesRead++;
                     if (nameLen == 0) {
-                        break; // Sybase/SQL 6.5 use a zero length name to terminate list
+                        continue; // Sybase/SQL 6.5 use a zero length name to terminate list
                     }
                     tabName = in.readString(nameLen);
                     // FIXME This will not work for multi-byte charsets

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.12 2004-07-21 21:57:21 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.13 2004-07-22 17:09:58 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -413,6 +413,9 @@ public class TdsData {
      * fixed size integers, or a count field precedes the actual data.
      * The size of the count field varies with the data type.
      *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      * @param in The server ResponseStream.
      * @param ci The ColInfo column descriptor object.
      * @param readTextMode True if reading results from ReadText;
@@ -420,7 +423,7 @@ public class TdsData {
      * @throws IOException
      * @throws ProtocolException
      */
-    static Object readData(ResponseStream in, ColInfo ci, boolean readTextMode)
+    static Object readData(Object callerReference, ResponseStream in, ColInfo ci, boolean readTextMode)
     throws IOException, ProtocolException {
         int len;
 
@@ -455,7 +458,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new BlobImpl(in);
+                	return new BlobImpl(callerReference, in);
                 }
 
                 break;
@@ -464,7 +467,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    return new ClobImpl(in, false, readTextMode);
+                    return new ClobImpl(callerReference, in, false, readTextMode);
                 }
 
                 break;
@@ -473,7 +476,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new ClobImpl(in, true, readTextMode);
+                	return new ClobImpl(callerReference, in, true, readTextMode);
                 }
 
                 break;

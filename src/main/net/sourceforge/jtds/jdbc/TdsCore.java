@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.7 2004-07-14 18:37:49 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.8 2004-07-22 17:09:58 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -791,7 +791,7 @@ public class TdsCore {
             for (int i = 0; i < parameters.length; i++){
                 if (!parameters[i].isSet && !parameters[i].isOutput){
                     throw new SQLException(Support.getMessage("error.prepare.paramnotset",
-                                                              Integer.toString(i+1)),
+                                                              Integer.toString(i + 1)),
                                            "07000");
                 }
 
@@ -1994,7 +1994,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         ColInfo col = new ColInfo();
         TdsData.readType(in, col);
-        Object value = TdsData.readData(in, col, false);
+        Object value = TdsData.readData(connection, in, col, false);
 
         if (tdsVersion >= TdsCore.TDS80 &&
             returnParam != null &&
@@ -2088,7 +2088,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      */
     private void tdsRowToken() throws IOException, ProtocolException {
         for (int i = 0; i < columns.length; i++) {
-            rowData[i] =  new ColData(TdsData.readData(in, columns[i], readTextMode), tdsVersion);
+            rowData[i] =  new ColData(TdsData.readData(connection, in, columns[i], readTextMode), tdsVersion);
         }
 
         readTextMode = false;
@@ -2109,7 +2109,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
-                new ColData(TdsData.readData(in, currentToken.dynamParamInfo[i], false), tdsVersion);
+                new ColData(TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false), tdsVersion);
         }
     }
 
@@ -2483,6 +2483,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Execute SQL using TDS 4.2 protocol.
+     * 
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -2663,15 +2664,15 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      */
     private static HashMap tds8SpNames = new HashMap();
     static {
-        tds8SpNames.put("sp_cursor",            new Integer( 1));
-        tds8SpNames.put("sp_cursoropen",        new Integer( 2));
-        tds8SpNames.put("sp_cursorprepare",     new Integer( 3));
-        tds8SpNames.put("sp_cursorexecute",     new Integer( 4));
-        tds8SpNames.put("sp_cursorprepexec",    new Integer( 5));
-        tds8SpNames.put("sp_cursorunprepare",   new Integer( 6));
-        tds8SpNames.put("sp_cursorfetch",       new Integer( 7));
-        tds8SpNames.put("sp_cursoroption",      new Integer( 8));
-        tds8SpNames.put("sp_cursorclose",       new Integer( 9));
+        tds8SpNames.put("sp_cursor",            new Integer(1));
+        tds8SpNames.put("sp_cursoropen",        new Integer(2));
+        tds8SpNames.put("sp_cursorprepare",     new Integer(3));
+        tds8SpNames.put("sp_cursorexecute",     new Integer(4));
+        tds8SpNames.put("sp_cursorprepexec",    new Integer(5));
+        tds8SpNames.put("sp_cursorunprepare",   new Integer(6));
+        tds8SpNames.put("sp_cursorfetch",       new Integer(7));
+        tds8SpNames.put("sp_cursoroption",      new Integer(8));
+        tds8SpNames.put("sp_cursorclose",       new Integer(9));
         tds8SpNames.put("sp_executesql",        new Integer(10));
         tds8SpNames.put("sp_prepare",           new Integer(11));
 //      tds8SpNames.put("sp_execute",           new Integer(12)); broken!

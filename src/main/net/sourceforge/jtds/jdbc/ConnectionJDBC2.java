@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.5 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.6 2004-07-22 17:09:57 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -192,6 +192,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private String javaCharset;
     /** Convert Prepared Statements to procs. */
     private boolean prepareSql = true;
+    /** The amount of LOB data to buffer in memory. */
+    private long lobBuffer;
     /** Send parameters as unicode. */
     private boolean useUnicode = true;
     /** Only return the last update count. */
@@ -407,7 +409,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The sp name as a <code>String</code>.
      */
     String getProcName() {
-        String seq = "000000"+Integer.toHexString(spSequenceNo++).toUpperCase();
+        String seq = "000000" + Integer.toHexString(spSequenceNo++).toUpperCase();
         String name = "#jtds" + seq.substring(seq.length() - 6, seq.length());
 
         return name;
@@ -618,6 +620,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrive the LOB buffer size.
+     *
+     * @return The LOB buffer size as a <code>long</code>.
+     */
+    long getLobBuffer() {
+        return this.lobBuffer;
+    }
+    
+    /**
      * Transfer the properties to the local instance variables.
      *
      * @param info The connection properties Object.
@@ -654,12 +665,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         appName = info.getProperty(Support.getMessage("prop.appname"), "java.exe");
         libName = info.getProperty(Support.getMessage("prop.libname"), "jTDS");
         serverCharset = info.getProperty(Support.getMessage("prop.charset"));
-        language= info.getProperty(Support.getMessage("prop.language"), "us_english");
-
+        language = info.getProperty(Support.getMessage("prop.language"), "us_english");
         prepareSql = info.getProperty(Support.getMessage("prop.preparesql"), "true").equalsIgnoreCase("true");
         lastUpdateCount = info.getProperty(Support.getMessage("prop.lastupdatecount"), "true").equalsIgnoreCase("true");
         useUnicode = info.getProperty(Support.getMessage("prop.useunicode"), "true").equalsIgnoreCase("true");
-
         charsetSpecified = (serverCharset != null && serverCharset.length() > 0);
 
         if (!charsetSpecified) {
@@ -692,19 +701,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                                      Support.getMessage("prop.packetsize")), "08001");
         }
 
-        try {
-            loginTimeout  = Integer.parseInt(
-                                            info.getProperty(Support.getMessage("prop.logintimeout"), "0"));
-        } catch (NumberFormatException e) {
-            throw new SQLException(
-                                  Support.getMessage("error.connection.badprop",
-                                                     Support.getMessage("prop.logintimeout")), "08001");
-        }
-
         if (packetSize < 512) {
             if (tdsVersion >= TdsCore.TDS70) {
                 // Default of 0 means let the server specify packet size
-                packetSize = (packetSize == 0)? 0: 4096;
+                packetSize = (packetSize == 0) ? 0 : 4096;
             } else {
                 // Sensible minimum for all other versions of TDS
                 packetSize = 512;
@@ -716,6 +716,25 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         packetSize = (packetSize / 512) * 512;
+
+        try {
+            loginTimeout = Integer.parseInt(
+                                            info.getProperty(Support.getMessage("prop.logintimeout"), "0"));
+        } catch (NumberFormatException e) {
+            throw new SQLException(
+                                  Support.getMessage("error.connection.badprop",
+                                                     Support.getMessage("prop.logintimeout")), "08001");
+        }
+        
+        try {
+            lobBuffer = Long.parseLong(
+                                       info.getProperty(Support.getMessage("prop.lobbuffer"), "32768"));
+        } catch (NumberFormatException e) {
+            throw new SQLException(
+                                  Support.getMessage("error.connection.badprop",
+                                                     Support.getMessage("prop.lobbuffer")), "08001");
+        }
+        
     }
 
     /**

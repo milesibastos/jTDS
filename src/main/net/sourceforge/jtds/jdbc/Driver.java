@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.16 2004-06-27 17:00:51 bheineman Exp $
+ * @version $Id: Driver.java,v 1.17 2004-07-22 17:09:58 bheineman Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -73,6 +73,7 @@ public class Driver implements java.sql.Driver {
         if (url == null) {
             return false;
         }
+        
         return url.toLowerCase().startsWith(driverPrefix);
     }
 
@@ -114,10 +115,12 @@ public class Driver implements java.sql.Driver {
             new DriverPropertyInfo(Support.getMessage("prop.instance"), null),
             new DriverPropertyInfo(Support.getMessage("prop.language"), null),
             new DriverPropertyInfo(Support.getMessage("prop.lastupdatecount"), null),
+            new DriverPropertyInfo(Support.getMessage("prop.logintimeout"), null),
             new DriverPropertyInfo(Support.getMessage("prop.useunicode"), null),
             new DriverPropertyInfo(Support.getMessage("prop.macaddress"), null),
             new DriverPropertyInfo(Support.getMessage("prop.packetsize"), null),
-            new DriverPropertyInfo(Support.getMessage("prop.preparesql"), null)
+            new DriverPropertyInfo(Support.getMessage("prop.preparesql"), null),
+            new DriverPropertyInfo(Support.getMessage("prop.lobbuffer"), null)
         };
 
         if (info == null) {
@@ -193,10 +196,16 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.instance");
             } else if (name.equals(Support.getMessage("prop.lastupdatecount"))) {
                 dpi[i].description = Support.getMessage("prop.desc.lastupdatecount");
-                dpi[i].choices = new String[] {"true","false"};
+                dpi[i].choices = new String[] {"true", "false"};
 
                 if (dpi[i].value == null) {
                     dpi[i].value = dpi[i].choices[1]; // false
+                }
+            } else if (name.equals(Support.getMessage("prop.logintimeout"))) {
+                dpi[i].description = Support.getMessage("prop.desc.logintimeout");
+
+                if (dpi[i].value == null) {
+                    dpi[i].value = "0";
                 }
             } else if (name.equals(Support.getMessage("prop.useunicode"))) {
                 dpi[i].description = Support.getMessage("prop.desc.useunicode");
@@ -209,15 +218,22 @@ public class Driver implements java.sql.Driver {
                 dpi[i].description = Support.getMessage("prop.desc.macaddress");
             } else if (name.equals(Support.getMessage("prop.packetsize"))) {
                 dpi[i].description = Support.getMessage("prop.desc.packetsize");
+                
                 if (dpi[i].value == null) {
                     dpi[i].value = "512";
                 }
             } else if (name.equals(Support.getMessage("prop.preparesql"))) {
                 dpi[i].description = Support.getMessage("prop.desc.preparesql");
-                dpi[i].choices = new String[] {"true","false"};
+                dpi[i].choices = new String[] {"true", "false"};
 
                 if (dpi[i].value == null) {
                     dpi[i].value = dpi[i].choices[0]; // true
+                }
+            } else if (name.equals(Support.getMessage("prop.lobbuffer"))) {
+                dpi[i].description = Support.getMessage("prop.desc.lobbuffer");
+    
+                if (dpi[i].value == null) {
+                    dpi[i].value = "32768";
                 }
             }
         }

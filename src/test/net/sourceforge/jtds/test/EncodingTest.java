@@ -1,6 +1,5 @@
 package net.sourceforge.jtds.test;
 
-import java.math.*;
 import java.sql.*;
 
 /**

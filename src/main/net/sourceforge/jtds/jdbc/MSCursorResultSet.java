@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.3 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.4 2004-07-22 17:09:58 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -820,7 +820,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     private int getRowStat() throws SQLException {
         ColData data = currentRow[columns.length - 1];
 
-        return((Integer)Support.convert(data.getValue(), java.sql.Types.INTEGER, null)).intValue();
+        return((Integer)Support.convert(this, data.getValue(), java.sql.Types.INTEGER, null)).intValue();
     }
 
     public boolean absolute(int row) throws SQLException {

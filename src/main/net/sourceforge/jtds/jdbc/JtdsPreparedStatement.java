@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.5 2004-07-19 22:17:03 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.6 2004-07-22 17:09:58 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -143,7 +143,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @return The SQL possibly in original form.
      */
     protected String normalizeCall(String sql) {
-        boolean retParam = false;
         String original = sql;
         sql = sql.trim();
 
@@ -165,11 +164,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             }
 
             sql = sql.substring(1).trim();
-            retParam = true;
-        }
-
-        // OK now reconstruct as JDBC escaped call
-        if (retParam) {
+            
+            // OK now reconstruct as JDBC escaped call
             return "{?=call " + sql + "}";
         }
 
@@ -264,14 +260,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
          }
 
          if (x != null) {
-             x = Support.convert(x, targetSqlType, connection.getCharSet());
+             x = Support.convert(this, x, targetSqlType, connection.getCharSet());
 
              if (scale >= 0) {
                  if (x instanceof BigDecimal) {
                      x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
                  } else if (x instanceof Number) {
                      f.setMaximumFractionDigits(scale);
-                     x = Support.convert(f.format(x), targetSqlType, connection.getCharSet());
+                     x = Support.convert(this, f.format(x), targetSqlType, connection.getCharSet());
                  }
              }
          }

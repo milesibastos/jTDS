@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.1 2004-06-27 17:00:51 bheineman Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.2 2004-07-22 17:09:58 bheineman Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**
@@ -115,49 +115,49 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public byte getByte(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Byte) Support.convert(pi.value, java.sql.Types.TINYINT, null)).byteValue();
+        return ((Byte) Support.convert(this, pi.value, java.sql.Types.TINYINT, null)).byteValue();
     }
 
     public double getDouble(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Double) Support.convert(pi.value, java.sql.Types.DOUBLE, null)).doubleValue();
+        return ((Double) Support.convert(this, pi.value, java.sql.Types.DOUBLE, null)).doubleValue();
     }
 
     public float getFloat(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Float) Support.convert(pi.value, java.sql.Types.FLOAT, null)).floatValue();
+        return ((Float) Support.convert(this, pi.value, java.sql.Types.FLOAT, null)).floatValue();
     }
 
     public int getInt(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Integer) Support.convert(pi.value, java.sql.Types.INTEGER, null)).intValue();
+        return ((Integer) Support.convert(this, pi.value, java.sql.Types.INTEGER, null)).intValue();
     }
 
     public long getLong(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Long) Support.convert(pi.value, java.sql.Types.BIGINT, null)).longValue();
+        return ((Long) Support.convert(this, pi.value, java.sql.Types.BIGINT, null)).longValue();
     }
 
     public short getShort(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Short) Support.convert(pi.value, java.sql.Types.SMALLINT, null)).shortValue();
+        return ((Short) Support.convert(this, pi.value, java.sql.Types.SMALLINT, null)).shortValue();
     }
 
     public boolean getBoolean(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((Boolean) Support.convert(pi.value, BOOLEAN, null)).booleanValue();
+        return ((Boolean) Support.convert(this, pi.value, BOOLEAN, null)).booleanValue();
     }
 
     public byte[] getBytes(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return ((byte[]) Support.convert(pi.value, java.sql.Types.VARBINARY, connection.getCharSet()));
+        return ((byte[]) Support.convert(this, pi.value, java.sql.Types.VARBINARY, connection.getCharSet()));
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
@@ -195,7 +195,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public String getString(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return (String) Support.convert(pi.value, java.sql.Types.VARCHAR, connection.getCharSet());
+        return (String) Support.convert(this, pi.value, java.sql.Types.VARCHAR, connection.getCharSet());
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName)
@@ -284,19 +284,19 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return (BigDecimal) Support.convert(pi.value, java.sql.Types.DECIMAL, null);
+        return (BigDecimal) Support.convert(this, pi.value, java.sql.Types.DECIMAL, null);
     }
 
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
-        BigDecimal bd = (BigDecimal) Support.convert(pi.value, java.sql.Types.DECIMAL, null);
+        BigDecimal bd = (BigDecimal) Support.convert(this, pi.value, java.sql.Types.DECIMAL, null);
 
         return bd.setScale(scale);
     }
 
     public URL getURL(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
-        String url = (String) Support.convert(pi.value, java.sql.Types.VARCHAR, connection.getCharSet());
+        String url = (String) Support.convert(this, pi.value, java.sql.Types.VARCHAR, connection.getCharSet());
 
         try {
             return new java.net.URL(url);
@@ -317,7 +317,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             return null;
         }
 
-        return new BlobImpl(value);
+        return new BlobImpl(connection, value);
     }
 
     public Clob getClob(int parameterIndex) throws SQLException {
@@ -327,13 +327,13 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             return null;
         }
 
-        return new ClobImpl(value);
+        return new ClobImpl(connection, value);
     }
 
     public Date getDate(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return (java.sql.Date) Support.convert(pi.value, java.sql.Types.DATE, null);
+        return (java.sql.Date) Support.convert(this, pi.value, java.sql.Types.DATE, null);
     }
 
     public Ref getRef(int parameterIndex) throws SQLException {
@@ -344,13 +344,13 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public Time getTime(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return (Time) Support.convert(pi.value, java.sql.Types.TIME, null);
+        return (Time) Support.convert(this, pi.value, java.sql.Types.TIME, null);
     }
 
     public Timestamp getTimestamp(int parameterIndex) throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        return (Timestamp) Support.convert(pi.value, java.sql.Types.TIMESTAMP, null);
+        return (Timestamp) Support.convert(this, pi.value, java.sql.Types.TIMESTAMP, null);
     }
 
     public void setAsciiStream(String parameterName, InputStream x, int length)

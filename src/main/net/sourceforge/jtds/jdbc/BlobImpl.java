@@ -18,8 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.io.*;
-import java.sql.Blob;
-import java.sql.SQLException;
+import java.sql.*;
 
 import net.sourceforge.jtds.util.Logger;
 
@@ -28,53 +27,66 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.14 2004-07-19 22:17:02 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.15 2004-07-22 17:09:57 bheineman Exp $
  */
 public class BlobImpl implements Blob {
-	private static final int MAXIMUM_SIZE = 32768;
 	private static final byte[] EMPTY_BLOB = new byte[0];
 
+    private ConnectionJDBC2 _connection;
 	private byte[] _blob;
     private File _blobFile;
     private JtdsInputStream _jtdsInputStream;
 
     /**
      * Constructs a new Blob instance.
+     * 
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      */
-    BlobImpl() {
-        _blob = EMPTY_BLOB;
+    BlobImpl(Object callerReference) {
+        this(callerReference, EMPTY_BLOB);
     }
 
     /**
      * Constructs a new Blob instance.
      *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      * @param blob The blob object to encapsulate
      */
-    BlobImpl(byte[] blob) {
+    BlobImpl(Object callerReference, byte[] blob) {
         if (blob == null) {
             throw new IllegalArgumentException("blob cannot be null.");
         }
 
+        _connection = getConnection(callerReference);
         _blob = blob;
     }
 
     /**
      * Constructs a new Blob instance.
      *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      * @param blob The blob object to encapsulate
      */
-    BlobImpl(ResponseStream in) throws IOException {
+    BlobImpl(Object callerReference, ResponseStream in) throws IOException {
         if (in == null) {
             throw new IllegalArgumentException("in cannot be null.");
         }
 
+        _connection = getConnection(callerReference);
+        
         TextPtr tp = new TextPtr();
 
         in.read(tp.ptr);
         in.read(tp.ts);
         tp.len = in.readInt();
         
-        if (tp.len < MAXIMUM_SIZE) {
+        if (tp.len < _connection.getLobBuffer()) {
         	_blob = new byte[tp.len];
         	in.read(_blob);
         } else {
@@ -174,7 +186,7 @@ public class BlobImpl implements Blob {
     }
 
     public long position(byte[] pattern, long start) throws SQLException {
-        return position(new BlobImpl(pattern), start);
+        return position(new BlobImpl(_connection, pattern), start);
     }
 
     public long position(Blob pattern, long start) throws SQLException {
@@ -240,7 +252,7 @@ public class BlobImpl implements Blob {
 
             {
                 try {
-                    if (length > MAXIMUM_SIZE) {
+                    if (length > _connection.getLobBuffer()) {
                         if (_blobFile == null) {
                             writeToDisk(getBinaryStream());
                         }
@@ -290,7 +302,7 @@ public class BlobImpl implements Blob {
              */
             private void checkSize(long length) throws IOException {
                 // Return if the data has already exceeded the maximum size
-                if (curPos > MAXIMUM_SIZE) {
+                if (curPos > _connection.getLobBuffer()) {
                     return;
                 }
 
@@ -307,7 +319,7 @@ public class BlobImpl implements Blob {
 
                 // Return if the length will not exceed the maximum in-memory
                 // value
-                if (curPos + length <= MAXIMUM_SIZE) {
+                if (curPos + length <= _connection.getLobBuffer()) {
                     return;
                 }
 
@@ -490,7 +502,7 @@ public class BlobImpl implements Blob {
 
         if (len == currentLength) {
             return;
-        } else if (len <= MAXIMUM_SIZE) {
+        } else if (len <= _connection.getLobBuffer()) {
             _blob = getBytes(1, (int) len);
             
             if (_blobFile != null) {
@@ -512,7 +524,7 @@ public class BlobImpl implements Blob {
                 byte[] buffer = new byte[1024];
                 int result = -1;
 
-                while ((_jtdsInputStream.read(buffer, 0, (int) Math.min(buffer.length, len))) != -1) {
+                while ((result = inputStream.read(buffer, 0, (int) Math.min(buffer.length, len))) > 0) {
                     len -= result;
                     outputStream.write(buffer, 0, result);
                 }
@@ -544,6 +556,38 @@ public class BlobImpl implements Blob {
             throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
+    }
+
+    /**
+     * Returns a connection for a given caller reference.
+     *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
+     * @return a connection
+     */
+    private ConnectionJDBC2 getConnection(Object callerReference) {
+        if (callerReference == null) {
+            throw new IllegalArgumentException("callerReference cannot be null.");
+        }
+
+        Connection connection;
+        
+        try {
+            if (callerReference instanceof Connection) {
+                connection = (Connection) callerReference;
+            } else if (callerReference instanceof Statement) {
+                connection = ((Statement) callerReference).getConnection();
+            } else if (callerReference instanceof ResultSet) {
+                connection = ((ResultSet) callerReference).getStatement().getConnection();
+            } else {
+                throw new IllegalArgumentException("callerReference is invalid.");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+        
+        return (ConnectionJDBC2) connection;
     }
     
     protected void finalize() {

@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.5 2004-07-19 22:17:03 bheineman Exp $
+ * @version $Id: Support.java,v 1.6 2004-07-22 17:09:58 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -220,12 +220,15 @@ public class Support {
     /**
      * Convert an existing data object to the specified JDBC type.
      *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      * @param x The data object to convert.
      * @param jdbcType The required type constant from java.sql.Types.
      * @return The (possibly) converted data object.
      * @throws SQLException if the conversion is not supported or fails.
      */
-    static Object convert(Object x, int jdbcType, String charSet)
+    static Object convert(Object callerReference, Object x, int jdbcType, String charSet)
     throws SQLException {
         try {
             switch (jdbcType) {
@@ -496,7 +499,7 @@ public class Support {
                     } else if (x instanceof Blob) {
                         return x;
                     } else if (x instanceof byte[]) {
-                        return new BlobImpl((byte[]) x);
+                        return new BlobImpl(callerReference, (byte[]) x);
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
 
@@ -505,7 +508,7 @@ public class Support {
                     }
 
                     if (x instanceof String) {
-                        BlobImpl blob = new BlobImpl();
+                        BlobImpl blob = new BlobImpl(callerReference);
                         String data = (String) x;
 
                         if (charSet == null) {
@@ -529,7 +532,7 @@ public class Support {
                     } else if (x instanceof Clob) {
                         return x;
                     } else if (x instanceof String) {
-                        return new ClobImpl((String) x);
+                        return new ClobImpl(callerReference, (String) x);
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
 
@@ -538,7 +541,7 @@ public class Support {
                     }
 
                     if (x instanceof byte[]) {
-                        ClobImpl clob = new ClobImpl();
+                        ClobImpl clob = new ClobImpl(callerReference);
                         byte[] data = (byte[]) x;
 
                         if (charSet == null) {

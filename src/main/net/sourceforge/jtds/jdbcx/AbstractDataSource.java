@@ -30,7 +30,7 @@ import net.sourceforge.jtds.util.*;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.1 2004-07-15 22:02:15 bheineman Exp $
+* @version $Id: AbstractDataSource.java,v 1.2 2004-07-22 17:09:58 bheineman Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
@@ -52,6 +52,7 @@ implements DataSource, Referenceable, Serializable {
     protected String macAddress = "";
     protected int packetSize = 0;
     protected boolean prepareSql = true;
+    protected long lobBuffer = 32768;
 
     public Reference getReference() throws NamingException {
         Reference ref = new Reference(getClass().getName(),
@@ -73,11 +74,15 @@ implements DataSource, Referenceable, Serializable {
         ref.add(new StringRefAddr(Support.getMessage("prop.instance"), instance));
         ref.add(new StringRefAddr(Support.getMessage("prop.lastupdatecount"),
                                   String.valueOf(isLastUpdateCount())));
+        ref.add(new StringRefAddr(Support.getMessage("prop.logintimeout"),
+                                  String.valueOf(loginTimeout)));
         ref.add(new StringRefAddr(Support.getMessage("prop.useunicode"),
                                   String.valueOf(sendStringParametersAsUnicode)));
         ref.add(new StringRefAddr(Support.getMessage("prop.macaddress"), macAddress));
         ref.add(new StringRefAddr(Support.getMessage("prop.preparesql"),
                                   String.valueOf(prepareSql)));
+        ref.add(new StringRefAddr(Support.getMessage("prop.lobbuffer"),
+                String.valueOf(portNumber)));
         ref.add(new StringRefAddr(Support.getMessage("prop.packetsize"),
                                   String.valueOf(packetSize)));
 
@@ -194,7 +199,7 @@ implements DataSource, Referenceable, Serializable {
     public void setLastUpdateCount(boolean lastUpdateCount) {
         this.lastUpdateCount = lastUpdateCount;
     }
-  
+    
     public String getCharset() {
         return charset;
     }
@@ -233,5 +238,13 @@ implements DataSource, Referenceable, Serializable {
   
     public boolean getPrepareSql() {
         return prepareSql;
+    }
+    
+    public void setLobBuffer(long lobBuffer) {
+        this.lobBuffer = lobBuffer;
+    }
+  
+    public long getLobBuffer() {
+        return lobBuffer;
     }
 }

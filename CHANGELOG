@@ -1,6 +1,13 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/22/2004 - Brian Heineman
+ o Added lobBuffer parameter to control the memory used by LOB's.
+ o Updated FAQ documentation with new parameter information and TDS protocol
+   support.
+ o Corrected bug in Blob and Clob truncate() methods that caused a
+   NullPointerException to be thrown for disk based LOBs.
+
 07/21/2004 - Brian Heineman
  o Added test for bug [994988] Network error when null is returned via int
    output parm

@@ -18,8 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.io.*;
-import java.sql.Clob;
-import java.sql.SQLException;
+import java.sql.*;
 
 import net.sourceforge.jtds.util.Logger;
 import net.sourceforge.jtds.util.ReaderInputStream;
@@ -37,45 +36,58 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.14 2004-07-19 22:17:02 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.15 2004-07-22 17:09:57 bheineman Exp $
  */
 public class ClobImpl implements Clob {
-	private static final int MAXIMUM_SIZE = 32768;
 	private static final String EMPTY_CLOB = "";
 	
+    private final ConnectionJDBC2 _connection;
     private String _clob;
     private File _clobFile;
     private JtdsReader _jtdsReader;
 
     /**
      * Constructs a new Clob instance.
+     * 
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      */
-    ClobImpl() {
-        _clob = EMPTY_CLOB;
+    ClobImpl(Object callerReference) {
+        this(callerReference, EMPTY_CLOB);
     }
     
     /**
      * Constructs a new Clob instance.
      *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      * @param clob The clob object to encapsulate
      */
-    ClobImpl(String clob) {
+    ClobImpl(Object callerReference, String clob) {
         if (clob == null) {
             throw new IllegalArgumentException("clob cannot be null.");
         }
 
         _clob = (String) clob;
+        _connection = getConnection(callerReference);
     }
 
     /**
      * Constructs a new Clob instance.
      *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
      * @param clob The clob object to encapsulate
      */
-    ClobImpl(ResponseStream in, boolean ntext, boolean readTextMode) throws IOException {
+    ClobImpl(Object callerReference, ResponseStream in, boolean ntext, boolean readTextMode) throws IOException {
         if (in == null) {
             throw new IllegalArgumentException("in cannot be null.");
         }
+        
+        _connection = getConnection(callerReference);
         
         TextPtr tp = new TextPtr();
         
@@ -105,7 +117,7 @@ public class ClobImpl implements Clob {
 	        }
         } else {
             try {
-                if (tp.len < MAXIMUM_SIZE) {
+                if (tp.len < _connection.getLobBuffer()) {
                 	if (ntext) {
                 		_clob = in.readString(tp.len / 2);
                 	} else {
@@ -238,7 +250,7 @@ public class ClobImpl implements Clob {
     }
 
     public long position(String searchStr, long start) throws SQLException {
-        return position(new ClobImpl(searchStr), start);
+        return position(new ClobImpl(_connection, searchStr), start);
     }
     
     public long position(Clob searchStr, long start) throws SQLException {
@@ -308,7 +320,7 @@ public class ClobImpl implements Clob {
 
             {
                 try {
-                    if (length > MAXIMUM_SIZE) {
+                    if (length > _connection.getLobBuffer()) {
                         if (_clobFile == null) {
                             writeToDisk(getCharacterStream());
                         }
@@ -358,7 +370,7 @@ public class ClobImpl implements Clob {
              */
             private void checkSize(long length) throws IOException {
                 // Return if the data has already exceeded the maximum size
-                if (curPos > MAXIMUM_SIZE) {
+                if (curPos > _connection.getLobBuffer()) {
                     return;
                 }
 
@@ -375,7 +387,7 @@ public class ClobImpl implements Clob {
 
                 // Return if the length will not exceed the maximum in-memory
                 // value
-                if (curPos + length <= MAXIMUM_SIZE) {
+                if (curPos + length <= _connection.getLobBuffer()) {
                     return;
                 }
 
@@ -585,7 +597,7 @@ public class ClobImpl implements Clob {
 
         if (len == currentLength) {
             return;
-        } else if (len <= MAXIMUM_SIZE) {
+        } else if (len <= _connection.getLobBuffer()) {
         	_clob = getSubString(1, (int) len);
             
             if (_clobFile != null) {
@@ -607,7 +619,7 @@ public class ClobImpl implements Clob {
                 char[] buffer = new char[1024];
                 int result = -1;
                 
-                while ((_jtdsReader.read(buffer, 0, (int) Math.min(buffer.length, len))) != -1) {
+                while ((result = reader.read(buffer, 0, (int) Math.min(buffer.length, len))) > 0) {
                     len -= result;
                     writer.write(buffer, 0, result);
                 }
@@ -641,6 +653,38 @@ public class ClobImpl implements Clob {
         }
     }
 
+    /**
+     * Returns a connection for a given caller reference.
+     *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
+     * @return a connection
+     */
+    private ConnectionJDBC2 getConnection(Object callerReference) {
+        if (callerReference == null) {
+            throw new IllegalArgumentException("callerReference cannot be null.");
+        }
+
+        Connection connection;
+        
+        try {
+            if (callerReference instanceof Connection) {
+                connection = (Connection) callerReference;
+            } else if (callerReference instanceof Statement) {
+                connection = ((Statement) callerReference).getConnection();
+            } else if (callerReference instanceof ResultSet) {
+                connection = ((ResultSet) callerReference).getStatement().getConnection();
+            } else {
+                throw new IllegalArgumentException("callerReference is invalid.");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+        
+        return (ConnectionJDBC2) connection;
+    }
+    
     protected void finalize() {
     	if (_clobFile != null) {
     		_clobFile.delete();

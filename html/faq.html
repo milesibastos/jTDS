@@ -152,21 +152,24 @@
           String user, String password)</code> it's not required to set this property
           as it is passed as parameter, but you will have to set it when using
           <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
-        <dt><code>TDS</code> (default - <code>&quot;7.0&quot;</code>)</dt>
+        <dt><code>TDS</code> (default - <code>&quot;7.0&quot;</code> for SQL Server;
+          <code>&quot;5.0&quot;</code> for Sybase)</dt>
         <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol
           used by Microsoft SQL Server and Sybase to communicate with database
-          clients. jTDS can use TDS 4.2 and 7.0. Version 4.2 is used by SQL Server
-          6.5 and Sybase 10, version 7.0 is used by SQL Server 7.0. SQL Server
-          2000 uses version 8.0 of the protocol, but jTDS can still communicate
-          with SQL Server 2000 because newer database server versions understand
-          older protocol versions.<br>
-          This means on one hand that SQL Server 7.0 can be used with TDS 4.2
-          and on the other hand that the limitations of the protocol apply regardless
-          of the server version (e.g. when using TDS 4.2 <code>VARCHAR</code>s
-          are limited to 255 characters). As a conclusion, you must set this property
-          to <code>&quot;4.2&quot;</code> when connecting to SQL Server 6.5 or
-          Sybase and you should not set it (or set it to <code>&quot;7.0&quot;</code>)
-          when connecting to any newer version of SQL Server.</dd>
+          clients. jTDS can use TDS 4.2, 5.0, 7.0 and 8.0. Version 4.2 is used by
+          SQL Server 6.5 and Sybase 10.  Version 5.0 is used with Sybase 11 onwards.
+          Version 7.0 is used by SQL Server 7.0; this protocol also works with SQL
+          Server 2000. Version 8.0 is used by SQL Server 2000 and SQL Server 2005.<br>
+          Newer database server versions usually understand older protocol versions.
+          This means that SQL Server 7.0 can be used with TDS 4.2, but the limitations
+          of the protocol apply regardless of the server version (e.g. when using TDS
+          4.2 <code>VARCHAR</code>s are limited to 255 characters). As a conclusion,
+          you must set this property to <code>&quot;4.2&quot;</code> when connecting
+          to SQL Server 6.5 or Sybase.  You should not set this value to
+          <code>&quot;7.0&quot; or &quot;8.0&quot;</code>) when connecting to any
+          version of Sybase as these are SQL Server specific protocols.  Further, you
+          should not set this value to <code>&quot;5.0&quot;</code>) when connecting
+          to any version of SQL Server as this is a Sybase specific protocol.</dd>
         <dt><code>charset</code> (default - the character set the server was installed
           with)</dt>
         <dd>Very important setting, determines the byte value to character mapping
@@ -214,6 +217,21 @@
           is always the last as the triggers execute first. If <code>false</code>
           all update counts are returned; use <code>getMoreResults()</code> to
           loop through them.</dd>
+        <dt><code>prepareSQL</code> (default - <code>true</code>)</dt>
+        <dd>If <code>true</code> the driver will use temporary stored procedures
+          for <code>PreparedStatement</code> SQL. If <code>false</code>
+          the driver will execute prepared statements with the <code>sp_executesql</code>
+          stored procedure for SQL Server, or send the raw SQL for Sybase.</dd>
+        <dt><code>packetSize</code> (default - <code>4096</code> for TDS 7.0/8.0;
+          <code>512</code> for TDS 4.2/5.0)</dt>
+        <dd>The network packet size (a multiple of 512).</dd>
+        <dt><code>lobBuffer</code> (default - <code>32768</code>)</dt>
+        <dd>The amount of LOB data to buffer in memory before caching to disk. The
+          value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>
+          data.</dd>
+        <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
+        <dd>The amount of time to wait (in milliseconds) for a successful connection
+          before timing out.</dd>
       </dl>
       <p>These properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

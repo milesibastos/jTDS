@@ -2951,6 +2951,87 @@ public class LOBTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test for bug [1172405] BLOB/CLOB position methods fail.
+     */
+    public void testBlobMethods() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTBLOB (id int, blob image null)");
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #TESTBLOB (id) VALUES (1)"));
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #TESTBLOB (id, blob) VALUES (2, 0x4445)"));
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #TESTBLOB (id, blob) VALUES (3, 0x4142434445464748)"));
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TESTBLOB");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        Blob blob = rs.getBlob(2);
+        assertNull(blob);
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        Blob pattern = rs.getBlob(2);
+        assertNotNull(pattern);
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        blob  = rs.getBlob(2);
+        assertEquals(8, blob.length());
+        assertEquals("ABCDEFGH", new String(blob.getBytes(1, 8)));
+        assertEquals(4, blob.position(pattern, 1));
+        assertEquals(-1, blob.position(pattern, 8));
+        assertEquals(3, blob.position(new byte[]{0x43,0x44}, 1));
+        assertEquals(-1, blob.position(new byte[]{0x43,0x44}, 8));
+        byte buf[] = new byte[(int)blob.length()];
+        InputStream is = blob.getBinaryStream();
+        assertEquals((int)blob.length(), is.read(buf));
+        assertEquals(-1, is.read());
+        assertEquals("ABCDEFGH", new String(buf));
+    }
+
+    /**
+     * Test for bug [1172405] BLOB/CLOB position methods fail.
+     */
+    public void testClobMethods() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTCLOB (id int, clob text null)");
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #TESTCLOB (id) VALUES (1)"));
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #TESTCLOB (id, clob) VALUES (2, 'CD')"));
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #TESTCLOB (id, clob) VALUES (3, 'ABCDEFGH')"));
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TESTCLOB");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        Clob clob = rs.getClob(2);
+        assertNull(clob);
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        Clob pattern = rs.getClob(2);
+        assertNotNull(pattern);
+        assertTrue(rs.next());
+        assertEquals(3, rs.getInt(1));
+        clob  = rs.getClob(2);
+        assertEquals(8, clob.length());
+        assertEquals("ABCDEFGH", clob.getSubString(1, 8));
+        assertEquals(3, clob.position(pattern, 1));
+        assertEquals(-1, clob.position(pattern, 8));
+        assertEquals(3, clob.position("CD", 1));
+        assertEquals(-1, clob.position("CD", 8));
+        Reader rdr = clob.getCharacterStream();
+        char buf[] = new char[(int)clob.length()];
+        assertEquals((int)clob.length(), rdr.read(buf));
+        assertEquals(-1, rdr.read());
+        assertEquals("ABCDEFGH", new String(buf));
+        byte bbuf[] = new byte[(int)clob.length()];
+        InputStream is = clob.getAsciiStream();
+        assertEquals((int)clob.length(), is.read(bbuf));
+        assertEquals(-1, is.read());
+        assertEquals("ABCDEFGH", new String(bbuf));
+    }
+
     private byte[] getBlobTestData() {
         return blobData;
     }

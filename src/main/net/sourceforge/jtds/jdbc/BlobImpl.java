@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.27 2005-03-18 13:55:53 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.28 2005-03-29 15:48:42 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -214,7 +214,7 @@ public class BlobImpl implements Blob {
             boolean reset = true;
 
             // TODO Implement a better pattern matching algorithm
-            for (long i = start; i < length; i++) {
+            for (long i = start - 1; i < length; i++) {
                 boolean found = true;
                 int value;
 
@@ -235,11 +235,12 @@ public class BlobImpl implements Blob {
                         break;
                     }
 
+                    value = inputStream.read();
                     reset = true;
                 }
 
                 if (found) {
-                    return i;
+                    return i + 1;
                 }
             }
         } catch (IOException e) {

@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/29/2005 - Alin Sinpalean
+ o Applied a temporary (and highly useless) fix for bug [1172405] BLOB/CLOB
+   position methods fail. position() methods work now, at least in theory.
+
 03/26/2005 - Alin Sinpalean
  o Applied Mike's patch [1166594] JDBC3 Multiple open result sets. The
    getMoreResults(int) method is fully implemented and the JtdsResultSet class
@@ -15,7 +19,7 @@ Changes from jTDS 1.0.2
    changed. Thanks go to Brett Wooldridge for signalling the bug and providing
    a fix.
 
-03/17/2005 - Alin Sinpalean
+03/18/2005 - Alin Sinpalean
  o Implemented RFE [1165119] Computername in Connection-URL: added a WSID
    parameter to the URL properties, to override the host name that is
    determined automatically.

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.32 2005-03-18 13:55:54 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.33 2005-03-29 15:48:43 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -289,7 +289,7 @@ public class ClobImpl implements Clob {
             boolean reset = true;
 
             // TODO Implement a better pattern matching algorithm
-            for (long i = start; i < length; i++) {
+            for (long i = start - 1; i < length; i++) {
                 boolean found = true;
                 int value;
 
@@ -310,11 +310,12 @@ public class ClobImpl implements Clob {
                         break;
                     }
 
+                    value = reader.read();
                     reset = true;
                 }
 
                 if (found) {
-                    return i;
+                    return i + 1;
                 }
             }
         } catch (IOException e) {

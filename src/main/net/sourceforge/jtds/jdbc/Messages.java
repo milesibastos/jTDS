@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
  * 
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.3 2004-08-06 03:18:11 ddkilzer Exp $
+ * @version $Id: Messages.java,v 1.4 2004-08-06 23:15:50 ddkilzer Exp $
  */
 public final class Messages {
 
@@ -110,6 +110,11 @@ public final class Messages {
      * Retrieve the list of driver property names and driver property
      * descriptions from <code>Messages.properties</code> and populate
      * them into {@link Map} objects.
+     * <p/>
+     * The keys used to populate both <code>propertyMap</code> and
+     * <code>descriptionMap</code> are guaranteed to match up as long
+     * as the properties defined in <code>Messages.properties</code>
+     * are well-formed.
      * 
      * @param propertyMap The map of property names to be populated.
      * @param descriptionMap The map of property descriptions to be populated.

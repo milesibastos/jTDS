@@ -2325,7 +2325,7 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertTrue(time - rs.getDate(1).getTime() < 24 * 60 * 60 * 1000);
         Calendar c1 = new GregorianCalendar(), c2 = new GregorianCalendar();
-        c1.setTime(rs.getDate(1));
+        c1.setTime(rs.getTimestamp(1));
         c2.setTime(new Timestamp(time));
         assertEquals(c2.get(Calendar.YEAR), c1.get(Calendar.YEAR));
         assertEquals(c2.get(Calendar.MONTH), c1.get(Calendar.MONTH));

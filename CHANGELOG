@@ -1,6 +1,12 @@
 Changes from jTDS 0.9
 =========================
 
+12/02/2004 - Alin Sinpalean
+ o Added a unit test (and made a couple of minor fixes) for column collation
+   support. Seems to work fine now.
+ o Fixed TimestampTest.testWriteDate() to actually test whether dates are
+   written correctly (i.e. w/o their time component) into the DB.
+
 12/01/2004 - Alin Sinpalean
  o Applied patch [1076337] Elimination of ColData class. Thanks a lot, Mike for
    all the effort!

@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.33 2004-12-01 15:37:19 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.34 2004-12-02 15:43:19 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -154,7 +154,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                       ParamInfo[] procedureParams,
                       int resultSetType,
                       int concurrency)
-    throws SQLException {
+            throws SQLException {
         super(statement, resultSetType, concurrency, null, false);
 
         cursorCreate(sql, procName, procedureParams);
@@ -167,7 +167,7 @@ public class MSCursorResultSet extends JtdsResultSet {
      * @param value The new column value.
      */
     protected void setColValue(int colIndex, int jdbcType, Object value, int length)
-    throws SQLException {
+            throws SQLException {
 
         super.setColValue(colIndex, jdbcType, value, length);
 
@@ -180,19 +180,21 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         if (onInsertRow) {
             pi = insertRow[colIndex];
-            if (pi == null) {
-                pi = new ParamInfo(-1);
-                pi.name = '@'+ci.realName;
-                insertRow[colIndex] = pi;
-            }
         } else {
             if (updateRow == null) {
                 updateRow = new ParamInfo[columnCount];
             }
             pi = updateRow[colIndex];
-            if (pi == null) {
-                pi = new ParamInfo(-1);
-                pi.name = '@'+ci.realName;
+        }
+
+        if (pi == null) {
+            pi = new ParamInfo(-1);
+            pi.name = '@'+ci.realName;
+            pi.collation = ci.collation;
+            pi.charsetInfo = ci.charsetInfo;
+            if (onInsertRow) {
+                insertRow[colIndex] = pi;
+            } else {
                 updateRow[colIndex] = pi;
             }
         }
@@ -307,7 +309,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     private void cursorCreate(String sql,
                               String procName,
                               ParamInfo[] parameters)
-    throws SQLException {
+            throws SQLException {
         TdsCore tds = statement.getTds();
         int prepareSql = statement.connection.getPrepareSql();
 

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.52 2004-12-01 15:37:19 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.53 2004-12-02 15:43:19 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1971,7 +1971,7 @@ public class TdsCore {
             col.isWriteable = (flags & 0x0C) != 0;
             TdsData.readType(in, col);
             // Set the charsetInfo field of col
-            if (tdsVersion > Driver.TDS80) {
+            if (tdsVersion >= Driver.TDS80 && col.collation != null) {
                 TdsData.setColumnCharset(col, connection.getCollation(),
                         connection.getCharsetInfo());
             }
@@ -2285,7 +2285,7 @@ public class TdsCore {
         ColInfo col = new ColInfo();
         TdsData.readType(in, col);
         // Set the charsetInfo field of col
-        if (tdsVersion > Driver.TDS80) {
+        if (tdsVersion >= Driver.TDS80 && col.collation != null) {
             TdsData.setColumnCharset(col, connection.getCollation(),
                     connection.getCharsetInfo());
         }

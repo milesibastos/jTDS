@@ -31,8 +31,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
 
-
-
 /**
  * Test case to illustrate use of TDS 8 support
  *
@@ -206,6 +204,95 @@ public class Tds8Test extends DatabaseTestCase {
         assertTrue(rs.next());
         assertEquals(1, rs.getInt(1));
         assertEquals(null, rs.getObject(2));
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test column collations.
+     */
+    public void testColumnCollations() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testColumnCollations (id int primary key, "
+                + "cp437val varchar(255) collate SQL_Latin1_General_Cp437_CI_AS, "
+                + "cp850val varchar(255) collate SQL_Latin1_General_Cp850_CI_AS, "
+                + "ms874val varchar(255) collate Thai_CI_AS, "
+                + "ms932val varchar(255) collate Japanese_CI_AS, "
+                + "ms936val varchar(255) collate Chinese_PRC_CI_AS, "
+                + "ms949val varchar(255) collate Korean_Wansung_CI_AS, "
+                + "ms950val varchar(255) collate Chinese_Taiwan_Stroke_CI_AS, "
+                + "cp1250val varchar(255) collate SQL_Romanian_Cp1250_CI_AS, "
+                + "cp1252val varchar(255) collate SQL_Latin1_General_Cp1_CI_AS)");
+
+        ResultSet rs = stmt.executeQuery("select * from #testColumnCollations");
+        assertFalse(rs.next());
+        rs.close();
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "insert into #testColumnCollations "
+                + "(id, cp437val, cp850val, ms874val, ms932val, "
+                + "ms936val, ms949val, ms950val, cp1250val, cp1252val) "
+                + "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+        // Test inserting and retrieving pure-ASCII values
+        pstmt.setInt(1, 1);
+        for (int i = 2; i <= 10; i++) {
+            pstmt.setString(i, "test");
+        }
+        assertEquals(1, pstmt.executeUpdate());
+
+        rs = stmt.executeQuery("select * from #testColumnCollations");
+        assertTrue(rs.next());
+        for (int i = 2; i <= 10; i++) {
+            assertEquals("test", rs.getString(i));
+        }
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(1, stmt.executeUpdate("delete from #testColumnCollations"));
+
+        // Test inserting and retrieving charset-specific values via PreparedStatement
+        String[] values = {
+            "123abc\u2591\u2592\u2593\u221a\u221e\u03b1",
+            "123abc\u00d5\u00f5\u2017\u00a5\u2591\u2592",
+            "123abc\u20ac\u2018\u2019\u0e10\u0e1e\u0e3a",
+            "123abc\uff67\uff68\uff9e\u60c6\u7210\ufa27",
+            "123abc\u6325\u8140\u79a9\u9f1e\u9f32\ufa29",
+            "123abc\uac4e\ub009\ubcde\u00de\u24d0\u30e5",
+            "123abc\ufe4f\u00d7\uff5e\u515e\u65b0\u7881",
+            "123abc\u20ac\u201a\u0103\u015e\u0162\u00f7",
+            "123abc\u20ac\u201e\u017d\u00fe\u02dc\u00b8"
+        };
+        for (int i = 2; i <= 10; i++) {
+            pstmt.setString(i, values[i - 2]);
+        }
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        rs = stmt.executeQuery("select * from #testColumnCollations");
+        assertTrue(rs.next());
+        for (int i = 2; i <= 10; i++) {
+            assertEquals("Column " + i + " doesn't match", values[i - 2], rs.getString(i));
+        }
+        assertFalse(rs.next());
+        rs.close();
+        pstmt.close();
+        stmt.close();
+
+        // Test inserting and retrieving charset-specific values via updateable ResultSet
+        stmt = con.createStatement(
+                ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        rs = stmt.executeQuery("select * from #testColumnCollations");
+        assertTrue(rs.next());
+        for (int i = 2; i <= 10; i++) {
+            rs.updateString(i, rs.getString(i) + "updated");
+            values[i - 2] = values[i - 2] + "updated";
+        }
+        rs.updateRow();
+        rs.refreshRow();
+        for (int i = 2; i <= 10; i++) {
+            assertEquals("Column " + i + " doesn't match", values[i - 2], rs.getString(i));
+        }
         assertFalse(rs.next());
         rs.close();
         stmt.close();

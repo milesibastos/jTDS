@@ -18,6 +18,8 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.util.Properties;
+import java.util.Map;
+import java.util.HashMap;
 
 
 
@@ -36,7 +38,7 @@ import java.util.Properties;
  * </ol>
  * 
  * @author David D. Kilzer.
- * @version $Id: DefaultProperties.java,v 1.1 2004-08-04 15:23:30 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.2 2004-08-05 00:00:36 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -95,100 +97,90 @@ public final class DefaultProperties {
      * @return The updated <code>props</code> object, or <code>null</code>
      *         if the <code>serverType</code> property is not set.
      */ 
-    public static Properties addDefaultProperties(Properties props) {
+    public static Properties addDefaultProperties(final Properties props) {
 
-        String serverType = props.getProperty(Support.getMessage("prop.servertype"));
+        final String serverType = props.getProperty(Support.getMessage("prop.servertype"));
         if (serverType == null) {
             return null;
         }
 
-        String messageKey = Support.getMessage("prop.tds");
-        if (props.getProperty(messageKey) == null) {
-            if (serverType.equals(String.valueOf(Driver.SQLSERVER))) {
-                props.setProperty(messageKey, TDS_VERSION_70);
-            } else if (serverType.equals(String.valueOf(Driver.SYBASE))) {
-                props.setProperty(messageKey, TDS_VERSION_50);
-            }
-        }
+        final HashMap tdsDefaults = new HashMap(2);
+        tdsDefaults.put(String.valueOf(Driver.SQLSERVER), TDS_VERSION_70);
+        tdsDefaults.put(String.valueOf(Driver.SYBASE), TDS_VERSION_50);
+        addDefaultPropertyIfNotSet(props, "prop.tds", "prop.servertype", tdsDefaults);
 
-        messageKey = Support.getMessage("prop.portnumber");
-        if (props.getProperty(messageKey) == null) {
-            if (serverType.equals(String.valueOf(Driver.SQLSERVER))) {
-                props.setProperty(messageKey, String.valueOf(PORT_NUMBER_SQLSERVER));
-            }
-            else if (serverType.equals(String.valueOf(Driver.SYBASE))) {
-                props.setProperty(messageKey, String.valueOf(PORT_NUMBER_SYBASE));
-            }
-        }
+        final HashMap portNumberDefaults = new HashMap(2);
+        portNumberDefaults.put(String.valueOf(Driver.SQLSERVER), String.valueOf(PORT_NUMBER_SQLSERVER));
+        portNumberDefaults.put(String.valueOf(Driver.SYBASE), String.valueOf(PORT_NUMBER_SYBASE));
+        addDefaultPropertyIfNotSet(props, "prop.portnumber", "prop.servertype", portNumberDefaults);
 
-        messageKey = Support.getMessage("prop.databasename");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, DATABASE_NAME);
-        }
+        addDefaultPropertyIfNotSet(props, "prop.databasename", DATABASE_NAME);
+        addDefaultPropertyIfNotSet(props, "prop.appname", APP_NAME);
+        addDefaultPropertyIfNotSet(props, "prop.lastupdatecount", String.valueOf(LAST_UPDATE_COUNT));
+        addDefaultPropertyIfNotSet(props, "prop.lobbuffer", String.valueOf(LOB_BUFFER_SIZE));
+        addDefaultPropertyIfNotSet(props, "prop.logintimeout", String.valueOf(LOGIN_TIMEOUT));
+        addDefaultPropertyIfNotSet(props, "prop.macaddress", MAC_ADDRESS);
+        addDefaultPropertyIfNotSet(props, "prop.namedpipe", String.valueOf(NAMED_PIPE));
 
-        messageKey = Support.getMessage("prop.appname");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, APP_NAME);
-        }
+        final HashMap packetSizeDefaults = new HashMap(4);
+        packetSizeDefaults.put(TDS_VERSION_42, String.valueOf(PACKET_SIZE_42_50));
+        packetSizeDefaults.put(TDS_VERSION_50, String.valueOf(PACKET_SIZE_42_50));
+        packetSizeDefaults.put(TDS_VERSION_70, String.valueOf(PACKET_SIZE_70_80));
+        packetSizeDefaults.put(TDS_VERSION_80, String.valueOf(PACKET_SIZE_70_80));
+        addDefaultPropertyIfNotSet(props, "prop.packetsize", "prop.tds", packetSizeDefaults);
 
-        messageKey = Support.getMessage("prop.lastupdatecount");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, String.valueOf(LAST_UPDATE_COUNT));
-        }
-
-        messageKey = Support.getMessage("prop.lobbuffer");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, String.valueOf(LOB_BUFFER_SIZE));
-        }
-
-        messageKey = Support.getMessage("prop.logintimeout");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, String.valueOf(LOGIN_TIMEOUT));
-        }
-
-        messageKey = Support.getMessage("prop.macaddress");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, MAC_ADDRESS);
-        }
-
-        messageKey = Support.getMessage("prop.namedpipe");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, String.valueOf(NAMED_PIPE));
-        }
-        
-        messageKey = Support.getMessage("prop.packetsize");
-        if (props.getProperty(messageKey) == null) {
-
-            String tdsVersion = props.getProperty(Support.getMessage("prop.tds"));
-
-            if (tdsVersion.equals(String.valueOf(TDS_VERSION_42)) ||
-                tdsVersion.equals(String.valueOf(TDS_VERSION_50))) {
-
-                props.setProperty(messageKey, String.valueOf(PACKET_SIZE_42_50));
-            }
-            else if (tdsVersion.equals(String.valueOf(TDS_VERSION_70)) ||
-                     tdsVersion.equals(String.valueOf(TDS_VERSION_80))) {
-
-                props.setProperty(messageKey, String.valueOf(PACKET_SIZE_70_80));
-            }
-        }
-
-        messageKey = Support.getMessage("prop.preparesql");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, String.valueOf(PREPARE_SQL));
-        }
-
-        messageKey = Support.getMessage("prop.progname");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, PROG_NAME);
-        }
-
-        messageKey = Support.getMessage("prop.useunicode");
-        if (props.getProperty(messageKey) == null) {
-            props.setProperty(messageKey, String.valueOf(USE_UNICODE));
-        }
+        addDefaultPropertyIfNotSet(props, "prop.preparesql", String.valueOf(PREPARE_SQL));
+        addDefaultPropertyIfNotSet(props, "prop.progname", PROG_NAME);
+        addDefaultPropertyIfNotSet(props, "prop.useunicode", String.valueOf(USE_UNICODE));
 
         return props;
+    }
+
+
+    /**
+     * Sets a default property if the property is not already set.
+     * 
+     * @param props The properties object.
+     * @param key The message key to set.
+     * @param defaultValue The default value to set.
+     */ 
+    private static void addDefaultPropertyIfNotSet(
+            final Properties props, final String key, final String defaultValue) {
+
+        final String messageKey = Support.getMessage(key);
+        if (props.getProperty(messageKey) == null) {
+            props.setProperty(messageKey, defaultValue);
+        }
+    }
+
+
+    /**
+     * Sets a default property if the property is not already set, using
+     * the <code>defaultKey</code> and the <code>defaults</code> map to
+     * determine the correct value.
+     * 
+     * @param props The properties object.
+     * @param key The message key to set.
+     * @param defaultKey The key whose value determines which default
+     *        value to set from <code>defaults</code>.
+     * @param defaults The mapping of <code>defaultKey</code> values to
+     *        the correct <code>key</code> value to set.
+     */ 
+    private static void addDefaultPropertyIfNotSet(
+            final Properties props, final String key, final String defaultKey, final Map defaults) {
+
+        final String defaultKeyValue = props.getProperty(Support.getMessage(defaultKey));
+        if (defaultKeyValue == null) {
+            return;
+        }
+
+        final String messageKey = Support.getMessage(key);
+        if (props.getProperty(messageKey) == null) {
+            final Object defaultValue = defaults.get(defaultKeyValue);
+            if (defaultValue != null) {
+                props.setProperty(messageKey, String.valueOf(defaultValue));
+            }
+        }
     }
 
 }

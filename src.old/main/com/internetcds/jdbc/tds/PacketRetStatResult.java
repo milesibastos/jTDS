@@ -37,7 +37,7 @@ package com.internetcds.jdbc.tds;
 
 public class PacketRetStatResult extends PacketResult
 {
-   public static final String cvsVersion = "$Id: PacketRetStatResult.java,v 1.1.1.1 2001-08-10 01:53:24 skizz Exp $";
+   public static final String cvsVersion = "$Id: PacketRetStatResult.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    private int  retStat;

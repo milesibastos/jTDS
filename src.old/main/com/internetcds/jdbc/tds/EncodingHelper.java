@@ -8,10 +8,10 @@ import java.util.Hashtable;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  *
- * @version  $Id: EncodingHelper.java,v 1.1.1.1 2001-08-10 01:53:23 skizz Exp $
+ * @version  $Id: EncodingHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class EncodingHelper {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.1.1.1 2001-08-10 01:53:23 skizz Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
     /**
      * The name of the encoding.

@@ -40,7 +40,7 @@ import java.util.Vector;
 
 public class Procedure
 {
-   public static final String cvsVersion = "$Id: Procedure.java,v 1.1.1.1 2001-08-10 01:53:25 skizz Exp $";
+   public static final String cvsVersion = "$Id: Procedure.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    ParameterListItem  parameterList[]    = null;

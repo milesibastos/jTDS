@@ -74,7 +74,7 @@ public class CallableStatement_base
    extends com.internetcds.jdbc.tds.PreparedStatement_base
    implements java.sql.CallableStatement
 {
-   public static final String cvsVersion = "$Id: CallableStatement_base.java,v 1.2 2001-08-13 00:35:57 skizz Exp $";
+   public static final String cvsVersion = "$Id: CallableStatement_base.java,v 1.3 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    private String   procedureName = null;

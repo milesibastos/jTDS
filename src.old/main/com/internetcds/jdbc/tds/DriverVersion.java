@@ -36,12 +36,12 @@ package com.internetcds.jdbc.tds;
 /**
  * version number of this driver.
  *
- * @version  $Id: DriverVersion.java,v 1.1.1.1 2001-08-10 01:53:23 skizz Exp $
+ * @version  $Id: DriverVersion.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  * @author Craig Spannring
  */
 public class DriverVersion
 {
-   public static final String cvsVersion = "$Id: DriverVersion.java,v 1.1.1.1 2001-08-10 01:53:23 skizz Exp $";
+   public static final String cvsVersion = "$Id: DriverVersion.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    private static final int MAJORVERSION = 0;

@@ -42,10 +42,10 @@ package com.internetcds.jdbc.tds;
  * names for temporary stored procedures and temporary tables.
  *
  * @author Craig Spannring
- * @version  $Id: UniqueId.java,v 1.1.1.1 2001-08-10 01:53:29 skizz Exp $
+ * @version  $Id: UniqueId.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class UniqueId {
-   public static final String cvsVersion = "$Id: UniqueId.java,v 1.1.1.1 2001-08-10 01:53:29 skizz Exp $";
+   public static final String cvsVersion = "$Id: UniqueId.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
    // next number to return from the getUniqueId() method
    private static long  id = 1;

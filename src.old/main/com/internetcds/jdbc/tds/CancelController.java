@@ -90,12 +90,12 @@ package com.internetcds.jdbc.tds;
  *     g) notify any threads that are waiting for cancel acknowledgment<b>
  *     h) unlock the control object.<b>
  * 
- * @version  $Id: CancelController.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $
+ * @version  $Id: CancelController.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  @ @author Craig Spannring
  */
 public class CancelController 
 {
-   public static final String cvsVersion = "$Id: CancelController.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $";
+   public static final String cvsVersion = "$Id: CancelController.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    boolean    awaitingData     = false;

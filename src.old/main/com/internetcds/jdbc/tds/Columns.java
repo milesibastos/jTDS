@@ -52,7 +52,7 @@ public class Columns {
     /**
      *@todo    Description of the Field
      */
-    public final static String cvsVersion = "$Id: Columns.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
     public Columns()

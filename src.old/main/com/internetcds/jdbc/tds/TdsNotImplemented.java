@@ -42,11 +42,11 @@ import com.internetcds.jdbc.tds.TdsException;
  * This class will eventually go away
  *
  * @author Craig Spannring
- * @version  $Id: TdsNotImplemented.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $
+ * @version  $Id: TdsNotImplemented.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class TdsNotImplemented extends TdsException
 {
-   public static final String cvsVersion = "$Id: TdsNotImplemented.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsNotImplemented.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    public TdsNotImplemented(String msg)

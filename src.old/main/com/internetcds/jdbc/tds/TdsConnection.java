@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $
+ *@version    $Id: TdsConnection.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -118,7 +118,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
 

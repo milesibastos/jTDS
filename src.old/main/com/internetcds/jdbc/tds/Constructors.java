@@ -37,7 +37,7 @@ package com.internetcds.jdbc.tds;
 
 public class Constructors
 {
-   public static final String cvsVersion = "$Id: Constructors.java,v 1.3 2001-08-13 00:35:57 skizz Exp $";
+   public static final String cvsVersion = "$Id: Constructors.java,v 1.4 2001-08-31 12:47:20 curthagenlocher Exp $";
 
    static boolean   dejavu  = false;
 

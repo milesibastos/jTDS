@@ -40,11 +40,11 @@ import java.lang.Exception;
  * base class for exceptions related to the Tds class.
  *
  * @author Craig Spannring
- * @version  $Id: TdsException.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $
+ * @version  $Id: TdsException.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class TdsException extends java.lang.Exception
 {
-   public static final String cvsVersion = "$Id: TdsException.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsException.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    public TdsException(String msg)

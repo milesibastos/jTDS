@@ -46,11 +46,11 @@ import java.io.*;
  * that will fit in memory.
  *
  * @author Craig Spannring
- * @version  $Id: TdsAsciiInputStream.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $
+ * @version  $Id: TdsAsciiInputStream.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 class TdsAsciiInputStream extends java.io.InputStream
 {
-   public static final String cvsVersion = "$Id: TdsAsciiInputStream.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsAsciiInputStream.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
    // The data that will be read from the stream.
    String   data;

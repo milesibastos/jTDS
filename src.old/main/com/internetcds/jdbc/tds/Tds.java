@@ -55,7 +55,7 @@ import java.util.Locale;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $
+ *@version    $Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -65,7 +65,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
     public TimeoutHandler(
@@ -101,7 +101,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $
+ *@version    $Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
     //
     // If the following variable is false we will consider calling

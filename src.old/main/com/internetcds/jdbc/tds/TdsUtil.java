@@ -37,7 +37,7 @@ import java.sql.*;
 
 public class TdsUtil
 {
-   public static final String cvsVersion = "$Id: TdsUtil.java,v 1.1.1.1 2001-08-10 01:53:29 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsUtil.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    static public String javaSqlTypeToString(int type)

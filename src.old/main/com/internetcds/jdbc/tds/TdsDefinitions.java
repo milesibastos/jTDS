@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsDefinitions.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
    //
    // Define the type of database the driver is connection to.

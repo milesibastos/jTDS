@@ -40,7 +40,7 @@ import com.internetcds.util.HexDump;
 
 public class TdsUnknownPacketType extends TdsException
 {
-   public static final String cvsVersion = "$Id: TdsUnknownPacketType.java,v 1.1.1.1 2001-08-10 01:53:29 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsUnknownPacketType.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
    
 
    public TdsUnknownPacketType(

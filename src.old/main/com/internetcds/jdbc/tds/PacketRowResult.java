@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.1.1.1 2001-08-10 01:53:24 skizz Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
     public PacketRowResult( Context context )

@@ -38,10 +38,10 @@ package com.internetcds.jdbc.tds;
  * interface to work around circular references
  *
  * @author Craig Spannring
- * @version  $Id: ConnectionHelper.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $
+ * @version  $Id: ConnectionHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public interface ConnectionHelper {
-   public static final String ConnectionHelperCvsVersion = "$Id: ConnectionHelper.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $";
+   public static final String ConnectionHelperCvsVersion = "$Id: ConnectionHelper.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    void relinquish(Tds tds) throws TdsException;

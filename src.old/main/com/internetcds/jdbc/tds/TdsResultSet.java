@@ -84,7 +84,7 @@ import java.io.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $
+ *@version    $Id: TdsResultSet.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -109,7 +109,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.1.1.1 2001-08-10 01:53:28 skizz Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
     public Context getContext()
     {

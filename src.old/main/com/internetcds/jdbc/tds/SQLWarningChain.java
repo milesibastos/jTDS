@@ -8,10 +8,10 @@ import java.sql.SQLWarning;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  *
- * @version  $Id: SQLWarningChain.java,v 1.1.1.1 2001-08-10 01:53:25 skizz Exp $
+ * @version  $Id: SQLWarningChain.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 class SQLWarningChain  {
-   public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.1.1.1 2001-08-10 01:53:25 skizz Exp $";
+   public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
    
    private SQLWarning warnings;
    

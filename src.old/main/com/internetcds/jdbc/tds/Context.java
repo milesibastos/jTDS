@@ -40,14 +40,14 @@ package com.internetcds.jdbc.tds;
  *
  *@author     Craig Spannring
  *@created    17 March 2001
- *@version    $Id: Context.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $
+ *@version    $Id: Context.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class Context {
 
     private Columns columns = null;
     private EncodingHelper encoder;
 
-    public final static String cvsVersion = "$Id: Context.java,v 1.1.1.1 2001-08-10 01:53:21 skizz Exp $";
+    public final static String cvsVersion = "$Id: Context.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
     public Context( Columns columns, EncodingHelper encoder )
     {

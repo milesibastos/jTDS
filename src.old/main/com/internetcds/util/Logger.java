@@ -39,12 +39,12 @@ import java.io.*;
 /**
  * This class will log messages into a file.
  *
- * @version $Id: Logger.java,v 1.1.1.1 2001-08-10 01:53:20 skizz Exp $
+ * @version $Id: Logger.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  * @author Craig Spannring
  */ 
 public class Logger
 {
-   public static final String cvsVersion = "$Id: Logger.java,v 1.1.1.1 2001-08-10 01:53:20 skizz Exp $";
+   public static final String cvsVersion = "$Id: Logger.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
    private static String       filename = "log.out";
    private static boolean      active   = false;

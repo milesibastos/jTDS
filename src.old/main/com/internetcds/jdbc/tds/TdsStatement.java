@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.1.1.1 2001-08-10 01:53:29 skizz Exp $
+ * @version $Id: TdsStatement.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.1.1.1 2001-08-10 01:53:29 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    private TdsConnection connection; // The connection who created us

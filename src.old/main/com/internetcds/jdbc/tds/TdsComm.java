@@ -42,13 +42,13 @@ import java.sql.Timestamp;
 /**
  * Handle the communications for a Tds instance.
  *
- * @version  $Id: TdsComm.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $
+ * @version  $Id: TdsComm.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  * @author Craig Spannring
  * @author Igor Petrovski
  */
 public class TdsComm implements TdsDefinitions
 {
-   public static final String cvsVersion = "$Id: TdsComm.java,v 1.1.1.1 2001-08-10 01:53:27 skizz Exp $";
+   public static final String cvsVersion = "$Id: TdsComm.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
    static final int headerLength = 8;

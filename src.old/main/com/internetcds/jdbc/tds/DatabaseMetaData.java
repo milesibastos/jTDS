@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.1.1.1 2001-08-10 01:53:23 skizz Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -293,7 +293,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.1.1.1 2001-08-10 01:53:23 skizz Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
 
 
     public DatabaseMetaData(

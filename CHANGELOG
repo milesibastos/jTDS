@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/24/2004 - Alin Sinpalean
+ o Updated JtdsDatabaseMetaData.getDriverVersion() to also include misc
+   version information.
+
 09/23/2004 - Alin Sinpalean
  o Applied Mike's patch [1030475] Scrollable/Updateable result sets for Sybase.
 

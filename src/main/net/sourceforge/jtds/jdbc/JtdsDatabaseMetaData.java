@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.13 2004-09-23 14:26:58 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.14 2004-09-24 09:24:38 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -601,7 +601,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public String getDriverVersion() throws SQLException {
-        return getDriverMajorVersion() + "." + getDriverMinorVersion();
+        return Driver.getVersion();
     }
 
     /**

@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.38 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.39 2004-09-24 09:24:38 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -95,7 +95,7 @@ public class Driver implements java.sql.Driver {
      * @return the driver version
      */
     public static final String getVersion() {
-        return "jTDS " + MAJOR_VERSION + "." + MINOR_VERSION
+        return MAJOR_VERSION + "." + MINOR_VERSION
                 + ((MISC_VERSION == null) ? "" : MISC_VERSION);
     }
 
@@ -110,7 +110,7 @@ public class Driver implements java.sql.Driver {
      * @return the driver version
      */
     public String toString() {
-        return getVersion();
+        return "jTDS " + getVersion();
     }
 
     public boolean jdbcCompliant() {

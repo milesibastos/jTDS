@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.29 2004-12-06 12:10:14 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.30 2005-01-17 14:28:24 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -133,7 +133,6 @@ public class ClobImpl implements Clob {
                 	if (ntext) {
                 		_clob = in.readUnicodeString(tp.len / 2);
                 	} else {
-                        // FIXME Use collation for reading
                 		_clob = in.readNonUnicodeString(tp.len, charsetInfo);
                 	}
                 } else {
@@ -150,7 +149,6 @@ public class ClobImpl implements Clob {
 	    	        		data = in.readUnicodeString(results / 2);
 		    	        } else {
                             // FIXME This won't work for multi-byte charsets
-                            // FIXME Use collation for reading
 			                data = in.readNonUnicodeString(results, charsetInfo);
 		    	        }
 
@@ -696,7 +694,6 @@ public class ClobImpl implements Clob {
                 return;
             }
 
-            // FIXME This is not correct. UTF-8 data is variable in length.
             byte[] data = new String(cbuf, off, len).getBytes();
 
             raf.write(data, 0, data.length);

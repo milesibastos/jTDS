@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.23 2005-01-05 12:24:12 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.24 2005-01-17 14:28:24 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -2377,12 +2377,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database-access error occurs.
      */
     public boolean supportsConvert(int fromType, int toType)
-    throws SQLException {
+            throws SQLException {
         if (fromType == toType) {
             return true;
         }
 
-        // TODO Shouldn't BLOB and CLOB be handled here, too?
         switch (fromType) {
             // SAfe Most types will convert to anything but IMAGE and
             //      TEXT/NTEXT (and UNIQUEIDENTIFIER, but that's not a standard
@@ -2400,28 +2399,33 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             case Types.DATE:
             case Types.TIME:
             case Types.TIMESTAMP:
-                return toType != Types.LONGVARCHAR && toType != Types.LONGVARBINARY;
+                return toType != Types.LONGVARCHAR && toType != Types.LONGVARBINARY
+                        && toType != Types.BLOB && toType != Types.CLOB;
 
             case Types.BINARY:
             case Types.VARBINARY:
                 return toType != Types.FLOAT && toType != Types.REAL
-                    && toType != Types.DOUBLE && toType != Types.LONGVARBINARY;
+                    && toType != Types.DOUBLE;
 
-                // IMAGE
+            // IMAGE
+            case Types.BLOB:
             case Types.LONGVARBINARY:
-                return toType == Types.BINARY || toType == Types.VARBINARY;
+                return toType == Types.BINARY || toType == Types.VARBINARY
+                        || toType == Types.BLOB || toType == Types.LONGVARBINARY;
 
-                // TEXT and NTEXT
+            // TEXT and NTEXT
+            case Types.CLOB:
             case Types.LONGVARCHAR:
-                return toType == Types.CHAR || toType == Types.VARCHAR;
+                return toType == Types.CHAR || toType == Types.VARCHAR
+                        || toType == Types.CLOB || toType == Types.LONGVARCHAR;
 
-                // These types can be converted to anything
+            // These types can be converted to anything
             case Types.NULL:
             case Types.CHAR:
             case Types.VARCHAR:
                 return true;
 
-                // We can't tell for sure what will happen with other types, so...
+            // We can't tell for sure what will happen with other types, so...
             case Types.OTHER:
             default:
                 return false;

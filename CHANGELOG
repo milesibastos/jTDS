@@ -1,6 +1,10 @@
 Changes from jTDS 0.9.1
 =======================
 
+01/10/2005 - Alin Sinpalean
+ o Added a specific error message for the case when an output parameter value
+   is accessed without registerOutParameter() being called first.
+
 01/05/2005 - Alin Sinpalean
  o Applied patch [1096296] DatabaseMetaData.getTypeInfo() ordering, submitted
    by David Eaves.

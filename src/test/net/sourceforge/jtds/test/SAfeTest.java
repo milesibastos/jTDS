@@ -1257,4 +1257,33 @@ public class SAfeTest extends DatabaseTestCase {
 
         assertEquals(0, errors.size());
     }
+
+    /**
+     * Test that <code>null</code> output parameters are handled correctly.
+     * <p/>
+     * It seems that if a non-nullable type is sent as input value and the
+     * output value is NULL, SQL Server (not Sybase) gets confused and returns
+     * the same type but a single 0 byte as value instead of the equivalent
+     * nullable type (e.g. instead of returning an <code>INTN</code> with
+     * length 0, which means it's null, it returns an <code>INT4</code>
+     * followed by a single 0 byte). The output parameter packet length is also
+     * incorrect, which indicates that SQL Server is confused.
+     * <p/>
+     * Currently jTDS always sends RPC parameters as nullable types, but this
+     * test is necessary to ensure that it will always remain so.
+     */
+    public void testNullOutputParameters() throws SQLException {
+        Statement stmt = con.createStatement();
+        assertEquals(0, stmt.executeUpdate(
+                "create procedure #testNullOutput @p1 int output as "
+                + "select @p1=null"));
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("#testNullOutput ?");
+        cstmt.setInt(1, 1);
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        assertEquals(0, cstmt.executeUpdate());
+        assertNull(cstmt.getObject(1));
+        cstmt.close();
+    }
 }

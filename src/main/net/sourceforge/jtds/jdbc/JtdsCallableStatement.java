@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.11 2004-11-24 06:42:01 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.12 2005-01-10 11:18:02 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -103,8 +103,15 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @throws SQLException if the parameter has not been set
      */
     protected Object getOutputValue(int parameterIndex)
-    throws SQLException {
-        Object value = getParameter(parameterIndex).getOutValue();
+            throws SQLException {
+        ParamInfo parameter = getParameter(parameterIndex);
+        if (!parameter.isOutput) {
+            throw new SQLException(
+                    Messages.get("error.callable.notoutput",
+                            new Integer(parameterIndex)),
+                    "07000");
+        }
+        Object value = parameter.getOutValue();
         paramWasNull = (value == null);
         return value;
     }

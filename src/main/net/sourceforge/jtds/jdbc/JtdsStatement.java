@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.27 2005-01-24 14:09:53 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.28 2005-01-28 21:12:13 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -305,8 +305,9 @@ public class JtdsStatement implements java.sql.Statement {
                     return currentResult;
                 }
             } catch (SQLException e) {
-                if (connection == null || connection.isClosed()) {
-                    // Serious error so return exception to caller
+                if (connection == null || connection.isClosed()
+                        || "HYT00".equals(e.getSQLState())) {
+                    // Serious error or timeout so return exception to caller
                     throw e;
                 }
                 warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
@@ -395,8 +396,9 @@ public class JtdsStatement implements java.sql.Statement {
                     return true;
                 }
             } catch (SQLException e) {
-                if (connection == null || connection.isClosed()) {
-                    // Serious error so return exception to caller
+                if (connection == null || connection.isClosed()
+                        || "HYT00".equals(e.getSQLState())) {
+                    // Serious error or timeout so return exception to caller
                     throw e;
                 }
                 warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();

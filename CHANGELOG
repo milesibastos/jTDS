@@ -2,6 +2,9 @@ Changes from jTDS 1.0
 =======================
 
 01/28/2005 - Alin Sinpalean
+ o Added checks for timeout exceptions to JtdsStatement.executeSQLQuery() and
+   executeSQL(); if a cursor creation fails because of a timeout, the exception
+   is thrown back and a direct select is not attempted anymore.
  o commit() and rollback() now throw SQLException if called in auto-commit
    mode, per API documentation.
  o Added checks to setAutoCommit() and setTransactionIsolation() to no longer

@@ -39,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: TdsSocket.java,v 1.7 2004-05-01 05:36:40 bheineman Exp $
+ * @version $Id: TdsSocket.java,v 1.8 2004-05-03 23:29:08 bheineman Exp $
  */
 public class TdsSocket {
 
@@ -279,7 +279,8 @@ public class TdsSocket {
         // Socket.isClosed() contains a  synchronized block and I do not see
         // the need to impose the additional overhead on each call to a
         // Connection / Statement / ResultSet...
-        return this.socket != null && socket.isConnected();
+        // Socket.isConnection() and Socket.isClosed() are only available in 1.4
+        return this.socket != null;
     }
 
     /**
@@ -384,12 +385,12 @@ public class TdsSocket {
                 //
                 try {
                     byte[] tmpBuf = dequeueOutput(vsock);
-    
+
                     while (tmpBuf != null) {
                         out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
                         tmpBuf = dequeueOutput(vsock);
                     }
-    
+
                     // Now we can safely send this packet too
                     out.write(buffer, 0, TdsComm.ntohs(buffer, 2));
                 } catch (IOException e) {

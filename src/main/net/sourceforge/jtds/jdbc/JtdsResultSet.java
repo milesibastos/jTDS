@@ -35,6 +35,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 import java.text.NumberFormat;
@@ -55,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.8 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: JtdsResultSet.java,v 1.9 2004-08-05 16:25:26 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -100,6 +101,9 @@ public class JtdsResultSet implements ResultSet {
     protected int fetchSize = 1;
     /** True if the resultset should read ahead to ensure return parameters are processed. */
     protected boolean readAhead = true;
+    /** Cache to optimize findColumn(String) lookups */
+    private HashMap columnMap;
+    
     /*
      * Private instance variables.
      */
@@ -882,16 +886,24 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public int findColumn(String columnName) throws SQLException {
-        checkOpen();
-
-        for (int i = 0; i < columnCount; i++) {
-            if (columns[i].name.equalsIgnoreCase(columnName)) {
-                return i+1;
-            }
-        }
-
-        throw new SQLException(
-            Messages.get("error.resultset.colname", columnName), "07009");
+         checkOpen();
+         
+         if (columnMap == null) {
+             columnMap = new HashMap();
+             
+             for (int i = 0; i < columnCount; i++) {
+                 columnMap.put(columns[i].name.toUpperCase(), 
+                               new Integer(i + 1));
+             }
+         }
+         
+         Integer colIndex = (Integer) columnMap.get(columnName.toUpperCase());
+         
+         if (colIndex != null) {
+             return colIndex.intValue();
+         }
+         
+         throw new SQLException(Messages.get("error.resultset.colname", columnName), "07009");
     }
 
     public int getInt(String columnName) throws SQLException {

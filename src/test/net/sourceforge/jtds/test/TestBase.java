@@ -8,7 +8,6 @@ import java.io.*;
 import java.sql.*;
 
 import java.util.*;
-import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
 /**

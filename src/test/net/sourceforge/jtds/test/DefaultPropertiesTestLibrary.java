@@ -21,7 +21,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.Messages;
 import java.util.Properties;
 
@@ -44,7 +43,7 @@ import java.util.Properties;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.5 2004-08-05 16:25:27 bheineman Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 

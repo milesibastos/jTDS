@@ -20,7 +20,6 @@ package net.sourceforge.jtds.test;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.Messages;
 import java.sql.SQLException;
 import java.sql.DriverPropertyInfo;
@@ -37,7 +36,7 @@ import java.util.Iterator;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.5 2004-08-05 16:25:27 bheineman Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 

@@ -18,7 +18,6 @@
 package net.sourceforge.jtds.test;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
-import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.Messages;
 import java.util.Properties;
 import java.util.Map;
@@ -30,7 +29,7 @@ import java.util.HashMap;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.2 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.3 2004-08-05 16:25:27 bheineman Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 

@@ -20,7 +20,6 @@ package net.sourceforge.jtds.jdbcx;
 import java.util.Hashtable;
 import javax.naming.*;
 import javax.naming.spi.*;
-import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.Messages;
 
 /**
@@ -28,7 +27,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.4 2004-08-05 01:45:23 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.5 2004-08-05 16:25:27 bheineman Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,

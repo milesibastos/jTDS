@@ -1,6 +1,11 @@
 Changes from jTDS 0.8.1
 =========================
 
+08/05/2004 - Brian Heineman
+ o Applied Mike Hutchinson's patch for [996631] Refactoring and some performance
+   optimization.
+ o Removed extraneous import statements.
+
 08/04/2004 - Brian Heineman
  o Applied patch in bug [1003507] Cursor result set close error;
    (thanks to Mike Hutchinson for report and the fix).

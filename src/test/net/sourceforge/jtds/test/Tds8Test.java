@@ -2,7 +2,6 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Messages;
 import java.math.BigDecimal;

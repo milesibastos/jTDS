@@ -19,8 +19,6 @@ package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.MessageFormat;
-import java.util.ResourceBundle;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.SQLException;
@@ -46,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.8 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: Support.java,v 1.9 2004-08-05 16:25:27 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.

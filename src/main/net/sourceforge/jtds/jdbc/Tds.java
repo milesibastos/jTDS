@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2002-11-07 11:07:01 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -734,8 +734,7 @@ public class Tds implements TdsDefinitions {
             comm.appendByte((byte) 0);
 
             // Now handle the parameters
-            for( i=0; i<formalParameterList.length; i++ )
-            {
+            for( i=0; i<formalParameterList.length; i++ ) {
                 byte nativeType = cvtJdbcTypeToNativeType(formalParameterList[i].type);
 
                 comm.appendByte((byte) 0);
@@ -777,8 +776,17 @@ public class Tds implements TdsDefinitions {
                         int len = val != null ? val.length() : 0;
                         int max = formalParameterList[i].maxLength;
 
-                        if (actualParameterList[i].formalType != null &&
-                             actualParameterList[i].formalType.startsWith("n")) {
+                        // MJH - Do not use the formalType from the actual parameters as
+                        // this will be null where a cached stored procedure is reused by a
+                        // different PreparedStatement from the one that created it in the fist
+                        // place. Use the formalParameter data instead.
+                        //
+                        //if (actualParameterList[i].formalType != null &&
+                        //   actualParameterList[i].formalType.startsWith("n")) {
+                        //
+                        if( formalParameterList[i].formalType != null &&
+                             formalParameterList[i].formalType.startsWith("n") )
+                        {
                             /*
                              * This is a Unicode column, save to assume TDS 7.0
                              */
@@ -801,6 +809,10 @@ public class Tds implements TdsDefinitions {
                                     comm.appendTdsShort((short) 0xFFFF);
                                 }
                                 else {
+                                    // MJH - Trap silent truncation problem
+                                    if( val.length() > 4000 )
+                                        throw new java.io.IOException("Field too long");
+
                                     comm.appendTdsShort((short) (len * 2));
                                     comm.appendChars(val);
                                 }

@@ -2,6 +2,27 @@
 Changes from jTDS 0.4
 =======================
 
+11/07/2002 - Alin Sinpalean
+
+ o Temporarily fixed bug #632852:
+
+     There appears to be an error in handling long (>4000/8000 bytes) data
+     items. This occurs where a subsequent attempt to update data, using the
+     same SQL statement, fails when executed via a different PreparedStatement.
+     This situation will occur most often when the database connection is
+     pooled for reuse for example in a web application.
+
+     The cause of the error is that, when the second SQL statement matches a
+     cached stored procedure, the data types of the parameters are not
+     re-evaluated. This causes the code in TDS.executeProcedure() to pass a
+     long String parameter as a VARCHAR parameter rather than a NTEXT causing
+     the statement to fail on the SQL Server with the message "Error converting
+     data type text to ntext".
+
+   Thanks go to Mike Hutchinson, for locating and fixing the problem. A final
+   solution, however would imply matching both the statement and the parameter
+   types when searching for a compatible procedure.
+
 11/01/2002 - Alin Sinpalean
 
  o Seems like SQL Server 6.5 does not support the extended Transact-SQL syntax

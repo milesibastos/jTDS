@@ -35,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer.
- * @version $Id: SharedNamedPipe.java,v 1.5 2004-07-27 20:20:06 ddkilzer Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.6 2004-07-28 19:25:01 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
 
@@ -191,7 +191,13 @@ public class SharedNamedPipe extends SharedSocket {
 
     /**
      * Calculate the buffer size to use when buffering the {@link SmbNamedPipe}
-     * <code>InputStream</code>.
+     * <code>InputStream</code>.  The buffer size is tied directly to the packet
+     * size because each request to the <code>SmbNamedPipe</code> will send a
+     * request for a particular size of packet.  In other words, if you only
+     * request 1 byte, the <code>SmbNamedPipe</code> will send a request out
+     * and only ask for 1 byte back.  Buffering the expected packet size ensures
+     * that all of the data will be returned in the buffer without wasting any
+     * space.
      * <p/>
      * <code>assert (packetSize == 0 || (packetSize >= {@link TdsCore.MIN_PKT_SIZE}
      * && packetSize <= {@link TdsCore.MAX_PKT_SIZE}))</code>

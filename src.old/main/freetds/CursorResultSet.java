@@ -320,7 +320,7 @@ public class CursorResultSet extends AbstractResultSet {
     throws SQLException
     {
         return (int)current.getLong(
-            current.getContext().getColumnInfo().realColumnCount());
+            getContext().getColumnInfo().realColumnCount());
     }
 
 
@@ -425,7 +425,7 @@ public class CursorResultSet extends AbstractResultSet {
 
     private Columns getColumnInfo()
     {
-        return currentRow().getContext().getColumnInfo();
+        return getContext().getColumnInfo();
     }
 
 

@@ -10,6 +10,12 @@ Changes from jTDS 0.3.1
    TimestampTest.testConnection0039 because there was really no justification
    for that and it took 20 seconds. Really need to write some more tests and
    reorganize the existing ones...
+ o Just tested jTDS with SQLDeveloper (http://sqldeveloper.solyp.com), a very
+   interesting database manager based on JDBC. The only problem I encountered
+   this far (and fixed) was that AbstractResultSet (and CursorResultSet) got
+   the context from the 'current row' instead of using their own getCursor()
+   method, which meant that when no 'current row' existed, an SQLException got
+   thrown. Now, everything seems to work fine. :o)
 
 09/09/2002 - Alin Sinpalean
 

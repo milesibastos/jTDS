@@ -12,6 +12,8 @@ Changes from jTDS 0.8-rc1
  o Minor optimizations for sending character data.
  o Improved exception handling throughout the driver to provide the complete
    stack trace of any nested exception.
+ o Applied part of patch [934396] better IO error handling; thanks to Fedor
+   Karpelevitch.
 
 04/14/2004 - Alin Sinpalean
  o Applied and improved patch #930076 - Passing parameters to stored procedure

@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $
+ * @version    $Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $
+ *@version    $Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -122,6 +122,7 @@ public class Tds implements TdsDefinitions {
     String appName;
     String serverName;
     String progName;
+    String domain;        //mdb: used for NTLM authentication; if blank, then use sql auth.
     byte progMajorVersion;
     byte progMinorVersion;
 
@@ -163,7 +164,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.10 2003-11-12 17:18:43 matt_brinkley Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -208,6 +209,8 @@ public class Tds implements TdsDefinitions {
         procedureCache = new HashMap(); // new Vector();   // XXX as
         proceduresOfTra = new ArrayList();
 
+        //mdb: if the domain is set, then the user wants NT auth (instead of SQL)
+        domain = props_.getProperty(PROP_DOMAIN, "");
 
         //mdb: get the instance port, if it is specified...
         String instanceName = props_.getProperty(PROP_INSTANCE, "");
@@ -1550,6 +1553,12 @@ public class Tds implements TdsDefinitions {
                 result = processTds7Result();
                 break;
             }
+            //mdb
+            case TDS_AUTH_TOKEN:
+            {
+                result = processNtlmChallenge();
+                break;
+            }
             default:
             {
                 throw new TdsUnknownPacketSubType(packetSubType);
@@ -2505,6 +2514,12 @@ public class Tds implements TdsDefinitions {
                 isOkay = false;
             }
             // XXX Should really process some more types of packets.
+
+            //mdb: handle ntlm challenge by sending a response...
+            if( result instanceof PacketAuthTokenResult )
+            {
+                sendNtlmChallengeResponse((PacketAuthTokenResult)result);
+            }
         }
 
         if (isOkay) {
@@ -2534,23 +2549,44 @@ public class Tds implements TdsDefinitions {
         byte[] empty = new byte[0];
         String appName = "jTDS";
 
+        //mdb
+        boolean ntlmAuth = (domain.length() > 0);
+
+        //mdb:begin-change
         short packSize = (short)( 86 + 2 *
-               (user.length() +
-                password.length() +
-                appName.length() +
+               (appName.length() +
                 serverName.length() +
                 libName.length() +
                 _database.length()) );
+        short authLen = 0;
+        //NOTE(mdb): ntlm includes auth block; sql auth includes uname and pwd.
+        if( ntlmAuth )
+        {
+            authLen = (short)(32 + domain.length());
+            packSize += authLen;
+        }
+        else
+        {
+            authLen = 0;
+            packSize += (2*(user.length()+password.length()));
+        }
+        //mdb:end-change
 
         comm.startPacket(TdsComm.LOGON70);
         comm.appendTdsInt(packSize);
         // TDS version
         comm.appendTdsInt(0x70000000);
 
-        comm.appendBytes(empty, 16, pad);
         // Magic!
+        comm.appendBytes(empty, 16, pad);
+
         comm.appendByte((byte)0xE0);
-        comm.appendByte((byte)0x03);
+        //mdb: this byte controls what kind of auth we do.
+        if( ntlmAuth )
+            comm.appendByte((byte)0x83);
+        else
+            comm.appendByte((byte)0x03);
+
         comm.appendBytes(empty, 10, pad);
 
         // Pack up value lengths, positions.
@@ -2561,14 +2597,32 @@ public class Tds implements TdsDefinitions {
         comm.appendTdsShort((short) 0);
 
         // Username
-        comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) user.length());
-        curPos += user.length() * 2;
+        //mdb: ntlm doesn't send username...
+        if( ! ntlmAuth )
+        {
+            comm.appendTdsShort(curPos);
+            comm.appendTdsShort((short) user.length());
+            curPos += user.length() * 2;
+        }
+        else
+        {
+            comm.appendTdsShort(curPos);
+            comm.appendTdsShort((short) 0);
+        }
 
         // Password
-        comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) password.length());
-        curPos += password.length() * 2;
+        //mdb: ntlm doesn't send username...
+        if( ! ntlmAuth )
+        {
+            comm.appendTdsShort(curPos);
+            comm.appendTdsShort((short) password.length());
+            curPos += password.length() * 2;
+        }
+        else
+        {
+            comm.appendTdsShort(curPos);
+            comm.appendTdsShort((short) 0);
+        }
 
         // App name
         comm.appendTdsShort(curPos);
@@ -2590,6 +2644,7 @@ public class Tds implements TdsDefinitions {
         curPos += libName.length() * 2;
 
         // Another unknown value
+        // mdb: this is the "language"
         comm.appendTdsShort(curPos);
         comm.appendTdsShort((short) 0);
 
@@ -2600,20 +2655,53 @@ public class Tds implements TdsDefinitions {
 
         // MAC address
         comm.appendBytes(empty, 6, pad);
-        comm.appendTdsShort(curPos);
 
-        // Seems like this is the size of the appended magic (was 0x30)
-        comm.appendTdsShort((short) 0);
+        //mdb: location of ntlm auth block. note that for sql auth, authLen==0.
+        comm.appendTdsShort(curPos);
+        comm.appendTdsShort(authLen);
+
+        //"next position" (same as total packet size)
         comm.appendTdsInt(packSize);
 
         // Pack up the login values.
-        String scrambledPw = tds7CryptPass(password);
-        comm.appendChars(user);
-        comm.appendChars(scrambledPw);
+        //mdb: for ntlm auth, uname and pwd aren't sent up...
+        if( ! ntlmAuth )
+        {
+            String scrambledPw = tds7CryptPass(password);
+            comm.appendChars(user);
+            comm.appendChars(scrambledPw);
+        }
         comm.appendChars(appName);
         comm.appendChars(serverName);
         comm.appendChars(libName);
         comm.appendChars(_database);
+
+        //mdb: add the ntlm auth info...
+        if( ntlmAuth )
+        {
+            // host and domain name are _narrow_ strings.
+            byte[] domainBytes = domain.getBytes("UTF8");
+            //byte[] hostBytes   = localhostname.getBytes("UTF8");
+
+            byte[] header = { 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00 };
+            comm.appendBytes( header ); //header is ascii "NTLMSSP\0"
+            comm.appendTdsInt(1);          //sequence number = 1
+            comm.appendTdsInt(0xb201);     //flags (???)
+
+            //domain info
+            comm.appendTdsShort( (short)domainBytes.length );
+            comm.appendTdsShort( (short)domainBytes.length );
+            comm.appendTdsInt(32); //offset, relative to start of auth block.
+
+            //host info
+            //NOTE(mdb): not sending host info; hope this is ok!
+            comm.appendTdsShort( (short)0 );
+            comm.appendTdsShort( (short)0 );
+            comm.appendTdsInt(32); //offset, relative to start of auth block.
+
+            // add the variable length data at the end...
+            comm.appendBytes( domainBytes );
+        }
     }
 
 
@@ -4540,4 +4628,117 @@ public class Tds implements TdsDefinitions {
 
         return isOkay;
     }
+
+    /**
+     *  Process an ntlm challenge...
+     *  Added by mdb to handle NT authentication to MS SQL Server
+     */
+    private PacketResult processNtlmChallenge()
+             throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
+    {
+        int packetLength = getSubPacketLength(); // Packet length
+
+        final int headerLength = 40;
+
+        if (packetLength < headerLength)
+            throw new TdsException("NTLM challenge: packet is too small:"+packetLength);
+
+        comm.skip(8);  //header "NTLMSSP\0"
+        int seq = comm.getTdsInt(); //sequence number (2)
+        if( seq != 2 )
+            throw new TdsException("NTLM challenge: got unexpected sequence number:"+seq);
+        comm.skip(4); //domain length (repeated 2x)
+        comm.skip(4); //domain offset
+        comm.skip(4); //flags
+        byte[] nonce = comm.getBytes(8, true); // this is what we really care about
+        comm.skip(8); //?? unknown
+
+        //skip the end, which may include the domain name, among other things...
+        comm.skip(packetLength-headerLength);
+
+        return new PacketAuthTokenResult(nonce);
+    }
+
+    private void sendNtlmChallengeResponse(PacketAuthTokenResult authToken)
+        throws TdsException, java.io.IOException
+    {
+        try
+        {
+            comm.startPacket(TdsComm.NTLMAUTH);
+
+            // host and domain name are _narrow_ strings.
+            //byte[] domainBytes = domain.getBytes("UTF8");
+            //byte[] user        = user.getBytes("UTF8");
+
+            byte[] header = { 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00 };
+            comm.appendBytes( header ); //header is ascii "NTLMSSP\0"
+            comm.appendTdsInt(3);          //sequence number = 3
+
+            int domainLenInBytes = domain.length()*2;
+            int userLenInBytes   = user.length()*2;
+            //mdb: not sending hostname; I hope this is ok!
+            int hostLenInBytes   = 0; //localhostname.length()*2;
+
+            int pos = 64 + domainLenInBytes + userLenInBytes + hostLenInBytes;
+
+            // lan man response: length and offset
+            comm.appendTdsShort( (short)24 );
+            comm.appendTdsShort( (short)24 );
+            comm.appendTdsInt(pos);
+            pos += 24;
+
+            // nt response: length and offset
+            comm.appendTdsShort( (short)24 );
+            comm.appendTdsShort( (short)24 );
+            comm.appendTdsInt(pos);
+
+            pos = 64;
+
+            //domain
+            comm.appendTdsShort( (short)domainLenInBytes );
+            comm.appendTdsShort( (short)domainLenInBytes );
+            comm.appendTdsInt(pos);
+            pos += domainLenInBytes;
+
+            //user
+            comm.appendTdsShort( (short)userLenInBytes );
+            comm.appendTdsShort( (short)userLenInBytes );
+            comm.appendTdsInt(pos);
+            pos += userLenInBytes;
+
+            //local hostname
+            comm.appendTdsShort( (short)hostLenInBytes );
+            comm.appendTdsShort( (short)hostLenInBytes );
+            comm.appendTdsInt(pos);
+            pos += hostLenInBytes;
+
+            //unknown
+            comm.appendTdsShort( (short)0 );
+            comm.appendTdsShort( (short)0 );
+            comm.appendTdsInt(pos);
+
+            //flags
+            comm.appendTdsInt(0x8201);     //flags (???)
+
+            //variable length stuff...
+            comm.appendChars(domain);
+            comm.appendChars(user);
+            //Not sending hostname...I hope this is OK!
+            //comm.appendChars(localhostname);
+
+            //the response to the challenge...
+            byte[] lmAnswer = NtlmAuth.answerLmChallenge(password, authToken.getNonce());
+            byte[] ntAnswer = NtlmAuth.answerNtChallenge(password, authToken.getNonce());
+            comm.appendBytes(lmAnswer);
+            comm.appendBytes(ntAnswer);
+
+            comm.sendPacket();
+        }
+        finally
+        {
+            //TODO(mdb): why do I have to do this?
+            comm.packetType = 0;
+        }
+    }
+
 }

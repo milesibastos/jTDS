@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.3 2003-10-10 20:51:17 matt_brinkley Exp $
+ *@version    $Id: TdsComm.java,v 1.4 2003-11-12 17:18:43 matt_brinkley Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.3 2003-10-10 20:51:17 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.4 2003-11-12 17:18:43 matt_brinkley Exp $";
 
     final static int headerLength = 8;
 
@@ -133,6 +133,11 @@ public class TdsComm implements TdsDefinitions {
      */
     public final static byte LOGON70 = 16;
     // Added 2000-06-05
+
+    /**
+     * Added by 12 Nov 03 by mdb: sends the response to the ntlm auth challenge
+     */
+    public final static byte NTLMAUTH = 0x11;
 
     // The minimum packet length that a TDS implementation can support
     // is 512 bytes.  This implementation will not support packets longer

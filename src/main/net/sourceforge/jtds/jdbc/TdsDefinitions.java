@@ -38,13 +38,13 @@ package net.sourceforge.jtds.jdbc;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.2 2003-08-30 16:06:53 matt_brinkley Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.3 2003-11-12 17:18:43 matt_brinkley Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   String cvsVersion = "$Id: TdsDefinitions.java,v 1.2 2003-08-30 16:06:53 matt_brinkley Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.3 2003-11-12 17:18:43 matt_brinkley Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -85,6 +85,7 @@ interface TdsDefinitions
    byte TDS_CAP_TOKEN       = (byte)226;  // 0xE2
    byte TDS_ENVCHANGE       = (byte)227;  // 0xE3 ENVCHANGE
    byte TDS_MSG50_TOKEN     = (byte)229;  // 0xE5
+   byte TDS_AUTH_TOKEN      = (byte)237;  // 0xED mdb: NTLM challenge
    byte TDS_RESULT_TOKEN    = (byte)238;  // 0xEE
    byte TDS_DONE            = (byte)253;  // 0xFD DONE
    byte TDS_DONEPROC        = (byte)254;  // 0xFE DONEPROC
@@ -148,5 +149,6 @@ interface TdsDefinitions
           PROP_APPNAME    = "APPNAME",
           PROP_SERVERNAME = "SERVERNAME",
           PROP_PROGNAME   = "PROGNAME",
-          PROP_TDS        = "TDS";
+          PROP_TDS        = "TDS",
+          PROP_DOMAIN     = "DOMAIN"; //if present, indicates NTLM auth
 }

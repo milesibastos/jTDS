@@ -2,6 +2,7 @@ Changes from jTDS 0.9
 =========================
 
 11/15/2004 - Alin Sinpalean
+ o Remapped TEXT/NTEXT to BLOB and IMAGE to CLOB in TdsData.types.
  o Partially applied patch [1065036] Problems with connection pooling and jTDS.
  o Cleaned up default value assignment to URL parameters, moving everything to
    DefaultProperties and replaced all property key literals with constants.

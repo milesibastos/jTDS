@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.30 2004-10-27 14:57:44 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.31 2004-11-15 15:44:38 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -195,9 +195,9 @@ public class TdsData {
         types[SYBFLT8]      = new TypeInfo("float",          8, 15, 24, true,  false, java.sql.Types.DOUBLE);
         types[SYBDATETIME]  = new TypeInfo("datetime",       8, 23, 23, false, false, java.sql.Types.TIMESTAMP);
         types[SYBBIT]       = new TypeInfo("bit",            1,  1,  1, false, false, java.sql.Types.BIT);
-        types[SYBTEXT]      = new TypeInfo("text",          -4, -1,  1, false, true,  java.sql.Types.LONGVARCHAR);
-        types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -2, false, true,  java.sql.Types.LONGVARCHAR);
-        types[SYBIMAGE]     = new TypeInfo("image",         -4, -1,  2, false, false, java.sql.Types.LONGVARBINARY);
+        types[SYBTEXT]      = new TypeInfo("text",          -4, -1,  1, false, true,  java.sql.Types.CLOB);
+        types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -2, false, true,  java.sql.Types.CLOB);
+        types[SYBIMAGE]     = new TypeInfo("image",         -4, -1,  2, false, false, java.sql.Types.BLOB);
         types[SYBMONEY4]    = new TypeInfo("smallmoney",     4, 10, 12, true,  false, java.sql.Types.DECIMAL);
         types[SYBMONEY]     = new TypeInfo("money",          8, 19, 21, true,  false, java.sql.Types.DECIMAL);
         types[SYBDATETIME4] = new TypeInfo("smalldatetime",  4, 16, 19, false, false, java.sql.Types.TIMESTAMP);

@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.20 2004-10-13 14:09:02 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.21 2004-11-15 15:44:37 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -747,7 +747,8 @@ public class JtdsResultSet implements ResultSet {
 
         if (ci.jdbcType != java.sql.Types.BINARY
             && ci.jdbcType != java.sql.Types.VARBINARY
-            && ci.jdbcType != java.sql.Types.LONGVARBINARY) {
+            && ci.jdbcType != java.sql.Types.LONGVARBINARY
+            && ci.jdbcType != java.sql.Types.BLOB) {
             throw new SQLException(
                             Messages.get("error.convert.badtypes",
                                 "Binary Stream",
@@ -786,7 +787,8 @@ public class JtdsResultSet implements ResultSet {
 
         if (ci.jdbcType != java.sql.Types.CHAR
             && ci.jdbcType != java.sql.Types.VARCHAR
-            && ci.jdbcType != java.sql.Types.LONGVARCHAR) {
+            && ci.jdbcType != java.sql.Types.LONGVARCHAR
+            && ci.jdbcType != java.sql.Types.CLOB) {
             throw new SQLException(
                             Messages.get("error.convert.badtypes",
                                 "Character Stream",

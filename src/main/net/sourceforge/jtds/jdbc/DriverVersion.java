@@ -35,12 +35,11 @@ package net.sourceforge.jtds.jdbc;
 /**
  * version number of this driver.
  *
- * @version  $Id: DriverVersion.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version  $Id: DriverVersion.java,v 1.4 2004-01-30 23:01:39 bheineman Exp $
  * @author Craig Spannring
  */
-public class DriverVersion
-{
-   public static final String cvsVersion = "$Id: DriverVersion.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $";
+public class DriverVersion {
+   public static final String cvsVersion = "$Id: DriverVersion.java,v 1.4 2004-01-30 23:01:39 bheineman Exp $";
 
    private static final int MAJORVERSION = 0;
    private static final int MINORVERSION = 6;
@@ -50,8 +49,7 @@ public class DriverVersion
     *
     * @return JDBC driver major version
     */
-   static public int getDriverMajorVersion()
-   {
+   public static int getDriverMajorVersion() {
       return MAJORVERSION;
    }
 
@@ -60,8 +58,7 @@ public class DriverVersion
     *
     * @return JDBC driver minor version number
     */
-   static public int getDriverMinorVersion()
-   {
+   public static int getDriverMinorVersion() {
       return MINORVERSION;
    }
 }

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.9 2001-09-21 06:27:09 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.9 2001-09-21 06:27:09 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.9 2001-09-21 06:27:09 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.9 2001-09-21 06:27:09 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1208,13 +1208,15 @@ public class Tds implements TdsDefinitions {
             element = getCharValue(false, true);
             break;
          }
-         case (byte)(0xa5):
+         case (byte)(SYBBIGVARBINARY):
          {
             int column_size = comm.getTdsShort();
-            element = getCharValue(false, false);
+            int len = comm.getTdsShort();
+            // if (tdsVer == Tds.TDS70 && len == 0xffff)
+            element = comm.getBytes(len);
             break;
          }
-         case (byte)(0xa7):
+         case (byte)(SYBBIGVARCHAR):
          {
             int column_size = comm.getTdsShort();
             element = getCharValue(false, false);

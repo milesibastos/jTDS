@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.41 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.42 2004-10-04 21:16:43 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2393,6 +2393,7 @@ public class TdsCore {
                         } else {
                             parameters[nextParam].value = null;
                         }
+                        parameters[nextParam].isSet = true;
                         break;
                     }
                 }

@@ -2,6 +2,9 @@ Changes from jTDS 0.9
 =========================
 
 10/04/2004 - Alin Sinpalean
+ o Corrected a bug in TdsCore causing "java.sql.SQLException: Output parameters
+   have not yet been processed. Call getMoreResults()." to be thrown with
+   Sybase.
  o Added a lot of LCID and sort order information to Charsets.properties (I
    hope all of it) in preparation for collation support for TDS 8.0.
  o Corrected bug [1039876] MS SQL JtdsResultSet.isAfterLast() always returns

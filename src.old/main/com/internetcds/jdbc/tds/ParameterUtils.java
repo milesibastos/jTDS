@@ -1,34 +1,34 @@
-//                                                                            
-// Copyright 1998 CDS Networks, Inc., Medford Oregon                          
-//                                                                            
-// All rights reserved.                                                       
-//                                                                            
-// Redistribution and use in source and binary forms, with or without         
+//
+// Copyright 1998 CDS Networks, Inc., Medford Oregon
+//
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright          
-//    notice, this list of conditions and the following disclaimer.           
-// 2. Redistributions in binary form must reproduce the above copyright       
-//    notice, this list of conditions and the following disclaimer in the     
-//    documentation and/or other materials provided with the distribution.    
-// 3. All advertising materials mentioning features or use of this software   
-//    must display the following acknowledgement:                             
-//      This product includes software developed by CDS Networks, Inc.        
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote   
-//    products derived from this software without specific prior              
-//    written permission.                                                     
-//                                                                            
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND              
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE      
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE            
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS    
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)      
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY  
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     
-// SUCH DAMAGE.                                                               
-//                                                                            
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. All advertising materials mentioning features or use of this software
+//    must display the following acknowledgement:
+//      This product includes software developed by CDS Networks, Inc.
+// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
+//    products derived from this software without specific prior
+//    written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
 
 
 package com.internetcds.jdbc.tds;
@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 public class ParameterUtils
 {
-   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.5 2001-09-24 08:45:10 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.6 2002-09-26 14:10:31 alin_sinpalean Exp $";
 
 
    /**
@@ -53,7 +53,7 @@ public class ParameterUtils
    {
       //
       // This is method is implemented as a very simple finite state machine.
-      // 
+      //
 
       int               result = 0;
 
@@ -151,11 +151,11 @@ public class ParameterUtils
       }
    }
 
-   /** 
+   /**
     * create the formal parameters for a parameter list.
     *
     * This method takes a sql string and a parameter list containing
-    * the actual parameters and creates the formal parameters for 
+    * the actual parameters and creates the formal parameters for
     * a stored procedure.  The formal parameters will later be used
     * when the stored procedure is submitted for creation on the server.
     *
@@ -166,7 +166,7 @@ public class ParameterUtils
    public static void createParameterMapping(
       String              rawQueryString,
       ParameterListItem[] parameterList,
-      Tds tds)   
+      Tds tds)
       throws SQLException
    {
       int    i;
@@ -191,28 +191,28 @@ public class ParameterUtils
             case java.sql.Types.CHAR:
             {
                String value = (String)parameterList[i].value;
-               if (value == null && tdsVer != Tds.TDS70) 
+               if (value == null && tdsVer != Tds.TDS70)
                {
                    // use the smalles case possible for nulls
                    parameterList[i].formalType = "varchar(255)";
                    parameterList[i].maxLength = 255;
 
-               } 
-               else if (tdsVer == Tds.TDS70) 
-               { 
-                   /* 
-                    * SQL Server 7 can handle Unicode so use it wherever 
+               }
+               else if (tdsVer == Tds.TDS70)
+               {
+                   /*
+                    * SQL Server 7 can handle Unicode so use it wherever
                     * possible
                     */
 
-                   if (value == null || value.length() < 4001) 
+                   if (value == null || value.length() < 4001)
                    {
                        parameterList[i].formalType = "nvarchar(4000)";
                        parameterList[i].maxLength = 4000;
                    }
                    else if (value.length() < 8001
-                              && !encoder.isDBCS() 
-                              && encoder.canBeConverted(value)) 
+                              && !encoder.isDBCS()
+                              && encoder.canBeConverted(value))
                    {
                        parameterList[i].formalType = "varchar(8000)";
                        parameterList[i].maxLength = 8000;
@@ -222,16 +222,16 @@ public class ParameterUtils
                        parameterList[i].formalType = "ntext";
                        parameterList[i].maxLength = Integer.MAX_VALUE;
                    }
-               } 
-               else 
+               }
+               else
                {
                    int len = value.length();
-                   if (encoder.isDBCS() &&  len > 127 && len < 256) 
+                   if (encoder.isDBCS() &&  len > 127 && len < 256)
                    {
                        len = encoder.getBytes(value).length;
                    }
-                   
-                   if (len < 256) 
+
+                   if (len < 256)
                    {
                        parameterList[i].formalType = "varchar(255)";
                        parameterList[i].maxLength = 255;
@@ -246,7 +246,7 @@ public class ParameterUtils
             }
             case java.sql.Types.LONGVARCHAR:
             {
-               if (tdsVer == Tds.TDS70) 
+               if (tdsVer == Tds.TDS70)
                {
                    parameterList[i].formalType = "ntext";
                }
@@ -275,6 +275,7 @@ public class ParameterUtils
             }
             case java.sql.Types.TIMESTAMP:
             case java.sql.Types.DATE:
+            case java.sql.Types.TIME:
             {
                parameterList[i].formalType = "datetime";
                break;
@@ -289,7 +290,7 @@ public class ParameterUtils
             {
                parameterList[i].formalType = "bit";
                break;
-            }            
+            }
             case java.sql.Types.BIGINT: {
                parameterList[i].formalType = "decimal(28,10)";
                break;
@@ -298,24 +299,23 @@ public class ParameterUtils
             {
                parameterList[i].formalType = "smallint";
                break;
-            }            
+            }
             case java.sql.Types.TINYINT:
             {
                parameterList[i].formalType = "tinyint";
                break;
-            }            
+            }
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
             {
                parameterList[i].formalType = "decimal(28,10)";
                break;
-            }            
+            }
             case java.sql.Types.BINARY:
             case java.sql.Types.NULL:
             case java.sql.Types.OTHER:
-            case java.sql.Types.TIME:
             {
-               throw new SQLException("Not implemented (type is ("
+               throw new SQLException("Not implemented (type is java.sql.Types."
                                       + TdsUtil.javaSqlTypeToString(parameterList[i].type) + ")");
             }
             default:

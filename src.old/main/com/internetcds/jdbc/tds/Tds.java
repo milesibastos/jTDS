@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.37 2002-09-26 14:10:31 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.37 2002-09-26 14:10:31 alin_sinpalean Exp $";
 
     public TimeoutHandler(TdsStatement stmt_, int timeout_)
     {
@@ -111,7 +111,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.37 2002-09-26 14:10:31 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -176,7 +176,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.36 2002-09-19 23:27:38 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.37 2002-09-26 14:10:31 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -3229,23 +3229,13 @@ public class Tds implements TdsDefinitions {
    {
       comm.appendByte((byte)nativeType);
 
-      if (value_in == null)
+      if( value_in == null )
       {
          comm.appendByte((byte)8);
          comm.appendByte((byte)0);
       }
       else
       {
-         Timestamp value;
-         if (value_in instanceof java.sql.Timestamp)
-         {
-            value = (Timestamp)value_in;
-         }
-         else
-         {
-            value = new Timestamp(((java.util.Date)value_in).getTime());
-         }
-
          final int secondsPerDay = 24 * 60 * 60;
          final int msPerDay      = secondsPerDay * 1000;
          final int nsPerMs       = 1000 * 1000;
@@ -3254,27 +3244,37 @@ public class Tds implements TdsDefinitions {
          // epoch (1970 based) and the sybase epoch (1900 based)
          final int epochsDifference = 25567;
 
-         long   nanoseconds = value.getNanos();
-
          // ms is the number of milliseconds into unix epoch
+         long ms = 0;
 
-         long   ms = ((value.getTime() + (nanoseconds / nsPerMs))
-                      + zoneOffset);
-                ms += getDstOffset(ms);
-         long   msIntoCurrentDay  = ms % msPerDay;
+         if (value_in instanceof java.sql.Timestamp)
+         {
+            Timestamp value = (Timestamp)value_in;
+            ms = value.getTime() + (value.getNanos()/nsPerMs);
+         }
+         else
+            ms = ((java.util.Date)value_in).getTime();
 
-         long   daysIntoUnixEpoch = (ms-msIntoCurrentDay)/msPerDay;
+         ms += zoneOffset;
+         ms += getDstOffset(ms);
 
-         int    jiffies = (int)((msIntoCurrentDay * 300) / 1000);
-         int    daysIntoSybaseEpoch = (int)daysIntoUnixEpoch
+         long msIntoCurrentDay  = ms % msPerDay;
+         long daysIntoUnixEpoch = ms / msPerDay;
+
+         if( value_in instanceof java.sql.Date )
+            msIntoCurrentDay = 0;
+         else if( value_in instanceof java.sql.Time )
+            daysIntoUnixEpoch = 0;
+
+         int  daysIntoSybaseEpoch = (int)daysIntoUnixEpoch
             + epochsDifference;
 
          // If the number of seconds and milliseconds are set to zero, then
          // pass this as a smalldatetime parameter.  Otherwise, pass it as
          // a datetime parameter
 
-         if ((msIntoCurrentDay % msPerMinute) == 0
-            && daysIntoSybaseEpoch < Short.MAX_VALUE)
+         if( (msIntoCurrentDay % msPerMinute)==0
+            && daysIntoSybaseEpoch < Short.MAX_VALUE )
          {
             comm.appendByte((byte)4);
             comm.appendByte((byte)4);
@@ -3283,6 +3283,8 @@ public class Tds implements TdsDefinitions {
          }
          else
          {
+            int jiffies = (int)((msIntoCurrentDay * 300) / 1000);
+
             comm.appendByte((byte)8);
             comm.appendByte((byte)8);
             comm.appendTdsInt(daysIntoSybaseEpoch);
@@ -4063,6 +4065,7 @@ public class Tds implements TdsDefinitions {
                 break;
             }
             case java.sql.Types.DATE:
+            case java.sql.Types.TIME:
             case java.sql.Types.TIMESTAMP:
             {
                 result = SYBDATETIMN;

@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.19 2002-09-18 16:27:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.20 2002-09-26 14:10:31 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -482,15 +482,7 @@ public class PreparedStatement_base
     public void setDate( int parameterIndex, java.sql.Date value )
              throws SQLException
     {
-        if ( value == null ) {
-            setParam( parameterIndex, null, java.sql.Types.DATE, -1 );
-        }
-        else {
-            setParam( parameterIndex,
-                    new java.sql.Date( value.getYear(), value.getMonth(), value.getDate() ),
-                    java.sql.Types.DATE,
-                    -1 );
-        }
+        setParam( parameterIndex, value, java.sql.Types.DATE, -1 );
     }
 
 
@@ -831,10 +823,10 @@ public class PreparedStatement_base
      *@param  x                 the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
-    public void setTime( int parameterIndex, java.sql.Time x )
-             throws SQLException
+    public void setTime( int parameterIndex, java.sql.Time value )
+        throws SQLException
     {
-        throw new SQLException( "Not implemented" );
+        setParam( parameterIndex, value, java.sql.Types.TIME, -1 );
     }
 
 

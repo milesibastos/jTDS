@@ -2,6 +2,14 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/26/2002 - Alin Sinpalean
+
+ o Long time, no work! :o)
+ o Implemented PreparesStatement_base.setTime() and optimized a bit Tds
+   handling of Time, Date and Timestamp objects in writeDateTimeValue(). Tried
+   to make something out from bug #614698, but it looks like it's only a
+   misunderstanding of the java.sql.Date type semantics. I'll close it.
+
 09/20/2002 - Alin Sinpalean
 
  o Bugfix in CursorResultSet: next() always returned true for the first time,

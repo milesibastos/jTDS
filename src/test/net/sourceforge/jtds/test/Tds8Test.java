@@ -59,18 +59,20 @@ public class Tds8Test extends DatabaseTestCase {
         long data = 1;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #bigint2 (data BIGINT)");
+        stmt.execute("CREATE TABLE #bigint2 (data BIGINT, minval BIGINT, maxval BIGINT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bigint2 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #bigint2 (data, minval, maxval) VALUES (?, ?, ?)");
 
         pstmt.setLong(1, data);
+        pstmt.setLong(2, Long.MIN_VALUE);
+        pstmt.setLong(3, Long.MAX_VALUE);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #bigint2");
+        ResultSet rs = stmt2.executeQuery("SELECT data, minval, maxval FROM #bigint2");
 
         assertTrue(rs.next());
 
@@ -82,7 +84,7 @@ public class Tds8Test extends DatabaseTestCase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).longValue() == 1);
-        assertTrue("1".equals(rs.getString(1)));
+        assertEquals(rs.getString(1), "1");
 
         Object tmpData = rs.getObject(1);
 
@@ -94,6 +96,9 @@ public class Tds8Test extends DatabaseTestCase {
         assertNotNull(resultSetMetaData);
         assertEquals(resultSetMetaData.getColumnType(1), Types.BIGINT);
 
+        assertEquals(rs.getLong(2), Long.MIN_VALUE);
+        assertEquals(rs.getLong(3), Long.MAX_VALUE);
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();

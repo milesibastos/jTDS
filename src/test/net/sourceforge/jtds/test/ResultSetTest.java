@@ -17,22 +17,24 @@ public class ResultSetTest extends TestBase {
         boolean data = true;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #getObject1 (data BIT)");
+        stmt.execute("CREATE TABLE #getObject1 (data BIT, minval BIT, maxval BIT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject1 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject1 (data, minval, maxval) VALUES (?, ?, ?)");
 
         pstmt.setBoolean(1, data);
+        pstmt.setBoolean(2, false);
+        pstmt.setBoolean(3, true);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #getObject1");
+        ResultSet rs = stmt2.executeQuery("SELECT data, minval, maxval FROM #getObject1");
 
         assertTrue(rs.next());
 
-        assertTrue(data == rs.getBoolean(1));
+        assertTrue(rs.getBoolean(1));
         assertTrue(rs.getByte(1) == 1);
         assertTrue(rs.getShort(1) == 1);
         assertTrue(rs.getInt(1) == 1);
@@ -40,18 +42,21 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).byteValue() == 1);
-        assertTrue("1".equals(rs.getString(1)));
+        assertEquals(rs.getString(1), "1");
 
         Object tmpData = rs.getObject(1);
 
         assertTrue(tmpData instanceof Boolean);
-        assertTrue(data == ((Boolean) tmpData).booleanValue());
+        assertEquals(((Boolean) tmpData).booleanValue(), true);
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
         assertEquals(resultSetMetaData.getColumnType(1), Types.BIT);
 
+        assertTrue(!rs.getBoolean(2));
+        assertTrue(rs.getBoolean(3));
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -64,18 +69,20 @@ public class ResultSetTest extends TestBase {
         byte data = 1;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #getObject2 (data TINYINT)");
+        stmt.execute("CREATE TABLE #getObject2 (data TINYINT, minval TINYINT, maxval TINYINT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject2 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject2 (data, minval, maxval) VALUES (?, ?, ?)");
 
         pstmt.setByte(1, data);
+        pstmt.setByte(2, Byte.MIN_VALUE);
+        pstmt.setByte(3, Byte.MAX_VALUE);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #getObject2");
+        ResultSet rs = stmt2.executeQuery("SELECT data, minval, maxval FROM #getObject2");
 
         assertTrue(rs.next());
 
@@ -87,7 +94,7 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).byteValue() == 1);
-        assertTrue("1".equals(rs.getString(1)));
+        assertEquals(rs.getString(1), "1");
 
         Object tmpData = rs.getObject(1);
 
@@ -98,6 +105,9 @@ public class ResultSetTest extends TestBase {
 
         assertNotNull(resultSetMetaData);
         assertEquals(resultSetMetaData.getColumnType(1), Types.TINYINT);
+
+        assertEquals(rs.getByte(2), Byte.MIN_VALUE);
+        assertEquals(rs.getByte(3), Byte.MAX_VALUE);
 
         assertTrue(!rs.next());
         stmt2.close();
@@ -111,18 +121,20 @@ public class ResultSetTest extends TestBase {
         short data = 1;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #getObject3 (data SMALLINT)");
+        stmt.execute("CREATE TABLE #getObject3 (data SMALLINT, minval SMALLINT, maxval SMALLINT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject3 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject3 (data, minval, maxval) VALUES (?, ?, ?)");
 
         pstmt.setShort(1, data);
+        pstmt.setShort(2, Short.MIN_VALUE);
+        pstmt.setShort(3, Short.MAX_VALUE);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #getObject3");
+        ResultSet rs = stmt2.executeQuery("SELECT data, minval, maxval FROM #getObject3");
 
         assertTrue(rs.next());
 
@@ -134,7 +146,7 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).shortValue() == 1);
-        assertTrue("1".equals(rs.getString(1)));
+        assertEquals(rs.getString(1), "1");
 
         Object tmpData = rs.getObject(1);
 
@@ -146,6 +158,9 @@ public class ResultSetTest extends TestBase {
         assertNotNull(resultSetMetaData);
         assertEquals(resultSetMetaData.getColumnType(1), Types.SMALLINT);
 
+        assertEquals(rs.getShort(2), Short.MIN_VALUE);
+        assertEquals(rs.getShort(3), Short.MAX_VALUE);
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -158,18 +173,20 @@ public class ResultSetTest extends TestBase {
         int data = 1;
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #getObject4 (data INT)");
+        stmt.execute("CREATE TABLE #getObject4 (data INT, minval INT, maxval INT)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject4 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject4 (data, minval, maxval) VALUES (?, ?, ?)");
 
         pstmt.setInt(1, data);
+        pstmt.setInt(2, Integer.MIN_VALUE);
+        pstmt.setInt(3, Integer.MAX_VALUE);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #getObject4");
+        ResultSet rs = stmt2.executeQuery("SELECT data, minval, maxval FROM #getObject4");
 
         assertTrue(rs.next());
 
@@ -181,7 +198,7 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.getFloat(1) == 1);
         assertTrue(rs.getDouble(1) == 1);
         assertTrue(rs.getBigDecimal(1).intValue() == 1);
-        assertTrue("1".equals(rs.getString(1)));
+        assertEquals(rs.getString(1), "1");
 
         Object tmpData = rs.getObject(1);
 
@@ -193,6 +210,9 @@ public class ResultSetTest extends TestBase {
         assertNotNull(resultSetMetaData);
         assertEquals(resultSetMetaData.getColumnType(1), Types.INTEGER);
 
+        assertEquals(rs.getInt(2), Integer.MIN_VALUE);
+        assertEquals(rs.getInt(3), Integer.MAX_VALUE);
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();

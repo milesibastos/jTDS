@@ -1286,4 +1286,20 @@ public class SAfeTest extends DatabaseTestCase {
         assertNull(cstmt.getObject(1));
         cstmt.close();
     }
+
+    /**
+     * Test that the SQL parser doesn't try to parse the table name unless
+     * necessary (or that it is able to parse function calls if it does).
+     */
+    public void testTableParsing() throws SQLException {
+        Statement stmt = con.createStatement();
+        try {
+            stmt.executeQuery(
+                    "SELECT * FROM ::fn_missing('c:\\t file.trc')");
+            fail("Expecting an SQLException");
+        } catch (SQLException ex) {
+            // 42000 == syntax error or access rule violation
+            assertEquals("42000", ex.getSQLState());
+        }
+    }
 }

@@ -3,6 +3,8 @@ Changes from jTDS 1.0
 
 02/01/2005 - Alin Sinpalean
  o Updated FAQ to include information about local named pipes.
+ o Modified SQLParser to only extract table names when requested to, because it
+   was unable to parse function calls.
 
 01/28/2005 - Alin Sinpalean
  o Added checks for timeout exceptions to JtdsStatement.executeSQLQuery() and

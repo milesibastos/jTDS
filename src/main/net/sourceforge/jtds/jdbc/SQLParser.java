@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.14 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.15 2005-02-01 06:28:37 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -797,6 +797,7 @@ class SQLParser {
      */
     private String getTableName()
     {
+        // FIXME If the resulting table name contains a '(' (i.e. is a function) "rollback" and return null
         StringBuffer name = new StringBuffer(128);
         char c = (s < len)? in[s]: ' ';
         while (s < len && Character.isWhitespace(c)) {
@@ -918,7 +919,6 @@ class SQLParser {
                                 keyWord = copyKeyWord();
                                 if (keyWord.equals("select")) {
                                     isSelect = true;
-                                    extractTable = true;
                                 }
                                 break;
                             }

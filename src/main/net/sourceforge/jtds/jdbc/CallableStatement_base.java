@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.15 2004-02-18 19:17:53 bheineman Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.16 2004-02-20 00:09:09 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.15 2004-02-18 19:17:53 bheineman Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.16 2004-02-20 00:09:09 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -122,7 +122,7 @@ implements java.sql.CallableStatement {
             char ch = rawQueryString.charAt(i);
 
             if (Character.isLetterOrDigit(ch)
-                || ch == '#'                
+                || ch == '#'
                 || ch == '?') {
                 break;
             } else if (ch == '[' || ch == '"') {
@@ -451,13 +451,10 @@ implements java.sql.CallableStatement {
         closeResults(false);
         lastOutParam = -1;
 
-        // First make sure the caller has filled in all the parameters.
-        ParameterUtils.verifyThatParametersAreSet(parameterList);
-
         // Setup the parameter native types and maximum sizes. Don't assign
         // names to parameters, it's going to crash.
         ParameterUtils.createParameterMapping(
-                rawQueryString, parameterList, tds, false);
+                null, parameterList, tds, false);
 
         // Execute the stored procedure
         return internalExecuteCall(procedureName, parameterList, parameterList,
@@ -746,5 +743,9 @@ implements java.sql.CallableStatement {
 
     public void setURL(String str, java.net.URL url) throws SQLException {
         NotImplemented();
+    }
+
+    public String getProcedureName() {
+        return procedureName;
     }
 }

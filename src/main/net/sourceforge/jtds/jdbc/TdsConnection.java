@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2004-02-20 00:09:10 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -85,7 +85,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.15 2004-02-17 19:03:25 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.16 2004-02-20 00:09:10 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.15 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.16 2004-02-20 00:09:10 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -856,7 +856,7 @@ public class TdsConnection implements Connection
         }
 
         PreparedStatement_base stmt = new PreparedStatement_base(this, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-        stmt.setReturnKeys(returnKeys);
+        stmt.statementReturnsKeys(returnKeys);
 
         return stmt;
     }

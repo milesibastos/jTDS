@@ -37,7 +37,6 @@ extends TestBase
     public void testScrollablePreparedStatement()
         throws Exception
     {
-
         Statement stmt = con.createStatement();
         makeTestTables( stmt );
         makeObjects( stmt, 10 );
@@ -52,13 +51,14 @@ extends TestBase
 
         assertTrue( rs.isBeforeFirst() );
         while ( rs.next() ) {}
-//        assertTrue( rs.isAfterLast() );
+        assertTrue( rs.isAfterLast() );
 
         //This currently fails because the PreparedStatement
         //Doesn't know it needs to create a cursored ResultSet.
         //Needs some refactoring!!
+        // SAfe Not any longer. ;o)
         while ( rs.previous() ) {}
-//        assertTrue( rs.isBeforeFirst() );
+        assertTrue( rs.isBeforeFirst() );
 
         rs.close();
 
@@ -92,7 +92,7 @@ extends TestBase
         }
 
         pstmt.close();
-    
+
         con.commit();
         con.setAutoCommit(true);
 

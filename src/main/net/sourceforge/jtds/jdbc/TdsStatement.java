@@ -44,12 +44,13 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.21 2004-02-16 20:13:06 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.22 2004-02-20 00:09:10 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Vector;
 
 public class TdsStatement implements java.sql.Statement
 {
@@ -65,12 +66,13 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.21 2004-02-16 20:13:06 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.22 2004-02-20 00:09:10 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
     SQLWarningChain warningChain = new SQLWarningChain(); // The warning chain
     TdsResultSet results = null;
+    protected Vector cursorResults = new Vector();
 
     private Tds actTds = null;
     private boolean escapeProcessing = true;
@@ -87,14 +89,25 @@ public class TdsStatement implements java.sql.Statement
 
     private boolean isClosed = false;
 
-    //
-    // MJH - Indicates that user wants generated keys
-    //
+    /**
+     * Indicates that user wants generated keys.
+     */
     private boolean returnKeys = false;
 
-    //
-    // MJH - Custom result set to store generated key values
-    //
+    /**
+     * Indicates that the statement returns generated keys (i.e a <code>SELECT
+     * SCOPE_IDENTITY()</code> is included in the
+     * <code>PreparedStatement</code>).
+     * <p>
+     * Only applies to <code>PreparedStatement</code>. This is separate from
+     * {@link #returnKeys} because <code>returnKeys</code> is modified by the
+     * <code>Statement.execute</code> methods.
+     */
+    private boolean statementReturnsKeys = false;
+
+    /**
+     * Custom result set to store generated key values.
+     */
     private GenKeyResultSet lastGeneratedKey = null;
 
     public OutputParamHandler outParamHandler;
@@ -119,13 +132,15 @@ public class TdsStatement implements java.sql.Statement
     }
 
     /**
-     * MJH - Set the return generated keys flag.
+     * Set the "<code>PreparedStatement</code> returns generated keys" flag.
+     * This means that a <code>SELECT SCOPE_IDENTITY()</code> was appended to
+     * the prepared SQL query.
      *
-     * @param value <code>true</code if generated keys should be retrieved;
+     * @param value <code>true</code if generated keys are returned;
      *              <code>false</code> otherwise.
      */
-    public void setReturnKeys(boolean  value) {
-        this.returnKeys = value;
+    public void statementReturnsKeys(boolean  value) {
+        this.statementReturnsKeys = value;
     }
 
     /**
@@ -165,19 +180,38 @@ public class TdsStatement implements java.sql.Statement
      */
     public ResultSet executeQuery(String sql) throws SQLException {
         checkClosed();
+        SQLWarning warn = null;
 
         // MJH - Return keys never valid for this type of call
         this.returnKeys = false;
 
-        if (type == ResultSet.TYPE_FORWARD_ONLY
-            && concurrency == ResultSet.CONCUR_READ_ONLY) {
-            if (internalExecute(sql)) {
-                return results;
-            } else {
-                throw new SQLException("No ResultSet was produced.");
+        if (type != ResultSet.TYPE_FORWARD_ONLY
+                || concurrency != ResultSet.CONCUR_READ_ONLY) {
+            // Try to create a cursor
+            try {
+                ResultSet rs = new CursorResultSet(this, sql, fetchDir, null);
+                cursorResults.add(rs);
+                return rs;
+            } catch (SQLException ex) {
+                // @todo Should check the error code, to make sure it was not
+                //       caused by something else
+                // Cursor creation failed, add a warning
+                warn = new SQLWarning(
+                        ex.getMessage(), ex.getSQLState(), ex.getErrorCode());
             }
+        }
+
+        boolean res = internalExecute(sql);
+        // If we had a warning we have to put it in the warning chain here,
+        // because internalExecute clears the warning chain
+        if (warn != null) {
+            warningChain.addWarning(warn);
+        }
+
+        if (res) {
+            return results;
         } else {
-            return new CursorResultSet(this, sql, fetchDir);
+            throw new SQLException("No ResultSet was produced.");
         }
     }
 
@@ -199,15 +233,15 @@ public class TdsStatement implements java.sql.Statement
         // return executeImpl(getTds(), sql, warningChain);
     }
 
-    public final synchronized boolean internalExecute(String sql, Tds tds, SQLWarningChain wChain)
-    throws SQLException {
+    public final synchronized boolean internalExecute(
+            String sql, Tds tds, SQLWarningChain wChain) throws SQLException {
     	// MJH - Changed to get the results without freeing the Tds object so
     	// we can call SELECT @@IDENTITY if requred.
         try {
             checkClosed();
 
             boolean result = executeImpl(tds, sql, wChain);
-            internalGetGeneratedKeys(tds, result); // MJH Get the keys if required
+            internalGetGeneratedKeys(tds, result, false); // MJH Get the keys if required
 
             return result;
         } finally {
@@ -262,29 +296,29 @@ public class TdsStatement implements java.sql.Statement
             tds.executeProcedure(name, formalParameterList, actualParameterList,
                                  this, wChain, getQueryTimeout(), false);
 
-    //        return getMoreResults(tds, wChain, true);
             // MJH - We do not want to free the Tds before checking to
             // see if we need to get the generated keys.
             result = getMoreResults(tds, warningChain, false);
 
-            if (this.returnKeys && tds.moreResults() && !result) {
-                //
-                // MJH - OK We need to get the @@IDENTITY value
-                //
-                int saveCount = this.updateCount;
+            internalGetGeneratedKeys(tds, result, true);
+//            if (this.statementReturnsKeys && tds.moreResults() && !result) {
+//                //
+//                // MJH - OK We need to get the @@IDENTITY value
+//                //
+//                int saveCount = this.updateCount;
+//
+//                if (getMoreResults(tds, new SQLWarningChain(), false)) {
+//                    // Construct special result set
+//                    this.lastGeneratedKey = new GenKeyResultSet(this, this.results);
+//                    this.results.close();
+//                    this.results = null;
+//                }
+//
+//                this.updateCount = saveCount;
+//                result = false;
+//            }
 
-                if (getMoreResults(tds, new SQLWarningChain(), false)) {
-                    // Construct special result set
-                    this.lastGeneratedKey = new GenKeyResultSet(this, this.results);
-                    this.results.close();
-                    this.results = null;
-                }
-
-                this.updateCount = saveCount;
-                result = false;
-            }
-
-            return this.results != null;
+            return result;
         } finally {
             releaseTds();
         }
@@ -381,9 +415,6 @@ public class TdsStatement implements java.sql.Statement
             return;
         }
 
-        // SAfe Mark Statement as closed internally, too
-        isClosed = true;
-
         if (actTds != null) {
             // Tds not yet released.
             try {
@@ -401,6 +432,21 @@ public class TdsStatement implements java.sql.Statement
                 throw new SQLException(e.toString());
             }
         }
+
+        if (!connection.isClosed()) {
+            // Synch on the Vector, to make sure it doesn't get changed
+            synchronized (cursorResults) {
+                for (int i=cursorResults.size()-1; i>=0; i--) {
+                    CursorResultSet rs = (CursorResultSet)cursorResults.get(i);
+                    rs.close();
+                }
+            }
+        }
+
+        cursorResults.clear();
+
+        // SAfe Mark Statement as closed internally, too
+        isClosed = true;
     }
 
     /**
@@ -657,32 +703,34 @@ public class TdsStatement implements java.sql.Statement
         //      Tds.skipToEnd while we're processing the results
         synchronized (tds) {
             try {
-                tds.goToNextResult(wChain, this);
+                do {
+                    tds.goToNextResult(wChain, this);
 
-                if (!tds.moreResults()) {
-                    if (allowTdsRelease) {
-                        releaseTds();
+                    if (!tds.moreResults()) {
+                        if (allowTdsRelease) {
+                            releaseTds();
+                        }
+
+                        wChain.checkForExceptions();
+                        return false;
                     }
 
-                    wChain.checkForExceptions();
-                    return false;
-                }
+                    // SAfe We found a ResultSet
+                    if (tds.isResultSet()) {
+                        results = new TdsResultSet(tds, this, wChain, fetchSize);
+                        wChain.checkForExceptions();
+                        return true;
+                    }
 
-                // SAfe We found a ResultSet
-                if (tds.isResultSet()) {
-                    results = new TdsResultSet(tds, this, wChain, fetchSize);
-                    wChain.checkForExceptions();
-                    return true;
-                }
+                    // SAfe It's a row count. Only TDS_DONE for Statements and
+                    //      TDS_DONEINPROC for PreparedStatements are row counts
+                    PacketEndTokenResult end =
+                        (PacketEndTokenResult) tds.processSubPacket();
+                    updateCount = end.getRowCount();
 
-                // SAfe It's a row count. Only TDS_DONE for Statements and
-                //      TDS_DONEINPROC for PreparedStatements are row counts
-                PacketEndTokenResult end =
-                    (PacketEndTokenResult) tds.processSubPacket();
-                updateCount = end.getRowCount();
-
-                // SAfe Eat up all packets until the next result or the end
-                tds.goToNextResult(wChain, this);
+                    // SAfe Eat up all packets until the next result or the end
+                    tds.goToNextResult(wChain, this);
+                } while (updateCount == -1 && tds.moreResults());
 
                 if (allowTdsRelease) {
                     releaseTds();
@@ -1037,14 +1085,15 @@ public class TdsStatement implements java.sql.Statement
     // last generated IDENTIY column. The value is stored in special resultSet
     // for late use in the getGeneratedKeys() method.
     //
-    private void internalGetGeneratedKeys(Tds tds, boolean result) throws SQLException {
+    private void internalGetGeneratedKeys(Tds tds,
+                                          boolean result,
+                                          boolean alreadySubmitted)
+            throws SQLException {
         this.lastGeneratedKey = null;
 
-        if (this.returnKeys
-            && !(this instanceof CallableStatement_base)
-            && !(this instanceof CallableStatement_base)
+        if ((this.returnKeys || this.statementReturnsKeys)
             && !result
-            && !tds.moreResults()) {
+            && (tds.moreResults() == alreadySubmitted)) {
 
             //
             // Routine only used by Statement
@@ -1053,26 +1102,35 @@ public class TdsStatement implements java.sql.Statement
 
             try {
                 SQLWarningChain tmpWarnings = new SQLWarningChain();
-                // SCOPE_IDENTITY() is prefered as it avoids problems with
-                // counts returned from triggers.
-                // @@IDENTITY is required for SQL 6.5 / Sybase in all cases.
-                //
-                String sql;
 
-                if (tds.getTdsVer() == Tds.TDS70) {
-                    sql = "SELECT SCOPE_IDENTITY() AS ID";
-                } else {
-                    sql = "SELECT @@IDENTITY AS ID";
+                if (!alreadySubmitted) {
+                    // SCOPE_IDENTITY() is prefered as it avoids problems with
+                    // counts returned from triggers.
+                    // @@IDENTITY is required for SQL 6.5/Sybase in all cases.
+                    //
+                    String sql;
+
+                    if (tds.getTdsVer() == Tds.TDS70) {
+                        sql = "SELECT SCOPE_IDENTITY() AS ID";
+                    } else {
+                        sql = "SELECT @@IDENTITY AS ID";
+                    }
+                    tds.executeQuery(sql, this, tmpWarnings, timeout);
                 }
 
-                if (executeImpl(tds, sql, tmpWarnings)) {
+                if (getMoreResults(tds, tmpWarnings, false)) {
                     // Construct a special result set.
                     this.lastGeneratedKey = new GenKeyResultSet(this, this.results);
                     this.results.close();
                     this.results = null;
+                } else {
+                    throw new SQLException(
+                            "Expected generated keys ResultSet.");
                 }
-            } catch (Exception e) {
-                throw new SQLException(e.getMessage());
+            } catch (SQLException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                throw new SQLException(ex.getMessage());
             } finally {
                 this.results = null; // Tidy up.
                 this.updateCount = saveCount; // Restore original count.

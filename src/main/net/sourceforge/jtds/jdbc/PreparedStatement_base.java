@@ -54,13 +54,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.21 2004-02-17 19:03:25 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.22 2004-02-20 00:09:09 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.21 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.22 2004-02-20 00:09:09 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -124,6 +124,16 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @see                      Statement#execute
      */
     public boolean execute(Tds tds) throws SQLException {
+        closeResults(false);
+
+        Procedure procedure = findOrCreateProcedure(tds);
+
+        return internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
+            warningChain);
+    }
+
+    private Procedure findOrCreateProcedure(Tds tds)
+            throws SQLException {
         //
         // TDS can handle prepared statements by creating a temporary
         // procedure.  Since procedure must have the datatype specified
@@ -131,12 +141,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // the actual procedure until the statement is executed.  By
         // that time we know all the types of all of the parameters.
         //
-
         Procedure procedure = null;
-        closeResults(false);
-
-        // First make sure the caller has filled in all the parameters.
-        ParameterUtils.verifyThatParametersAreSet(parameterList);
 
         // Map parameters to native types and assign them generated names
         ParameterUtils.createParameterMapping(
@@ -160,7 +165,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             // Create the stored procedure
             // MJH Pass in the caculated signature to be used as the cache key
             procedure = new Procedure(rawQueryString, signature.toString(),
-                parameterList, tds);
+                                      parameterList, tds);
 
             // SAfe Submit it to the SQL Server before adding it to the cache or procedures of transaction list.
             //      Otherwise, if submitProcedure fails (e.g. because of a syntax error) it will be in our procedure
@@ -171,8 +176,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             tds.addStoredProcedure(procedure);
         }
 
-        return internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
-            warningChain);
+        return procedure;
     }
 
     private Procedure findCompatibleStoredProcedure(Tds tds, String rawQueryString) {
@@ -192,6 +196,60 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database-access error occurs.
      */
     public java.sql.ResultSet executeQuery() throws SQLException {
+        warningChain.clearWarnings();
+        SQLWarning warn = null;
+
+        // Try to create a CursorResultSet if needed
+        if (getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
+                || getResultSetConcurrency() != ResultSet.CONCUR_READ_ONLY) {
+            TdsConnection conn = (TdsConnection) getConnection();
+            String procedureName = null;
+            // SAfe We have to synchronize this, in order to avoid mixing up our
+            //      actions with another CursorResultSet's and eating up its
+            //      results.
+            synchronized (conn.mainTdsMonitor) {
+                Tds tds = conn.allocateTds(true);
+                try {
+                    if (this instanceof CallableStatement) {
+                        procedureName = ((CallableStatement_base) this).
+                                getProcedureName();
+                        ParameterUtils.createParameterMapping(
+                                null, parameterList, tds, false);
+                    } else {
+                        procedureName = findOrCreateProcedure(tds)
+                                .getProcedureName();
+                    }
+                } finally {
+                    try {
+                        conn.freeTds(tds);
+                    } catch (TdsException ex) {
+                        warningChain.addException(
+                                new SQLException(ex.getMessage()));
+                    }
+                }
+            }
+
+            // Check if the procedure was found
+            warningChain.checkForExceptions();
+
+            try {
+                // Create the CursorResultSet
+                ResultSet rs = new CursorResultSet(
+                        this, procedureName, getFetchDirection(),
+                        parameterList);
+                cursorResults.add(rs);
+                return rs;
+            } catch (SQLException ex) {
+                // @todo Should check the error code, to make sure it was not
+                //       caused by something else
+                // Cursor creation failed, add a warning
+                warn = new SQLWarning(
+                        ex.getMessage(), ex.getSQLState(), ex.getErrorCode());
+            }
+        }
+
+        // We got here either because the requested type is FORWARD_ONLY or
+        // because the cursor creation failed.
         Tds tds = getTds();
 
         try {
@@ -202,6 +260,9 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
             return results;
         } finally {
+            if (warn != null) {
+                warningChain.addWarning(warn);
+            }
             releaseTds();
         }
     }

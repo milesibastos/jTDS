@@ -1,6 +1,25 @@
 Changes from jTDS 0.6
 ========================
 
+02/19/2004 - Alin Sinpalean
+ o Implemented support for scrollable/updateable ResultSets from prepared/
+   callable statements.
+ o Implemented a fallback to FORWARD_ONLY ResultSets if cursor creation fails.
+ o Fixed handling of TDS_COLINFO packets (these can contain the actual column
+   name if the SELECT statement contained aliases; the alias/label is returned
+   in the TDS_COLMETADATA packet).
+ o Updated AbstractResultSet to handle requests for columns both by label and
+   name (until now they were the same).
+ o Improved the implementation of generated keys retrieval.
+ o TdsStatement.getMoreResults() no longer returns update counts from end of
+   ResultSets and end of process tokens.
+ o Added a list of cursors-based ResultSets to TdsStatement and the code needed
+   to maintain this list and close them when the Statement closes. This is not
+   really enough, they should be closed on the next execute or close, but we'll
+   see to that some other time.
+ o Made ParameterUtils.verifyThatParametersAreSet() private and had it called
+   from createParameterMapping, as they always appeared together in this order.
+
 02/18/2004 - Alin Sinpalean
  o Made PacketRowResult.setElementAt much more flexible. It now converts the
    provided Objects into an acceptable internal type, to support the

@@ -16,10 +16,10 @@ import java.util.GregorianCalendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.8 2004-02-16 20:11:40 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.9 2004-02-20 00:09:09 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.8 2004-02-16 20:11:40 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.9 2004-02-20 00:09:09 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
 
@@ -393,7 +393,8 @@ public abstract class AbstractResultSet implements ResultSet {
 
         for (int i = 1; i <= info.fakeColumnCount(); i++) {
             /** @todo Also need to look at the fully qualified name, i.e. table.column */
-            if (info.getName(i).equalsIgnoreCase(columnName)) {
+            if (info.getName(i).equalsIgnoreCase(columnName)
+                    || info.getLabel(i).equalsIgnoreCase(columnName)) {
                 return i;
             }
         }

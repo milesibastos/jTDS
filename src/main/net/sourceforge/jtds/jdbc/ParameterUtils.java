@@ -35,15 +35,15 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.8 2004-02-19 00:14:37 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.9 2004-02-20 00:09:09 alin_sinpalean Exp $";
 
     /**
      * Check that all items in parameterList have been given a value
      *
      * @exception SQLException thrown if one or more parameters aren't set
      */
-    public static void verifyThatParametersAreSet(ParameterListItem[] parameterList)
-    throws SQLException {
+    private static void verifyThatParametersAreSet(ParameterListItem[] parameterList)
+            throws SQLException {
         for (int i = 0; i < parameterList.length; i++) {
             if (parameterList[i].isOutput) {
                 // Allow output parameters to be "not set"
@@ -75,7 +75,10 @@ public class ParameterUtils {
                                               ParameterListItem[] parameterList,
                                               Tds tds,
                                               boolean assignNames)
-    throws SQLException {
+            throws SQLException {
+        // First make sure the caller has filled in all the parameters.
+        verifyThatParametersAreSet(parameterList);
+
         int nextParameterNumber = 0;
         int tdsVer = tds.getTdsVer();
         EncodingHelper encoder = tds.getEncoder();

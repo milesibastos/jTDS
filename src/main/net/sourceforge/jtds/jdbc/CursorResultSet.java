@@ -110,11 +110,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
      */
     private PacketRowResult insertRow;
 
-    public Context getContext() {
-        return context;
-    }
-
-    public CursorResultSet(TdsStatement stmt, String sql, int fetchDir)
+    public CursorResultSet(TdsStatement stmt, String sql, int fetchDir,
+                           ParameterListItem[] parameters)
             throws SQLException {
         this.stmt = stmt;
         this.conn = (TdsConnection) stmt.getConnection();
@@ -127,7 +124,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         // SAfe Until we're actually created use the Statement's warning chain.
         warningChain = stmt.warningChain;
 
-        cursorCreate();
+        cursorCreate(parameters);
 
         // SAfe Now we can create our own warning chain.
         warningChain = new SQLWarningChain();
@@ -138,6 +135,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
             close();
         } catch (SQLException ex) {
         }
+    }
+
+    public Context getContext() {
+        return context;
     }
 
     public void setFetchDirection(int direction) throws SQLException {
@@ -209,7 +210,9 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         if (open) {
             try {
                 warningChain.clearWarnings();
-                cursorClose();
+                if (!conn.isClosed())
+                    cursorClose();
+                stmt.cursorResults.remove(this);
             } finally {
                 open = false;
                 stmt = null;
@@ -374,6 +377,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         }
 
         cursor(CURSOR_OP_INSERT, insertRow);
+        // Update the number of rows and the cursor position
+        cursorFetch(FETCH_INFO, 1);
         insertRow = new PacketRowResult(context);
     }
 
@@ -387,6 +392,8 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         }
 
         cursor(CURSOR_OP_UPDATE, current);
+        // Update the number of rows and the cursor position
+        cursorFetch(FETCH_INFO, 1);
         refreshRow();
     }
 
@@ -411,7 +418,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         cursorFetch(FETCH_REPEAT, 1);
     }
 
-    private void cursorCreate() throws SQLException {
+    private void cursorCreate(ParameterListItem[] procedureParams) throws SQLException {
         warningChain.clearWarnings();
         parameterList = new ParameterListItem[5];
         int scrollOpt, ccOpt;
@@ -477,6 +484,15 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         param[4].isSet = true;
         param[4].type = Types.INTEGER;
         param[4].isOutput = true;
+
+        if (procedureParams != null) {
+            param = new ParameterListItem[5+procedureParams.length];
+            System.arraycopy(parameterList, 0, param, 0, 5);
+
+            for (int i=0; i<procedureParams.length; i++) {
+                param[5+i] = procedureParams[i];
+            }
+        }
 
         lastOutParam = -1;
         retVal = null;

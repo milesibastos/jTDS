@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.32 2004-02-19 00:14:37 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.33 2004-02-20 00:09:09 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.32 2004-02-19 00:14:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.33 2004-02-20 00:09:09 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -2549,12 +2549,22 @@ public class Tds implements TdsDefinitions {
             while (bytesRead < totalLen) {
                 int columnIndex = (comm.getByte() & 0xff);
                 int tableIndex = (comm.getByte() & 0xff) - 1;
-                comm.getByte(); // flags
+                byte flags = comm.getByte(); // flags
                 bytesRead += 3;
 
                 if (tableIndex != -1) {
                     columns.getColumn(columnIndex).setTableName(
                             tables.get(tableIndex).toString());
+                }
+
+                // If bit 5 is set, we have a column name
+                if ((flags & 0x20) != 0) {
+                    final int nameLen = comm.getByte() & 0xff;
+                    bytesRead += 1;
+                    final String colName = comm.getString(nameLen, encoder);
+                    columns.getColumn(columnIndex).setName(colName);
+                    bytesRead += (tdsVer == TDS70)
+                            ? 2*colName.length() : colName.length(); 
                 }
             }
         }
@@ -2583,8 +2593,9 @@ public class Tds implements TdsDefinitions {
         comm.getByte();
         // comm.skip(3);
         int rowCount = comm.getTdsInt();
-        if (op == (byte) 0xC1)
-            rowCount = 0;
+        // If it was a SELECT or an END PROCEDURE, ignore it
+        if (op == (byte) 0xC1 || op == (byte) 0xE0)
+            rowCount = -1;
 
         if (packetType == TdsDefinitions.TDS_DONEPROC)
             rowCount = -1;

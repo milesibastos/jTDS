@@ -606,7 +606,7 @@ public class SAfeTest extends DatabaseTestCase
     }
 
     /**
-     * Test how an "out-of-order" close behaves (e.g. close the
+     * Test how an "out-of-order" close behaves (e.g close the
      * <code>Connection</code> first, then the <code>Statement</code> anf
      * finally the <code>ResultSet</code>).
      */

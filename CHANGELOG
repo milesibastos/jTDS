@@ -2,10 +2,17 @@ Changes from jTDS 0.6
 ========================
 
 02/09/2004 - Alin Sinpalean
- o Inplementer CursorResultSet.isLast() and added a check to currentRow() to
+ o Implemented CursorResultSet.isLast() and added a check to currentRow() to
    see if there is actually a current row (otherwise a NPE was thrown).
  o Updated SanityTest and UpdateTest to test the new features implemented in
    CursorResultSet.
+
+02/09/2004 - Brian Heineman
+ o Implemented ResultSet.updateAsciiStream().
+ o Implemented ResultSet.updateBinaryStream().
+ o Implemented ResultSet.updateBlob().
+ o Implemented ResultSet.updateCharacterStream().
+ o Implemented ResultSet.updateClob().
 
 02/08/2004 - Brian Heineman
  o Improved parsing of callable statements to be case-insensitive, allow

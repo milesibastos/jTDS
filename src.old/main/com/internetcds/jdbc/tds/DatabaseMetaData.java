@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.7 2002-06-28 18:01:15 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.8 2002-08-05 14:14:33 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.7 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.8 2002-08-05 14:14:33 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -366,7 +366,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
    public boolean dataDefinitionCausesTransactionCommit()
       throws SQLException
    {
-      NotImplemented(); return false;
+      // XXX needs to be checked for Sybase
+      return false;
    }
 
 
@@ -379,7 +380,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
    public boolean dataDefinitionIgnoredInTransactions()
       throws SQLException
    {
-      NotImplemented(); return false;
+      // XXX needs to be checked for Sybase
+      return false;
    }
 
 
@@ -703,68 +705,81 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
       return lookup;
    }
 
-   private java.sql.ResultSet getColumns_SQLServer65(
-      String catalog,
-      String schemaPattern,
-      String tableNamePattern,
-      String columnNamePattern)
+   private static String makeTypeSQL(String colName)
       throws SQLException
    {
-      int                  i;
+      // Create a lookup table for mapping between native and jdbc types
+      // This table can be reused for all FreeTDS drivers of the same version
 
-      String              sql = null;
-      java.sql.Statement  tmpTableStmt = connection.createStatement();
+      String sql =
+         "CASE " + colName + " " +
+         "WHEN  31 THEN 1111 " +   // VOID
+         "WHEN  34 THEN 1111 " +   // IMAGE
+         "WHEN  35 THEN   -1 " +   // TEXT
+         "WHEN  37 THEN   -3 " +   // VARBINARY
+         "WHEN  38 THEN    4 " +   // INTN
+         "WHEN  39 THEN   12 " +   // VARCHAR
+         "WHEN  45 THEN   -2 " +   // BINARY
+         "WHEN  47 THEN    1 " +   // CHAR
+         "WHEN  48 THEN   -6 " +   // INT1
+         "WHEN  50 THEN   -7 " +   // BIT
+         "WHEN  52 THEN    5 " +   // INT2
+         "WHEN  56 THEN    4 " +   // INT4
+         "WHEN  58 THEN   93 " +   // DATETIME4
+         "WHEN  59 THEN    7 " +   // REAL
+         "WHEN  60 THEN 1111 " +   // MONEY
+         "WHEN  61 THEN   93 " +   // DATETIME
+         "WHEN  62 THEN    8 " +   // FLT8
+         "WHEN  63 THEN    2 " +   // NUMERIC
+         "WHEN 106 THEN    3 " +   // DECIMAL
+         "WHEN 108 THEN    2 " +   // NUMERIC
+         "WHEN 109 THEN    8 " +   // FLTN
+         "WHEN 110 THEN 1111 " +   // MONEYN
+         "WHEN 111 THEN   93 " +   // DATETIMN
+         "WHEN 112 THEN 1111 " +   // MONEY4
+         "WHEN 122 THEN 1111 " +   // SMALLMONEY
+         "ELSE 0             " +   // Unknown
+         "END";
 
-      // XXX We need to come up with something better than a global temporary
-      // table.  It could cause problems if two people try to getColumns().
-      // (note- it is _unlikely_, not impossible)
-      String              tmpTableName = "##t#" + UniqueId.getUniqueId();
-      String              lookup       = makeTypeTable(tmpTableStmt);
+      return sql;
+   }
 
-      // create a temporary table
-      sql =
-         "create table " + tmpTableName + " (           " +
-         "    TABLE_CAT         sysname null,           " +
-         "    TABLE_SCHEM       sysname null,           " +
-         "    TABLE_NAME        sysname null,           " +
-         "    COLUMN_NAME       sysname null,           " +
-         "    DATA_TYPE         integer null,           " +
-         "    TYPE_NAME         sysname null,           " +
-         "    COLUMN_SIZE       integer null,           " +
-         "    BUFFER_LENGTH     integer null,           " +
-         "    DECIMAL_DIGITS    integer null,           " +
-         "    NUM_PREC_RADIX    integer null,           " +
-         "    NULLABLE          integer null,           " +
-         "    REMARKS           char(255) null,         " +
-         "    COLUMN_DEF        char(255) null,         " +
-         "    SQL_DATA_TYPE     integer null,           " +
-         "    SQL_DATETIME_SUB  integer null,           " +
-         "    CHAR_OCTET_LENGTH integer null,           " +
-         "    ORDINAL_POSITION  integer null,           " +
-         "    IS_NULLABLE       char(3))                " +
-         "";
-      tmpTableStmt.execute(sql);
+    private java.sql.ResultSet getColumns_SQLServer65(
+        String catalog,
+        String schemaPattern,
+        String tableNamePattern,
+        String columnNamePattern)
+        throws SQLException
+    {
 
-      // For each table in the system add its columns
-      // Note-  We have to do them one at a time in case
-      // there are databases we don't have access to.
-      java.sql.ResultSet          rs = getCatalogs(catalog);
-      int n = 0;
-      while(rs.next())
-      {
-         String cat = rs.getString(1);
+        String sql = null;
+        java.sql.Statement statement = connection.createStatement();
+
+        String lookup = makeTypeSQL("c.type");
+
+        java.sql.ResultSet rs;
+        String cat = catalog;
+
+        if(catalog == null)
+        {
+            rs = statement.executeQuery("SELECT DB_NAME()");
+            rs.next();
+
+            cat = rs.getString(1);
+
+            rs.close();
+        }
 
          // XXX Security risk.  It 'might' be possible to create
          // a catalog name that when inserted into this sql statement could
          // do other commands.
-         sql =
-            "insert into  " + tmpTableName + "                " +
+        sql =
             "select                                           " +
             "   TABLE_CAT='" + cat + "',                      " +
             "   TABLE_SCHEM=USER_NAME(o.uid),                 " +
             "   TABLE_NAME=o.name,                            " +
             "   COLUMN_NAME=c.name,                           " +
-            "   DATA_TYPE=l.jdbc_type,                        " +
+            "   DATA_TYPE=" + lookup + ",                     " +
             "   TYPE_NAME=t.name,                             " +
             "   COLUMN_SIZE=c.prec,                           " +
             "   BUFFER_LENGTH=0,                              " +
@@ -772,8 +787,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "   NUM_PREC_RADIX=10,                            " +
             "   NULLABLE=convert(integer,                     " +
             "                    convert(bit, c.status&8)),   " +
-            "   REMARKS=null,                                 " +
-            "   COLUMN_DEF=null,                              " +
+            (tds.getDatabaseMajorVersion()>=8 && tds.getServerType()==Tds.SQLSERVER ?
+                "   REMARKS=convert(varchar,                  " +
+                "       (select value from                    " +
+                "       " + cat + ".dbo.sysproperties as rm   " +
+                "       where rm.id=o.id and smallid=c.colid  " +
+                "       and rm.name='MS_Description')),       " :
+                "   REMARKS=NULL,                             ") +
+            "   COLUMN_DEF=                                   " +
+            "       (select syscom.text from                  " +
+            "       " + cat + ".dbo.sysobjects as sysobj,     " +
+            "       " + cat + ".dbo.syscomments as syscom     " +
+            "       where sysobj.parent_obj=o.id              " +
+            "       and sysobj.type='D'                       " +
+            "       and sysobj.info=c.colid                   " +
+            "       and syscom.id=sysobj.id),                 " +
             "   SQL_DATATYPE=c.type,                          " +
             "   SQL_DATETIME_SUB=0,                           " +
             "   CHAR_OCTET_LENGTH=c.length,                   " +
@@ -785,44 +813,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "from                                             " +
             "   " + cat + ".dbo.sysobjects o,                 " +
             "   " + cat + ".dbo.syscolumns c,                 " +
-            "   " + lookup + " l,                             " +
             "   " + cat + ".dbo.systypes t                    " +
-            "where o.type in ('V', 'U') and o.id=c.id         " +
-            "   and t.usertype=c.usertype "+// SAfe: and t.type=c.type   " +
-            "   and l.native_type=c.type                      " +
-            "";
-         try
-         {
-            n = tmpTableStmt.executeUpdate(sql);
-         }
-         catch (SQLException e)
-         {
-        System.out.println(e.getMessage());
-         }
-      }
-      rs.close();
+            "where o.type in ('S', 'V', 'U') and o.id=c.id    " +
+            "   and t.usertype=c.usertype                     " +
+            "   and USER_NAME(o.uid) LIKE                     " +
+            "           '" + schemaPattern + "'               " +
+            "   and o.name LIKE '" + tableNamePattern + "'    " ;
 
+        if(columnNamePattern != null) sql += "  and c.name like '" + columnNamePattern + "'";
 
-      sql =
-         "select distinct * from " + tmpTableName + " where  " +
-         " TABLE_SCHEM like ?  and  TABLE_NAME  like ?  and  " +
-         " COLUMN_NAME like ?                                " +
-         "order by TABLE_CAT, TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION " ;
+        sql += " order by TABLE_CAT, TABLE_SCHEM, TABLE_NAME, ORDINAL_POSITION";
 
-      java.sql.PreparedStatement ps = connection.prepareStatement(sql);
+        rs = statement.executeQuery(sql);
 
-      ps.setString(1, schemaPattern);
-      ps.setString(2, tableNamePattern);
-      ps.setString(3, columnNamePattern);
-      rs = ps.executeQuery();
-
-      // We need to do something about deleting the global temporary table
-      tmpTableStmt.close();
-
-      // System.out.println(n + " records updated");
-
-      return rs;
-   }
+        return rs;
+    }
 
     /**
      *  Get a description of the foreign key columns in the foreign key table
@@ -1187,11 +1192,81 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *@exception  SQLException  if a database-access error occurs.
      *@see                      #getExportedKeys
      */
-    public java.sql.ResultSet getImportedKeys( String catalog, String schema,
-            String table ) throws SQLException
+    public java.sql.ResultSet getImportedKeys(
+        String catalog,
+        String schema,
+        String table)
+        throws SQLException
     {
-        NotImplemented();
-        return null;
+        String sql = null;
+        java.sql.Statement statement = connection.createStatement();
+
+        java.sql.ResultSet rs;
+
+        if(catalog == null)
+        {
+            rs = statement.executeQuery("SELECT DB_NAME()");
+            rs.next();
+
+            catalog = rs.getString(1);
+
+            rs.close();
+        }
+
+         // XXX Security risk.  It 'might' be possible to create
+         // a catalog name that when inserted into this sql statement could
+         // do other commands.
+        sql =
+            "select                                                         " +
+            "  '" + catalog + "' as PKTABLE_CAT,                            " +
+            "  PKTABLE_SCHEM=                                               " +
+            "    (select USER_NAME(uid) from                                " +
+            "    " + catalog + ".dbo.sysobjects                             " +
+            "    where f.rkeyid=id),                                        " +
+            "  OBJECT_NAME(f.rkeyid) as PKTABLE_NAME,                       " +
+            "  PKCOLUMN_NAME=                                               " +
+            "    (select name from                                          " +
+            "    " + catalog + ".dbo.syscolumns                             " +
+            "    where f.rkeyid=id and f.rkey=colid),                       " +
+            "  '" + catalog + "'  as FKTABLE_CAT,                           " +
+            "  USER_NAME(o.uid) as FKTABLE_SCHEM,                           " +
+            "  OBJECT_NAME(o.parent_obj) as FKTABLE_NAME,                   " +
+            "  FKCOLUMN_NAME=                                               " +
+            "    (select name from                                          " +
+            "    " + catalog + ".dbo.syscolumns                             " +
+            "    where f.fkeyid=id and f.fkey=colid),                       " +
+            "  f.keyno as KEY_SEQ,                                          " +
+            "  UPDATE_RULE=                                                 " +
+            "    CASE OBJECTPROPERTY(f.constid, 'CnstIsUpdateCascade')      " +
+            "    WHEN 1 THEN 0                                              " +
+            "    ELSE 1                                                     " +
+            "    END,                                                       " +
+            " DELETE_RULE=                                                  " +
+            "    CASE OBJECTPROPERTY(f.constid, 'CnstIsDeleteCascade')      " +
+            "    WHEN 1 THEN 0                                              " +
+            "    ELSE 1                                                     " +
+            "    END,                                                       " +
+            "  o.name as FK_NAME,                                           " +
+            "  PK_NAME=                                                     " +
+            "    (select name from                                          " +
+            "    " + catalog + ".dbo.sysobjects                             " +
+            "    where parent_obj=f.rkeyid and xtype='PK'),                 " +
+            "  7 as DEFERRABILITY                                           " +
+            "from                                                           " +
+            "  " + catalog + ".dbo.sysobjects as o,                         " +
+            "  " + catalog + ".dbo.sysforeignkeys as f                      " +
+            "where                                                          " +
+            "  OBJECT_NAME(o.parent_obj)='" + table + "' and                " +
+            "  o.xtype = 'F' and                                            " +
+            "  o.id=f.constid                                               " ;
+
+        if(schema != null) sql += " and USER_NAME(o.uid) LIKE '" + schema + "'" ;
+
+        sql += " order by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, KEY_SEQ";
+
+        rs = statement.executeQuery(sql);
+
+        return rs;
     }
 
 
@@ -1252,12 +1327,87 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *      description
      *@exception  SQLException  if a database-access error occurs.
      */
-    public java.sql.ResultSet getIndexInfo( String catalog, String schema, String table,
-            boolean unique, boolean approximate )
-             throws SQLException
+    public java.sql.ResultSet getIndexInfo(
+        String catalog,
+        String schema,
+        String table,
+        boolean unique,
+        boolean approximate)
+        throws SQLException
     {
-        NotImplemented();
-        return null;
+        String sql = null;
+        java.sql.Statement statement = connection.createStatement();
+
+        java.sql.ResultSet rs;
+
+        if(catalog == null)
+        {
+            rs = statement.executeQuery("SELECT DB_NAME()");
+            rs.next();
+
+            catalog = rs.getString(1);
+
+            rs.close();
+        }
+
+         // XXX Security risk.  It 'might' be possible to create
+         // a catalog name that when inserted into this sql statement could
+         // do other commands.
+        sql =
+            "select                                                                                 " +
+            "  '" + catalog + "' as TABLE_CAT,                                                      " +
+            "  USER_NAME(o.uid) as TABLE_SCHEM,                                                     " +
+            "  o.name as TABLE_NAME,                                                                " +
+            "  NON_UNIQUE=                                                                          " +
+            "          CASE INDEXPROPERTY(o.id, i.name, 'IsUnique')                                 " +
+            "          WHEN 1 THEN convert(bit, 0)                                                  " +
+            "          WHEN 0 THEN convert(bit, 1)                                                  " +
+            "          END,                                                                         " +
+            "  null as INDEX_QUALIFIER,                                                             " +
+            "  i.name as INDEX_NAME,                                                                " +
+            "  TYPE=                                                                                " +
+            "          CASE                                                                         " +
+            "          WHEN INDEXPROPERTY(o.id, i.name, 'IsStatistics')=1 THEN 0                    " +
+            "          WHEN INDEXPROPERTY(o.id, i.name, 'IsClustered')=1 THEN 1                     " +
+            "          ELSE 3                                                                       " +
+            "          END,                                                                         " +
+            "  ORDINAL_POSITION=                                                                   " +
+            "          CASE                                                                         " +
+            "          WHEN INDEXPROPERTY(o.id, i.name, 'IsStatistics')=1 THEN 0                    " +
+            "          ELSE k.keyno                                                                 " +
+            "          END,                                                                         " +
+            "  c.name as COLUMN_NAME,                                                               " +
+            "  ASC_OR_DESC=                                                                         " +
+            (tds.getDatabaseMajorVersion()>=8 && tds.getServerType()==Tds.SQLSERVER ?
+               ("          CASE                                                                         " +
+                "          WHEN INDEXKEY_PROPERTY(o.id, i.indid, k.keyno, 'IsDescending')=1 THEN 'DESC' " +
+                "          ELSE 'ASC'                                                                   " +
+                "          END,                                                                         ")
+               : "NULL,") +
+            "  i.rowcnt as CARDINALITY,                                                             " +
+            "  i.dpages as PAGES,                                                                   " +
+            "  null as FILTER_CONDITION                                                             " +
+            "from                                                                                   " +
+            "  " + catalog + ".dbo.sysobjects as o,                                                 " +
+            "  " + catalog + ".dbo.sysindexes as i,                                                 " +
+            "  " + catalog + ".dbo.sysindexkeys as k,                                               " +
+            "  " + catalog + ".dbo.syscolumns as c                                                  " +
+            "where                                                                                  " +
+            "  o.name='" + table + "' and                                                           " +
+            "  o.id=i.id and                                                                        " +
+            "  k.id=i.id and                                                                        " +
+            "  k.indid=i.indid and                                                                  " +
+            "  k.id=c.id and                                                                        " +
+            "  k.colid=c.colid                                                                      " ;
+
+        if(schema != null) sql += " and USER_NAME(o.uid) LIKE '" + schema + "'" ;
+        if(unique) sql += "  and NON_UNIQUE=0";
+
+        sql += " order by NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION";
+
+        rs = statement.executeQuery(sql);
+
+        return rs;
     }
 
 
@@ -1290,7 +1440,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxCatalogNameLength() throws SQLException
     {
-        NotImplemented();
+//      NotImplemented();
         return 0;
     }
 
@@ -1485,7 +1635,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxSchemaNameLength() throws SQLException
     {
-        NotImplemented();
+//      NotImplemented();
         return 0;
     }
 
@@ -1601,11 +1751,63 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      *      description
      *@exception  SQLException  if a database-access error occurs.
      */
-    public java.sql.ResultSet getPrimaryKeys( String catalog, String schema,
-            String table ) throws SQLException
+    public java.sql.ResultSet getPrimaryKeys(
+        String catalog,
+        String schema,
+        String table)
+        throws SQLException
     {
-        NotImplemented();
-        return null;
+        String sql = null;
+        java.sql.Statement statement = connection.createStatement();
+
+        java.sql.ResultSet rs;
+
+        if(catalog == null)
+        {
+            rs = statement.executeQuery("SELECT DB_NAME()");
+            rs.next();
+
+            catalog = rs.getString(1);
+
+            rs.close();
+        }
+
+         // XXX Security risk.  It 'might' be possible to create
+         // a catalog name that when inserted into this sql statement could
+         // do other commands.
+        sql =
+            "select                                     " +
+            "  '" + catalog + "' as TABLE_CAT,          " +
+            "  USER_NAME(o.uid) as TABLE_SCHEM,         " +
+            "  TABLE_NAME=                              " +
+            "    (select name from                      " +
+            "    dbo.sysobjects                         " +
+            "    where o.parent_obj=id),                " +
+            "  c.name as COLUMN_NAME,                   " +
+            "  k.keyno as KEY_SEQ,                      " +
+            "  o.name as PK_NAME                        " +
+            "from                                       " +
+            "  " + catalog + ".dbo.sysobjects as o,     " +
+            "  " + catalog + ".dbo.sysindexes as i,     " +
+            "  " + catalog + ".dbo.sysindexkeys as k,   " +
+            "  " + catalog + ".dbo.syscolumns as c      " +
+            "where                                      " +
+            "  o.xtype = 'PK' and                       " +
+            "  i.id = o.parent_obj and                  " +
+            "  i.name = o.name and                      " +
+            "  k.id = o.parent_obj and                  " +
+            "  k.indid = i.indid and                    " +
+            "  k.id=c.id and                            " +
+            "  k.colid=c.colid and                      " +
+            "  OBJECT_NAME(o.parent_obj)='" + table + "'";
+
+        if(schema != null) sql += " and USER_NAME(o.uid) LIKE '" + schema + "'" ;
+
+        sql += " order by KEY_SEQ";
+
+        rs = statement.executeQuery(sql);
+
+        return rs;
     }
 
 
@@ -1748,7 +1950,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             "      and l.native_type=c.type                   " +
             "      and o.name like ? and c.name like ?        " +
             "";
-// System.out.println("Executing \n" + sql + "\n");
          try
          {
             java.sql.PreparedStatement ps = connection.prepareStatement(sql);
@@ -1940,34 +2141,19 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getSchemas() throws SQLException
     {
         // XXX We should really clean up all these temporary tables.
-        String tmpName = "#t#" + UniqueId.getUniqueId();
-        final String sql =
-                " create table " + tmpName + "                                   " +
-                " (                                                              " +
-         "    q  sysname null,                                            " +
-         "    o  sysname not null,                                        " +
-         "    n  sysname null,                                            " +
-         "    t  sysname null,                                            " +
-                "    r  varchar(255) null                                        " +
-         " )                                                              " +
-         "                                                                " +
-         " insert into " + tmpName + " EXEC sp_tables ' ', '%', ' ', null " +
-         "                                                                " +
-                " select TABLE_SCHEM=o from " + tmpName + "                      " +
-                "";
-        java.sql.Statement stmt = connection.createStatement();
+        java.sql.Statement statement = connection.createStatement();
         java.sql.ResultSet rs;
 
-        if ( stmt.execute( sql ) ) {
-            throw new SQLException( "Internal error.  "
-                     + "Unexpected result from stmt.execute(sql) "
-                     + "inside of getSchemas" );
-        }
+        String sql =
+            "select                                         " +
+            "  u.name as TABLE_SCHEM,                       " +
+            "  DB_NAME() as TABLE_CATALOG                   " +
+            "from                                           " +
+            "  dbo.sysusers as u                            " +
+            "where                                          " +
+            "  issqlrole=0                                  ";
 
-        while (!stmt.getMoreResults() && stmt.getUpdateCount() != -1) ;
-        rs = stmt.getResultSet();
-
-        return rs;
+        return statement.executeQuery(sql);
     }
 
 
@@ -2155,121 +2341,67 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String schemaPattern,
             String tableNamePattern,
             String types[] )
-             throws SQLException
+            throws SQLException
     {
-        int paramIndex;
-        int i;
+        java.sql.Statement statement = connection.createStatement();
+        java.sql.ResultSet rs;
 
-        String sql = null;
-        java.sql.Statement tmpTableStmt = connection.createStatement();
-
-        // XXX We need to come up with something better than a global temporary
-        // table.  It could cause problems if two people try to getTables().
-        // (note- it is unlikely to cause any problems, but it is possible)
-        String tmpTableName = "##t#" + UniqueId.getUniqueId();
-        String catalogCriteria;
-        String schemaCriteria;
-        String tableCriteria;
-        String typesCriteria;
-
-        if ( schemaPattern != null ) {
-            schemaPattern = schemaPattern.trim();
-        }
-        if ( tableNamePattern != null ) {
-            tableNamePattern = tableNamePattern.trim();
-        }
-
-        /*
-        debugPrintln( "inside getTables" );
-        debugPrintln( "  catalog is |" + catalog + "|" );
-        debugPrintln( "  schemaPattern is |" + schemaPattern + "|" );
-        debugPrintln( "  tableNamePattern is |" + tableNamePattern + "|" );
-        if ( types == null ) {
-            System.out.println( "types is null" );
-        }
-        else {
-            for ( i = 0; i < types.length; i++ ) {
-                debugPrintln( "  types[" + i + "] is |" + types[i] );
+        if(types != null)
+        {
+            for(int i=0; i<types.length; i++)
+            {
+                if(types[i].equalsIgnoreCase("SYSTEM TABLE")) types[i] = "S";
+                else if(types[i].equalsIgnoreCase("TABLE")) types[i] = "U";
+                else if(types[i].equalsIgnoreCase("VIEW")) types[i] = "V";
+                else types[i] = "U";
             }
         }
-         */
-
-        // create a temporary table
-        sql =
-                "create table " + tmpTableName + " ( " +
-         "    cat    sysname null,            " +
-         "    schem  sysname null,            " +
-         "    name   sysname null,            " +
-         "    type   sysname null,            " +
-                "    rem    char(255) null)          ";
-        tmpTableStmt.execute( sql );
-
-        // For each database in the system add its tables
-        // Note-  We have to do them one at a time in case
-        // there are databases we don't have access to.
-      java.sql.ResultSet rs = getCatalogs(catalog);
-        while ( rs.next() ) {
-            String cat = rs.getString( 1 );
-
-            sql =
-                    "insert into " + tmpTableName + "                            " +
-                    "    select '" + cat + "', USER_NAME(uid), name,  type, null " +
-                    "        from " + cat + ".dbo.sysobjects                     " +
-                    "        where type in ('S', 'U', 'V')                       ";
-            try {
-                tmpTableStmt.executeUpdate( sql );
-            }
-            catch ( SQLException e ) {
-                // We might not have access to certain tables.  Just ignore the
-                // error if this is the case.
-            }
-        }
-        rs.close();
-
-        sql =
-                "update " + tmpTableName + " " +
-                "  set type='SYSTEM TABLE' where type='S'";
-        tmpTableStmt.executeUpdate( sql );
-
-        sql =
-                "update " + tmpTableName + " " +
-                "  set type='TABLE' where type='U'";
-        tmpTableStmt.executeUpdate( sql );
-
-        sql =
-                "update " + tmpTableName + " " +
-                "  set type='VIEW' where type='V'";
-        tmpTableStmt.executeUpdate( sql );
-
-        sql =
-                "select TABLE_CAT=cat, TABLE_SCHEM=schem, "
-                 + "     TABLE_NAME=name, TABLE_TYPE=type, "
-                 + "     REMARKS=rem                       "
-                 + " from " + tmpTableName
-         + " where schem like ?  and "
-                 + " name like ?   ";
-        if ( types != null && types.length > 0 ) {
-            sql = sql + " and ( type = ? ";
-
-            for ( i = 1; i < types.length; i++ ) {
-                sql = sql + " or type=? ";
-            }
-            sql = sql + " )";
+        else
+        {
+            types = new String[]{"S", "U", "V"};
         }
 
-        java.sql.PreparedStatement ps = connection.prepareStatement( sql );
+        if(catalog == null)
+        {
+            rs = statement.executeQuery("SELECT DB_NAME()");
+            rs.next();
 
+            catalog = rs.getString(1);
 
-      ps.setString(1, schemaPattern);
-      ps.setString(2, tableNamePattern);
-      for(i=0; types!=null && i<types.length; i++)
-      {
-         ps.setString(i+3, types[i]);
+            rs.close();
         }
-        rs = ps.executeQuery();
 
-        // We need to do something about deleting the global temporary table
-        tmpTableStmt.close();
+        String sql =
+         "select                            " +
+         "  '"+catalog+"' as TABLE_CAT,     " +
+         "  USER_NAME(uid) as TABLE_SCHEM,  " +
+         "  name as TABLE_NAME,             " +
+         "  TABLE_TYPE=                     " +
+         "    CASE type                     " +
+         "      WHEN 'S' THEN 'SYSTEM TABLE'" +
+         "      WHEN 'U' THEN 'TABLE'       " +
+         "      WHEN 'V' THEN 'VIEW'        " +
+         "      END,                        " +
+         "  null as REMARKS                 " +
+         "from                              " +
+         "  " + catalog + ".dbo.sysobjects  " +
+         "where                             " +
+         "  type in (";
+
+        for(int i=0; i<types.length; i++)
+        {
+            if(i > 0) sql += ", ";
+            sql += "'"+types[i]+"'";
+        }
+
+        sql += ") ";
+
+        if(schemaPattern != null) sql += "  and USER_NAME(uid) LIKE '" + schemaPattern +"'";
+        if(tableNamePattern != null) sql += "  and name LIKE '" + tableNamePattern +"'";
+
+        sql += "  order by TABLE_CAT, TABLE_SCHEM, TABLE_NAME";
+
+        rs = statement.executeQuery(sql);
 
         return rs;
     }
@@ -2481,7 +2613,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean isReadOnly() throws SQLException
     {
-        NotImplemented();
         return false;
     }
 
@@ -2625,9 +2756,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesLowerCaseIdentifiers() throws SQLException
     {
-        // according to "Programming ODBC for SQLServer" Appendix A this
-        // depends on how the SQLServer was installed.
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2641,7 +2770,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesLowerCaseQuotedIdentifiers() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2655,6 +2784,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesMixedCaseIdentifiers() throws SQLException
     {
+        // XXX Will have to use [sp_server_info] for this.
         NotImplemented();
         return false;
     }
@@ -2669,6 +2799,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesMixedCaseQuotedIdentifiers() throws SQLException
     {
+        // XXX Will have to use [sp_server_info] for this.
         NotImplemented();
         return false;
     }
@@ -2683,7 +2814,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesUpperCaseIdentifiers() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2697,7 +2828,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean storesUpperCaseQuotedIdentifiers() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2738,8 +2869,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsANSI92EntryLevelSQL() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Will have to check for Sybase
+        return true;
     }
 
 
@@ -2751,7 +2882,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsANSI92FullSQL() throws SQLException
     {
-        NotImplemented();
+        // XXX Will have to check for Sybase
         return false;
     }
 
@@ -2764,7 +2895,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsANSI92IntermediateSQL() throws SQLException
     {
-        NotImplemented();
+        // XXX Will have to check for Sybase
         return false;
     }
 
@@ -2777,8 +2908,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -2790,8 +2921,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -2803,8 +2934,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -2816,8 +2947,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -2829,8 +2960,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -2846,6 +2977,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsColumnAliasing() throws SQLException
     {
+        // XXX needs to be checked for Sybase
         return true;
     }
 
@@ -2886,8 +3018,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCoreSQLGrammar() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return true;
     }
 
 
@@ -2900,8 +3032,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsCorrelatedSubqueries() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return true;
     }
 
 
@@ -2915,8 +3047,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
              throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return tds.getTdsVer()>=Tds.TDS70 || (tds.getTdsVer()==Tds.TDS42 && tds.getServerType()==Tds.SQLSERVER);
     }
 
 
@@ -2929,8 +3061,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public boolean supportsDataManipulationTransactionsOnly()
              throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return tds.getTdsVer()<Tds.TDS70 && (tds.getTdsVer()!=Tds.TDS42 || tds.getServerType()!=Tds.SQLSERVER);
     }
 
 
@@ -2943,7 +3075,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsDifferentTableCorrelationNames() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -2956,8 +3088,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsExpressionsInOrderBy() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return true;
     }
 
 
@@ -2969,7 +3101,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsExtendedSQLGrammar() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -3038,7 +3170,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsIntegrityEnhancementFacility() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -3081,8 +3213,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsMinimumSQLGrammar() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return true;
     }
 
 
@@ -3096,6 +3228,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsMixedCaseIdentifiers() throws SQLException
     {
+        // XXX Will have to use [sp_server_info] to find this out
         NotImplemented();
         return false;
     }
@@ -3111,6 +3244,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException
     {
+        // XXX Will have to use [sp_server_info] to find this out
         NotImplemented();
         return false;
     }
@@ -3163,7 +3297,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -3177,7 +3311,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -3191,8 +3325,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenStatementsAcrossCommit() throws SQLException
     {
-        NotImplemented();
-        return false;
+        return true;
     }
 
 
@@ -3205,8 +3338,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsOpenStatementsAcrossRollback() throws SQLException
     {
-        NotImplemented();
-        return false;
+        return true;
     }
 
 
@@ -3269,8 +3401,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -3282,8 +3414,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -3295,8 +3427,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -3308,8 +3440,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSchemasInProcedureCalls() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -3321,8 +3453,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX needs to be checked for Sybase
+        return true;
     }
 
 
@@ -3334,7 +3466,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSelectForUpdate() throws SQLException
     {
-        NotImplemented();
+        // XXX Need to check for Sybase
         return false;
     }
 
@@ -3400,8 +3532,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsSubqueriesInQuantifieds() throws SQLException
     {
-        NotImplemented();
-        return false;
+        // XXX Need to check for Sybase
+        return true;
     }
 
 
@@ -3718,13 +3850,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
     protected void NotImplemented() throws SQLException
     {
-        try {
-            throw new SQLException( "Not implemented" );
-        }
-        catch ( SQLException e ) {
-            e.printStackTrace();
-        }
-        throw new SQLException( "Not implemented" );
+        SQLException ex = new SQLException( "Not implemented" );
+        ex.printStackTrace();
+        throw ex;
     }
 
 

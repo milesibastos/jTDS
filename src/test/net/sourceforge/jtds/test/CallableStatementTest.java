@@ -157,6 +157,20 @@ public class CallableStatementTest extends TestBase {
         rs.close();
     }
 
+    public void testCallableStatementExec7() throws Exception {
+        CallableStatement stmt = con.prepareCall("execute \"master\"..sp_who");
+
+        makeTestTables(stmt);
+        makeObjects(stmt, 8);
+
+        ResultSet rs = stmt.executeQuery();
+
+        dump(rs);
+
+        stmt.close();
+        rs.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

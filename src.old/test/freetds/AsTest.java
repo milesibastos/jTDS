@@ -114,6 +114,7 @@ public class AsTest extends DatabaseTestCase {
     stmt.executeUpdate(sqlnocount1);
     stmt.executeUpdate(sqlwithcount2);
     stmt.executeUpdate(sqlnocount2);
+
     CallableStatement cstmt = con.prepareCall("#multi1nocount");
     assertTrue(cstmt.execute());
     ResultSet rs = cstmt.getResultSet();
@@ -237,7 +238,7 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(!rs.next());
     assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
      */
-  }    
+  }
 
   public void testBug457955() throws Exception
   {
@@ -245,18 +246,18 @@ public class AsTest extends DatabaseTestCase {
     Statement stmt = con.createStatement();
     dropProcedure("#Bug457955");
     stmt.executeUpdate("  create procedure #Bug457955 (@par1 VARCHAR(10)) as select @par1");
-    String param = "123456789"; 
-    CallableStatement s = con.prepareCall("exec #Bug457955 ?"); 
-    s.setString(1, param); 
-    ResultSet r = s.executeQuery(); 
-    
+    String param = "123456789";
+    CallableStatement s = con.prepareCall( "exec #Bug457955 ?" );
+    s.setString(1, param);
+    ResultSet r = s.executeQuery();
+
   }
 
 
 
   public void testBugAttTest2() throws Exception
   {
-    String tabdef = 
+    String tabdef =
       "CREATE TABLE #ICEributeTest_AttributeTest2( " +
       "  ICEobjectId NUMERIC(19) " +
       "     /*CONSTRAINT ICEributeTest_AttributeTest2_PKICEobjectId PRIMARY KEY */ " +
@@ -313,7 +314,7 @@ public class AsTest extends DatabaseTestCase {
       "     NOT NULL, " +
       "  updateCount INTEGER " +
       "    NOT NULL " +
-      "  ) "; 
+      "  ) ";
     Statement stmt = con.createStatement();
     dropTable("#ICEributeTest_AttributeTest2");
     stmt.executeUpdate(tabdef);
@@ -376,22 +377,22 @@ public class AsTest extends DatabaseTestCase {
     PreparedStatement pstmt = con.prepareStatement("insert into #testBigInt values (?)");
     pstmt.setNull(1,java.sql.Types.BIGINT);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setLong(1,99999999999L);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setLong(1,-99999999999L);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setLong(1,9999999999999L);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setLong(1,-9999999999999L);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setLong(1,(long)99999999999L);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
   }
   public void testBoolean() throws Throwable
   {
@@ -415,16 +416,16 @@ public class AsTest extends DatabaseTestCase {
     PreparedStatement pstmt = con.prepareStatement("insert into #testBit values (?)");
     pstmt.setBoolean(1,true);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setBoolean(1,false);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
     pstmt.setNull(1,java.sql.Types.BIT);
     assertTrue(!pstmt.execute());
-    assertTrue(pstmt.getUpdateCount() == 1);        
+    assertTrue(pstmt.getUpdateCount() == 1);
   }
 
-  
+
   public void testBinary() throws Throwable
   {
     String crtab = "create table #testBinary (a varbinary(8000))";

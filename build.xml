@@ -11,6 +11,9 @@
     <tstamp/>
 
     <property name="build" value="build"/>
+
+    <property name="build.compiler" value="modern"/>
+
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
@@ -30,7 +33,7 @@
     <mkdir dir="${build}/classes"/>
   </target>
 
-  <target depends="prepare" name="compile">
+  <target depends="init,prepare" name="compile">
     <mkdir dir="${build}/src"/>
     <copydir dest="${build}/src" includes="**/*.java" src="${src}/main"/>
     <copydir dest="${build}/src" includes="**/*.java" src="${src}/test"/>
@@ -84,5 +87,5 @@
     <deltree dir="${dist}/tmp"/>
   </target>
 
-    
+
 </project>

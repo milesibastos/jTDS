@@ -24,7 +24,9 @@ extends TestBase
     public void testPreparedStatement()
         throws Exception
     {
-        PreparedStatement pstmt = con.prepareStatement( "SELECT * FROM #test" );
+
+        PreparedStatement pstmt
+            = con.prepareStatement( "SELECT * FROM #test" );
 
         makeTestTables( pstmt );
         makeObjects( pstmt, 10 );
@@ -32,6 +34,36 @@ extends TestBase
         ResultSet rs = pstmt.executeQuery();
 
         dump( rs );
+
+        rs.close();
+
+    }
+
+    public void testScrollablePreparedStatement()
+        throws Exception
+    {
+
+        Statement stmt = con.createStatement();
+        makeTestTables( stmt );
+        makeObjects( stmt, 10 );
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement(
+            "SELECT * FROM #test",
+            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.CONCUR_READ_ONLY );
+
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue( rs.isBeforeFirst() );
+        while ( rs.next() ) {}
+//        assertTrue( rs.isAfterLast() );
+
+        //This currently fails because the PreparedStatement
+        //Doesn't know it needs to create a cursored ResultSet.
+        //Needs some refactoring!!
+        while ( rs.previous() ) {}
+//        assertTrue( rs.isBeforeFirst() );
 
         rs.close();
 

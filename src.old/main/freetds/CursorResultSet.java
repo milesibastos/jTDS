@@ -58,7 +58,7 @@ public class CursorResultSet extends AbstractResultSet {
     String cursorName;
 
     String sql;
-    CursorStatement stmt;
+    TdsStatement stmt;
 
     int direction = FETCH_FORWARD;
     int fetchSize = 1;
@@ -89,7 +89,7 @@ public class CursorResultSet extends AbstractResultSet {
         return context;
     }
 
-    public CursorResultSet(CursorStatement stmt, String sql)
+    public CursorResultSet(TdsStatement stmt, String sql)
              throws SQLException
     {
         this.stmt = stmt;
@@ -171,13 +171,13 @@ public class CursorResultSet extends AbstractResultSet {
 
     public int getType() throws SQLException
     {
-        return stmt.type;
+        return stmt.getResultSetType();
     }
 
 
     public int getConcurrency() throws SQLException
     {
-        return stmt.concurrency;
+        return stmt.getResultSetConcurrency();
     }
 
 
@@ -354,14 +354,14 @@ public class CursorResultSet extends AbstractResultSet {
         cursorName = getNewCursorName();
         String options = "";
 
-        if ( stmt.type == ResultSet.TYPE_FORWARD_ONLY ) {
+        if ( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY ) {
             options += " FAST_FORWARD ";
         }
-        else if ( stmt.type == ResultSet.TYPE_SCROLL_INSENSITIVE ) {
+        else if ( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE ) {
             options += " SCROLL ";
         }
 
-        if ( stmt.concurrency == ResultSet.CONCUR_READ_ONLY ) {
+        if ( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY ) {
             options += " READ_ONLY ";
         }
 

@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2001-09-18 08:38:08 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2001-09-25 18:16:56 skizz Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.4 2001-09-18 08:38:08 aschoerk Exp $
+ *@version    $Id: TdsConnection.java,v 1.5 2001-09-25 18:16:56 skizz Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -113,7 +113,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     boolean autoCommit = true;
     int transactionIsolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
     boolean isClosed = false;
-    
+
     private Tds mainTds = null;
     private boolean mainTdsUsed = false;
     private Statement lockingStatement = null;
@@ -122,13 +122,13 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2001-09-18 08:38:08 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2001-09-25 18:16:56 skizz Exp $";
 
 
 
     public synchronized Tds getMainTds() throws SQLException
     {
-      if (mainTds == null) 
+      if (mainTds == null)
         mainTds = allocateTds();
       return mainTds;
     }
@@ -144,8 +144,8 @@ public class TdsConnection implements ConnectionHelper, Connection {
         lockingStatement = stmt;
         mainTdsUsed = true;
       }
-    }    
-    
+    }
+
     public synchronized void releaseMainTds(Statement stmt, Tds tds)  throws SQLException, TdsException
     {
       if (tds == mainTds) {
@@ -153,10 +153,10 @@ public class TdsConnection implements ConnectionHelper, Connection {
           throw new SQLException("wrong statement tries to unlock tds");
         mainTdsUsed = false;
       }
-      else 
+      else
         freeTds(tds);
     }
-    
+
     public boolean isMainTds(Tds tds)
     {
       return tds == mainTds;
@@ -267,7 +267,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
      */
     public void setReadOnly(boolean readOnly) throws SQLException
     {
-        
+
     }
 
 
@@ -421,7 +421,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
      */
     public String getCatalog() throws SQLException
     {
-        return database; 
+        return database;
     }
 
 
@@ -536,13 +536,10 @@ public class TdsConnection implements ConnectionHelper, Connection {
     public java.sql.PreparedStatement prepareStatement(String sql)
              throws SQLException
     {
-        java.sql.PreparedStatement result;
-
-        result = Constructors.newPreparedStatement(this, sql);
-
-        allStatements.addElement(result);
-
-        return result;
+        return prepareStatement(
+            sql,
+            ResultSet.TYPE_FORWARD_ONLY,
+            ResultSet.CONCUR_READ_ONLY );
     }
 
 
@@ -567,14 +564,10 @@ public class TdsConnection implements ConnectionHelper, Connection {
      */
     public java.sql.CallableStatement prepareCall(String sql) throws SQLException
     {
-        java.sql.CallableStatement result;
-
-        Tds tmpTds = this.allocateTds();
-
-        result = Constructors.newCallableStatement(this, tmpTds, sql);
-        allStatements.addElement(result);
-
-        return result;
+        return prepareCall(
+            sql,
+            ResultSet.TYPE_FORWARD_ONLY,
+            ResultSet.CONCUR_READ_ONLY );
     }
 
 
@@ -684,7 +677,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     public java.sql.Statement createStatement( int type, int concurrency )
              throws SQLException
     {
-        Statement result = new CursorStatement( this, type, concurrency );
+        Statement result = new TdsStatement( this, type, concurrency );
         allStatements.addElement(result);
         return result;
     }
@@ -710,8 +703,11 @@ public class TdsConnection implements ConnectionHelper, Connection {
             int resultSetConcurrency)
              throws SQLException
     {
-        NotImplemented();
-        return null;
+        java.sql.PreparedStatement result;
+        result = new PreparedStatement_base(
+            this, sql, resultSetType, resultSetConcurrency);
+        allStatements.addElement(result);
+        return result;
     }
 
 
@@ -734,8 +730,12 @@ public class TdsConnection implements ConnectionHelper, Connection {
             int resultSetType,
             int resultSetConcurrency) throws SQLException
     {
-        NotImplemented();
-        return null;
+        java.sql.CallableStatement result;
+        Tds tmpTds = this.allocateTds();
+        result = new CallableStatement_base(
+            this, sql, resultSetType, resultSetConcurrency);
+        allStatements.addElement(result);
+        return result;
     }
 
 
@@ -989,7 +989,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
                     " used when auto commit has been disabled.");
         }
 
-        
+
         TdsStatement mainCommitStmt = (TdsStatement)createStatement();
         exception = encapsulateCommitOrRollback(mainCommitStmt,commit);
         if (exception != null) {

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.8 2001-09-24 08:45:10 aschoerk Exp $
+ * @version $Id: TdsStatement.java,v 1.9 2001-09-25 18:16:56 skizz Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.8 2001-09-24 08:45:10 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.9 2001-09-25 18:16:56 skizz Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -72,6 +72,19 @@ public class TdsStatement implements java.sql.Statement
    private int  maxFieldSize = (1<<31)-1;
    private int  maxRows      = 0;
 
+    private int type = ResultSet.TYPE_FORWARD_ONLY;
+    private int concurrency = ResultSet.CONCUR_READ_ONLY;
+
+
+    public TdsStatement( TdsConnection con, int type, int concurrency )
+             throws SQLException
+    {
+        this.connection = con;
+        this.warningChain = new SQLWarningChain();
+        this.type = type;
+        this.concurrency = concurrency;
+    }
+
 
   /**
    * Constructor for a Statement.  It simply sets the connection
@@ -80,14 +93,12 @@ public class TdsStatement implements java.sql.Statement
    * @param connection_ the Connection instantation that creates us
    * @param tds_        a TDS instance to use for communication with server.
    */
-   public TdsStatement(
-      TdsConnection     connection_)
+   public TdsStatement( TdsConnection con )
       throws SQLException
    {
-      connection = connection_;
-      warningChain = new SQLWarningChain();
+        this( con, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY );
    }
-   
+
    protected void eofResults() throws SQLException
    {
      if(!actTds.moreResults())
@@ -123,7 +134,6 @@ public class TdsStatement implements java.sql.Statement
    }
 
 
-
    /**
     * Execute a SQL statement that retruns a single ResultSet
     *
@@ -133,7 +143,13 @@ public class TdsStatement implements java.sql.Statement
     */
    public ResultSet executeQuery(String sql) throws SQLException
    {
-      return internalExecuteQuery( getTds(sql), sql );
+        if ( type == ResultSet.TYPE_FORWARD_ONLY
+                && concurrency == ResultSet.CONCUR_READ_ONLY ) {
+            return internalExecuteQuery( getTds(sql), sql );
+        }
+        else {
+            return new freetds.CursorResultSet( this, sql );
+        }
    }
 
    final public TdsResultSet internalExecuteQuery(String sql) throws SQLException
@@ -190,7 +206,7 @@ public class TdsStatement implements java.sql.Statement
       }
    }
 
-   protected void closeResults() 
+   protected void closeResults()
       throws java.sql.SQLException
    {
       if (results != null)
@@ -289,7 +305,7 @@ public class TdsStatement implements java.sql.Statement
              // ignore this for now
           }
       }
-       
+
       try
       {
          ((ConnectionHelper)connection).markAsClosed(this);
@@ -482,15 +498,15 @@ public class TdsStatement implements java.sql.Statement
    {
      return execute(getTds(sql),sql);
    }
-   
+
    protected Tds getTds(String sql) throws SQLException
    {
      int pos = sql.indexOf(' ');
      String firstword;
-     if (pos >= 0) 
+     if (pos >= 0)
        firstword = sql.substring(0,pos);
      else firstword = "";
-     
+
      if (firstword.equalsIgnoreCase("SELECT") && connection.getTransactionIsolation() == java.sql.Connection.TRANSACTION_READ_UNCOMMITTED) {
        if (actTds != null)
          if(connection.isMainTds(actTds)) {
@@ -498,7 +514,7 @@ public class TdsStatement implements java.sql.Statement
            actTds = connection.allocateTds();
          }
          else ;
-       else 
+       else
          actTds = connection.allocateTds();
        return actTds;
      }
@@ -519,7 +535,7 @@ public class TdsStatement implements java.sql.Statement
       SQLException   exception = null;
 
       if (tds == null)
-      {        
+      {
          throw new SQLException("Statement is closed");
       }
 
@@ -597,7 +613,7 @@ public class TdsStatement implements java.sql.Statement
                  (PacketEndTokenResult) actTds.processSubPacket();
             updateCount = end.getRowCount();
             results = null;
-            
+
          }
          else
          {
@@ -638,16 +654,16 @@ public class TdsStatement implements java.sql.Statement
       return updateCount;
    }
 
-   
+
    public boolean getMoreResults() throws SQLException
    {
      return getMoreResults(actTds);
    }
-   
+
    public void handleRetStat(PacketRetStatResult packet) {
    }
-   
-   public void handleParamResult(PacketOutputParamResult packet) throws SQLException 
+
+   public void handleParamResult(PacketOutputParamResult packet) throws SQLException
    {
    }
    /**
@@ -682,7 +698,7 @@ public class TdsStatement implements java.sql.Statement
          tds.isResultSet();
 
          // Keep eating garbage and warnings until we reach the next result
-         
+
          while (true)
          {
             if (tds.isProcId())
@@ -739,7 +755,7 @@ public class TdsStatement implements java.sql.Statement
          {
             try
             {
-               if (result) 
+               if (result)
                  tds.discardResultSet(null);
                releaseTds();
             }
@@ -760,7 +776,7 @@ public class TdsStatement implements java.sql.Statement
             throw exception;
          }
 
-         return result; 
+         return result;
       }
 
       catch(java.io.IOException e)
@@ -866,11 +882,11 @@ public class TdsStatement implements java.sql.Statement
    void fetchIntoCache() throws SQLException
    {
      if (results != null) {
-       // System.out.println("fetching into Cache !!");       
+       // System.out.println("fetching into Cache !!");
        results.fetchIntoCache();
      }
    }
-   
+
 
 
     //--------------------------JDBC 2.0-----------------------------
@@ -967,8 +983,7 @@ public class TdsStatement implements java.sql.Statement
      */
    public int getResultSetConcurrency() throws SQLException
       {
-         NotImplemented();
-         return 0;
+         return concurrency;
       }
 
 
@@ -979,8 +994,7 @@ public class TdsStatement implements java.sql.Statement
      */
    public int getResultSetType()  throws SQLException
       {
-         NotImplemented();
-         return 0;
+         return type;
       }
 
 
@@ -1106,7 +1120,7 @@ public class TdsStatement implements java.sql.Statement
          System.out.println("");
       }
    }
-   
+
 }
 
 

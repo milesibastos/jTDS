@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.33 2004-08-28 19:10:01 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.34 2004-08-31 17:25:17 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -285,6 +285,12 @@ public class TdsCore {
     public static final int PREPARE = 3;
     /** Prepare SQL using sp_prepexec and sp_execute */
     public static final int PREPEXEC = 4;
+
+    //
+    // Class variables
+    //
+    /** Name of the client host (it can take quite a while to find it out if DNS is configured incorrectly). */
+    private static String hostName = null;
 
     //
     // Instance variables
@@ -602,7 +608,7 @@ public class TdsCore {
         while (!currentToken.isRowData() && !currentToken.isEndToken()) {
             nextToken(); // Could be messages
         }
-        
+
         messages.checkErrors();
 
         return currentToken.isRowData();
@@ -764,8 +770,7 @@ public class TdsCore {
             for (int i = 0; i < parameters.length; i++){
                 if (!parameters[i].isSet && !parameters[i].isOutput){
                     throw new SQLException(Messages.get("error.prepare.paramnotset",
-                                                              Integer.toString(i + 1)),
-                                           "07000");
+                            Integer.toString(i + 1)), "07000");
                 }
 
                 TdsData.getNativeType(connection, parameters[i]);
@@ -853,7 +858,7 @@ public class TdsCore {
             return procName;
         } else if (prepareSql == PREPARE) {
             ParamInfo prepParam[] = new ParamInfo[4];
-            
+
             // Setup prepare handle param
             prepParam[0] = new ParamInfo();
             prepParam[0].isSet = true;
@@ -866,29 +871,29 @@ public class TdsCore {
             prepParam[1].jdbcType = Types.LONGVARCHAR;
             prepParam[1].value = Support.getParameterDefinitions(params);
             prepParam[1].isUnicode = true;
-            
+
             // Setup sql statemement param
             prepParam[2] = new ParamInfo();
             prepParam[2].isSet = true;
             prepParam[2].jdbcType = Types.LONGVARCHAR;
             prepParam[2].value = Support.substituteParamMarkers(sql, params);
             prepParam[2].isUnicode = true;
-            
+
             // Setup flag param
             prepParam[3] = new ParamInfo();
             prepParam[3].isSet = true;
             prepParam[3].jdbcType = Types.INTEGER;
             prepParam[3].value = new Integer(1);
-            
+
             columns = null; // Will be populated if preparing a select
-            
+
             executeSQL(null, "sp_prepare", prepParam, false, 0, 0);
-            
+
             clearResponseQueue();
-            
+
             // columns will now hold meta data for select statements
             Integer prepareHandle = (Integer) prepParam[0].value;
-            
+
             if (prepareHandle != null) {
                 return prepareHandle.toString();
             }
@@ -1020,8 +1025,7 @@ public class TdsCore {
 
         if (getMoreResults()) {
             if (getNextRow()) {
-            	// FIXME - this will not be valid since a Blob/Clob is returned
-            	// instead of byte[]/String
+            	// FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
                 results = rowData[0].getValue();
             }
         }
@@ -1336,13 +1340,13 @@ public class TdsCore {
         flags |= 0x80; // enable warning messages if SET LANGUAGE issued
         flags |= 0x40; // change to initial database must succeed
         flags |= 0x20; // enable warning messages if USE <database> issued
-        out.write((byte) flags);
+        out.write(flags);
 
         //mdb: this byte controls what kind of auth we do.
         flags = 0x03; // ODBC (JDBC) driver
         if (ntlmAuth)
             flags |= 0x80; // Use NT authentication
-        out.write((byte)flags);
+        out.write(flags);
 
         out.write((byte)0); // SQL type flag
         out.write((byte)0); // Reserved flag
@@ -1535,8 +1539,8 @@ public class TdsCore {
 
     /**
      * Read the next TDS token from the response stream.
-     * @return The Next TDS token as a <code>TdsToken</code>.
-     * @throws SQLException
+     *
+     * @throws SQLException if an I/O or protocol error occurs
      */
     private void nextToken()
         throws SQLException
@@ -1756,7 +1760,6 @@ public class TdsCore {
         final int pktLen = in.readShort();
 
         int bytesRead = 0;
-        int i = 0;
 
         while (bytesRead < pktLen) {
             ColInfo col = new ColInfo();
@@ -1764,7 +1767,6 @@ public class TdsCore {
             String name = in.readString(nameLen);
 
             bytesRead = bytesRead + 1 + nameLen;
-            i++;
             col.realName  = name;
             col.name = name;
 
@@ -2021,11 +2023,11 @@ public class TdsCore {
             && !returnParam.isSet) {
             // TDS 8 Allows function return values of types other than int
             if (value != null) {
-                parameters[nextParam].value = 
-                    Support.convert(connection, value, 
-                                    parameters[nextParam].jdbcType, 
+                parameters[nextParam].value =
+                    Support.convert(connection, value,
+                                    parameters[nextParam].jdbcType,
                                     connection.getCharSet());
-                parameters[nextParam].collation = col.collation;                             
+                parameters[nextParam].collation = col.collation;
             }
         } else {
             // Look for next output parameter in list
@@ -2033,11 +2035,11 @@ public class TdsCore {
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {
                         if (value != null) {
-                            parameters[nextParam].value = 
-                                Support.convert(connection, value, 
-                                                parameters[nextParam].jdbcType, 
+                            parameters[nextParam].value =
+                                Support.convert(connection, value,
+                                                parameters[nextParam].jdbcType,
                                                 connection.getCharSet());
-                            parameters[nextParam].collation = col.collation;                             
+                            parameters[nextParam].collation = col.collation;
                         }
 
                         break;
@@ -2707,7 +2709,7 @@ public class TdsCore {
      * Returns <code>true</code> if the specified <code>procName</code>
      * is a sp_prepare or sp_prepexec handle; returns <code>false</code>
      * otherwise.
-     * 
+     *
      * @param procName Stored procedure to execute or <code>null</code>.
      * @return <code>true</code> if the specified <code>procName</code>
      *   is a sp_prepare or sp_prepexec handle; <code>false</code>
@@ -2718,10 +2720,10 @@ public class TdsCore {
                 && Character.isDigit(procName.charAt(0))) {
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Execute SQL using TDS 7.0 protocol.
      *
@@ -2737,8 +2739,8 @@ public class TdsCore {
                               boolean noMetaData)
         throws IOException, SQLException {
         int prepareSql = connection.getPrepareSql();
-        
-        if ((parameters == null || (parameters != null && parameters.length == 0)) 
+
+        if ((parameters == null || parameters.length == 0)
                 && (prepareSql == EXECUTE_SQL || prepareSql == PREPARE || prepareSql == PREPEXEC)) {
             // Downgrade EXECUTE_SQL, PREPARE and PREPEXEC to UNPREPARED
             // if there are no parameters.
@@ -2746,13 +2748,18 @@ public class TdsCore {
             // Should we downgrade TEMPORARY_STORED_PROCEDURES as well?
             prepareSql = UNPREPARED;
         }
-        
+
         if (isPreparedProcedureName(procName)) {
             // If the procedure is a prepared handle then redefine the
             // procedure name as sp_execute with the handle as a parameter.
-            ParamInfo params[] = new ParamInfo[1 + parameters.length];
+            ParamInfo params[];
 
-            System.arraycopy(parameters, 0, params, 1, parameters.length);
+            if (parameters != null) {
+                params = new ParamInfo[1 + parameters.length];
+                System.arraycopy(parameters, 0, params, 1, parameters.length);
+            } else {
+                params = new ParamInfo[1];
+            }
 
             params[0] = new ParamInfo();
             params[0].jdbcType = Types.INTEGER;
@@ -2769,14 +2776,14 @@ public class TdsCore {
         } else if (procName == null) {
             if (prepareSql == EXECUTE_SQL) {
                 ParamInfo[] params;
-                
+
                 if (parameters == null) {
                     params = new ParamInfo[2];
                 } else {
                     params = new ParamInfo[2 + parameters.length];
                     System.arraycopy(parameters, 0, params, 2, parameters.length);
                 }
-    
+
                 params[0] = new ParamInfo();
                 params[0].jdbcType = Types.VARCHAR;
                 params[0].bufferSize = 4000;
@@ -2784,7 +2791,7 @@ public class TdsCore {
                 params[0].isUnicode = true;
                 params[0].value = Support.substituteParamMarkers(sql, parameters);
                 TdsData.getNativeType(connection, params[0]);
-    
+
                 params[1] = new ParamInfo();
                 params[1].jdbcType = Types.VARCHAR;
                 params[1].bufferSize = 4000;
@@ -2792,23 +2799,23 @@ public class TdsCore {
                 params[1].isUnicode = true;
                 params[1].value = Support.getParameterDefinitions(parameters);
                 TdsData.getNativeType(connection, params[1]);
-    
+
                 parameters = params;
-                
+
                 // Use sp_executesql approach
                 procName = "sp_executesql";
             } else if (prepareSql == PREPEXEC) {
                 ParamInfo params[] = new ParamInfo[3 + parameters.length];
-                
+
                 System.arraycopy(parameters, 0, params, 3, parameters.length);
-                
+
                 // Setup prepare handle param
                 params[0] = new ParamInfo();
                 params[0].isSet = true;
                 params[0].jdbcType = Types.INTEGER;
                 params[0].isOutput = true;
                 TdsData.getNativeType(connection, params[0]);
-    
+
                 // Setup parameter descriptor param
                 params[1] = new ParamInfo();
                 params[1].isSet = true;
@@ -2816,7 +2823,7 @@ public class TdsCore {
                 params[1].value = Support.getParameterDefinitions(parameters);
                 params[1].isUnicode = true;
                 TdsData.getNativeType(connection, params[1]);
-                
+
                 // Setup sql statemement param
                 params[2] = new ParamInfo();
                 params[2].isSet = true;
@@ -2824,9 +2831,9 @@ public class TdsCore {
                 params[2].value = Support.substituteParamMarkers(sql, parameters);
                 params[2].isUnicode = true;
                 TdsData.getNativeType(connection, params[2]);
-    
+
                 parameters = params;
-                
+
                 // Use sp_prepexec approach
                 procName = "sp_prepexec";
             }
@@ -2849,21 +2856,23 @@ public class TdsCore {
 
             out.write((short) (noMetaData ? 2 : 0));
 
-            for (int i = nextParam + 1; i < parameters.length; i++) {
-                if (parameters[i].name != null) {
-                   out.write((byte) parameters[i].name.length());
-                   out.write(parameters[i].name);
-                } else {
-                   out.write((byte) 0);
+            if (parameters != null) {
+                for (int i = nextParam + 1; i < parameters.length; i++) {
+                    if (parameters[i].name != null) {
+                       out.write((byte) parameters[i].name.length());
+                       out.write(parameters[i].name);
+                    } else {
+                       out.write((byte) 0);
+                    }
+
+                    out.write((byte) (parameters[i].isOutput ? 1 : 0));
+
+                    TdsData.writeParam(out,
+                                       connection.getCharSet(),
+                                       connection.isWideChar(),
+                                       connection.getCollation(),
+                                       parameters[i]);
                 }
-
-                out.write((byte) (parameters[i].isOutput ? 1 : 0));
-
-                TdsData.writeParam(out,
-                                   connection.getCharSet(),
-                                   connection.isWideChar(),
-                                   connection.getCollation(),
-                                   parameters[i]);
             }
 
             out.flush();
@@ -2962,12 +2971,17 @@ public class TdsCore {
      * @return    name we will use as the client.
      */
     private static String getHostName() {
+        if (hostName != null) {
+            return hostName;
+        }
+
         String name;
 
         try {
             name = java.net.InetAddress.getLocalHost().getHostName().toUpperCase();
         } catch (java.net.UnknownHostException e) {
-            return "UNKNOWN";
+            hostName = "UNKNOWN";
+            return hostName;
         }
 
         int pos = name.indexOf('.');
@@ -2977,17 +2991,20 @@ public class TdsCore {
         }
 
         if (name.length() == 0) {
-            return "UNKNOWN";
+            hostName = "UNKNOWN";
+            return hostName;
         }
 
         try {
             Integer.parseInt(name);
             // All numbers probably an IP address
-            return "UNKNOWN";
+            hostName = "UNKNOWN";
+            return hostName;
         } catch (NumberFormatException e) {
             // Bit tacky but simple check for all numbers
         }
 
+        hostName = name;
         return name;
     }
 

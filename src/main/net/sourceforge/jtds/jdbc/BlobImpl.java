@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.18 2004-08-24 17:45:01 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.19 2004-08-31 17:25:17 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -39,7 +39,7 @@ public class BlobImpl implements Blob {
 
     /**
      * Constructs a new Blob instance.
-     * 
+     *
      * @param callerReference an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
@@ -54,7 +54,7 @@ public class BlobImpl implements Blob {
      * @param callerReference an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
-     * @param blob The blob object to encapsulate
+     * @param blob the blob object to encapsulate
      */
     BlobImpl(Object callerReference, byte[] blob) {
         if (blob == null) {
@@ -71,7 +71,7 @@ public class BlobImpl implements Blob {
      * @param callerReference an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
-     * @param blob The blob object to encapsulate
+     * @param in the blob object to encapsulate
      */
     BlobImpl(Object callerReference, ResponseStream in) throws IOException {
         if (in == null) {
@@ -79,30 +79,30 @@ public class BlobImpl implements Blob {
         }
 
         _connection = getConnection(callerReference);
-        
+
         TextPtr tp = new TextPtr();
 
         in.read(tp.ptr);
         in.read(tp.ts);
         tp.len = in.readInt();
-        
+
         if (tp.len < _connection.getLobBuffer()) {
         	_blob = new byte[tp.len];
         	in.read(_blob);
         } else {
 			_blob = EMPTY_BLOB;
-			
+
         	try {
 	        	OutputStream outputStream = setBinaryStream(1);
 	        	byte[] buffer = new byte[1024];
 	        	int length = tp.len;
 	        	int result;
-	        	
+
 	        	while ((result = in.read(buffer, 0, Math.min(length, buffer.length))) != -1 && length != 0) {
 	        		outputStream.write(buffer, 0, result);
 	        		length -= result;
 	        	}
-	        	
+
 	        	outputStream.close();
         	} catch (SQLException e) {
         		// Should never happen...
@@ -121,7 +121,7 @@ public class BlobImpl implements Blob {
                                             "US-ASCII"));
             }
         }
-*/        
+*/
     }
 
     /**
@@ -181,7 +181,7 @@ public class BlobImpl implements Blob {
     	} else if (_blobFile != null) {
     		return _blobFile.length();
     	}
-    	
+
         return _jtdsInputStream.getLength();
     }
 
@@ -280,7 +280,7 @@ public class BlobImpl implements Blob {
      */
     public synchronized void truncate(long len) throws SQLException {
         long currentLength = length();
-        
+
         if (len < 0) {
             throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (len > currentLength) {
@@ -291,12 +291,12 @@ public class BlobImpl implements Blob {
             return;
         } else if (len <= _connection.getLobBuffer()) {
             _blob = getBytes(1, (int) len);
-            
+
             if (_blobFile != null) {
             	_blobFile.delete();
             	_blobFile = null;
             }
-            
+
             _jtdsInputStream = null;
         } else {
             try {
@@ -309,13 +309,13 @@ public class BlobImpl implements Blob {
 
                 OutputStream outputStream = setBinaryStream(1);
                 byte[] buffer = new byte[1024];
-                int result = -1;
+                int result;
 
                 while ((result = inputStream.read(buffer, 0, (int) Math.min(buffer.length, len))) > 0) {
                     len -= result;
                     outputStream.write(buffer, 0, result);
                 }
-		
+
 		        outputStream.close();
 
                 // If the data came from a file; delete the original file to
@@ -359,7 +359,7 @@ public class BlobImpl implements Blob {
         }
 
         Connection connection;
-        
+
         try {
             if (callerReference instanceof Connection) {
                 connection = (Connection) callerReference;
@@ -373,10 +373,10 @@ public class BlobImpl implements Blob {
         } catch (SQLException e) {
             throw new IllegalStateException(e.getMessage());
         }
-        
+
         return (ConnectionJDBC2) connection;
     }
-    
+
     protected void finalize() {
     	if (_blobFile != null) {
     		_blobFile.delete();
@@ -438,7 +438,7 @@ public class BlobImpl implements Blob {
 
         /**
          * Checks the size of the in-memory buffer; if a write will
-         * cause the size to exceed <code>MAXIMUM_SIZE</code> than
+         * cause the size to exceed <code>MAXIMUM_SIZE</code> then
          * the data will be removed from memory and written to disk.
          *
          * @param length the length of data to be written
@@ -473,7 +473,7 @@ public class BlobImpl implements Blob {
         }
 
         void writeToDisk(InputStream inputStream) throws IOException {
-            OutputStream os = null;
+            OutputStream os;
 
             try {
                 _blobFile = File.createTempFile("jtds", ".tmp");
@@ -484,6 +484,15 @@ public class BlobImpl implements Blob {
                 // Unable to write to disk
                 securityFailure = true;
 
+                if (_blobFile != null) {
+                    try {
+                        _blobFile.delete();
+                    } catch (SecurityException ex) {
+                        // Ignore exception
+                    }
+                    _blobFile = null;
+                }
+
                 os = new ByteArrayOutputStream();
 
                 if (Logger.isActive()) {
@@ -493,7 +502,7 @@ public class BlobImpl implements Blob {
 
             try {
                 byte[] buffer = new byte[1024];
-                int result = -1;
+                int result;
 
                 while ((result = inputStream.read(buffer)) != -1) {
                     os.write(buffer, 0, result);
@@ -502,11 +511,6 @@ public class BlobImpl implements Blob {
                 os.flush();
 
                 if (os instanceof ByteArrayOutputStream) {
-                    if (_blobFile != null) {
-                            _blobFile = null;
-                            _blobFile.delete();
-                    }
-
                     _blob = ((ByteArrayOutputStream) os).toByteArray();
                 } else {
                     _blob = null;
@@ -518,10 +522,10 @@ public class BlobImpl implements Blob {
 
         /**
          * Updates the <code>outputStream</code> member by creating the
-         * approperiate type of output stream based upon the current
+         * appropriate type of output stream based upon the current
          * storage mechanism.
          *
-         * @throws IOException if any failure occure while creating the
+         * @throws IOException if any failure occured while creating the
          *         output stream
          */
         void updateOuputStream() throws IOException {
@@ -532,16 +536,17 @@ public class BlobImpl implements Blob {
                     int curPos = (int) startPos;
                     boolean closed = false;
 
-                    public void write(int b) throws IOException {
+                    private void checkOpen() throws IOException {
                         if (closed) {
                             throw new IOException("stream closed");
                         } else if (_blob == null) {
                             throw new IOException(
                                     Messages.get("error.generic.iowrite", "byte", "_blob = NULL"));
-                        } else if (curPos > _blob.length) {
-                            throw new IOException(
-                                    Messages.get("error.generic.iowrite", "byte", "_blob.length changed"));
                         }
+                    }
+
+                    public void write(int b) throws IOException {
+                        checkOpen();
 
                         if (curPos + 1 > _blob.length) {
                             byte[] buffer = new byte[curPos + 1];
@@ -554,15 +559,31 @@ public class BlobImpl implements Blob {
                     }
 
                     public void write(byte[] b, int off, int len) throws IOException {
-                        // FIXME - write an optimized version of this method
-                        if (closed) {
-                            throw new IOException("stream closed");
+                        checkOpen();
+
+                        if (b == null) {
+                            throw new NullPointerException();
+                        } else if (off < 0 || off > b.length || len < 0 ||
+                                off + len > b.length || off + len < 0) {
+                            throw new IndexOutOfBoundsException();
+                        } else if (len == 0) {
+                            return;
                         }
 
-                        super.write(b, off, len);
+                        // Reallocate the buffer
+                        if (curPos + len > _blob.length) {
+                            byte[] buffer = new byte[curPos + len];
+
+                            System.arraycopy(_blob, 0, buffer, 0, _blob.length);
+                            _blob = buffer;
+                        }
+
+                        // Append the contents of b to the blob
+                        System.arraycopy(b, off, _blob, curPos, len);
+                        curPos += len;
                     }
 
-                    public void close() throws IOException {
+                    public void close() {
                         closed = true;
                     }
                 };

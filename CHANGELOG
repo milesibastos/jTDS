@@ -1,3 +1,21 @@
+Changes from jTDS 0.9-rc2
+=========================
+
+08/31/2004 - Alin Sinpalean
+ o Improved BlobImpl internal OutputStream write(byte[], int, int)
+   implementation. No longer uses write(byte). Also cleaned up somewhat
+   ClobImpl.
+ o TestBase.compareInputStreams() and compareReaders() were not checking for
+   EOF on the first input stream/readed. Fixed.
+ o LargeLOBTest now only runs if the 'jTDS.runLargeLOBTest' system property is
+   defined. Should do this with 1.4-only test methods too.
+ o Updated build.sh to work on my development machine (should work better on
+   any *NIX now).
+ o Cleaned up some Javadoc comments that were causing warnings when generating
+   the documentation.
+ o Cleaned up some IntelliJ IDEA warnings, including a possible bug that could
+   cause NPEs in TdsCode.executeSQL70().
+
 ===============================================================================
 08/28/2004 - jTDS 0.9-rc2 released
 ===============================================================================
@@ -34,7 +52,7 @@ Changes from jTDS 0.9-rc1
    (thanks to Mike Hutchinson for the bug report and patch).
  o Corrected bug [1013819] Cursor downgraded bug;
    (thanks to Mike Hutchinson for the bug report and patch).
- 
+
 08/21/2004 - Brian Heineman
  o Applied patch [1013432] Patches for SUN JDBC Compatibility test; (many thanks
    again to Hutchinson for the patch.  The driver now passes the SUN JDBC
@@ -61,7 +79,7 @@ Changes from jTDS 0.9-rc1
  o Corrected bug [1009234] sp_prepare and sp_prepexec should be limited to TDS
    8.0
  o Added initial support for sp_cursorprepare, sp_cursorprepexec and
-   sp_cursorexecute; statement handles are not currently cached for reuse. This 
+   sp_cursorexecute; statement handles are not currently cached for reuse. This
    corrects bug [1008097] 0.9-rc1 prepareSQL=3 - read only cursor.
 
 08/16/2004 - David Kilzer

@@ -3,7 +3,7 @@
 //
 //This library is free software; you can redistribute it and/or
 //modify it under the terms of the GNU Lesser General Public
-//License as published by the Free Software Foundation; either
+ //License as published by the Free Software Foundation; either
 //version 2.1 of the License, or (at your option) any later version.
 //
 //This library is distributed in the hope that it will be useful,
@@ -20,11 +20,26 @@ package net.sourceforge.jtds.test;
 import java.io.*;
 import java.sql.*;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
 /**
  * @version 1.0
  */
 public class LargeLOBTest extends TestBase {
     private static final int LOB_LENGTH = 100000000;
+
+    /**
+     * Only run the test suite if the "jTDS.runLargeLOBTest" system property is defined, as the test takes A LOT of time
+     * to execute.
+     */
+    public static Test suite() {
+        if (System.getProperty("jTDS.runLargeLOBTest") == null) {
+            return new TestSuite();
+        }
+
+        return new TestSuite(LargeLOBTest.class);
+    }
 
     public LargeLOBTest(String name) {
         super(name);
@@ -43,15 +58,15 @@ public class LargeLOBTest extends TestBase {
     	File data = File.createTempFile("blob", ".tmp");
     	FileOutputStream fos = new FileOutputStream(data);
     	BufferedOutputStream bos = new BufferedOutputStream(fos);
-    	
+
     	data.deleteOnExit();
 
     	for (long i = 0; i < LOB_LENGTH; i++) {
     		bos.write((byte) i % 255);
     	}
-    	
+
     	bos.close();
-    	
+
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #largeblob1 (data IMAGE)");
         stmt.close();
@@ -59,7 +74,7 @@ public class LargeLOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #largeblob1 (data) VALUES (?)");
     	FileInputStream fis = new FileInputStream(data);
     	BufferedInputStream bis = new BufferedInputStream(fis);
-        
+
         // Test PreparedStatement.setBinaryStream()
         pstmt.setBinaryStream(1, bis, LOB_LENGTH);
         assertTrue(pstmt.executeUpdate() == 1);
@@ -74,7 +89,7 @@ public class LargeLOBTest extends TestBase {
 
     	fis = new FileInputStream(data);
     	bis = new BufferedInputStream(fis);
-        
+
         // Test ResultSet.getBinaryStream()
         compareInputStreams(bis, rs.getBinaryStream(1));
         bis.close();
@@ -82,7 +97,7 @@ public class LargeLOBTest extends TestBase {
         assertFalse(rs.next());
         stmt2.close();
         rs.close();
-        
+
         assertTrue(data.delete());
     }
 

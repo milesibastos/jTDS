@@ -66,7 +66,7 @@ public class LOBTest extends TestBase {
      *************************************************************************
      *************************************************************************/
 
-    public void testBlobGet1() throws Exception {    	
+    public void testBlobGet1() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
@@ -96,7 +96,7 @@ public class LOBTest extends TestBase {
         assertEquals(data.length, is.read(isTmpData));
         assertEquals(-1, is.read());
         assertTrue(Arrays.equals(data, isTmpData));
-        
+
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
 
@@ -746,7 +746,7 @@ public class LOBTest extends TestBase {
     }
 
     /**
-     * Test for bug [985956] Cannot setObject(null) on image 
+     * Test for bug [985956] Cannot setObject(null) on image.
      */
     public void testBlobSetNull4() throws Exception {
         Statement stmt = con.createStatement();
@@ -786,7 +786,7 @@ public class LOBTest extends TestBase {
         stmt2.close();
         rs.close();
     }
-    
+
     public void testBlobSetNull5() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #blobsetnull5 (data IMAGE NULL)");
@@ -1091,9 +1091,9 @@ public class LOBTest extends TestBase {
     }
 
     /**
-     * Test for bug [989399] bug? blob.getBytes() from 0
+     * Test for bug [989399] blob.getBytes() from 0.
      */
-    public void testBlobGetBytes1() throws Exception {       
+    public void testBlobGetBytes1() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
@@ -1115,9 +1115,9 @@ public class LOBTest extends TestBase {
 
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
-        
+
         assertNotNull(blob);
-        
+
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(data, blob.getBytes(1L, (int) blob.length())));
 
@@ -1126,7 +1126,7 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
-    public void testBlobGetBytes2() throws Exception {       
+    public void testBlobGetBytes2() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
@@ -1148,13 +1148,13 @@ public class LOBTest extends TestBase {
 
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
-        
+
         assertNotNull(blob);
-        
+
         byte[] tmpData = new byte[data.length / 2];
-        
+
         System.arraycopy(data, 0, tmpData, 0, tmpData.length);
-        
+
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, tmpData.length)));
 
@@ -1163,7 +1163,7 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
-    public void testBlobGetBytes3() throws Exception {       
+    public void testBlobGetBytes3() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
@@ -1185,14 +1185,14 @@ public class LOBTest extends TestBase {
 
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
-        
+
         assertNotNull(blob);
-        
+
         byte[] tmpData = new byte[data.length / 2];
-        
+
         // Offset data copy by 1
         System.arraycopy(data, 1, tmpData, 0, tmpData.length);
-        
+
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(2L, tmpData.length)));
 
@@ -1201,7 +1201,7 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
-    public void testBlobLength1() throws Exception {       
+    public void testBlobLength1() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
@@ -1223,9 +1223,9 @@ public class LOBTest extends TestBase {
 
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
-        
+
         assertNotNull(blob);
-        
+
         // Test Blob.length()
         assertEquals(data.length, blob.length());
 
@@ -1234,7 +1234,7 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
-    public void testBlobTruncate1() throws Exception {       
+    public void testBlobTruncate1() throws Exception {
         byte[] data = getBlobTestData();
 
         Statement stmt = con.createStatement();
@@ -1256,17 +1256,17 @@ public class LOBTest extends TestBase {
 
         // Test ResultSet.getBlob()
         Blob blob = rs.getBlob(1);
-        
+
         assertNotNull(blob);
 
         byte[] tmpData = new byte[data.length / 2];
-        
+
         System.arraycopy(data, 0, tmpData, 0, tmpData.length);
-        
+
         // Test Blob.truncate()
         blob.truncate(tmpData.length);
         assertEquals(tmpData.length, blob.length());
-        
+
         // Test Blob.getBytes()
         assertTrue(Arrays.equals(tmpData, blob.getBytes(1L, (int) blob.length())));
 
@@ -1274,7 +1274,7 @@ public class LOBTest extends TestBase {
         stmt2.close();
         rs.close();
     }
-    
+
     /*************************************************************************
      *************************************************************************
      **                          CLOB TESTS                                 **
@@ -1304,7 +1304,7 @@ public class LOBTest extends TestBase {
         assertTrue(data.equals(rs.getString(1)));
 
         // Test ResultSet.getAsciiStream()
-        InputStream is = rs.getAsciiStream(1);        
+        InputStream is = rs.getAsciiStream(1);
         compareInputStreams(new ByteArrayInputStream(data.getBytes("ASCII")), is);
 
         // Test ResultSet.getUnicodeStream(()
@@ -1314,7 +1314,7 @@ public class LOBTest extends TestBase {
         // Test ResultSet.getCharacterStream()
         Reader rdr = rs.getCharacterStream(1);
         compareReaders(new StringReader(data), rdr);
-        
+
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
@@ -2660,7 +2660,7 @@ public class LOBTest extends TestBase {
         assertNotNull(clob);
 
         String tmpData = data.substring(0, data.length() / 2);
-        
+
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(1L, tmpData.length())));
 
@@ -2695,7 +2695,7 @@ public class LOBTest extends TestBase {
 
         // Offset data by 1
         String tmpData = data.substring(1, data.length() / 2);
-        
+
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(2L, tmpData.length())));
 
@@ -2727,7 +2727,7 @@ public class LOBTest extends TestBase {
         Clob clob = rs.getClob(1);
 
         assertNotNull(clob);
-        
+
         // Test Clob.length()
         assertEquals(data.length(), clob.length());
 
@@ -2761,11 +2761,11 @@ public class LOBTest extends TestBase {
         assertNotNull(clob);
 
         String tmpData = data.substring(0, data.length() / 2);
-        
+
         // Test Clob.truncate()
         clob.truncate(tmpData.length());
         assertEquals(tmpData.length(), clob.length());
-        
+
         // Test Clob.getSubString()
         assertTrue(tmpData.equals(clob.getSubString(1L, (int) clob.length())));
 
@@ -2773,7 +2773,7 @@ public class LOBTest extends TestBase {
         stmt2.close();
         rs.close();
     }
-    
+
     private byte[] getBlobTestData() {
         return blobData;
     }

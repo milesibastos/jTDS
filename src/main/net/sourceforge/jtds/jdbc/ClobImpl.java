@@ -36,11 +36,11 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.20 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.21 2004-08-31 17:25:17 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
-	
+
     private final ConnectionJDBC2 _connection;
     private String _clob;
     private File _clobFile;
@@ -48,7 +48,7 @@ public class ClobImpl implements Clob {
 
     /**
      * Constructs a new Clob instance.
-     * 
+     *
      * @param callerReference an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
@@ -56,14 +56,14 @@ public class ClobImpl implements Clob {
     ClobImpl(Object callerReference) {
         this(callerReference, EMPTY_CLOB);
     }
-    
+
     /**
      * Constructs a new Clob instance.
      *
      * @param callerReference an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
-     * @param clob The clob object to encapsulate
+     * @param clob the clob object to encapsulate
      */
     ClobImpl(Object callerReference, String clob) {
         if (clob == null) {
@@ -80,38 +80,38 @@ public class ClobImpl implements Clob {
      * @param callerReference an object reference to the caller of this method;
      *        must be a <code>Connection</code>, <code>Statement</code> or
      *        <code>ResultSet</code>
-     * @param clob The clob object to encapsulate
+     * @param in the clob object to encapsulate
      */
     ClobImpl(Object callerReference, ResponseStream in, boolean ntext, boolean readTextMode) throws IOException {
         if (in == null) {
             throw new IllegalArgumentException("in cannot be null.");
         }
-        
+
         _connection = getConnection(callerReference);
-        
+
         TextPtr tp = new TextPtr();
-        
+
         in.read(tp.ptr);
         in.read(tp.ts);
         tp.len = in.readInt();
 
         readTextMode = false;
-        
+
         if (readTextMode) {
 	        if (ntext) {
                 char[] buf = new char[tp.len / 2];
 
                 in.read(buf);
                 tp.value = buf;
-                
+
                 // FIXME - Create a JtdsReader instead
 	        	_clob = new String((char[]) tp.value);
 	        } else {
                 byte[] bytes = new byte[tp.len];
-                
+
                 in.read(bytes);
                 tp.value = bytes;
-                
+
                 // FIXME - Create a JtdsReader instead
 	        	_clob = new String((byte[]) tp.value);
 	        }
@@ -125,45 +125,45 @@ public class ClobImpl implements Clob {
                 	}
                 } else {
                 	_clob = EMPTY_CLOB;
-            	
+
 	            	Writer writer = setCharacterStream(1);
 	            	long length = tp.len;
 
     	        	while (length > 0) {
     	        		int results = (int) Math.min(1024, length);
-    	        		String data; 
-    	        		
+    	        		String data;
+
 		    	        if (ntext) {
-	    	        		data = in.readString(results / 2); 
+	    	        		data = in.readString(results / 2);
 		    	        } else {
 			                data = in.readAsciiString(results);
 		    	        }
-    	        		
+
 		    	        length -= results;
     	        		writer.write(data);
     	        	}
-    	        	
+
     	        	writer.close();
             	}
-                
+
                 if (in.getTdsVersion() < Driver.TDS70
                         && length() == 1
                         && getSubString(1, 1).equals(" ")) {
                         // In TDS 4/5 zero length strings are stored as a single space
                         // to distinguish them from nulls.
                         truncate(0);
-                }                
+                }
             } catch (SQLException e) {
                 // Should never happen...
             }
         }
-        
+
         if (ntext && (tp.len & 0x01) != 0) {
             // If text size is set to an odd number e.g. 1
             // Then only part of a char is available.
             in.read(); // Discard!
         }
-        
+
 /*
         if (statement != null && statement.getMaxFieldSize() == 1) {
             // Try to build a CLOB built over a Reader stream.
@@ -178,9 +178,9 @@ public class ClobImpl implements Clob {
                                             getCharSet()));
             }
         }
-*/        
+*/
     }
-    
+
     /**
      * Returns a new ascii stream for the CLOB data.
      */
@@ -198,16 +198,16 @@ public class ClobImpl implements Clob {
             } else if (_clobFile != null) {
                 return new BufferedReader(new FileReader(_clobFile));
             }
-            
+
             _jtdsReader.reset();
-            
+
             return _jtdsReader;
         } catch (IOException e) {
             throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
     }
-    
+
     public String getSubString(long pos, int length) throws SQLException {
         if (pos < 1) {
             throw new SQLException(Messages.get("error.blobclob.badpos"), "HY090");
@@ -220,14 +220,14 @@ public class ClobImpl implements Clob {
         Reader reader = getCharacterStream();
 
         skip(reader, pos - 1);
-        
+
         try {
             char[] buffer = new char[length];
-            
+
             if (reader.read(buffer) != length) {
                 throw new SQLException(Messages.get("error.blobclob.readlen"), "HY000");
             }
-            
+
             return new String(buffer);
         } catch (IOException ioe) {
             throw new SQLException(
@@ -252,7 +252,7 @@ public class ClobImpl implements Clob {
     public long position(String searchStr, long start) throws SQLException {
         return position(new ClobImpl(_connection, searchStr), start);
     }
-    
+
     public long position(Clob searchStr, long start) throws SQLException {
         if (searchStr == null) {
             throw new SQLException(Messages.get("error.clob.searchnull"), "HY024");
@@ -262,28 +262,28 @@ public class ClobImpl implements Clob {
             Reader reader = getCharacterStream();
             long length = length() - searchStr.length();
             boolean reset = true;
-            
+
             for (long i = start; i < length; i++) {
                 boolean found = true;
                 int value;
-                
+
                 if (reset) {
                     reader = getCharacterStream();
                     skip(reader, i);
                     reset = false;
                 }
-            
+
                 value = reader.read();
-                
+
                 Reader searchReader = searchStr.getCharacterStream();
                 int searchValue;
-                
+
                 while ((searchValue = searchReader.read()) != -1) {
                     if (value != searchValue) {
                         found = false;
                         break;
                     }
-                    
+
                     reset = true;
                 }
 
@@ -306,7 +306,7 @@ public class ClobImpl implements Clob {
 
     public synchronized Writer setCharacterStream(final long pos) throws SQLException {
         long length = length();
-        
+
         if (pos < 1) {
             throw new SQLException(Messages.get("error.blobclob.badpos"), "HY024");
         } else if (pos > length && pos != 1) {
@@ -347,7 +347,7 @@ public class ClobImpl implements Clob {
      */
     public synchronized void truncate(long len) throws SQLException {
         long currentLength = length();
-        
+
         if (len < 0) {
             throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (len > currentLength) {
@@ -358,12 +358,12 @@ public class ClobImpl implements Clob {
             return;
         } else if (len <= _connection.getLobBuffer()) {
         	_clob = getSubString(1, (int) len);
-            
+
             if (_clobFile != null) {
                 _clobFile.delete();
                 _clobFile = null;
             }
-            
+
         	_jtdsReader = null;
         } else {
 	        try {
@@ -373,19 +373,19 @@ public class ClobImpl implements Clob {
                 _clob = "";
                 _clobFile = null;
                 _jtdsReader = null;
-                
+
 	        	Writer writer = setCharacterStream(1);
                 char[] buffer = new char[1024];
-                int result = -1;
-                
+                int result;
+
                 while ((result = reader.read(buffer, 0, (int) Math.min(buffer.length, len))) > 0) {
                     len -= result;
                     writer.write(buffer, 0, result);
                 }
-	        	
+
 	        	writer.close();
-                
-                // If the data came from a file; delete the original file to 
+
+                // If the data came from a file; delete the original file to
                 // free disk space
                 if (tmpFile != null) {
                     tmpFile.delete();
@@ -426,7 +426,7 @@ public class ClobImpl implements Clob {
         }
 
         Connection connection;
-        
+
         try {
             if (callerReference instanceof Connection) {
                 connection = (Connection) callerReference;
@@ -440,10 +440,10 @@ public class ClobImpl implements Clob {
         } catch (SQLException e) {
             throw new IllegalStateException(e.getMessage());
         }
-        
+
         return (ConnectionJDBC2) connection;
     }
-    
+
     protected void finalize() {
     	if (_clobFile != null) {
     		_clobFile.delete();
@@ -540,7 +540,7 @@ public class ClobImpl implements Clob {
         }
 
         void writeToDisk(Reader reader) throws IOException {
-            Writer wtr = null;
+            Writer wtr;
 
             try {
                 _clobFile = File.createTempFile("jtds", ".tmp");
@@ -551,6 +551,15 @@ public class ClobImpl implements Clob {
                 // Unable to write to disk
                 securityFailure = true;
 
+                if (_clobFile != null) {
+                    try {
+                        _clobFile.delete();
+                    } catch (SecurityException ex) {
+                        // Ignore exception
+                    }
+                    _clobFile = null;
+                }
+
                 wtr = new StringWriter();
 
                 if (Logger.isActive()) {
@@ -560,7 +569,7 @@ public class ClobImpl implements Clob {
 
             try {
                 char[] buffer = new char[1024];
-                int result = -1;
+                int result;
 
                 while ((result = reader.read(buffer)) != -1) {
                     wtr.write(buffer, 0, result);
@@ -569,12 +578,7 @@ public class ClobImpl implements Clob {
                 wtr.flush();
 
                 if (wtr instanceof StringWriter) {
-                    if (_clobFile != null) {
-                            _clobFile.delete();
-                            _clobFile = null;
-                    }
-
-                    _clob = ((StringWriter) wtr).toString();
+                    _clob = wtr.toString();
                 } else {
                     _clob = null;
                 }
@@ -600,27 +604,35 @@ public class ClobImpl implements Clob {
                     boolean closed = false;
                     char[] singleChar = new char[1];
 
+                    private void checkOpen() throws IOException {
+                        if (closed) {
+                            throw new IOException("stream closed");
+                        } else if (_clob == null) {
+                            throw new IOException(
+                                    Messages.get("error.generic.iowrite", "byte", "_clob = NULL"));
+                        }
+                    }
+
                     public void write(int c) throws IOException {
+                        checkOpen();
+
                         singleChar[0] = (char) c;
                         write(singleChar, 0, 1);
                     }
 
                     public void write(char[] cbuf, int off, int len) throws IOException {
-                        if (closed) {
-                            throw new IOException("stream closed");
-                        } else if (cbuf == null) {
+                        checkOpen();
+
+                        if (cbuf == null) {
                             throw new NullPointerException();
-                        } else if (off < 0
-                                   || len < 0
-                                   || off > cbuf.length
-                                   || off + len > cbuf.length) {
-                            throw new ArrayIndexOutOfBoundsException();
+                        } else if (off < 0 || len < 0 || off > cbuf.length
+                                   || off + len > cbuf.length || off + len < 0) {
+                            throw new IndexOutOfBoundsException();
                         } else if (len == 0) {
                             return;
                         }
 
-                        // FIXME - Optimize writes; reduce memory allocation
-                        // by creating fewer objects.
+                        // FIXME - Optimize writes; reduce memory allocation by creating fewer objects.
                         if (curPos + 1 > _clob.length()) {
                             _clob += new String(cbuf, off, len);
                         } else {
@@ -636,10 +648,10 @@ public class ClobImpl implements Clob {
                         curPos += len;
                     }
 
-                    public void flush() throws IOException {
+                    public void flush() {
                     }
 
-                    public void close() throws IOException {
+                    public void close() {
                         closed = true;
                     }
                 };

@@ -26,7 +26,7 @@ import java.sql.SQLException;
  * READTEXT command for image, text and ntext columns.
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsInputStream.java,v 1.6 2004-08-24 21:47:39 bheineman Exp $
+ * @version $Id: JtdsInputStream.java,v 1.7 2004-08-31 17:25:17 alin_sinpalean Exp $
  */
 public class JtdsInputStream extends InputStream {
     private TdsCore tds;
@@ -74,10 +74,8 @@ public class JtdsInputStream extends InputStream {
     }
 
     /**
-     * Resets the stream so that the data may be read from the specified
-     * offset.
+     * Resets the stream so that the data may be read from the specified offset.
      *
-     * @param offset the offset to reset the stream to
      * @throws IOException if <code>offset</code> is less <code>0</code>;
      *                     if <code>offset</code> is greater than <code>getLength()</code>;
      */

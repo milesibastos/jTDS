@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.22 2004-08-24 21:47:38 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.23 2004-08-31 17:25:17 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -368,7 +368,7 @@ public class TdsData {
                 ci.sqlType = types[SYBMONEY4].sqlType;
             }
         }
-        
+
         // Set sizes for character types
         if (ci.precision == -1) {
             ci.precision = ci.bufferSize;
@@ -1511,8 +1511,8 @@ public class TdsData {
             case SYBDECIMAL:
                 out.write((byte) pi.tdsType);
                 BigDecimal value = null;
-                int scale = 0;
                 int prec = out.getMaxPrecision();
+                int scale;
 
                 if (pi.jdbcType == java.sql.Types.BIGINT) {
                     scale = 0;
@@ -1659,7 +1659,7 @@ public class TdsData {
                     time = time - (minutes * 18000);
                     seconds = time / 300;
                     cal.set(Calendar.SECOND, seconds);
-                    time = time - seconds * 300;                    
+                    time = time - seconds * 300;
                     time = (int) Math.round(time * 1000 / 300f);
                     cal.set(Calendar.MILLISECOND, time);
 //

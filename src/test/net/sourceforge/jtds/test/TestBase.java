@@ -149,10 +149,12 @@ public abstract class TestBase extends TestCase {
         try {
             if (is1 == null && is2 == null) {
                 return;
-            } else if (is1 == null && is2 != null) {
+            } else if (is1 == null) {
                 assertTrue("is1 == null && is2 != null", false);
-            } else if (is1 != null && is2 == null) {
+                return;
+            } else if (is2 == null) {
                 assertTrue("is1 != null && is2 == null", false);
+                return;
             }
 
             long count = 0;
@@ -173,6 +175,10 @@ public abstract class TestBase extends TestCase {
 
                 count++;
             }
+
+            if (is2.read() != -1) {
+                assertTrue("stream 1 EOF at: " + count, false);
+            }
         } finally {
             if (is1 != null) {
                 is1.close();
@@ -188,10 +194,12 @@ public abstract class TestBase extends TestCase {
         try {
             if (r1 == null && r2 == null) {
                 return;
-            } else if (r1 == null && r2 != null) {
+            } else if (r1 == null) {
                 assertTrue("r1 == null && r2 != null", false);
-            } else if (r1 != null && r2 == null) {
+                return;
+            } else if (r2 == null) {
                 assertTrue("r1 != null && r2 == null", false);
+                return;
             }
 
             long count = 0;
@@ -211,6 +219,10 @@ public abstract class TestBase extends TestCase {
                         (value1 == value2));
 
                 count++;
+            }
+
+            if (r2.read() != -1) {
+                assertTrue("reader 1 EOF at: " + count, false);
             }
         } finally {
             if (r1 != null) {

@@ -1,6 +1,12 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/20/2004 - Brian Heineman
+ o Corrected bug [919594] Clob support; added setObject support for both
+   java.sql.Blob and java.sql.Clob.  Added initial Blob and Clob functional
+   tests.
+ o Corrected SQLException in getBytes() due to invalid length calculation.
+
 03/14/2004 - Alin Sinpalean
  o Applied Mike's version 4 of the single connection patch fixing a number of
    issues (see patch #912364 for the exact description).

@@ -35,7 +35,7 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.11 2004-03-03 22:14:13 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.12 2004-03-21 01:54:59 bheineman Exp $";
 
     /**
      * Check that all items in parameterList have been given a value
@@ -141,6 +141,7 @@ public class ParameterUtils {
                     }
                     break;
                 }
+                case java.sql.Types.CLOB:
                 case java.sql.Types.LONGVARCHAR:
                 {
                     if (tdsVer == Tds.TDS70) {
@@ -175,6 +176,7 @@ public class ParameterUtils {
                     parameterList[i].formalType = "datetime";
                     break;
                 }
+                case java.sql.Types.BLOB:
                 case java.sql.Types.LONGVARBINARY:
                 {
                     parameterList[i].formalType = "image";

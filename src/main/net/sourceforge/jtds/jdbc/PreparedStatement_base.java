@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.26 2004-03-13 23:34:39 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.27 2004-03-21 01:54:59 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.26 2004-03-13 23:34:39 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.27 2004-03-21 01:54:59 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -588,6 +588,12 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             if( x instanceof java.lang.Float )
                 setFloat( parameterIndex, ((Number)x).floatValue() );
         else
+            if (x instanceof java.sql.Blob)
+                setBlob(parameterIndex, (java.sql.Blob) x);
+        else
+            if (x instanceof java.sql.Clob)
+                setClob(parameterIndex, (java.sql.Clob) x);
+        else
             if( x instanceof java.sql.Date )
                 setDate( parameterIndex, (java.sql.Date)x );
         else
@@ -737,6 +743,16 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                     break;
                 case java.sql.Types.BIGINT:
                     setLong( parameterIndex, ((Number) x).longValue() );
+                    break;
+                case java.sql.Types.BLOB:
+                    Blob blob = (Blob) x;
+
+                    setBinaryStream(parameterIndex, blob.getBinaryStream(), (int) blob.length());
+                    break;
+                case java.sql.Types.CLOB:
+                    Clob clob = (Clob) x;
+
+                    setCharacterStream(parameterIndex, clob.getCharacterStream(), (int) clob.length());
                     break;
                 default:
                     setParam( parameterIndex, x, targetSqlType, scale );

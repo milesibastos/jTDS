@@ -275,7 +275,7 @@ public class CallableStatementTest extends TestBase {
     /**
      * Test for incorrect exception thrown/no exception thrown when invalid
      * call escape is used.
-     *
+     * <p/>
      * See https://sourceforge.net/forum/forum.php?thread_id=1144619&forum_id=104389
      * for more detail.
      */
@@ -295,6 +295,40 @@ public class CallableStatementTest extends TestBase {
     public void testCallableStatementParsing5() throws Exception {
         CallableStatement cstmt = con.prepareCall(" { Call Test(?,?) } ");
         cstmt.close();
+    }
+
+    /**
+     * Test for incorrect exception thrown/no exception thrown when invalid
+     * call escape is used.
+     * <p/>
+     * A message containing the correct missing terminator should be generated.
+     */
+    public void testCallableStatementParsing6() throws SQLException {
+        try {
+            con.prepareCall("{call sp_test(?, ?)");
+            fail("Was expecting an invalid escape error");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            assertEquals("22025", ex.getSQLState());
+            assertTrue(ex.getMessage().indexOf('}') != -1);
+        }
+    }
+
+    /**
+     * Test for incorrect exception thrown/no exception thrown when invalid
+     * call escape is used.
+     * <p/>
+     * A message containing the correct missing terminator should be generated.
+     */
+    public void testCallableStatementParsing7() throws SQLException {
+        try {
+            con.prepareCall("{call sp_test(?, ?}");
+            fail("Was expecting an invalid escape error");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            assertEquals("22025", ex.getSQLState());
+            assertTrue(ex.getMessage().indexOf(')') != -1);
+        }
     }
 
     /**

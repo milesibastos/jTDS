@@ -10,6 +10,9 @@ Changes from jTDS 1.0.2
    Also removed the readAhead flag, which caused the rest of the response to
    be dumped when the end of the first ResultSet was reached for a
    CallableStatement.executeQuery.
+ o Corrected a problem in SQLParser causing an error message with the wrong
+   terminator value missing (i.e. ')' instead of '}' missing from
+   "{call proc(?)").
 
 02/25/2005 - Alin Sinpalean
  o Added code to close the socket and release any data buffered at the socket

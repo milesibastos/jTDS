@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.17 2005-02-15 16:28:48 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.18 2005-02-27 12:33:45 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -300,8 +300,9 @@ class SQLParser {
         skipWhiteSpace();
 
         if (in[s] == '(') { // Optional ( )
-            s++; skipWhiteSpace();
+            s++;
             terminator = ')';
+            skipWhiteSpace();
         } else {
             terminator = '}';
         }
@@ -354,8 +355,8 @@ class SQLParser {
             s++; // Elide
         }
 
-        skipWhiteSpace();
         terminator = '}';
+        skipWhiteSpace();
     }
 
     /**

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.29 2004-04-16 21:14:12 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.30 2004-04-17 03:48:50 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,7 +66,7 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.29 2004-04-16 21:14:12 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.30 2004-04-17 03:48:50 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -963,8 +963,10 @@ public class TdsStatement implements java.sql.Statement
         return connection;
     }
 
-    private void checkClosed() throws SQLException {
-        if (isClosed || connection.isClosed()) {
+    void checkClosed() throws SQLException {
+        connection.checkClosed();
+
+        if (isClosed) {
             throw new SQLException("Statement already closed.");
         }
     }

@@ -39,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: TdsSocket.java,v 1.5 2004-04-06 03:01:53 bheineman Exp $
+ * @version $Id: TdsSocket.java,v 1.6 2004-04-17 03:48:50 bheineman Exp $
  */
 public class TdsSocket {
 
@@ -276,7 +276,11 @@ public class TdsSocket {
      * @return True if the underlying socket is connected.
      */
     public boolean isConnected() {
-        return this.socket != null;
+        // Socket.isClosed() contains a  synchronized block and I do not see
+        // the need to impose the additional overhead on each call to a
+        // Connection / Statement / ResultSet...
+        return this.socket != null && socket.isConnected();
+//        return this.socket != null && socket.isConnected() && !socket.isClosed();
     }
 
     /**
@@ -302,8 +306,7 @@ public class TdsSocket {
      * Close the socket (noop if in shared mode)
      * @throws IOException
      */
-    public void close()
-            throws IOException {
+    public void close() throws IOException {
         if (Logger.isActive())
             Logger.println("TdsSocket: Max buffer memory used = " + peakMemUsage + "KB");
 
@@ -376,6 +379,7 @@ public class TdsSocket {
                 // First, send out any output that might have been queued
                 //
                 byte[] tmpBuf = dequeueOutput(vsock);
+
                 while (tmpBuf != null) {
                     out.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
                     tmpBuf = dequeueOutput(vsock);
@@ -383,6 +387,7 @@ public class TdsSocket {
 
                 // Now we can safely send this packet too
                 out.write(buffer, 0, TdsComm.ntohs(buffer, 2));
+
                 if (buffer[1] != 0) {
                     // This means the TDS Packet is complete
                     currentSender = null;

@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.25 2004-04-16 21:14:12 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.26 2004-04-17 03:48:50 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -106,7 +106,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.25 2004-04-16 21:14:12 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.26 2004-04-17 03:48:50 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -449,7 +449,7 @@ public class TdsConnection implements Connection
      * @exception SQLException  if a database-access error occurs.
      */
     public boolean isClosed() throws SQLException {
-        return isClosed;
+        return isClosed || !tdsSocket.isConnected();
     }
 
     /**
@@ -682,8 +682,9 @@ public class TdsConnection implements Connection
      * @exception  SQLException  if a database-access error occurs.
      */
     public synchronized void close() throws SQLException {
-        if (isClosed)
+        if (isClosed()) {
             return;
+        }
 
         // MJH Need to rollback if in manual commit mode
         synchronized (mainTdsMonitor) {
@@ -811,7 +812,7 @@ public class TdsConnection implements Connection
     }
 
     /*package*/ void checkClosed() throws SQLException {
-        if (isClosed) {
+        if (isClosed()) {
             throw new SQLException("Connection closed", "HY000");
         }
     }
@@ -886,7 +887,7 @@ public class TdsConnection implements Connection
      * @exception  TdsException  Description of Exception
      * @see                      #allocateTds
      */
-    synchronized void freeTds(Tds tds) throws TdsException {
+    synchronized void freeTds(Tds tds) throws TdsException, SQLException {
         int i;
 
         for (i = tdsPool.size() - 1; i >= 0; i-- ) {
@@ -899,7 +900,7 @@ public class TdsConnection implements Connection
             tds.setInUse(false);
         } else {
             // Only throw the exception if the connection is not closed
-            if (!isClosed) {
+            if (!isClosed()) {
                 throw new TdsException(
                         "Tried to free a tds that wasn't in use.");
             }

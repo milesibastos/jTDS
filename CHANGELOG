@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/14/2004 - Brian Heineman
+ o Corrected bug [1006449] 0.9rc1: Driver version broken; (thanks to Mike
+   Hutchinson for the patch).
+
 08/13/2004 - Brian Heineman
  o Added test for bug [1008208] 0.9-rc1 updateNull doesn't work
  o Added initial support for prepareSql=4; sp_prepexec used in conjunction with

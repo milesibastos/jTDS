@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.33 2004-08-07 01:37:43 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.34 2004-08-14 16:43:27 bheineman Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -78,6 +78,31 @@ public class Driver implements java.sql.Driver {
 
     public int getMinorVersion() {
         return MINOR_VERSION;
+    }
+
+    /**
+     * Returns the driver version.
+     * <p>
+     * Per [908906] 0.7: Static Version information, please.
+     *
+     * @return the driver version
+     */
+    public static final String getVersion() {
+        return "jTDS " + MAJOR_VERSION + "." + MINOR_VERSION;
+    }
+
+    /**
+     * Returns the string form of the object.
+     * <p>
+     * Per [887120] DriverVersion.getDriverVersion(); this will return a short
+     * version name.
+     * <p>
+     * Added back to driver per [1006449] 0.9rc1: Driver version broken
+     *
+     * @return the driver version
+     */
+    public String toString() {
+        return getVersion();
     }
 
     public boolean jdbcCompliant() {

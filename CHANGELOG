@@ -5,6 +5,8 @@ Changes from jTDS 0.9
  o Initial work to support controlled statement caching.  A latching mechanism
    is available to ensure two separate statements with the same SQL do not cause
    a cached statement to be removed prematurely.
+ o Corrected bug [1051747] Array out of bounds Exception in ResultSetMetaData;
+   (thanks to Mike Hutchinson for the patch).
 
 10/20/2004 - Alin Sinpalean
  o Corrected a bug that was causing Charsets.properties not to be loaded under

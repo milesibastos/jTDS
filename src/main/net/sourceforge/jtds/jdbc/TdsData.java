@@ -47,7 +47,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.36 2004-11-29 17:41:18 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.37 2004-12-03 16:52:00 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -320,7 +320,7 @@ public class TdsData {
         int type = in.read();
 
         if (types[type] == null) {
-            throw new ProtocolException("Invalid TDS data type 0x" + Integer.toHexString(type));
+            throw new ProtocolException("Invalid TDS data type 0x" + Integer.toHexString(type & 0xFF));
         }
 
         ci.tdsType     = type;
@@ -879,7 +879,7 @@ public class TdsData {
 
             default:
                 throw new ProtocolException("Unsupported TDS data type 0x"
-                                            + Integer.toHexString(ci.tdsType));
+                        + Integer.toHexString(ci.tdsType & 0xFF));
         }
 
         return null;

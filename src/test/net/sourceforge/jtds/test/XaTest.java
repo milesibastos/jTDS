@@ -37,7 +37,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  * examples found in the following article at
  * <a href="http://archive.devx.com/java/free/articles/dd_jta/jta-2.asp">DevX</a>.
  *
- * @version $Id: XaTest.java,v 1.4 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: XaTest.java,v 1.5 2004-12-03 16:52:09 alin_sinpalean Exp $
  */
 public class XaTest extends DatabaseTestCase {
 
@@ -53,11 +53,14 @@ public class XaTest extends DatabaseTestCase {
      */
     public XADataSource getDataSource() throws SQLException {
         JtdsDataSource xaDS = new JtdsDataSource();
-        String user = props.getProperty(Messages.get(Driver.USER));
-        String pwd  = props.getProperty(Messages.get(Driver.PASSWORD));
-        String host = props.getProperty(Messages.get(Driver.SERVERNAME));
-        String port = props.getProperty(Messages.get(Driver.PORTNUMBER));
+        String user     = props.getProperty(Messages.get(Driver.USER));
+        String pwd      = props.getProperty(Messages.get(Driver.PASSWORD));
+        String host     = props.getProperty(Messages.get(Driver.SERVERNAME));
+        String port     = props.getProperty(Messages.get(Driver.PORTNUMBER));
         String database = props.getProperty(Messages.get(Driver.DATABASENAME));
+        String xaMode   = props.getProperty(Messages.get(Driver.XAEMULATION));
+        String tds      = props.getProperty(Messages.get(Driver.TDS));
+        String serverType = props.getProperty(Messages.get(Driver.SERVERTYPE));
         int portn;
         try {
             portn = Integer.parseInt(port);
@@ -69,6 +72,9 @@ public class XaTest extends DatabaseTestCase {
         xaDS.setUser(user);
         xaDS.setPassword(pwd);
         xaDS.setDatabaseName(database);
+        xaDS.setXaEmulation(xaMode.equalsIgnoreCase("true"));
+        xaDS.setTds(tds);
+        xaDS.setServerType("2".equals(serverType)? 2: 1);
         return xaDS;
     }
 
@@ -226,6 +232,10 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testLocalTran() throws Exception {
+        if ("true".equalsIgnoreCase(props.getProperty(Messages.get(Driver.XAEMULATION)))) {
+            // Emulation mode does not support suspending transactions.
+            return;
+        }
         Connection con2 = null;
         XAConnection xaCon = null;
 
@@ -285,6 +295,10 @@ public class XaTest extends DatabaseTestCase {
      * @throws Exception if an error condition occurs
      */
     public void testXAJoinTran() throws Exception {
+        if ("true".equalsIgnoreCase(props.getProperty(Messages.get(Driver.XAEMULATION)))) {
+            // Emulation mode does not joining transactions.
+            return;
+        }
         Connection con2 = null;
         Connection con3 = null;
         XAConnection xaCon = null;

@@ -2,6 +2,14 @@ Changes from jTDS 0.9
 =========================
 
 12/03/2004 - Alin Sinpalean
+ o Corrected bug [1078325] Multithreaded prepared statement errors (or at least
+   I sure do hope so). The problem seems to have been the fact that preparing
+   a statement and executing it was not a single, atomic operation and a
+   rollback() could occur between the two basically "unpreparing" the
+   statement. Also synchronized some methods in ConnectionJDBC2 that looked
+   like they needed some sync.
+ o Corrected some exception error messages that contained incorrect hexadecimal
+   values.
  o Corrected an issue in SQLParser that prevented CallableStatements from
    working properly with procedures containing semicolons in their name (e.g.
    "test;1").

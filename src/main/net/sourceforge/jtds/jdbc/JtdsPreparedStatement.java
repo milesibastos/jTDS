@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.28 2004-12-01 15:37:19 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.29 2004-12-03 16:52:00 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -371,13 +371,18 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public int executeUpdate() throws SQLException {
         checkOpen();
-        String spName = procName;
 
-        if (spName == null) {
-            spName = connection.prepareSQL(this, sql, parameters, returnKeys);
+        if (procName == null) {
+            // Sync on the connection to make sure rollback() isn't called
+            // between the moment when the statement is prepared and the moment
+            // when it's executed.
+            synchronized (connection) {
+                String spName = connection.prepareSQL(this, sql, parameters, returnKeys);
+                executeSQL(sql, spName, sqlWord, parameters, returnKeys, true);
+            }
+        } else {
+            executeSQL(sql, procName, sqlWord, parameters, returnKeys, true);
         }
-
-        executeSQL(sql, spName, sqlWord, parameters, returnKeys, true);
 
         return getUpdateCount(0);
     }
@@ -413,13 +418,18 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         checkOpen();
         resultQueue.clear();
         genKeyResultSet = null;
-        String spName = procName;
 
-        if (spName == null) {
-            spName = connection.prepareSQL(this, sql, parameters, returnKeys);
+        if (procName == null) {
+            // Sync on the connection to make sure rollback() isn't called
+            // between the moment when the statement is prepared and the moment
+            // when it's executed.
+            synchronized (connection) {
+                String spName = connection.prepareSQL(this, sql, parameters, returnKeys);
+                return executeSQL(sql, spName, sqlWord, parameters, returnKeys, false);
+            }
+        } else {
+            return executeSQL(sql, procName, sqlWord, parameters, returnKeys, false);
         }
-
-        return executeSQL(sql, spName, sqlWord, parameters, returnKeys, false);
     }
 
     public void setByte(int parameterIndex, byte x) throws SQLException {
@@ -623,16 +633,19 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         checkOpen();
         resultQueue.clear();
         genKeyResultSet = null;
-        String spName = procName;
+        boolean isCallableStatement = this instanceof JtdsCallableStatement;
 
-        if (spName == null) {
-            spName = connection.prepareSQL(this, sql, parameters, false);
+        if (procName == null) {
+            // Sync on the connection to make sure rollback() isn't called
+            // between the moment when the statement is prepared and the moment
+            // when it's executed.
+            synchronized (connection) {
+                String spName = connection.prepareSQL(this, sql, parameters, false);
+                return executeSQLQuery(sql, spName, parameters, isCallableStatement);
+            }
+        } else {
+            return executeSQLQuery(sql, procName, parameters, isCallableStatement);
         }
-
-        return executeSQLQuery(sql,
-                               spName,
-                               parameters,
-                               (this instanceof JtdsCallableStatement));
     }
 
     public ResultSetMetaData getMetaData() throws SQLException {

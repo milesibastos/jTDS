@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.54 2004-12-03 14:48:58 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.55 2004-12-03 16:52:00 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1773,7 +1773,7 @@ public class TdsCore {
                 default:
                     throw new ProtocolException(
                             "Invalid packet type 0x" +
-                                Integer.toHexString(currentToken.token));
+                                Integer.toHexString((int) currentToken.token & 0xFF));
             }
         } catch (IOException ioe) {
             connection.setClosed();
@@ -1802,7 +1802,7 @@ public class TdsCore {
     {
         in.skip(in.readShort());
         throw new ProtocolException("Unsupported TDS token: 0x" +
-                            Integer.toHexString(currentToken.token & 0xFF));
+                            Integer.toHexString((int) currentToken.token & 0xFF));
     }
 
     /**

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.52 2004-12-03 14:42:34 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.53 2004-12-03 16:52:00 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -261,7 +261,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @throws SQLException
      */
     ConnectionJDBC2(String url, Properties info)
-    throws SQLException {
+            throws SQLException {
         this.statements = new ArrayList();
         this.url = url;
         //
@@ -437,17 +437,24 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Try to convert the SQL statement into a stored procedure.
+     * <p>
+     * Synchronized because it accesses the procedure cache and the
+     * <code>baseTds</code>, but the method call also needs to made in a
+     * <code>synchronized (connection)</code> block together with the execution
+     * (if the prepared statement is actually executed) to ensure the
+     * transaction isn't rolled back between this method call and the actual
+     * execution.
      *
-     * @param sql The SQL statement to prepare.
-     * @param params The parameters.
-     * @return The SQL procedure name as a <code>String</code> or
-     * null if the SQL cannot be prepared.
+     * @param sql    the SQL statement to prepare
+     * @param params the parameters
+     * @return the SQL procedure name as a <code>String</code> or null if the
+     *         SQL cannot be prepared
      */
-    String prepareSQL(JtdsPreparedStatement pstmt,
+    synchronized String prepareSQL(JtdsPreparedStatement pstmt,
                                    String sql,
                                    ParamInfo[] params,
                                    boolean returnKeys)
-    throws SQLException {
+            throws SQLException {
         if (prepareSql == TdsCore.UNPREPARED
                 || prepareSql == TdsCore.EXECUTE_SQL) {
             return null; // User selected not to use procs
@@ -537,7 +544,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         pstmt.handles.add(proc);
-
 
         // Give the user the name
         return proc.name;
@@ -1046,21 +1052,23 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /**
      * Remove a statement object from the list maintained by the connection and
      * clean up the statement cache if necessary.
+     * <p>
+     * Synchronized because it accesses the statement list, the statement cache
+     * and the <code>baseTds</code>.
      *
      * @param statement the statement to remove
      */
-    void removeStatement(JtdsStatement statement) throws SQLException {
+    synchronized void removeStatement(JtdsStatement statement)
+            throws SQLException {
         // Remove the JtdsStatement
-        synchronized (statements) {
-            for (int i = 0; i < statements.size(); i++) {
-                WeakReference wr = (WeakReference) statements.get(i);
+        for (int i = 0; i < statements.size(); i++) {
+            WeakReference wr = (WeakReference) statements.get(i);
 
-                if (wr != null) {
-                    Statement stmt = (Statement) wr.get();
+            if (wr != null) {
+                Statement stmt = (Statement) wr.get();
 
-                    if (stmt != null && stmt == statement) {
-                        statements.set(i, null);
-                    }
+                if (stmt != null && stmt == statement) {
+                    statements.set(i, null);
                 }
             }
         }
@@ -1219,13 +1227,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Invoke the <code>xp_jtdsxa</code> extended stored procedure on the server.
+     * <p>
+     * Synchronized because it accesses the <code>baseTds</code>.
      *
      * @param args the arguments eg cmd, rmid, flags etc.
      * @param data option byte data eg open string xid etc.
      * @return optional byte data eg OLE cookie.
      * @throws SQLException if an error condition occurs
      */
-    byte[][]  sendXaPacket(int args[], byte[] data)
+    synchronized byte[][] sendXaPacket(int args[], byte[] data)
             throws SQLException
     {
         ParamInfo params[] = new ParamInfo[6];
@@ -1287,7 +1297,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param oleTranID the OLE transaction cookie or null to delist
      * @throws SQLException if an error condition occurs
      */
-    void enlistConnection(byte[] oleTranID)
+    synchronized void enlistConnection(byte[] oleTranID)
             throws SQLException
     {
         if (oleTranID != null) {
@@ -1367,6 +1377,23 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         messages.clearWarnings();
     }
 
+    /**
+     * Releases this <code>Connection</code> object's database and JDBC
+     * resources immediately instead of waiting for them to be automatically
+     * released.
+     * <p>
+     * Calling the method close on a <code>Connection</code> object that is
+     * already closed is a no-op.
+     * <p>
+     * <b>Note:</b> A <code>Connection</code> object is automatically closed
+     * when it is garbage collected. Certain fatal errors also close a
+     * <code>Connection</code> object.
+     * <p>
+     * Synchronized because it accesses the statement list and the
+     * <code>baseTds</code>.
+     *
+     * @throws SQLException if a database access error occurs
+     */
     synchronized public void close() throws SQLException {
         if (!closed) {
             try {

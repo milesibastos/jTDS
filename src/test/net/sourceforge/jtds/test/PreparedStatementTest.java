@@ -548,8 +548,6 @@ public class PreparedStatementTest extends TestBase {
         assertEquals("id", rsmd.getColumnName(1));
 
         pstmt.close();
-        pstmt = null;
-        rsmd = null;
 
         // test more complex statement
         pstmt = con.prepareStatement("SELECT id, count(*) as count " +
@@ -602,6 +600,86 @@ public class PreparedStatementTest extends TestBase {
         assertFalse(rs.next());
         rs.close();
         pstmt.close();
+    }
+
+    static class TestMultiThread extends Thread {
+        static Connection con;
+        static final int THREAD_MAX = 10;
+        static final int LOOP_MAX = 10;
+        static final int ROWS_MAX = 10;
+        static int live;
+        static Exception error;
+
+        int threadId;
+
+        TestMultiThread(int n) {
+            threadId = n;
+        }
+
+        public void run() {
+            try {
+//                System.out.println("ID=" + threadId + " starting.");
+                con.rollback();
+                PreparedStatement pstmt = con.prepareStatement(
+                        "SELECT id, data FROM #TEST WHERE id = ?",
+                        ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+                for (int i = 1; i <= LOOP_MAX; i++) {
+                    pstmt.clearParameters();
+                    pstmt.setInt(1, i);
+                    ResultSet rs = pstmt.executeQuery();
+
+                    while (rs.next()) {
+                        rs.getInt(1);
+                        rs.getString(2);
+                    }
+
+//                    System.out.println("ID=" + threadId + " loop=" + i + " done.");
+                }
+
+                pstmt.close();
+            } catch (Exception e) {
+                System.err.print("ID=" + threadId + ' ');
+                e.printStackTrace();
+                error = e;
+            }
+
+            synchronized (this.getClass()) {
+                live--;
+            }
+        }
+
+        static void startThreads(Connection con) throws Exception {
+            TestMultiThread.con = con;
+            con.setAutoCommit(false);
+
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE #TEST (id int identity primary key, data varchar(255))");
+
+            for (int i = 0; i < ROWS_MAX; i++) {
+                stmt.executeUpdate("INSERT INTO #TEST (data) VALUES('This is line " + i + "')");
+            }
+
+            stmt.close();
+            con.commit();
+
+//            DriverManager.setLogStream(System.out);
+            live = THREAD_MAX;
+            for (int i = 0; i < THREAD_MAX; i++) {
+                new TestMultiThread(i).start();
+            }
+            while (live > 0) {
+                sleep(1);
+            }
+
+            if (error != null) {
+                throw error;
+            }
+        }
+    }
+
+    public void testMultiThread() throws Exception {
+        TestMultiThread.startThreads(con);
     }
 
     public static void main(String[] args) {

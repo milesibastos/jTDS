@@ -1,6 +1,9 @@
 Changes from jTDS 0.9.1
 =======================
 
+01/21/2005 - Alin Sinpalean
+ o Changed the home page title to "jTDS JDBC Driver".
+
 01/17/2005 - Alin Sinpalean
  o Updated typemap.html to reflect the mapping of IMAGE to BLOB and TEXT/NTEXT
    to CLOB.

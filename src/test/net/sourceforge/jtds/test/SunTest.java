@@ -404,8 +404,8 @@ public class SunTest extends DatabaseTestCase {
      * @throws Exception
      */
     public void testNestedEscapes() throws Exception {
-        String sql = "SELECT {fn convert(varchar, {fn month({fn now()})})} WHERE X";
-        assertEquals("SELECT convert(varchar, datepart(month,getdate())) WHERE X", con.nativeSQL(sql));
+        String sql = "SELECT {fn convert({fn month({fn now()})},varchar)} WHERE X";
+        assertEquals("SELECT convert(varchar,datepart(month,getdate())) WHERE X", con.nativeSQL(sql));
         sql = "{?=call testproc(?, {fn now()})}";
         assertEquals("EXECUTE testproc ?,getdate()", con.nativeSQL(sql));
         sql = "SELECT * FROM {oj t1 LEFT OUTER JOIN {oj t2 LEFT OUTER JOIN t2 ON condition1} ON condition2}";

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse. 
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.6 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: SQLParser.java,v 1.7 2004-08-28 15:29:32 bheineman Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -344,6 +344,8 @@ class SQLParser {
         if (terminator == ')') {
             s++; // Elide
         }
+        
+        terminator = '}';
     }
 
     /**
@@ -510,7 +512,9 @@ class SQLParser {
     private static HashMap fnMap = new HashMap();
     /** Map of jdbc to sql server function names. */
     private static HashMap msFnMap = new HashMap();
-
+    /** Map of jdbc to server data types for convert */
+    private static HashMap cvMap = new HashMap();
+    
     static {
         // Microsoft only functions
         msFnMap.put("length", "len($)");
@@ -545,6 +549,15 @@ class SQLParser {
         fnMap.put("monthname",   "datename(month,$)");
         fnMap.put("timestampadd",   "dateadd($)");
         fnMap.put("timestampdiff",   "datediff($)");
+        // convert jdbc to sql types
+        cvMap.put("binary", "varbinary");
+        cvMap.put("char", "varchar");
+        cvMap.put("date", "datetime");
+        cvMap.put("double", "float");
+        cvMap.put("longvarbinary", "image");
+        cvMap.put("longvarchar", "text");
+        cvMap.put("time", "datetime");
+        cvMap.put("timestamp", "timestamp");        
     }
 
     /**
@@ -570,6 +583,7 @@ class SQLParser {
         skipWhiteSpace();
         mustbe('(', false);
         int argStart = d;
+        int arg2Start = 0;
         terminator = ')';
         while (in[s] != ')') {
             final char c = in[s];
@@ -585,6 +599,9 @@ class SQLParser {
                     escape();
                     break;
                 case ',':
+                    if (arg2Start == 0) {
+                        arg2Start = d - argStart;
+                    }
                     if (name.equals("concat")) {
                         out[d++] = '+'; s++;
                     } else
@@ -599,14 +616,39 @@ class SQLParser {
                     break;
             }
         }
+
         String args = String.valueOf(out, argStart, d-argStart).trim();
-        d = argStart;            
+
+        d = argStart;
         mustbe(')', false);
         terminator = tc;
         skipWhiteSpace();
 
         //
-        // See if string mapped
+        // Process convert scalar function.
+        // Arguments need to be reversed and the data type
+        // argument converted to an SQL server type
+        //
+        if (name.equals("convert") && arg2Start < args.length() - 1) {
+            String arg2 = args.substring(arg2Start + 1).trim().toLowerCase();
+            String dataType = (String) cvMap.get(arg2);
+
+            if (dataType == null) {
+                // Will get server error if invalid type passed
+                dataType = arg2;
+            }
+
+            copyLiteral("convert(");
+            copyLiteral(dataType);
+            out[d++] = ',';
+            copyLiteral(args.substring(0, arg2Start));
+            out[d++] = ')';
+
+            return;
+        }
+
+        //
+        // See if function mapped
         //
         String fn;
         if (serverType == Driver.SQLSERVER) {

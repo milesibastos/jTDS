@@ -4,6 +4,8 @@ Changes from jTDS 0.8.1
 07/23/2004 - Brian Heineman
  o Improved ConnectionPoolDataSource exception processing and closed connection
    handling.
+ o Applied patch [989791] Workaround for null values in properties; (Thanks to
+   Art Gramlich for the original patch)
 
 07/22/2004 - Brian Heineman
  o Added lobBuffer parameter to control the memory used by LOB's.

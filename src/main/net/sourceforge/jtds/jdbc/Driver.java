@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.17 2004-07-22 17:09:58 bheineman Exp $
+ * @version $Id: Driver.java,v 1.18 2004-07-23 14:15:14 bheineman Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -253,8 +253,12 @@ public class Driver implements java.sql.Driver {
 
         // Take local copy of existing properties
         for (Enumeration e = info.keys(); e.hasMoreElements();) {
-            String key = (String)e.nextElement();
-            props.setProperty(key.toUpperCase(), info.getProperty(key));
+            String key = (String) e.nextElement();
+            String value = info.getProperty(key);
+            
+            if (value != null) {
+                props.setProperty(key.toUpperCase(), value);
+            }
         }
 
         StringBuffer token = new StringBuffer(16);
@@ -268,6 +272,7 @@ public class Driver implements java.sql.Driver {
         }
 
         pos = nextToken(url, pos, token); // Skip jtds
+        
         if (!token.toString().equalsIgnoreCase("jtds")) {
             return null; // jtds: missing
         }

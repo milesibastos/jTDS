@@ -1,4 +1,8 @@
 
+===============================================================================
+11/11/2002 - jTDS 0.5 released
+===============================================================================
+
 Changes from jTDS 0.4
 =======================
 
@@ -120,6 +124,7 @@ Changes from jTDS 0.4
  o I think I fixed the 'cursor not found' issue with cursor result sets. Still
    need some testing to make sure it works fine, but it looks quite good. ;o)
 
+
 ===============================================================================
 10/14/2002 - jTDS 0.4 released
 ===============================================================================
@@ -174,6 +179,7 @@ Changes from jTDS 0.3.2
    empty Map unless the application has added an entry. So, as the application
    can't add an entry (setTypeMap throws an SQLException as well :o) ) we'll
    just return an empty Map each time. :o)))
+
 
 ===============================================================================
 09/20/2002 - jTDS 0.3.2 released
@@ -383,6 +389,7 @@ Changes from jTDS 0.3.1
  o Removed TdsStatement.commit(), TdsStatement.rollback(),
    TdsStatement.finalize() and TdsResultSet.finalize() as they were no longer
    needed.
+
 
 ===============================================================================
 09/06/2002 - jTDS 0.3.1 released

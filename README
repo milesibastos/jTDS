@@ -1,0 +1,57 @@
+jTDS Ultra quick start
+======================
+
+This software is based on the FreeTDS project that can be found at
+http://www.freetds.org/ Much kudos goes to the developers of that
+software. More kudos will be included in this file once everything
+settles down.
+
+Status
+======
+
+pre-alpha
+
+Unstable, breakable not guaranteed to work.
+
+Having said that, I am using it to run corporate systems talking to
+a SQL Server 7.0 database.
+
+Supports
+========
+
+Everything FreeTDS does except JDBC 1.0 .
+
+Read only scrollable recordsets and cursors.
+
+Requires JDBC 2.0 (JDK 1.3 recommended).
+
+Quick Start
+===========
+
+1. Modify conf/properties to point to your server, and put
+in your username and password. All the tests use only temporary
+tables, so almost any user should do.
+
+2. In a command prompt, type:
+
+build test
+
+This will run a series of tests on your database (see
+src/test/freetds/BaseTest.java for an example). Note that some
+tests (PerformanceTest) use the odbc driver to compare results,
+so if you are running on another OS this test will fail.
+
+TO-DO
+=====
+
+1. Update for scrollable recordsets.
+2. More metadata.
+3. Connection pooling
+4. JDBC 3.0 compliance
+5. Change package names
+
+CONTACTS
+========
+Sourceforge project page: http://sourceforge.net/projects/jtds/
+
+Chris Stevenson chris@ssabsa.sa.gov.au

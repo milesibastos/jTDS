@@ -31,5 +31,6 @@
     <property category="archiving" name="targetPath" value="jtds.jar" />
   </node>
   <file path="build.xml" />
+  <file path="README" />
 </project>
 

@@ -1,4 +1,4 @@
-<project name="freetds" default="compile" basedir=".">
+<project name="jtds" default="compile" basedir=".">
 
   <target name="init">
 
@@ -16,6 +16,7 @@
 
   <target name="clean" depends="init">
     <deltree dir="${build}" />
+    <deltree dir="${dist}" />
   </target>
 
   <target name="prepare" depends="init">
@@ -47,7 +48,7 @@
            author="true"
            version="true"
            use="true"
-           windowtitle="${project-name} API"
+           windowtitle="${ant.project.name} API"
            doctitle="jTDS API Documentation"
            bottom="Released under the LGPL">
     </javadoc>
@@ -80,17 +81,28 @@
 
   <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}" />
-    <jar jarfile="${dist}/${project-name}-src.jar"
-        basedir="${build}/src"
-    />
-    <jar jarfile="${dist}/${project-name}.jar"
+    <!-- Runtime jar only -->
+    <jar jarfile="${dist}/${ant.project.name}-${DSTAMP}${TSTAMP}.jar"
         basedir="${build}/classes"
+        excludes="**Test/*"
+        includes="**/*"
     />
+    <!-- Full dist -->
     <mkdir dir="${dist}/doc" />
     <copydir src="${build}/doc"
-           dest="${dist}/doc"
+           dest="${dist}/tmp/doc"
            includes="**/*"
     />
+    <mkdir dir="${dist}/tmp"/>
+    <copydir src="."
+        dest="${dist}/tmp"
+        includes="README,*.bat,*.xml,*.jpx,*.library,src/**/*,lib/**/*,conf/**/*"
+    />
+    <zip zipfile="${dist}/${ant.project.name}-${DSTAMP}${TSTAMP}.zip"
+        basedir="${dist}/tmp"
+        includes="**/*"
+    />
+    <deltree dir="${dist}/tmp" />
   </target>
 
 </project>

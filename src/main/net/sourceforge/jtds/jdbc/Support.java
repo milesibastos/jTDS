@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.9 2004-08-05 16:25:27 bheineman Exp $
+ * @version $Id: Support.java,v 1.10 2004-08-05 21:21:50 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -325,14 +325,24 @@ public class Support {
                         return((Boolean) x).booleanValue() ? "1" : "0";
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
+                        long length = clob.length();
 
-                        // FIXME - Throw exception if length() is greater than Integer.MAX_VALUE
-                        return clob.getSubString(1, (int) clob.length());
+                        if (length > Integer.MAX_VALUE) {
+                            throw new SQLException(Messages.get("error.normalize.lobtoobig"),
+                                                   "22000");
+                        }
+
+                        return clob.getSubString(1, (int) length);
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
+                        long length = blob.length();
 
-                        // FIXME - Throw exception if length() is greater than Integer.MAX_VALUE
-                        x = blob.getBytes(1, (int) blob.length());
+                        if (length > Integer.MAX_VALUE) {
+                            throw new SQLException(Messages.get("error.normalize.lobtoobig"),
+                                                   "22000");
+                        }
+
+                        x = blob.getBytes(1, (int) length);
                     }
 
                     if (x instanceof byte[]) {
@@ -372,9 +382,14 @@ public class Support {
                         return blob.getBytes(1, (int) blob.length());
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
+                        long length = clob.length();
 
-                        // FIXME - Throw exception if length() is greater than Integer.MAX_VALUE
-                        x = clob.getSubString(1, (int) clob.length());
+                        if (length > Integer.MAX_VALUE) {
+                            throw new SQLException(Messages.get("error.normalize.lobtoobig"),
+                                                   "22000");
+                        }
+
+                        x = clob.getSubString(1, (int) length);
                     }
 
                     if (x instanceof String) {

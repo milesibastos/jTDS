@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.17 2004-08-05 01:45:22 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.18 2004-08-05 21:21:50 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -519,7 +519,7 @@ public class TdsCore {
     boolean isResultSet() {
         return currentToken.isResultSet();
     }
-    
+
     /**
      * Retrieve the status of the next result item.
      *
@@ -1005,7 +1005,6 @@ public class TdsCore {
         clearResponseQueue();
         messages.checkErrors();
 
-System.out.println("results.getClass().getName()" + results.getClass().getName());
         return results;
     }
 
@@ -2300,7 +2299,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Process TDS 5 Dynamic results paramater descriptors.
-     * 
+     *
      * @throws IOException
      * @throws ProtocolException
      */
@@ -2474,7 +2473,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Execute SQL using TDS 4.2 protocol.
-     * 
+     *
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.

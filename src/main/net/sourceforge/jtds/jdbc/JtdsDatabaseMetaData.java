@@ -38,7 +38,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.18 2004-11-29 16:33:55 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.19 2004-12-06 12:10:14 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1955,13 +1955,13 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     /**
-     * What's the url for this database?
+     * What's the URL for this database?
      *
-     * @return the url or null if it can't be generated
-     * @throws SQLException if a database-access error occurs.
+     * @return the URL or null if it can't be generated
+     * @throws SQLException if a database-access error occurs
      */
     public String getURL() throws SQLException {
-        return connection.getUrl();
+        return connection.getURL();
     }
 
     /**

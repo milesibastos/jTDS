@@ -29,7 +29,7 @@ import net.sourceforge.jtds.jdbcx.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.5 2004-11-15 14:45:48 alin_sinpalean Exp $
+ * @version $Id: ConnectionProxy.java,v 1.6 2004-12-06 12:10:31 alin_sinpalean Exp $
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;
@@ -689,7 +689,7 @@ public class ConnectionProxy implements Connection {
     /**
      * Closes the proxy, releasing the connection.
      */
-    public void finalize() {
+    protected void finalize() {
         close();
     }
 }

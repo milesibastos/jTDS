@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.24 2004-12-03 14:55:44 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.25 2004-12-06 12:10:13 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -386,7 +386,7 @@ public class BlobImpl implements Blob {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream((int) length);
 
                     byte[] buffer = new byte[1024];
-                    int result = -1;
+                    int result;
 
                     while ((result = _jtdsInputStream.read(buffer)) != -1) {
                         baos.write(buffer, 0, result);

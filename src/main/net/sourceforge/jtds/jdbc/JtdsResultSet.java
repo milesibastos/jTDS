@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.24 2004-12-03 14:48:58 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.25 2004-12-06 12:10:14 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -667,7 +667,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateBoolean(int columnIndex, boolean x) throws SQLException {
-        setColValue(columnIndex, Types.BIT, new Boolean(x), 0);
+        setColValue(columnIndex, Types.BIT, x ? Boolean.TRUE : Boolean.FALSE, 0);
     }
 
     public void updateBytes(int columnIndex, byte[] x) throws SQLException {
@@ -952,7 +952,7 @@ public class JtdsResultSet implements ResultSet {
         checkUpdateable();
         if (x != null) {
             int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
-            x = Support.normalizeBigDecimal((BigDecimal)x, prec);
+            x = Support.normalizeBigDecimal(x, prec);
         }
         setColValue(columnIndex, Types.DECIMAL, x, 0);
     }

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.53 2004-12-03 16:52:00 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.54 2004-12-06 12:10:14 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -551,6 +551,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Add a stored procedure to the cache.
+     * <p>
+     * Not explicitly synchronized because it's only called by synchronized
+     * methods.
      *
      * @param key The signature of the procedure to cache.
      * @param proc The stored procedure descriptor.
@@ -565,6 +568,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Remove a stored procedure from the cache.
+     * <p>
+     * Not explicitly synchronized because it's only called by synchronized
+     * methods.
      *
      * @param key The signature of the procedure to remove from the cache.
      */
@@ -692,12 +698,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         xaEmulation = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.XAEMULATION)));
         charsetSpecified = serverCharset.length() > 0;
-
-        // Don't default serverCharset at this point; if none specified,
-        // initialize to an empty String & discover value later
-//        if (!charsetSpecified) {
-//            serverCharset = "";
-//        }
 
         Integer parsedTdsVersion =
                 DefaultProperties.getTdsVersion(info.getProperty(Messages.get(Driver.TDS)));
@@ -1201,7 +1201,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *
      * @return The connection url as a <code>String</code>.
      */
-    String getUrl() {
+    String getURL() {
         return this.url;
     }
 
@@ -1449,17 +1449,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
 
-        synchronized (statementCache) {
-            for (int i = 0; i < procInTran.size(); i++) {
-                String key = (String) procInTran.get(i);
-
-                if (key != null && tdsVersion != Driver.TDS50) {
-                    statementCache.remove(key);
-                }
+        for (int i = 0; i < procInTran.size(); i++) {
+            String key = (String) procInTran.get(i);
+            if (key != null && tdsVersion != Driver.TDS50) {
+                statementCache.remove(key);
             }
-
-            procInTran.clear();
         }
+        procInTran.clear();
 
         clearSavepoints();
     }

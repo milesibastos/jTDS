@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.28 2004-12-03 14:55:44 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.29 2004-12-06 12:10:14 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -464,7 +464,7 @@ public class ClobImpl implements Clob {
                     StringWriter sw  = new StringWriter((int) length);
 
                     char[] buffer = new char[1024];
-                    int result = -1;
+                    int result;
 
                     while ((result = _jtdsReader.read(buffer)) != -1) {
                         sw.write(buffer, 0, result);

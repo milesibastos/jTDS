@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.11 2004-12-03 14:42:35 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.12 2004-12-06 12:10:32 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -64,8 +64,8 @@ public class JtdsObjectFactory implements ObjectFactory {
             ds.setLoginTimeout(Integer.parseInt((String) ref.get(Messages.get(Driver.LOGINTIMEOUT)).getContent()));
             ds.setAppName((String) ref.get(Messages.get(Driver.APPNAME)).getContent());
             ds.setProgName((String) ref.get(Messages.get(Driver.PROGNAME)).getContent());
-            ds.setTcpNoDelay("true".equals((String) ref.get(Messages.get(Driver.TCPNODELAY)).getContent()));
-            ds.setXaEmulation("true".equals((String) ref.get(Messages.get(Driver.XAEMULATION)).getContent()));
+            ds.setTcpNoDelay("true".equals(ref.get(Messages.get(Driver.TCPNODELAY)).getContent()));
+            ds.setXaEmulation("true".equals(ref.get(Messages.get(Driver.XAEMULATION)).getContent()));
             ds.setLogFile((String) ref.get(Messages.get(Driver.LOGFILE)).getContent());
 
             return ds;

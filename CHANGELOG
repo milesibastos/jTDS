@@ -1,6 +1,9 @@
 Changes from jTDS 0.9.1
 =======================
 
+12/14/2004 - Alin Sinpalean
+ o Applied Mike's update to patch [1037237] Windows Single Sign On in jTDS.
+
 12/13/2004 - Alin Sinpalean
  o Applied patch [1037237] Windows Single Sign On in jTDS. Thanks go to
    Magendran Sathaiah and Mike Hutchinson for the original patch and Java code

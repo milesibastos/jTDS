@@ -26,23 +26,52 @@ package net.sourceforge.jtds.util;
  * @author Magendran Sathaiah (mahi@aztec.soft.net)
  */
 public class SSPIJNIClient {
-
+    /** Singleton instance. */
     private static SSPIJNIClient thisInstance = null;
-    private static boolean initialized = false;
 
+    /** SSPI client initialized flag. */
+    private boolean initialized = false;
+
+    /** Initializes the SSPI client. */
     private native void initialize();
+
+    /** Uninitializes the SSPI client. */
     private native void unInitialize();
+
+    /**
+     * Prepares the NTLM TYPE-1 message and returns it as a
+     * <code>byte[]</code>.
+     */
     private native byte[] prepareSSORequest();
+
+    /**
+     * Prepares the NTLM TYPE-3 message using the current user's credentials.
+     * <p>
+     * It needs the challenge BLOB and it's size as input. The challenge BLOB
+     * is nothig but the TYPE-2 message that is received from the SQL Server.
+     *
+     * @param buf  challenge BLOB
+     * @param size challenge BLOB size
+     * @return NTLM TYPE-3 message
+     */
     private native byte[] prepareSSOSubmit(byte[] buf, long size);
 
     static {
         System.loadLibrary("ntlmauth");
     }
 
+    /**
+     * Private constructor for singleton.
+     */
     private SSPIJNIClient() {
         //empty constructor
     }
 
+    /**
+     * Returns the singleton <code>SSPIJNIClient</code> instance.
+     *
+     * @throws Exception if an error occurs during initialization
+     */
     public static SSPIJNIClient getInstance() throws Exception {
 
         if (thisInstance == null) {
@@ -52,6 +81,11 @@ public class SSPIJNIClient {
         return thisInstance;
     }
 
+    /**
+     * Calls {@link #initialize()} if the SSPI client is not already inited.
+     *
+     * @throws Exception if an error occurs during the call
+     */
     public void invokeInitialize() throws Exception {
         if (!initialized) {
             initialize();
@@ -59,6 +93,11 @@ public class SSPIJNIClient {
         }
     }
 
+    /**
+     * Calls {@link #unInitialize()} if the SSPI client is inited.
+     *
+     * @throws Exception if an error occurs during the call
+     */
     public void invokeUnInitialize() throws Exception {
         if (initialized) {
             unInitialize();
@@ -66,6 +105,12 @@ public class SSPIJNIClient {
         }
     }
 
+    /**
+     * Calls {@link #prepareSSORequest()} to prepare the NTLM TYPE-1 message.
+     *
+     * @throws Exception if an error occurs during the call or the SSPI client
+     *                   is uninitialized
+     */
     public byte[] invokePrepareSSORequest() throws Exception {
         if (!initialized) {
             throw new Exception("SSPI Not Initialized");
@@ -73,6 +118,13 @@ public class SSPIJNIClient {
         return prepareSSORequest();
     }
 
+    /**
+     * Calls {@link #prepareSSOSubmit(byte[], long)} to prepare the NTLM TYPE-3
+     * message.
+     *
+     * @throws Exception if an error occurs during the call or the SSPI client
+     *                   is uninitialized
+     */
     public byte[] invokePrepareSSOSubmit(byte[] buf) throws Exception {
         if (!initialized) {
             throw new Exception("SSPI Not Initialized");
@@ -108,7 +160,7 @@ public class SSPIJNIClient {
         }
     }
 
-    public static void hexDump(byte[] data) {
+    private static void hexDump(byte[] data) {
         int loc;
         int end;
         int off = 0;

@@ -10,22 +10,27 @@ HINSTANCE               _hProvider          = NULL;      // provider dll's insta
 SspiClient*				client				= NULL;		//Ptr to the SSPI Client
 
 
-JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_initialize
+JNIEXPORT void JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_initialize
 (JNIEnv * env, jobject obj) {
-	
-	_hProvider = LoadLibrary ( _T("security.dll") );
-    if ( _hProvider == NULL )
-		THROWEX ( ErrorNoLibrary );
-    
+
+	_hProvider = LoadLibrary ( _T("secur32.dll") );
+    if ( _hProvider == NULL ) {
+        // secur32.dll not normally available on windows NT < 5.0
+        _hProvider = LoadLibrary ( _T("security.dll") );
+        if (_hProvider == NULL) {
+            // Neither found so give up!
+    		THROWEX ( ErrorNoLibrary );
+        }
+    }
 
 	INIT_SECURITY_INTERFACE InitSecurityInterface;
 
     // Get the address of the InitSecurityInterface function.
 	InitSecurityInterface = reinterpret_cast<INIT_SECURITY_INTERFACE> (
 										      GetProcAddress (
-													_hProvider, 
+													_hProvider,
 													INIT_SEC_INTERFACE_NAME
-												) 
+												)
 										 );
 	if ( InitSecurityInterface == NULL )
 		THROWEX ( ErrorNoSecurityInterface );
@@ -35,15 +40,15 @@ JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_initialize
 		THROWEX ( ErrorNoSecurityInterface );
 }
 
-JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_unInitialize
+JNIEXPORT void JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_unInitialize
 (JNIEnv * env, jobject obj) {
-	
+
 	FreeLibrary ( _hProvider );
     _hProvider = NULL;
     _pSecurityInterface = NULL;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_ntlm_SSPIJNIClient_prepareSSORequest
+JNIEXPORT jbyteArray JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_prepareSSORequest
 (JNIEnv *env, jobject obj) {
 
 	client = new SspiClient(_T("NTLM"), NULL );
@@ -59,8 +64,8 @@ JNIEXPORT jbyteArray JNICALL Java_ntlm_SSPIJNIClient_prepareSSORequest
 
 }
 
-JNIEXPORT jbyteArray JNICALL Java_ntlm_SSPIJNIClient_prepareSSOSubmit
-(JNIEnv *env, jobject obj, jbyteArray buf, jlong size) 
+JNIEXPORT jbyteArray JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_prepareSSOSubmit
+(JNIEnv *env, jobject obj, jbyteArray buf, jlong size)
 {
 
 	jbyte* newBuf = env->GetByteArrayElements(buf, NULL);

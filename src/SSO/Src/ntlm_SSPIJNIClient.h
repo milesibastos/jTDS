@@ -13,7 +13,7 @@ extern "C" {
  * Method:    initialize
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_initialize
+JNIEXPORT void JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_initialize
   (JNIEnv *, jobject);
 
 /*
@@ -21,7 +21,7 @@ JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_initialize
  * Method:    unInitialize
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_unInitialize
+JNIEXPORT void JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_unInitialize
   (JNIEnv *, jobject);
 
 /*
@@ -29,7 +29,7 @@ JNIEXPORT void JNICALL Java_ntlm_SSPIJNIClient_unInitialize
  * Method:    prepareSSORequest
  * Signature: ()[B
  */
-JNIEXPORT jbyteArray JNICALL Java_ntlm_SSPIJNIClient_prepareSSORequest
+JNIEXPORT jbyteArray JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_prepareSSORequest
   (JNIEnv *, jobject);
 
 /*
@@ -37,7 +37,7 @@ JNIEXPORT jbyteArray JNICALL Java_ntlm_SSPIJNIClient_prepareSSORequest
  * Method:    prepareSSOSubmit
  * Signature: ([BJ)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_ntlm_SSPIJNIClient_prepareSSOSubmit
+JNIEXPORT jbyteArray JNICALL Java_net_sourceforge_jtds_util_SSPIJNIClient_prepareSSOSubmit
   (JNIEnv *, jobject, jbyteArray, jlong);
 
 #ifdef __cplusplus

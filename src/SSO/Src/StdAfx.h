@@ -31,6 +31,8 @@
 #include <schnlsp.h>
 #include <jni.h>
 #include <vector>
+#include <rpc.h>
+#include <rpcdce.h>
 #include "SspiDef.h"
 #include "SspiPackage.h"
 #include "SspiEx.h"

@@ -270,7 +270,7 @@
           value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>
           data.</dd>
         <dt><code>maxStatements</code> (default - <code>500</code>)</dt>
-        <dd>The number of statements each connection should keep open.
+        <dd>The number of statement prepares each connection should cache.
           A value of <code>0</code> will disable statement caching.
           A value of <code>Integer.MAX_VALUE</code> (<code>2147483647</code>)
           will enable fast caching (uses less memory and has no overhead

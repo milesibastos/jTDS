@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.70 2005-02-23 17:43:52 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.71 2005-02-24 12:56:46 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -285,12 +285,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                         serverType, tcpNoDelay);
             }
 
-            // Don't call loadCharset if serverCharset not specified; discover
-            // the actual serverCharset later
             if ( charsetSpecified ) {
                 loadCharset(serverCharset);
             } else {
                 // Need a default charset to process login packets for TDS 4.2/5.0
+                // Will discover the actual serverCharset later
                 loadCharset("iso_1");
             }
 
@@ -881,7 +880,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // If the user specified a charset, ignore environment changes
         if (charsetSpecified) {
             Logger.println("Server charset " + charset +
-                           ". Ignoring as driver requested " + serverCharset);
+                    ". Ignoring as user requested " + serverCharset + '.');
             return;
         }
 
@@ -889,7 +888,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             loadCharset(charset);
 
             if (Logger.isActive()) {
-                Logger.println("Set charset to " + serverCharset + '/' + charsetInfo);
+                Logger.println("Set charset to " + serverCharset + '/'
+                        + charsetInfo);
             }
         }
     }
@@ -909,19 +909,28 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     Messages.get("error.charset.nomapping", charset), "2C000");
         }
 
-        try {
-            "This is a test".getBytes(tmp.getCharset());
+        loadCharset(tmp, charset);
+        serverCharset = charset;
+    }
 
-            charsetInfo = tmp;
+    /**
+     * Load the Java charset to match the server character set.
+     *
+     * @param ci the <code>CharsetInfo</code> to load
+     */
+    private void loadCharset(CharsetInfo ci, String ref) throws SQLException {
+        try {
+            "This is a test".getBytes(ci.getCharset());
+
+            charsetInfo = ci;
         } catch (UnsupportedEncodingException ex) {
             throw new SQLException(
-                    Messages.get("error.charset.invalid", charset,
+                    Messages.get("error.charset.invalid", ref,
                             charsetInfo.getCharset()),
                     "2C000");
         }
 
         socket.setCharsetInfo(charsetInfo);
-        serverCharset = charset;
     }
 
     /**
@@ -985,22 +994,23 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param collation The new collation.
      */
     void setCollation(byte[] collation) throws SQLException {
-        CharsetInfo tmp = CharsetInfo.getCharset(collation);
-
-        try {
-            "This is a test".getBytes(tmp.getCharset());
-
-            charsetInfo = tmp;
-        } catch (UnsupportedEncodingException ex) {
-            throw new SQLException(
-                    Messages.get("error.charset.invalid",
-                            Support.toHex(collation),
-                            charsetInfo.getCharset()),
-                    "2C000");
+        String strCollation = "0x" + Support.toHex(collation);
+        // If the user specified a charset, ignore environment changes
+        if (charsetSpecified) {
+            Logger.println("Server collation " + strCollation +
+                    ". Ignoring as user requested " + serverCharset + '.');
+            return;
         }
 
-        socket.setCharsetInfo(charsetInfo);
+        CharsetInfo tmp = CharsetInfo.getCharset(collation);
+
+        loadCharset(tmp, strCollation);
         this.collation = collation;
+
+        if (Logger.isActive()) {
+            Logger.println("Set collation to " + strCollation + '/'
+                    + charsetInfo);
+        }
     }
 
     /**
@@ -1010,6 +1020,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     byte[] getCollation() {
         return this.collation;
+    }
+
+    /**
+     * Retrieves whether a specific charset was requested on creation. If this
+     * is the case, all character data should be encoded/decoded using that
+     * charset.
+     */
+    boolean isCharsetSpecified() {
+        return charsetSpecified;
     }
 
     /**

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.73 2005-02-23 20:40:09 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.74 2005-02-24 12:56:47 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2422,8 +2422,7 @@ public class TdsCore {
             TdsData.readType(in, col);
             // Set the charsetInfo field of col
             if (tdsVersion >= Driver.TDS80 && col.collation != null) {
-                TdsData.setColumnCharset(col, connection.getCollation(),
-                        connection.getCharsetInfo());
+                TdsData.setColumnCharset(col, connection);
             }
 
             int clen = in.read();
@@ -2739,8 +2738,7 @@ public class TdsCore {
         TdsData.readType(in, col);
         // Set the charsetInfo field of col
         if (tdsVersion >= Driver.TDS80 && col.collation != null) {
-            TdsData.setColumnCharset(col, connection.getCollation(),
-                    connection.getCharsetInfo());
+            TdsData.setColumnCharset(col, connection);
         }
         Object value = TdsData.readData(connection, in, col, false);
 
@@ -3043,9 +3041,6 @@ public class TdsCore {
                     if (clen == 5) {
                         in.read(collation);
                         connection.setCollation(collation);
-                        if (Logger.isActive()) {
-                            Logger.println("Collation changed to 0x" + Support.toHex(collation));
-                        }
                     } else {
                         in.skip(clen);
                     }

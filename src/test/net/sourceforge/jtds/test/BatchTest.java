@@ -21,11 +21,12 @@ import java.sql.BatchUpdateException;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.sql.ResultSet;
 
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.2 2004-12-20 17:14:20 alin_sinpalean Exp $
+ * @version $Id: BatchTest.java,v 1.3 2005-02-24 12:56:47 alin_sinpalean Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -274,6 +275,43 @@ public class BatchTest extends DatabaseTestCase {
         } finally {
             dropProcedure("jTDS_PROC");
         }
+    }
+
+    /**
+     * Test large batch behavior.
+     */
+    public void testLargeBatch() throws Exception {
+        final int n = 5000;
+        java.sql.DriverManager.setLogStream(System.out);
+        getConnection().close();
+        java.sql.DriverManager.setLogStream(null);
+
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #testLargeBatch (val int)");
+        stmt.executeUpdate("insert into #testLargeBatch (val) values (0)");
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "update #testLargeBatch set val=? where val=?");
+        for (int i = 0; i < n; i++) {
+            pstmt.setInt(1, i + 1);
+            pstmt.setInt(2, i);
+            pstmt.addBatch();
+        }
+        int counts[] =pstmt.executeBatch();
+        System.out.println(pstmt.getWarnings());
+        assertEquals(n, counts.length);
+        for (int i = 0; i < n; i++) {
+            assertEquals(1, counts[i]);
+        }
+        pstmt.close();
+
+        ResultSet rs =
+                stmt.executeQuery("select count(*) from #testLargeBatch");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
     }
 
     public static void main(String[] args) {

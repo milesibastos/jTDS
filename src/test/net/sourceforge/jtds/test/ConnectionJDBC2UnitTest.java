@@ -3,6 +3,12 @@ package net.sourceforge.jtds.test;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import java.util.Properties;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
@@ -163,4 +169,29 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
         }
     }
 
+    public void testForceCharset() throws Exception {
+        // Get properties, set charset to Cp1251 and Unicode parameters to false
+        Properties props = (Properties) TestBase.props.clone();
+        props.setProperty(Messages.get(Driver.CHARSET), "Cp1251");
+        props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE),
+                "false");
+
+        // Obtain connection
+        Class.forName(props.getProperty("driver"));
+        String url = props.getProperty("url");
+        Connection con = DriverManager.getConnection(url, props);
+
+        // Test both sending and retrieving of values
+        String value = "\u0410\u0411\u0412";
+        PreparedStatement pstmt = con.prepareStatement("select ?");
+        pstmt.setString(1, value);
+        ResultSet rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(value, rs.getString(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        pstmt.close();
+        con.close();
+    }
 }

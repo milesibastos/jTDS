@@ -1,7 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
-02/23/3005 - Alin Sinpalean
+02/24/2005 - Alin Sinpalean
+ o Corrected bug [1150880] Character Set getting overwritten. Collation
+   envchange packets altered the charset specified on connection creation.
+
+02/23/2005 - Alin Sinpalean
  o Implemented feature [1145697] Better handling of OutOfMemoryError. On an
    OutOfMemoryError, TdsCore.nextToken() now consumes the rest of the server
    response to ensure no protocol confusion will occur.

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.41 2005-02-17 21:48:50 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.42 2005-02-24 12:56:47 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -257,24 +257,26 @@ public class TdsData {
      * Set the <code>charsetInfo</code> field of <code>ci</code> according to
      * the value of its <code>collation</code> field.
      * <p>
-     * The default collation and <code>CharsetInfo</code> are provided as an
-     * optimization -- if the collation matches the default server collation
-     * then the default <code>CharsetInfo</code> is used.
+     * The <code>Connection</code> is used to find out whether a specific
+     * charset was requested. In this case, the column charset will be ignored.
      *
-     * @param ci                 the <code>ColInfo</code> instance to update
-     * @param defaultCollation   the default connection collation
-     * @param defaultCharsetInfo the default <code>CharsetInfo</code> for the
-     *                           connection
-     * @throws SQLException      if a <code>CharsetInfo</code> is not found for
-     *                           the specified collation
+     * @param ci         the <code>ColInfo</code> instance to update
+     * @param connection a <code>Connection</code> instance to check whether it
+     *                   has a fixed charset or not
+     * @throws SQLException if a <code>CharsetInfo</code> is not found for this
+     *                      particular column collation
      */
-    static void setColumnCharset(ColInfo ci,
-                                 byte[] defaultCollation,
-                                 CharsetInfo defaultCharsetInfo)
+    static void setColumnCharset(ColInfo ci, ConnectionJDBC2 connection)
             throws SQLException {
-        if (ci.collation != null) {
-            // TDS version will be 8.0 or higher in this case
+        if (connection.isCharsetSpecified()) {
+            // If a charset was requested on connection creation, ignore the
+            // column collation and use default
+            ci.charsetInfo = connection.getCharsetInfo();
+        } else if (ci.collation != null) {
+            // TDS version will be 8.0 or higher in this case and connection
+            // collation will be non-null
             byte[] collation = ci.collation;
+            byte[] defaultCollation = connection.getCollation();
             int i;
 
             for (i = 0; i < 5; ++i) {
@@ -282,8 +284,9 @@ public class TdsData {
                     break;
                 }
             }
+
             if (i == 5) {
-                ci.charsetInfo = defaultCharsetInfo;
+                ci.charsetInfo = connection.getCharsetInfo();
             } else {
                 ci.charsetInfo = CharsetInfo.getCharset(collation);
             }
@@ -874,7 +877,7 @@ public class TdsData {
                 break;
 
             case SYBVARIANT:
-                return getVariant(in);
+                return getVariant(connection, in);
 
             default:
                 throw new ProtocolException("Unsupported TDS data type 0x"
@@ -2320,10 +2323,12 @@ public class TdsData {
      * <li>byte[0...n] the actual data
      * </ol>
      *
-     * @param in the server response stream
+     * @param connection used to obtain collation/charset information
+     * @param in         the server response stream
      * @return the SQL_VARIANT data
      */
-    private static Object getVariant(ResponseStream in)
+    private static Object getVariant(ConnectionJDBC2 connection,
+                                     ResponseStream in)
             throws IOException, ProtocolException {
         byte[] bytes;
         int len = in.readInt();
@@ -2356,7 +2361,7 @@ public class TdsData {
                 // FIXME Use collation for reading
                 getCollation(in, ci);
                 try {
-                    setColumnCharset(ci, new byte[5], null);
+                    setColumnCharset(ci, connection);
                 } catch (SQLException ex) {
                     // Skip the buffer size and value
                     in.skip(2 + len);

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.23 2004-08-07 01:22:12 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.24 2004-08-07 17:48:54 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -893,13 +893,8 @@ public class TdsCore {
 
             return procName;
         } else if (prepareSql == PREPARE) {
-            Statement stmt = null;
-            ResultSet rs = null;
-
-            spSql.append("DECLARE @procid INT\r\n");
-            spSql.append("SET @procid=null\r\n");
-            spSql.append("EXEC sp_prepare @procid output,N'");
-
+            
+            // Build parameter descriptor            
             for (int i = 0; i < params.length; i++) {
                 spSql.append("@P");
                 spSql.append(i);
@@ -910,29 +905,47 @@ public class TdsCore {
                     spSql.append(',');
                 }
             }
+            
+            ParamInfo prepParam[] = new ParamInfo[4];
+            
+            // Setup prepare handle param
+            prepParam[0] = new ParamInfo();
+            prepParam[0].isSet = true;
+            prepParam[0].jdbcType = Types.INTEGER;
+            prepParam[0].isOutput = true;
 
-            spSql.append("',N");
-            Support.embedData(spSql, Support.substituteParamMarkers(sql, params));
-            spSql.append(",1\r\n");
-            spSql.append("SELECT @procid");
-
-            try {
-                stmt = connection.createStatement();
-                rs = stmt.executeQuery(spSql.toString());
-
-                if (rs.next()) {
-                    return rs.getString(1);
-                } else {
-                    return null;
-                }
-            } finally {
-                if (stmt != null) {
-                    stmt.close();
-                }
-
-                if (rs != null) {
-                    rs.close();
-                }
+            // Setup parameter descriptor param
+            prepParam[1] = new ParamInfo();
+            prepParam[1].isSet = true;
+            prepParam[1].jdbcType = Types.LONGVARCHAR;
+            prepParam[1].value = spSql.toString();
+            prepParam[1].isUnicode = true;
+            
+            // Setup sql statemement param
+            prepParam[2] = new ParamInfo();
+            prepParam[2].isSet = true;
+            prepParam[2].jdbcType = Types.LONGVARCHAR;
+            prepParam[2].value = Support.substituteParamMarkers(sql, params);
+            prepParam[2].isUnicode = true;
+            
+            // Setup flag param
+            prepParam[3] = new ParamInfo();
+            prepParam[3].isSet = true;
+            prepParam[3].jdbcType = Types.INTEGER;
+            prepParam[3].value = new Integer(1);
+            
+            columns = null; // Will be populated if preparing a select
+            
+            executeSQL(null, "sp_prepare", prepParam, false, 0, 0);
+            
+            clearResponseQueue();
+            
+            // columns will now hold meta data for select statements
+            
+            Integer prepareHandle = (Integer) prepParam[0].value;
+            
+            if (prepareHandle != null) {
+                return prepareHandle.toString();
             }
         }
 

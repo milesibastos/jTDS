@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2003-08-30 15:43:48 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.4 2003-08-30 15:43:48 matt_brinkley Exp $
+ * @version    $Id: TdsConnection.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -124,7 +124,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2003-08-30 15:43:48 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -253,7 +253,7 @@ public class TdsConnection implements Connection
             //      before entering the monitor. Or not? Not too clear to me...
             synchronized( tds )
             {
-                TdsStatement s = tds.statement;
+                TdsStatement s = tds.getStatement();
 
                 // SAfe A bit paranoic thinking here, but better to be sure it
                 //      works. :o) Will synchronize again on the Tds if the
@@ -263,11 +263,12 @@ public class TdsConnection implements Connection
                 {
                     if( s != null )
                         s.skipToEnd();
-                    tds.changeDB(catalog);
+                    tds.changeDB(catalog, warningChain);
                 }
             }
         }
 
+        warningChain.checkForExceptions();
         database = catalog;
     }
 

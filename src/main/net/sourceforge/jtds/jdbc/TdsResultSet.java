@@ -79,7 +79,7 @@ import java.sql.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.4 2003-12-11 07:33:28 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -103,7 +103,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.4 2003-12-11 07:33:28 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
@@ -298,7 +298,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     public boolean isAfterLast() throws SQLException
     {
         checkClosed();
-        return hitEndOfData;
+        return rowIndex==rowCount && hitEndOfData;
     }
 
     /**
@@ -328,10 +328,10 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      *      otherwise.
      *@exception  SQLException  if a database access error occurs
      */
-    public boolean isLast() throws SQLException
+    public synchronized boolean isLast() throws SQLException
     {
-        /** @todo Implement isLast */
-        throw new SQLException("Cannot determine position on a FORWARD_ONLY RecordSet.");
+        checkClosed();
+        return rowIndex>=0 && rowIndex==rowCount-1 && !haveMoreResults();
     }
 
     public int getRow() throws SQLException
@@ -385,12 +385,12 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
      *
      *@exception  SQLException  if a database-access error occurs.
      */
-    public synchronized void close() throws SQLException
+    public void close() throws SQLException
     {
         close(true);
     }
 
-    public synchronized void close(boolean allowTdsRelease) throws SQLException
+    synchronized void close(boolean allowTdsRelease) throws SQLException
     {
         Exception exception = null;
 
@@ -402,7 +402,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         {
             try
             {
-                tds.discardResultSetOld();
+                tds.discardResultSet(stmt);
                 hitEndOfData = true;
                 if( allowTdsRelease )
                     stmt.releaseTds();
@@ -450,14 +450,24 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             return true;
         }
 
+        // SAfe Set rowIndex, rowCount and row to 0 if we just got passed the
+        //      end of the resultset, to be able to make the difference between
+        //      being on the last row and being after the last row.
+        if( rowCount != 0 )
+        {
+            rowIndex = 0;
+            rowCount = 0;
+            row = 0;
+        }
+
         return false;
     }
 
-    /** @todo fetchNextRow should not be public! Possible synchronization problem! */
+    /**
+     * Not public. Otherwise it could cause synchronization problems!
+     */
     private PacketRowResult fetchNextRow() throws SQLException
     {
-        checkClosed();
-
         PacketRowResult row = null;
 
         try
@@ -508,7 +518,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
                     warningChain.addException(
                         new SQLException("Query was canceled or timed out."));
 
-                tds.goToNextResult(warningChain);
+                tds.goToNextResult(warningChain, stmt);
 
                 row = null;
                 hitEndOfData = true;
@@ -843,10 +853,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
             return true;
 
         if( hitEndOfData )
-        {
-            rowCount = 0;
             return false;
-        }
 
         // Get next batch of results
         return internalFetchRows() > 0;
@@ -862,6 +869,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     private int internalFetchRows() throws SQLException
     {
         rowCount = 0;
+        // SAfe Need to set this to -1 so that next() will set it to 0
+        rowIndex = -1;
 
         do
         {
@@ -871,10 +880,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
             rowCache[rowCount] = row;
             rowCount++;
-            // SAfe Need to set this so that next() will set it to 0
-            // Not very efficient, but this should be set only if we got a row
-            rowIndex = -1;
-        } while (rowCount < fetchSize);
+        } while( rowCount < fetchSize );
 
         return rowCount;
     }
@@ -905,7 +911,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     {
         checkClosed();
 
-        if( rowCount == 0 )
+        if( rowCount == 0 && !hitEndOfData )
             internalFetchRows();
 
         if( hitEndOfData )

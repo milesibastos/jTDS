@@ -8,11 +8,11 @@ import java.sql.SQLWarning;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  * @author Alin Sinpalean
- * @version $Id: SQLWarningChain.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version $Id: SQLWarningChain.java,v 1.2 2003-12-16 19:08:48 alin_sinpalean Exp $
  */
 class SQLWarningChain
 {
-    public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.2 2003-12-16 19:08:48 alin_sinpalean Exp $";
 
     private SQLWarning warnings;
     private SQLException exceptions;
@@ -29,15 +29,6 @@ class SQLWarningChain
     synchronized SQLWarning getWarnings()
     {
         return warnings;
-    }
-
-    /**
-     * The first exception added with {@see #addException addException}.
-     * Subsequent exceptions will be chained to this SQLException.
-     */
-    synchronized SQLException getExceptions()
-    {
-        return exceptions;
     }
 
     /**

@@ -85,12 +85,12 @@ package net.sourceforge.jtds.jdbc;
  * <li> unlock the control object.
  * </ul>
  *
- * @version  $Id: CancelController.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version  $Id: CancelController.java,v 1.2 2003-12-16 19:08:48 alin_sinpalean Exp $
  * @author Craig Spannring
  */
 public class CancelController
 {
-    public static final String cvsVersion = "$Id: CancelController.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: CancelController.java,v 1.2 2003-12-16 19:08:48 alin_sinpalean Exp $";
 
     private boolean awaitingData     = false;
     private int     cancelsRequested = 0;
@@ -99,11 +99,6 @@ public class CancelController
     public synchronized void setQueryInProgressFlag()
     {
         awaitingData = true;
-    }
-
-    private synchronized void clearQueryInProgressFlag()
-    {
-        awaitingData = false;
     }
 
     public synchronized void finishQuery(boolean wasCanceled, boolean moreResults)
@@ -121,10 +116,10 @@ public class CancelController
         // TDS_END* packet and not clear the flag if we have more
         // results?
         if( !moreResults )
-            clearQueryInProgressFlag();
+            awaitingData = false;
 
         if( wasCanceled )
-            handleCancelAck();
+            cancelsProcessed++;
 
         // XXX Should we see if there are any more cancels pending and
         // try to read the cancel acknowledgments?
@@ -150,11 +145,6 @@ public class CancelController
             //      packet with the cancel flag set, the caller will never get out
             //      of here alive.
         }
-    }
-
-    private synchronized void handleCancelAck()
-    {
-        cancelsProcessed++;
     }
 
     public synchronized int outstandingCancels()

@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.5 2003-12-04 00:27:20 matt_brinkley Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.6 2003-12-16 19:08:48 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.5 2003-12-04 00:27:20 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.6 2003-12-16 19:08:48 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -159,11 +159,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             submitProcedure( tds, procedure );
 
             // store it in the procedureCache
-            tds.procedureCache.put( rawQueryString, procedure );
-
-            // MJH Only record the proc name in proceduresOfTra if in manual commit mode
-            if( !getConnection().getAutoCommit() ) // MJH
-                tds.proceduresOfTra.add( procedure );
+            tds.addStoredProcedure(rawQueryString, procedure);
         }
 
         result = internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
@@ -174,7 +170,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
     private Procedure findCompatibleStoredProcedure( Tds tds, String rawQueryString )
     {
-        return (Procedure)tds.procedureCache.get(rawQueryString);
+        return tds.findCompatibleStoredProcedure(rawQueryString);
     }
 
     private void submitProcedure( Tds tds, Procedure proc )

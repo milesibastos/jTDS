@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.4 2003-11-12 17:18:43 matt_brinkley Exp $
+ *@version    $Id: TdsComm.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -86,7 +86,7 @@ public class TdsComm implements TdsDefinitions {
     private int tdsVer = TDS42;
 
     /**
-     *@todo    Does this need to be synchronized?
+     * Buffer used for reading the packet header.
      */
     byte tmpBuf[] = new byte[8];
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.4 2003-11-12 17:18:43 matt_brinkley Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -426,45 +426,6 @@ public class TdsComm implements TdsDefinitions {
     }
 
 
-    /*
-     *  Stefan Bodewig 2000-06-21
-     *
-     *  removed appendString() to keep the encoding to and from the
-     *  server charset in on place - i.e. Tds.
-     *
-     *  It had to be Tds as we need to specify the length for the
-     *  String as well, sometimes before we send the actual data,
-     *  sometimes after we've sent them.
-     *
-     *  If we need to know the length beforehand in Tds, we'd have to
-     *  convert the data twice, once to get the length and once to send
-     *  them.
-     */
-//   public void appendString(
-//      String s,
-//      int    length,
-//      byte   pad)
-//      throws java.io.IOException
-//   {
-//      int   i;
-//      byte  dst[];
-//
-//
-//      dst = encoder.getBytes(s.substring(0, (length<=s.length() ? length
-//                                             : s.length())));
-//
-//      for(i=0; i<dst.length; i++)
-//      {
-//         appendByte(dst[i]);
-//      }
-//
-//      for(; i<length; i++)
-//      {
-//         appendByte(pad);
-//      }
-//   }
-
-
     /**
      *  Send the logical packet. <p>
      *
@@ -530,8 +491,7 @@ public class TdsComm implements TdsDefinitions {
             storeByte( 0, ( byte ) ( packetType & 0xff ) );
             storeByte( 1, isLastSegment ? ( byte ) 1 : ( byte ) 0 );
             storeShort( 2, ( short ) nextOutBufferIndex );
-            storeByte( 4, ( byte ) 0 );
-            storeByte( 5, ( byte ) 0 );
+            storeShort( 4, ( short ) 0 );
             storeByte( 6, ( byte ) ( tdsVer == TDS70 ? 1 : 0 ) );
             storeByte( 7, ( byte ) 0 );
 
@@ -847,4 +807,3 @@ public class TdsComm implements TdsDefinitions {
         // return an int since we really want an _unsigned_
     }
 }
-

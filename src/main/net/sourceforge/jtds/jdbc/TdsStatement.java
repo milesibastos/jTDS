@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.5 2003-11-28 06:45:04 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.6 2003-12-16 19:08:49 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.5 2003-11-28 06:45:04 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.6 2003-12-16 19:08:49 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -235,9 +235,6 @@ public class TdsStatement implements java.sql.Statement
         }
         catch ( java.io.IOException e ) {
             throw new SQLException( e.toString() );
-        }
-        finally {
-            tds.comm.packetType = 0;
         }
 
         return result;
@@ -651,8 +648,8 @@ public class TdsStatement implements java.sql.Statement
                 // SAfe: Only TDS_DONE should return row counts for Statements
                 // TDS_DONEINPROC should return row counts for PreparedStatements
                 else if( tds.peek()==Tds.TDS_DONE ||
-                    (tds.getStatement() instanceof PreparedStatement &&
-                    !(tds.getStatement() instanceof CallableStatement) &&
+                    (this instanceof PreparedStatement &&
+                    !(this instanceof CallableStatement) &&
                     tds.peek()==Tds.TDS_DONEINPROC) )
                 {
                     PacketEndTokenResult end =
@@ -660,7 +657,7 @@ public class TdsStatement implements java.sql.Statement
                     updateCount = end.getRowCount();
 
                     // SAfe Eat up all packets until the next result or the end
-                    tds.goToNextResult(wChain);
+                    tds.goToNextResult(wChain, this);
 
                     if( allowTdsRelease )
                         releaseTds();
@@ -673,7 +670,7 @@ public class TdsStatement implements java.sql.Statement
                     tds.processSubPacket();
 
                     // SAfe Eat up all packets until the next result or the end
-                    tds.goToNextResult(wChain);
+                    tds.goToNextResult(wChain, this);
 
                     if( !tds.moreResults() )
                     {
@@ -908,14 +905,7 @@ public class TdsStatement implements java.sql.Statement
     {
         if( actTds != null )
         {
-            String query = actTds.sqlStatementForSettings(autoCommit,
-                transactionIsolationLevel);
-
-            if( query != null )
-            {
-                executeImpl(actTds, query, warningChain);
-                skipToEnd();
-            }
+            actTds.changeSettings(autoCommit, transactionIsolationLevel);
         }
     }
 

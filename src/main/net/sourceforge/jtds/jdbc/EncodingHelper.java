@@ -7,11 +7,11 @@ import java.util.Hashtable;
  * Helper class to handle server character set conversion.
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
- * @version  $Id: EncodingHelper.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $
+ * @version  $Id: EncodingHelper.java,v 1.4 2003-12-16 19:08:48 alin_sinpalean Exp $
  */
 public class EncodingHelper
 {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.4 2003-12-16 19:08:48 alin_sinpalean Exp $";
 
     /**
      * Array containig the bytes 0x00 - 0xFF.
@@ -38,6 +38,29 @@ public class EncodingHelper
     static
     {
         initialize();
+    }
+
+    /**
+     * Initialize the static variables.
+     * <p>
+     * Will be called from the static block above, but some VMs (notably
+     * Microsoft's) won't run this.
+     */
+    private static void initialize()
+    {
+        convArray = new byte[256];
+        for( int i=0; i<256; i++ )
+            convArray[i] = (byte)i;
+
+        knownEncodings = new Hashtable();
+        // SAfe: SQL Server returns iso_1, but it's actually Cp1252
+        try
+        {
+            knownEncodings.put("iso_1", new EncodingHelper("Cp1252"));
+        }
+        catch( UnsupportedEncodingException ex )
+        {}
+        initialized = true;
     }
 
     /**
@@ -152,29 +175,6 @@ public class EncodingHelper
             knownEncodings.put(encodingName, res);
 
         return res;
-    }
-
-    /**
-     * Initialize the static variables.
-     *
-     * <p>Will be called from the static block below, but some VMs
-     * (notably Microsoft's) won't run this.
-     */
-    private synchronized static void initialize()
-    {
-        convArray = new byte[256];
-        for( int i=0; i<256; i++ )
-            convArray[i] = (byte)i;
-
-        knownEncodings = new Hashtable();
-        // SAfe: SQL Server returns iso_1, but it's actually Cp1252
-        try
-        {
-            knownEncodings.put("iso_1", new EncodingHelper("Cp1252"));
-        }
-        catch( UnsupportedEncodingException ex )
-        {}
-        initialized = true;
     }
 
     public String getName()

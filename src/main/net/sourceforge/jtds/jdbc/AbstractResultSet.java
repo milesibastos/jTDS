@@ -16,11 +16,11 @@ import java.util.GregorianCalendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.4 2003-12-16 19:08:48 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet
 {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.4 2003-12-16 19:08:48 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
 
@@ -268,7 +268,7 @@ public abstract class AbstractResultSet implements ResultSet
                 staticCalendar.set(Calendar.MINUTE, 0);
                 staticCalendar.set(Calendar.SECOND, 0);
                 staticCalendar.set(Calendar.MILLISECOND, 0);
-                result = new java.sql.Date(staticCalendar.getTimeInMillis());
+                result = new java.sql.Date(staticCalendar.getTime().getTime());
             }
         return result;
     }
@@ -328,7 +328,7 @@ public abstract class AbstractResultSet implements ResultSet
                 staticCalendar.set(Calendar.YEAR, 1970);
                 staticCalendar.set(Calendar.MONTH, 0);
                 staticCalendar.set(Calendar.DAY_OF_MONTH, 1);
-                result = new java.sql.Time(staticCalendar.getTimeInMillis());
+                result = new java.sql.Time(staticCalendar.getTime().getTime());
             }
         return result;
     }

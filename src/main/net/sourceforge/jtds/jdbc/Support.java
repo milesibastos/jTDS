@@ -45,7 +45,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.3 2004-07-07 17:42:40 bheineman Exp $
+ * @version $Id: Support.java,v 1.4 2004-07-07 17:59:56 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -458,7 +458,7 @@ public class Support {
                     }
 
                     if (x instanceof String) {
-                        Blob blob = new BlobImpl();
+                        BlobImpl blob = new BlobImpl();
                         String data = (String) x;
                         
                         if (charSet == null) {
@@ -491,7 +491,7 @@ public class Support {
                     }
                     
                     if (x instanceof byte[]) {
-                        Clob clob = new ClobImpl();
+                        ClobImpl clob = new ClobImpl();
                         byte[] data = (byte[]) x;
                         
                         if (charSet == null) {

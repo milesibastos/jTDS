@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.11 2004-01-22 23:49:17 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.12 2004-01-27 23:11:51 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.11 2004-01-22 23:49:17 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.12 2004-01-27 23:11:51 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -1505,11 +1505,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Get a comma separated list of all a database's SQL keywords that are NOT
-     *  also SQL92 keywords.
+     * Get a comma separated list of all a database's SQL keywords that are NOT
+     * also SQL92 keywords.
      *
-     *@return                   the list
-     *@exception  SQLException  if a database-access error occurs.
+     * @return the list
+     * @exception SQLException  if a database-access error occurs.
      */
     public String getSQLKeywords() throws SQLException
     {
@@ -1526,22 +1526,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Get a comma separated list of string functions.
+     * Get a comma separated list of string functions.
      *
-     *@return                   the list
-     *@exception  SQLException  if a database-access error occurs.
+     * @return the list
+     * @exception SQLException  if a database-access error occurs.
      */
     public String getStringFunctions() throws SQLException
     {
-        // @todo Implement CONCAT(a,b) as (a)+(b)
-        return "ASCII,CHAR,DIFFERENCE,INSERT,LCASE,LEFT,LENGTH,LOCATE,LTRIM,REPEAT,REPLACE,RIGHT,RTRIM,SOUNDEX,SPACE,SUBSTRING,UCASE";
+        return "ASCII,CHAR,CONCAT,DIFFERENCE,INSERT,LCASE,LEFT,LENGTH,LOCATE,LTRIM,REPEAT,REPLACE,RIGHT,RTRIM,SOUNDEX,SPACE,SUBSTRING,UCASE";
     }
 
     /**
-     *  Get a comma separated list of system functions.
+     * Get a comma separated list of system functions.
      *
-     *@return                   the list
-     *@exception  SQLException  if a database-access error occurs.
+     * @return the list
+     * @exception  SQLException  if a database-access error occurs.
      */
     public String getSystemFunctions() throws SQLException
     {
@@ -3160,14 +3159,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Returns the JDBC major version.
+     */
     public int getJDBCMajorVersion() throws java.sql.SQLException
     {
-        throw new UnsupportedOperationException();
+        return 2;
     }
 
+    /**
+     * Returns the JDBC minor version.
+     */
     public int getJDBCMinorVersion() throws java.sql.SQLException
     {
-        throw new UnsupportedOperationException();
+        return 0;
     }
 
     public int getResultSetHoldability() throws java.sql.SQLException
@@ -3190,14 +3195,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Returns <code>true</code> if updates are made to a copy of the LOB; returns
+     * <code>false</code> if LOB updates are made directly to the database.
+     * <p>
+     * NOTE: Since SQL Server / Sybase do not support LOB locators as Oracle does (AFAIK);
+     * this method always returns <code>true</code>.
+     */
     public boolean locatorsUpdateCopy() throws java.sql.SQLException
     {
-        throw new UnsupportedOperationException();
+        return true;
     }
 
+    /**
+     * Returns <code>true</code> if getting auto-generated keys is supported after a
+     * statment is executed; returns <code>false</code> otherwise
+     */
     public boolean supportsGetGeneratedKeys() throws java.sql.SQLException
     {
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     public boolean supportsMultipleOpenResults() throws java.sql.SQLException

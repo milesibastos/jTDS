@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.35 2004-12-03 14:48:58 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.36 2004-12-09 15:26:51 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -66,35 +66,19 @@ public class MSCursorResultSet extends JtdsResultSet {
     private static final Integer CURSOR_OP_DELETE = new Integer(34);
 
     /**
-     * The row is unchanged.
+     * The row is dirty and needs to be reloaded (internal state).
      */
-    private static final int SQL_ROW_SUCCESS = 1;
+    private static final Integer SQL_ROW_DIRTY   = new Integer(0);
+
+    /**
+     * The row is valid.
+     */
+    private static final Integer SQL_ROW_SUCCESS = new Integer(1);
 
     /**
      * The row has been deleted.
      */
-    private static final int SQL_ROW_DELETED = 2;
-
-    // @todo Check the values for the constants below (above are ok).
-    /**
-     * The row has been updated.
-     */
-    private static final int SQL_ROW_UPDATED = 3;
-
-    /**
-     * There is no row that corresponds this position.
-     */
-    private static final int SQL_ROW_NOROW = 4;
-
-    /**
-     * The row has been added.
-     */
-    private static final int SQL_ROW_ADDED = 5;
-
-    /**
-     * The row is unretrievable due to an error.
-     */
-    private static final int SQL_ROW_ERROR = 6;
+    private static final Integer SQL_ROW_DELETED = new Integer(2);
 
     /*
      * Instance variables.
@@ -126,10 +110,10 @@ public class MSCursorResultSet extends JtdsResultSet {
     private final ParamInfo PARAM_NUMROWS_IN = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
 
     /** <code>sp_cursorfetch</code> rownum OUT parameter (for FETCH_INFO). */
-    private final ParamInfo PARAM_ROWNUM_OUT = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
+    private final ParamInfo PARAM_ROWNUM_OUT = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
 
     /** <code>sp_cursorfetch</code> numrows OUT parameter (for FETCH_INFO). */
-    private final ParamInfo PARAM_NUMROWS_OUT = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+    private final ParamInfo PARAM_NUMROWS_OUT = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
 
     /** <code>sp_cursor</code> optype parameter. */
     private final ParamInfo PARAM_OPTYPE = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
@@ -224,6 +208,8 @@ public class MSCursorResultSet extends JtdsResultSet {
      *                      current row
      */
     protected Object getColumn(int index) throws SQLException {
+        checkOpen();
+
         if (index < 1 || index > columnCount) {
             throw new SQLException(Messages.get("error.resultset.colindex",
                     Integer.toString(index)),
@@ -231,7 +217,12 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         if (onInsertRow || currentRow == null) {
-            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
+            throw new SQLException(
+                    Messages.get("error.resultset.norow"), "24000");
+        }
+
+        if (SQL_ROW_DIRTY.equals(getRowStat())) {
+            cursorFetch(FETCH_REPEAT, 1);
         }
 
         Object data = currentRow[index - 1];
@@ -719,8 +710,8 @@ public class MSCursorResultSet extends JtdsResultSet {
             } else {
                 this.currentRow = null;
             }
-        } else {
-            this.currentRow  = null;
+        } else if (!isInfo) {
+            this.currentRow = null;
         }
 
         tds.clearResponseQueue();
@@ -732,7 +723,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
         }
 
-        return  currentRow != null;
+        return currentRow != null;
     }
 
     /**
@@ -947,9 +938,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         cursor(CURSOR_OP_DELETE, null);
         // No need to re-fetch the row, just mark it as deleted
-//        cursorFetch(FETCH_REPEAT, 1);
-        // Mark the row as deleted instead
-        currentRow[currentRow.length - 1] = new Integer(SQL_ROW_DELETED);
+        setRowStat(SQL_ROW_DELETED);
     }
 
     public void insertRow() throws SQLException {
@@ -961,10 +950,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         cursor(CURSOR_OP_INSERT, insertRow);
-        // Update the number of rows and the cursor position
-//        cursorFetch(FETCH_INFO, 1);
-        // SAfe On SQL Server own inserts show up at the end of the ResultSet
-        //      in scroll sensitive ResultSets. The position remains the same.
+        // On SQL Server inserts show up at the end of the ResultSet in scroll
+        // sensitive ResultSets. The position remains the same.
         if (resultSetType == TYPE_SCROLL_SENSITIVE) {
             rowsInResult++;
         }
@@ -976,7 +963,6 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         onInsertRow = false;
     }
-
 
     public void moveToInsertRow() throws SQLException {
         checkOpen();
@@ -1010,18 +996,15 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         cursor(CURSOR_OP_UPDATE, updateRow);
-        // Update the number of rows and the cursor position
-//        cursorFetch(FETCH_INFO, 1);
-        // SAfe On SQL Server own updates delete the row and a new row shows up
-        //      at the end of the ResultSet in scroll sensitive ResultSets. The
-        //      position remains the same.
+        // On SQL Server own inserts show up at the end of the ResultSet (if
+        // the primary key is altered) or are updaded in place (otherwise) so
+        // we need to see what happened to the number of rows
         if (resultSetType == TYPE_SCROLL_SENSITIVE) {
-            rowsInResult++;
+            // Update the number of rows and the cursor position
+            cursorFetch(FETCH_INFO, 1);
         }
-        // Don't reload the row, it's not necessary
-//        refreshRow();
-        // Mark the row as deleted instead
-        currentRow[currentRow.length - 1] = new Integer(SQL_ROW_DELETED);
+        // In any eventuality we must mark the current row as dirty
+        setRowStat(SQL_ROW_DIRTY);
     }
 
     public boolean first() throws SQLException {
@@ -1086,20 +1069,22 @@ public class MSCursorResultSet extends JtdsResultSet {
 
     public boolean rowInserted() throws SQLException {
         checkOpen();
-
-        return getRowStat() == SQL_ROW_ADDED;
+        // No way to find out
+        return false;
     }
 
     public boolean rowUpdated() throws SQLException {
         checkOpen();
-
-        return getRowStat() == SQL_ROW_UPDATED;
+        // No way to find out
+        return false;
     }
 
-    private int getRowStat() throws SQLException {
-        Object data = currentRow[columns.length - 1];
+    private Object getRowStat() {
+        return currentRow[columns.length - 1];
+    }
 
-        return((Integer)Support.convert(this, data, Types.INTEGER, null)).intValue();
+    private void setRowStat(Integer rowStat) {
+        currentRow[columns.length - 1] = rowStat;
     }
 
     public boolean absolute(int row) throws SQLException {

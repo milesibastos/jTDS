@@ -674,8 +674,8 @@ public class ResultSetTest extends TestBase {
     }
 
     /**
-     * Test that updated rows are indeed deleted, and the new values inserted
-     * at the end of the <code>ResultSet</code>.
+     * Test that updated rows are marked as deleted and the new values inserted
+     * at the end of the <code>ResultSet</code> if the primary key is updated.
      */
     public void testUpdateRowDuplicatesRow() throws Exception
     {
@@ -714,6 +714,47 @@ public class ResultSetTest extends TestBase {
             assertFalse(rs.rowDeleted());
             assertEquals(i, rs.getInt(1));
         }
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that updated rows are modified in place if the primary key is not
+     * updated.
+     */
+    public void testUpdateRowUpdatesRow() throws Exception
+    {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "create table #updateRowUpdatesRow (id int primary key, val int)");
+        stmt.executeUpdate(
+                "insert into #updateRowUpdatesRow (id, val) values (1, 1)");
+        stmt.executeUpdate(
+                "insert into #updateRowUpdatesRow (id, val) values (2, 2)");
+        stmt.executeUpdate(
+                "insert into #updateRowUpdatesRow (id, val) values (3, 3)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select id, val from #updateRowUpdatesRow order by id");
+
+        for (int i = 0; i < 3; i++) {
+            assertTrue(rs.next());
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertFalse(rs.rowDeleted());
+            rs.updateInt(2, rs.getInt(2) + 10);
+            rs.updateRow();
+            rs.refreshRow();
+            assertFalse(rs.rowUpdated());
+            assertFalse(rs.rowInserted());
+            assertFalse(rs.rowDeleted());
+            assertEquals(rs.getInt(1) + 10, rs.getInt(2));
+        }
+
+        assertFalse(rs.next());
 
         rs.close();
         stmt.close();

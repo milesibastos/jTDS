@@ -38,7 +38,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.19 2004-12-06 12:10:14 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.20 2004-12-09 15:26:51 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -3008,8 +3008,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean othersUpdatesAreVisible(int type) throws SQLException {
-        // Updates not supported, so just return false
-        return false;
+        // Updates are visibile in scroll sensitive ResultSets
+        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
     }
 
     /**
@@ -3021,7 +3021,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean othersDeletesAreVisible(int type) throws SQLException {
-        // @todo Make sure this is indeed true
+        // Deletes are visibile in scroll sensitive ResultSets
         return type == ResultSet.TYPE_SCROLL_SENSITIVE;
     }
 
@@ -3034,8 +3034,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean othersInsertsAreVisible(int type) throws SQLException {
-        // Inserts not supported, so just return false
-        return false;
+        // Inserts should be visibile in scroll sensitive ResultSets
+        // TODO Not sure if this is true for keyset cursors (should work with dynamic)
+        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
     }
 
     /**
@@ -3048,6 +3049,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean updatesAreDetected(int type) throws SQLException {
+        // Seems like there's no support for this in SQL Server
         return false;
     }
 
@@ -3073,6 +3075,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean insertsAreDetected(int type) throws SQLException {
+        // Seems like there's no support for this in SQL Server
         return false;
     }
 

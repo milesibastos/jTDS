@@ -57,9 +57,9 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
         assertTrue("nullsAreSortedLow", dbmd.nullsAreSortedLow());
         assertFalse("othersDeletesAreVisible",dbmd.othersDeletesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
         assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
-        assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
         assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
-        assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
         assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY));
         assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
         assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));

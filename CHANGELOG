@@ -1,6 +1,17 @@
 Changes from jTDS 0.9
 =========================
 
+12/09/2004 - Alin Sinpalean
+ o Added code to ensure scroll sensitive ResultSet rows are reloaded after
+   updated (delete just marks the row as deleted, while insert adds a row at
+   the end of the ResultSet).
+ o Fixed some cursor ResultSet issues caused by invalid suppositions considered
+   when optimizing (i.e. that updating a row will always delete the current row
+   and create a new one at the end of the ResultSet).
+ o Updated DatabaseMetaData boolean getters related to the capabilities of
+   detecting updates/inserts/deletes (only deletes can in fact be detected on
+   SQL Server).
+
 12/08/2004 - Alin Sinpalean
  o Combined connection properties setup in the ConnectionJDBC2 constructor with
    the SELECT @@MAX_PRECISION query into a single request, reducing login

@@ -289,7 +289,6 @@ public class Tds8Test extends DatabaseTestCase {
             values[i - 2] = values[i - 2] + "updated";
         }
         rs.updateRow();
-        rs.refreshRow();
         for (int i = 2; i <= 10; i++) {
             assertEquals("Column " + i + " doesn't match", values[i - 2], rs.getString(i));
         }

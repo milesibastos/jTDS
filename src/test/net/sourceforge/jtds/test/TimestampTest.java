@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.GregorianCalendar;
 
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.util.Logger;
@@ -2299,17 +2300,54 @@ public class TimestampTest extends DatabaseTestCase {
         rs.close();
         stmt.close();
     }
-    
+
     /**
-     * Java 1.3 Timestamp.getDate() does not add the nano seconds to 
+     * Test that <code>java.sql.Date</code> objects are inserted and retrieved
+     * correctly (ie no time component).
+     */
+    public void testWriteDate() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate(
+                "CREATE TABLE #testWriteDate (d DATETIME)");
+        stmt.close();
+
+        long time = System.currentTimeMillis();
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO #testWriteDate VALUES (?)");
+        pstmt.setDate(1, new Date(time));
+        pstmt.executeUpdate();
+        pstmt.close();
+
+        pstmt = con.prepareStatement("SELECT * FROM #testWriteDate WHERE d=?");
+        pstmt.setDate(1, new Date(time + 10));
+        ResultSet rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        assertTrue(time - rs.getDate(1).getTime() < 24 * 60 * 60 * 1000);
+        Calendar c1 = new GregorianCalendar(), c2 = new GregorianCalendar();
+        c1.setTime(rs.getDate(1));
+        c2.setTime(new Timestamp(time));
+        assertEquals(c2.get(Calendar.YEAR), c1.get(Calendar.YEAR));
+        assertEquals(c2.get(Calendar.MONTH), c1.get(Calendar.MONTH));
+        assertEquals(c2.get(Calendar.DAY_OF_MONTH), c1.get(Calendar.DAY_OF_MONTH));
+        assertEquals(0, c1.get(Calendar.HOUR));
+        assertEquals(0, c1.get(Calendar.MINUTE));
+        assertEquals(0, c1.get(Calendar.SECOND));
+        assertEquals(0, c1.get(Calendar.MILLISECOND));
+        rs.close();
+        pstmt.close();
+    }
+
+    /**
+     * Java 1.3 Timestamp.getDate() does not add the nano seconds to
      * the millisecond value returned. This causes the timestamp tests
      * to fail. If running under java 1.3 we add the nanos ourselves.
-     * @param rs The result set returning the Timstamp value in column 1 
-     * @return The millisecond date value as a <code>long</code>.
-     * @throws SQLException
+     *
+     * @param rs the result set returning the Timstamp value in column 1
+     * @return the millisecond date value as a <code>long</code>.
      */
     public long getTimeInMs(ResultSet rs)
-        throws SQLException {
+            throws SQLException {
         Timestamp value = rs.getTimestamp(1);
         long ms = value.getTime();
         if (!Driver.JDBC3) {

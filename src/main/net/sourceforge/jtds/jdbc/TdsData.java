@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.31 2004-11-15 15:44:38 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.32 2004-11-18 13:12:43 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -2067,8 +2067,8 @@ public class TdsData {
      * Output a java.sql.Date/Time/Timestamp value to the server
      * as a Sybase datetime value.
      *
-     * @param out The server request stream.
-     * @param value The date value to write.
+     * @param out   the server request stream
+     * @param value the date value to write
      */
     private static void putDateTimeValue(RequestStream out, Object value)
             throws SQLException, IOException {
@@ -2082,7 +2082,12 @@ public class TdsData {
 
         synchronized (cal) {
             out.write((byte) 8);
-            time = calendarToSybTime(cal, value);
+            if (value instanceof java.sql.Date) {
+                time = 0;
+                cal.setTime((java.util.Date) value);
+            } else {
+                time = calendarToSybTime(cal, value);
+            }
 
             if (value instanceof java.sql.Time) {
                 daysSince1900 = 0;

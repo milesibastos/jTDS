@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+11/18/2004 - Alin Sinpalean
+ o Corrected a bug that was causing Date values to be inserted just like
+   Timestamps (i.e. including the time component).
+
 11/17/2004 - Alin Sinpalean
  o Tiny performance tweaks.
  o Added jta.jar to lib folder to ensure compilation works under Java 1.3.

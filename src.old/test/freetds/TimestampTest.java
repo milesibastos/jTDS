@@ -21,7 +21,7 @@ public class TimestampTest extends DatabaseTestCase
 	public static void main(String args[]) 
 	{
           try {
-		Logger.setActive(true);
+		Logger.setActive(false);
           }
           catch (java.io.IOException ex) {
             throw new RuntimeException("Unexpected Exception " + ex + " occured in main");
@@ -1378,7 +1378,6 @@ public class TimestampTest extends DatabaseTestCase
 		ps.close();
 		conn.commit();
 		// conn.rollback();
-		System.out.println("conn.close();");
 		conn.close();
 
 		conn = getConnection();

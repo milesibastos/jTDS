@@ -24,6 +24,8 @@ public class CSUnitTest extends DatabaseTestCase {
     super(name);
   }
   
+  static PrintStream output = null;
+  
   public static void main(String args[]) {
     try {
       Logger.setActive(true);
@@ -32,14 +34,22 @@ public class CSUnitTest extends DatabaseTestCase {
       throw new RuntimeException("Unexpected Exception " + ex + " occured in main");
     }
     if (args.length > 0) {
+      output = System.out;
       junit.framework.TestSuite s = new TestSuite();
       for (int i = 0; i < args.length; i++) {
         s.addTest(new CSUnitTest(args[i]));
       }
       junit.textui.TestRunner.run(s);
     }
-    else
+    else {
+      try {
+        output = new PrintStream(new FileOutputStream("nul"));
+      }
+      catch (FileNotFoundException ex) {
+        throw new RuntimeException("could not create device nul");
+      }
       junit.textui.TestRunner.run(CSUnitTest.class);
+    }
   }
   
   
@@ -236,19 +246,19 @@ public class CSUnitTest extends DatabaseTestCase {
       assertTrue("should get Result",false);
     }
     else {
-      System.out.println("Getting the results");
-      System.out.println("mybinary is " + rs.getObject("mybinary"));
-      System.out.println("myvarbinary is " + rs.getObject("myvarbinary"));
-      System.out.println("mychar is " + rs.getObject("mychar"));
-      System.out.println("myvarchar is " + rs.getObject("myvarchar"));
-      System.out.println("mytext is " + rs.getObject("mytext"));
-      System.out.println("myimage is " + rs.getObject("myimage"));
-      System.out.println("mynullbinary is " + rs.getObject("mynullbinary"));
-      System.out.println("mynullvarbinary is " + rs.getObject("mynullvarbinary"));
-      System.out.println("mynullchar is " + rs.getObject("mynullchar"));
-      System.out.println("mynullvarchar is " + rs.getObject("mynullvarchar"));
-      System.out.println("mynulltext is " + rs.getObject("mynulltext"));
-      System.out.println("mynullimage is " + rs.getObject("mynullimage"));
+      output.println("Getting the results");
+      output.println("mybinary is " + rs.getObject("mybinary"));
+      output.println("myvarbinary is " + rs.getObject("myvarbinary"));
+      output.println("mychar is " + rs.getObject("mychar"));
+      output.println("myvarchar is " + rs.getObject("myvarchar"));
+      output.println("mytext is " + rs.getObject("mytext"));
+      output.println("myimage is " + rs.getObject("myimage"));
+      output.println("mynullbinary is " + rs.getObject("mynullbinary"));
+      output.println("mynullvarbinary is " + rs.getObject("mynullvarbinary"));
+      output.println("mynullchar is " + rs.getObject("mynullchar"));
+      output.println("mynullvarchar is " + rs.getObject("mynullvarchar"));
+      output.println("mynulltext is " + rs.getObject("mynulltext"));
+      output.println("mynullimage is " + rs.getObject("mynullimage"));
     }
   }
   
@@ -313,7 +323,7 @@ public class CSUnitTest extends DatabaseTestCase {
       assertTrue(m.equals(money[i].setScale(2, BigDecimal.ROUND_DOWN)));
       assertTrue(sm.equals(smallmoney[i].setScale(2, BigDecimal.ROUND_DOWN)));
       
-      System.out.println(m + ", " + sm);
+      output.println(m + ", " + sm);
     }
   }
   
@@ -326,7 +336,7 @@ public class CSUnitTest extends DatabaseTestCase {
     "   b      bit,                 " +
     "   s      char(5),             " +
     "   f      float)               ");
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
     
     stmt.executeUpdate("insert into t0026 values(0, 0, 'false', 0.0)");
     stmt.executeUpdate("insert into t0026 values(0, 0, 'N', 10)");
@@ -410,10 +420,10 @@ public class CSUnitTest extends DatabaseTestCase {
   */
 
   public void testDataTypes0027() throws Exception {
-    System.out.println("Test all the SQLServer datatypes in Statement\n"
+    output.println("Test all the SQLServer datatypes in Statement\n"
     + "and PreparedStatement using the preferred getXXX()\n"
     + "instead of getObject like t0017.java does.");
-    System.out.println("!!!Note- This test is not fully implemented yet!!!");
+    output.println("!!!Note- This test is not fully implemented yet!!!");
     Statement   stmt = con.createStatement();
     ResultSet   rs;
     stmt.execute("set dateformat ymd");
@@ -549,44 +559,44 @@ public class CSUnitTest extends DatabaseTestCase {
     sql = "select * from t0027";
     rs = stmt.executeQuery(sql);
     assertTrue(rs.next());
-    System.out.println("mybinary is " + rs.getObject("mybinary"));
-    System.out.println("myvarbinary is " + rs.getObject("myvarbinary"));
-    System.out.println("mychar is " + rs.getString("mychar"));
-    System.out.println("myvarchar is " + rs.getString("myvarchar"));
-    System.out.println("mydatetime is " + rs.getTimestamp("mydatetime"));
-    System.out.println("mysmalldatetime is " + rs.getTimestamp("mysmalldatetime"));
-    System.out.println("mydecimal10_3 is " + rs.getObject("mydecimal10_3"));
-    System.out.println("mynumeric5_4 is " + rs.getObject("mynumeric5_4"));
-    System.out.println("myfloat6 is " + rs.getDouble("myfloat6"));
-    System.out.println("myfloat14 is " + rs.getDouble("myfloat14"));
-    System.out.println("myreal is " + rs.getDouble("myreal"));
-    System.out.println("myint is " + rs.getInt("myint"));
-    System.out.println("mysmallint is " + rs.getShort("mysmallint"));
-    System.out.println("mytinyint is " + rs.getByte("mytinyint"));
-    System.out.println("mymoney is " + rs.getObject("mymoney"));
-    System.out.println("mysmallmoney is " + rs.getObject("mysmallmoney"));
-    System.out.println("mybit is " + rs.getObject("mybit"));
-    System.out.println("mytimestamp is " + rs.getObject("mytimestamp"));
-    System.out.println("mytext is " + rs.getObject("mytext"));
-    System.out.println("myimage is " + rs.getObject("myimage"));
-    System.out.println("mynullbinary is " + rs.getObject("mynullbinary"));
-    System.out.println("mynullvarbinary is " + rs.getObject("mynullvarbinary"));
-    System.out.println("mynullchar is " + rs.getString("mynullchar"));
-    System.out.println("mynullvarchar is " + rs.getString("mynullvarchar"));
-    System.out.println("mynulldatetime is " + rs.getTimestamp("mynulldatetime"));
-    System.out.println("mynullsmalldatetime is " + rs.getTimestamp("mynullsmalldatetime"));
-    System.out.println("mynulldecimal10_3 is " + rs.getObject("mynulldecimal10_3"));
-    System.out.println("mynullnumeric15_10 is " + rs.getObject("mynullnumeric15_10"));
-    System.out.println("mynullfloat6 is " + rs.getDouble("mynullfloat6"));
-    System.out.println("mynullfloat14 is " + rs.getDouble("mynullfloat14"));
-    System.out.println("mynullreal is " + rs.getDouble("mynullreal"));
-    System.out.println("mynullint is " + rs.getInt("mynullint"));
-    System.out.println("mynullsmallint is " + rs.getShort("mynullsmallint"));
-    System.out.println("mynulltinyint is " + rs.getByte("mynulltinyint"));
-    System.out.println("mynullmoney is " + rs.getObject("mynullmoney"));
-    System.out.println("mynullsmallmoney is " + rs.getObject("mynullsmallmoney"));
-    System.out.println("mynulltext is " + rs.getObject("mynulltext"));
-    System.out.println("mynullimage is " + rs.getObject("mynullimage"));
+    output.println("mybinary is " + rs.getObject("mybinary"));
+    output.println("myvarbinary is " + rs.getObject("myvarbinary"));
+    output.println("mychar is " + rs.getString("mychar"));
+    output.println("myvarchar is " + rs.getString("myvarchar"));
+    output.println("mydatetime is " + rs.getTimestamp("mydatetime"));
+    output.println("mysmalldatetime is " + rs.getTimestamp("mysmalldatetime"));
+    output.println("mydecimal10_3 is " + rs.getObject("mydecimal10_3"));
+    output.println("mynumeric5_4 is " + rs.getObject("mynumeric5_4"));
+    output.println("myfloat6 is " + rs.getDouble("myfloat6"));
+    output.println("myfloat14 is " + rs.getDouble("myfloat14"));
+    output.println("myreal is " + rs.getDouble("myreal"));
+    output.println("myint is " + rs.getInt("myint"));
+    output.println("mysmallint is " + rs.getShort("mysmallint"));
+    output.println("mytinyint is " + rs.getByte("mytinyint"));
+    output.println("mymoney is " + rs.getObject("mymoney"));
+    output.println("mysmallmoney is " + rs.getObject("mysmallmoney"));
+    output.println("mybit is " + rs.getObject("mybit"));
+    output.println("mytimestamp is " + rs.getObject("mytimestamp"));
+    output.println("mytext is " + rs.getObject("mytext"));
+    output.println("myimage is " + rs.getObject("myimage"));
+    output.println("mynullbinary is " + rs.getObject("mynullbinary"));
+    output.println("mynullvarbinary is " + rs.getObject("mynullvarbinary"));
+    output.println("mynullchar is " + rs.getString("mynullchar"));
+    output.println("mynullvarchar is " + rs.getString("mynullvarchar"));
+    output.println("mynulldatetime is " + rs.getTimestamp("mynulldatetime"));
+    output.println("mynullsmalldatetime is " + rs.getTimestamp("mynullsmalldatetime"));
+    output.println("mynulldecimal10_3 is " + rs.getObject("mynulldecimal10_3"));
+    output.println("mynullnumeric15_10 is " + rs.getObject("mynullnumeric15_10"));
+    output.println("mynullfloat6 is " + rs.getDouble("mynullfloat6"));
+    output.println("mynullfloat14 is " + rs.getDouble("mynullfloat14"));
+    output.println("mynullreal is " + rs.getDouble("mynullreal"));
+    output.println("mynullint is " + rs.getInt("mynullint"));
+    output.println("mynullsmallint is " + rs.getShort("mynullsmallint"));
+    output.println("mynulltinyint is " + rs.getByte("mynulltinyint"));
+    output.println("mynullmoney is " + rs.getObject("mynullmoney"));
+    output.println("mynullsmallmoney is " + rs.getObject("mynullsmallmoney"));
+    output.println("mynulltext is " + rs.getObject("mynulltext"));
+    output.println("mynullimage is " + rs.getObject("mynullimage"));
   }
   public void testCallStoredProcedures0028() throws Exception {
     Statement   stmt = con.createStatement();
@@ -601,7 +611,7 @@ public class CSUnitTest extends DatabaseTestCase {
     
     
     isResultSet = stmt.execute("EXEC sp_who");
-    System.out.println("execute(EXEC sp_who) returned: " + isResultSet);
+    output.println("execute(EXEC sp_who) returned: " + isResultSet);
     
     updateCount=stmt.getUpdateCount();
     
@@ -612,17 +622,17 @@ public class CSUnitTest extends DatabaseTestCase {
         
         ResultSetMetaData rsMeta =  rs.getMetaData();
         int columnCount = rsMeta.getColumnCount();
-        System.out.println("columnCount: " +
+        output.println("columnCount: " +
         Integer.toString(columnCount));
         for(int n=1; n<= columnCount; n++) {
-          System.out.println(Integer.toString(n) + ": " +
+          output.println(Integer.toString(n) + ": " +
           rsMeta.getColumnName(n));
         }
         
         while(rs.next()) {
           rowCount++;
           for(int n=1; n<= columnCount; n++) {
-            System.out.println(Integer.toString(n) + ": " +
+            output.println(Integer.toString(n) + ": " +
             rs.getString(n));
           }
         }
@@ -630,16 +640,16 @@ public class CSUnitTest extends DatabaseTestCase {
       }
       else {
         numberOfUpdates++;
-        System.out.println("UpdateCount: " +
+        output.println("UpdateCount: " +
         Integer.toString(updateCount));
       }
       isResultSet=stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     }
     
-    System.out.println("resultSetCount: " + resultSetCount);
-    System.out.println("Total rowCount: " + rowCount);
-    System.out.println("Number of updates: " + numberOfUpdates);
+    output.println("resultSetCount: " + resultSetCount);
+    output.println("Total rowCount: " + rowCount);
+    output.println("Number of updates: " + numberOfUpdates);
     
     
     assertTrue((rowCount>=1) && (numberOfUpdates==0) && (resultSetCount==1));
@@ -659,14 +669,14 @@ public class CSUnitTest extends DatabaseTestCase {
     int numberOfUpdates=0;
     
     
-    System.out.println("before execute DROP PROCEDURE");
+    output.println("before execute DROP PROCEDURE");
     
     try {
       isResultSet =stmt.execute("DROP PROCEDURE t0029_p1");
       updateCount = stmt.getUpdateCount();
       do {
-        System.out.println("DROP PROCEDURE isResultSet: " + isResultSet);
-        System.out.println("DROP PROCEDURE updateCount: " + updateCount);
+        output.println("DROP PROCEDURE isResultSet: " + isResultSet);
+        output.println("DROP PROCEDURE updateCount: " + updateCount);
         isResultSet = stmt.getMoreResults();
         updateCount = stmt.getUpdateCount();
       } while (((updateCount!=-1) && !isResultSet) || isResultSet);
@@ -678,8 +688,8 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet =stmt.execute("DROP PROCEDURE t0029_p2");
       updateCount = stmt.getUpdateCount();
       do {
-        System.out.println("DROP PROCEDURE isResultSet: " + isResultSet);
-        System.out.println("DROP PROCEDURE updateCount: " + updateCount);
+        output.println("DROP PROCEDURE isResultSet: " + isResultSet);
+        output.println("DROP PROCEDURE updateCount: " + updateCount);
         isResultSet = stmt.getMoreResults();
         updateCount = stmt.getUpdateCount();
       } while (((updateCount!=-1) && !isResultSet) || isResultSet);
@@ -700,8 +710,8 @@ public class CSUnitTest extends DatabaseTestCase {
     "   t5 text null)                             ");
     updateCount = stmt.getUpdateCount();
     do {
-      System.out.println("CREATE TABLE isResultSet: " + isResultSet);
-      System.out.println("CREATE TABLE updateCount: " + updateCount);
+      output.println("CREATE TABLE isResultSet: " + isResultSet);
+      output.println("CREATE TABLE updateCount: " + updateCount);
       isResultSet = stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     } while (((updateCount!=-1) && !isResultSet) || isResultSet);
@@ -733,8 +743,8 @@ public class CSUnitTest extends DatabaseTestCase {
     
     updateCount = stmt.getUpdateCount();
     do {
-      System.out.println("CREATE PROCEDURE isResultSet: " + isResultSet);
-      System.out.println("CREATE PROCEDURE updateCount: " + updateCount);
+      output.println("CREATE PROCEDURE isResultSet: " + isResultSet);
+      output.println("CREATE PROCEDURE updateCount: " + updateCount);
       isResultSet = stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     } while (((updateCount!=-1) && !isResultSet) || isResultSet);
@@ -752,8 +762,8 @@ public class CSUnitTest extends DatabaseTestCase {
     
     updateCount = stmt.getUpdateCount();
     do {
-      System.out.println("CREATE PROCEDURE isResultSet: " + isResultSet);
-      System.out.println("CREATE PROCEDURE updateCount: " + updateCount);
+      output.println("CREATE PROCEDURE isResultSet: " + isResultSet);
+      output.println("CREATE PROCEDURE updateCount: " + updateCount);
       isResultSet = stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     } while (((updateCount!=-1) && !isResultSet) || isResultSet);
@@ -761,7 +771,7 @@ public class CSUnitTest extends DatabaseTestCase {
     
     isResultSet = stmt.execute( "EXEC  t0029_p2  ");
     
-    System.out.println("execute(EXEC t0029_p2) returned: " + isResultSet);
+    output.println("execute(EXEC t0029_p2) returned: " + isResultSet);
     
     updateCount=stmt.getUpdateCount();
     
@@ -772,17 +782,17 @@ public class CSUnitTest extends DatabaseTestCase {
         
         ResultSetMetaData rsMeta =  rs.getMetaData();
         int columnCount = rsMeta.getColumnCount();
-        System.out.println("columnCount: " +
+        output.println("columnCount: " +
         Integer.toString(columnCount));
         for(int n=1; n<= columnCount; n++) {
-          System.out.println(Integer.toString(n) + ": " +
+          output.println(Integer.toString(n) + ": " +
           rsMeta.getColumnName(n));
         }
         
         while(rs.next()) {
           rowCount++;
           for(int n=1; n<= columnCount; n++) {
-            System.out.println(Integer.toString(n) + ": " +
+            output.println(Integer.toString(n) + ": " +
             rs.getString(n));
           }
         }
@@ -790,16 +800,16 @@ public class CSUnitTest extends DatabaseTestCase {
       }
       else {
         numberOfUpdates++;
-        System.out.println("UpdateCount: " +
+        output.println("UpdateCount: " +
         Integer.toString(updateCount));
       }
       isResultSet=stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     }
     
-    System.out.println("resultSetCount: " + resultSetCount);
-    System.out.println("Total rowCount: " + rowCount);
-    System.out.println("Number of updates: " + numberOfUpdates);
+    output.println("resultSetCount: " + resultSetCount);
+    output.println("Total rowCount: " + rowCount);
+    output.println("Number of updates: " + numberOfUpdates);
     
     
     assertTrue((resultSetCount==1) &&
@@ -826,21 +836,21 @@ public class CSUnitTest extends DatabaseTestCase {
       ResultSetMetaData meta = rs.getMetaData();
       
       if (meta.getColumnType(1)!=java.sql.Types.TINYINT) {
-        System.out.println("tinyint column was read as "
+        output.println("tinyint column was read as "
         + meta.getColumnType(1));
         passed = false;
       }
       if (meta.getColumnType(2)!=java.sql.Types.SMALLINT) {
-        System.out.println("smallint column was read as "
+        output.println("smallint column was read as "
         + meta.getColumnType(2));
         passed = false;
       }
       if (rs.getInt(1) != 2) {
-        System.out.println("Bogus value read for tinyint");
+        output.println("Bogus value read for tinyint");
         passed = false;
       }
       if (rs.getInt(2) != 5) {
-        System.out.println("Bogus value read for smallint");
+        output.println("Bogus value read for smallint");
         passed = false;
       }
     }
@@ -851,7 +861,7 @@ public class CSUnitTest extends DatabaseTestCase {
     boolean   passed = true;
     
     
-    System.out.println("Starting test t0031-  test text columns");
+    output.println("Starting test t0031-  test text columns");
     
     
     int         count    = 0;
@@ -861,7 +871,7 @@ public class CSUnitTest extends DatabaseTestCase {
     "  (t_nullable      text null,     " +
     "   t_notnull       text not null, " +
     "   i               int not null)  ");
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
     
     stmt.executeUpdate("insert into t0031 values(null, '',   1)");
     stmt.executeUpdate("insert into t0031 values(null, 'b1', 2)");
@@ -930,7 +940,7 @@ public class CSUnitTest extends DatabaseTestCase {
     int       updateCount = 0;
     
     
-    System.out.println("Starting test t0032-  test sp_help sysusers");
+    output.println("Starting test t0032-  test sp_help sysusers");
     
     
     int         count    = 0;
@@ -938,28 +948,28 @@ public class CSUnitTest extends DatabaseTestCase {
     
     isResultSet = stmt.execute("sp_help sysusers");
     
-    System.out.println("Executed the statement.  rc is " + isResultSet);
+    output.println("Executed the statement.  rc is " + isResultSet);
     
     do {
       if (isResultSet) {
-        System.out.println("About to call getResultSet");
+        output.println("About to call getResultSet");
         ResultSet          rs   = stmt.getResultSet();
         ResultSetMetaData  meta = rs.getMetaData();
         updateCount = 0;
         while(rs.next()) {
           for(i=1; i<=meta.getColumnCount(); i++) {
-            System.out.print(rs.getString(i) + "\t");
+            output.print(rs.getString(i) + "\t");
           }
-          System.out.println("");
+          output.println("");
         }
-        System.out.println("Done processing the result set");
+        output.println("Done processing the result set");
       }
       else {
-        System.out.println("About to call getUpdateCount()");
+        output.println("About to call getUpdateCount()");
         updateCount = stmt.getUpdateCount();
-        System.out.println("Updated " + updateCount + " rows");
+        output.println("Updated " + updateCount + " rows");
       }
-      System.out.println("About to call getMoreResults()");
+      output.println("About to call getMoreResults()");
       isResultSet = stmt.getMoreResults();
       done = !isResultSet && updateCount==-1;
     } while (!done);
@@ -978,14 +988,14 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testExceptionByUpdate0033() throws Exception {
     boolean passed;
     Statement   stmt = con.createStatement();
-    System.out.println("Starting test t0033-  make sure Statement.executeUpdate() throws excpetion");
+    output.println("Starting test t0033-  make sure Statement.executeUpdate() throws excpetion");
     
     try {
       passed = false;
       stmt.executeUpdate("I am sure this is an error");
     }
     catch (SQLException e) {
-      System.out.println("The execption is " + e.getMessage());
+      output.println("The execption is " + e.getMessage());
       passed = true;
     }
     assertTrue(passed);
@@ -1007,7 +1017,7 @@ public class CSUnitTest extends DatabaseTestCase {
     "  b char    not null)";
     
     count = stmt.executeUpdate(query);
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
     
     
     query =
@@ -1016,7 +1026,7 @@ public class CSUnitTest extends DatabaseTestCase {
     "  c char    not null,                   " +
     "  foreign key (a) references t0049a(a)) ";
     count = stmt.executeUpdate(query);
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
     
     
     query = "insert into t0049b (a, c) values (?, ?)";
@@ -1035,7 +1045,7 @@ public class CSUnitTest extends DatabaseTestCase {
     
     query = "insert into t0049a (b) values ('a')";
     count = stmt.executeUpdate(query);
-    System.out.println("insert affected " + count + " rows");
+    output.println("insert affected " + count + " rows");
     
     pstmt.setInt(1, 1);
     pstmt.setString(2, "a");
@@ -1067,7 +1077,7 @@ public class CSUnitTest extends DatabaseTestCase {
     "  b char    not null)";
     
     count = stmt.executeUpdate(query);
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
     
     
     query =
@@ -1076,13 +1086,13 @@ public class CSUnitTest extends DatabaseTestCase {
     "  c char    not null,                   " +
     "  foreign key (a) references t0050a(a)) ";
     count = stmt.executeUpdate(query);
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
     
     query =
     "create procedure p0050 (@a integer, @c char) as " +
     "   insert into t0050b (a, c) values (@a, @c)    ";
     count = stmt.executeUpdate(query);
-    System.out.println("Creating procedure affected " + count + " rows");
+    output.println("Creating procedure affected " + count + " rows");
     
     
     query = "exec p0050 ?, ?";
@@ -1101,7 +1111,7 @@ public class CSUnitTest extends DatabaseTestCase {
     
     query = "insert into t0050a (b) values ('a')";
     count = stmt.executeUpdate(query);
-    System.out.println("insert affected " + count + " rows");
+    output.println("insert affected " + count + " rows");
     
     pstmt.setInt(1, 1);
     pstmt.setString(2, "a");
@@ -1121,17 +1131,17 @@ public class CSUnitTest extends DatabaseTestCase {
       ResultSet        rs         = dbMetaData.getTables( null, "%", "t%", types);
       
       while(rs.next()) {
-        System.out.println("Table " + rs.getString(3));
-        System.out.println("  catalog " + rs.getString(1));
-        System.out.println("  schema  " + rs.getString(2));
-        System.out.println("  name    " + rs.getString(3));
-        System.out.println("  type    " + rs.getString(4));
-        System.out.println("  remarks " + rs.getString(5));
+        output.println("Table " + rs.getString(3));
+        output.println("  catalog " + rs.getString(1));
+        output.println("  schema  " + rs.getString(2));
+        output.println("  name    " + rs.getString(3));
+        output.println("  type    " + rs.getString(4));
+        output.println("  remarks " + rs.getString(5));
       }
     }
     catch(java.sql.SQLException e) {
       passed = false;
-      System.out.println("Exception caught.  " + e.getMessage());
+      output.println("Exception caught.  " + e.getMessage());
       e.printStackTrace();
     }
     assertTrue(passed);
@@ -1158,7 +1168,7 @@ public class CSUnitTest extends DatabaseTestCase {
       if (rsMetaData.getColumnCount() != 5) {
         if (passed) {
           passed = false;
-          System.out.println("Bad column count.  Should be 5, was "
+          output.println("Bad column count.  Should be 5, was "
           + rsMetaData.getColumnCount());
         }
       }
@@ -1166,7 +1176,7 @@ public class CSUnitTest extends DatabaseTestCase {
       for(i=0; passed && i<expectedNames.length; i++) {
         if (! rsMetaData.getColumnName(i+1).equals(expectedNames[i])) {
           passed = false;
-          System.out.println("Bad name for column " + (i+1) + ".  "
+          output.println("Bad name for column " + (i+1) + ".  "
           + "Was " + rsMetaData.getColumnName(i+1)
           + ", expected "
           + expectedNames[i]);
@@ -1175,7 +1185,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     catch(java.sql.SQLException e) {
       passed = false;
-      System.out.println("Exception caught.  " + e.getMessage());
+      output.println("Exception caught.  " + e.getMessage());
       e.printStackTrace();
     }
     assertTrue(passed);
@@ -1229,7 +1239,7 @@ public class CSUnitTest extends DatabaseTestCase {
         passed = false;
       }
       else {
-        System.out.println("Testing getAsciiStream()");
+        output.println("Testing getAsciiStream()");
         InputStream in = rs.getAsciiStream("myvarchar");
         String expect = "This is a test with german umlauts ???";
         byte[] toRead = new byte[expect.length()];
@@ -1238,14 +1248,14 @@ public class CSUnitTest extends DatabaseTestCase {
           for (i=0; i<expect.length(); i++) {
             if (expect.charAt(i) != toRead[i]) {
               passed = false;
-              System.out.println("Expected "+expect.charAt(i)
+              output.println("Expected "+expect.charAt(i)
               + " but was "
               + toRead[i]);
             }
           }
         } else {
           passed = false;
-          System.out.println("Premature end in "
+          output.println("Premature end in "
           + "getAsciiStream(\"myvarchar\") "
           + count + " instead of "
           + expect.length());
@@ -1259,18 +1269,18 @@ public class CSUnitTest extends DatabaseTestCase {
           for (i=0; i<41; i++) {
             if (toRead[i] != (toRead[i] & 0x7F)) {
               passed = false;
-              System.out.println("Non ASCII characters in getAsciiStream");
+              output.println("Non ASCII characters in getAsciiStream");
               break;
             }
           }
         } else {
           passed = false;
-          System.out.println("Premature end in getAsciiStream(1) "
+          output.println("Premature end in getAsciiStream(1) "
           +count+" instead of 41");
         }
         in.close();
         
-        System.out.println("Testing getUnicodeStream()");
+        output.println("Testing getUnicodeStream()");
         in = rs.getUnicodeStream("myvarchar");
         Reader reader = new InputStreamReader(in, "UTF8");
         expect = "This is a test with german umlauts הצü";
@@ -1280,12 +1290,12 @@ public class CSUnitTest extends DatabaseTestCase {
           String result = new String(charsToRead);
           if (!expect.equals(result)) {
             passed = false;
-            System.out.println("Expected "+ expect
+            output.println("Expected "+ expect
             + " but was " + result);
           }
         } else {
           passed = false;
-          System.out.println("Premature end in "
+          output.println("Premature end in "
           + "getUnicodeStream(\"myvarchar\") "
           + count + " instead of "
           + expect.length());
@@ -1296,7 +1306,7 @@ public class CSUnitTest extends DatabaseTestCase {
         in = rs.getUnicodeStream(2);
         in.close();
         
-        System.out.println("Testing getBinaryStream()");
+        output.println("Testing getBinaryStream()");
         
                 /* Cannot think of a meaningfull test */
         in = rs.getBinaryStream("myvarchar");
@@ -1310,7 +1320,7 @@ public class CSUnitTest extends DatabaseTestCase {
           image.length-count);
           if (actuallyRead == -1) {
             passed = false;
-            System.out.println("Premature end in "
+            output.println("Premature end in "
             +" getBinaryStream(2) "
             + count +" instead of "
             + image.length);
@@ -1322,14 +1332,14 @@ public class CSUnitTest extends DatabaseTestCase {
         for (i=0; i<count; i++) {
           if (toRead[i] != image[i]) {
             passed = false;
-            System.out.println("Expected "+toRead[i]
+            output.println("Expected "+toRead[i]
             + "but was "+image[i]);
             break;
           }
         }
         in.close();
         
-        System.out.println("Testing getCharacterStream()");
+        output.println("Testing getCharacterStream()");
         try {
           Method getCharacterStreamString =
           ResultSet.class.getMethod("getCharacterStream",
@@ -1348,12 +1358,12 @@ public class CSUnitTest extends DatabaseTestCase {
             String result = new String(charsToRead);
             if (!expect.equals(result)) {
               passed = false;
-              System.out.println("Expected "+ expect
+              output.println("Expected "+ expect
               + " but was " + result);
             }
           } else {
             passed = false;
-            System.out.println("Premature end in "
+            output.println("Premature end in "
             + "getCharacterStream(\"myvarchar\") "
             + count + " instead of "
             + expect.length());
@@ -1366,10 +1376,10 @@ public class CSUnitTest extends DatabaseTestCase {
           new Object[] {new Integer(2)});
           reader.close();
         } catch (NoSuchMethodException e) {
-          System.out.println("JDBC 2 only");
+          output.println("JDBC 2 only");
         } catch (Throwable t) {
           passed = false;
-          System.out.println("Exception: "+t.getMessage());
+          output.println("Exception: "+t.getMessage());
         }
       }
       rs.close();
@@ -1377,7 +1387,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     catch(java.sql.SQLException e) {
       passed = false;
-      System.out.println("Exception caught.  " + e.getMessage());
+      output.println("Exception caught.  " + e.getMessage());
       e.printStackTrace();
     }
     assertTrue(passed);
@@ -1465,7 +1475,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     catch(java.sql.SQLException e) {
       passed = false;
-      System.out.println("Exception caught.  " + e.getMessage());
+      output.println("Exception caught.  " + e.getMessage());
       e.printStackTrace();
     }
     assertTrue(passed);
@@ -1474,7 +1484,7 @@ public class CSUnitTest extends DatabaseTestCase {
   {
     boolean    passed = true;
 
-    System.out.println("test getting a DECIMAL as a long from the database.");
+    output.println("test getting a DECIMAL as a long from the database.");
 
     int         count    = 0;
     Statement   stmt     = con.createStatement();
@@ -1528,7 +1538,7 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testxx0057() throws Exception {
     boolean    passed = true;
 
-    System.out.println("test putting a zero length string into a parameter");
+    output.println("test putting a zero length string into a parameter");
 
     // open the database
 
@@ -1540,17 +1550,17 @@ public class CSUnitTest extends DatabaseTestCase {
     count = stmt.executeUpdate("create table t0057          "
                                + " (a varchar(10) not null, "
                                + "  b char(10)    not null) ");
-    System.out.println("Creating table affected " + count + " rows");
+    output.println("Creating table affected " + count + " rows");
 
     PreparedStatement  pStmt = con.prepareStatement( 
        "insert into t0057 values (?, ?)");      
     pStmt.setString(1, "");
     pStmt.setString(2, "");
     count = pStmt.executeUpdate();
-    System.out.println("Added " + count + " rows");
+    output.println("Added " + count + " rows");
     if (count != 1) 
     {
-       System.out.println("Failed to add rows");
+       output.println("Failed to add rows");
        passed = false;
     }
     else
@@ -1561,12 +1571,12 @@ public class CSUnitTest extends DatabaseTestCase {
        if (!rs.next())
        {
           passed = false;
-          System.out.println("Couldn't read rows from table.");
+          output.println("Couldn't read rows from table.");
        }
        else
        {
-          System.out.println("a is |" + rs.getString("a") + "|");
-          System.out.println("b is |" + rs.getString("b") + "|");
+          output.println("a is |" + rs.getString("a") + "|");
+          output.println("b is |" + rs.getString("b") + "|");
           passed = passed && (rs.getString("a").equals(""));
           passed = passed && (rs.getString("b").equals("          "));
        }
@@ -1594,13 +1604,13 @@ public class CSUnitTest extends DatabaseTestCase {
 
        while(rs.next())
        {
-          System.out.println("schema " + rs.getString(1));
+          output.println("schema " + rs.getString(1));
        }
     }
     catch(java.sql.SQLException e)
     {
        passed = false;
-       System.out.println("Exception caught.  " + e.getMessage());
+       output.println("Exception caught.  " + e.getMessage());
        e.printStackTrace();
     }
     assertTrue(passed);

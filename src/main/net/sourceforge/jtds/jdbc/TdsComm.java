@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.2 2003-02-15 14:19:21 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.3 2003-10-10 20:51:17 matt_brinkley Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.2 2003-02-15 14:19:21 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.3 2003-10-10 20:51:17 matt_brinkley Exp $";
 
     final static int headerLength = 8;
 
@@ -752,7 +752,11 @@ public class TdsComm implements TdsDefinitions {
 
         // read the header
         for ( int nread = 0; nread < 8;  ) {
-            nread += in.read( tmpBuf, nread, 8 - nread );
+            int amtRead = in.read( tmpBuf, nread, 8 - nread );
+            if( amtRead == -1 )
+                // this appears to happen when the remote host closes the connection...
+                throw new IOException( "Db server closed connection." );
+            nread += amtRead;
         }
 
         if ( Logger.isActive() ) {
@@ -786,7 +790,11 @@ public class TdsComm implements TdsDefinitions {
 
         // now get the data
         for ( int nread = 0; nread < len;  ) {
-            nread += in.read( inBuffer, nread, len - nread );
+            int amtRead = in.read( inBuffer, nread, len - nread );
+            if( amtRead == -1 )
+                // this appears to happen when the remote host closes the connection...
+                throw new IOException( "Db server closed connection." );
+            nread += amtRead;
         }
         packetsReceived++;
 

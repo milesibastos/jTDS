@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.43 2004-10-25 19:33:39 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.44 2004-11-08 20:14:06 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -224,6 +224,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean namedPipe = false;
     /** Only return the last update count. */
     private boolean lastUpdateCount = false;
+    /** TCP_NODELAY */
+    private boolean tcpNoDelay = true;
     /** Login timeout value in seconds or 0. */
     private int loginTimeout = 0;
     /** Sybase capability mask.*/
@@ -281,7 +283,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize,
                         instanceName, domainName, user, password);
             } else {
-                socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType);
+                socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType, tcpNoDelay);
             }
 
             // Don't call loadCharset if serverCharset not specified; discover
@@ -739,6 +741,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         language = info.getProperty(Messages.get("prop.language"), "us_english");
         prepareSql = parseIntegerProperty(info, "prop.preparesql");
         lastUpdateCount = info.getProperty(Messages.get("prop.lastupdatecount")).equalsIgnoreCase("true");
+        tcpNoDelay = info.getProperty(Messages.get("prop.tcpnodelay")).equalsIgnoreCase("true");
         useUnicode = info.getProperty(Messages.get("prop.useunicode")).equalsIgnoreCase("true");
         namedPipe = info.getProperty(Messages.get("prop.namedpipe")).equalsIgnoreCase("true");
         charsetSpecified = (serverCharset != null && serverCharset.length() > 0);

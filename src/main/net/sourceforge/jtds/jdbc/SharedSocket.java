@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.16 2004-10-27 14:57:44 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.17 2004-11-08 20:14:06 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -216,16 +216,19 @@ class SharedSocket {
      * @param host The SQL Server host name.
      * @param port The connection port eg 1433.
      * @param tdsVersion The TDS protocol version
+     * @param tcpNoDelay <code>true</code> to enable TCP_NODELAY on the underlying socket; 
+     *   <code>false</code> to disable.
      * @throws IOException If Socket open fails.
      */
-    SharedSocket(String host, int port, int tdsVersion, int serverType)
+    SharedSocket(String host, int port, int tdsVersion, int serverType,
+    		boolean tcpNoDelay)
             throws IOException, UnknownHostException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
         this.socket = new Socket(host, port);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
-        this.socket.setTcpNoDelay(true);
+        this.socket.setTcpNoDelay(tcpNoDelay);
     }
 
     /**

@@ -246,6 +246,8 @@
         <dt><code>packetSize</code> (default - <code>4096</code> for TDS 7.0/8.0;
           <code>512</code> for TDS 4.2/5.0)</dt>
         <dd>The network packet size (a multiple of 512).</dd>
+        <dt><code>tcpNoDelay</code> (default - <code>true</code>)</dt>
+        <dd><code>true</code> to enable TCP_NODELAY on the socket; <code>false</code> to disable it.</dd>
         <dt><code>lobBuffer</code> (default - <code>32768</code>)</dt>
         <dd>The amount of LOB data to buffer in memory before caching to disk. The
           value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>

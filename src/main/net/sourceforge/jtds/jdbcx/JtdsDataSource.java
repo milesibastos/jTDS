@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.19 2004-10-26 12:53:37 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.20 2004-11-08 20:14:06 bheineman Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -61,6 +61,7 @@ public class JtdsDataSource
     protected String macAddress;
     protected String prepareSql;
     protected String packetSize;
+    protected String tcpNoDelay;
     protected String user;
     protected String password;
     protected String loginTimeout;
@@ -94,6 +95,7 @@ public class JtdsDataSource
         macAddress = props.getProperty(Messages.get("prop.macaddress"));
         prepareSql = props.getProperty(Messages.get("prop.preparesql"));
         packetSize = props.getProperty(Messages.get("prop.packetsize"));
+        tcpNoDelay = props.getProperty(Messages.get("prop.tcpnodelay"));
         user = props.getProperty(Messages.get("prop.user"));
         password = props.getProperty(Messages.get("prop.password"));
         loginTimeout = props.getProperty(Messages.get("prop.logintimeout"));
@@ -172,6 +174,7 @@ public class JtdsDataSource
         props.setProperty(Messages.get("prop.macaddress"), macAddress);
         props.setProperty(Messages.get("prop.preparesql"), prepareSql);
         props.setProperty(Messages.get("prop.packetsize"), packetSize);
+        props.setProperty(Messages.get("prop.tcpNoDelay"), tcpNoDelay);
         props.setProperty(Messages.get("prop.user"), user);
         props.setProperty(Messages.get("prop.password"), password);
         props.setProperty(Messages.get("prop.logintimeout"), loginTimeout);
@@ -207,6 +210,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get("prop.macaddress"), macAddress));
         ref.add(new StringRefAddr(Messages.get("prop.preparesql"), prepareSql));
         ref.add(new StringRefAddr(Messages.get("prop.packetsize"), packetSize));
+        ref.add(new StringRefAddr(Messages.get("prop.tcpnodelay"), tcpNoDelay));
         ref.add(new StringRefAddr(Messages.get("prop.user"), user));
         ref.add(new StringRefAddr(Messages.get("prop.password"), password));
         ref.add(new StringRefAddr(Messages.get("prop.logintimeout"), loginTimeout));
@@ -404,6 +408,14 @@ public class JtdsDataSource
         return Integer.parseInt(packetSize);
     }
 
+    public boolean getTcpNoDelay() {
+        return Boolean.valueOf(tcpNoDelay).booleanValue();
+    }
+
+    public void setTcpNoDelay(boolean tcpNoDelay) {
+        this.tcpNoDelay = String.valueOf(tcpNoDelay);
+    }
+    
     public void setPrepareSql(int prepareSql) {
         this.prepareSql = String.valueOf(prepareSql);
     }

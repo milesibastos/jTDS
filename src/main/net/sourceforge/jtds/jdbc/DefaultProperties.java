@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.12 2004-10-25 19:33:39 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.13 2004-11-08 20:14:06 bheineman Exp $
  */
 public final class DefaultProperties {
 
@@ -84,6 +84,8 @@ public final class DefaultProperties {
     public static final String PREPARE_SQL = String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES);
     /** Default <code>progName</code> property. */
     public static final String PROG_NAME = "jTDS";
+    /** Default <code>tcpNoDelay</code> property. */
+    public static final String TCP_NODELAY = "true";
     /** Default <code>sendStringParametersAsUnicode</code> property. */
     public static final String USE_UNICODE = "true";
     /** Default <code>user</code> property. */
@@ -155,16 +157,14 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, "prop.macaddress", MAC_ADDRESS);
         addDefaultPropertyIfNotSet(props, "prop.maxstatements", MAX_STATEMENTS);
         addDefaultPropertyIfNotSet(props, "prop.namedpipe", NAMED_PIPE);
-
         addDefaultPropertyIfNotSet(props, "prop.packetsize", "prop.tds", packetSizeDefaults);
-
         addDefaultPropertyIfNotSet(props, "prop.preparesql", PREPARE_SQL);
         addDefaultPropertyIfNotSet(props, "prop.progname", PROG_NAME);
+        addDefaultPropertyIfNotSet(props, "prop.tcpnodelay", TCP_NODELAY);
         addDefaultPropertyIfNotSet(props, "prop.useunicode", USE_UNICODE);
 
         return props;
     }
-
 
     /**
      * Sets a default property if the property is not already set.
@@ -181,7 +181,6 @@ public final class DefaultProperties {
             props.setProperty(messageKey, defaultValue);
         }
     }
-
 
     /**
      * Sets a default property if the property is not already set, using
@@ -214,7 +213,6 @@ public final class DefaultProperties {
         }
     }
 
-
     /**
      * Converts an integer server type to its string representation.
      *
@@ -231,7 +229,6 @@ public final class DefaultProperties {
         return null;
     }
 
-
     /**
      * Converts a string server type to its integer representation.
      *
@@ -247,7 +244,6 @@ public final class DefaultProperties {
 
         return null;
     }
-
 
     /**
      * Converts a string TDS version to its integer representation.
@@ -268,5 +264,4 @@ public final class DefaultProperties {
 
         return null;
     }
-
 }

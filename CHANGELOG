@@ -1,6 +1,9 @@
 Changes from jTDS 0.9
 =========================
 
+11/08/2004 - Brian Heineman
+ o Added tcpNoDelay driver property; default is true.
+
 11/05/2004 - Alin Sinpalean
  o Applied Mike's fix for bug [1060466] SQL Executed twice.
  o Applied Mike's fix for bug [1059916] Whitespace needed in preparedStatement.

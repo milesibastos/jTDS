@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.40 2004-09-28 16:59:00 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.41 2004-11-08 20:14:06 bheineman Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -210,6 +210,7 @@ public class Driver implements java.sql.Driver {
         final String[] booleanChoices = new String[]{"true", "false"};
         choicesMap.put(Messages.get("prop.lastupdatecount"), booleanChoices);
         choicesMap.put(Messages.get("prop.namedpipe"), booleanChoices);
+        choicesMap.put(Messages.get("prop.tcpnodelay"), booleanChoices);
         choicesMap.put(Messages.get("prop.useunicode"), booleanChoices);
 
         final String[] prepareSqlChoices = new String[]{

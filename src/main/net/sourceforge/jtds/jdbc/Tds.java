@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -164,7 +164,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.11 2003-11-28 06:45:04 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.12 2003-12-01 23:29:18 matt_brinkley Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -2552,12 +2552,15 @@ public class Tds implements TdsDefinitions {
         byte[] empty = new byte[0];
         String appName = this.appName;
 
+        String clientName = getClientName();
+
         //mdb
         boolean ntlmAuth = (domain.length() > 0);
 
         //mdb:begin-change
         short packSize = (short)( 86 + 2 *
-               (appName.length() +
+               (clientName.length() +
+                appName.length() +
                 serverName.length() +
                 libName.length() +
                 _database.length()) );
@@ -2597,7 +2600,8 @@ public class Tds implements TdsDefinitions {
 
         // Hostname
         comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) 0);
+        comm.appendTdsShort((short) clientName.length());
+        curPos += clientName.length() * 2;
 
         // Username
         //mdb: ntlm doesn't send username...
@@ -2667,6 +2671,7 @@ public class Tds implements TdsDefinitions {
         comm.appendTdsInt(packSize);
 
         // Pack up the login values.
+        comm.appendChars(clientName);
         //mdb: for ntlm auth, uname and pwd aren't sent up...
         if( ! ntlmAuth )
         {

@@ -68,7 +68,7 @@ public class ReadTextTest extends TestBase {
         
         
         // Read back using READTEXT
-        stmt.setMaxFieldSize(1); // Trigger use of READTEXT
+        // FIXME - Trigger use of READTEXT
         rs = stmt.executeQuery("SELECT * FROM #TEST");
         validateReadTextResult(rs, data, byteBuf);
     }

@@ -1,9 +1,14 @@
+===============================================================================
+02/09/2005 - jTDS 1.0.1 released
+===============================================================================
+
 Changes from jTDS 1.0
 =======================
 
 02/09/2005 - Alin Sinpalean
- o Corrected bug [1118956] statement.setMaxFieldSize() sends a statement every 
-   time. Max field size is now set at the same time as row count.
+ o Corrected bug [1118956] statement.setMaxFieldSize() sends a statement every
+   time. Max field size is now set at the same time and in the same way as row
+   count.
  o Applied Mike's patch [1118912] Small enhancements. Extended DataTruncation
    support, better transaction isolation support for Sybase and a fixed NPE in
    Logger.

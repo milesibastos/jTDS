@@ -40,7 +40,7 @@ import java.util.Enumeration;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.19 2004-07-25 15:30:25 bheineman Exp $
+ * @version $Id: Driver.java,v 1.20 2004-07-27 01:21:56 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -289,9 +289,11 @@ public class Driver implements java.sql.Driver {
         String type = token.toString().toLowerCase();
 
         if (type.equals("sqlserver")) {
-            props.setProperty(Support.getMessage("prop.servertype"), "1");
+            props.setProperty(Support.getMessage("prop.servertype"),
+                              String.valueOf(TdsCore.SQLSERVER));
         } else if (type.equals("sybase")) {
-            props.setProperty(Support.getMessage("prop.servertype"), "2");
+            props.setProperty(Support.getMessage("prop.servertype"),
+                              String.valueOf(TdsCore.SYBASE));
             port = 7100;
         } else {
             return null; // Bad server type

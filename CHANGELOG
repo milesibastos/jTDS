@@ -4,6 +4,8 @@ Changes from jTDS 0.8.1
 07/26/2004 - David Kilzer
  o Made SharedNamedPipe constructor package-private to match SharedSocket
    constructor.
+ o Made TdsCore.SQLSERVER and TdsCore.SYBASE public.  Removed use of
+   "magic" numbers and strings.
 
 07/26/2004 - Brian Heineman
  o Removed extraneous methods from SharedSocket and SharedNamedPipe.

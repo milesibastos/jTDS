@@ -850,6 +850,25 @@ public class ResultSetTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test for bug [1075977] <code>setObject()</code> causes SQLException.
+     * <p>
+     * Conversion of <code>float</code> values to <code>String</code> adds
+     * grouping to the value, which cannot then be parsed.
+     */
+    public void testSetObjectScale() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testsetobj (i int)");
+        PreparedStatement pstmt =
+                con.prepareStatement("insert into #testsetobj values(?)");
+        // next line causes sqlexception
+        pstmt.setObject(1, new Float(1234.5667), Types.INTEGER, 0);
+        assertEquals(1, pstmt.executeUpdate());
+        ResultSet rs = stmt.executeQuery("select * from #testsetobj");
+        assertTrue(rs.next());
+        assertEquals("1234", rs.getString(1));
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

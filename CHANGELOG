@@ -1,6 +1,9 @@
 Changes from jTDS 0.9
 =========================
 
+11/30/2004 - Alin Sinpalean
+ o Corrected bug [1075977] setObject() causes SQLException.
+
 11/29/2004 - Alin Sinpalean
  o Fixed some NPEs caused by the new per column collation support.
  o Applied Mike's fix for [1074356] TDS 4/5 Login fails with latest CVS code.

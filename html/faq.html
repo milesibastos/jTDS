@@ -176,7 +176,7 @@
           <code>&quot;7.0&quot; or &quot;8.0&quot;</code>) when connecting to any
           version of Sybase as these are SQL Server specific protocols.  Further, you
           should not set this value to <code>&quot;5.0&quot;</code>) when connecting
-          to any version of SQL Server as this is a Sybase specific protocol.<br>
+          to any version of SQL Server as this is a Sybase specific protocol.<br/>
           Currently jTDS automatically falls back from 8.0 to 7.0 (if used with
           SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying
           the value for this parameter is only necessary for SQL Server 6.5.</dd>
@@ -188,9 +188,18 @@
           <code>NCHAR</code>/<code>NVARCHAR</code>/<code>NTEXT</code> values
           doesn't have any effect since these are stored using Unicode.</dd>
         <dt><code>domain</code></dt>
-        <dd>Specifies the Windows domain to authenticate in. If present, jTDS
-          uses Windows (NTLM) authentication instead of the usual SQL Server authentication
-          (i.e. the user and password provided are the domain user and password).</dd>
+        <dd>Specifies the Windows domain to authenticate in. If present and the
+          user name and password are provided, jTDS uses Windows (NTLM)
+          authentication instead of the usual SQL Server authentication (i.e.
+          the user and password provided are the domain user and password).
+          This allows non-Windows clients to log in to servers which are only
+          configured to accept Windoes authentication.<br/>
+          If the <code>domain</code> parameter is present but no user name and
+          password are provided, jTDS uses its native Single-Sign-On library
+          and logs in with the logged Windows user's credentials (for this to
+          work one would obviously need to be on Windows, logged into a domain,
+          and also have the SSO library installed -- consult README.SSO in the
+          distribution on how to do this).</dd>
         <dt><code>instance</code></dt>
         <dd>Named instance to connect to. SQL Server can run multiple so-called
           "named instances" (i.e. different server instances, running on different
@@ -264,13 +273,19 @@
         <dd>The amount of time to wait (in milliseconds) for a successful connection
           before timing out.</dd>
         <dt><code>namedPipe</code> (default - <code>false</code>)</dt>
-        <dd>When set to <code>true</code>, named pipe communication using
-          <a href="http://jcifs.samba.org/">jCIFS</a> is used to connect to the
-          database instead of TCP/IP sockets.  Such a connection requires Windows
-          (NTLM) authentication, so the <code>domain</code> parameter is required.
+        <dd>When set to <code>true</code>, named pipe communication is used to
+          connect to the database instead of TCP/IP sockets. When the server
+          name is "localhost" or starts with "127.", local named pipes (via the
+          Windows filesystem) are used. These usually have better performance
+          than TCP/IP communication, but only work when the SQL Server and
+          client are on the same machine. If the server name is not "localhost"
+          or "127.<i>something</i>" the <a href="http://jcifs.samba.org/">JCIFS</a>
+          library is used. JCIFS is a named pipe over TCP/IP implementation and
+          requires Windows (NTLM) authentication, so the <code>domain</code>
+          parameter is required.<br/>
           This feature supports the <code>instance</code> parameter (which changes
           the named pipe URL), but it does not currently support the named pipe at
-          a location other than <code>/sql/query</code> on the server.  The
+          a location other than <code>/sql/query</code> on the server. The
           <code>port</code> parameter is ignored if set.</dd>
         <dt><code>xaEmulation</code> (default - <code>true</code>)</dt>
         <dd>When set to <code>true</code>, emulate XA distributed transaction

@@ -1,6 +1,9 @@
 Changes from jTDS 1.0
 =======================
 
+02/01/2005 - Alin Sinpalean
+ o Updated FAQ to include information about local named pipes.
+
 01/28/2005 - Alin Sinpalean
  o Added checks for timeout exceptions to JtdsStatement.executeSQLQuery() and
    executeSQL(); if a cursor creation fails because of a timeout, the exception

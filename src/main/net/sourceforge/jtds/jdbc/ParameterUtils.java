@@ -39,7 +39,7 @@ import java.util.StringTokenizer;
 
 public class ParameterUtils
 {
-   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.2 2004-01-15 23:00:52 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.3 2004-01-22 23:49:42 alin_sinpalean Exp $";
 
 
    /**
@@ -159,13 +159,14 @@ public class ParameterUtils
       int    tdsVer              = tds.getTdsVer();
       EncodingHelper encoder     = tds.getEncoder();
 
-      for(i=0; i<parameterList.length; i++)
+      for( i=0; i<parameterList.length; i++ )
       {
          do
          {
             nextParameterNumber++;
             nextFormal = "P" + nextParameterNumber;
-         } while (-1 != rawQueryString.indexOf(nextFormal));
+         }
+         while( -1 != rawQueryString.indexOf(nextFormal) );
 
          parameterList[i].formalName = nextFormal;
 
@@ -175,47 +176,44 @@ public class ParameterUtils
             case java.sql.Types.CHAR:
             {
                String value = (String)parameterList[i].value;
-               if (value == null && tdsVer != Tds.TDS70)
-               {
-                   // use the smalles case possible for nulls
-                   parameterList[i].formalType = "varchar(255)";
-                   parameterList[i].maxLength = 255;
 
-               }
-               else if (tdsVer == Tds.TDS70)
+               if( tdsVer == Tds.TDS70 )
                {
-                   /*
-                    * SQL Server 7 can handle Unicode so use it wherever
-                    * possible
-                    */
-
-                   if (value == null || value.length() < 4001)
+                   // SQL Server 7 can handle Unicode so use it wherever
+                   // possible AND required
+                   if( (value==null || value.length()<4001) && tds.useUnicode() )
                    {
                        parameterList[i].formalType = "nvarchar(4000)";
                        parameterList[i].maxLength = 4000;
                    }
-                   else if (value.length() < 8001
+                   else if( value==null ||
+                             (value.length()<8001
                               && !encoder.isDBCS()
-                              && encoder.canBeConverted(value))
+                              && encoder.canBeConverted(value)) )
                    {
                        parameterList[i].formalType = "varchar(8000)";
                        parameterList[i].maxLength = 8000;
                    }
                    else
                    {
+                       // SAfe We'll always use NTEXT (not TEXT) because CLOB
+                       //      columns can't be index columns, so there's no
+                       //      performance hit
                        parameterList[i].formalType = "ntext";
                        parameterList[i].maxLength = Integer.MAX_VALUE;
                    }
                }
                else
                {
-                   int len = value.length();
-                   if (encoder.isDBCS() &&  len > 127 && len < 256)
+                   int len = 0; // This is for NULL values
+                   if( value != null )
                    {
-                       len = encoder.getBytes(value).length;
+                       len = value.length();
+                       if( encoder.isDBCS() && len>127 && len<256 )
+                           len = encoder.getBytes(value).length;
                    }
 
-                   if (len < 256)
+                   if( len < 256 )
                    {
                        parameterList[i].formalType = "varchar(255)";
                        parameterList[i].maxLength = 255;
@@ -230,14 +228,11 @@ public class ParameterUtils
             }
             case java.sql.Types.LONGVARCHAR:
             {
-               if (tdsVer == Tds.TDS70)
-               {
+               if( tdsVer == Tds.TDS70 )
                    parameterList[i].formalType = "ntext";
-               }
                else
-               {
                    parameterList[i].formalType = "text";
-               }
+
                parameterList[i].maxLength = Integer.MAX_VALUE;
                break;
             }

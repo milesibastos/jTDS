@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.8 2004-01-15 23:00:52 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.9 2004-01-22 23:49:47 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.8 2004-01-15 23:00:52 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.9 2004-01-22 23:49:47 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -246,27 +246,41 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
 
     /**
-     *  When a very large ASCII value is input to a LONGVARCHAR parameter, it
-     *  may be more practical to send it via a java.io.InputStream. JDBC will
-     *  read the data from the stream as needed, until it reaches end-of-file.
-     *  The JDBC driver will do any necessary conversion from ASCII to the
-     *  database char format. <P>
+     * When a very large ASCII value is input to a LONGVARCHAR parameter, it
+     * may be more practical to send it via a java.io.InputStream. JDBC will
+     * read the data from the stream as needed, until it reaches end-of-file.
+     * The JDBC driver will do any necessary conversion from ASCII to the
+     * database char format. <P>
      *
-     *  <B>Note:</B> This stream object can either be a standard Java stream
-     *  object or your own subclass that implements the standard interface.
+     * <B>Note:</B> This stream object can either be a standard Java stream
+     * object or your own subclass that implements the standard interface.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the java input stream which contains the ASCII
-     *      parameter value
-     *@param  length            the number of bytes in the stream
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  inputStream       the java input stream which contains the ASCII
+     *                           parameter value
+     * @param  length            the number of bytes in the stream
+     * @exception  SQLException  if a database-access error occurs.
      */
-    public void setAsciiStream( int parameterIndex,
-            java.io.InputStream x,
-            int length )
-             throws SQLException
+    public void setAsciiStream(int parameterIndex,
+                               java.io.InputStream inputStream,
+                               int length )
+        throws SQLException
     {
-        NotImplemented();
+        if( inputStream == null )
+            setCharacterStream(parameterIndex, null, 0);
+        else
+            try
+            {
+                setCharacterStream(parameterIndex,
+                    new java.io.InputStreamReader(inputStream, "ASCII"),
+                    length);
+            }
+            catch( java.io.UnsupportedEncodingException e )
+            {
+                // This should never happen...
+                throw new SQLException("Unexpected encoding exception: "
+                    + e.getMessage());
+            }
     }
 
 
@@ -745,25 +759,41 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
 
     /**
-     *  When a very large UNICODE value is input to a LONGVARCHAR parameter, it
-     *  may be more practical to send it via a java.io.InputStream. JDBC will
-     *  read the data from the stream as needed, until it reaches end-of-file.
-     *  The JDBC driver will do any necessary conversion from UNICODE to the
-     *  database char format. <P>
+     * When a very large UNICODE value is input to a LONGVARCHAR parameter, it
+     * may be more practical to send it via a java.io.InputStream. JDBC will
+     * read the data from the stream as needed, until it reaches end-of-file.
+     * The JDBC driver will do any necessary conversion from UNICODE (UTF-8)
+     * to the database char format. <P>
      *
-     *  <B>Note:</B> This stream object can either be a standard Java stream
-     *  object or your own subclass that implements the standard interface.
+     * <B>Note:</B> This stream object can either be a standard Java stream
+     * object or your own subclass that implements the standard interface.
      *
-     *@param  parameterIndex    the first parameter is 1, the second is 2, ...
-     *@param  x                 the java input stream which contains the UNICODE
-     *      parameter value
-     *@param  length            the number of bytes in the stream
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  inputStream       the java input stream which contains the
+     *                           UNICODE (UTF-8) parameter value
+     * @param  length            the number of bytes in the stream
+     * @exception  SQLException  if a database-access error occurs.
      */
-    public void setUnicodeStream( int parameterIndex, java.io.InputStream x, int length )
-             throws SQLException
+    public void setUnicodeStream(int parameterIndex,
+                                 java.io.InputStream inputStream,
+                                 int length)
+        throws SQLException
     {
-        throw new SQLException( "Not implemented" );
+        if( inputStream == null )
+            setCharacterStream(parameterIndex, null, 0);
+        else
+            try
+            {
+                setCharacterStream(parameterIndex,
+                    new java.io.InputStreamReader(inputStream, "UTF-8"),
+                    length);
+            }
+            catch( java.io.UnsupportedEncodingException e )
+            {
+                // This should never happen...
+                throw new SQLException("Unexpected encoding exception: "
+                    + e.getMessage());
+            }
     }
 
 
@@ -836,28 +866,50 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
 
     /**
-     *  JDBC 2.0 Sets a BLOB parameter.
+     * JDBC 2.0 Sets a BLOB parameter.
      *
-     *@param  i                 the first parameter is 1, the second is 2, ...
-     *@param  x                 an object representing a BLOB
-     *@exception  SQLException  if a database access error occurs
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  blob              an object representing a BLOB
+     * @exception  SQLException  if a database access error occurs
      */
-    public void setBlob( int i, java.sql.Blob x ) throws java.sql.SQLException
+    public void setBlob( int parameterIndex, java.sql.Blob blob )
+        throws java.sql.SQLException
     {
-        NotImplemented();
+        if( blob == null )
+            setBinaryStream(parameterIndex, null, 0);
+        else {
+            long length = blob.length();
+
+            if( length > Integer.MAX_VALUE )
+                throw new SQLException("Blob lengths greater than " + Integer.MAX_VALUE
+                    + " are not suported.");
+
+            setBinaryStream(parameterIndex, blob.getBinaryStream(), (int) length);
+        }
     }
 
 
     /**
-     *  JDBC 2.0 Sets a CLOB parameter.
+     * JDBC 2.0 Sets a CLOB parameter.
      *
-     *@param  i                 the first parameter is 1, the second is 2, ...
-     *@param  x                 an object representing a CLOB
-     *@exception  SQLException  if a database access error occurs
+     * @param  parameterIndex    the first parameter is 1, the second is 2, ...
+     * @param  clob              an object representing a CLOB
+     * @exception  SQLException  if a database access error occurs
      */
-    public void setClob( int i, java.sql.Clob x ) throws java.sql.SQLException
+    public void setClob( int parameterIndex, java.sql.Clob clob )
+        throws java.sql.SQLException
     {
-        NotImplemented();
+        if( clob == null )
+            setCharacterStream(parameterIndex, null, 0);
+        else {
+            long length = clob.length();
+
+            if( length > Integer.MAX_VALUE )
+                throw new SQLException("Clob lengths greater than " + Integer.MAX_VALUE
+                    + " are not suported.");
+
+            setCharacterStream(parameterIndex, clob.getCharacterStream(), (int) length);
+        }
     }
 
 

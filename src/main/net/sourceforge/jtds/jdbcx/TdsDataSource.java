@@ -26,6 +26,7 @@ public class TdsDataSource implements DataSource, Referenceable, Serializable
     private int serverType = Tds.SQLSERVER;
     private String domain;
     private String instance;
+    private boolean sendStringParametersAsUnicode;
 
     public TdsDataSource() {}
 
@@ -45,6 +46,8 @@ public class TdsDataSource implements DataSource, Referenceable, Serializable
         props.setProperty(Tds.PROP_TDS, getTdsVersion());
         props.setProperty(Tds.PROP_DOMAIN, getDomain());
         props.setProperty(Tds.PROP_INSTANCE, getInstance());
+        props.setProperty(Tds.PROP_USEUNICODE,
+            String.valueOf(getSendStringParametersAsUnicode()));
 
         props.setProperty(Tds.PROP_USER, username);
         props.setProperty(Tds.PROP_PASSWORD, password);
@@ -93,6 +96,8 @@ public class TdsDataSource implements DataSource, Referenceable, Serializable
         ref.add( new StringRefAddr("serverType", String.valueOf(getServerType())));
         ref.add( new StringRefAddr("domain", getDomain()));
         ref.add( new StringRefAddr("instance", getInstance()));
+        ref.add( new StringRefAddr("sendStringParametersAsUnicode",
+            String.valueOf(getSendStringParametersAsUnicode())));
 
         return ref;
     }
@@ -187,5 +192,15 @@ public class TdsDataSource implements DataSource, Referenceable, Serializable
     public void setInstance(String instance)
     {
         this.instance = instance;
+    }
+
+    public boolean getSendStringParametersAsUnicode()
+    {
+        return sendStringParametersAsUnicode;
+    }
+
+    public void setSendStringParametersAsUnicode(boolean sendStringParametersAsUnicode)
+    {
+        this.sendStringParametersAsUnicode = sendStringParametersAsUnicode;
     }
 }

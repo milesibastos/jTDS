@@ -40,12 +40,12 @@ import java.util.*;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version    $Id: Driver.java,v 1.2 2004-01-22 23:49:35 alin_sinpalean Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver
 {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.2 2004-01-22 23:49:35 alin_sinpalean Exp $";
 
     final static boolean debug = false;
     final static String oldSQLServerUrlPrefix = "jdbc:jtds://";
@@ -82,6 +82,7 @@ public class Driver implements java.sql.Driver
         else
             try
             {
+                info = processProperties(info);
                 return new TdsConnection(info);
             }
             catch (NumberFormatException e)
@@ -205,7 +206,32 @@ public class Driver implements java.sql.Driver
 
     private boolean isValidHostname(String host)
     {
-        return true;
+        return host != null;
+    }
+
+    /**
+     * Returns a <code>Properties</code> instance with the keys "uppercased".
+     * The idea is to make them easier to read by the inner classes.
+     *
+     * @param props the input <code>Properties</code>
+     * @return      the "same" <code>Properties</code> with uppercase keys
+     */
+    static Properties processProperties(Properties props)
+    {
+        Properties res = null;
+
+        if( props != null )
+        {
+            res = new Properties();
+
+            for( Enumeration e=props.keys(); e.hasMoreElements(); )
+            {
+                String key = e.nextElement().toString();
+                res.setProperty(key.toUpperCase(), props.getProperty(key));
+            }
+        }
+
+        return res;
     }
 
     // Register ourselves with the DriverManager

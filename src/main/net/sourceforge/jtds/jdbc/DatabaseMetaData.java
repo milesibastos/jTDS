@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.10 2004-01-15 23:00:51 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.11 2004-01-22 23:49:17 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.10 2004-01-15 23:00:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.11 2004-01-22 23:49:17 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -200,8 +200,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -317,8 +318,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_column_privileges ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_column_privileges ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_column_privileges ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -398,8 +400,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_columns ?, ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_columns ?, ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_columns ?, ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -520,14 +523,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( primaryCatalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                primaryCatalog = '[' + primaryCatalog + ']';
-            query = "exec "+primaryCatalog+"..sp_fkeys ?, ?, ?, ?, ?, ?";
+                query = "exec ["+primaryCatalog+"]..sp_fkeys ?, ?, ?, ?, ?, ?";
+            else
+                query = "exec "+primaryCatalog+"..sp_fkeys ?, ?, ?, ?, ?, ?";
         }
         else if( foreignCatalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                foreignCatalog = '[' + foreignCatalog + ']';
-            query = "exec "+foreignCatalog+"..sp_fkeys ?, ?, ?, ?, ?, ?";
+                query = "exec ["+foreignCatalog+"]..sp_fkeys ?, ?, ?, ?, ?, ?";
+            else
+                query = "exec "+foreignCatalog+"..sp_fkeys ?, ?, ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -894,8 +899,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_statistics ?, ?, ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_statistics ?, ?, ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_statistics ?, ?, ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -1246,8 +1252,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_pkeys ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_pkeys ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_pkeys ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -1338,8 +1345,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_sproc_columns ?, ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_sproc_columns ?, ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_sproc_columns ?, ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -1407,8 +1415,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_stored_procedures ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_stored_procedures ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_stored_procedures ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -1452,7 +1461,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     {
         java.sql.Statement statement = connection.createStatement();
 
-        String sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE islogin=1";
+        String sql;
+        //
+        // MJH - isLogin column only in MSSQL >= 7.0
+        //
+        if( this.tds.getTdsVer() >= Tds.TDS70 )
+            sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE islogin=1";
+        else
+            sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE uid>0";
 
         return statement.executeQuery(sql);
     }
@@ -1576,8 +1592,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_table_privileges ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_table_privileges ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_table_privileges ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -1639,8 +1656,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_tables ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_tables ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_tables ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -1894,8 +1912,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
         try {
             s = connection.createStatement();
-            // XXX Need to check this for Sybase
-            rs = s.executeQuery( "select system_user" );
+
+            // MJH Sybase does not support system_user
+            if( tds.getServerType() == Tds.SYBASE )
+                rs = s.executeQuery("select suser_name()");
+            else
+                rs = s.executeQuery("select system_user");
 
             if ( !rs.next() ) {
                 throw new SQLException( "Couldn't determine user name" );
@@ -1952,8 +1974,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         if( catalog != null )
         {
             if( tds.getTdsVer() == Tds.TDS70 )
-                catalog = '[' + catalog + ']';
-            query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+                query = "exec ["+catalog+"]..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
+            else
+                query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?, ?";
         }
 
         CallableStatement s = connection.prepareCall(query);
@@ -2871,11 +2894,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     public boolean supportsTransactionIsolationLevel( int level )
              throws SQLException
     {
-        if( tds.getServerType() == Tds.SQLSERVER )
-            return true;
-        else
-            return level != Connection.TRANSACTION_REPEATABLE_READ &&
-                level != Connection.TRANSACTION_READ_UNCOMMITTED;
+        return true;
     }
 
     /**

@@ -36,7 +36,7 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.4 2002-10-22 09:50:10 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.5 2004-01-22 23:49:38 alin_sinpalean Exp $";
 
     String   input;
     private static final String ESCAPE_PREFIX_DATE = "d ";
@@ -294,6 +294,8 @@ abstract public class EscapeProcessor
             result = getTimestamp(str);
         else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_OUTER_JOIN) )
             result = str.substring(ESCAPE_PREFIX_OUTER_JOIN.length()).trim();
+        else if( startsWithIgnoreCase(str, ESCAPE_PREFIX_ESCAPE_CHAR) )
+            result = getEscape(str);
         else
             throw new SQLException("Unrecognized escape sequence: " + escapeSequence);
 
@@ -339,45 +341,55 @@ abstract public class EscapeProcessor
         return result;
     }
 
-    public String nativeString() throws SQLException
+    /**
+     * Returns ANSI ESCAPE sequence with the specified escape character
+     */
+    public String getEscape(String str) throws SQLException
     {
-        return nativeString(input, '\\');
+        String tmpStr = str.substring(ESCAPE_PREFIX_ESCAPE_CHAR.length()).trim();
+
+        if( tmpStr.length()!=3 ||
+            tmpStr.charAt(0)!='\'' ||
+            tmpStr.charAt(2)!='\'' )
+            throw new SQLException("Malformed escape: " + str);
+
+        // If the escape character is a single quote then it must be escaped using another
+        // single quote
+        if( tmpStr.charAt(1) == '\'' )
+            tmpStr = "''''";
+
+        return "ESCAPE " + tmpStr;
     }
 
-    private String nativeString(String sql, char escapeCharacter) throws SQLException
+    public String nativeString() throws SQLException
     {
-        StringBuffer result = new StringBuffer(sql.length());
-
-        String escape = "";
-        int    i;
+        StringBuffer result = new StringBuffer(input.length());
+        StringBuffer escape = null;
 
         // Simple finite state machine.  Bonehead, but it works.
         final int   normal                        = 0;
-
         final int   inString                      = 1;
-        final int   inStringWithBackquote         = 2;
-
-        final int   inEscape                      = 3;
-        final int   inEscapeInString              = 4;
-        final int   inEscapeInStringWithBackquote = 5;
+        final int   inEscape                      = 2;
 
         int         state = normal;
-        char        ch;
 
-        int escapeStartedAt = -1;
-        i = 0;
-        while( i < sql.length() )
+        for (int i = 0; i < input.length(); i++ )
         {
-            ch = sql.charAt(i);
+            char ch = input.charAt(i);
+
             switch( state )
             {
                 case normal:
                 {
                     if( ch == '{' )
                     {
-                        escapeStartedAt = i;
                         state = inEscape;
-                        escape = "";
+
+                        if (escape == null) {
+                            escape = new StringBuffer();
+                        } else {
+                            escape.delete(0, escape.length());
+                        }
                     }
                     else
                     {
@@ -388,29 +400,15 @@ abstract public class EscapeProcessor
                     break;
                 }
                 case inString:
-                case inStringWithBackquote:
                 {
-                    if( (i+1)<sql.length() && ch==escapeCharacter &&
-                        (sql.charAt(i+1)=='_' || sql.charAt(i+1)=='%') )
-                    {
-                        i++;
-                        ch = sql.charAt(i);
-                        result.append('\\');
-                        result.append(ch);
-                    }
-                    else
-                    {
-                        result.append(ch);
-                        if( state == inStringWithBackquote )
-                        {
-                            state = inString;
-                        }
-                        else
-                        {
-                            if( ch == '\\' ) state = inStringWithBackquote;
-                            if( ch == '\'' ) state = normal;
-                        }
-                    }
+                    result.append(ch);
+
+                    // NOTE: This works even if a single quote is being used as an escape
+                    // character since the next single quote found will force the state
+                    // to be == to inString again.
+                    if( ch == '\'')
+                        state = normal;
+
                     break;
                 }
                 case inEscape:
@@ -418,71 +416,18 @@ abstract public class EscapeProcessor
                     if( ch == '}' )
                     {
                         // XXX Is it always okay to trim leading and trailing blanks?
-                        escape = escape.trim();
-
-                        // At this point there are a couple of things to
-                        // consider.  First, if the escape is of the form
-                        // "{escape 'c'} but it is not at the end of the SQL
-                        // we consider that a malformed SQL string.  If it
-                        // is the "{escape 'c'}" clause and it is at the end
-                        // of the string then we have to go through and
-                        // reparse this whole thing again, this time with an
-                        // escape character.  Any other escape is handled in
-                        // the expandEscape method()
-
-                        if( startsWithIgnoreCase(escape, ESCAPE_PREFIX_ESCAPE_CHAR) )
-                        {
-                            char c;
-
-                            // make sure it is the last thing in the sql
-                            if( i+1 != sql.length() )
-                                throw new SQLException("Malformed statement. Escape clause must " +
-                                    "be at the end of the query.");
-
-                            /** @todo Avoid reparsing the query with the escape character */
-                            // parse the sql again, this time without the ending string but with the
-                            // escape character set
-
-                            c = findEscapeCharacter(escape);
-
-                            result.delete(0,result.length());
-                            result.append(nativeString(sql.substring(0, escapeStartedAt), c));
-                            state = normal;
-                        }
-                        else
-                        {
-                            state = normal;
-                            result.append(expandEscape(escape));
-                            escapeStartedAt = -1;
-                        }
+                        result.append(expandEscape(escape.toString().trim()));
+                        state = normal;
                     }
                     else
                     {
-                        escape = escape + ch;
-                        if( ch == '\'' ) state = inEscapeInString;
-                    }
-                    break;
-                }
-                case inEscapeInString:
-                case inEscapeInStringWithBackquote:
-                {
-                    escape = escape + ch;
-
-                    if( state == inEscapeInStringWithBackquote )
-                        state = inEscapeInString;
-                    else
-                    {
-                        // SAfe This backslash in escape string is wrong. Someone might want to use backslash as escape
-                        //      character. Then it would look like: {escape '\'} <- no backslash escaping.
-//                        if( ch == '\\' ) state = inEscapeInStringWithBackquote;
-                        if( ch == '\'' ) state = inEscape;
+                        escape.append(ch);
                     }
                     break;
                 }
                 default:
                     throw new SQLException("Internal error.  Unknown state in FSM");
             }
-            i++;
         }
 
         if( state!=normal && state!=inString )
@@ -491,20 +436,6 @@ abstract public class EscapeProcessor
         return result.toString();
     } // nativeString()
 
-    static char findEscapeCharacter(String escape)
-        throws SQLException
-    {
-        String str = escape.trim();
-
-        if( !str.substring(0, 6).equalsIgnoreCase("escape") )
-            throw new SQLException("Internal Error");
-
-        str = str.substring(6).trim();
-        if( str.length()!=3 || str.charAt(0)!='\'' || str.charAt(2)!='\'' )
-            throw new SQLException("Malformed escape clause: |" + escape + "|");
-
-        return str.charAt(1);
-    }
 
     public static boolean startsWithIgnoreCase(String s, String prefix)
     {

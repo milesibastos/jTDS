@@ -31,6 +31,8 @@ public class TdsObjectFactory implements ObjectFactory
                 .getContent()));
             ds.setDomain((String)ref.get("domain").getContent());
             ds.setInstance((String)ref.get("instance").getContent());
+            ds.setSendStringParametersAsUnicode(
+                "true".equals(ref.get("sendStringParametersAsUnicode").getContent()));
 
             return ds;
         }

@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.17 2004-01-15 23:00:52 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.18 2004-01-22 23:49:48 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.17 2004-01-15 23:00:52 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.18 2004-01-22 23:49:48 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -167,6 +167,12 @@ public class Tds implements TdsDefinitions
      * The context of the result set currently being parsed.
      */
     private Context currentContext;
+
+    /**
+     * If set character parameters are sent as Unicode (NTEXT, NVARCHAR),
+     * otherwise they are sent using the default encoding.
+     */
+    private boolean useUnicode;
 
     public Tds(
             TdsConnection connection_,
@@ -187,6 +193,7 @@ public class Tds implements TdsDefinitions
         serverName = props_.getProperty(PROP_SERVERNAME, host);
         progName = props_.getProperty(PROP_PROGNAME, "jTDS");
         String verString = props_.getProperty(PROP_TDS, "7.0");
+        useUnicode = "true".equalsIgnoreCase(props_.getProperty(PROP_USEUNICODE, "true"));
         procedureCache = new HashMap(); // new Vector();   // XXX as
         proceduresOfTra = new ArrayList();
 
@@ -4443,53 +4450,31 @@ public class Tds implements TdsDefinitions
 
     private String sqlStatementToSetTransactionIsolationLevel() throws SQLException
     {
-        StringBuffer sql = new StringBuffer(48);
+        StringBuffer sql = new StringBuffer(64);
         sql.append("set transaction isolation level ");
 
-        if (serverType == Tds.SYBASE)
-            switch( transactionIsolationLevel )
-            {
-                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                    throw new SQLException("Bad transaction level");
+        switch (transactionIsolationLevel)
+        {
+            case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
+                sql.append("read uncommitted");
+                break;
 
-                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                    sql.append('1');
-                    break;
+            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+                sql.append("read committed");
+                break;
 
-                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                    throw new SQLException("Bad transaction level");
+            case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
+                sql.append("repeatable read");
+                break;
 
-                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                    sql.append('3');
-                    break;
+            case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+                sql.append("serializable");
+                break;
 
-                case java.sql.Connection.TRANSACTION_NONE:
-                default:
-                    throw new SQLException("Bad transaction level");
-            }
-        else
-            switch (transactionIsolationLevel)
-            {
-                case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                    sql.append("read uncommitted");
-                    break;
-
-                case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                    sql.append("read committed");
-                    break;
-
-                case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                    sql.append("repeatable read");
-                    break;
-
-                case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                    sql.append("serializable");
-                    break;
-
-                case java.sql.Connection.TRANSACTION_NONE:
-                default:
-                    throw new SQLException("Bad transaction level");
-            }
+            case java.sql.Connection.TRANSACTION_NONE:
+            default:
+                throw new SQLException("Bad transaction level");
+        }
 
         return sql.toString();
     }
@@ -4732,5 +4717,10 @@ public class Tds implements TdsDefinitions
             if( !connection.getAutoCommit() )
                 proceduresOfTra.add( procedure );
         }
+    }
+
+    public boolean useUnicode()
+    {
+        return useUnicode;
     }
 }

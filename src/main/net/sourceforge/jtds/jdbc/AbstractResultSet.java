@@ -16,11 +16,11 @@ import java.util.GregorianCalendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.5 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.6 2004-01-22 23:49:07 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet
 {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.5 2003-12-22 00:33:06 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.6 2004-01-22 23:49:07 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
 
@@ -373,12 +373,22 @@ public abstract class AbstractResultSet implements ResultSet
 
     public Blob getBlob(int i) throws SQLException
     {
-        throw new java.lang.UnsupportedOperationException("Not Implemented");
+        byte[] value = getBytes(i);
+
+        if( value == null )
+            return null;
+        else
+            return new BlobImpl(value);
     }
 
     public Clob getClob(int i) throws SQLException
     {
-        throw new java.lang.UnsupportedOperationException("Not Implemented");
+        String value = getString(i);
+
+        if( value == null )
+            return null;
+        else
+            return new ClobImpl(value);
     }
 
     public Array getArray(int i) throws SQLException

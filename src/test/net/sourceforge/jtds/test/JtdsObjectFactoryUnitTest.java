@@ -14,7 +14,7 @@ import java.util.Properties;
  * Unit tests for the {@link JtdsObjectFactory} class.
  * 
  * @author David D. Kilzer
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.1 2004-08-16 18:43:05 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.2 2004-08-28 19:02:32 bheineman Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
 
@@ -112,12 +112,8 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
                                                                             "get" + ucFirst(fieldName),
                                                                             new Class[]{}, new Object[]{}));
                                 assertEquals(message, expected, actual);
-                            }
-                            catch (NamingException e) {
+                            } catch (Exception e) {
                                 throw new RuntimeException(e.getMessage());
-                            }
-                            catch (Exception e) {
-                                throw new RuntimeException(e);
                             }
                         }
                     }

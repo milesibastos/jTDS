@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.39 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.40 2005-04-04 20:55:30 ddkilzer Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -734,12 +734,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
 
         if (x != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = x.getTime();
-
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
-            x = new java.sql.Date(newTime);
+            x = new java.sql.Date(adjustTimeByCalendar(x.getTime(), cal));
         }
 
         setDate(parameterIndex, x);
@@ -747,13 +742,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setTime(int parameterIndex, Time x, Calendar cal)
         throws SQLException {
-        if (x != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = x.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
-            x = new java.sql.Time(newTime);
+        if (x != null && cal != null) {
+            x = new java.sql.Time(adjustTimeByCalendar(x.getTime(), cal));
         }
 
         setTime(parameterIndex, x);
@@ -761,16 +752,19 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal)
         throws SQLException {
-        if (x != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = x.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
-            x = new java.sql.Timestamp(newTime);
+        if (x != null && cal != null) {
+            x = new java.sql.Timestamp(adjustTimeByCalendar(x.getTime(), cal));
         }
 
         setTimestamp(parameterIndex, x);
+    }
+
+    private long adjustTimeByCalendar(long newTime, Calendar cal) {
+        TimeZone timeZone = TimeZone.getDefault();
+        newTime -= timeZone.getRawOffset();
+        newTime += cal.getTimeZone().getRawOffset();
+        return newTime;
     }
 
     public int executeUpdate(String sql) throws SQLException {

@@ -1,6 +1,12 @@
 Changes from jTDS 1.0.2
 =======================
 
+04/04/2005 - David Kilzer
+ o Refactored duplicate code in JtdsPreparedStatement.setDate(int, Date, Calendar),
+   setTime(int, Time, Calendar) and setTimestamp(int, Timestamp, Calendar) into
+   adjustTimeByCalendar(long, Calendar) method in preparation to fix [1176221]
+   JtdsPreparedStatement setTime setTimestamp Daylight DST Bug.
+
 04/04/2005 - Alin Sinpalean
  o Optimized buffer allocation in RequestStream/ResponseStream.
  o Moved the Statement.getMoreResults(Statement.KEEP_CURRENT_RESULT) test to a

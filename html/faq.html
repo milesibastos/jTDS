@@ -545,17 +545,9 @@
         using it once and then closing it, your statement will be compiled only
         once for each <code>Connection</code>, no matter how many times you
         call that method.</p>
-      <p>However, if the <code>PreparedStatement</code>s you use are not
-        parameterized (i.e. they look like <code>"SELECT x FROM y WHERE z&gt;" +
-        min + " AND z&lt;" + max</code> instead of <code>"SELECT x from y WHERE
-        z&gt;? AND z&lt;?"</code>) you will cause jTDS to cache large numbers of
-        <code>PreparedStatement</code>s (which will probably never be reused),
-        leading to memory leaks.</p>
-      <p>We have decided to address this issue and implement a dynamic cache of
-        prepared procedures. The number of statements that are kept open
-        simultaneously can be controlled with the <code>maxStatements</code>
-        parameter; see the <a href="#urlFormat">jTDS URL format</a> for more
-        information.</p>
+      <p>The number of statements that are kept open simultaneously can be
+        controlled with the <code>maxStatements</code> parameter; see the
+        <a href="#urlFormat">jTDS URL format</a> for more information.</p>
       <p>Future versions of jTDS will allow the type of cache (LRU, FIFO, etc)
         to be selected.</p>
       <p><a href="#">^ top ^</a></p>
@@ -607,11 +599,11 @@
       <p class="title">Technical support</p>
       <p class="question"><a name="techSupport"></a>Is there any commercial
         technical support available for jTDS?</p>
-      <p>We're currently looking into offering organized technical support for
-        jTDS and it will definitely be available before the next major release.
-        Until then you can get technical support from individual developers of
-        jTDS. Just send an email request and we'll be happy to provide you with
-        our tech support terms and conditions and fees.</p>
+      <p>We are currently looking into creating an organization that will offer
+        technical support for jTDS. In the meantime you can get official
+        technical support from individual developers of jTDS. Contact any of
+        the developers and we'll be happy to provide you with our tech support
+        terms and conditions as well as our fees.</p>
       <p>As for where the technical support money will go, part of them will be
         retained by the developer and part of them will go back into jTDS.
         Currently the aim is to raise US $2000, to pay for JDBC certification.

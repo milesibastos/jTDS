@@ -2,6 +2,9 @@ Changes from jTDS 0.9
 =========================
 
 12/07/2004 - Alin Sinpalean
+ o Updated the build files to create a binary distribution package containing
+   the readme, license, html documentation, XA DLL and SQL as well as the jar,
+   instead of the plain jar as it was before.
  o Updated README and README.XA.
  o Corrected bug [1080659] ParamInfo throws NullPointerException.
  o Corrected loading of Charsets.properties under a J2EE environment.

@@ -84,12 +84,11 @@
 
   <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}"/>
-
-    <!-- Runtime jar only -->
+    <!-- Runtime jar -->
     <jar basedir="${build}/classes"
          excludes="net/sourceforge/jtds/test/*.class"
          includes="**/*"
-         jarfile="${dist}/${ant.project.name}-${version}.jar">
+         jarfile="${build}/${ant.project.name}-${version}.jar">
         <manifest>
             <attribute name="Implementation-Title" value="jTDS JDBC Driver"/>
             <attribute name="Implementation-Version" value="${version}"/>
@@ -100,16 +99,29 @@
         </manifest>
     </jar>
 
-    <!-- Full dist -->
+    <!-- Source package -->
     <copy todir="${dist}/tmp/doc">
       <fileset dir="${build}/doc" includes="**/*"/>
     </copy>
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,CHANGELOG,LICENSE,*.bat,*.xml,jtds.jpx,*.library,src/**/*,lib/**/*,conf/**/*"/>
+      <fileset dir="." includes="README,README.XA,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
+    <delete dir="${dist}/tmp"/>
 
+    <!-- Binary package -->
+    <mkdir dir="${dist}/tmp"/>
+    <copy todir="${dist}/tmp">
+      <fileset dir="." includes="README,README.XA,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
+      <fileset dir="${build}" includes="*.jar"/>
+    </copy>
+    <mkdir dir="${dist}/tmp/XA"/>
+    <copy todir="${dist}/tmp/XA">
+      <fileset dir="lib" includes="*.dll"/>
+      <fileset dir="src/XA" includes="*.sql"/>
+    </copy>
+    <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-dist.zip"/>
     <delete dir="${dist}/tmp"/>
   </target>
 

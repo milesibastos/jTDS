@@ -35,8 +35,8 @@ Status
 
 Production, Beta.
 
-Stable for concurrent usage (Connections, Statements and ResultSets are
-completely multithread-safe). Full support is provided for forward-only and
+Stable for concurrent usage (Connections are multithread-safe, Statements are
+completely independent). Full support is provided for forward-only and
 scrollable/updateable ResultSets, PreparedStatements, and CallableStatements.
 
 A DataSource, a ConnectionPoolDataSource and an experimental XADataSource

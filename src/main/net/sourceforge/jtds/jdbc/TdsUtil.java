@@ -33,7 +33,7 @@
 package net.sourceforge.jtds.jdbc;
 
 public class TdsUtil {
-    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.2 2004-02-26 19:00:51 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.3 2004-04-02 18:37:22 bheineman Exp $";
 
     private static char hex[] =
             {
@@ -69,6 +69,8 @@ public class TdsUtil {
             return "VARCHAR";
         case java.sql.Types.LONGVARCHAR:
             return "LONGVARCHAR";
+        case java.sql.Types.CLOB:
+            return "CLOB";
         case java.sql.Types.DATE:
             return "DATE";
         case java.sql.Types.TIME:
@@ -81,6 +83,8 @@ public class TdsUtil {
             return "VARBINARY";
         case java.sql.Types.LONGVARBINARY:
             return "LONGVARBINARY";
+        case java.sql.Types.BLOB:
+            return "BLOB";
         case java.sql.Types.NULL:
             return "NULL";
         case java.sql.Types.OTHER:

@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.11 2004-11-29 06:43:08 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.12 2004-12-20 15:51:17 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -330,24 +330,6 @@ public class ResponseStream {
         }
 
         return tmp;
-    }
-
-    /**
-     * Set the read timeout on the underlying shared socket.
-     *
-     * @param timeout The timeout value in milliseconds.
-     */
-    void setTimeout(int timeout) {
-        socket.setSoTimeout(streamId, timeout);
-    }
-
-    /**
-     * Retrieve the read timeout value from the underlying shared socket.
-     *
-     * @return The result as an <code>int</code>.
-     */
-    int getTimeOut() {
-        return socket.getSoTimeout(streamId);
     }
 
     /**

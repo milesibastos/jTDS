@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.23 2004-12-14 17:24:25 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.24 2004-12-20 15:51:17 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -65,9 +65,10 @@ public class JtdsStatement implements java.sql.Statement {
     static final int CLOSE_CURRENT_RESULT = 1;
     static final int KEEP_CURRENT_RESULT = 2;
     static final int CLOSE_ALL_RESULTS = 3;
-    static final int EXECUTE_FAILED = -3;
     static final int BOOLEAN = 16;
     static final int DATALINK = 70;
+    static final Integer SUCCESS_NO_INFO = new Integer(-2);
+    static final Integer EXECUTE_FAILED = new Integer(-3);
 
     /** The connection owning this statement object. */
     protected ConnectionJDBC2 connection;
@@ -111,7 +112,43 @@ public class JtdsStatement implements java.sql.Statement {
      */
     JtdsStatement(ConnectionJDBC2 connection,
                   int resultSetType,
-                  int resultSetConcurrency) {
+                  int resultSetConcurrency) throws SQLException {
+        //
+        // This is a good point to do common validation of the result set type
+        //
+        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
+                && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE
+                && resultSetType != ResultSet.TYPE_SCROLL_SENSITIVE) {
+            String method;
+            if (this instanceof JtdsCallableStatement) {
+                method = "prepareCall";
+            } else if (this instanceof JtdsPreparedStatement) {
+                method = "prepareStatement";
+            } else {
+                method = "createStatement";
+            }
+            throw new SQLException(
+                       Messages.get("error.generic.badparam", "TYPE", method),
+                                   "HY092");
+        }
+        //
+        // ditto for the result set concurrency
+        //
+        if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
+                && resultSetConcurrency != ResultSet.CONCUR_UPDATABLE) {
+                String method;
+                if (this instanceof JtdsCallableStatement) {
+                    method = "prepareCall";
+                } else if (this instanceof JtdsPreparedStatement) {
+                    method = "prepareStatement";
+                } else {
+                    method = "createStatement";
+                }
+                throw new SQLException(
+                           Messages.get("error.generic.badparam", "CONCURRENCY", method),
+                                       "HY092");
+        }
+
         this.connection = connection;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
@@ -197,10 +234,16 @@ public class JtdsStatement implements java.sql.Statement {
     }
 
     /**
-     * This method should be over-ridden by any sub-classes that place values other than
-     * Strings into the batchValues list to handle execution properly.
+     * This method should be over-ridden by any sub-classes that place values
+     * other than <code>String</code>s into the <code>batchValues</code> list
+     * to handle execution properly.
+     *
+     * @param value SQL <code>String</code> or list of parameters to execute
+     * @param last  <code>true</code> if this is the last query/parameter list
+     *              in the batch
      */
-    protected int executeBatchOther(Object value) throws SQLException {
+    protected void executeBatchOther(Object value, boolean last)
+            throws SQLException {
         throw new SQLException(
                 Messages.get("error.statement.badbatch",
                         value.toString()), "HYC00");
@@ -548,6 +591,49 @@ public class JtdsStatement implements java.sql.Statement {
         return getMoreResults(CLOSE_CURRENT_RESULT);
     }
 
+    public synchronized int[] executeBatch()
+            throws SQLException, BatchUpdateException {
+        checkOpen();
+
+        if (batchValues == null || batchValues.size() == 0) {
+            return new int[0];
+        }
+
+        int size = batchValues.size();
+
+        try {
+            for (int i = 0; i < size;) {
+                Object value = batchValues.get(i);
+                ++i;
+
+                if (value instanceof String) {
+                    tds.executeSQL((String)value, null, null, true, 0, -1,
+                            i == size);
+                } else {
+                    executeBatchOther(value, i == size);
+                }
+            }
+
+            // Will throw a BatchUpdateException with the partial update counts
+            // if an error occurs and consume the whole response
+            return tds.getBatchCounts();
+        } catch (BatchUpdateException ex) {
+            // If it's a BatchUpdateException let it go
+            throw ex;
+        } catch (SQLException ex) {
+            // An SQLException can only occur while sending the batch
+            // (getBatchCounts() doesn't throw SQLExceptions), so we have to
+            // end the batch and return the partial results
+            // FIXME What should we send here to flush out the batch?
+            // Come to think of it, is there any circumstance under which this
+            // could actually happen without the connection getting closed?
+            throw new BatchUpdateException(ex.getMessage(), ex.getSQLState(),
+                    ex.getErrorCode(), tds.getBatchCounts());
+        } finally {
+            clearBatch();
+        }
+    }
+/*
     public synchronized int[] executeBatch() throws SQLException {
         checkOpen();
 
@@ -582,7 +668,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         return updateCounts;
     }
-
+*/
     public void setFetchDirection(int direction) throws SQLException {
         checkOpen();
         switch (direction) {

@@ -51,7 +51,7 @@ public class AsTest extends DatabaseTestCase {
 
         CallableStatement cstmt = con.prepareCall("#spTestExec");
         assertFalse(cstmt.execute());
-        assertEquals(0, cstmt.getUpdateCount());
+        assertEquals(1, cstmt.getUpdateCount());
 
         // The JDBC-ODBC driver does not return update counts from stored
         // procedures so we won't, either.
@@ -59,13 +59,6 @@ public class AsTest extends DatabaseTestCase {
         // SAfe Yes, we will. It seems like that's how it should work. The idea
         //      however is to only return valid update counts (e.g. not from
         //      SET, EXEC or such).
-//        assertTrue(cstmt.getUpdateCount() == 0);  // set
-//        assertTrue(!cstmt.getMoreResults());
-        assertTrue(cstmt.getUpdateCount() == 0);  // create
-        assertTrue(!cstmt.getMoreResults());
-//        assertTrue(cstmt.getUpdateCount() == 0);  // execute
-//        assertTrue(!cstmt.getMoreResults());
-        assertTrue(cstmt.getUpdateCount() == 1);  // insert
         assertTrue(cstmt.getMoreResults());
 
         boolean passed = false;
@@ -149,7 +142,6 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertTrue(rs.getString(1).equals("b"));
         assertTrue(!rs.next());
-        assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == 0);  // create
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == 1);  // insert
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == 1);  // insert
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == 1);  // insert
@@ -200,7 +192,6 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertTrue(rs.getString(1).equals("b"));
         assertTrue(!rs.next());
-        assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == 0);
         assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == 1);
         assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == 1);
         assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == 1);
@@ -212,7 +203,6 @@ public class AsTest extends DatabaseTestCase {
         rs = stmt.getResultSet();
         assertTrue(rs.next());
         assertTrue(!rs.next());
-        assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == 0);   // drop
         assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
 
         assertTrue(stmt.execute(sqlnocount1));    // set
@@ -225,8 +215,6 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertTrue(rs.getString(1).equals("b"));
         assertTrue(!rs.next());
-        assertTrue(!stmt.getMoreResults());    // create table
-        assertEquals(0, stmt.getUpdateCount());
         assertTrue(stmt.getMoreResults());    // select
         rs = stmt.getResultSet();
         assertTrue(rs.next());
@@ -235,8 +223,6 @@ public class AsTest extends DatabaseTestCase {
         rs = stmt.getResultSet();
         assertTrue(rs.next());
         assertTrue(!rs.next());
-        assertTrue(!stmt.getMoreResults());    // drop table
-        assertEquals(0, stmt.getUpdateCount());
         assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
         stmt.close();
     }

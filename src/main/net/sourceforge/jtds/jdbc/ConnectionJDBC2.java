@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.58 2004-12-17 14:33:35 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.59 2004-12-20 15:51:17 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -248,6 +248,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private Object xid;
     /** True if driver should emulate distributed transactions. */
     private boolean xaEmulation = true;
+    /** Mutual exclusion lock to control access to connection. */
+    private Semaphore mutex = new Semaphore(1);
 
     /**
      * Default constructor.
@@ -373,7 +375,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         } catch (SQLException e) {
             if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
                 throw new SQLException(
-                        Messages.get("error.connection.timeout"), "08S01");
+                        Messages.get("error.connection.timeout"), "HYT01");
             }
 
             throw e;
@@ -1363,6 +1365,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     boolean isXaEmulation() {
         return xaEmulation;
+    }
+
+    /**
+     * Retrieve the connection mutex.
+     *
+     * @return the mutex object as a <code>Semaphore</code>
+     */
+    Semaphore getMutex() {
+        return this.mutex;
     }
 
     //

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.60 2004-12-19 17:34:54 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.61 2004-12-20 15:51:17 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -151,6 +151,46 @@ public class TdsCore {
         /** Table name. */
         String name;
     }
+
+    /**
+     * Simple timer class used to implement query timeouts.
+     * <p>When the timer expires a cancel packet is sent causing
+     * the server to abort the request.
+     */
+    private static class QueryTimer extends Thread {
+        private int timeout;
+        private TdsCore tds;
+        private boolean exitNow;
+        private boolean cancelled;
+
+        QueryTimer(TdsCore tds, int timeout) {
+            this.timeout = timeout;
+            this.tds     = tds;
+        }
+
+        public void run() {
+            while (!exitNow) {
+                try {
+                    sleep(timeout * 1000);
+                    cancelled = true;
+                    tds.cancel();
+                    return;
+                } catch (java.lang.InterruptedException e) {
+                    // nop
+                }
+            }
+        }
+
+        void stopTimer() {
+            exitNow = true;
+            this.interrupt();
+        }
+
+        boolean wasCancelled()
+        {
+            return this.cancelled;
+        }
+    }
     //
     // Package private constants
     //
@@ -192,6 +232,8 @@ public class TdsCore {
     private static final byte TDS5_WIDE_RESULT      = (byte) 97;   // 0x61
     /** TDS 5.0 Close token. */
     private static final byte TDS_CLOSE_TOKEN       = (byte) 113;  // 0x71
+    /** TDS DBLIB Offsets token. */
+    private static final byte TDS_OFFSETS_TOKEN     = (byte) 120;  // 0x78
     /** TDS Procedure call return status token. */
     private static final byte TDS_RETURNSTATUS_TOKEN= (byte) 121;  // 0x79
     /** TDS Procedure ID token. */
@@ -375,6 +417,10 @@ public class TdsCore {
     private boolean ntlmAuthSSO;
     /** Indicates that a fatal error has occured and the connection will close. */
     private boolean fatalError;
+    /** Mutual exclusion lock on connection. */
+    private Semaphore connectionLock;
+    /** Indicates processing a batch. */
+    private boolean inBatch;
 
     /**
      * Construct a TdsCore object.
@@ -766,7 +812,18 @@ public class TdsCore {
      * Send a cancel packet to the server.
      */
     void cancel() {
-        socket.cancel(out.getStreamId());
+        Semaphore mutex = null;
+        try {
+            mutex = connection.getMutex();
+            mutex.acquire();
+            socket.cancel(out.getStreamId());
+        } catch (InterruptedException e) {
+            mutex = null;
+        } finally {
+            if (mutex != null) {
+                mutex.release();
+            }
+        }
     }
 
     /**
@@ -807,100 +864,137 @@ public class TdsCore {
                                  int maxRows,
                                  boolean sendNow)
             throws SQLException {
-        checkOpen();
-        clearResponseQueue();
-        messages.exceptions = null;
-        // TODO Make sure this doesn't actually submit a query in the middle of buffering more requests
-        setRowCount(maxRows);
-        messages.clearWarnings();
-        this.returnStatus = null;
-        //
-        // Normalize the parameters argument to simplify later checks
-        //
-        if (parameters != null && parameters.length == 0) {
-            parameters = null;
-        }
-        this.parameters = parameters;
-        //
-        // Normalise the procName argument as well
-        //
-        if (procName != null && procName.length() == 0) {
-            procName = null;
-        }
-
-        if (parameters != null && parameters[0].isRetVal) {
-            returnParam = parameters[0];
-            nextParam = 0;
-        } else {
-            returnParam = null;
-            nextParam = -1;
-        }
-
-        if (parameters != null) {
-            if (procName == null && sql.startsWith("EXECUTE ")) {
-                //
-                // If this is a callable statement that could not be fully parsed
-                // into an RPC call convert to straight SQL now.
-                // An example of non RPC capable SQL is {?=call sp_example('literal', ?)}
-                //
-                for (int i = 0; i < parameters.length; i++){
-                    // Output parameters not allowed.
-                    if (!parameters[i].isRetVal && parameters[i].isOutput){
-                        throw new SQLException(Messages.get("error.prepare.nooutparam",
-                                Integer.toString(i + 1)), "07000");
-                    }
-                }
-                sql = Support.substituteParameters(sql, parameters, getTdsVersion());
-                parameters = null;
-            } else {
-                //
-                // Check all parameters are either output or have values set
-                //
-                for (int i = 0; i < parameters.length; i++){
-                    if (!parameters[i].isSet && !parameters[i].isOutput){
-                        throw new SQLException(Messages.get("error.prepare.paramnotset",
-                                Integer.toString(i + 1)), "07000");
-                    }
-                    parameters[i].clearOutValue();
-                    TdsData.getNativeType(connection, parameters[i]);
-                }
-            }
-        }
+        boolean sendFailed = true; // Used to ensure mutex is released.
 
         try {
-            switch (tdsVersion) {
-                case Driver.TDS42:
-                    executeSQL42(sql, procName, parameters, noMetaData);
-                    break;
-                case Driver.TDS50:
-                    executeSQL50(sql, procName, parameters);
-                    break;
-                case Driver.TDS70:
-                case Driver.TDS80:
-                case Driver.TDS81:
-                    executeSQL70(sql, procName, parameters, noMetaData);
-                    break;
-                default:
-                    throw new IllegalStateException("Unknown TDS version " + tdsVersion);
+            //
+            // Obtain a lock on the connection giving exclusive access
+            // to the network connection for this thread
+            //
+            if (connectionLock == null) {
+                connectionLock = connection.getMutex();
+                try {
+                    connectionLock.acquire();
+                } catch (InterruptedException e) {
+                    connectionLock = null;
+                    throw new IllegalStateException("Connection synchronization failed");
+                }
             }
-
+            checkOpen();
+            clearResponseQueue();
+            messages.exceptions = null;
             if (sendNow) {
-                out.flush();
-
-                endOfResponse = false;
-                endOfResults  = true;
-                wait(timeOut);
-            } else {
-                out.write((byte) DONE_END_OF_RESPONSE);
+                // Need to know we are sending a batch
+                inBatch = true;
             }
-        } catch (IOException ioe) {
-            connection.setClosed();
+            //
+            // Set the connection row count if required.
+            // Once set this will not be changed within a
+            // batch so execution of the set rows query will
+            // only occur once a the start of a batch.
+            // No other thread can send until this one has finished.
+            //
+            setRowCount(maxRows);
+            //
+            messages.clearWarnings();
+            this.returnStatus = null;
+            //
+            // Normalize the parameters argument to simplify later checks
+            //
+            if (parameters != null && parameters.length == 0) {
+                parameters = null;
+            }
+            this.parameters = parameters;
+            //
+            // Normalise the procName argument as well
+            //
+            if (procName != null && procName.length() == 0) {
+                procName = null;
+            }
 
-            throw Support.linkException(
-                new SQLException(
-                       Messages.get(
-                                "error.generic.ioerror", ioe.getMessage()),
-                                    "08S01"), ioe);
+            if (parameters != null && parameters[0].isRetVal) {
+                returnParam = parameters[0];
+                nextParam = 0;
+            } else {
+                returnParam = null;
+                nextParam = -1;
+            }
+
+            if (parameters != null) {
+                if (procName == null && sql.startsWith("EXECUTE ")) {
+                    //
+                    // If this is a callable statement that could not be fully parsed
+                    // into an RPC call convert to straight SQL now.
+                    // An example of non RPC capable SQL is {?=call sp_example('literal', ?)}
+                    //
+                    for (int i = 0; i < parameters.length; i++){
+                        // Output parameters not allowed.
+                        if (!parameters[i].isRetVal && parameters[i].isOutput){
+                            throw new SQLException(Messages.get("error.prepare.nooutparam",
+                                    Integer.toString(i + 1)), "07000");
+                        }
+                    }
+                    sql = Support.substituteParameters(sql, parameters, getTdsVersion());
+                    parameters = null;
+                } else {
+                    //
+                    // Check all parameters are either output or have values set
+                    //
+                    for (int i = 0; i < parameters.length; i++){
+                        if (!parameters[i].isSet && !parameters[i].isOutput){
+                            throw new SQLException(Messages.get("error.prepare.paramnotset",
+                                    Integer.toString(i + 1)), "07000");
+                        }
+                        parameters[i].clearOutValue();
+                        TdsData.getNativeType(connection, parameters[i]);
+                    }
+                }
+            }
+
+            try {
+                switch (tdsVersion) {
+                    case Driver.TDS42:
+                        executeSQL42(sql, procName, parameters, noMetaData, sendNow);
+                        break;
+                    case Driver.TDS50:
+                        executeSQL50(sql, procName, parameters);
+                        break;
+                    case Driver.TDS70:
+                    case Driver.TDS80:
+                    case Driver.TDS81:
+                        executeSQL70(sql, procName, parameters, noMetaData, sendNow);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown TDS version " + tdsVersion);
+                }
+
+                if (sendNow) {
+                    out.flush();
+                    connectionLock.release();
+                    connectionLock = null;
+                    sendFailed = false;
+                    endOfResponse = false;
+                    endOfResults  = true;
+                    wait(timeOut);
+                } else {
+                    sendFailed = false;
+                }
+            } catch (IOException ioe) {
+                connection.setClosed();
+
+                throw Support.linkException(
+                    new SQLException(
+                           Messages.get(
+                                    "error.generic.ioerror", ioe.getMessage()),
+                                        "08S01"), ioe);
+            }
+        } finally {
+            if ((sendNow || sendFailed) && connectionLock != null) {
+                connectionLock.release();
+                connectionLock = null;
+            }
+            // Clear the in batch flag
+            inBatch = false;
         }
     }
 
@@ -1212,7 +1306,15 @@ public class TdsCore {
      * @throws SQLException
      */
     synchronized byte[] enlistConnection(int type, byte[] oleTranID) throws SQLException {
+        Semaphore mutex = null;
         try {
+            try {
+                mutex = connection.getMutex();
+                mutex.acquire();
+            } catch (InterruptedException e) {
+                mutex = null;
+                throw new IllegalStateException("Connection synchronization failed");
+            }
             out.setPacketType(MSDTC_PKT);
             out.write((short)type);
             switch (type) {
@@ -1240,6 +1342,10 @@ public class TdsCore {
                                     "error.generic.ioerror", ioe.getMessage()),
                             "08S01"),
                     ioe);
+        } finally {
+            if (mutex != null) {
+                mutex.release();
+            }
         }
 
         byte[] tmAddress = null;
@@ -1255,6 +1361,100 @@ public class TdsCore {
         clearResponseQueue();
         messages.checkErrors();
         return tmAddress;
+    }
+
+    /**
+     * Obtain the counts from a batch of SQL updates.
+     * <p>
+     * If an error occurs Sybase will continue processing a batch whilst SQL
+     * Server will stop. This method returns the JDBC3
+     * <code>EXECUTE_FAILED</code> constant in the counts array when a
+     * statement fails with an error.
+     *
+     * @return the update counts as an <code>int[]</code>
+     */
+    int[] getBatchCounts() throws BatchUpdateException {
+        ArrayList counts = new ArrayList();
+        Integer lastCount = JtdsStatement.SUCCESS_NO_INFO;
+        BatchUpdateException batchEx = null;
+
+        try {
+            checkOpen();
+            while (!endOfResponse) {
+                nextToken();
+                if (currentToken.isResultSet()) {
+                    throw new SQLException(
+                            Messages.get(
+                                    "error.statement.batchnocount"),"07000");
+                }
+                //
+                // Analyse type of end token and try to extract correct
+                // update count when calling stored procs.
+                //
+                switch (currentToken.token) {
+                    case TDS_DONE_TOKEN:
+                        if ((currentToken.status & DONE_ERROR) != 0) {
+                            counts.add(JtdsStatement.EXECUTE_FAILED);
+                        } else {
+                            if (currentToken.isUpdateCount()) {
+                                counts.add(new Integer(currentToken.updateCount));
+                            } else {
+                                counts.add(lastCount);
+                            }
+                        }
+                        lastCount = JtdsStatement.SUCCESS_NO_INFO;
+                        break;
+                    case TDS_DONEINPROC_TOKEN:
+                        if ((currentToken.status & DONE_ERROR) != 0) {
+                            lastCount = JtdsStatement.EXECUTE_FAILED;
+                        } else
+                        if (currentToken.isUpdateCount()) {
+                            lastCount = new Integer(currentToken.updateCount);
+                        }
+                        break;
+                    case TDS_DONEPROC_TOKEN:
+                        if ((currentToken.status & DONE_ERROR) != 0) {
+                            counts.add(JtdsStatement.EXECUTE_FAILED);
+                        } else {
+                            counts.add(lastCount);
+                        }
+                        lastCount = JtdsStatement.SUCCESS_NO_INFO;
+                        break;
+                }
+            }
+            messages.checkErrors();
+        } catch (SQLException e) {
+            // A server error has been reported
+            // return a BatchUpdateException
+            // Create partial response count array
+            int results[] = new int[counts.size()];
+            for (int i = 0; i < results.length; i++) {
+                results[i] = ((Integer)counts.get(i)).intValue();
+            }
+            batchEx = new BatchUpdateException(e.getMessage(), e.getSQLState(),
+                    e.getErrorCode(), results);
+            throw batchEx;
+        } finally {
+            while (!endOfResponse) {
+                // Flush rest of response
+                try {
+                    nextToken();
+                } catch (SQLException ex) {
+                    // Chain any exceptions to the BatchUpdateException
+                    if (batchEx != null) {
+                        batchEx.setNextException(ex);
+                    }
+                }
+            }
+        }
+        //
+        // Batch completed OK return full count array
+        //
+        int results[] = new int[counts.size()];
+        for (int i = 0; i < results.length; i++) {
+            results[i] = ((Integer)counts.get(i)).intValue();
+        }
+        return results;
     }
 
 // ---------------------- Private Methods from here ---------------------
@@ -1809,6 +2009,9 @@ public class TdsCore {
                 case TDS_PROCID:
                     tdsProcIdToken();
                     break;
+                case TDS_OFFSETS_TOKEN:
+                    tdsOffsetsToken();
+                    break;
                 case TDS7_RESULT_TOKEN:
                     tds7ResultToken();
                     break;
@@ -2039,12 +2242,25 @@ public class TdsCore {
     }
 
     /**
-     * Process procedure ID token (function unknown).
-     *
-     * @throws IOException
+     * Process procedure ID token.
+     * <p>
+     * Used by DBLIB to obtain the object id of a stored procedure.
      */
     private void tdsProcIdToken() throws IOException {
         in.skip(8);
+    }
+
+    /**
+     * Process offsets token.
+     * <p>
+     * Used by DBLIB to return the offset of various keywords in a statement.
+     * This saves the client from having to parse a SQL statement. Enabled with
+     * <code>&quot;set offsets from on&quot;</code>.
+     */
+    private void tdsOffsetsToken() throws IOException {
+        /*int keyword =*/ in.read();
+        /*int unknown =*/ in.read();
+        /*int offset  =*/ in.readShort();
     }
 
     /**
@@ -2928,14 +3144,13 @@ public class TdsCore {
      *
      * @throws IOException
      */
-    private void tdsDoneToken()
-        throws IOException
-    {
+    private void tdsDoneToken() throws IOException {
         currentToken.status = (byte)in.read();
         in.skip(1);
         currentToken.operation = (byte)in.read();
         in.skip(1);
         currentToken.updateCount = in.readInt();
+
         if (!endOfResults) {
             // This will eliminate the select row count for sybase
             currentToken.status &= ~DONE_ROW_COUNT;
@@ -2943,6 +3158,10 @@ public class TdsCore {
         }
 
         if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
+            //
+            // There are no more results or pending cancel packets
+            // to process.
+            //
             endOfResponse = true;
 
             if (fatalError) {
@@ -2957,24 +3176,8 @@ public class TdsCore {
             // MS SQL Server provides additional information we
             // can use to return special row counts for DDL etc.
             //
-            switch (currentToken.operation) {
-                //
-                // These next four entries provide backwards
-                // compatibility with previous versions of jTDS
-                //
-                // TODO Remove these. They introduce incompatibilities with other drivers and are against the spec.
-                case (byte)0xC6: // CREATE
-                case (byte)0xC7: // DROP TABLE
-                case (byte)0xD8: // ALTER TABLE
-                case (byte)0xDF: // DROP PROC
-                    currentToken.status |= DONE_ROW_COUNT;
-                    break;
-                //
-                // Ignore row counts returned by SELECTs
-                //
-                case (byte)0XC1: // SELECT
-                    currentToken.status &= ~DONE_ROW_COUNT;
-                    break;
+            if (currentToken.operation == (byte) 0xC1) {
+                currentToken.status &= ~DONE_ROW_COUNT;
             }
         }
 
@@ -2997,8 +3200,9 @@ public class TdsCore {
     private void executeSQL42(String sql,
                               String procName,
                               ParamInfo[] parameters,
-                              boolean noMetaData)
-        throws IOException, SQLException {
+                              boolean noMetaData,
+                              boolean sendNow)
+            throws IOException, SQLException {
         if (procName != null) {
             // RPC call
             out.setPacketType(RPC_PKT);
@@ -3026,6 +3230,10 @@ public class TdsCore {
                                        parameters[i]);
                 }
             }
+            if (!sendNow) {
+                // Send end of packet byte to batch RPC
+                out.write((byte) DONE_END_OF_RESPONSE);
+            }
         } else if (sql.length() > 0) {
             if (parameters != null) {
                 sql = Support.substituteParameters(sql, parameters, tdsVersion);
@@ -3033,6 +3241,10 @@ public class TdsCore {
 
             out.setPacketType(QUERY_PKT);
             out.write(sql);
+            if (!sendNow) {
+                // Batch SQL statements
+                out.write("\r\n");
+            }
         }
     }
 
@@ -3212,7 +3424,8 @@ public class TdsCore {
     private void executeSQL70(String sql,
                               String procName,
                               ParamInfo[] parameters,
-                              boolean noMetaData)
+                              boolean noMetaData,
+                              boolean sendNow)
         throws IOException, SQLException {
         int prepareSql = connection.getPrepareSql();
 
@@ -3225,6 +3438,13 @@ public class TdsCore {
             // No it may be a complex select with no parameters but costly to
             // evaluate for each execution.
             prepareSql = UNPREPARED;
+        }
+
+        if (inBatch) {
+            // For batch execution with parameters
+            // we need to be consistant and use
+            // execute SQL
+            prepareSql = EXECUTE_SQL;
         }
 
         if (isPreparedProcedureName(procName)) {
@@ -3249,6 +3469,7 @@ public class TdsCore {
             procName = "sp_execute";
         } else if (procName == null) {
             if (prepareSql == PREPEXEC) {
+                // TODO: Make this option work with batch execution!
                 ParamInfo params[] = new ParamInfo[3 + parameters.length];
 
                 System.arraycopy(parameters, 0, params, 3, parameters.length);
@@ -3330,6 +3551,10 @@ public class TdsCore {
                             parameters[i]);
                 }
             }
+            if (!sendNow) {
+                // Append RPC packets
+                out.write((byte) DONE_END_OF_RESPONSE);
+            }
         } else if (sql.length() > 0) {
             if (parameters != null) {
                 sql = Support.substituteParameters(sql, parameters, tdsVersion);
@@ -3338,6 +3563,10 @@ public class TdsCore {
             // Simple query
             out.setPacketType(QUERY_PKT);
             out.write(sql);
+            if (!sendNow) {
+                // Append SQL packets
+                out.write("\r\n");
+            }
         }
     }
 
@@ -3372,19 +3601,27 @@ public class TdsCore {
      * Wait for the first byte of the server response.
      *
      * @param timeOut The time out period in seconds or 0.
-     * @throws IOException
      */
     private void wait(int timeOut) throws IOException, SQLException {
+        QueryTimer timer = null;
+
         try {
-            in.setTimeout(timeOut * 1000);
+            if (timeOut > 0) {
+                // Start a login timer
+                timer = new QueryTimer(this, timeOut);
+                timer.start();
+            }
             in.peek();
-        } catch (java.io.InterruptedIOException e) {
-            // Query timed out
-            endOfResponse = true;
-            throw new SQLException(
-                    Messages.get("error.generic.timeout"), "HYT00");
         } finally {
-            in.setTimeout(0);
+            if (timer != null) {
+                // Cancel QueryTimer
+                timer.stopTimer();
+                if (timer.wasCancelled()) {
+                    // Query timed out
+                    throw new SQLException(
+                            Messages.get("error.generic.timeout"), "HYT00");
+                }
+            }
         }
     }
 

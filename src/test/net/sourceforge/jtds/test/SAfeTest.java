@@ -114,8 +114,6 @@ public class SAfeTest extends DatabaseTestCase {
             "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
             "insert into ##SAfe0002 values (1, 'Line 1') "+
             "insert into ##SAfe0002 values (2, 'Line 2')"));
-        assertEquals(0, stmt.getUpdateCount());
-        assertTrue(!stmt.getMoreResults());
         assertEquals(1, stmt.getUpdateCount());
         assertTrue(!stmt.getMoreResults());
         assertEquals(1, stmt.getUpdateCount());

@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.32 2004-12-14 17:24:24 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.33 2004-12-20 15:51:17 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -198,9 +198,23 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     /**
-     * This method should be over-ridden by any sub-classes that place values other than
-     * Strings into the batchValues list to handle execution properly.
+     * Executes a <code>ParamInfo</code> array (list of parameters).
+     *
+     * @param value list of parameters to execute
+     * @param last  <code>true</code> if this is the last parameter list in the
+     *              batch
      */
+    protected void executeBatchOther(Object value, boolean last)
+            throws SQLException {
+        if (value instanceof ParamInfo[]) {
+            // procName will contain the procedure name for CallableStatements
+            // and null for PreparedStatements
+            tds.executeSQL(sql, procName, (ParamInfo[])value, false, 0, -1, last);
+        } else {
+            super.executeBatchOther(value, last);
+        }
+    }
+/*
     protected int executeBatchOther(Object value) throws SQLException {
         if (value instanceof ParamInfo[]) {
             ParamInfo[] saveParameters = parameters;
@@ -218,6 +232,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         return Integer.MIN_VALUE;
     }
+*/
 
     /**
      * Check the supplied index and return the selected parameter.
@@ -394,15 +409,22 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             batchValues = new ArrayList();
         }
 
-        batchValues.add(parameters);
+        if (parameters.length == 0) {
+            // This is likely to be an error. Batch execution
+            // of a prepared statement with no parameters means
+            // exactly the same SQL will be executed each time!
+            batchValues.add(sql);
+        } else {
+            batchValues.add(parameters);
 
-        ParamInfo tmp[] = new ParamInfo[parameters.length];
+            ParamInfo tmp[] = new ParamInfo[parameters.length];
 
-        for (int i = 0; i < parameters.length; i++) {
-            tmp[i] = (ParamInfo) parameters[i].clone();
+            for (int i = 0; i < parameters.length; ++i) {
+                tmp[i] = (ParamInfo) parameters[i].clone();
+            }
+
+            parameters = tmp;
         }
-
-        parameters = tmp;
     }
 
     public void clearParameters() throws SQLException {

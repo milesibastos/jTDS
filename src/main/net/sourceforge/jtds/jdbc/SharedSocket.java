@@ -43,11 +43,8 @@ import net.sourceforge.jtds.util.*;
  *    we can just rely on this code instead.
  * <li>A cancel can be issued by a caller only if the server is currently sending
  *    data for the caller otherwise the cancel is ignored.
- * <li>Query timeouts are implemented via socket timeout on the first byte of a packet.
- *    A cancel is issued in this case to terminate the reply and an exception issued
- *    to the caller but only after the input stream has be entirely read.
- * <li>Stray cancel packets on their own are filtered out so that the higher levels
- *    do not need to.
+ * <li>Cancel packets on their own are returned as extra records appended to the
+ *     previous packet so that the TdsCore module can process them.
  * </ol>
  * This version of the class will start to cache results to disk once a predetermined
  * maximum buffer memory threshold has been passed. Small result sets that will fit
@@ -55,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.20 2004-12-17 18:01:53 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.21 2004-12-20 15:51:17 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -65,44 +62,35 @@ class SharedSocket {
         /**
          * The stream ID of the stream objects owning this state.
          */
-        private int owner;
-        /**
-         * Query timeout value in msec or 0.
-         */
-        private int timeOut;
+        int owner;
         /**
          * Memory resident packet queue.
          */
-        private LinkedList pktQueue;
+        LinkedList pktQueue;
         /**
          * True to discard network data.
          */
-        private boolean flushInput;
+        boolean flushInput;
         /**
          * True if output is complete TDS packet.
          */
-        private boolean complete;
+        boolean complete;
         /**
          * File object for disk packet queue.
          */
-        private File queueFile;
+        File queueFile;
         /**
          * I/O Stream for disk packet queue.
          */
-        private RandomAccessFile diskQueue;
+        RandomAccessFile diskQueue;
         /**
          * Number of packets cached to disk.
          */
-        private int pktsOnDisk;
+        int pktsOnDisk;
         /**
          * Total of input packets in memory or disk.
          */
-        private int inputPkts;
-        /**
-         * Total of output packets in memory or disk.
-         */
-        private int outputPkts;
-
+        int inputPkts;
         /**
          * Constuct object to hold state information for each caller.
          * @param streamId the Response/Request stream id.
@@ -112,12 +100,10 @@ class SharedSocket {
             this.pktQueue = new LinkedList();
             this.flushInput = false;
             this.complete = false;
-            this.timeOut = 0;
             this.queueFile = null;
             this.diskQueue = null;
             this.pktsOnDisk = 0;
             this.inputPkts = 0;
-            this.outputPkts = 0;
         }
     }
 
@@ -145,10 +131,6 @@ class SharedSocket {
      * The Stream ID of the object that is expecting a response from the server.
      */
     private int responseOwner = -1;
-    /**
-     * The Stream ID of the object that is currently building a send packet.
-     */
-    private int currentSender = -1;
     /**
      * Buffer for packet header.
      */
@@ -374,30 +356,6 @@ class SharedSocket {
     }
 
     /**
-     * Set the Socket time out in milliseconds.
-     *
-     * @param streamId the <code>ResponseStream</code> id
-     * @param timeOut  the time out value in milliseconds
-     */
-    void setSoTimeout(int streamId, int timeOut) {
-        VirtualSocket vsock = lookup(streamId);
-
-        vsock.timeOut = timeOut;
-    }
-
-    /**
-     * Get the Socket time out value.
-     *
-     * @param streamId the <code>ResponseStream</code> id
-     * @return the <code>int</code> value of the timeout
-     */
-    int getSoTimeout(int streamId) {
-        VirtualSocket vsock = lookup(streamId);
-
-        return vsock.timeOut;
-    }
-
-    /**
      * Get the connected status of this socket.
      *
      * @return <code>true</code> if the underlying socket is connected
@@ -413,17 +371,33 @@ class SharedSocket {
      */
     void cancel(int streamId) {
         //
-        // Only send if response pending for the caller
+        // Only send if response pending for the caller.
+        // Caller must have aquired connection mutex first.
+        // NB. This method will not work with local named pipes
+        // as this thread will be blocked in the write until the
+        // reading thread has returned from the read.
         //
-        synchronized (socketTable) {
-            if (responseOwner != -1
-                && responseOwner == streamId
-				&& currentSender == -1) {
-                try {
-                    sendCancel(streamId);
-                } catch (IOException e) {
-                    // Ignore error as network is probably dead anyway
+        if (responseOwner == streamId) {
+            try {
+                //
+                // Send a cancel packet.
+                //
+                byte[] cancel = new byte[8];
+                cancel[0] = TdsCore.CANCEL_PKT;
+                cancel[1] = 1;
+                cancel[2] = 0;
+                cancel[3] = 8;
+                cancel[4] = 0;
+                cancel[5] = 0;
+                cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
+                cancel[7] = 0;
+                getOut().write(cancel, 0, 8);
+                getOut().flush();
+                if (Logger.isActive()) {
+                    Logger.logPacket(streamId, false, cancel);
                 }
+            } catch (IOException e) {
+                // Ignore error as network is probably dead anyway
             }
         }
     }
@@ -516,72 +490,48 @@ class SharedSocket {
             VirtualSocket vsock = lookup(streamId);
 
             while (vsock.inputPkts > 0) {
-                // There is unread data in the input buffer.
-                // This may indicate a problem in the higher layers
-                // of the driver but for now just clear the buffer.
+                //
+                // There is unread data in the input buffers.
+                // As we are sending another packet we can just discard it now.
+                //
                 if (Logger.isActive()) {
                     Logger.println("TdsSocket: Unread data in input packet queue");
                 }
-
                 dequeueInput(vsock);
             }
 
-            if (responseOwner == streamId) {
-                // This means that we are sending again while data from our
-                // previous response is still being read across the network.
-                // This may indicate an error in the driver. See above.
-                if (Logger.isActive()) {
-                    Logger.println("TdsSocket: Unread data on network");
-                }
+            if (responseOwner != -1) {
+                //
+                // Complex case there is another stream's data in the network pipe
+                // or we had our own incomplete request to discard first
+                // Read and store other stream's data or flush our own.
+                //
+                VirtualSocket other = (VirtualSocket)socketTable.get(responseOwner);
+                byte[] tmpBuf = null;
+                boolean ourData = (other.owner == streamId);
+                do {
+                    // Reuse the buffer if it's our data; we don't need it
+                    tmpBuf = readPacket(ourData ? tmpBuf : null);
 
-                // Tell the driver to discard the rest of the server packets
-                vsock.flushInput = true;
+                    if (!ourData) {
+                        // We need to save this input as it belongs to
+                        // Another thread.
+                        enqueueInput(other, tmpBuf);
+                    }   // Any of our input is discarded.
+
+                } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
+                responseOwner = -1;
             }
+            //
+            // At this point we know that we are able to send the first
+            // or subsequent packet of a new request.
+            //
+            getOut().write(buffer, 0, getPktLen(buffer, 2));
 
-            if (responseOwner != -1
-            	|| (currentSender != -1 && currentSender != streamId)) {
-                //
-                // This means that another virtual socket is building an
-                // output packet or reading input. We need to enqueue the
-                // data to send later.
-                //
-                enqueueOutput(vsock, buffer);
-                // Return a new buffer to the caller so that
-                // the cached data is not overwritten.
-                buffer = new byte[buffer.length];
-            } else {
-                //
-                // At this point we know that we are able to send the first
-                // or subsequent packet of a new request.
-                //
-                // First, send out any output that might have been queued
-                //
-                byte[] tmpBuf = dequeueOutput(vsock);
-
-                while (tmpBuf != null) {
-                    getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
-                    tmpBuf = dequeueOutput(vsock);
-                }
-
-                // Now we can safely send this packet too
-                getOut().write(buffer, 0, getPktLen(buffer, 2));
+            if (buffer[1] != 0) {
                 getOut().flush();
-
-                if (buffer[1] != 0) {
-                    // This is the response owner now
-                    responseOwner = streamId;
-
-                    if (currentSender != -1) {
-                        // This means the TDS Packet is complete
-                        currentSender = -1;
-                        // Notify all waiting senders
-                        socketTable.notifyAll();
-                    }
-                } else {
-                    // This is one of several buffers to make up the complete
-                    // TDS request
-                    currentSender = streamId;
-                }
+                // We are the response owner now
+                responseOwner = streamId;
             }
 
             return buffer;
@@ -608,123 +558,42 @@ class SharedSocket {
                 return dequeueInput(vsock);
             }
 
-            // Wait until the current sender finishes
-            while (currentSender != -1) {
-                try {
-                    socketTable.wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-
             //
-            // See if we need to:
-            //  1. Send a request
-            //  2. Read and save another callers request
-            //  3. Flush the end of our previous request and send a new one
+            // Nothing cached see if we are expecting network data
             //
-            if (responseOwner == -1 || responseOwner != streamId || vsock.flushInput) {
-                byte[] tmpBuf;
-
-                if (responseOwner != -1) {
-                    // Complex case there is another socket's data in the network pipe
-                    // or we had our own incomplete request to discard first
-                    // Read and store other socket's data or flush our own
-                    VirtualSocket other = (VirtualSocket)socketTable.get(responseOwner);
-
-                    do {
-                        tmpBuf = readPacket(null, other, 0);
-
-                        if (!other.flushInput) {
-                        	// We need to save this input
-                            enqueueInput(other, tmpBuf);
-                        }
-                    } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
-                    other.flushInput = false;
-                }
-
-                // OK All input either read and stored or read and discarded
-                // now send our cached request packet.
-                tmpBuf = dequeueOutput(vsock);
-
-                if (tmpBuf == null) {
-                    // Oops something has gone wrong. Trying to read but no
-                    // complete request packet to send first.
-                    throw new IOException("No client request to send");
-                }
-
-                while (tmpBuf != null) {
-                    getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
-                    tmpBuf = dequeueOutput(vsock);
-                }
-                getOut().flush();
-
-                responseOwner = streamId;
+            if (responseOwner == -1) {
+                throw new IOException("Stream " + streamId +
+                                " attempting to read when no request has been sent");
             }
-
+            //
+            // OK There should be data, check that it is for this stream
+            //
+            if (responseOwner != streamId) {
+                // Error we are trying to read another thread's request.
+                throw new IOException("Stream " + streamId +
+                                " is trying to read data that belongs to stream " +
+                                    responseOwner);
+            }
+            //
             // Simple case we are reading our input directly from the server
-            buffer = readPacket(buffer, vsock, vsock.timeOut);
-
+            //
+            buffer = readPacket(buffer);
+            if (buffer[1] != 0) {
+                // End of response connection now free
+                responseOwner = -1;
+            }
             return buffer;
         }
     }
 
     /**
-     * Return any server packet saved for the specified <code>TdsCore</code>
-     * object.
-     */
-    private byte[] dequeueInput(VirtualSocket vsock) throws IOException {
-        byte[] buf = dequeuePacket(vsock);
-
-        if (buf != null) {
-            vsock.inputPkts--;
-        }
-
-        return buf;
-    }
-
-    /**
-     * Save a server packet for the specified <code>TdsCore</code> object.
+     * Save a packet buffer in a memory queue or to a disk queue if the global
+     * memory limit for the driver has been exceeded.
+     *
+     * @param vsock  the virtual socket owning this data
+     * @param buffer the data to queue
      */
     private void enqueueInput(VirtualSocket vsock, byte[] buffer)
-            throws IOException {
-        enqueuePacket(vsock, buffer);
-        vsock.inputPkts++;
-    }
-
-    /**
-     * Return any client request packet saved for the specified
-     * <code>TdsCore</code> object.
-     */
-    private byte[] dequeueOutput(VirtualSocket vsock)
-            throws IOException {
-        byte[] buf = dequeuePacket(vsock);
-
-        if (buf == null) {
-            vsock.complete = false;
-        } else {
-            vsock.outputPkts--;
-        }
-
-        return buf;
-    }
-
-    /**
-     * Save a client request packet for the specified <code>TdsCore</code>
-     * object.
-     */
-    private void enqueueOutput(VirtualSocket vsock, byte[] buffer)
-            throws IOException {
-        enqueuePacket(vsock, buffer);
-        vsock.complete = buffer[1] != 0;
-        vsock.outputPkts++;
-    }
-
-    /**
-     * Save a packet buffer in a memory queue or to a disk queue
-     * if the global memory limit for the driver has been exceeded.
-     */
-    private void enqueuePacket(VirtualSocket vsock,
-                               byte[] buffer)
             throws IOException {
         //
         // Check to see if we should start caching to disk
@@ -769,13 +638,17 @@ class SharedSocket {
             }
         }
 
+        vsock.inputPkts++;
         return;
     }
 
     /**
      * Read a cached packet from the in memory queue or from a disk based queue.
+     *
+     * @param vsock the virtual socket owning this data
+     * @return a buffer containing the packet
      */
-    private byte[] dequeuePacket(VirtualSocket vsock)
+    private byte[] dequeueInput(VirtualSocket vsock)
             throws IOException {
         byte[] buffer = null;
 
@@ -810,48 +683,27 @@ class SharedSocket {
             globalMemUsage -= buffer.length;
         }
 
+        if (buffer != null) {
+            vsock.inputPkts--;
+        }
+
         return buffer;
     }
 
     /**
      * Read a physical TDS packet from the network.
+     *
+     * @param buffer a buffer to read the data into (if it fits) or null
+     * @return either the incoming buffer if it was large enough or a newly
+     *         allocated buffer with the read packet
      */
-    private byte[] readPacket(byte buffer[], VirtualSocket vsock, int timeOut)
+    private byte[] readPacket(byte buffer[])
             throws IOException {
-        boolean queryTimedOut = false;
-
         do {
-            // read the header with timeout specified
-            if (timeOut > 0) {
-                setTimeout(timeOut);
-            }
-
-            int len = 0;
-
-            while (len == 0) {
-                try {
-                    len = getIn().read(hdrBuf, 0, 1);
-                } catch (InterruptedIOException e) {
-                    queryTimedOut = true;
-                    sendCancel(vsock.owner);
-                } finally {
-                    if (timeOut > 0) {
-                        setTimeout(0);
-                    }
-
-                    timeOut = 0;
-                }
-            }
-
-            if (len == -1) {
-            	// this appears to happen when the remote host closes the connection...
-                throw new IOException("DB server closed connection.");
-            }
-
             //
             // Read rest of header
             try {
-                getIn().readFully(hdrBuf, 1, 7);
+                getIn().readFully(hdrBuf);
             } catch (EOFException e) {
                 throw new IOException("DB server closed connection.");
             }
@@ -866,7 +718,7 @@ class SharedSocket {
             }
 
             // figure out how many bytes are remaining in this packet.
-            len = getPktLen(hdrBuf, 2);
+            int len = getPktLen(hdrBuf, 2);
 
             if (len < 8 || len > 65536) {
                 throw new IOException("Invalid network packet length " + len);
@@ -900,69 +752,43 @@ class SharedSocket {
                     && "NTLMSSP".equals(new String(buffer, 11, 7))) {
                 buffer[1] = 1;
             }
-        } while ((queryTimedOut && buffer[1] == 0)
-        		 || (!queryTimedOut && isUnwantedCancelAck(buffer)));
 
-        //
-        // Track TDS packet complete
-        //
-        if (buffer[1] != 0) {
-            responseOwner = -1;
-
-            if (queryTimedOut) {
-                // We had timed out so return an exception to notify the caller
-                // All input will have been read
-                throw new InterruptedIOException("Query timed out");
-            }
-        }
+        } while (isCancelAck(buffer)); // Discard stray cancel packets
 
         return buffer;
     }
 
     /**
-     * Identify isolated cancel packets so that we can ignore them.
+     * Identify isolated cancel packets so that we can count them.
+     *
+     * @param buffer the packet to check whether it's a cancel ACK or not
      */
-    private boolean isUnwantedCancelAck(byte[] buffer) {
+    private boolean isCancelAck(byte[] buffer) {
         if (buffer[1] == 0) {
             return false; // Not complete TDS packet
         }
 
         if (getPktLen(buffer, 2) != 17) {
-            return false; // To short to contain cancel or has other stuff
+            return false; // Too short to contain cancel or has other stuff
         }
 
         if (buffer[8] != TDS_DONE_TOKEN
-            || (buffer[9] & TdsCore.DONE_CANCEL) == 0) {
+                || (buffer[9] & TdsCore.DONE_CANCEL) == 0) {
             return false; // Not a cancel packet
         }
 
         if (Logger.isActive()) {
-            Logger.println("TdsSocket: Cancel packet discarded");
+            Logger.println("TdsSocket: Cancel packet read");
         }
 
         return true;
     }
 
     /**
-     * Send a cancel packet.
-     */
-    private void sendCancel(int streamId) throws IOException {
-        byte[] cancel = new byte[8];
-        cancel[0] = TdsCore.CANCEL_PKT;
-        cancel[1] = 1;
-        cancel[2] = 0;
-        cancel[3] = 8;
-        cancel[4] = 0;
-        cancel[5] = 0;
-        cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
-        cancel[7] = 0;
-        getOut().write(cancel, 0, 8);
-
-        if (Logger.isActive()) {
-            Logger.logPacket(streamId, false, cancel);
-        }
-    }
-
+     * Retrieves the virtual socket with the given id.
+     *
+     * @param streamId id of the virtual socket to retrieve
+     */ 
     private VirtualSocket lookup(int streamId) {
         if (streamId < 0 || streamId > socketTable.size()) {
             throw new IllegalArgumentException("Invalid parameter stream ID "

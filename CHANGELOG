@@ -1,6 +1,12 @@
 Changes from jTDS 0.9.1
 =======================
 
+12/20/2004 - Alin Sinpalean
+ o Applied patch [1088293] Simplified multi threaded execution with a few minor
+   corrections and modifications.
+ o DDL statements no longer return update counts. This should make jTDS more
+   compatible with other drivers and the spec.
+
 12/19/2004 - Alin Sinpalean
  o Fixed bug [1082986] prepareSQL=3 Does Not Function (caused by the separation
    of input and output values).

@@ -1634,7 +1634,7 @@ public class TimestampTest extends DatabaseTestCase
         }
         catch (SQLException e)
         {
-            assertTrue(e.getMessage().startsWith("result set is cl"));
+            assertTrue(e.getMessage().startsWith("Invalid state"));
         }
     }
 

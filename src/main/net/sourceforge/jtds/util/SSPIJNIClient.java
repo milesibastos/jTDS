@@ -86,7 +86,8 @@ public class SSPIJNIClient {
 
         if (thisInstance == null) {
             if (!libraryLoaded) {
-                throw new Exception("Native SSPI library not loaded.");
+                throw new Exception("Native SSPI library not loaded. "
+                        + "Check the java.library.path system property.");
             }
             thisInstance = new SSPIJNIClient();
             thisInstance.invokeInitialize();

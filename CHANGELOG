@@ -6,6 +6,8 @@ Changes from jTDS 0.9-rc1
    (thanks to David Kilzer and Joel Fouse).
  o Corrected bug [1009234] sp_prepare and sp_prepexec should be limited to TDS
    8.0
+ o Added initial support for sp_cursorprepare, sp_cursorprepexec and
+   sp_cursorexecute; statement handles are not currently cached for reuse.
 
 08/16/2004 - David Kilzer
  o New JtdsObjectFactoryUnitTest class used to test JtdsObjectFactory class.

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.26 2004-08-17 20:07:52 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.27 2004-08-17 23:53:49 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -843,12 +843,11 @@ public class TdsCore {
     }
 
     /**
-     * Create a temporary stored procedure on a Microsoft server.
+     * Prepares the SQL for use with Microsoft server.
      *
      * @param sql The SQL statement to prepare.
-     * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
-     * @return name of the procedure.
+     * @return name of the procedure or prepared statement handle.
      * @throws SQLException
      */
     String microsoftPrepare(String sql, ParamInfo[] params)
@@ -942,7 +941,6 @@ public class TdsCore {
      * Create a light weight stored procedure on a Sybase server.
      *
      * @param sql The SQL statement to prepare.
-     * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
      * @return name of the procedure.
      * @throws SQLException
@@ -2783,7 +2781,7 @@ public class TdsCore {
         if (isPreparedProcedureName(procName)) {
             // If the procedure is a prepared handle then redefine the
             // procedure name as sp_execute with the handle as a parameter.
-            ParamInfo params[] = new ParamInfo[parameters.length + 1];
+            ParamInfo params[] = new ParamInfo[1 + parameters.length];
 
             System.arraycopy(parameters, 0, params, 1, parameters.length);
 
@@ -2806,7 +2804,7 @@ public class TdsCore {
                 if (parameters == null) {
                     params = new ParamInfo[2];
                 } else {
-                    params = new ParamInfo[parameters.length + 2];
+                    params = new ParamInfo[2 + parameters.length];
                     System.arraycopy(parameters, 0, params, 2, parameters.length);
                 }
     
@@ -2831,7 +2829,7 @@ public class TdsCore {
                 // Use sp_executesql approach
                 procName = "sp_executesql";
             } else if (prepareSql == PREPEXEC) {
-                ParamInfo params[] = new ParamInfo[parameters.length + 3];
+                ParamInfo params[] = new ParamInfo[3 + parameters.length];
                 
                 System.arraycopy(parameters, 0, params, 3, parameters.length);
                 

@@ -2,6 +2,9 @@ Changes from jTDS 0.9
 =========================
 
 12/03/2004 - Alin Sinpalean
+ o Corrected an issue in SQLParser that prevented CallableStatements from
+   working properly with procedures containing semicolons in their name (e.g.
+   "test;1").
  o Modified BlobImpl.getBytes() and ClobImpl.getString() to return as much data
    as available instead of throwing an SQLException if the length parameter is
    too big (this is my understanding of the API documentation).

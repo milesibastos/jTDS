@@ -579,13 +579,30 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
-     *  Test for separation of IN and INOUT/OUT parameter values
+     * Test for separation of IN and INOUT/OUT parameter values
      */
     public void testInOutParameters() throws Exception
     {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
         CallableStatement cstmt = con.prepareCall("{ call #testInOut ( ?,? ) }");
+        cstmt.setInt(1, 1);
+        cstmt.registerOutParameter(2, Types.INTEGER);
+        cstmt.setInt(2, 2);
+        cstmt.execute();
+        assertEquals(3, cstmt.getInt(2));
+        cstmt.execute();
+        assertEquals(3, cstmt.getInt(2));
+    }
+
+    /**
+     * Test that procedures containing semicolons work.
+     */
+    public void testSemicolonProcedures() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
+        CallableStatement cstmt = con.prepareCall("{call #testInOut;1(?,?)}");
         cstmt.setInt(1, 1);
         cstmt.registerOutParameter(2, Types.INTEGER);
         cstmt.setInt(2, 2);

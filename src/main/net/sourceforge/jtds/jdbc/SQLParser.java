@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.12 2004-11-23 13:41:05 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.13 2004-12-03 15:28:29 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -177,7 +177,7 @@ class SQLParser {
             } else {
                 char c = in[s++];
 
-                while (Character.isJavaIdentifierPart(c) || c == '#') {
+                while (Character.isJavaIdentifierPart(c) || c == '#' || c == ';') {
                     out[d++] = c;
                     c = in[s++];
                 }

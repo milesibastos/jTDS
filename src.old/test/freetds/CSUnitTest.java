@@ -22,6 +22,13 @@ public class CSUnitTest extends DatabaseTestCase {
   
   public CSUnitTest(String name) {
     super(name);
+    if (output == null) 
+      try {
+        output = new PrintStream(new FileOutputStream("nul"));
+      }
+      catch (FileNotFoundException ex) {
+        throw new RuntimeException("could not create device nul");
+      }
   }
   
   static PrintStream output = null;
@@ -42,12 +49,6 @@ public class CSUnitTest extends DatabaseTestCase {
       junit.textui.TestRunner.run(s);
     }
     else {
-      try {
-        output = new PrintStream(new FileOutputStream("nul"));
-      }
-      catch (FileNotFoundException ex) {
-        throw new RuntimeException("could not create device nul");
-      }
       junit.textui.TestRunner.run(CSUnitTest.class);
     }
   }
@@ -639,7 +640,7 @@ public class CSUnitTest extends DatabaseTestCase {
         
       }
       else {
-        numberOfUpdates++;
+        numberOfUpdates += updateCount;
         output.println("UpdateCount: " +
         Integer.toString(updateCount));
       }
@@ -722,6 +723,7 @@ public class CSUnitTest extends DatabaseTestCase {
     "CREATE PROCEDURE t0029_p1                    " +
     "AS                                           " +
     "                                             " +
+    "                                             " +
     " insert into t0029_t1 values                " +
     " ('1999-01-07', '1998-09-09 15:35:05',       " +
     " getdate(), '1998-09-09 15:35:00', null)     " +
@@ -753,7 +755,8 @@ public class CSUnitTest extends DatabaseTestCase {
     isResultSet =
     stmt.execute(
     "CREATE PROCEDURE t0029_p2                    " +
-    "AS                                           " +
+    "AS           " +
+    " set nocount on " + 
     " EXEC t0029_p1                               " +
     " SELECT * FROM t0029_t1                      " +
     "                                             " +
@@ -799,7 +802,7 @@ public class CSUnitTest extends DatabaseTestCase {
         
       }
       else {
-        numberOfUpdates++;
+        numberOfUpdates += updateCount;
         output.println("UpdateCount: " +
         Integer.toString(updateCount));
       }
@@ -814,7 +817,7 @@ public class CSUnitTest extends DatabaseTestCase {
     
     assertTrue((resultSetCount==1) &&
     (rowCount==2) &&
-    (numberOfUpdates==1));
+    (numberOfUpdates==0));
   }
   
   public void testDataTypesByResultSetMetaData0030() throws Exception {
@@ -1008,8 +1011,8 @@ public class CSUnitTest extends DatabaseTestCase {
     
     int         i;
     int         count    = 0;
-    dropTable("t0049a");
-    dropTable("t0049b");
+    dropTable("t0049b");    // important: first drop this because of foreign key
+    dropTable("t0049a");  
     
     String query =
     "create table t0049a(                    " +

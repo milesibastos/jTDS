@@ -1036,6 +1036,6 @@ public abstract class AbstractResultSet
 
 
 
-    public abstract PacketRowResult currentRow();
+    public abstract PacketRowResult currentRow() throws SQLException;
 
 }

@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import com.internetcds.jdbc.tds.Tds;
 import com.internetcds.util.Logger;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import junit.framework.AssertionFailedError;
 
 /**
@@ -20,13 +21,22 @@ public class TimestampTest extends DatabaseTestCase
 	
 	public static void main(String args[]) 
 	{
+          boolean loggerActive = args.length > 0;
           try {
-		Logger.setActive(false);
+		Logger.setActive(loggerActive);
           }
           catch (java.io.IOException ex) {
             throw new RuntimeException("Unexpected Exception " + ex + " occured in main");
           }
-	  junit.textui.TestRunner.run(TimestampTest.class);
+          if (args.length > 0) {
+            junit.framework.TestSuite s = new TestSuite();
+            for (int i = 0; i < args.length; i++) {
+              s.addTest(new TimestampTest(args[i]));
+            }
+            junit.textui.TestRunner.run(s);
+          }
+          else
+	    junit.textui.TestRunner.run(TimestampTest.class);
 		// new TimestampTest("test").testOutputParams();
 	}
 	
@@ -1126,7 +1136,7 @@ public class TimestampTest extends DatabaseTestCase
 			+ "   type char(30) not null, "
 			+ "   b    bit, "
 			+ "   str  char(30) not null, "
-			+ "   t    datetime default getdate(), "
+			+ "   t int identity(1,1), "
 			+ "   primary key (pk, type))    ");
 		
 		PreparedStatement  pStmt = cx.prepareStatement(
@@ -1200,7 +1210,7 @@ public class TimestampTest extends DatabaseTestCase
 			+ "   type char(30) not null,          "
 			+ "   b    bit,                        "
 			+ "   str  char(30) not null,          "
-			+ "   t    datetime default getdate(), "
+			+ "   t int identity(1,1), "
 			+"    primary key (pk, type))    ");
 		
 		PreparedStatement  pStmt = cx.prepareStatement(
@@ -1548,7 +1558,7 @@ public class TimestampTest extends DatabaseTestCase
 		{
 			ResultSet rs = stmt.executeQuery("select 1");
 			assertNotNull(rs);
-			
+
 			rs.getInt(1);
 			
 			assertTrue("Did not expect to reach here", false);

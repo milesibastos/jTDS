@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $
+ * @version $Id: TdsStatement.java,v 1.5 2001-09-17 06:46:48 aschoerk Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.5 2001-09-17 06:46:48 aschoerk Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -496,7 +496,10 @@ public class TdsStatement implements java.sql.Statement
    protected Tds getTds(String sql) throws SQLException
    {
      int pos = sql.indexOf(' ');
-     String firstword = sql.substring(0,pos);
+     String firstword;
+     if (pos >= 0) 
+       firstword = sql.substring(0,pos);
+     else firstword = "";
      
      if (firstword.equalsIgnoreCase("SELECT") && connection.getTransactionIsolation() == java.sql.Connection.TRANSACTION_READ_UNCOMMITTED) {
        if (actTds != null)
@@ -705,7 +708,9 @@ public class TdsStatement implements java.sql.Statement
               result = false;
               break;
             }
-            else
+            else  // process whatever comes now
+              tds.processSubPacket();
+            /*
             {
                releaseTds();
                throw new SQLException("Protocol confusion.  "
@@ -713,6 +718,7 @@ public class TdsStatement implements java.sql.Statement
                                       + Integer.toHexString((tds.peek() & 0xff))
                                       + " packet");
             }
+             */
          } // end while
 
          if (exception != null)
@@ -745,10 +751,12 @@ public class TdsStatement implements java.sql.Statement
 
       catch(java.io.IOException e)
       {
+         releaseTds();
          throw new SQLException("Network error- " + e.getMessage());
       }
       catch(com.internetcds.jdbc.tds.TdsException e)
       {
+         releaseTds();
          throw new SQLException("TDS error- " + e.getMessage());
       }
    }

@@ -84,7 +84,7 @@ import java.io.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ *@version    $Id: TdsResultSet.java,v 1.4 2001-09-17 06:46:47 aschoerk Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -109,7 +109,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.4 2001-09-17 06:46:47 aschoerk Exp $";
 
     public Context getContext()
     {
@@ -380,6 +380,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
             row++;
             return true;
         }
+        else 
+          rowIndex = -1;   // invalidate current row
 
         return false;
     }
@@ -770,8 +772,13 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet {
     }
 
 
-    public PacketRowResult currentRow()
+    public PacketRowResult currentRow() throws SQLException
     {
+      if (rowIndex < 0) 
+        throw new SQLException("No current row in the result set");
+      else
+        if (rowIndex >= rowCount)
+          throw new SQLException("no more results in ResultSet");
         return rowCache[rowIndex];
     }
 

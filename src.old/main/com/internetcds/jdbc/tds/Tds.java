@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.4 2001-09-14 16:04:30 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1057,7 +1057,7 @@ public class Tds implements TdsDefinitions {
         // TDS_DONEINPROC is the real end of data?  If so then the
         // next section of code will hang forever waiting for more data
         // from the socket.
-        if (isEndOfResults()) {
+        if (isEndOfResults() || this.isRetStat()) {
             processSubPacket();
         }
 
@@ -2748,8 +2748,13 @@ public class Tds implements TdsDefinitions {
              throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
         byte status = comm.getByte();
-        comm.skip(3);
+        comm.getByte();
+        byte op = comm.getByte();
+        comm.getByte();
+        // comm.skip(3);
         int rowCount = comm.getTdsInt();
+        if (op == (byte)0xC1) 
+          rowCount = 0;
 
         /*
         if (packetType == TdsDefinitions.TDS_DONEINPROC) {

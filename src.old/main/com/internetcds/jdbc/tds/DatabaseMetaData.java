@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.4 2001-09-14 16:04:29 aschoerk Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -293,7 +293,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.4 2001-09-14 16:04:29 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.5 2001-09-17 06:46:47 aschoerk Exp $";
 
 
     public DatabaseMetaData(
@@ -355,10 +355,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             boolean nullable )
              throws SQLException
     {
+      /*
         debugPrintln( "Inside getBestRowIdentifier with catalog=|" + catalog
                  + "|, schema=|" + schema + "|, table=|" + table + "|, "
                  + " scope=" + scope + ", nullable=" + nullable );
 
+       */
         NotImplemented();
         return null;
     }
@@ -544,12 +546,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String tableNamePattern, String columnNamePattern )
              throws SQLException
     {
+      /*
         debugPrintln( "Inside of getColumn" );
         debugPrintln( "  catalog is |" + catalog + "|" );
         debugPrintln( "  schemaPattern is " + schemaPattern );
         debugPrintln( "  tableNamePattern is " + tableNamePattern );
         debugPrintln( "  columnNamePattern is " + columnNamePattern );
-
+       */
         return getColumns_SQLServer65( catalog, schemaPattern,
                 tableNamePattern, columnNamePattern );
     }
@@ -1456,11 +1459,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String procedureNamePattern )
              throws SQLException
     {
+      /*
         debugPrintln( "Inside of getProcedures" );
         debugPrintln( "  catalog is |" + catalog + "|" );
         debugPrintln( "  schemaPattern is " + schemaPattern );
         debugPrintln( "  procedurePattern is " + procedureNamePattern );
 
+       */
         schemaPattern = schemaPattern.trim();
 
         if ( tds.getDatabaseProductName().indexOf( "Microsoft" ) >= 0
@@ -1492,26 +1497,26 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             query = query + " and o.name like ? ";
             // procedure name
 
-            debugPrintln( "Query is |" + query + "|" );
+            // debugPrintln( "Query is |" + query + "|" );
 
             java.sql.PreparedStatement ps = connection.prepareStatement( query );
 
-            debugPrintln( "ps.setString(1, \"" + catalog + "\")" );
+            // debugPrintln( "ps.setString(1, \"" + catalog + "\")" );
             ps.setString( 1, catalog );
             if ( schemaPattern == null || schemaPattern.equals( "" ) ) {
-                debugPrintln( "ps.setString(2, \"%\");" );
+                // debugPrintln( "ps.setString(2, \"%\");" );
                 ps.setString( 2, "%" );
             }
             else {
-                debugPrintln( "ps.setString(2, \"" + schemaPattern + "\")" );
+                // debugPrintln( "ps.setString(2, \"" + schemaPattern + "\")" );
                 ps.setString( 2, schemaPattern );
             }
             if ( procedureNamePattern == null || procedureNamePattern.equals( "" ) ) {
-                debugPrintln( "ps.setString(3, \"%\");" );
+                // debugPrintln( "ps.setString(3, \"%\");" );
                 ps.setString( 3, "%" );
             }
             else {
-                debugPrintln( "ps.setString(3, \"" + procedureNamePattern + "\")" );
+                // debugPrintln( "ps.setString(3, \"" + procedureNamePattern + "\")" );
                 ps.setString( 3, procedureNamePattern );
             }
 
@@ -1809,6 +1814,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             tableNamePattern = tableNamePattern.trim();
         }
 
+        /*
         debugPrintln( "inside getTables" );
         debugPrintln( "  catalog is |" + catalog + "|" );
         debugPrintln( "  schemaPattern is |" + schemaPattern + "|" );
@@ -1821,6 +1827,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
                 debugPrintln( "  types[" + i + "] is |" + types[i] );
             }
         }
+         */
 
         // create a temporary table
         sql =

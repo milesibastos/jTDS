@@ -49,6 +49,7 @@ public class TestBase extends TestCase {
 
         showWarnings( con.getWarnings() );
 
+        initLanguage(con);
         return con;
     }
 
@@ -129,6 +130,13 @@ public class TestBase extends TestCase {
         showWarnings( con.getWarnings() );
 
         return con;
+    }
+
+    private void initLanguage(Connection con) throws SQLException
+    {
+        Statement stmt = con.createStatement();
+        stmt.executeQuery("set LANGUAGE 'us_english'");
+        stmt.close();
     }
 
 }

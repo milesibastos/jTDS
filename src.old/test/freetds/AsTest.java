@@ -237,6 +237,19 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(!rs.next());
     assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
      */
-  }
+  }    
 
+  public void testBug457955() throws Exception
+  {
+    boolean passed = false;
+    Statement stmt = con.createStatement();
+    stmt.executeUpdate("  if (exists (select * from sysobjects where name = 'spTestExec')) drop procedure Bug457955");
+    stmt.executeUpdate("  create procedure Bug457955 (@par1 VARCHAR(10)) as select @par1");
+    String param = "123456789"; 
+    CallableStatement s = con.prepareCall("exec Bug457955 ?"); 
+    s.setString(1, param); 
+    ResultSet r = s.executeQuery(); 
+    
+  }
 }
+

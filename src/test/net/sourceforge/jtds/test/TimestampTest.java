@@ -2,7 +2,7 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 import java.math.BigDecimal;
-import net.sourceforge.jtds.jdbc.Tds;
+import net.sourceforge.jtds.jdbc.EscapeProcessor;
 import net.sourceforge.jtds.util.Logger;
 import junit.framework.TestSuite;
 
@@ -160,7 +160,7 @@ public class TimestampTest extends DatabaseTestCase
 
     public void testEscape(String sql, String expected) throws Exception
     {
-        String tmp = Tds.toNativeSql(sql, Tds.SQLSERVER);
+        String tmp = EscapeProcessor.nativeSQL(sql);
         assertEquals(tmp, expected);
     }
 
@@ -185,9 +185,9 @@ public class TimestampTest extends DatabaseTestCase
         testEscape("select * from tmp where a like '\\%%'",
             "select * from tmp where a like '\\%%'");
         testEscape("select * from tmp where a like 'b%%' {escape 'b'}",
-            "select * from tmp where a like 'b%%' ESCAPE 'b'");
+            "select * from tmp where a like 'b%%' escape 'b'");
         testEscape("select * from tmp where a like 'bbb' {escape 'b'}",
-            "select * from tmp where a like 'bbb' ESCAPE 'b'");
+            "select * from tmp where a like 'bbb' escape 'b'");
         testEscape("select * from tmp where a='{fn user}'",
             "select * from tmp where a='{fn user}'");
         testEscape("select * from tmp where a={fn user()}",

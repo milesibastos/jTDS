@@ -17,8 +17,50 @@ public class CallableStatementTest extends TestBase {
         stmt.close();
     }
 
+    public void testCallableStatement1() throws Exception {
+        CallableStatement stmt = con.prepareCall("sp_who");
+
+        makeTestTables(stmt);
+        makeObjects(stmt, 8);
+
+        ResultSet rs = stmt.executeQuery();
+
+        dump(rs);
+
+        stmt.close();
+        rs.close();
+    }
+
     public void testCallableStatementCall1() throws Exception {
         CallableStatement stmt = con.prepareCall("{call sp_who}");
+
+        makeTestTables(stmt);
+        makeObjects(stmt, 8);
+
+        ResultSet rs = stmt.executeQuery();
+
+        dump(rs);
+
+        stmt.close();
+        rs.close();
+    }
+
+    public void testCallableStatementCall2() throws Exception {
+        CallableStatement stmt = con.prepareCall("{CALL sp_who}");
+
+        makeTestTables(stmt);
+        makeObjects(stmt, 8);
+
+        ResultSet rs = stmt.executeQuery();
+
+        dump(rs);
+
+        stmt.close();
+        rs.close();
+    }
+
+    public void testCallableStatementCall3() throws Exception {
+        CallableStatement stmt = con.prepareCall("{cAlL sp_who}");
 
         makeTestTables(stmt);
         makeObjects(stmt, 8);

@@ -15,8 +15,8 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-
 package net.sourceforge.jtds.util;
+
 import java.sql.*;
 import java.io.PrintWriter;
 import java.io.FileOutputStream;
@@ -33,7 +33,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.5 2004-06-27 17:00:55 bheineman Exp $
+ * @version $Id: Logger.java,v 1.6 2004-07-15 22:02:15 bheineman Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */

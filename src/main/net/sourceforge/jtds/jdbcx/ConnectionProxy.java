@@ -1,21 +1,20 @@
-//jTDS JDBC Driver for Microsoft SQL Server
-//Copyright (C) 2004 The jTDS Project
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
 //
-//This library is free software; you can redistribute it and/or
-//modify it under the terms of the GNU Lesser General Public
-//License as published by the Free Software Foundation; either
-//version 2.1 of the License, or (at your option) any later version.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-//This library is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//Lesser General Public License for more details.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-//You should have received a copy of the GNU Lesser General Public
-//License along with this library; if not, write to the Free Software
-//Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-
 package net.sourceforge.jtds.jdbcx;
 
 import java.sql.*;
@@ -30,7 +29,7 @@ import net.sourceforge.jtds.jdbc.Support;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.4 2004-06-27 17:00:55 bheineman Exp $
+ * @version $Id: ConnectionProxy.java,v 1.5 2004-07-15 22:02:15 bheineman Exp $
  */
 public class ConnectionProxy implements Connection {
     private net.sourceforge.jtds.jdbcx.PooledConnection _pooledConnection;

@@ -1,9 +1,16 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/15/2004 - Brian Heineman
+ o Refactored JtdsDataSource implementation into AbstractDataSource,
+   JtdsDataSource and JtdsConnectionPoolDataSource.
+ o Updated FAQ documentation to reflect current driver and data source class
+   names.
+
 07/14/2004 - Brian Heineman
  o Updated ResultSetMetaData.getColumnType(int) always return Types.BIT for BIT
-   Updated tests to ensure this functionality continues to work in the future.
+   columns. Updated tests to ensure this functionality continues to work in the
+   future.
    http://sourceforge.net/forum/forum.php?thread_id=1108433&forum_id=129584
  o Corrected bug [991033] Data type 0x32 is unknown error with SQL Server 2005;
    SYBBITN values are now properly formed and are no longer sent as SYBBIT

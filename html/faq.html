@@ -54,8 +54,8 @@
       <p class="title">Frequently Asked Questions</p>
       <p class="question">Getting Started</p>
       <ul>
-        <li><a href="#driverImplementation">What is the class name of the <code>Driver</code>
-          and <code>DataSource</code> implementations?</a></li>
+        <li><a href="#driverImplementation">What are the class names of the <code>Driver</code>,
+          <code>DataSource</code> and <code>ConnectionPoolDataSource</code> implementations?</a></li>
         <li><a href="#urlFormat">What is the URL format used by jTDS?</a></li>
         <li><a href="#benchmarks">jTDS is supposed to be the fastest JDBC driver
           around. Have you got any figures to prove that? Or even better, a
@@ -118,15 +118,18 @@
       </ul>
 
       <p class="title">Getting Started</p>
-      <p class="question"><a name="driverImplementation"></a>What is the class
-        name of the <code>Driver</code> and <code>DataSource</code>
-        implementations?</p>
-      <p>The class name of jTDS' <code>java.sql.Driver</code> implementation is
-        <code>net.sourceforge.jtds.jdbc.Driver</code>. The class name of the
-        <code>javax.sql.DataSource</code> implementation is
-        <code>net.sourceforge.jtds.jdbcx.TdsDataSource</code>
-        (<code>TdsDataSource</code> also implements
-        <code>javax.sql.ConnectionPoolDataSource</code>).</p>
+      <p class="question"><a name="driverImplementation"></a>What are the class names of the <code>Driver</code>,
+          <code>DataSource</code> and <code>ConnectionPoolDataSource</code> implementations?</p>
+      <table class="inner" cellpadding="0" cellspacing="0">
+        <thead>
+          <tr><th>Interface</th><th>jTDS Implementation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>java.sql.Driver</code></td><td><code>net.sourceforge.jtds.jdbc.Driver</code></td></tr>
+          <tr><td><code>javax.sql.DataSource</code></td><td><code>net.sourceforge.jtds.jdbcx.JtdsDataSource</code></td></tr>
+          <tr><td><code>javax.sql.ConnectionPoolDataSource</code></td><td><code>net.sourceforge.jtds.jdbcx.JtdsConnectionPoolDataSource</code></td></tr>
+        </tbody>
+      </table>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="urlFormat"></a>What is the URL format used
         by jTDS?</p>

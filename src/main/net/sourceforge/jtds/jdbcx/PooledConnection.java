@@ -15,7 +15,6 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-
 package net.sourceforge.jtds.jdbcx;
 
 import java.sql.*;
@@ -26,7 +25,7 @@ import net.sourceforge.jtds.jdbc.*;
 
 /**
  *
- * @version $Id: PooledConnection.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
+ * @version $Id: PooledConnection.java,v 1.3 2004-07-15 22:02:15 bheineman Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private final ArrayList _listeners = new ArrayList();

@@ -1,6 +1,13 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/26/2004 - Alin Sinpalean
+ o Fixed the fix for bug #922802. ;o) There was a NPE thrown if the batch was
+   empty at its first execution.
+ o Added a test for bug #582464 (which, although closed, was signalled again
+   with a different date - 06/15/1940 0:00:00). Turns out I couldn't reproduce
+   it.
+
 03/25/2004 - Alin Sinpalean
  o Fixed bug #922802 (TdsStatement.executeBatch() throws exception if no
    statements added). Indeed other drivers work just fine with empty batches and

@@ -13,29 +13,43 @@ public class PerformanceTest extends DatabaseTestCase {
         super(name);
     }
 
-    public void testPreparedStatementODBC() throws Exception {
-        dropTable("jTDSPerformanceTest");
-
+    public void setUp() throws Exception {
+        super.setUp();
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE jTDSPerformanceTest "
-                     + "(id int identity(1,1) not null,"
-                     + "v_bit bit,"
-                     + "v_smallint smallint,"
-                     + "v_tinyint tinyint,"
-                     + "v_decimal decimal(28,11),"
-                     + "v_money money,"
-                     + "v_smallmoney smallmoney,"
-                     + "v_float float,"
-                     + "v_real real,"
-                     + "v_datetime datetime,"
-                     + "v_smalldatetime smalldatetime,"
-                     + "v_char char(255),"
-                     + "v_varchar varchar(255),"
-                     + "v_binary binary(255),"
-                     + "v_varbinary varbinary(255),"
-                     + "primary key (id))");
-        stmt.close();
 
+        try {
+            stmt.execute("CREATE TABLE jTDSPerformanceTest "
+                         + "(id int identity(1,1) not null,"
+                         + "v_bit bit,"
+                         + "v_smallint smallint,"
+                         + "v_tinyint tinyint,"
+                         + "v_decimal decimal(28,11),"
+                         + "v_money money,"
+                         + "v_smallmoney smallmoney,"
+                         + "v_float float,"
+                         + "v_real real,"
+                         + "v_datetime datetime,"
+                         + "v_smalldatetime smalldatetime,"
+                         + "v_char char(255),"
+                         + "v_varchar varchar(255),"
+                         + "v_binary binary(255),"
+                         + "v_varbinary varbinary(255),"
+                         + "primary key (id))");
+        } catch (SQLException ex) {
+            // Ignore it. It just means that the table already exists.
+        } finally {
+            stmt.close();
+        }
+    }
+
+    // No better idea for dropping the table. :o(
+    public void finalize() throws Exception {
+        super.setUp();
+        dropTable("jTDSPerformanceTest");
+        super.tearDown();
+    }
+
+    public void testPreparedStatementODBC() throws Exception {
         try {
             connectODBC();
             populate("ODBC");
@@ -162,11 +176,7 @@ public class PerformanceTest extends DatabaseTestCase {
     }
 
     public void testDiscard() throws Exception {
-        try {
-            runDiscard("jTDS");
-        } finally {
-            dropTable("jTDSPerformanceTest");
-        }
+        runDiscard("jTDS");
     }
 
     public void runDiscard(String name) throws Exception {

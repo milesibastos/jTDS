@@ -8,6 +8,7 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.util.Logger;
@@ -720,12 +721,11 @@ public class SAfeTest extends DatabaseTestCase
      * Test batch updates for both plain and prepared statements.
      */
     public void testBatchUpdates0015() throws Exception {
-        Connection localConn = getConnection();
-        Statement stmt = localConn.createStatement();
+        Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #SAfe0015(value VARCHAR(255) PRIMARY KEY)");
 
         // Execute prepared batch
-        PreparedStatement insStmt = localConn.prepareStatement(
+        PreparedStatement insStmt = con.prepareStatement(
                 "INSERT INTO #SAfe0015(value) values (?)");
         insStmt.setString(1, "Row 1");
         insStmt.addBatch();
@@ -739,6 +739,7 @@ public class SAfeTest extends DatabaseTestCase
         // Execute an empty batch
         res = insStmt.executeBatch();
         assertEquals(0, res.length);
+        insStmt.close();
 
         // Execute plain batch
         stmt.addBatch("UPDATE #SAfe0015 SET value='R1' WHERE value='Row 1'");
@@ -751,8 +752,52 @@ public class SAfeTest extends DatabaseTestCase
         // Execute an empty batch
         res = stmt.executeBatch();
         assertEquals(0, res.length);
+        stmt.close();
+    }
 
-        // Close the connection first
-        localConn.close();
+    /**
+     * Test that dates prior to 06/15/1940 0:00:00 are stored and retrieved
+     * correctly.
+     */
+    public void testOldDates0016() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #SAfe0016(id INT, value DATETIME)");
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String[] dates = {
+            "1983-10-30 02:00:00",
+            "1983-10-30 01:59:59",
+            "1940-06-14 23:59:59",
+            "1753-01-01 00:00:00"
+        };
+
+        // Insert the timestamps
+        PreparedStatement pstmt =
+                con.prepareStatement("INSERT INTO #SAfe0016 VALUES(?, ?)");
+        for (int i=0; i<dates.length; i++) {
+            pstmt.setInt(1, i);
+            pstmt.setString(2, dates[i]);
+            pstmt.addBatch();
+        }
+        int[] res = pstmt.executeBatch();
+        // Check that the insertion went ok
+        assertEquals(dates.length, res.length);
+        for (int i=0; i<dates.length; i++) {
+            assertEquals(1, res[i]);
+        }
+
+        // Select the timestamps and make sure they are the same
+        ResultSet rs = stmt.executeQuery(
+                "SELECT value FROM #SAfe0016 ORDER BY id");
+        int counter = 0;
+        while (rs.next()) {
+            assertEquals(format.parse(dates[counter]), rs.getTimestamp(1));
+            ++counter;
+        }
+
+        // Close everything
+        rs.close();
+        stmt.close();
+        pstmt.close();
     }
 }

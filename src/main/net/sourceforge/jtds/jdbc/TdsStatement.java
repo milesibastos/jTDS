@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.26 2004-03-25 22:04:30 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.27 2004-03-26 21:15:49 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,7 +66,7 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.26 2004-03-25 22:04:30 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.27 2004-03-26 21:15:49 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -891,7 +891,8 @@ public class TdsStatement implements java.sql.Statement
      * driver does not support batch statements
      */
     public synchronized void clearBatch() throws SQLException {
-        batchValues.clear();
+        if (batchValues != null)
+            batchValues.clear();
     }
 
     /**
@@ -907,10 +908,6 @@ public class TdsStatement implements java.sql.Statement
      * driver does not support batch statements
      */
     public synchronized int[] executeBatch() throws SQLException {
-//        if (batchValues == null || batchValues.size() == 0) {
-//            throw new SQLException("Nothing has been batched for execution.");
-//        }
-
         int size = (batchValues == null) ? 0 : batchValues.size();
         int[] updateCounts = new int[size];
         int i = 0;

@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.15 2004-08-28 17:59:54 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.16 2004-09-05 14:56:18 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -66,7 +66,7 @@ public class JtdsStatement implements java.sql.Statement {
     static final int EXECUTE_FAILED = -3;
     static final int BOOLEAN = 16;
     static final int DATALINK = 70;
-	
+
     /** The connection owning this statement object. */
     protected ConnectionJDBC2 connection;
     /** The TDS object used for server access. */
@@ -102,7 +102,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Construct a new Statement object.
-     * 
+     *
      * @param connection The parent connection.
      * @param resultSetType The result set type for example TYPE_FORWARD_ONLY.
      * @param resultSetConcurrency The concurrency for example CONCUR_READ_ONLY.
@@ -131,7 +131,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Get the Statement's TDS object.
-     * 
+     *
      * @return The TDS support as a <code>TdsCore</core> Object.
      */
     TdsCore getTds() {
@@ -140,7 +140,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Get the statement's warnings list.
-     * 
+     *
      * @return The warnings list as a <code>SQLDiagnostic</code>.
      */
     SQLDiagnostic getMessages() {
@@ -149,7 +149,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Check that this statement is still open.
-     * 
+     *
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
@@ -161,7 +161,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Report that user tried to call a method which has not been implemented.
-     * 
+     *
      * @param method The method name to report in the error message.
      * @throws SQLException
      */
@@ -187,7 +187,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Add an SQLWarning object to the statment warnings list.
-     * 
+     *
      * @param w The SQLWarning to add.
      */
     void addWarning(SQLWarning w) {
@@ -206,7 +206,7 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Execute SQL to obtain a result set.
-     * 
+     *
      * @param sql The SQL statement to execute.
      * @param spName Optional stored procedure name.
      * @param params Optional parameters.
@@ -226,6 +226,8 @@ public class JtdsStatement implements java.sql.Statement {
         closeCurrentResultSet();
         updateCount = -1;
         genKeyResultSet = null;
+        String warningMessage = null;
+
         //
         // Try to open a cursor result set if required
         //
@@ -234,24 +236,25 @@ public class JtdsStatement implements java.sql.Statement {
             try {
                 if (connection.getServerType() == Driver.SQLSERVER) {
                     JtdsResultSet rs =
-                        new MSCursorResultSet(this,
-                                              sql,
-                                              spName,
-                                              params,
-                                              resultSetType,
-                                              resultSetConcurrency);
+                            new MSCursorResultSet(this,
+                                    sql,
+                                    spName,
+                                    params,
+                                    resultSetType,
+                                    resultSetConcurrency);
                     currentResult = rs;
 
                     return rs;
                 } else {
                     // Sybase cursor logic goes here (one day).
                 }
-             } catch (SQLException e) {
-                 if (connection == null || connection.isClosed()) {
-                     // Serious error so return exception to caller
-                     throw e;
-                 }
-             }
+            } catch (SQLException e) {
+                if (connection == null || connection.isClosed()) {
+                    // Serious error so return exception to caller
+                    throw e;
+                }
+                warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
+            }
         }
 
         //
@@ -273,17 +276,25 @@ public class JtdsStatement implements java.sql.Statement {
                             Messages.get("error.statement.noresult"), "24000");
         }
 
+        if (warningMessage != null) {
+            //
+            // Update warning chain if cursor was downgraded
+            //
+            addWarning(new SQLWarning(
+                    Messages.get("warning.cursordowngraded", warningMessage), "01000"));
+        }
+
         return currentResult;
     }
 
     /**
      * Execute any type of SQL.
-     * 
+     *
      * @param sql The SQL statement to execute.
      * @param spName Optional stored procedure name.
      * @param params Optional parameters.
      * @return <code>boolean</code> true if a result set is returned by the statement.
-     * @throws SQLException
+     * @throws SQLException if an error condition occurs
      */
     protected boolean executeSQL(String sql,
                                  String spName,
@@ -295,6 +306,7 @@ public class JtdsStatement implements java.sql.Statement {
         closeCurrentResultSet();
         updateCount = -1;
         genKeyResultSet = null;
+        String warningMessage = null;
 
         //
         // Try to open a cursor result set if required (and possible)
@@ -304,26 +316,27 @@ public class JtdsStatement implements java.sql.Statement {
             && sqlWord.equals("select")
             && !returnKeys) {
             try {
-                 if (connection.getServerType() == Driver.SQLSERVER) {
-                     JtdsResultSet rs =
-                         new MSCursorResultSet(this,
-                                               sql,
-                                               spName,
-                                               params,
-                                               resultSetType,
-                                               resultSetConcurrency);
-                     currentResult = rs;
+                if (connection.getServerType() == Driver.SQLSERVER) {
+                    JtdsResultSet rs = new MSCursorResultSet(
+                            this,
+                            sql,
+                            spName,
+                            params,
+                            resultSetType,
+                            resultSetConcurrency);
+                    currentResult = rs;
 
-                     return true;
-                 } else {
-                     // Sybase cursor logic goes here (one day).
-                 }
-              } catch (SQLException e) {
-                  if (connection == null || connection.isClosed()) {
-                      // Serious error so return exception to caller
-                      throw e;
-                  }
-              }
+                    return true;
+                } else {
+                    // Sybase cursor logic goes here (one day).
+                }
+            } catch (SQLException e) {
+                if (connection == null || connection.isClosed()) {
+                    // Serious error so return exception to caller
+                    throw e;
+                }
+                warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
+            }
         }
 
         //
@@ -383,6 +396,14 @@ public class JtdsStatement implements java.sql.Statement {
                                                          false);
                     currentResult = rs;
                     updateCount = -1;
+
+                    if (warningMessage != null) {
+                        //
+                        // Update warning chain if cursor was downgraded
+                        //
+                        addWarning(new SQLWarning(Messages.get(
+                                "warning.cursordowngraded", warningMessage), "01000"));
+                    }
 
                     return true;
                 } else if (tds.isUpdateCount()) {
@@ -476,7 +497,7 @@ public class JtdsStatement implements java.sql.Statement {
         if (!closed) {
             try {
                 closeCurrentResultSet();
-                
+
                 if (!connection.isClosed()) {
                     tds.clearResponseQueue();
                     tds.close();
@@ -631,7 +652,7 @@ public class JtdsStatement implements java.sql.Statement {
 
             return false;
         }
-        
+
         JtdsResultSet rs = new JtdsResultSet(this,
                                              ResultSet.TYPE_FORWARD_ONLY,
                                              ResultSet.CONCUR_READ_ONLY,

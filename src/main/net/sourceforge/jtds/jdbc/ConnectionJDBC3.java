@@ -29,12 +29,14 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.5 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.6 2004-09-05 14:56:18 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
     private ArrayList savepoints = null;
+    /** Maps each savepoint to a list of tmep procedures created since the savepoint */
     private Map savepointProcInTran = null;
+    /** Counter for generating unique savepoint identifiers */
     private int savepointId = 0;
 
     /**

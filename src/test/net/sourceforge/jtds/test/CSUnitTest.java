@@ -77,8 +77,8 @@ public class CSUnitTest extends DatabaseTestCase {
         count = 0;
 
         while (rs.next()) {
-            int n = rs.getInt("i");
             count++;
+            assertEquals(rs.getInt("i"), count);
         }
 
         assertTrue(count == rowLimit);
@@ -87,7 +87,6 @@ public class CSUnitTest extends DatabaseTestCase {
 
 
     public void testGetAsciiStream0018() throws Exception {
-        int count = 0;
         Statement stmt = con.createStatement();
         ResultSet rs;
 
@@ -205,7 +204,7 @@ public class CSUnitTest extends DatabaseTestCase {
         " mynulltext                 text null,                " +
         " mynullimage                image null)               ";
 
-        count = stmt.executeUpdate(sql);
+        assertEquals(stmt.executeUpdate(sql), 0);
         // Insert a row without nulls via a Statement
         sql =
         "insert into #t0018(       " +
@@ -238,12 +237,12 @@ public class CSUnitTest extends DatabaseTestCase {
         ")";
 
 
-        count = stmt.executeUpdate(sql);
+        assertEquals(stmt.executeUpdate(sql), 1);
 
         sql = "select * from #t0018";
         rs = stmt.executeQuery(sql);
         if (!rs.next()) {
-            assertTrue("should get Result",false);
+            fail("should get Result");
         } else {
             output.println("Getting the results");
             output.println("mybinary is " + rs.getObject("mybinary"));
@@ -264,8 +263,6 @@ public class CSUnitTest extends DatabaseTestCase {
 
     public void testMoneyHandling0019() throws Exception {
         java.sql.Statement  stmt   = null;
-        BigDecimal          tmp1   = null;
-        BigDecimal          tmp2   = null;
         int                 i;
         BigDecimal          money[] = {
             new BigDecimal("922337203685477.5807"),
@@ -465,7 +462,7 @@ public class CSUnitTest extends DatabaseTestCase {
         " mynulltext                 text null,                " +
         " mynullimage                image null)               ";
 
-        int count = stmt.executeUpdate(sql);
+        assertEquals(stmt.executeUpdate(sql), 0);
 
 
         // Insert a row without nulls via a Statement
@@ -550,7 +547,7 @@ public class CSUnitTest extends DatabaseTestCase {
         "     0x1200340056)              " + //   mynullimage)
         "";
 
-        count = stmt.executeUpdate(sql);
+        assertEquals(stmt.executeUpdate(sql), 1);
 
         sql = "select * from #t0027";
         rs = stmt.executeQuery(sql);
@@ -651,9 +648,6 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     public void testxx0029() throws Exception {
         Statement   stmt = con.createStatement();
-        int         i;
-        int         j;
-        int         count    = 0;
         ResultSet   rs       = null;
 
         boolean isResultSet;
@@ -805,11 +799,8 @@ public class CSUnitTest extends DatabaseTestCase {
     }
 
     public void testDataTypesByResultSetMetaData0030() throws Exception {
-        boolean passed = true;
         Statement   stmt = con.createStatement();
-        int         count    = 0;
         ResultSet   rs;
-
 
         String sql = ("select " +
                       " convert(tinyint, 2),  " +
@@ -817,30 +808,25 @@ public class CSUnitTest extends DatabaseTestCase {
 
         rs = stmt.executeQuery(sql);
         if (!rs.next()) {
-            passed = false;
+            fail("Expecting one row");
         } else {
             ResultSetMetaData meta = rs.getMetaData();
 
             if (meta.getColumnType(1)!=java.sql.Types.TINYINT) {
-                output.println("tinyint column was read as "
+                fail("tinyint column was read as "
                                + meta.getColumnType(1));
-                passed = false;
             }
             if (meta.getColumnType(2)!=java.sql.Types.SMALLINT) {
-                output.println("smallint column was read as "
+                fail("smallint column was read as "
                                + meta.getColumnType(2));
-                passed = false;
             }
             if (rs.getInt(1) != 2) {
-                output.println("Bogus value read for tinyint");
-                passed = false;
+                fail("Bogus value read for tinyint");
             }
             if (rs.getInt(2) != 5) {
-                output.println("Bogus value read for smallint");
-                passed = false;
+                fail("Bogus value read for smallint");
             }
         }
-        assertTrue(passed);
     }
     public void testTextColumns0031() throws Exception {
         Statement   stmt = con.createStatement();
@@ -925,12 +911,7 @@ public class CSUnitTest extends DatabaseTestCase {
         int       i;
         int       updateCount = 0;
 
-
         output.println("Starting test #t0032-  test sp_help sysusers");
-
-
-        int         count    = 0;
-
 
         isResultSet = stmt.execute("sp_help sysusers");
 
@@ -988,8 +969,6 @@ public class CSUnitTest extends DatabaseTestCase {
     public void testInsertConflict0049() throws Exception {
         Statement   stmt = con.createStatement();
 
-
-        int         i;
         int         count    = 0;
         dropTable("#t0049b");    // important: first drop this because of foreign key
         dropTable("#t0049a");
@@ -1040,7 +1019,6 @@ public class CSUnitTest extends DatabaseTestCase {
     public void testxx0050() throws Exception {
         Statement   stmt = con.createStatement();
         boolean passed = true;
-        int         i;
         int         count    = 0;
 
         try {
@@ -1103,9 +1081,6 @@ public class CSUnitTest extends DatabaseTestCase {
 
     public void testxx0051() throws Exception {
         boolean passed = true;
-        int         i;
-        int         count    = 0;
-        Statement   stmt     = con.createStatement();
 
         try {
             String           types[] = {"TABLE"};
@@ -1130,8 +1105,6 @@ public class CSUnitTest extends DatabaseTestCase {
     public void testxx0055() throws Exception {
         boolean passed = true;
         int         i;
-        int         count    = 0;
-        Statement   stmt     = con.createStatement();
 
         try {
             String           expectedNames[] = {
@@ -1371,7 +1344,6 @@ public class CSUnitTest extends DatabaseTestCase {
     public void testxx0053() throws Exception {
         boolean passed = true;
 
-        int         count    = 0;
         Statement   stmt     = con.createStatement();
 
         dropTable("#t0053");
@@ -1459,7 +1431,6 @@ public class CSUnitTest extends DatabaseTestCase {
 
         output.println("test getting a DECIMAL as a long from the database.");
 
-        int         count    = 0;
         Statement   stmt     = con.createStatement();
 
         ResultSet  rs;
@@ -1538,13 +1509,6 @@ public class CSUnitTest extends DatabaseTestCase {
     }
 
     public void testxx0059() throws Exception {
-        boolean passed = true;
-
-
-        int         i;
-        int         count    = 0;
-        Statement   stmt     = con.createStatement();
-
         try {
             DatabaseMetaData  dbMetaData = con.getMetaData( );
             ResultSet         rs         = dbMetaData.getSchemas();

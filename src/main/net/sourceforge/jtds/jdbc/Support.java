@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.17 2004-08-28 15:46:50 bheineman Exp $
+ * @version $Id: Support.java,v 1.18 2004-09-05 14:56:18 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -231,7 +231,7 @@ public class Support {
                     }
 
                 break;
-                
+
                 case java.sql.Types.FLOAT:
                 case java.sql.Types.DOUBLE:
                     if (x == null) {
@@ -342,7 +342,7 @@ public class Support {
                     }
 
                     break;
-                    
+
                 case java.sql.Types.LONGVARBINARY:
                 case java.sql.Types.VARBINARY:
                 case java.sql.Types.BINARY:
@@ -381,7 +381,7 @@ public class Support {
                     }
 
                     break;
-                    
+
                 case java.sql.Types.TIMESTAMP:
                     if (x == null) {
                         return null;
@@ -396,7 +396,7 @@ public class Support {
                     }
 
                     break;
-                    
+
                 case java.sql.Types.DATE:
                     if (x == null) {
                         return null;
@@ -445,12 +445,12 @@ public class Support {
 
                 case java.sql.Types.OTHER:
                     return x;
-                    
+
                 case java.sql.Types.JAVA_OBJECT:
-                throw new SQLException(
-                                      Messages.get("error.convert.badtypes",
-                                                 x.getClass().getName(),                                                
-                                                 getJdbcTypeName(jdbcType)), "22005");
+                    throw new SQLException(
+                            Messages.get("error.convert.badtypes",
+                                    x.getClass().getName(),
+                                    getJdbcTypeName(jdbcType)), "22005");
 
                 case java.sql.Types.BLOB:
                     if (x == null) {
@@ -527,7 +527,7 @@ public class Support {
             throw new SQLException(
                                   Messages.get("error.convert.badtypes",
 //                                             getJdbcTypeName(getJdbcType(x)),
-                                             x.getClass().getName(),                                                
+                                             x.getClass().getName(),
                                              getJdbcTypeName(jdbcType)), "22005");
         } catch (NumberFormatException nfe) {
             throw new SQLException(
@@ -625,7 +625,7 @@ public class Support {
 
             case java.sql.Types.REAL:
                 return "java.lang.Float";
-                   
+
             case java.sql.Types.FLOAT:
             case java.sql.Types.DOUBLE:
                 return "java.lang.Double";
@@ -665,8 +665,8 @@ public class Support {
      * @param buf The buffer in which the data will be embeded.
      * @param value The data object.
      */
-    static void embedData(StringBuffer buf, Object value)
-    throws SQLException {
+    static void embedData(StringBuffer buf, Object value, boolean isUnicode)
+            throws SQLException {
         if (value == null) {
             buf.append("NULL");
             return;
@@ -703,6 +703,9 @@ public class Support {
             String tmp = (String) value;
             int len = tmp.length();
 
+            if (isUnicode) {
+                buf.append('N');
+            }
             buf.append('\'');
 
             for (int i = 0; i < len; i++) {
@@ -798,14 +801,14 @@ public class Support {
      * Constructs a parameter definition string for use with
      * sp_executesql, sp_prepare, sp_prepexec, sp_cursoropen,
      * sp_cursorprepare and sp_cursorprepexec.
-     * 
+     *
      * @param parameters Parameters to construct the definition for
      * @return a parameter definition string
      */
     static String getParameterDefinitions(ParamInfo[] parameters) {
         StringBuffer sql = new StringBuffer(parameters.length * 10);
-        
-        // Build parameter descriptor            
+
+        // Build parameter descriptor
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i].name == null) {
                 sql.append("@P");
@@ -813,7 +816,7 @@ public class Support {
             } else {
                 sql.append(parameters[i].name);
             }
-            
+
             sql.append(' ');
             sql.append(parameters[i].sqlType);
 
@@ -821,7 +824,7 @@ public class Support {
                 sql.append(',');
             }
         }
-        
+
         return sql.toString();
     }
 
@@ -863,8 +866,8 @@ public class Support {
      * @param list The parameter descriptors.
      * @return The modified SQL statement.
      */
-    static String substituteParameters(String sql, ParamInfo[] list)
-    throws SQLException {
+    static String substituteParameters(String sql, ParamInfo[] list, int tdsVersion)
+            throws SQLException {
         int len = sql.length();
 
         for (int i = 0; i < list.length; i++) {
@@ -875,7 +878,7 @@ public class Support {
             }
 
             Object value = list[i].value;
-            
+
             if (value instanceof java.io.InputStream
                     || value instanceof java.io.Reader) {
                 try {
@@ -892,7 +895,7 @@ public class Support {
             }
 
             if (value instanceof String) {
-                len += ((String) value).length() + 2;
+                len += ((String) value).length() + 3;
             } else if (value instanceof byte[]) {
                 len += ((byte[]) value).length * 2 + 2;
             } else {
@@ -900,7 +903,7 @@ public class Support {
             }
         }
 
-        StringBuffer buf = new StringBuffer(len);
+        StringBuffer buf = new StringBuffer(len + 10);
         int start = 0;
 
         for (int i = 0; i < list.length; i++) {
@@ -909,7 +912,8 @@ public class Support {
             if (pos > 0) {
                 buf.append(sql.substring(start, list[i].markerPos));
                 start = pos + 1;
-                Support.embedData(buf, list[i].value);
+                Support.embedData(buf, list[i].value,
+                        tdsVersion >= Driver.TDS70 && list[i].isUnicode);
             }
         }
 

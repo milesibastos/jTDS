@@ -1,6 +1,18 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/05/2004 - Alin Sinpalean
+ o Corrected a bug which was causing strings to always be sent as non-unicode
+   (i.e. not preceded by N') by prepared statements with prepareSQL=0,
+   regardless of TDS version and settings.
+ o Corrected bug [1022445] Cursor downgrade warning not raised; thanks Mike for
+   the find and fix.
+ o Corrected bug [1022448] NPE Cursor result set errors with prepareSQL != 1;
+   thanks Mike for the find and fix.
+ o Added a misc component to the driver version, to include release candidate
+   information or any other version information besides major and minor version
+   (e.g. the "-rc2" in 0.9-rc2).
+
 09/02/2004 - Alin Sinpalean
  o Corrected bug [1020733] Sysbase test failures; (thanks to Mike Hutchinson
    for the bug report and patch).

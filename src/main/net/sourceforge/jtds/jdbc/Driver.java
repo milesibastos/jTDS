@@ -43,12 +43,17 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.36 2004-09-01 16:04:32 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.37 2004-09-05 14:56:18 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
+    /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
     private static String driverPrefix = "jdbc:jtds:";
+    /** Driver major version. */
     static final int MAJOR_VERSION = 0;
+    /** Driver minor version. */
     static final int MINOR_VERSION = 9;
+    /** Driver version miscellanea (e.g "-rc2" or ".1"). */
+    static final String MISC_VERSION = "-rc2";
     public static final boolean JDBC3 =
             "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
     /** TDS 4.2 protocol. */
@@ -88,7 +93,8 @@ public class Driver implements java.sql.Driver {
      * @return the driver version
      */
     public static final String getVersion() {
-        return "jTDS " + MAJOR_VERSION + "." + MINOR_VERSION;
+        return "jTDS " + MAJOR_VERSION + "." + MINOR_VERSION
+                + ((MISC_VERSION == null) ? "" : MISC_VERSION);
     }
 
     /**

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.34 2004-08-31 17:25:17 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.35 2004-09-05 14:56:18 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2549,7 +2549,7 @@ public class TdsCore {
             out.flush();
         } else if (sql.length() > 0) {
             if (parameters != null && parameters.length > 0) {
-                sql = Support.substituteParameters(sql, parameters);
+                sql = Support.substituteParameters(sql, parameters, tdsVersion);
             }
 
             out.setPacketType(QUERY_PKT);
@@ -2591,7 +2591,7 @@ public class TdsCore {
                 }
 
                 // prepared statement substitute parameters into SQL
-                sql = Support.substituteParameters(sql, parameters);
+                sql = Support.substituteParameters(sql, parameters, tdsVersion);
                 haveParams = false;
                 procName = null;
 
@@ -2878,7 +2878,7 @@ public class TdsCore {
             out.flush();
         } else if (sql.length() > 0) {
             if (parameters != null && parameters.length > 0) {
-                sql = Support.substituteParameters(sql, parameters);
+                sql = Support.substituteParameters(sql, parameters, tdsVersion);
             }
 
             // Simple query

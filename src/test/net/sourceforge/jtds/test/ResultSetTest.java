@@ -18,6 +18,7 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
+import java.math.BigDecimal;
 
 /**
  * @version 1.0
@@ -73,7 +74,7 @@ public class ResultSetTest extends TestBase {
 
         assertFalse(rs.getBoolean(2));
         assertTrue(rs.getBoolean(3));
-        
+
         assertFalse(rs.next());
         stmt2.close();
         rs.close();
@@ -177,7 +178,7 @@ public class ResultSetTest extends TestBase {
 
         assertEquals(rs.getShort(2), Short.MIN_VALUE);
         assertEquals(rs.getShort(3), Short.MAX_VALUE);
-        
+
         assertFalse(rs.next());
         stmt2.close();
         rs.close();
@@ -229,7 +230,7 @@ public class ResultSetTest extends TestBase {
 
         assertEquals(rs.getInt(2), Integer.MIN_VALUE);
         assertEquals(rs.getInt(3), Integer.MAX_VALUE);
-        
+
         assertFalse(rs.next());
         stmt2.close();
         rs.close();
@@ -271,28 +272,28 @@ public class ResultSetTest extends TestBase {
 
         Object tmpData = rs.getObject(1);
 
-        //assertTrue(tmpData instanceof Long);
-        //assertEquals(data, ((Long) tmpData).longValue());
+        assertTrue(tmpData instanceof BigDecimal);
+        assertEquals(data, ((BigDecimal) tmpData).longValue());
 
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
-        //assertEquals(Types.BIGINT, resultSetMetaData.getColumnType(1));
+        assertEquals(Types.DECIMAL, resultSetMetaData.getColumnType(1));
 
         assertEquals(rs.getLong(2), Long.MIN_VALUE);
         assertEquals(rs.getLong(3), Long.MAX_VALUE);
-        
+
         assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
-    
+
     /**
      * Test for bug [961594] ResultSet.
      */
     public void testResultSetScroll1() throws Exception {
     	int count = 125;
-    	
+
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #resultSetScroll1 (data INT)");
         stmt.close();
@@ -400,9 +401,9 @@ public class ResultSetTest extends TestBase {
         rs.getShort(2);
         assertTrue(rs.wasNull());
         rs.getInt(3);
-        assertTrue(rs.wasNull());        
+        assertTrue(rs.wasNull());
         assertFalse(rs.next());
-        
+
         stmt.close();
         rs.close();
     }
@@ -435,8 +436,8 @@ public class ResultSetTest extends TestBase {
         stmt2.close();
         rs.close();
     }
-    
-    /** 
+
+    /**
      * Test for fixed bugs in ResultSetMetaData:
      * <ol>
      * <li>isNullable() always returns columnNoNulls.
@@ -446,7 +447,7 @@ public class ResultSetTest extends TestBase {
      * </ol>
      * NB: This test assumes getColumnName has been fixed to work as per the suggestion
      * in bug report [1009233].
-     * 
+     *
      * @throws Exception
      */
     public void testResultSetMetaData() throws Exception {
@@ -480,12 +481,12 @@ public class ResultSetTest extends TestBase {
     /**
      * Test for [1017164] - CallableStatement.executeQuery fails
      * when procedure returns more than one result set.
-     * 
+     *
      * @throws Exception
-     */    
+     */
     public void testTwoSelectCall() throws Exception {
         Statement stmt = con.createStatement();
-        
+
         stmt.execute("CREATE PROC #TESTP @p1 INT OUTPUT AS\r\n"
         		     + "BEGIN\r\n"
 					 + "SELECT 'RS ONE' as ID\r\n"
@@ -493,22 +494,39 @@ public class ResultSetTest extends TestBase {
 					 + "SELECT @p1 = 100\r\n"
 					 + "END\r\n");
         stmt.close();
-        
+
         CallableStatement cstmt = con.prepareCall("{call #TESTP (?)}");
         cstmt.registerOutParameter(1, java.sql.Types.INTEGER);
-        
+
         ResultSet rs = cstmt.executeQuery();
-        
+
         assertTrue(rs.next());
         assertEquals("RS ONE", rs.getString(1));
         assertFalse(rs.next());
         assertEquals(100, cstmt.getInt(1));
-        
+
         rs.close();
         cstmt.close();
     }
 
-    
+    /**
+     * Test for bug [1022445] Cursor downgrade warning not raised.
+     */
+    public void testCursorWarning() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTCW (id INT PRIMARY KEY, DATA VARCHAR(255))");
+        stmt.execute("CREATE PROC #SPTESTCW @P0 INT OUTPUT AS SELECT * FROM #TESTCW");
+        stmt.close();
+        CallableStatement cstmt = con.prepareCall("{call #SPTESTCW(?)}",
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        ResultSet rs = cstmt.executeQuery();
+        // This should generate a ResultSet type/concurrency downgraded error.
+        assertNotNull(rs.getWarnings());
+        cstmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

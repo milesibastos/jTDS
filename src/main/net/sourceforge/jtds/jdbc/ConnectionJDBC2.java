@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.27 2004-08-28 17:59:54 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.28 2004-09-05 14:56:18 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -207,7 +207,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Default constructor.
      * <p/>
      * Used for testing.
-     */ 
+     */
     private ConnectionJDBC2() {
     }
 
@@ -294,24 +294,18 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
         } catch (UnknownHostException e) {
             throw Support.linkException(
-                                       new SQLException(
-                                                       Messages.get(
-                                                                         "error.connection.badhost", e.getMessage()),
-                                                       "08S03"), e);
+                    new SQLException(Messages.get("error.connection.badhost",
+                            e.getMessage()), "08S03"), e);
         } catch (IOException e) {
             throw Support.linkException(
-                                       new SQLException(
-                                                       Messages.get(
-                                                                         "error.connection.ioerror", e.getMessage()),
-                                                       "08S01"), e);
+                    new SQLException(Messages.get("error.connection.ioerror",
+                            e.getMessage()), "08S01"), e);
         } catch (SQLException e) {
             if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
                 throw new SQLException(
-                                      Messages.get(
-                                                        "error.connection.timeout"),
-                                      "08S01");
+                        Messages.get("error.connection.timeout"), "08S01");
             }
-            
+
             throw e;
         }
 
@@ -521,7 +515,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (serverType == Driver.SQLSERVER) {
             proc.name = baseTds.microsoftPrepare(sql, params);
-            
+
             if (proc.name == null) {
                 return null;
             }
@@ -532,7 +526,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             if (proc.name == null) {
                 return null;
             }
-            
+
             // Sybase gives us lots of useful information about the result set
             proc.colMetaData = baseTds.getColumns();
             proc.paramMetaData = baseTds.getParameters();
@@ -655,7 +649,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     int getPrepareSql() {
         return this.prepareSql;
     }
-    
+
     /**
      * Transfer the properties to the local instance variables.
      *
@@ -717,7 +711,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
         lobBuffer = parseLongProperty(info, "prop.lobbuffer");
-        
+
         // The TdsCore.PREPARE and TdsCore.PREPEXEC methods are only available with
         // TDS 8.0+ (SQL Server 2000+); downgrade to TdsCore.EXECUTE_SQL if an invalid
         // option is selected.
@@ -729,7 +723,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Parse a string property value into an integer value.
-     *  
+     *
      * @param info The connection properties object.
      * @param key The message key used to retrieve the property name.
      * @return The integer value of the string property value.
@@ -749,7 +743,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Parse a string property value into a long value.
-     * 
+     *
      * @param info The connection properties object.
      * @param key The message key used to retrieve the property name.
      * @return The long value of the string property value.

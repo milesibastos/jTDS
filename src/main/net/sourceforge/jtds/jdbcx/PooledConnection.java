@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.9 2004-11-15 14:45:57 alin_sinpalean Exp $
+ * @version $Id: PooledConnection.java,v 1.10 2004-12-19 09:40:23 alin_sinpalean Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private final ArrayList listeners = new ArrayList();
@@ -77,8 +77,13 @@ public class PooledConnection implements javax.sql.PooledConnection {
                 if (closed) {
                     listener.connectionClosed(connectionEvent);
                 } else {
-                    // TODO Only notify listener if the error is fatal
-                    listener.connectionErrorOccurred(connectionEvent);
+                    try {
+                        if (connection == null || connection.isClosed()) {
+                            listener.connectionErrorOccurred(connectionEvent);
+                        }
+                    } catch (SQLException ex) {
+                        // Will never occur
+                    }
                 }
             }
         }

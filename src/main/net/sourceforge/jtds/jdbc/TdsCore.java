@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.58 2004-12-14 15:00:29 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.59 2004-12-19 09:40:20 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -366,13 +366,15 @@ public class TdsCore {
     /** The head of the diagnostic messages chain. */
     private SQLDiagnostic messages;
     /** Indicates that this object is closed. */
-    private boolean isClosed = false;
+    private boolean isClosed;
     /** Indicates reading results from READTEXT command. */
-    private boolean readTextMode = false;
+    private boolean readTextMode;
     /** A reference to ntlm.SSPIJNIClient. */
-    private SSPIJNIClient sspiJNIClient = null;
+    private SSPIJNIClient sspiJNIClient;
     /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
-    private boolean ntlmAuthSSO = false;
+    private boolean ntlmAuthSSO;
+    /** Indicates that a fatal error has occured and the connection will close. */
+    private boolean fatalError;
 
     /**
      * Construct a TdsCore object.
@@ -524,14 +526,13 @@ public class TdsCore {
     boolean getMoreResults() throws SQLException {
         checkOpen();
         nextToken();
-        messages.checkErrors();
 
         while (!endOfResponse
                && !currentToken.isUpdateCount()
                && !currentToken.isResultSet()) {
             nextToken();
-            messages.checkErrors();
         }
+        messages.checkErrors();
 
         //
         // Cursor opens are followed by TDS_TAB_INFO and TDS_COL_INFO
@@ -644,6 +645,7 @@ public class TdsCore {
                 return;
             }
         }
+        messages.checkErrors();
     }
 
     /**
@@ -2371,15 +2373,18 @@ public class TdsCore {
             if (severity < 10) {
                 severity = 11; // Ensure treated as error
             }
-            messages.addDiagnostic(number, state, severity,
-                                    message, server, procName, line);
+            if (severity >= 20) {
+                // A fatal error has occured, the connection will be closed by
+                // the server immediately after the last TDS_DONE packet
+                fatalError = true;
+            }
         } else {
             if (severity > 9) {
                 severity = 9; // Ensure treated as warning
             }
-            messages.addDiagnostic(number, state, severity,
-                                     message, server, procName, line);
         }
+        messages.addDiagnostic(number, state, severity,
+                message, server, procName, line);
     }
 
     /**
@@ -2939,6 +2944,12 @@ public class TdsCore {
 
         if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
             endOfResponse = true;
+
+            if (fatalError) {
+                // A fatal error has occured, the server has closed the
+                // connection
+                connection.setClosed();
+            }
         }
 
         if (serverType == Driver.SQLSERVER) {

@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.27 2004-12-14 15:00:29 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.28 2005-01-04 10:22:07 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -858,24 +858,28 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public int findColumn(String columnName) throws SQLException {
-         checkOpen();
+        checkOpen();
 
-         if (columnMap == null) {
-             columnMap = new HashMap();
+        if (columnMap == null) {
+            columnMap = new HashMap();
+        } else {
+            Object pos = columnMap.get(columnName);
+            if (pos != null) {
+                return ((Integer) pos).intValue();
+            }
+        }
 
-             for (int i = columnCount - 1; i >= 0; i--) {
-                 columnMap.put(columns[i].name.toUpperCase(),
-                               new Integer(i + 1));
-             }
-         }
+        // Rather than use toUpperCase()/toLowerCase(), which are costly,
+        // better do a sequential search. It's actually faster in most cases.
+        for (int i = 0; i < columnCount; i++) {
+            if (columns[i].name.equalsIgnoreCase(columnName)) {
+                columnMap.put(columnName, new Integer(i + 1));
 
-         Integer colIndex = (Integer) columnMap.get(columnName.toUpperCase());
+                return i + 1;
+            }
+        }
 
-         if (colIndex != null) {
-             return colIndex.intValue();
-         }
-
-         throw new SQLException(Messages.get("error.resultset.colname", columnName), "07009");
+        throw new SQLException(Messages.get("error.resultset.colname", columnName), "07009");
     }
 
     public int getInt(String columnName) throws SQLException {

@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.12 2004-12-20 15:51:17 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.13 2005-01-04 10:22:07 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -191,6 +191,28 @@ public class ResponseStream {
     }
 
     /**
+     * Skip a string from the server response stream. If the TDS protocol is
+     * 4.2 or 5.0 <code>len</code> is the length in bytes, otherwise it's the
+     * length in UCS2-LE characters (length in bytes == 2 * <code>len</code>).
+     *
+     * @param len the length of the string to skip <b>in bytes</b> in the case
+     *            of TDS 4.2/5.0 and <b>in characters</b> for TDS 7.0+
+     *            (UCS2-LE encoded strings)
+     * @throws IOException if an I/O error occurs
+     */
+    void skipString(int len) throws IOException {
+        if (len <= 0) {
+            return;
+        }
+
+        if (socket.getTdsVersion() >= Driver.TDS70) {
+            skip(len * 2);
+        } else {
+            skip(len);
+        }
+    }
+
+    /**
      * Retrieve a UCS2-LE (Unicode) encoded String object from the server
      * response stream.
      *
@@ -315,18 +337,29 @@ public class ResponseStream {
         return b1 | b2 | b3 | b4 | b5 | b6 | b7 | b8;
     }
 
-   /**
-    * Discard bytes from the server response stream.
-    *
-    * @param skip The number of bytes to discard.
-    * @return The skip parameter as an <code>int</code>.
-    * @throws IOException
-    */
-   int skip(int skip) throws IOException {
+    /**
+     * Discard bytes from the server response stream.
+     *
+     * @param skip The number of bytes to discard.
+     * @return The skip parameter as an <code>int</code>.
+     */
+    int skip(int skip) throws IOException {
         int tmp = skip;
 
-        while (skip-- > 0) {
-            read();
+        while (skip > 0) {
+            if (bufferPtr >= bufferLen) {
+                getPacket();
+            }
+
+            int available = bufferLen - bufferPtr;
+
+            if (skip > available) {
+                skip -= available;
+                bufferPtr = bufferLen;
+            } else {
+                bufferPtr += skip;
+                skip = 0;
+            }
         }
 
         return tmp;

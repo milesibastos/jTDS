@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.61 2004-12-20 15:51:17 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.62 2005-01-04 10:22:07 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2612,7 +2612,7 @@ public class TdsCore {
     private void tdsOutputParamToken()
         throws IOException, ProtocolException, SQLException {
         in.readShort(); // Packet length
-        in.readString(in.read()); // Column Name
+        in.skipString(in.read()); // Column Name
         in.skip(5);
 
         ColInfo col = new ColInfo();

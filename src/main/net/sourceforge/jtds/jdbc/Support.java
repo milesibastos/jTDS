@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.34 2004-12-05 12:07:31 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.35 2005-01-04 10:22:07 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -197,12 +197,13 @@ public class Support {
      * Convert an existing data object to the specified JDBC type.
      *
      * @param callerReference an object reference to the caller of this method;
-     *        must be a <code>Connection</code>, <code>Statement</code> or
-     *        <code>ResultSet</code>
-     * @param x The data object to convert.
-     * @param jdbcType The required type constant from java.sql.Types.
-     * @return The (possibly) converted data object.
-     * @throws SQLException if the conversion is not supported or fails.
+     *                        must be a <code>Connection</code>,
+     *                        <code>Statement</code> or <code>ResultSet</code>
+     * @param x               the data object to convert
+     * @param jdbcType        the required type constant from
+     *                        <code>java.sql.Types</code>
+     * @return the converted data object
+     * @throws SQLException if the conversion is not supported or fails
      */
     static Object convert(Object callerReference, Object x, int jdbcType, String charSet)
             throws SQLException {
@@ -213,6 +214,8 @@ public class Support {
                 case java.sql.Types.INTEGER:
                     if (x == null) {
                         return INTEGER_ZERO;
+                    } else if (x instanceof Integer) {
+                        return x;
                     } else if (x instanceof Byte) {
                         return new Integer(((Byte)x).byteValue() & 0xFF);
                     } else if (x instanceof Number) {
@@ -864,32 +867,50 @@ public class Support {
     }
 
     /**
-     * Update the SQL string and replace the &#63; markers with parameter names
+     * Update the SQL string and replace the ? markers with parameter names
      * eg @P0, @P1 etc.
      *
-     * @param sql The SQL containing markers to substitute.
-     * @param list The Parameter list.
-     * @return The modified SQL as a <code>String</code>.
+     * @param sql  the SQL containing markers to substitute
+     * @param list the parameter list
+     * @return the modified SQL as a <code>String</code>
      */
-    static String substituteParamMarkers(String sql, ParamInfo[] list){
-        StringBuffer buf = new StringBuffer(sql.length() + list.length * 6);
-        int start = 0;
+    static String substituteParamMarkers(String sql, ParamInfo[] list) {
+        // A parameter can have at most 8 characters: " @P" plus at most 4
+        // digits plus " ". We substract the "?" placeholder, that's at most
+        // 7 extra characters needed for each parameter.
+        char[] buf = new char[sql.length() + list.length * 7];
+        int bufferPtr = 0; // Output buffer pointer
+        int start = 0;     // Input string pointer
 
         for (int i = 0; i < list.length; i++) {
             int pos = list[i].markerPos;
 
             if (pos > 0) {
-                buf.append(sql.substring(start, list[i].markerPos));
+                sql.getChars(start, pos, buf, bufferPtr);
+                bufferPtr += (pos - start);
                 start = pos + 1;
-                buf.append(" @P").append(i).append(' ');
+
+                // Append " @P"
+                buf[bufferPtr++] = ' ';
+                buf[bufferPtr++] = '@';
+                buf[bufferPtr++] = 'P';
+
+                // Append parameter number
+                String number = String.valueOf(i);
+                number.getChars(0, number.length(), buf, bufferPtr);
+                bufferPtr += number.length();
+
+                // Append " "
+                buf[bufferPtr++] = ' ';
             }
         }
 
         if (start < sql.length()) {
-            buf.append(sql.substring(start));
+            sql.getChars(start, sql.length(), buf, bufferPtr);
+            bufferPtr += (sql.length() - start);
         }
 
-        return buf.toString();
+        return new String(buf, 0, bufferPtr);
     }
 
     /**

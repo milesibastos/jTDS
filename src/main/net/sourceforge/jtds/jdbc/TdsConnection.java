@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.9 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2004-02-06 17:50:24 bheineman Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.9 2004-02-05 19:00:31 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.10 2004-02-06 17:50:24 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -125,7 +125,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.9 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2004-02-06 17:50:24 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -882,19 +882,65 @@ public class TdsConnection implements Connection
         throw new UnsupportedOperationException();
     }
 
-    public java.sql.PreparedStatement prepareStatement(String str, int param) throws java.sql.SQLException
-    {
-        throw new UnsupportedOperationException();
+    //
+    // MJH - Add option to request return of generated keys.
+    //
+    public PreparedStatement prepareStatement(String sql, int param) throws SQLException {
+        checkClosed();
+        
+        boolean returnKeys = false;
+        
+        if (param == Statement.RETURN_GENERATED_KEYS
+            && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
+            StringBuffer tmpSQL = new StringBuffer(sql);
+
+            if (tdsVer == Tds.TDS70) {
+                tmpSQL.append("\r\nSELECT SCOPE_IDENTITY() AS ID");
+            } else {
+                tmpSQL.append("\r\nSELECT SCOPE_IDENTITY() AS ID");
+            }
+
+            tmpSQL.append("\r\nSELECT @@IDENTITY AS ID");
+            sql = tmpSQL.toString();            
+            returnKeys = true;
+        }
+
+        PreparedStatement_base stmt = new PreparedStatement_base(this, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        stmt.setReturnKeys(returnKeys);
+
+        return stmt;
     }
 
-    public java.sql.PreparedStatement prepareStatement(String str, int[] values) throws java.sql.SQLException
-    {
-        throw new UnsupportedOperationException();
+    //
+    // MJH - Add option to request return of generated keys.
+    // NB. SQL Server only allows one IDENTITY column per table so 
+    // cheat here and don't process the column parameter in detail.
+    //
+    public PreparedStatement prepareStatement(String sql, int[] values)
+    throws SQLException {
+        if (values == null) {
+            throw new SQLException("values cannot be null.");
+        } else  if (values.length != 1) {
+            throw new SQLException("One valid column index must be supplied.");
+        }
+
+        return prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
     }
 
-    public java.sql.PreparedStatement prepareStatement(String str, String[] str1) throws java.sql.SQLException
-    {
-        throw new UnsupportedOperationException();
+    //
+    // MJH - Add option to request return of generated keys.
+    // NB. SQL Server only allows one IDENTITY column per table so 
+    // cheat here and don't process the column parameter in detail.
+    //
+    public PreparedStatement prepareStatement(String sql, String[] str1)
+    throws SQLException {
+        if (str1 == null) {
+            throw new SQLException("str1 cannot be nulll.");
+        } else if (str1.length != 1) {
+            throw new SQLException("One valid column name must be supplied.");
+        }
+
+        return prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
     }
 
     public java.sql.PreparedStatement prepareStatement(String str, int param, int param2, int param3) throws java.sql.SQLException

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.13 2004-02-05 23:57:55 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.14 2004-02-06 17:50:24 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.13 2004-02-05 23:57:55 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.14 2004-02-06 17:50:24 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -75,6 +75,16 @@ public class TdsStatement implements java.sql.Statement
 
     private boolean isClosed = false;
 
+    //
+    // MJH - Indicates that user wants generated keys
+    //
+    private boolean returnKeys = false;
+
+    //
+    // MJH - Custom result set to store generated key values
+    //
+    private GenKeyResultSet lastGeneratedKey = null;
+
     public OutputParamHandler outParamHandler;
 
     public TdsStatement(TdsConnection con, int type, int concurrency)
@@ -95,6 +105,16 @@ public class TdsStatement implements java.sql.Statement
         throws SQLException
     {
         this(con, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+    }
+
+    /**
+     * MJH - Set the return generated keys flag.
+     * 
+     * @param value <code>true</code if generated keys should be retrieved;
+     *              <code>false</code> otherwise.
+     */
+    public void setReturnKeys(boolean  value) {
+        this.returnKeys = value;
     }
 
     /**
@@ -135,20 +155,22 @@ public class TdsStatement implements java.sql.Statement
      *            the query; never <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public ResultSet executeQuery(String sql) throws SQLException
-    {
+    public ResultSet executeQuery(String sql) throws SQLException {
         checkClosed();
 
-        if( type == ResultSet.TYPE_FORWARD_ONLY &&
-            concurrency == ResultSet.CONCUR_READ_ONLY )
-        {
-            if( internalExecute(sql) )
+        // MJH - Return keys never valid for this type of call
+        this.returnKeys = false;
+
+        if (type == ResultSet.TYPE_FORWARD_ONLY
+            && concurrency == ResultSet.CONCUR_READ_ONLY) {
+            if (internalExecute(sql)) {
                 return results;
-            else
+            } else {
                 throw new SQLException("No ResultSet was produced.");
-        }
-        else
+            }
+        } else {
             return new CursorResultSet(this, sql, fetchDir);
+        }
     }
 
     /**
@@ -162,16 +184,23 @@ public class TdsStatement implements java.sql.Statement
      *      an update count or there are no more results
      * @exception SQLException if a database access error occurs
      */
-    public final synchronized boolean internalExecute(String sql) throws SQLException
-    {
-        checkClosed();
-        return executeImpl(getTds(), sql, warningChain);
+    public final synchronized boolean internalExecute(String sql) throws SQLException {
+        // checkClosed();
+        // MJH - Invoke other method to simplify get gen keys logic
+        return internalExecute(sql, getTds(), warningChain); 
+        // return executeImpl(getTds(), sql, warningChain);
     }
 
-    public final synchronized boolean internalExecute(String sql, Tds tds, SQLWarningChain wChain) throws SQLException
-    {
+    public final synchronized boolean internalExecute(String sql, Tds tds, SQLWarningChain wChain)
+    throws SQLException {
+    	// MJH - Changed to get the results without freeing the Tds object so
+    	// we can call SELECT @@IDENTITY if requred.
         checkClosed();
-        return executeImpl(tds, sql, wChain);
+        boolean result = executeImpl(tds, sql, wChain);
+        internalGetGeneratedKeys(tds, result); // MJH Get the keys if required
+        releaseTds(); // MJH - OK we can free the Tds now if required.
+
+        return result;
     }
 
     private final boolean executeImpl(Tds tds, String sql, SQLWarningChain wChain)
@@ -194,7 +223,10 @@ public class TdsStatement implements java.sql.Statement
         //      statements
         wChain.checkForExceptions();
 
-        return getMoreResults(tds, wChain, true);
+        // return getMoreResults(tds, wChain, true);
+        // MJH - We do not want to free the Tds in case we
+        // need to get the generated keys.
+        return getMoreResults(tds, wChain, false);
     }
 
     public final synchronized boolean internalExecuteCall(String name, ParameterListItem[] formalParameterList,
@@ -211,10 +243,38 @@ public class TdsStatement implements java.sql.Statement
         //      sure they don't interfere with the the current ones.
         skipToEnd();
 
+        boolean result;
+        this.lastGeneratedKey = null;
+
         // execute the stored procedure.
         tds.executeProcedure(name, formalParameterList, actualParameterList,
                              this, wChain, getQueryTimeout(), false);
-        return getMoreResults(tds, wChain, true);
+
+//        return getMoreResults(tds, wChain, true);
+        // MJH - We do not want to free the Tds before checking to 
+        // see if we need to get the generated keys.
+        result = getMoreResults(tds, warningChain, false);
+
+        if (this.returnKeys && tds.moreResults() && !result) {
+            //
+            // MJH - OK We need to get the @@IDENTITY value
+            //
+            int saveCount = this.updateCount;
+
+            if (getMoreResults(tds, new SQLWarningChain(), false)) {
+                // Construct special result set
+                this.lastGeneratedKey = new GenKeyResultSet(this, this.results);
+                this.results.close();
+                this.results = null;
+            }
+
+            this.updateCount = saveCount;
+            result = false;
+        }
+
+        releaseTds();
+
+        return this.results != null;
     }
 
     /**
@@ -235,6 +295,9 @@ public class TdsStatement implements java.sql.Statement
     public synchronized int executeUpdate(String sql) throws SQLException {
         checkClosed();
 
+        // MJH - Block return keys for this type of executeUpdate()
+        this.returnKeys = false;
+
         if (internalExecute(sql)) {
             skipToEnd();
             releaseTds();
@@ -253,8 +316,9 @@ public class TdsStatement implements java.sql.Statement
             }
 
             releaseTds();
+
             // We should return 0 (at least that's what the javadoc above says)
-            return res==-1 ? 0 : res;
+            return (res == -1) ? 0 : res;
         }
     }
 
@@ -547,9 +611,12 @@ public class TdsStatement implements java.sql.Statement
         // SAfe As the javadoc above says, this should be a no-op.
     }
 
-    public synchronized boolean execute(String sql) throws SQLException
-    {
+    public synchronized boolean execute(String sql) throws SQLException {
         checkClosed();
+
+        // MJH - Block return keys action for this type of execute       
+        this.returnKeys = false;
+
         return internalExecute(sql);
     }
 
@@ -861,43 +928,161 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("Statement already closed.");
     }
 
-    public boolean execute(String str, int param) throws java.sql.SQLException {
-        NotImplemented();
-        return false;
+    //
+    // MJH - Add option to request return of generated keys.
+    //
+    public boolean execute(String str, int param) throws SQLException {
+        checkClosed();
+
+        if (param == Statement.RETURN_GENERATED_KEYS
+            && str.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
+            this.returnKeys = true;
+        } else {
+            this.returnKeys = false;
+        }
+
+        return internalExecute(str);
+    }
+    //
+    // MJH - Add option to request return of generated keys.
+    // NB. SQL Server only allows one IDENTITY column per table so 
+    // cheat here and don't process the column parameter in detail.
+    //
+    public boolean execute(String str, String[] str1) throws SQLException {
+        if (str1 == null) {
+            throw new SQLException("str1 cannot be null.");
+        } else if (str1.length != 1) {
+            throw new SQLException("One valid column name must be supplied");
+        }
+
+        return execute(str, Statement.RETURN_GENERATED_KEYS);
+    }
+    //
+    // MJH - Add option to request return of generated keys.
+    // NB. SQL Server only allows one IDENTITY column per table so 
+    // cheat here and don't process the column parameter in detail.
+    //
+    public boolean execute(String str, int[] values) throws SQLException {
+        if (values == null) {
+            throw new SQLException("values cannot be null.");
+        } else if (values.length != 1) {
+            throw new SQLException("One valid column index must be supplied.");
+        }
+
+        return execute(str, Statement.RETURN_GENERATED_KEYS);
     }
 
-    public boolean execute(String str, String[] str1) throws java.sql.SQLException {
-        NotImplemented();
-        return false;
+    //
+    // MJH - Add option to request return of generated keys.
+    // NB. SQL Server only allows one IDENTITY column per table so 
+    // cheat here and don't process the column parameter in detail.
+    //
+    public int executeUpdate(String str, String[] str1) throws SQLException {
+        if (str1 == null) {
+            throw new SQLException("str1 cannot be null.");
+        } else if (str1.length != 1) {
+            throw new SQLException("One valid column name must be supplied.");
+        }
+
+        return executeUpdate(str, Statement.RETURN_GENERATED_KEYS);
     }
 
-    public boolean execute(String str, int[] values) throws java.sql.SQLException {
-        NotImplemented();
-        return false;
-    }
+    //
+    // MJH - Add option to request return of generated keys.
+    // NB. SQL Server only allows one IDENTITY column per table so 
+    // cheat here and don't process the column parameter in detail.
+    //
+    public int executeUpdate(String str, int[] values) throws SQLException {
+        if (values == null) {
+            throw new SQLException("values cannot be null.");
+        } else if (values.length != 1) {
+            throw new SQLException("One valid column index must be supplied.");
+        }
 
-    public int executeUpdate(String str, String[] str1) throws java.sql.SQLException {
-        NotImplemented();
-        return Integer.MIN_VALUE;
+        return executeUpdate(str, Statement.RETURN_GENERATED_KEYS);
     }
+    //
+    // MJH - Add option to request return of generated keys.
+    //
+    public int executeUpdate(String str, int param) throws SQLException {
+        checkClosed();
 
-    public int executeUpdate(String str, int[] values) throws java.sql.SQLException {
-        NotImplemented();
-        return Integer.MIN_VALUE;
+        if (param == Statement.RETURN_GENERATED_KEYS
+            && str.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
+            this.returnKeys = true;
+        } else {
+            this.returnKeys = false;
+        }
+
+        if (internalExecute(str)) {
+            skipToEnd();
+            throw new SQLException("executeUpdate can't return a result set.");
+        } else {
+            int res = getUpdateCount();
+            // We should return 0 (at least that's what the javadoc above says)
+            return (res == -1) ? 0 : res;
+        }
     }
-
-    public int executeUpdate(String str, int param) throws java.sql.SQLException {
-        NotImplemented();
-        return Integer.MIN_VALUE;
-    }
-
-    public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException {
-        NotImplemented();
-        return null;
+    
+    //
+    // MJH - At last! Return the special result set containing the
+    // key generated by the last insert statement.
+    //
+    public ResultSet getGeneratedKeys() throws SQLException {
+        checkClosed();
+        return(this.lastGeneratedKey != null) ? this.lastGeneratedKey : new GenKeyResultSet(this);
     }
 
     public int getResultSetHoldability() throws java.sql.SQLException {
         NotImplemented();
         return Integer.MIN_VALUE;
+    }
+
+    //
+    // MJH - This method calls SELECT @@IDENTIY to obtain the value of the
+    // last generated IDENTIY column. The value is stored in special resultSet
+    // for late use in the getGeneratedKeys() method.
+    //
+    private void internalGetGeneratedKeys(Tds tds, boolean result) throws SQLException {
+        this.lastGeneratedKey = null;
+    
+        if (this.returnKeys
+            && !(this instanceof CallableStatement_base)
+            && !(this instanceof CallableStatement_base)
+            && !result
+            && !tds.moreResults()) {
+    
+            //
+            // Routine only used by Statement
+            //
+            int saveCount = this.updateCount; // Original value will be reset to -1 by getMoreResults()
+    
+            try {
+                SQLWarningChain tmpWarnings = new SQLWarningChain();
+                // SCOPE_IDENTITY() is prefered as it avoids problems with
+                // counts returned from triggers.
+                // @@IDENTITY is required for SQL 6.5 / Sybase in all cases.
+                //
+                String sql;
+    
+                if (tds.getTdsVer() == Tds.TDS70) {
+                    sql = "SELECT SCOPE_IDENTITY() AS ID";
+                } else {
+                    sql = "SELECT @@IDENTITY AS ID";
+                }
+    
+                if (executeImpl(tds, sql, tmpWarnings)) {
+                    // Construct a special result set.
+                    this.lastGeneratedKey = new GenKeyResultSet(this, this.results);
+                    this.results.close();
+                    this.results = null;
+                }
+            } catch (Exception e) {
+                throw new SQLException(e.getMessage());
+            } finally {
+                this.results = null; // Tidy up.
+                this.updateCount = saveCount; // Restore original count.
+            }
+        }
     }
 }

@@ -2,7 +2,7 @@ Changes from jTDS 0.9-rc1
 =========================
 
 08/17/2004 - Brian Heineman
- o Additional corrections for bug [1006449] 0.9rc1: Driver version broken;
+ o Additional corrections for bug [966274] Trusted Connections no longer work;
    (thanks to David Kilzer and Joel Fouse).
 
 08/16/2004 - David Kilzer

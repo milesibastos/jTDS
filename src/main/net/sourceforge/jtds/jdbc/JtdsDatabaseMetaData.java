@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.5 2004-07-29 00:14:53 ddkilzer Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.6 2004-07-29 20:11:21 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -275,7 +275,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param columnNamePattern a column name pattern
      * @return ResultSet - each row is a column privilege description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getColumnPrivileges(String catalog,
@@ -360,7 +360,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param columnNamePattern a column name pattern
      * @return ResultSet - each row is a column description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getColumns(String catalog,
@@ -481,7 +481,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param foreignTable the table name that imports the key
      * @return ResultSet - each row is a foreign key column description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getImportedKeys
      */
     public java.sql.ResultSet getCrossReference(String primaryCatalog,
@@ -558,7 +558,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *
      * @return the default isolation level
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see Connection
      */
     public int getDefaultTransactionIsolation() throws SQLException {
@@ -674,7 +674,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param table a table name
      * @return ResultSet - each row is a foreign key column description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getImportedKeys
      */
     public java.sql.ResultSet getExportedKeys(String catalog,
@@ -777,7 +777,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param table a table name
      * @return ResultSet - each row is a primary key column description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getExportedKeys
      */
     public java.sql.ResultSet getImportedKeys(String catalog,
@@ -1328,7 +1328,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param procedureNamePattern a procedure name pattern
      * @return ResultSet - each row is a procedure description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getProcedures(String catalog,
@@ -1388,7 +1388,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         //
         // MJH - isLogin column only in MSSQL >= 7.0
         //
-        if (this.tdsVersion >= Driver.TDS70) {
+        if (tdsVersion >= Driver.TDS70) {
             sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE islogin=1";
         } else {
             sql = "SELECT name AS TABLE_SCHEM FROM dbo.sysusers WHERE uid>0";
@@ -1497,7 +1497,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param tableNamePattern a table name pattern
      * @return ResultSet - each row is a table privilege description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getTablePrivileges(String catalog,
@@ -1559,7 +1559,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param types a list of table types to include; null returns all types
      * @return ResultSet - each row is a table description
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see #getSearchStringEscape
      */
     public java.sql.ResultSet getTables(String catalog,
@@ -1602,19 +1602,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             cstmt.setString(4, buf.toString());
         }
 
-        boolean hasResultSet = cstmt.execute();
-
-        // Consume any update counts
-        while (!hasResultSet) {
-            if (cstmt.getUpdateCount() == -1) {
-                break;
-            }
-            
-            hasResultSet = cstmt.getMoreResults();
-        }
-
-        // If there is not a result set, let the SQLException propagate to the caller.
-        JtdsResultSet rs = (JtdsResultSet) cstmt.getResultSet();
+        JtdsResultSet rs = (JtdsResultSet) cstmt.executeQuery();
 
         rs.setColName(1, "TABLE_CAT");
         rs.setColLabel(1, "TABLE_CAT");
@@ -2723,7 +2711,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param level the values are defined in java.sql.Connection
      * @return <code>true</code> if so
      * @throws SQLException if a database-access error occurs.
-     * 
+     *
      * @see Connection
      */
     public boolean supportsTransactionIsolationLevel(int level)
@@ -2792,7 +2780,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param type defined in <code>java.sql.ResultSet</code>
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @throws SQLException if a database access error occurs
-     * 
+     *
      * @see Connection
      */
     public boolean supportsResultSetType(int type) throws SQLException {
@@ -2808,7 +2796,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param concurrency type defined in <code>java.sql.ResultSet</code>
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @throws SQLException if a database access error occurs
-     * 
+     *
      * @see Connection
      */
     public boolean supportsResultSetConcurrency(int type, int concurrency)

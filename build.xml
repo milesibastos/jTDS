@@ -13,6 +13,7 @@
 
     <property name="build.compiler" value="modern"/>
     <property name="javac.debug" value="on"/>
+    <property name="javac.optimize" value="off"/>
 
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
@@ -40,7 +41,7 @@
   </target>
 
   <target name="compile" depends="init,prepare">
-    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}"/>
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" />
   </target>
 
   <target name="javadoc" depends="prepare">

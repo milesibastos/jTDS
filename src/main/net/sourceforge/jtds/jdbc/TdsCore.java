@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.53 2004-12-02 15:43:19 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.54 2004-12-03 14:48:58 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -435,7 +435,7 @@ public class TdsCore {
     /**
      * Retrieve the current result set data items.
      *
-     * @return The row data as a <code>ColData[]</code>.
+     * @return the row data as an <code>Object</code> array
      */
     Object[] getRowData() {
         return rowData;

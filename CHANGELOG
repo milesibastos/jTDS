@@ -2,6 +2,7 @@ Changes from jTDS 0.9
 =========================
 
 12/03/2004 - Alin Sinpalean
+ o Removed ColData from CVS (forgot to do it when applying the patch).
  o Applied Mike's patch [1077886] XA Emulation mode.
 
 12/02/2004 - Alin Sinpalean

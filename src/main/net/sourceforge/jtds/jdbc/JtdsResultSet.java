@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.23 2004-12-01 15:37:19 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.24 2004-12-03 14:48:58 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -245,8 +245,8 @@ public class JtdsResultSet implements ResultSet {
     /**
      * Get the specified column's data item.
      *
-     * @param index The column index in the row.
-     * @return The column value as a <code>ColData</code> object.
+     * @param index the column index in the row
+     * @return the column value as an <code>Object</code>
      * @throws SQLException if the connection is closed;
      *         if <code>index</code> is less than <code>1</code>;
      *         if <code>index</code> is greater that the number of columns;
@@ -324,7 +324,7 @@ public class JtdsResultSet implements ResultSet {
     /**
      * Create a new row containing empty data items.
      *
-     * @return The new row as a <code>ColData[]</code>.
+     * @return the new row as an <code>Object</code> array
      */
     protected Object[] newRow() {
         Object row[] = new Object[columns.length];
@@ -335,8 +335,8 @@ public class JtdsResultSet implements ResultSet {
     /**
      * Copy an existing result set row.
      *
-     * @param row The result set row to copy.
-     * @return The new row as a <code>ColData[]</code>.
+     * @param row the result set row to copy
+     * @return the new row as an <code>Object</code> array
      */
     protected Object[] copyRow(Object[] row) {
         Object copy[] = new Object[columns.length];

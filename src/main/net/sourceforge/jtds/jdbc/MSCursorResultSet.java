@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.34 2004-12-02 15:43:19 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.35 2004-12-03 14:48:58 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -218,9 +218,10 @@ public class MSCursorResultSet extends JtdsResultSet {
     /**
      * Get the specified column's data item.
      *
-     * @param index The column index in the row.
-     * @return The column value as a <code>ColData</code> object.
-     * @throws SQLException
+     * @param index the column index in the row
+     * @return the column value as an <code>Object</code>
+     * @throws SQLException if the index is out of bounds or there is no
+     *                      current row
      */
     protected Object getColumn(int index) throws SQLException {
         if (index < 1 || index > columnCount) {

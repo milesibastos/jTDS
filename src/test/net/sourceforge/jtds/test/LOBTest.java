@@ -423,7 +423,6 @@ public class LOBTest extends TestBase {
                      + "CONSTRAINT pk_blobupdate1 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
-
         stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobupdate1");
 
@@ -739,8 +738,8 @@ public class LOBTest extends TestBase {
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull4 (data) VALUES (?)");
 
-        // Test PreparedStatement.setObject(int,Object)
-        pstmt.setObject(1, null);
+        // Test PreparedStatement.setObject(int,Object,int)
+        pstmt.setObject(1, null, Types.BLOB);
         assertTrue(pstmt.executeUpdate() == 1);
 
         pstmt.close();
@@ -778,8 +777,8 @@ public class LOBTest extends TestBase {
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull5 (data) VALUES (?)");
 
-        // Test PreparedStatement.setObject(int,Object,int)
-        pstmt.setObject(1, null, Types.BLOB);
+        // Test PreparedStatement.setNull()
+        pstmt.setNull(1, Types.BLOB);
         assertTrue(pstmt.executeUpdate() == 1);
 
         pstmt.close();
@@ -812,21 +811,27 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull6() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull6 (data IMAGE NULL)");
+        stmt.execute("CREATE TABLE #blobsetnull6 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobsetnull6 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull6 (data) VALUES (?)");
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull6");
 
-        // Test PreparedStatement.setNull()
-        pstmt.setNull(1, Types.BLOB);
-        assertTrue(pstmt.executeUpdate() == 1);
+        rs.moveToInsertRow();
 
-        pstmt.close();
+        // Test ResultSet.updateBinaryStream()
+        rs.updateBinaryStream(2, null, 0);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
 
         Statement stmt2 = con.createStatement();
-        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull6");
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull6");
 
-        assertTrue(rs.next());
+        assertTrue(rs2.next());
 
         // Test ResultSet.getBinaryStream()
         assertTrue(rs.getBinaryStream(1) == null);
@@ -844,9 +849,189 @@ public class LOBTest extends TestBase {
         assertTrue(rs.getObject(1) == null);
         assertTrue(rs.wasNull());
 
-        assertTrue(!rs.next());
+        assertTrue(!rs2.next());
         stmt2.close();
+        rs2.close();
+    }
+
+    public void testBlobSetNull7() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull7 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobsetnull7 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull7");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateBlob()
+        rs.updateBlob(2, null);
+
+        rs.insertRow();
+
+        stmt.close();
         rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull7");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testBlobSetNull8() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull8 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobsetnull8 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull8");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateBytes()
+        rs.updateBytes(2, null);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull8");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testBlobSetNull9() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull9 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobsetnull9 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull9");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateObject()
+        rs.updateObject(2,  null);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull9");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testBlobSetNull10() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull10 (id NUMERIC IDENTITY, data IMAGE, "
+                     + "CONSTRAINT pk_blobsetnull10 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #blobsetnull10");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateNull()
+        rs.updateNull(2);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #blobsetnull10");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
     }
 
     /*************************************************************************
@@ -1902,6 +2087,324 @@ public class LOBTest extends TestBase {
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
+    }
+
+    public void testClobSetNull9() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull9 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobsetnull9 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobsetnull9");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateAsciiStream()
+        rs.updateAsciiStream(2, null, 0);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobsetnull9");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobSetNull10() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull10 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobsetnull10 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobsetnull10");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateCharacterStream()
+        rs.updateCharacterStream(2, null, 0);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobsetnull10");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobSetNull11() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull11 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobsetnull11 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobsetnull11");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateClob()
+        rs.updateClob(2, null);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobsetnull11");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobSetNull12() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull12 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobsetnull12 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobsetnull12");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateObject()
+        rs.updateObject(2, null);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobsetnull12");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobSetNull13() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull13 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobsetnull13 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobsetnull13");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateString()
+        rs.updateString(2, null);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobsetnull13");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
+    }
+
+    public void testClobSetNull14() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull14 (id NUMERIC IDENTITY, data TEXT, "
+                     + "CONSTRAINT pk_clobsetnull14 PRIMARY KEY CLUSTERED (id))");
+        stmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #clobsetnull14");
+
+        rs.moveToInsertRow();
+
+        // Test ResultSet.updateNull()
+        rs.updateNull(2);
+
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT data FROM #clobsetnull14");
+
+        assertTrue(rs2.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs2.next());
+        stmt2.close();
+        rs2.close();
     }
 
     private byte[] getBlobTestData() {

@@ -101,19 +101,83 @@ public class SAfeTest extends DatabaseTestCase {
 
     /**
      * Test cancelling. Create 2 connections, lock some records on one of them
-     * and try to read them using the other one. Then, try executing some other
-     * queries on the second connection to make sure it's in a correct state.
+     * and try to read them using the other one. Cancel the statement from the
+     * second connection, then try executing a simple query on it to make sure
+     * it's in a correct state.
      */
-    public void testCancel0002() throws Exception {
-        // Create another connection to make sure the 2 statements use the same
-        // physical connection
+    public void testCancel0001() throws Exception {
+        // Create another connection to make sure the statements will deadlock
         Connection con2 = getConnection();
 
         Statement stmt = con.createStatement();
         assertTrue(!stmt.execute(
-            "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
-            "insert into ##SAfe0002 values (1, 'Line 1') "+
-            "insert into ##SAfe0002 values (2, 'Line 2')"));
+                "create table ##SAfe0001 (id int primary key, val varchar(20) null) "+
+                "insert into ##SAfe0001 values (1, 'Line 1') "+
+                "insert into ##SAfe0001 values (2, 'Line 2')"));
+        assertEquals(1, stmt.getUpdateCount());
+        assertTrue(!stmt.getMoreResults());
+        assertEquals(1, stmt.getUpdateCount());
+        assertTrue(!stmt.getMoreResults());
+        assertEquals(-1, stmt.getUpdateCount());
+
+        con.setAutoCommit(false);
+        // This is where we lock the first line in the table
+        stmt.executeUpdate("update ##SAfe0001 set val='Updated Line' where id=1");
+
+        final Statement stmt2 = con2.createStatement();
+
+        new Thread() {
+            public void run() {
+                try {
+                    sleep(1000);
+                    stmt2.cancel();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }.start();
+
+        try {
+            stmt2.executeQuery("if 1 = 1 select * from ##SAfe0001");
+            // Make sure we get to the
+            stmt2.getMoreResults();
+            fail("Expecting cancel exception");
+        } catch( SQLException ex ) {
+            assertEquals(
+                    "Expecting cancel exception. Got " + ex.getMessage(),
+                    "S1008", ex.getSQLState());
+        }
+
+        con.setAutoCommit(true);
+
+        stmt.execute("drop table ##SAfe0001");
+        stmt.close();
+
+        // Just run a tiny query to make sure the stream is still in working
+        // condition.
+        ResultSet rs = stmt2.executeQuery("select 1");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertTrue(!rs.next());
+        stmt2.close();
+        con2.close();
+    }
+
+    /**
+     * Test cancelling. Create 2 connections, lock some records on one of them
+     * and try to read them using the other one with a timeout set. When the
+     * second connection times out try executing a simple query on it to make
+     * sure it's in a correct state.
+     */
+    public void testCancel0002() throws Exception {
+        // Create another connection to make sure the statements will deadlock
+        Connection con2 = getConnection();
+
+        Statement stmt = con.createStatement();
+        assertTrue(!stmt.execute(
+                "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
+                "insert into ##SAfe0002 values (1, 'Line 1') "+
+                "insert into ##SAfe0002 values (2, 'Line 2')"));
         assertEquals(1, stmt.getUpdateCount());
         assertTrue(!stmt.getMoreResults());
         assertEquals(1, stmt.getUpdateCount());
@@ -128,7 +192,7 @@ public class SAfeTest extends DatabaseTestCase {
         stmt2.setQueryTimeout(1);
 
         try {
-            stmt2.executeQuery("select * from ##SAfe0002");
+            stmt2.executeQuery("if 1 = 1 select * from ##SAfe0002");
             fail("Expecting timeout exception");
         } catch( SQLException ex ) {
             assertEquals(
@@ -138,7 +202,6 @@ public class SAfeTest extends DatabaseTestCase {
 
         // SAfe What should we do with the results if the execution timed out?!
 
-        con.commit();
         con.setAutoCommit(true);
 
         stmt.execute("drop table ##SAfe0002");
@@ -152,6 +215,58 @@ public class SAfeTest extends DatabaseTestCase {
         assertTrue(!rs.next());
         stmt2.close();
         con2.close();
+    }
+
+    /**
+     * Test for bug [1120442] Statement hangs in socket read after
+     * Statement.cancel().
+     * <p/>
+     * In 1.0.1 and earlier versions network packets consisting of a single
+     * TDS_DONE packet with the CANCEL flag set were ignored and a new read()
+     * was attempted, essentially causing a deadlock.
+     * <p/>
+     * Because it relies on a particular succession of events this test will
+     * not always work as expected, i.e. the cancel might be executed too early
+     * or too late, but it won't fail in this situation.
+     */
+    public void testCancel0003() throws SQLException {
+        final Statement stmt = con.createStatement();
+
+        for (int i = 0; i < 10; i++) {
+            Thread t = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        // Cancel the statement and hope this happens
+                        // immediately after the executeQuery() below and
+                        // before any results arrive
+                        stmt.cancel();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            t.start();
+
+            // Create a thread that executes a query
+            try {
+                stmt.executeQuery("select max(id) from sysobjects");
+                // Can't fail here, the cancel() request might be out of order
+            } catch (SQLException ex) {
+                // Request was canceled
+                assertEquals("S1008", ex.getSQLState());
+            }
+
+            // Wait for the cancel to finish executing
+            try {
+                t.join();
+            } catch (InterruptedException ex) {
+                // Ignore
+            }
+        }
+
+        // Make sure the connection is still alive
+        stmt.executeQuery("select 1");
+        stmt.close();
     }
 
     // MT-unsafe!!!

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.68 2005-02-09 09:57:36 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.69 2005-02-12 19:40:51 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -3289,8 +3289,8 @@ public class TdsCore {
 
         if ((currentToken.status & DONE_CANCEL) != 0) {
             // Indicates cancel packet
-            messages.addDiagnostic(9999, 0, 14,
-                                    "Request cancelled", "", "", 0);
+            messages.addException(
+                    new SQLException("Request cancelled", "S1008", 0));
         }
     }
 

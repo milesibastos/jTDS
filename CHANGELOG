@@ -1,5 +1,9 @@
-Changes from jTDS 1.0
+Changes from jTDS 1.0.1
 =======================
+
+02/12/2005 - Alin Sinpalean
+ o Corrected bug [1120442] Statement hangs in socket read after
+   Statement.cancel().
 
 02/10/2005 - Alin Sinpalean
  o Improved test for bug [1116046] {fn } escape can't handle nested functions.

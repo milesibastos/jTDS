@@ -35,7 +35,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.7 2004-08-06 03:18:15 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.8 2004-08-06 23:10:44 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -200,7 +200,7 @@ public class DriverUnitTest extends UnitTestBase {
         Map requiredTrueMap = new HashMap();
         requiredTrueMap.put(Messages.get("prop.servername"), Boolean.TRUE);
         requiredTrueMap.put(Messages.get("prop.servertype"), Boolean.TRUE);
-        
+
         final Map infoMap = new HashMap();
         loadDriverPropertyInfoMap(infoMap);
 

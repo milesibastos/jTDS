@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.25 2004-08-14 01:29:42 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.26 2004-08-17 20:07:52 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -1888,7 +1888,7 @@ public class TdsCore {
 
         if (tdsVersion >= Driver.TDS70) {
             while (bytesRead < pktLen) {
-                if (tdsVersion == Driver.TDS80) {
+                if (tdsVersion >= Driver.TDS80) {
                     in.read();  // Not sure what this flag is used for
                     bytesRead++;
                 }
@@ -2770,57 +2770,67 @@ public class TdsCore {
                               boolean noMetaData)
         throws IOException, SQLException {
         int prepareSql = connection.getPrepareSql();
+        
+        if ((parameters == null || (parameters != null && parameters.length == 0)) 
+                && (prepareSql == EXECUTE_SQL || prepareSql == PREPARE || prepareSql == PREPEXEC)) {
+            // Downgrade EXECUTE_SQL, PREPARE and PREPEXEC to UNPREPARED
+            // if there are no parameters.
+            //
+            // Should we downgrade TEMPORARY_STORED_PROCEDURES as well?
+            prepareSql = UNPREPARED;
+        }
+        
+        if (isPreparedProcedureName(procName)) {
+            // If the procedure is a prepared handle then redefine the
+            // procedure name as sp_execute with the handle as a parameter.
+            ParamInfo params[] = new ParamInfo[parameters.length + 1];
 
-        if (procName == null && parameters != null && parameters.length > 0
-                && prepareSql == EXECUTE_SQL) {
-            // Use sp_executesql approach
-            procName = "sp_executesql";
-
-            ParamInfo[] params = new ParamInfo[parameters.length + 2];
-
-            System.arraycopy(parameters, 0, params, 2, parameters.length);
+            System.arraycopy(parameters, 0, params, 1, parameters.length);
 
             params[0] = new ParamInfo();
-            params[0].jdbcType = Types.VARCHAR;
-            params[0].bufferSize = 4000;
+            params[0].jdbcType = Types.INTEGER;
+            params[0].bufferSize = 4;
             params[0].isSet = true;
-            params[0].isUnicode = true;
-            params[0].value = Support.substituteParamMarkers(sql, parameters);
+            params[0].isUnicode = false;
+            params[0].value = new Integer(procName);
             TdsData.getNativeType(connection, params[0]);
 
-            params[1] = new ParamInfo();
-            params[1].jdbcType = Types.VARCHAR;
-            params[1].bufferSize = 4000;
-            params[1].isSet = true;
-            params[1].isUnicode = true;
-            params[1].value = Support.getParameterDefinitions(parameters);
-            TdsData.getNativeType(connection, params[1]);
-
             parameters = params;
-        } else if (prepareSql == PREPARE || prepareSql == PREPEXEC) {
-            if (isPreparedProcedureName(procName)) {
-                if (parameters == null) {
-                    parameters = new ParamInfo[0];
-                }
+
+            // Use sp_execute approach
+            procName = "sp_execute";
+        } else if (procName == null) {
+            if (prepareSql == EXECUTE_SQL) {
+                ParamInfo[] params;
                 
-                ParamInfo params[] = new ParamInfo[parameters.length + 1];
-    
-                System.arraycopy(parameters, 0, params, 1, parameters.length);
+                if (parameters == null) {
+                    params = new ParamInfo[2];
+                } else {
+                    params = new ParamInfo[parameters.length + 2];
+                    System.arraycopy(parameters, 0, params, 2, parameters.length);
+                }
     
                 params[0] = new ParamInfo();
-                params[0].jdbcType = Types.INTEGER;
-                params[0].bufferSize = 4;
+                params[0].jdbcType = Types.VARCHAR;
+                params[0].bufferSize = 4000;
                 params[0].isSet = true;
-                params[0].isUnicode = false;
-                params[0].value = new Integer(procName);
+                params[0].isUnicode = true;
+                params[0].value = Support.substituteParamMarkers(sql, parameters);
                 TdsData.getNativeType(connection, params[0]);
     
-                parameters = params;
+                params[1] = new ParamInfo();
+                params[1].jdbcType = Types.VARCHAR;
+                params[1].bufferSize = 4000;
+                params[1].isSet = true;
+                params[1].isUnicode = true;
+                params[1].value = Support.getParameterDefinitions(parameters);
+                TdsData.getNativeType(connection, params[1]);
     
-                // Use sp_execute approach
-                procName = "sp_execute";
-            } else if (prepareSql == PREPEXEC && procName == null
-                    && parameters != null && parameters.length > 0) {
+                parameters = params;
+                
+                // Use sp_executesql approach
+                procName = "sp_executesql";
+            } else if (prepareSql == PREPEXEC) {
                 ParamInfo params[] = new ParamInfo[parameters.length + 3];
                 
                 System.arraycopy(parameters, 0, params, 3, parameters.length);
@@ -2831,7 +2841,7 @@ public class TdsCore {
                 params[0].jdbcType = Types.INTEGER;
                 params[0].isOutput = true;
                 TdsData.getNativeType(connection, params[0]);
-
+    
                 // Setup parameter descriptor param
                 params[1] = new ParamInfo();
                 params[1].isSet = true;
@@ -2847,10 +2857,10 @@ public class TdsCore {
                 params[2].value = Support.substituteParamMarkers(sql, parameters);
                 params[2].isUnicode = true;
                 TdsData.getNativeType(connection, params[2]);
-
+    
                 parameters = params;
                 
-                // Use sp_execute approach
+                // Use sp_prepexec approach
                 procName = "sp_prepexec";
             }
         }
@@ -2860,7 +2870,7 @@ public class TdsCore {
             out.setPacketType(RPC_PKT);
             Integer shortcut;
 
-            if (tdsVersion == Driver.TDS80
+            if (tdsVersion >= Driver.TDS80
             	&& (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
                 // Use the shortcut form of procedure name for TDS8
                 out.write((short) -1);

@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.13 2004-08-14 01:29:42 bheineman Exp $
+ * @version $Id: Support.java,v 1.14 2004-08-17 20:07:52 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -762,7 +762,8 @@ public class Support {
 
     /**
      * Constructs a parameter definition string for use with
-     * sp_executesql, sp_prepare and sp_prepexec.
+     * sp_executesql, sp_prepare, sp_prepexec, sp_cursoropen,
+     * sp_cursorprepare and sp_cursorprepexec.
      * 
      * @param parameters Parameters to construct the definition for
      * @return a parameter definition string
@@ -772,8 +773,13 @@ public class Support {
         
         // Build parameter descriptor            
         for (int i = 0; i < parameters.length; i++) {
-            sql.append("@P");
-            sql.append(i);
+            if (parameters[i].name == null) {
+                sql.append("@P");
+                sql.append(i);
+            } else {
+                sql.append(parameters[i].name);
+            }
+            
             sql.append(' ');
             sql.append(parameters[i].sqlType);
 

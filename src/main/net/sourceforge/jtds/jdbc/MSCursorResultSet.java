@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.9 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.10 2004-08-17 20:07:52 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -189,7 +189,8 @@ public class MSCursorResultSet extends JtdsResultSet {
                               String procName,
                               ParamInfo[] procedureParams)
     throws SQLException {
-        int scrollOpt, ccOpt;
+        int scrollOpt;
+        int ccOpt;
         TdsCore tds = statement.getTds();
 
         switch (this.resultSetType) {
@@ -221,6 +222,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         if (tds.getTdsVersion() == Driver.TDS42
             && procedureParams != null && procedureParams.length > 0) {
             // SQL 6.5 does not support stored procs (with params) in the sp_cursor call
+            procName = null;
+        } else if (TdsCore.isPreparedProcedureName(procName)) {
             procName = null;
         }
 
@@ -299,32 +302,16 @@ public class MSCursorResultSet extends JtdsResultSet {
             param[1].value = buf.toString();
             param[2].value = new Integer(scrollOpt | 0x1000);
 
-            buf.delete(0, buf.length());
-
             // Parameter declarations
-            for (int i = 0; ; ) {
+            for (int i = 0; i < procedureParams.length; i++) {
                 TdsData.getNativeType(statement.connection,
                                       procedureParams[i]);
-
-                if (procedureParams[i].name == null) {
-                    buf.append("@P").append(i + 1);
-                } else {
-                    buf.append(procedureParams[i].name);
-                }
-
-                buf.append(' ').append(procedureParams[i].sqlType);
-
-                if (++i == procedureParams.length) {
-                    break;
-                }
-
-                buf.append(',');
             }
 
             param[5] = new ParamInfo();
             param[5].isSet = true;
             param[5].jdbcType = java.sql.Types.LONGVARCHAR;
-            param[5].value = buf.toString();
+            param[5].value = Support.getParameterDefinitions(procedureParams);
             param[5].isUnicode = true;
 
             // Parameter values
@@ -340,7 +327,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
         if (tds.isResultSet()) {
-            this.columns     = copyInfo(tds.getColumns());
+            this.columns = copyInfo(tds.getColumns());
             this.columnCount = getColumnCount(columns);
         } else {
             statement.getMessages().addException(new SQLException(
@@ -566,7 +553,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                 } else {
                     if (opType == CURSOR_OP_INSERT && row[i].getValue() != null)
                         throw new SQLException(Messages.get("error.resultset.insert",
-                                                                  Integer.toString(i+1),
+                                                                  Integer.toString(i + 1),
                                                                   columns[i].name), "24000");
                 }
             }

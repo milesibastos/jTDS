@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.23 2004-08-07 04:46:53 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.24 2004-08-17 20:07:52 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -717,6 +717,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
         lobBuffer = parseLongProperty(info, "prop.lobbuffer");
+        
+        // The TdsCore.PREPARE and TdsCore.PREPEXEC methods are only available with
+        // TDS 8.0+ (SQL Server 2000+); downgrade to TdsCore.EXECUTE_SQL if an invalid
+        // option is selected.
+        if (tdsVersion < Driver.TDS80
+                && (prepareSql == TdsCore.PREPARE || prepareSql == TdsCore.PREPEXEC)) {
+            prepareSql = TdsCore.EXECUTE_SQL;
+        }
     }
 
     /**

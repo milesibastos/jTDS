@@ -21,14 +21,13 @@ import java.sql.*;
 import java.util.*;
 
 import net.sourceforge.jtds.jdbc.*;
-import net.sourceforge.jtds.jdbc.Driver;
 
 /**
  * A plain <code>DataSource</code> implementation.
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.10 2004-08-08 03:50:26 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.11 2004-08-10 15:07:42 bheineman Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 

@@ -765,6 +765,32 @@ public class ResultSetTest extends TestBase {
     }
 
     /**
+     * Test for bug [1170777] resultSet.updateRow() fails if no row has been
+     * changed.
+     */
+    public void testUpdateRowNoChanges() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "create table #deleteRowMarksDeleted (val int primary key)");
+        stmt.executeUpdate(
+                "insert into #deleteRowMarksDeleted (val) values (1)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select val from #deleteRowMarksDeleted order by val");
+        assertTrue(rs.next());
+        // This should not crash; it should be a no-op
+        rs.updateRow();
+        rs.refreshRow();
+        assertEquals(1, rs.getInt(1));
+        assertFalse(rs.next());
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
      * Test the behavior of <code>sp_cursorfetch</code> with fetch sizes
      * greater than 1.
      * <p>

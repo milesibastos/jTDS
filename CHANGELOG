@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/26/2005 - Alin Sinpalean
+ o Corrected bug [1170777] resultSet.updateRow() fails if no row has been
+   changed. Thanks go to Brett Wooldridge for signalling the bug and providing
+   a fix.
+
 03/17/2005 - Alin Sinpalean
  o Implemented RFE [1165119] Computername in Connection-URL: added a WSID
    parameter to the URL properties, to override the host name that is
@@ -8,7 +13,7 @@ Changes from jTDS 1.0.2
  o Corrected bug [1164219] possible incorrect synchronization in
    BlobImpl.java (removed all synchronizations from BlobImpl and ClobImpl).
  o Added a description of jTDS' support for multi threading to the FAQ.
- o Update for bug [1161601] Connection.close() can take a long time when Sybase 
+ o Update for bug [1161601] Connection.close() can take a long time when Sybase
    down. The close timeout has been reduced to 1 second, just to make sure the
    logout request makes it through to the server.
 

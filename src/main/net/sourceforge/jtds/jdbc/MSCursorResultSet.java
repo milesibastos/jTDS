@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.44 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.45 2005-03-26 21:07:58 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -1091,7 +1091,9 @@ public class MSCursorResultSet extends JtdsResultSet {
             throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
-        cursor(CURSOR_OP_UPDATE, updateRow);
+        if (updateRow != null) {
+            cursor(CURSOR_OP_UPDATE, updateRow);
+        }
     }
 
     public boolean first() throws SQLException {

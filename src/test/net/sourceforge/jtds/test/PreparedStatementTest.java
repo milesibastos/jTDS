@@ -435,7 +435,7 @@ public class PreparedStatementTest extends TestBase {
         }
         sb.append(")");
         try {
-            PreparedStatement pstmt = con.prepareStatement(sb.toString());
+            con.prepareStatement(sb.toString());
             fail("Too many parameters Exception expected");
         } catch (SQLException e)
         {
@@ -511,6 +511,43 @@ public class PreparedStatementTest extends TestBase {
 
         assertFalse(rs.next());
 
+        rs.close();
+        pstmt.close();
+    }
+
+    /**
+     * Test for bug [1071397] Error in prepared statement (parameters in outer
+     * join escapes are not recognized).
+     */
+    public void testOuterJoinParameters() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate(
+                "CREATE TABLE #outerJoinParameters (id int primary key)");
+        stmt.executeUpdate(
+                "INSERT #outerJoinParameters (id) values (1)");
+        stmt.close();
+
+        // Real dumb join, the idea is to see the parser works fine
+        PreparedStatement pstmt = con.prepareStatement(
+                "select * from "
+                + "{oj #outerJoinParameters a left outer join #outerJoinParameters b on a.id = ?}"
+                + "where b.id = ?");
+        pstmt.setInt(1, 1);
+        pstmt.setInt(2, 1);
+        ResultSet rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals(1, rs.getInt(2));
+        assertFalse(rs.next());
+        rs.close();
+        pstmt.close();
+
+        pstmt = con.prepareStatement("select {fn round(?, 0)}");
+        pstmt.setDouble(1, 1.2);
+        rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(1, rs.getDouble(1), 0);
+        assertFalse(rs.next());
         rs.close();
         pstmt.close();
     }

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.11 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.12 2004-11-23 13:41:05 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -510,6 +510,9 @@ class SQLParser {
                 case '{':
                     // Nested escape!
                     escape();
+                    break;
+                case '?':
+                    copyParam(null, d);
                     break;
                 default:
                     out[d++] = c;

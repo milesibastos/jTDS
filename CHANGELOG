@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+11/23/2004 - Alin Sinpalean
+ o Corrected bug [1071397] Error in prepared statement (parameters in outer
+   join escapes are not recognized).
+
 11/19/2004 - Alin Sinpalean
  o Replaced the ColData copy constructor with clone().
  o Added tests to ensure Blob.getBytes(0, length) and Clob.getSubString(0,

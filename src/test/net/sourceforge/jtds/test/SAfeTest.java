@@ -887,4 +887,30 @@ public class SAfeTest extends DatabaseTestCase {
         pstmt.close();
         rs.close();
     }
+
+    /**
+     * Test for bug [963799] float values change when written to the database
+     */
+    public void testFloat1() throws Exception {
+        float value = 2.2f;
+        
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testFloat1 (data decimal(28,10))");
+        stmt.close();
+        
+        PreparedStatement pstmt = con.prepareStatement("insert into #testFloat1 (data) values (?)");
+        pstmt.setFloat(1, value);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+        
+        pstmt = con.prepareStatement("select data from #testFloat1");
+        ResultSet rs = pstmt.executeQuery();
+        
+        assertTrue(rs.next());
+        assertTrue(value == rs.getFloat(1));
+        assertTrue(!rs.next());
+        
+        pstmt.close();
+        rs.close();
+    }
 }

@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.17 2002-09-14 06:32:46 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.17 2002-09-14 06:32:46 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.17 2002-09-14 06:32:46 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -246,10 +246,18 @@ public class TdsConnection implements ConnectionHelper, Connection
         for( int i=0; i<tdsPool.size(); i++ )
         {
             Tds tds = ((TdsInstance)tdsPool.get(i)).tds;
-            Statement s = tds.statement;
-            if( s != null )
-                while( s.getMoreResults() || s.getUpdateCount() >= 0 );
-            tds.changeDB(catalog);
+            TdsStatement s = tds.statement;
+
+            // SAfe We have to synchronize this so that the Statement doesn't
+            //      begin sending data while we're changing the database. Not
+            //      really safe though, since the Tds could be deallocated just
+            //      before entering the monitor. Or not? Not too clear to me...
+            synchronized( s )
+            {
+                if( s != null )
+                    s.skipToEnd();
+                tds.changeDB(catalog);
+            }
         }
 
         database = catalog;

@@ -26,12 +26,7 @@ public class AsTest extends DatabaseTestCase {
   }
 
   public static void main(String args[]) {
-    try {
-      Logger.setActive(true);
-    }
-    catch (java.io.IOException ex) {
-      throw new RuntimeException("Unexpected Exception " + ex + " occured in main");
-    }
+    Logger.setActive(true);
     if (args.length > 0) {
       junit.framework.TestSuite s = new TestSuite();
       for (int i = 0; i < args.length; i++) {

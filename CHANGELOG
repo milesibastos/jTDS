@@ -1,6 +1,21 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/16/2002 - Alin Sinpalean
+
+ o Even bigger clean-up of most of the base classes: TdsStatement,
+   TdsResultSet, TdsConnection etc. Lots of changes, so it's pretty
+   hard to make a list of them. Anyway, major changes include: synchronization
+   and visibility changes in TdsStatement, Logger no longer throws IOExceptions
+   (it's kind of stupid to do that), TDS_XXX token name changes, processing of
+   database changes in Tds, SQLWarningChain clears the exceptions list when
+   throwing one. That's about it.
+ o Created a "specification" for TDS 7.0 based on 2 days of packet sniffing.
+   Still in preliminary stage, but contains a lot of information. I will have
+   to match it up against existing specifications from FreeTDS and other
+   sources to make sure I wasn't wrong about things, then I'll probably publish
+   it on the documentation page of the project's site.
+
 09/14/2002 - Alin Sinpalean
 
  o Fix in TdsResultSetMetaData: getColumnTypeName() crashed on SYBBITN columns.

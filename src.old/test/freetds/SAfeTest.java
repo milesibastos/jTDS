@@ -26,15 +26,7 @@ public class SAfeTest extends DatabaseTestCase
 
     public static void main(String args[])
     {
-        try
-        {
-            Logger.setActive(true);
-        }
-        catch( java.io.IOException ex )
-        {
-            throw new RuntimeException("Unexpected exception "+ex
-                +" occured in main.");
-        }
+        Logger.setActive(true);
 
         if( args.length > 0 )
         {

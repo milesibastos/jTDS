@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.7 2002-09-11 19:34:37 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.8 2002-09-16 11:13:43 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.7 2002-09-11 19:34:37 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.8 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -751,7 +751,7 @@ public class TdsComm implements TdsDefinitions {
                     System.currentTimeMillis() ) ).toString();
 
             Logger.println( "Instance " + id + " @ " + t
-                     + " recevied header #" + ( packetsReceived + 1 )
+                     + " received header #" + ( packetsReceived + 1 )
                      + "\n" + dump );
         }
 
@@ -790,7 +790,7 @@ public class TdsComm implements TdsDefinitions {
                     System.currentTimeMillis() ) ).toString();
 
             Logger.println( "Instance " + id + " @ " + t
-                     + " recevied data #" + ( packetsReceived )
+                     + " received data #" + ( packetsReceived )
                      + "\n" + dump );
         }
     }

@@ -34,12 +34,7 @@ public class CSUnitTest extends DatabaseTestCase {
   static PrintStream output = null;
 
   public static void main(String args[]) {
-    try {
-      Logger.setActive(true);
-    }
-    catch (java.io.IOException ex) {
-      throw new RuntimeException("Unexpected Exception " + ex + " occured in main");
-    }
+    Logger.setActive(true);
     if (args.length > 0) {
       output = System.out;
       junit.framework.TestSuite s = new TestSuite();
@@ -721,28 +716,24 @@ public class CSUnitTest extends DatabaseTestCase {
 
     isResultSet =
     stmt.execute(
-    "CREATE PROCEDURE #t0029_p1                    " +
-    "AS                                           " +
-    "                                             " +
-    "                                             " +
+    "CREATE PROCEDURE #t0029_p1 AS                " +
+
     " insert into #t0029_t1 values                " +
     " ('1999-01-07', '1998-09-09 15:35:05',       " +
     " getdate(), '1998-09-09 15:35:00', null)     " +
-    "                                             " +
+
     " update #t0029_t1 set t1='1999-01-01'         " +
-    "                                             " +
-    " insert into #t0029_t1 values                 " +
+
+    " insert into #t0029_t1 values                " +
     " ('1999-01-08', '1998-09-09 15:35:05',       " +
     " getdate(), '1998-09-09 15:35:00','456')     " +
-    "                                             " +
-    " update #t0029_t1 set t2='1999-01-02'         " +
-    "                                             " +
+
+    " update #t0029_t1 set t2='1999-01-02'        " +
+
     " declare @ptr varbinary(16)                  " +
-    " select @ptr=textptr(t5) from #t0029_t1       " +
+    " select @ptr=textptr(t5) from #t0029_t1      " +
     "   where t1='1999-01-08'                     " +
-    " writetext #t0029_t1.t5 @ptr with log '123'   " +
-    "                                             " +
-    "                                             ");
+    " writetext #t0029_t1.t5 @ptr with log '123'  ");
 
     updateCount = stmt.getUpdateCount();
     do {
@@ -755,14 +746,11 @@ public class CSUnitTest extends DatabaseTestCase {
 
     isResultSet =
     stmt.execute(
-    "CREATE PROCEDURE #t0029_p2                    " +
-    "AS           " +
+    "CREATE PROCEDURE #t0029_p2 AS                " +
+
     " set nocount on " +
-    " EXEC #t0029_p1                               " +
-    " SELECT * FROM #t0029_t1                      " +
-    "                                             " +
-    "                                             " +
-    "                                             ");
+    " EXEC #t0029_p1                              " +
+    " SELECT * FROM #t0029_t1                     ");
 
     updateCount = stmt.getUpdateCount();
     do {
@@ -1286,8 +1274,7 @@ public class CSUnitTest extends DatabaseTestCase {
         in.close();
 
         output.println("Testing getUnicodeStream()");
-        in = rs.getUnicodeStream("myvarchar");
-        Reader reader = new InputStreamReader(in, "UTF8");
+        Reader reader = rs.getCharacterStream("myvarchar");
         expect = "This is a test with german umlauts הצü";
         char[] charsToRead = new char[expect.length()];
         count = reader.read(charsToRead, 0, expect.length());
@@ -1308,8 +1295,8 @@ public class CSUnitTest extends DatabaseTestCase {
         reader.close();
 
                 /* Cannot think of a meaningfull test */
-        in = rs.getUnicodeStream(2);
-        in.close();
+        reader = rs.getCharacterStream(2);
+        reader.close();
 
         output.println("Testing getBinaryStream()");
 

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.23 2002-09-14 06:32:46 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.24 2002-09-16 11:13:44 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,23 +53,25 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.23 2002-09-14 06:32:46 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.24 2002-09-16 11:13:44 alin_sinpalean Exp $";
 
-    protected TdsConnection connection; // The connection who created us
-    protected SQLWarningChain warningChain; // The warnings chain.
-    protected int timeout = 0;              // The timeout for a query
+    private TdsConnection connection; // The connection that created us
 
-    protected TdsResultSet results = null;
-    protected Tds          actTds = null;
+    SQLWarningChain warningChain; // The warning chain
+    TdsResultSet results = null;
 
-    private   boolean      escapeProcessing = true;
-    protected int          updateCount = -1;
+    private Tds actTds = null;
+    private boolean escapeProcessing = true;
 
-    private int  maxFieldSize = (1<<31)-1;
-    private int  maxRows      = 0;
+    private int updateCount  = -1;
+    private int maxFieldSize = (1<<31)-1;
+    private int maxRows      = 0;
+    private int timeout      = 0; // The timeout for a query
 
     private int type = ResultSet.TYPE_FORWARD_ONLY;
     private int concurrency = ResultSet.CONCUR_READ_ONLY;
+
+    private boolean isClosed = false;
 
     public TdsStatement(TdsConnection con, int type, int concurrency)
         throws SQLException
@@ -92,12 +94,10 @@ public class TdsStatement implements java.sql.Statement
         this(con, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
     }
 
-    protected void eofResults() throws SQLException
-    {
-        releaseTds();
-    }
-
-    protected void releaseTds() throws SQLException
+    /**
+     * Releases <code>actTds</code> IF there are no outstanding results.
+     */
+    protected synchronized void releaseTds() throws SQLException
     {
         // MJH remove test of autoCommit
         if( actTds == null )
@@ -132,8 +132,10 @@ public class TdsStatement implements java.sql.Statement
      *            the query; never <code>null</code>
      * @exception SQLException if a database access error occurs
      */
-    public ResultSet executeQuery(String sql) throws SQLException
+    public synchronized ResultSet executeQuery(String sql) throws SQLException
     {
+        checkClosed();
+
         if( type == ResultSet.TYPE_FORWARD_ONLY &&
             concurrency == ResultSet.CONCUR_READ_ONLY )
         {
@@ -144,17 +146,6 @@ public class TdsStatement implements java.sql.Statement
         }
         else
             return new freetds.CursorResultSet(this, sql);
-    }
-
-    final public TdsResultSet internalExecuteQuery(String sql) throws SQLException
-    {
-        internalExecute(getTds(sql), sql);
-        return results;
-    }
-
-    final public boolean internalExecute(String sql) throws SQLException
-    {
-        return internalExecute(getTds(sql), sql);
     }
 
     /**
@@ -168,7 +159,13 @@ public class TdsStatement implements java.sql.Statement
      *      an update count or there are no more results
      * @exception SQLException if a database access error occurs
      */
-    final public boolean internalExecute(Tds tds, String sql)
+    public final synchronized boolean internalExecute(String sql)
+        throws SQLException
+    {
+        return executeImpl(getTds(sql), sql);
+    }
+
+    private final boolean executeImpl(Tds tds, String sql)
         throws SQLException
     {
         // Clear warnings, otherwise the last exception will be thrown.
@@ -181,7 +178,7 @@ public class TdsStatement implements java.sql.Statement
 
         try
         {
-            if (escapeProcessing)
+            if( escapeProcessing )
                 sql = Tds.toNativeSql(sql, tds.getServerType());
 
             tds.executeQuery(sql, this, timeout);
@@ -215,8 +212,10 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs
      */
 
-    public int executeUpdate(String sql) throws SQLException
+    public synchronized int executeUpdate(String sql) throws SQLException
     {
+        checkClosed();
+
         if( internalExecute(sql) )
         {
             skipToEnd();
@@ -230,7 +229,7 @@ public class TdsStatement implements java.sql.Statement
         }
     }
 
-    protected void closeResults(boolean allowTdsRelease)
+    protected synchronized void closeResults(boolean allowTdsRelease)
         throws java.sql.SQLException
     {
         if( results != null )
@@ -250,14 +249,10 @@ public class TdsStatement implements java.sql.Statement
      * server response without processing it, but that requires some changes in
      * <code>TdsComm</code>, too.
      */
-    protected void skipToEnd()
-        throws java.sql.SQLException
+    protected synchronized void skipToEnd() throws java.sql.SQLException
     {
         if( actTds != null )
-        {
-             closeResults(false);
              while( getMoreResults(actTds, false) || updateCount!=-1 );
-        }
     }
 
     /**
@@ -272,8 +267,14 @@ public class TdsStatement implements java.sql.Statement
      *
      * @exception SQLException if a database access error occurs (why?)
      */
-    public void close() throws SQLException
+    public synchronized void close() throws SQLException
     {
+        if( isClosed )
+            return;
+
+        // SAfe Mark Statement as closed internally, too
+        isClosed = true;
+
         // MJH MarkAsClosed is always called to prevent memory leak.
         connection.markAsClosed(this);
 
@@ -304,8 +305,9 @@ public class TdsStatement implements java.sql.Statement
      * @return the current max column size limit; zero means unlimited
      * @exception SQLException if a database access error occurs
      */
-    public int getMaxFieldSize() throws SQLException
+    public synchronized int getMaxFieldSize() throws SQLException
     {
+        checkClosed();
         return maxFieldSize;
     }
 
@@ -315,8 +317,9 @@ public class TdsStatement implements java.sql.Statement
      * @param max the new max column size limit; zero means unlimited
      * @exception SQLException if size exceeds buffer size
      */
-    public void setMaxFieldSize(int max) throws SQLException
+    public synchronized void setMaxFieldSize(int max) throws SQLException
     {
+        checkClosed();
         maxFieldSize = max;
     }
 
@@ -328,8 +331,9 @@ public class TdsStatement implements java.sql.Statement
      * @return the current maximum row limit; zero means unlimited
      * @exception SQLException if a database access error occurs
      */
-    public int getMaxRows() throws SQLException
+    public synchronized int getMaxRows() throws SQLException
     {
+        checkClosed();
         return maxRows;
     }
 
@@ -340,11 +344,12 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs
      * @see #getMaxRows
      */
-    public void setMaxRows(int max) throws SQLException
+    public synchronized void setMaxRows(int max) throws SQLException
     {
-        if (maxRows < 0)
-            throw new SQLException("Negative row count");
+        checkClosed();
 
+        if( maxRows < 0 )
+            throw new SQLException("Negative row count");
         maxRows = max;
     }
 
@@ -355,8 +360,9 @@ public class TdsStatement implements java.sql.Statement
      * @param enable true to enable; false to disable
      * @exception SQLException if a database access error occurs
      */
-    public void setEscapeProcessing(boolean enable) throws SQLException
+    public synchronized void setEscapeProcessing(boolean enable) throws SQLException
     {
+        checkClosed();
         escapeProcessing = enable;
     }
 
@@ -368,8 +374,9 @@ public class TdsStatement implements java.sql.Statement
      * @return the current query timeout limit in seconds; 0 = unlimited
      * @exception SQLException if a database access error occurs
      */
-    public int getQueryTimeout() throws SQLException
+    public synchronized int getQueryTimeout() throws SQLException
     {
+        checkClosed();
         return timeout;
     }
 
@@ -379,8 +386,9 @@ public class TdsStatement implements java.sql.Statement
      * @param seconds - the new query timeout limit in seconds
      * @exception SQLException if a database access error occurs
      */
-    public void setQueryTimeout(int seconds) throws SQLException
+    public synchronized void setQueryTimeout(int seconds) throws SQLException
     {
+        checkClosed();
         timeout = seconds;
     }
 
@@ -388,10 +396,9 @@ public class TdsStatement implements java.sql.Statement
     *
     * @exception SQLException
     */
-    public void cancel() throws SQLException
+    public synchronized void cancel() throws SQLException
     {
-        if (actTds == null)
-            throw new SQLException("Statement is closed");
+        checkClosed();
 
         try
         {
@@ -423,8 +430,9 @@ public class TdsStatement implements java.sql.Statement
      * @return the first SQLWarning on null
      * @exception SQLException if a database access error occurs
      */
-    public SQLWarning getWarnings() throws SQLException
+    public synchronized SQLWarning getWarnings() throws SQLException
     {
+        checkClosed();
         return warningChain.getWarnings();
     }
 
@@ -435,8 +443,9 @@ public class TdsStatement implements java.sql.Statement
     *
     * @exception SQLException if a database access error occurs (why?)
     */
-    public void clearWarnings() throws SQLException
+    public synchronized void clearWarnings() throws SQLException
     {
+        checkClosed();
         warningChain.clearWarnings();
     }
 
@@ -457,12 +466,13 @@ public class TdsStatement implements java.sql.Statement
         NotImplemented();
     }
 
-    public boolean execute(String sql) throws SQLException
+    public synchronized boolean execute(String sql) throws SQLException
     {
+        checkClosed();
         return internalExecute(sql);
     }
 
-    protected Tds getTds(String sql) throws SQLException
+    synchronized Tds getTds(String sql) throws SQLException
     {
         if( actTds != null )
             return actTds;
@@ -481,8 +491,9 @@ public class TdsStatement implements java.sql.Statement
      * @return the current result set; null if there are no more
      * @exception SQLException if a database access error occurs
      */
-    public java.sql.ResultSet getResultSet() throws SQLException
+    public synchronized java.sql.ResultSet getResultSet() throws SQLException
     {
+        checkClosed();
         return results;
     }
 
@@ -494,8 +505,9 @@ public class TdsStatement implements java.sql.Statement
      * @return the current result as an update count.
      * @exception SQLException if a database access error occurs
      */
-    public int getUpdateCount() throws SQLException
+    public synchronized int getUpdateCount() throws SQLException
     {
+        checkClosed();
         return updateCount;
     }
 
@@ -506,8 +518,9 @@ public class TdsStatement implements java.sql.Statement
      * @return true if the next ResultSet is valid
      * @exception SQLException if a database access error occurs
      */
-    public boolean getMoreResults() throws SQLException
+    public synchronized boolean getMoreResults() throws SQLException
     {
+        checkClosed();
         return getMoreResults(actTds, true);
     }
 
@@ -516,15 +529,17 @@ public class TdsStatement implements java.sql.Statement
         throw new SQLException("Not Implemented");
     }
 
-    public void handleRetStat(PacketRetStatResult packet)
+    void handleRetStat(PacketRetStatResult packet)
     {
     }
 
-    public void handleParamResult(PacketOutputParamResult packet) throws SQLException
+    void handleParamResult(PacketOutputParamResult packet)
+        throws SQLException
     {
     }
 
-    public boolean getMoreResults(Tds tds, boolean allowTdsRelease) throws SQLException
+    synchronized boolean getMoreResults(Tds tds, boolean allowTdsRelease)
+        throws SQLException
     {
         updateCount = -1;
 
@@ -548,12 +563,12 @@ public class TdsStatement implements java.sql.Statement
             {
                 if( tds.isResultSet() )
                 {
-                    startResultSet(tds);
+                    results = new TdsResultSet(tds, this, warningChain);
                     break;
                 }
-                // SAfe: Only TDS_END_TOKEN should return row counts for Statements
+                // SAfe: Only TDS_DONE should return row counts for Statements
                 // TDS_DONEINPROC should return row counts for PreparedStatements
-                else if( tds.peek()==Tds.TDS_END_TOKEN ||
+                else if( tds.peek()==Tds.TDS_DONE ||
                     (tds.getStatement() instanceof PreparedStatement &&
                     !(tds.getStatement() instanceof CallableStatement) &&
                     tds.peek()==Tds.TDS_DONEINPROC) )
@@ -588,7 +603,7 @@ public class TdsStatement implements java.sql.Statement
                     tds.processSubPacket();
                 else if( tds.isProcId() )
                     tds.processSubPacket();
-                else  // process whatever comes now, isParamResult
+                else
                     throw new SQLException("Protocol confusion. Got a 0x"
                         + Integer.toHexString((tds.peek() & 0xff)) + " packet.");
             } // end while
@@ -600,26 +615,19 @@ public class TdsStatement implements java.sql.Statement
 
         catch( Exception ex )
         {
-            skipToEnd();
+            // SAfe we should not eat up all input. Even if an error was
+            //      returned, this doesn't mean there isn't valid data after it.
+//            try
+//            {
+//                tds.skipToEnd();
+//            }
+//            catch( Exception exc )
+//            {}
             releaseTds();
             if( ex instanceof SQLException )
                 throw (SQLException)ex;
             else
                 throw new SQLException("Network error: " + ex.getMessage());
-        }
-    }
-
-    protected void startResultSet(Tds tds) throws SQLException
-    {
-        results = new TdsResultSet(tds, this);
-    }
-
-    void fetchIntoCache() throws SQLException
-    {
-        if (results != null)
-        {
-            // System.out.println("fetching into Cache !!");
-            results.fetchIntoCache();
         }
     }
 
@@ -709,9 +717,12 @@ public class TdsStatement implements java.sql.Statement
      * JDBC 2.0
      *
      * Retrieves the result set concurrency.
+     * <p>
+     * <b>Note:</b> No need for synchronization. Value never changes.
      */
     public int getResultSetConcurrency() throws SQLException
     {
+        checkClosed();
         return concurrency;
     }
 
@@ -719,9 +730,12 @@ public class TdsStatement implements java.sql.Statement
      * JDBC 2.0
      *
      * Determine the result set type.
+     * <p>
+     * <b>Note:</b> No need for synchronization. Value never changes.
      */
     public int getResultSetType()  throws SQLException
     {
+        checkClosed();
         return type;
     }
 
@@ -777,25 +791,46 @@ public class TdsStatement implements java.sql.Statement
      *
      * Returns the <code>Connection</code> object
      * that produced this <code>Statement</code> object.
+     * <p>
+     * <b>Note:</b> No need for synchromization here. <code>connection</code>
+     * doesn't change during execution (not even after <code>close()</code>.
+     *
      * @return the connection that produced this statement
      * @exception SQLException if a database access error occurs
      */
     public java.sql.Connection getConnection() throws SQLException
     {
+        checkClosed();
         return connection;
     }
 
-    protected void changeSettings(boolean autoCommit, int transactionIsolationLevel) throws SQLException
+    /**
+     * Changes the auto commit and transaction isolation level of
+     * <code>actTds</code>.
+     * <p>
+     * <b>Note:</b> Needs synchronization because it operates on
+     * <code>actTds</code>.
+     */
+    protected synchronized void changeSettings(boolean autoCommit,
+        int transactionIsolationLevel) throws SQLException
     {
         if( actTds != null )
         {
-            String query = actTds.sqlStatementForSettings(autoCommit, transactionIsolationLevel);
+            String query = actTds.sqlStatementForSettings(autoCommit,
+                transactionIsolationLevel);
+
             if( query != null )
             {
-                internalExecute(actTds, query);
+                executeImpl(actTds, query);
                 skipToEnd();
             }
         }
+    }
+
+    private void checkClosed() throws SQLException
+    {
+        if( isClosed )
+            throw new SQLException("Statement already closed.");
     }
 
     public boolean execute(String str, int param) throws java.sql.SQLException

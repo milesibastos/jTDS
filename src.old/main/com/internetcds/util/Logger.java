@@ -39,12 +39,12 @@ import java.io.*;
 /**
  * This class will log messages into a file.
  *
- * @version $Id: Logger.java,v 1.3 2001-09-17 09:32:35 skizz Exp $
+ * @version $Id: Logger.java,v 1.4 2002-09-16 11:13:44 alin_sinpalean Exp $
  * @author Craig Spannring
  */
 public class Logger
 {
-   public static final String cvsVersion = "$Id: Logger.java,v 1.3 2001-09-17 09:32:35 skizz Exp $";
+   public static final String cvsVersion = "$Id: Logger.java,v 1.4 2002-09-16 11:13:44 alin_sinpalean Exp $";
 
    private static String       filename = "log.out";
    private static boolean      active   = false;
@@ -62,18 +62,23 @@ public class Logger
     * multiple times.
     */
    synchronized private static void init()
-      throws IOException
    {
       // check to see if the file is already open
-      if (out==null)
-      {
-         if ( filename != null ) {
-             out = new  PrintStream( new FileOutputStream(filename), true );
+      if( out == null )
+         try
+         {
+            if( filename != null )
+               out = new PrintStream(new FileOutputStream(filename), true);
          }
-         else {
-            out = System.out;
+         catch( FileNotFoundException ex )
+         {
+            // Ignore
          }
-      }
+         finally
+         {
+            if( out == null )
+               out = System.out;
+         }
    }
 
    /**
@@ -85,7 +90,6 @@ public class Logger
     *                if it is false it will turn the logging off.
     */
    synchronized public static void setActive(boolean value)
-      throws IOException
    {
       init();
       active = value;
@@ -125,13 +129,11 @@ public class Logger
     * Print a string into the log file if and only if logging is active
     */
    synchronized public static void print(String msg)
-      throws IOException
    {
       if (active)
       {
          init();
          out.print(msg);
-
       }
    }
 
@@ -139,7 +141,6 @@ public class Logger
     * Print a string into the log file if and only if logging is active
     */
    synchronized public static void println(String msg)
-      throws IOException
    {
       if (active)
       {

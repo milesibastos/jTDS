@@ -38,13 +38,13 @@ package com.internetcds.jdbc.tds;
 /**
  * constants from the 4.2 TDS protocol
  *
- * @version  $Id: TdsDefinitions.java,v 1.10 2002-08-30 10:27:18 alin_sinpalean Exp $
+ * @version  $Id: TdsDefinitions.java,v 1.11 2002-09-16 11:13:43 alin_sinpalean Exp $
  * @author Craig Spannring
  * @author The FreeTDS project.
  */
 interface TdsDefinitions
 {
-   String cvsVersion = "$Id: TdsDefinitions.java,v 1.10 2002-08-30 10:27:18 alin_sinpalean Exp $";
+   String cvsVersion = "$Id: TdsDefinitions.java,v 1.11 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
    //
    // Define the type of database the driver is connection to.
@@ -65,9 +65,9 @@ interface TdsDefinitions
    //
    byte TDS_LANG_TOKEN      = (byte)33;   // 0x21 ? TDS 5.0 only
    byte TDS_CLOSE_TOKEN     = (byte)113;  // 0x71 ? TDS 5.0 only? ct_close()
-   byte TDS_RET_STAT_TOKEN  = (byte)121;  // 0x79 RETURNSTATUS
+   byte TDS_RETURNSTATUS    = (byte)121;  // 0x79 RETURNSTATUS
    byte TDS_PROCID          = (byte)124;  // 0x7C TDS_PROCID
-   byte TDS7_RESULT_TOKEN   = (byte)129;  // 0x81 COLMETADATA TDS 7.0 only
+   byte TDS_COLMETADATA     = (byte)129;  // 0x81 COLMETADATA TDS 7.0 only
    byte TDS_COL_NAME_TOKEN  = (byte)160;  // 0xA0 TDS 4.2 only
    byte TDS_COL_INFO_TOKEN  = (byte)161;  // 0xA1 TDS 4.2 only
    byte TDS_TABNAME         = (byte)164;  // 0xA4 TABNAME
@@ -75,18 +75,18 @@ interface TdsDefinitions
    byte TDS_UNKNOWN_0xA7    = (byte)167;  // 0xA7
    byte TDS_UNKNOWN_0xA8    = (byte)168;  // 0xA8
    byte TDS_ORDER           = (byte)169;  // 0xA9 ORDER
-   byte TDS_ERR_TOKEN       = (byte)170;  // 0xAA ERROR
-   byte TDS_MSG_TOKEN       = (byte)171;  // 0xAB INFO
-   byte TDS_PARAM_TOKEN     = (byte)172;  // 0xAC
-   byte TDS_LOGIN_ACK_TOKEN = (byte)173;  // 0xAD LOGINACK
+   byte TDS_ERROR           = (byte)170;  // 0xAA ERROR
+   byte TDS_INFO            = (byte)171;  // 0xAB INFO
+   byte TDS_PARAM           = (byte)172;  // 0xAC
+   byte TDS_LOGINACK        = (byte)173;  // 0xAD LOGINACK
    byte TDS_CONTROL         = (byte)174;  // 0xAE TDS_CONTROL
-   byte TDS_ROW_TOKEN       = (byte)209;  // 0xD1 ROW
-   byte TDS_CMP_ROW_TOKEN   = (byte)211;  // 0xD3 ALTROW Compute Result Row
+   byte TDS_ROW             = (byte)209;  // 0xD1 ROW
+   byte TDS_ALTROW          = (byte)211;  // 0xD3 ALTROW Compute Result Row
    byte TDS_CAP_TOKEN       = (byte)226;  // 0xE2
-   byte TDS_ENV_CHG_TOKEN   = (byte)227;  // 0xE3 ENVCHANGE
+   byte TDS_ENVCHANGE       = (byte)227;  // 0xE3 ENVCHANGE
    byte TDS_MSG50_TOKEN     = (byte)229;  // 0xE5
    byte TDS_RESULT_TOKEN    = (byte)238;  // 0xEE
-   byte TDS_END_TOKEN       = (byte)253;  // 0xFD DONE
+   byte TDS_DONE            = (byte)253;  // 0xFD DONE
    byte TDS_DONEPROC        = (byte)254;  // 0xFE DONEPROC
    byte TDS_DONEINPROC      = (byte)255;  // 0xFF DONEINPROC
    // end of sub packet types

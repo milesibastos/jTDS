@@ -53,12 +53,12 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.9 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.10 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
     {
-        super( TdsDefinitions.TDS_ROW_TOKEN );
+        super( TdsDefinitions.TDS_ROW );
         this.context = context;
         row = new Vector( realColumnCount() );
         row.setSize( realColumnCount() );

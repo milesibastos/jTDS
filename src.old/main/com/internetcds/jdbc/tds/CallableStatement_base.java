@@ -74,7 +74,7 @@ import java.util.Calendar;
 public class CallableStatement_base
          extends com.internetcds.jdbc.tds.PreparedStatement_base
          implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.11 2002-09-09 12:14:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.12 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -511,7 +511,8 @@ public class CallableStatement_base
         boolean result;
 
         closeResults(false);
-        updateCount = -2;
+        // SAfe No need for this. getMoreResults sets it to -1 at start, anyway
+//        updateCount = -2;
         lastOutParam = -1;
 
         // First make sure the caller has filled in all the parameters.

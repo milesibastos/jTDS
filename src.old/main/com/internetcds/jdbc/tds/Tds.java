@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -115,8 +115,8 @@ public class Tds implements TdsDefinitions {
     String databaseProductVersion;
     int databaseMajorVersion;
 
-    java.sql.Connection connection;
-    java.sql.Statement statement;
+    TdsConnection connection;
+    TdsStatement statement;
     String host;
     int serverType = -1;
     // either Tds.SYBASE or Tds.SQLSERVER
@@ -168,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.31 2002-09-14 06:32:45 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -190,18 +190,19 @@ public class Tds implements TdsDefinitions {
     boolean autoCommit = true;
 
     public Tds(
-            java.sql.Connection connection_,
+            TdsConnection connection_,
             Properties props_)
              throws java.io.IOException, java.net.UnknownHostException,
             java.sql.SQLException, com.internetcds.jdbc.tds.TdsException
     {
-        connection = (java.sql.Connection) connection_;
+        connection = connection_;
         initialProps = props_;
 
         host = props_.getProperty(PROP_HOST);
         serverType = Integer.parseInt(props_.getProperty(PROP_SERVERTYPE));
         port = Integer.parseInt(props_.getProperty(PROP_PORT));
-        database = props_.getProperty(PROP_DBNAME);
+        // SAfe We don't know what database we'll get (probably master)
+        database = null;
         user = props_.getProperty(PROP_USER);
         password = props_.getProperty(PROP_PASSWORD);
         appName = props_.getProperty(PROP_APPNAME, "jdbclib");
@@ -244,18 +245,14 @@ public class Tds implements TdsDefinitions {
         autoCommit = connection.getAutoCommit();
         transactionIsolationLevel = connection.getTransactionIsolation();
 
-        if (logon()) {
-            // everything is hunky-dory.
-        }
-        else {
+        if( !logon(props_.getProperty(PROP_DBNAME)) )
             throw new SQLException("Logon failed.  " + lastServerMessage);
-        }
     }
 
     /**
-     * Set the <code>Statement</code> currently using the Tds.
+     * Set the <code>TdsStatement</code> currently using the Tds.
      */
-    public void setStatement(Statement s)
+    public void setStatement(TdsStatement s)
     {
         statement = s;
     }
@@ -358,7 +355,7 @@ public class Tds implements TdsDefinitions {
          * XXX to support 5.0 we need to expand our view of what a result
          * set is.
          */
-        return type == TDS_COL_NAME_TOKEN || type == TDS7_RESULT_TOKEN;
+        return type == TDS_COL_NAME_TOKEN || type == TDS_COLMETADATA;
     }
 
 
@@ -377,7 +374,7 @@ public class Tds implements TdsDefinitions {
     {
         byte type = comm.peek();
 
-        return type == TDS_RET_STAT_TOKEN;
+        return type == TDS_RETURNSTATUS;
     }
 
 
@@ -395,7 +392,7 @@ public class Tds implements TdsDefinitions {
     {
         byte type = comm.peek();
 
-        return type == TDS_ROW_TOKEN /*|| type == TDS_CMP_ROW_TOKEN*/;
+        return type == TDS_ROW /*|| type == TDS_CMP_ROW_TOKEN*/;
     }
 
 
@@ -414,7 +411,7 @@ public class Tds implements TdsDefinitions {
     {
         byte type = comm.peek();
 
-        return type == TDS_END_TOKEN || type == TDS_DONEPROC || type == TDS_DONEINPROC;
+        return type == TDS_DONE || type == TDS_DONEPROC || type == TDS_DONEINPROC;
     }
 
 
@@ -450,7 +447,7 @@ public class Tds implements TdsDefinitions {
              throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
         byte type = comm.peek();
-        return type == TDS_MSG_TOKEN;
+        return type == TDS_INFO;
     }
 
 
@@ -468,7 +465,7 @@ public class Tds implements TdsDefinitions {
         throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
      {
         byte  type = comm.peek();
-        return type==TDS_PARAM_TOKEN;
+        return type==TDS_PARAM;
      }
 
     /**
@@ -505,7 +502,7 @@ public class Tds implements TdsDefinitions {
              throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
         byte type = comm.peek();
-        return type == TDS_ERR_TOKEN;
+        return type == TDS_ERROR;
     }
 
 
@@ -540,7 +537,7 @@ public class Tds implements TdsDefinitions {
     public synchronized boolean isEnvChange()
         throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
-        return comm.peek() == TDS_ENV_CHG_TOKEN;
+        return comm.peek() == TDS_ENVCHANGE;
     }
 
 
@@ -599,7 +596,6 @@ public class Tds implements TdsDefinitions {
         }
         return isOkay;
     }
-    // changeDB()
 
 
     public void cancel()
@@ -1076,7 +1072,7 @@ public class Tds implements TdsDefinitions {
         if (comm.peek() == TDS_DONEINPROC) {
             PacketResult tmp = processSubPacket();
             if ( Logger.isActive() ) {
-                Logger.println( "Discarded TDS_DONE_IN_PROC" );
+                Logger.println( "Discarded TDS_DONEINPROC" );
             }
         }
 
@@ -1164,7 +1160,7 @@ public class Tds implements TdsDefinitions {
    /**
     * Process an output parameter subpacket.
     * <p>
-    * This routine assumes that the TDS_PARAM_TOKEN byte has already
+    * This routine assumes that the TDS_PARAM byte has already
     * been read.
     *
     * @return a <code>PacketOutputParamResult</code> wrapping an output
@@ -1407,38 +1403,29 @@ public class Tds implements TdsDefinitions {
                     "moreResults: " + moreResults());
 
         switch (packetSubType) {
-            case TDS_ENV_CHG_TOKEN:
+            case TDS_ENVCHANGE:
             {
                 result = processEnvChange();
                 break;
             }
-            case TDS_ERR_TOKEN:
-            case TDS_MSG_TOKEN:
+            case TDS_ERROR:
+            case TDS_INFO:
             case TDS_MSG50_TOKEN:
             {
                 result = processMsg(packetSubType);
                 break;
             }
-            case TDS_PARAM_TOKEN:
+            case TDS_PARAM:
             {
               result = processOutputParam();
               break;
             }
-            /* strange replaced by PARAM_TOKEN
-            case TDS_TEXT_UPD_TOKEN:
-            {
-                int len = getSubPacketLength();
-                comm.skip(len);
-                result = new PacketResult(TDS_TEXT_UPD_TOKEN);
-                break;
-            }
-             */
-            case TDS_LOGIN_ACK_TOKEN:
+            case TDS_LOGINACK:
             {
                 result = processLoginAck();
                 break;
             }
-            case TDS_RET_STAT_TOKEN:
+            case TDS_RETURNSTATUS:
             {
                 result = processRetStat();
                 break;
@@ -1448,15 +1435,9 @@ public class Tds implements TdsDefinitions {
                 result = processProcId();
                 break;
             }
-            case TDS_DONEINPROC:
-              /*
-            {
-                result = processDoneInProc(packetSubType);
-                break;
-            }
-               */
+            case TDS_DONE:
             case TDS_DONEPROC:
-            case TDS_END_TOKEN:
+            case TDS_DONEINPROC:
             {
                 result = processEndToken(packetSubType);
                 moreResults2 = ((PacketEndTokenResult) result).moreResults();
@@ -1502,12 +1483,12 @@ public class Tds implements TdsDefinitions {
                 result = new PacketControlResult();
                 break;
             }
-            case TDS_ROW_TOKEN:
+            case TDS_ROW:
             {
                 result = getRow(context);
                 break;
             }
-            case TDS7_RESULT_TOKEN:
+            case TDS_COLMETADATA:
             {
                 result = processTds7Result();
                 break;
@@ -1524,14 +1505,6 @@ public class Tds implements TdsDefinitions {
 
     private void setCharset(String charset)
     {
-        if( Logger.isActive() )
-            try {
-                Logger.println("Trying to change charset to " + charset);
-            }
-            catch (java.io.IOException e) {
-                // nop
-            }
-
         if (charset == null || charset.length() > 30)
             charset = "iso_1";
 
@@ -2270,7 +2243,7 @@ public class Tds implements TdsDefinitions {
      *@exception  java.sql.SQLException
      *@author                                            Craig Spannring
      */
-    private boolean logon()
+    private boolean logon(String database)
              throws java.sql.SQLException,
             TdsUnknownPacketSubType, java.io.IOException,
             com.internetcds.jdbc.tds.TdsException
@@ -2687,11 +2660,8 @@ public class Tds implements TdsDefinitions {
         int len = getSubPacketLength();
 
         msg.number = comm.getTdsInt();
-
         msg.state = comm.getByte();
-
-        msg.level = comm.getByte();
-        // ?class?
+        msg.severity = comm.getByte();
 
         int msgLen = comm.getTdsShort();
         msg.message = comm.getString(msgLen);
@@ -2708,7 +2678,7 @@ public class Tds implements TdsDefinitions {
         int srvNameLen = comm.getByte() & 0xFF;
         msg.server = comm.getString(srvNameLen);
 
-        if (packetSubType == TDS_MSG_TOKEN || packetSubType == TDS_ERR_TOKEN) {
+        if (packetSubType == TDS_INFO || packetSubType == TDS_ERROR) {
             // nop
             int procNameLen = comm.getByte() & 0xFF;
             msg.procName = comm.getString(procNameLen);
@@ -2726,7 +2696,7 @@ public class Tds implements TdsDefinitions {
 
         lastServerMessage = msg;
 
-        if (packetSubType == TDS_ERR_TOKEN) {
+        if (packetSubType == TDS_ERROR) {
             return new PacketErrorResult(packetSubType, msg);
         }
         else {
@@ -2749,26 +2719,28 @@ public class Tds implements TdsDefinitions {
     private PacketResult processEnvChange()
              throws java.io.IOException, com.internetcds.jdbc.tds.TdsException
     {
-        final byte CHARSET_CHANGE = (byte) 3;
-
         int len = getSubPacketLength();
         int type = comm.getByte();
         switch (type) {
-            case TDS_ENV_BLOCKSIZE: {
-              String blocksize;
-              int clen = comm.getByte() & 0xFF;
-              if (tdsVer == TDS70) {
-                blocksize = comm.getString(clen);
+            case TDS_ENV_BLOCKSIZE:
+            {
+                String blocksize;
+                int clen = comm.getByte() & 0xFF;
+                if (tdsVer == TDS70) {
+                    blocksize = comm.getString(clen);
+                    comm.skip(len - 2 - clen * 2);
+                }
+                else {
+                    blocksize = encoder.getString(comm.getBytes(clen, false), 0, clen);
+                    comm.skip(len - 2 - clen);
+                }
+                // SAfe This was only done for TDS70. Why?
                 comm.resizeOutbuf(Integer.parseInt(blocksize));
-                comm.skip(len - 2 - clen * 2);
-              }
-              else {
-                blocksize = encoder.getString(comm.getBytes(clen, false), 0, clen);
-                comm.skip(len - 2 - clen);
-              }
+                if( Logger.isActive() )
+                    Logger.println("Changed blocksize to "+blocksize);
             }
             break;
-            case CHARSET_CHANGE:
+            case TDS_ENV_CHARSET:
             {
                 int clen = comm.getByte() & 0xFF;
                 String charset;
@@ -2781,6 +2753,25 @@ public class Tds implements TdsDefinitions {
                     comm.skip(len - 2 - clen);
                 }
                 setCharset(charset);
+                if( Logger.isActive() )
+                    Logger.println("Changed charset to "+charset+'/'+encoder.getName());
+                break;
+            }
+            case TDS_ENV_DATABASE:
+            {
+                int clen = comm.getByte() & 0xFF;
+                String newDb = tdsVer==TDS70 ? comm.getString(clen) :
+                    encoder.getString(comm.getBytes(clen, false), 0, clen);
+                clen = comm.getByte() & 0xFF;
+                String oldDb = tdsVer==TDS70 ? comm.getString(clen) :
+                    encoder.getString(comm.getBytes(clen, false), 0, clen);
+
+                if( database!=null && !oldDb.equals(database) )
+                    throw new TdsException("Old database mismatch.");
+
+                database = newDb;
+                if( Logger.isActive() )
+                    Logger.println("Changed database to "+database);
                 break;
             }
             default:
@@ -2792,7 +2783,7 @@ public class Tds implements TdsDefinitions {
             }
         }
 
-        return new PacketResult( TDS_ENV_CHG_TOKEN );
+        return new PacketResult( TDS_ENVCHANGE );
     }
 
 
@@ -3042,11 +3033,11 @@ public class Tds implements TdsDefinitions {
 
         while (result.moreResults() &&
                 (peek() == TdsDefinitions.TDS_PROCID
-                 || peek() == TdsDefinitions.TDS_RET_STAT_TOKEN)) {
+                 || peek() == TdsDefinitions.TDS_RETURNSTATUS)) {
             if (peek() == TDS_PROCID) {
                 PacketResult tmp = processSubPacket();
             }
-            else if (peek() == TDS_RET_STAT_TOKEN) {
+            else if (peek() == TDS_RETURNSTATUS) {
                 PacketRetStatResult tmp = (PacketRetStatResult) processSubPacket();
                 result.setRetStat(tmp.getRetStat());
             }
@@ -3621,7 +3612,7 @@ public class Tds implements TdsDefinitions {
             databaseProductName = databaseProductName.substring(0, last);
         }
 
-        return new PacketResult(TDS_LOGIN_ACK_TOKEN);
+        return new PacketResult(TDS_LOGINACK);
     }
 
 
@@ -4308,7 +4299,11 @@ public class Tds implements TdsDefinitions {
             throw exception;
     }
 
-    void skipToEnd()
+    // SAfe This method is *completely* unsafe (although I was the brilliant
+    //      mind that wrote it :o( ). It will have to wait until the Tds will
+    //      manage its own Context; that way it will know exactly how to deal
+    //      with packages. Anyway, it seems a little bit useless. Or not?
+    void skipToEnd_do_not_call()
       throws java.sql.SQLException, java.io.IOException,
         com.internetcds.jdbc.tds.TdsUnknownPacketSubType,
         com.internetcds.jdbc.tds.TdsException

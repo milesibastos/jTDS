@@ -22,12 +22,8 @@ public class TimestampTest extends DatabaseTestCase
     public static void main(String args[])
     {
           boolean loggerActive = args.length > 0;
-          try {
-        Logger.setActive(loggerActive);
-          }
-          catch (java.io.IOException ex) {
-            throw new RuntimeException("Unexpected Exception " + ex + " occured in main");
-          }
+          Logger.setActive(loggerActive);
+
           if (args.length > 0) {
             junit.framework.TestSuite s = new TestSuite();
             for (int i = 0; i < args.length; i++) {
@@ -95,8 +91,8 @@ public class TimestampTest extends DatabaseTestCase
         PreparedStatement pStmt = cx.prepareStatement(
             "insert into #t0001 values (?, '1998-03-09 15:35:06.4',        " +
             "                          ?, '1998-03-09 15:35:00')");
-        Timestamp   t0 = new Timestamp(98, 2, 9, 15, 35, 6, 400000000);
-        Timestamp   t1 = new Timestamp(98, 2, 9, 15, 35, 0, 0);
+        Timestamp   t0 = Timestamp.valueOf("1998-03-09 15:35:06.4");
+        Timestamp   t1 = Timestamp.valueOf("1998-03-09 15:35:00");
 
         pStmt.setTimestamp(1, t0);
         pStmt.setTimestamp(2, t1);
@@ -132,7 +128,7 @@ public class TimestampTest extends DatabaseTestCase
         PreparedStatement pStmt = cx.prepareStatement(
             "insert into #t0004 values ('1998-09-09 15:35:05', ?, ?)");
 
-        Timestamp   t0 = new Timestamp(98, 8, 9, 15, 35, 5, 0);
+        Timestamp   t0 = Timestamp.valueOf("1998-09-09 15:35:05");
         pStmt.setTimestamp(1, t0);
         pStmt.setTimestamp(2, t0);
         int count = pStmt.executeUpdate();
@@ -336,6 +332,7 @@ public class TimestampTest extends DatabaseTestCase
         cx.commit();
         pStmt.close();
 
+        stmt = cx.createStatement();
         rs = stmt.executeQuery("select s, i from #t0009");
 
         count = 0;
@@ -546,7 +543,6 @@ public class TimestampTest extends DatabaseTestCase
             count++;
         }
         assertTrue(count == 5);
-        stmt.close();
 
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
@@ -557,6 +553,7 @@ public class TimestampTest extends DatabaseTestCase
             count++;
         }
         assertTrue(count == rowsToAdd);
+        stmt.close();
     }
 
     public void testMultipleResults0015() throws Exception
@@ -756,8 +753,8 @@ public class TimestampTest extends DatabaseTestCase
             { "binary(5)",     "0x1213141516",           new byte[] { 0x12, 0x13, 0x14, 0x15, 0x16 } },
             { "varbinary(4)",  "0x1718191A",             new byte[] { 0x17, 0x18, 0x19, 0x1A } },
             { "varchar(8)",    "'12345678'",             new String("12345678") },
-            { "datetime",      "'19990815 21:29:59.01'", new Timestamp(99, 7, 15, 21, 29, 59, 10000000) },
-            { "smalldatetime", "'19990215 20:45'",       new Timestamp(99, 1, 15, 20, 45, 0, 0) },
+            { "datetime",      "'19990815 21:29:59.01'", Timestamp.valueOf("1999-08-15 21:29:59.01") },
+            { "smalldatetime", "'19990215 20:45'",       Timestamp.valueOf("1999-02-15 20:45:00") },
             { "float(6)",      "65.4321",                new Float(65.4321)/* new BigDecimal("65.4321") */},
             { "float(14)",     "1.123456789",            new Double(1.123456789) /*new BigDecimal("1.123456789") */},
             { "real",          "7654321.0",              new Double(7654321.0) },
@@ -911,7 +908,7 @@ public class TimestampTest extends DatabaseTestCase
 
         int nextB = 1;
         int nextC = 1;
-        for (int i = 1; i < 500; i++)
+        for (int i = 1; i < 50; i++)
         {
             stmt.executeUpdate("insert into #t0020a " +
                 "  values(" + i + ", " +
@@ -1444,7 +1441,7 @@ public class TimestampTest extends DatabaseTestCase
 
     public void testConnection0039() throws Exception
     {
-        for( int i = 0; i < 100; i++ )
+        for( int i = 0; i < 10; i++ )
         {
             Connection conn = getConnection();
             Statement statement = conn.createStatement();
@@ -1484,7 +1481,6 @@ public class TimestampTest extends DatabaseTestCase
             + "'" + blong + "', "
             + "'" + blong + "')");
         assertTrue(count == 1);
-        stmt.close();
 
         pStmt = cx.prepareStatement("select c255, v255 from #t0040 order by c255");
         ResultSet rs = pStmt.executeQuery();
@@ -1513,6 +1509,7 @@ public class TimestampTest extends DatabaseTestCase
         assertEquals(rs.getString("v255"), blong);
 
         assertTrue("Expected no result set", !rs.next());
+        stmt.close();
 
         cx.close();
     }
@@ -1739,8 +1736,8 @@ public class TimestampTest extends DatabaseTestCase
         java.sql.Timestamp  t3 = rs.getTimestamp("t3");
         java.sql.Timestamp  t4 = rs.getTimestamp("t4");
 
-        java.sql.Timestamp r1 = new java.sql.Timestamp(100, 0, 2, 19, 35, 1, 333000000);
-        java.sql.Timestamp r2 = new java.sql.Timestamp(100, 0, 2, 19, 35, 0, 0);
+        java.sql.Timestamp r1 = Timestamp.valueOf("2000-01-02 19:35:01.333");
+        java.sql.Timestamp r2 = Timestamp.valueOf("2000-01-02 19:35:00");
 
         assertEquals(r1, t1);
         assertEquals(r1, t2);
@@ -1766,8 +1763,8 @@ public class TimestampTest extends DatabaseTestCase
 
         java.sql.Timestamp r1;
         java.sql.Timestamp r2;
-        r1 = new java.sql.Timestamp(100, 0, 2, 19, 35, 01, 0 * 1000000);
-        r2 = new java.sql.Timestamp(100, 0, 2, 19, 35, 0, 0);
+        r1 = Timestamp.valueOf("2000-01-02 19:35:01");
+        r2 = Timestamp.valueOf("2000-01-02 19:35:00");
 
         java.sql.PreparedStatement pstmt = cx.prepareStatement(
             "insert into #t0048 (t1, t2, t3, t4) values(?, ?, ?, ?)");

@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.17 2002-09-14 06:32:45 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -166,7 +166,8 @@ public class PreparedStatement_base
         boolean result = false;
 
         closeResults(false);
-        updateCount = -2;
+        // SAfe No need for this. getMoreResults sets it to -1 at start, anyway
+//        updateCount = -2;
 
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet( parameterList );
@@ -189,7 +190,7 @@ public class PreparedStatement_base
             // store it in the procedureCache
             tds.procedureCache.put( rawQueryString, procedure );
             // MJH Only record the proc name if in manual commit mode
-            if( !connection.getAutoCommit() ) // MJH
+            if( !getConnection().getAutoCommit() ) // MJH
                 tds.proceduresOfTra.add( procedure );
 
             // create it on the SQLServer.
@@ -236,7 +237,7 @@ public class PreparedStatement_base
                     formalParameterList,
                     actualParameterList,
                     this,
-                    timeout );
+                    getQueryTimeout() );
 
             result = getMoreResults(tds, true);
         }
@@ -450,16 +451,15 @@ public class PreparedStatement_base
      *@param  x                 the parameter value
      *@exception  SQLException  if a database-access error occurs.
      */
-    public void setBytes( int parameterIndex, byte x[] ) throws SQLException
+    public void setBytes(int parameterIndex, byte x[]) throws SQLException
     {
         // when this method creates the parameter the formal type should
         // be a varbinary if the length of 'x' is <=255, image if length>255.
-        if ( x == null || x.length <= 255 || connection.getTdsVer() == Tds.TDS70 && x.length <= 8000 ) {
+        if( x==null || x.length<=255 || (x.length<=8000 &&
+            ((TdsConnection)getConnection()).getTdsVer()==Tds.TDS70) )
             setParam( parameterIndex, x, java.sql.Types.VARBINARY, -1 );
-        }
-        else {
+        else
             setParam( parameterIndex, x, java.sql.Types.LONGVARBINARY, -1 );
-        }
     }
 
 

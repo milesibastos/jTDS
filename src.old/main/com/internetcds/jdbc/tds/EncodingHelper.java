@@ -8,10 +8,10 @@ import java.util.Hashtable;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  *
- * @version  $Id: EncodingHelper.java,v 1.4 2002-09-06 14:33:47 alin_sinpalean Exp $
+ * @version  $Id: EncodingHelper.java,v 1.5 2002-09-16 11:13:43 alin_sinpalean Exp $
  */
 public class EncodingHelper {
-    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.4 2002-09-06 14:33:47 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EncodingHelper.java,v 1.5 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
     /**
      * The name of the encoding.
@@ -165,5 +165,10 @@ public class EncodingHelper {
     static
     {
         initialize();
+    }
+
+    public String getName()
+    {
+        return name;
     }
 }

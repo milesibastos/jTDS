@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.13 2002-09-14 06:32:46 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.14 2002-09-16 11:13:43 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,13 +110,14 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.13 2002-09-14 06:32:46 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.14 2002-09-16 11:13:43 alin_sinpalean Exp $";
 
-    public TdsResultSet(Tds tds_, TdsStatement stmt_) throws SQLException
+    public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain)
+        throws SQLException
     {
         tds = tds_;
         stmt = stmt_;
-        startResultSet(tds, stmt.warningChain);
+        startResultSet(tds, stmtChain);
 
         hitEndOfData = false;
         warningChain = new SQLWarningChain();
@@ -509,7 +510,8 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
                         + " packet");
             }
 
-            stmt.eofResults();
+            // SAfe Only releases the tds if no more packets are outstanding.
+            stmt.releaseTds();
             warningChain.checkForExceptions();
 
             if( tds.isResultRow() )
@@ -532,7 +534,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
 
                 row = null;
                 hitEndOfData = true;
-                stmt.eofResults();
+                stmt.releaseTds();
             }
             else if( !tds.isResultSet() )
                 throw new SQLException("Protocol confusion. "
@@ -542,12 +544,12 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
         }
         catch( java.io.IOException e )
         {
-            stmt.eofResults();
+            stmt.releaseTds();
             throw new SQLException(e.getMessage());
         }
         catch( TdsException e )
         {
-            stmt.eofResults();
+            stmt.releaseTds();
             e.printStackTrace();
             throw new SQLException(e.getMessage());
         }

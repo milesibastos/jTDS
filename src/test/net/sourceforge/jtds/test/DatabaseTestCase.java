@@ -1,11 +1,8 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.Map;
 import java.math.BigDecimal;
-import junit.framework.TestCase;
-import junit.framework.AssertionFailedError;
 
 public class DatabaseTestCase extends TestBase
 {

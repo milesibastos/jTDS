@@ -32,11 +32,9 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.ResultSetMetaData;
-
 public class Column
 {
-   public static final String cvsVersion = "$Id: Column.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: Column.java,v 1.2 2004-04-06 03:01:53 bheineman Exp $";
 
    private String  catalog       = null;
    private String  schema        = null;

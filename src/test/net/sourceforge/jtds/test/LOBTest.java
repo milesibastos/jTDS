@@ -1,6 +1,5 @@
 package net.sourceforge.jtds.test;
 
-import junit.framework.TestCase;
 import java.io.*;
 import java.sql.*;
 import java.util.*;

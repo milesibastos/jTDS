@@ -35,12 +35,11 @@
 package net.sourceforge.jtds.jdbc;
 
 import net.sourceforge.jtds.jdbc.TdsException;
-import net.sourceforge.jtds.util.HexDump;
 
 
 public class TdsUnknownPacketType extends TdsException
 {
-   public static final String cvsVersion = "$Id: TdsUnknownPacketType.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsUnknownPacketType.java,v 1.2 2004-04-06 03:01:53 bheineman Exp $";
 
 
    public TdsUnknownPacketType(

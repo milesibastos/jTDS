@@ -39,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: TdsSocket.java,v 1.4 2004-04-01 19:48:36 alin_sinpalean Exp $
+ * @version $Id: TdsSocket.java,v 1.5 2004-04-06 03:01:53 bheineman Exp $
  */
 public class TdsSocket {
 
@@ -293,7 +293,7 @@ public class TdsSocket {
             try {
                 sendCancel(tdsComm);
             } catch (IOException e) {
-                ; // Ignore error as network is probably dead anyway
+                // Ignore error as network is probably dead anyway
             }
         }
     }
@@ -315,7 +315,7 @@ public class TdsSocket {
                     vsock.diskQueue.close();
                     vsock.queueFile.delete();
                 } catch (IOException ioe) {
-                    ; // Ignore errors
+                    // Ignore errors
                 }
             }
         }

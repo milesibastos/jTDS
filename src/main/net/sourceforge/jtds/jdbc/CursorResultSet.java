@@ -341,7 +341,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     public boolean rowInserted() throws SQLException {
-        return getRowStat() == this.SQL_ROW_ADDED;
+        return getRowStat() == SQL_ROW_ADDED;
     }
 
     public boolean rowDeleted() throws SQLException {

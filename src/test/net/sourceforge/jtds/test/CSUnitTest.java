@@ -7,9 +7,7 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 import java.math.BigDecimal;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import junit.framework.AssertionFailedError;
 import java.io.*;
 import java.lang.reflect.*;
 

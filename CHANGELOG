@@ -1,6 +1,9 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/05/2004 - Brian Heineman
+ o Code clean up - removed unused import statements.
+
 04/04/2004 - Alin Sinpalean
  o Cleaned up TEXT and IMAGE sending. Now there's only one method for each of
    them. Also simplified CHAR/VARCHAR and BINARY/VARBINARY sending code.

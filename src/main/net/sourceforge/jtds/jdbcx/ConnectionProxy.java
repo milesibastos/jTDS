@@ -3,8 +3,6 @@ package net.sourceforge.jtds.jdbcx;
 import java.sql.*;
 import java.util.Map;
 
-import javax.sql.*;
-
 import net.sourceforge.jtds.jdbc.TdsConnection;
 
 /**

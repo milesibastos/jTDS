@@ -32,8 +32,6 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.io.*;
-
 
 /**
  * Extend the java.io.InputStream class for the TDS driver.
@@ -46,11 +44,11 @@ import java.io.*;
  * that will fit in memory.
  *
  * @author Craig Spannring
- * @version  $Id: TdsAsciiInputStream.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version  $Id: TdsAsciiInputStream.java,v 1.2 2004-04-06 03:01:53 bheineman Exp $
  */
 class TdsAsciiInputStream extends java.io.InputStream
 {
-   public static final String cvsVersion = "$Id: TdsAsciiInputStream.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsAsciiInputStream.java,v 1.2 2004-04-06 03:01:53 bheineman Exp $";
 
    // The data that will be read from the stream.
    String   data;

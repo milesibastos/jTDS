@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.1 2004-12-17 14:33:36 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.2 2004-12-17 15:20:22 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -86,7 +86,9 @@ public class SharedLocalNamedPipe extends SharedSocket {
             getOut().close();
             getIn().close();
 
-            pipe.close();
+            if (pipe  != null) {
+                pipe.close();
+            }
         } finally {
             pipe = null;
         }

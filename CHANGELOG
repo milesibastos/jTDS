@@ -1,9 +1,9 @@
-Changes from jTDS 0.8
+Changes from jTDS 0.8.1
 =========================
 
 07/08/2004 - Brian Heineman
- o Corrected bug [983561] getDatetimeValue truncates fractional milliseconds;
-   Added test to ensure this functionality continues to work in the future.
+ o Added test for bug [983561] getDatetimeValue truncates fractional
+   milliseconds.
 
 07/07/2004 - Brian Heineman
  o Added test for bug [974036] Bug in 0.8rc1 DatabaseMetaData method
@@ -46,6 +46,23 @@ Changes from jTDS 0.8
    support for TDS 8.0 as well). See NEWCODE.TXT for additional information.
  o Corrected bug with Savepoint id assignment.
  o Improved performance of data conversions by reducing memory allocations.
+ o Corrected bug [974036] Bug in 0.8rc1 DatabaseMetaData method getTableTypes()
+
+===============================================================================
+07/08/2004 - jTDS 0.8.1 released
+===============================================================================
+
+Changes from jTDS 0.8
+=========================
+
+07/08/2004 - Brian Heineman
+ o Corrected bug [983561] getDatetimeValue truncates fractional milliseconds.
+
+07/07/2004 - Brian Heineman
+ o Corrections to compile with the 1.3 JDK; updated Types.BOOLEAN references 
+   to Tds.BOOLEAN.
+
+06/27/2004 - Brian Heineman
  o Corrected bug [974036] Bug in 0.8rc1 DatabaseMetaData method getTableTypes()
 
 ===============================================================================

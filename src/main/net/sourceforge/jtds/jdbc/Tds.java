@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.48 2004-04-03 21:01:38 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.49 2004-04-03 21:10:20 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.48 2004-04-03 21:01:38 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.49 2004-04-03 21:10:20 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -2863,6 +2863,7 @@ public class Tds implements TdsDefinitions {
                     buffer = tmpBuffer;
                 }
 
+                // Creating a new String every time is very inefficient; this should be fixed.
                 comm.appendBytes(encodingHelper.getBytes(new String(buffer)));
             }
         }

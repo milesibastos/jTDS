@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.11 2004-08-07 02:09:02 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.12 2004-08-07 02:20:14 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -55,10 +55,10 @@ public class DriverUnitTest extends UnitTestBase {
         TestSuite testSuite = new TestSuite(DriverUnitTest.class);
 
         testSuite.addTest(
-                DefaultPropertiesTestLibrary_Driver_parseURL.suite("test_parseURL_DefaultProperties"));
+                Test_Driver_parseURL.suite("test_parseURL_DefaultProperties"));
 
         testSuite.addTest(
-                DefaultPropertiesTestLibrary_Driver_getPropertyInfo.suite("test_getPropertyInfo_DefaultProperties"));
+                Test_Driver_getPropertyInfo.suite("test_getPropertyInfo_DefaultProperties"));
 
         return testSuite;
     }
@@ -252,7 +252,7 @@ public class DriverUnitTest extends UnitTestBase {
     /**
      * Class used to test {@link Driver#parseURL(String, Properties)}.
      */
-    public static class DefaultPropertiesTestLibrary_Driver_parseURL extends DefaultPropertiesTestLibrary {
+    public static class Test_Driver_parseURL extends DefaultPropertiesTestLibrary {
 
         /**
          * Construct a test suite for this library.
@@ -261,13 +261,13 @@ public class DriverUnitTest extends UnitTestBase {
          * @return The test suite.
          */
         public static Test suite(String name) {
-            return new TestSuite(DefaultPropertiesTestLibrary_Driver_parseURL.class, name);
+            return new TestSuite(Test_Driver_parseURL.class, name);
         }
 
         /**
          * Default constructor.
          */
-        public DefaultPropertiesTestLibrary_Driver_parseURL() {
+        public Test_Driver_parseURL() {
             setTester(
                     new DefaultPropertiesTester() {
             
@@ -292,7 +292,7 @@ public class DriverUnitTest extends UnitTestBase {
     /**
      * Class used to test {@link Driver#getPropertyInfo(String, Properties)}.
      */
-    public static class DefaultPropertiesTestLibrary_Driver_getPropertyInfo extends DefaultPropertiesTestLibrary {
+    public static class Test_Driver_getPropertyInfo extends DefaultPropertiesTestLibrary {
 
         /**
          * Construct a test suite for this library.
@@ -301,13 +301,13 @@ public class DriverUnitTest extends UnitTestBase {
          * @return The test suite.
          */
         public static Test suite(String name) {
-            return new TestSuite(DefaultPropertiesTestLibrary_Driver_getPropertyInfo.class, name);
+            return new TestSuite(Test_Driver_getPropertyInfo.class, name);
         }
 
         /**
          * Default constructor.
          */
-        public DefaultPropertiesTestLibrary_Driver_getPropertyInfo() {
+        public Test_Driver_getPropertyInfo() {
             setTester(
                     new DefaultPropertiesTester() {
             

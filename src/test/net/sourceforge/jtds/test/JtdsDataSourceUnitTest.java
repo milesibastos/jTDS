@@ -26,11 +26,11 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
         final TestSuite testSuite = new TestSuite(JtdsDataSourceUnitTest.class);
 
         testSuite.addTest(
-                JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource.suite(
-                        "test_JtdsDataSource_field_DefaultProperties"));
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_fields.suite(
+                        "test_fields_DefaultProperties"));
 
         testSuite.addTest(
-                JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource_getReference.suite(
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_getReference.suite(
                         "test_getReference_DefaultProperties"));
 
         return testSuite;
@@ -61,7 +61,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     /**
      * Class used to test {@link JtdsDataSource}.
      */
-    public static class DefaultPropertiesTestLibrary_JtdsDataSource
+    public static class Test_JtdsDataSource_fields
             extends DefaultPropertiesTestLibrary {
 
         /**
@@ -71,7 +71,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          * @return The test suite.
          */
         public static Test suite(String name) {
-            return new TestSuite(JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource.class, name);
+            return new TestSuite(JtdsDataSourceUnitTest.Test_JtdsDataSource_fields.class, name);
         }
 
         /**
@@ -80,7 +80,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          * This class only has one default setup (SQL Server with TDS 7.0),
          * so flags are set to make sure only that configuration is tested.
          */
-        public DefaultPropertiesTestLibrary_JtdsDataSource() {
+        public Test_JtdsDataSource_fields() {
 
             setOnlySqlServerTests(true);
             setOnlyTds70Tests(true);
@@ -119,7 +119,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     /**
      * Class used to test {@link JtdsDataSource#getReference()}.
      */
-    public static class DefaultPropertiesTestLibrary_JtdsDataSource_getReference
+    public static class Test_JtdsDataSource_getReference
             extends DefaultPropertiesTestLibrary {
 
         /**
@@ -130,7 +130,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          */
         public static Test suite(String name) {
             return new TestSuite(
-                    JtdsDataSourceUnitTest.DefaultPropertiesTestLibrary_JtdsDataSource_getReference.class, name);
+                    JtdsDataSourceUnitTest.Test_JtdsDataSource_getReference.class, name);
         }
 
         /**
@@ -139,7 +139,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          * This class only has one default setup (SQL Server with TDS 7.0),
          * so flags are set to make sure only that configuration is tested.
          */
-        public DefaultPropertiesTestLibrary_JtdsDataSource_getReference() {
+        public Test_JtdsDataSource_getReference() {
             setOnlySqlServerTests(true);
             setOnlyTds70Tests(true);
             setTester(

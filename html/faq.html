@@ -90,6 +90,8 @@
           scrollable and/or updateable <code>ResultSet</code>.</a></li>
         <li><a href="#sqlStates">Not all <code>SQLException</code>s thrown by
           jTDS seem to have associated meaningful SQL state values.</a></li>
+        <li><a href="#batchProcessing">Batch processing with executeBatch()
+          hangs or is unreliable on Sybase.</a></li>
       </ul>
       <p class="question">Incorrect Behavior</p>
       <ul>
@@ -531,6 +533,16 @@
         <a href="http://www.contrib.andrew.cmu.edu/~shadow/sql/sql1992.txt">SQL
         92</a> spec for the complete list and description of SQL state
         codes.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="batchProcessing"></a>Batch processing
+        using executeBatch() hangs or is unreliable on Sybase.</p>
+      <p>When executing large batches on Sybase the client application may
+        hang or the response time may vary considerably. Firstly, the client
+        may be suspended if the system log fills so check that the log space
+        is sufficient for the batch you are trying to load. Secondly, try to
+        use reasonable batch sizes, for example &lt;= 5000 statements, and
+        execute each batch in a transaction (i.e. with auto commit set to
+        false).</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Incorrect Behavior</p>

@@ -1549,4 +1549,52 @@ public class SAfeTest extends DatabaseTestCase {
         assertEquals(3, rs.getString(2).length());
         rs.close();
     }
+
+    /**
+     * Test return of multiple scrollable result sets from one execute.
+     */
+    public void testGetMultiScrollRs() throws Exception {
+        // Manual commit mode to make sure no garbage is left behind
+        con.setAutoCommit(false);
+
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+        try {
+            dropProcedure("jtds_multiSet");
+            stmt.execute("CREATE PROC jtds_multiSet as\r\n " +
+                    "BEGIN\r\n" +
+                    "SELECT 'SINGLE ROW RESULT'\r\n"+
+                    "SELECT 1, 'LINE ONE'\r\n"+
+                    "UNION\r\n" +
+                    "SELECT 2, 'LINE TWO'\r\n"+
+                    "UNION\r\n" +
+                    "SELECT 3, 'LINE THREE'\r\n"+
+                    "SELECT 'ANOTHER SINGLE ROW RESULT'\r\n"+
+                    "END\r\n");
+            assertTrue(stmt.execute("exec jtds_multiSet"));
+            stmt.clearWarnings();
+            ResultSet rs = stmt.getResultSet();
+            assertNotNull(stmt.getWarnings()); // Downgrade to read only
+            assertNotNull(stmt.getWarnings().getNextWarning()); // Downgrade to insensitive
+            assertTrue(rs.next());
+            assertEquals("SINGLE ROW RESULT", rs.getString(1));
+
+            assertTrue(stmt.getMoreResults());
+            rs = stmt.getResultSet();
+            assertTrue(rs.absolute(2));
+            assertEquals("LINE TWO", rs.getString(2));
+            assertTrue(rs.relative(-1));
+            assertEquals("LINE ONE", rs.getString(2));
+
+            assertTrue(stmt.getMoreResults());
+            rs = stmt.getResultSet();
+            assertTrue(rs.next());
+            assertEquals("ANOTHER SINGLE ROW RESULT", rs.getString(1));
+        } finally {
+            dropProcedure("jtds_multiSet");
+            stmt.close();
+            // We can safely commit, mess cleaned up (we could rollback, too)
+            con.commit();
+        }
+    }
 }

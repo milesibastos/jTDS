@@ -49,7 +49,7 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.10 2005-02-09 09:57:35 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.11 2005-02-16 22:15:29 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -179,13 +179,39 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a cached result set with the same columns as an existing result set.
+     * Create a cached result set with the same columns
+     * (and optionally data) as an existing result set.
      * @param rs The result set to copy.
+     * @param load Load data from the supplied result set.
      * @throws SQLException
      */
-    CachedResultSet(JtdsResultSet rs) throws SQLException {
-        super((JtdsStatement)rs.getStatement(), ResultSet.TYPE_FORWARD_ONLY,
-                ResultSet.CONCUR_UPDATABLE, null, false);
+    CachedResultSet(JtdsResultSet rs, boolean load) throws SQLException {
+        super((JtdsStatement)rs.getStatement(),
+                rs.getStatement().getResultSetType(),
+                rs.getStatement().getResultSetConcurrency(), null, false);
+        //
+        JtdsStatement stmt = ((JtdsStatement)rs.getStatement());
+        //
+        // OK If the user requested an updateable result set tell them
+        // they can't have one!
+        //
+        if (concurrency == ResultSet.CONCUR_UPDATABLE) {
+            concurrency = ResultSet.CONCUR_READ_ONLY;
+            stmt.addWarning(new SQLWarning(
+                Messages.get("warning.cursordowngraded",
+                             "CONCUR_READ_ONLY"), "01000"));
+        }
+        //
+        // If the user requested a scroll sensitive cursor tell them
+        // they can't have that either!
+        //
+        if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+            resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
+            stmt.addWarning(new SQLWarning(
+                Messages.get("warning.cursordowngraded",
+                             "TYPE_SCROLL_INSENSITIVE"), "01000"));
+        }
+
         this.columns       = rs.getColumns();
         this.columnCount   = getColumnCount(columns);
         this.rowData       = new ArrayList(INITIAL_ROW_COUNT);
@@ -194,6 +220,16 @@ public class CachedResultSet extends JtdsResultSet {
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
         this.cursorName    = null;
+        //
+        // Load result set into buffer
+        //
+        if (load) {
+            while (rs.next()) {
+                rowData.add(copyRow(rs.getCurrentRow()));
+            }
+            this.rowsInResult  = rowData.size();
+            this.initialRowCnt = rowsInResult;
+        }
     }
 
     /**
@@ -967,22 +1003,8 @@ public class CachedResultSet extends JtdsResultSet {
              // Construct an SQL INSERT statement
              //
              StringBuffer sql = new StringBuffer(128);
-             String dbName    = columns[0].catalog;
-             String userName  = columns[0].schema;
-             String tableName = columns[0].tableName;
              ArrayList params = new ArrayList();
              sql.append("INSERT INTO ");
-             if (dbName != null) {
-                 sql.append(dbName);
-                 sql.append('.');
-                 if (userName == null) {
-                     sql.append('.');
-                 }
-             }
-             if (userName != null) {
-                 sql.append(userName);
-                 sql.append('.');
-             }
              sql.append(tableName);
              int sqlLen = sql.length();
              //

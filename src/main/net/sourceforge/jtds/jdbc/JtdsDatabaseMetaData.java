@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.25 2005-02-14 12:15:42 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.26 2005-02-16 22:15:29 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -3358,11 +3358,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     }
 
     private static CachedResultSet createTypeInfoResultSet(JtdsResultSet rs) throws SQLException {
-        CachedResultSet result = new CachedResultSet(rs);
+        CachedResultSet result = new CachedResultSet(rs, false);
         result.setColumnCount(TypeInfo.NUM_COLS);
         result.setColLabel(3, "PRECISION");
         result.setColLabel(11, "FIXED_PREC_SCALE");
         upperCaseColumnNames(result);
+        result.setConcurrency(ResultSet.CONCUR_UPDATABLE);
         result.moveToInsertRow();
 
         for (Iterator iter = getSortedTypes(rs).iterator(); iter.hasNext();) {

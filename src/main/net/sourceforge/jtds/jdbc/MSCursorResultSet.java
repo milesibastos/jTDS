@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.41 2005-02-09 09:57:36 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.42 2005-02-16 22:15:30 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -1217,7 +1217,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
     }
 
-    private Object[] getCurrentRow() {
+    protected Object[] getCurrentRow() {
         if (pos < cursorPos || pos >= cursorPos + rowCache.length) {
             return null;
         }

@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.30 2005-01-05 08:34:10 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.31 2005-02-16 22:15:30 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -362,6 +362,14 @@ public class JtdsResultSet implements ResultSet {
         return copy;
     }
 
+    /**
+     * Retrieve the current row data.
+     * @return The current row data as an <code>Object[]</code>.
+     */
+    protected Object[] getCurrentRow()
+    {
+        return this.currentRow;
+    }
 //
 // -------------------- java.sql.ResultSet methods -------------------
 //

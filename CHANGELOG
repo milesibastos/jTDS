@@ -1,6 +1,12 @@
 Changes from jTDS 1.0.1
 =======================
 
+02/16/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1122357] INSERT is executed twice by scrollable 
+   Statement on Sybase. CachedResultSets are now created on top of plain
+   ResultSets from scrollable/updateable Statements. The query is only altered
+   (by adding "FOR BROWSE") if executed via executeQuery().
+
 02/15/2005 - Alin Sinpalean
  o Altered SQLParser to accept any number of parameters for a PreparedStatement
    if prepareSql=0, i.e. plain queries rathern than RPC are used to execute the

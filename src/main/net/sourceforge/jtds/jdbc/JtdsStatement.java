@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.30 2005-02-09 09:57:35 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.31 2005-02-16 22:15:30 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -366,16 +366,17 @@ public class JtdsStatement implements java.sql.Statement {
         String warningMessage = null;
 
         //
-        // Try to open a cursor result set if required (and possible)
+        // For SQL Server, try to open a cursor result set if required
+        // (and possible).
         //
-        if ((resultSetType != ResultSet.TYPE_FORWARD_ONLY
+        if (connection.getServerType() == Driver.SQLSERVER
+            &&  (resultSetType != ResultSet.TYPE_FORWARD_ONLY
                 || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
                 || cursorName != null)
                 && !returnKeys
                 && (sqlWord.equals("select") || sqlWord.startsWith("exec"))) {
             try {
-                if (connection.getServerType() == Driver.SQLSERVER) {
-                    currentResult = new MSCursorResultSet(
+                 currentResult = new MSCursorResultSet(
                             this,
                             sql,
                             spName,
@@ -384,18 +385,6 @@ public class JtdsStatement implements java.sql.Statement {
                             resultSetConcurrency);
 
                     return true;
-                } else {
-                    // Use client side cursor for Sybase
-                    currentResult = new CachedResultSet(
-                            this,
-                            sql,
-                            spName,
-                            params,
-                            resultSetType,
-                            resultSetConcurrency);
-
-                    return true;
-                }
             } catch (SQLException e) {
                 if (connection == null || connection.isClosed()
                         || "HYT00".equals(e.getSQLState())) {
@@ -407,7 +396,8 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         //
-        // Could not open a Cursor or not a SELECT so just execute
+        // We are talking to a Sybase server or we could not open a cursor
+        // or we did not have a SELECT so just execute the SQL normally.
         //
         tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
                 maxFieldSize, true);
@@ -984,6 +974,23 @@ public class JtdsStatement implements java.sql.Statement {
 
     public ResultSet getResultSet() throws SQLException {
         checkOpen();
+        //
+        if (currentResult instanceof MSCursorResultSet ||
+            currentResult instanceof CachedResultSet) {
+            return currentResult;
+        }
+        //
+        // See if we are returning a forward read only resultset
+        //
+        if (currentResult == null ||
+            (resultSetType == ResultSet.TYPE_FORWARD_ONLY &&
+             resultSetConcurrency == ResultSet.CONCUR_READ_ONLY)) {
+            return currentResult;
+        }
+        //
+        // OK Now create a CachedResultSet based on the existng result set.
+        //
+        currentResult = new CachedResultSet(currentResult, true);
 
         return currentResult;
     }

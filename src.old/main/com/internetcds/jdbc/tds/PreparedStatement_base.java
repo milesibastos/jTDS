@@ -56,7 +56,7 @@ import java.util.Map;
  *
  * @author Craig Spannring
  * @author The FreeTDS project
- * @version  $Id: PreparedStatement_base.java,v 1.6 2001-09-18 08:38:07 aschoerk Exp $
+ * @version  $Id: PreparedStatement_base.java,v 1.7 2001-09-20 07:14:08 aschoerk Exp $
  *
  * @see Connection#prepareStatement
  * @see ResultSet
@@ -65,7 +65,7 @@ public class PreparedStatement_base
    extends    TdsStatement
    implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.6 2001-09-18 08:38:07 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: PreparedStatement_base.java,v 1.7 2001-09-20 07:14:08 aschoerk Exp $";
 
 
    String               rawQueryString     = null;
@@ -508,7 +508,7 @@ public class PreparedStatement_base
     */
    public void setByte(int index, byte x) throws SQLException
    {
-      throw new SQLException("Not implemented");
+      setParam(index, new Integer(x), java.sql.Types.SMALLINT, -1);
    }
 
 
@@ -694,8 +694,13 @@ public class PreparedStatement_base
      else               
      if (x instanceof java.util.Date)
        setTimestamp(parameterIndex,new Timestamp(((java.util.Date)x).getTime()));
-     else               
-      throw new SQLException("Not implemented");
+     else {
+       Class c = x.getClass();
+       if (c.isArray() && c.getComponentType().equals(byte.class))
+         setBytes(parameterIndex,(byte[])x);
+       else               
+        throw new SQLException("Not implemented");
+     }
    }
 
 

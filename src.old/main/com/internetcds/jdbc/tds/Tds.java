@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $
+ *@version    $Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.7 2001-09-18 08:38:07 aschoerk Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2001-09-20 07:14:09 aschoerk Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -824,8 +824,11 @@ public class Tds implements TdsDefinitions {
                             if (tdsVer != TDS70 && max > 255) {
                                 // TEXT
                                 comm.appendByte((byte) SYBTEXT);
-                                sendSybImage(encoder.getBytes((String) actualParameterList[i]
+                                if (len > 0)
+                                  sendSybImage(encoder.getBytes((String) actualParameterList[i]
                                         .value));
+                                else 
+                                  sendSybImage((byte[]) actualParameterList[i].value);
                             }
                             else {
                                 // VARCHAR
@@ -1883,18 +1886,19 @@ public class Tds implements TdsDefinitions {
 */
           case 4:
             {
-                result = new Long(comm.getTdsInt());
+                result = new Integer(comm.getTdsInt());
                 break;
             }
             case 2:
             {
-                result = new Long(comm.getTdsShort());
+                result = new Short((short)comm.getTdsShort());
                 break;
             }
             case 1:
             {
                 int tmp = toUInt(comm.getByte());
                 // XXX Are we sure this should be unsigned?
+                // AS: no, there is no unsigned Byte in Java so -> use smallint in Params and Table-Creation
                 result = new Long(tmp);
                 break;
             }
@@ -3157,9 +3161,56 @@ public class Tds implements TdsDefinitions {
    }
    
    
-   private void writeDecimalValue(byte nativeType, Object value, int scale, int precision)
+   private void writeDecimalValue(byte nativeType, Object o, int scalePar, int precision)
       throws TdsException, java.io.IOException
    {
+      comm.appendByte((byte)SYBDECIMAL);
+      if (o == null) {
+        comm.appendByte((byte)0);
+        comm.appendByte((byte)28);
+        comm.appendByte((byte)12);
+        comm.appendByte((byte)0);
+      }
+      else {
+        if (o instanceof Long) {
+          long value = ((Long)o).longValue();
+          comm.appendByte((byte)9);
+          comm.appendByte((byte)28);
+          comm.appendByte((byte)0);
+          comm.appendByte((byte)9);
+          if (value >= 0L) {
+            comm.appendByte((byte)1);
+          }
+          else {
+            comm.appendByte((byte)0);
+            value = -value;
+          }
+          for (int valueidx = 0; valueidx<8; valueidx++) {
+            // comm.appendByte((byte)(value & 0xFF));
+            comm.appendByte((byte)(value & 0xFF));
+            value >>>= 8;
+          }
+        }
+        else {
+          BigDecimal bd = (BigDecimal)o;
+          byte scale = (byte)bd.scale();
+          byte signum = (byte)(bd.signum() < 0 ? 0 : 1);
+          BigInteger bi = bd.unscaledValue();
+          long l = bi.longValue();
+          byte[] mantisse = bi.abs().toByteArray();
+          byte len = (byte)(mantisse.length + 1);
+          byte prec = 28;
+          comm.appendByte(len);
+          comm.appendByte(prec);
+          comm.appendByte(scale);
+          comm.appendByte(len);
+          comm.appendByte(signum);
+          for (int mantidx = mantisse.length - 1; mantidx >= 0 ; mantidx--) {
+            comm.appendByte(mantisse[mantidx]);
+          }                                
+        }
+      }
+                      /*
        BigDecimal d;
        if (value == null || value instanceof BigDecimal)
        {
@@ -3224,6 +3275,7 @@ public class Tds implements TdsDefinitions {
            comm.appendByte(signum < 0 ? (byte)0 : (byte)1);
            comm.appendBytes(data);
        }
+                       */
    }
 
     private Object readFloatN(int len)
@@ -3392,7 +3444,7 @@ public class Tds implements TdsDefinitions {
         // set the type of the column
         // set the maximum length of the field
         // set the actual lenght of the field.
-        if (converted.length > 255) {
+        if (maxLength > 255 || converted.length > 255) {
             if (tdsVer != TDS70)
             {
                throw new java.io.IOException("String too long");

@@ -19,20 +19,26 @@ public class DatabaseTestCase extends TestBase
 	
 	protected void dropTable(String tablename) throws SQLException
 	{
-		Statement stmt = con.createStatement();
-		stmt.executeUpdate(
-			"if exists (select * from sysobjects where name = '" + tablename + "' and type = 'U') "
-			+ " drop table " + tablename);
-		stmt.close();
+          String sobName = "sysobjects";
+          if (tablename.startsWith("#"))
+            sobName = "tempdb.dbo.sysobjects";
+          Statement stmt = con.createStatement();
+          stmt.executeUpdate(
+                  "if exists (select * from " + sobName + " where name like '" + tablename + "%' and type = 'U') "
+                  + " drop table " + tablename);
+          stmt.close();
 	}
 	
 	protected void dropProcedure(String procname) throws SQLException
 	{
-		Statement stmt = con.createStatement();
-		stmt.executeUpdate(
-			"if exists (select * from sysobjects where name = '" + procname + "' and type = 'P') "
-			+ " drop procedure " + procname);
-		stmt.close();
+          String sobName = "sysobjects";
+          if (procname.startsWith("#"))
+            sobName = "tempdb.dbo.sysobjects";
+          Statement stmt = con.createStatement();
+          stmt.executeUpdate(
+                  "if exists (select * from " + sobName + " where name like '" + procname + "%' and type = 'P') "
+                  + " drop procedure " + procname);
+          stmt.close();
 	}
 	
 	// return -1 if a1<a2, 0 if a1==a2, 1 if a1>a2
@@ -76,13 +82,15 @@ public class DatabaseTestCase extends TestBase
 			return typemap;
 
 		Map map = new java.util.HashMap(15);
-		map.put(BigDecimal.class,         new Integer(java.sql.Types.NUMERIC));
+		map.put(BigDecimal.class,         new Integer(java.sql.Types.DECIMAL));
 		map.put(Boolean.class,            new Integer(java.sql.Types.BIT));
 		map.put(Byte.class,               new Integer(java.sql.Types.TINYINT));
 		map.put(byte[].class,             new Integer(java.sql.Types.VARBINARY));
 		map.put(java.sql.Date.class,      new Integer(java.sql.Types.DATE));
+		map.put(double.class,             new Integer(java.sql.Types.DOUBLE));
 		map.put(Double.class,             new Integer(java.sql.Types.DOUBLE));
 		map.put(float.class,              new Integer(java.sql.Types.REAL));
+		map.put(Float.class,              new Integer(java.sql.Types.REAL));
 		map.put(Integer.class,            new Integer(java.sql.Types.INTEGER));
 		map.put(Long.class,               new Integer(java.sql.Types.NUMERIC));
 		map.put(Short.class,              new Integer(java.sql.Types.SMALLINT));

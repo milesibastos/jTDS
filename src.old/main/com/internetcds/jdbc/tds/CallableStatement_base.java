@@ -74,7 +74,7 @@ public class CallableStatement_base
    extends com.internetcds.jdbc.tds.PreparedStatement_base
    implements java.sql.CallableStatement
 {
-   public static final String cvsVersion = "$Id: CallableStatement_base.java,v 1.5 2001-09-18 08:38:07 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: CallableStatement_base.java,v 1.6 2001-09-20 07:14:08 aschoerk Exp $";
 
 
    private String   procedureName = null;
@@ -637,7 +637,7 @@ public class CallableStatement_base
       return null;
    }
 
-   protected void addOutputParam(Object value)
+   protected void addOutputParam(Object value) throws SQLException
    {
       for (lastOutParam++; lastOutParam < parameterList.length; lastOutParam++)
       {
@@ -647,6 +647,7 @@ public class CallableStatement_base
 	    return;
          }
       }
+      throw new SQLException("protocol returns too many output params");
       // ERROR: More parameters received than expected
    }
 
@@ -910,6 +911,16 @@ public class CallableStatement_base
       throws java.sql.SQLException
    {
       NotImplemented();
+   }
+   
+   // called by TdsStatement.moreResults
+   public void handleRetStat(PacketRetStatResult packet) {
+     
+   }
+   
+   public void handleParamResult(PacketOutputParamResult packet) throws SQLException 
+   {
+     addOutputParam(packet.value);
    }
 
 }

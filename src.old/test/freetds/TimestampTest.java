@@ -740,30 +740,35 @@ public class TimestampTest extends DatabaseTestCase
 			0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
 			0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
 			} },
-			*/
-
+*/
+			{ "float(6)",      "65.4321",                new BigDecimal("65.4321") },
 			{ "binary(5)",     "0x1213141516",           new byte[] { 0x12, 0x13, 0x14, 0x15, 0x16 } },
 			{ "varbinary(4)",  "0x1718191A",             new byte[] { 0x17, 0x18, 0x19, 0x1A } },
-			{ "char(1000)",
-			"'123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'",
-			new String("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890") },
-			{ "char(1000)",      "'1234567890'",           new String("1234567890") },
 			{ "varchar(8)",    "'12345678'",             new String("12345678") },
 			{ "datetime",      "'19990815 21:29:59.01'", new Timestamp(99, 7, 15, 21, 29, 59, 10000000) },
 			{ "smalldatetime", "'19990215 20:45'",       new Timestamp(99, 1, 15, 20, 45, 0, 0) },
-//			{ "decimal(10,3)", "1234567.089",            new BigDecimal("1234567.089") },
-//			{ "numeric(5,4)",  "1.2345",                 new BigDecimal("1.2345") },
-//			{ "float(6)",      "65.4321",                new BigDecimal("65.4321") },
-//			{ "float(14)",     "1.123456789",            new BigDecimal("1.123456789") },
+			{ "float(6)",      "65.4321",                 new Float(65.4321)/* new BigDecimal("65.4321") */},
+			{ "float(14)",     "1.123456789",            new Double(1.123456789) /*new BigDecimal("1.123456789") */},
 			{ "real",          "7654321.0",              new Double(7654321.0) },
 			{ "int",           "4097",                   new Integer(4097) },
-//			{ "smallint",      "4094",                   new Short((short)4094) },
-//			{ "tinyint",       "127",                    new Byte((byte)127) },
-//			{ "money",         "19.95",                  new BigDecimal("19.95") },
-//			{ "smallmoney",    "9.97",                   new BigDecimal("9.97") },
+			{ "float(6)",      "65.4321",                new BigDecimal("65.4321") },
+			{ "float(14)",     "1.123456789",            new BigDecimal("1.123456789") },
+			{ "decimal(10,3)", "1234567.089",            new BigDecimal("1234567.089") },
+			{ "numeric(5,4)",  "1.2345",                 new BigDecimal("1.2345") },
+			{ "smallint",      "4094",                   new Short((short)4094) },
+			// { "tinyint",       "127",                    new Byte((byte)127) },
+			// { "tinyint",       "-128",                    new Byte((byte)-128) },
+			{ "smallint",       "127",                    new Byte((byte)127) },
+			{ "smallint",       "-128",                    new Byte((byte)-128) },
+			{ "money",         "19.95",                  new BigDecimal("19.95") },
+			{ "smallmoney",    "9.97",                   new BigDecimal("9.97") },
 			{ "bit",           "1",                      Boolean.TRUE },
 //			{ "text",          "'abcedefg'",             new String("abcdefg") },
 //			{ "image",         "0x0a0a0b",               new byte[] { 0x0a, 0x0a, 0x0b } }
+			{ "char(1000)",
+			  "'123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'",
+			   new String("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890") },
+			{ "char(1000)",      "'1234567890'",           new String("1234567890") },
 		};
 	}
 
@@ -777,6 +782,7 @@ public class TimestampTest extends DatabaseTestCase
 		Object[][] datatypes = getDatatypes();
 		for (int i = 0; i < datatypes.length; i++)
 		{
+                  for (int pass = 0; pass < 2; pass++) {
 			String sql = "create procedure #freetds_outputTest "
 				+ "@a1 " + datatypes[i][0] + " = null out "
 				+ "as select @a1 = " + datatypes[i][1];
@@ -784,32 +790,47 @@ public class TimestampTest extends DatabaseTestCase
 
 			CallableStatement cstmt = cx.prepareCall("{call #freetds_outputTest[(?)]}");
 			int jtype = getType(datatypes[i][2]);
-			if (jtype == java.sql.Types.NUMERIC)
+
+                        if (jtype == java.sql.Types.NUMERIC || jtype == java.sql.Types.DECIMAL)
 			{
-				cstmt.registerOutParameter(1, jtype, 10);
+		          cstmt.registerOutParameter(1, jtype, 10);
+                          if (pass == 0) 
+                            cstmt.setObject(1,datatypes[i][2],jtype,10);
 			}
 			else if (jtype == java.sql.Types.VARCHAR)
 			{
-				cstmt.registerOutParameter(1, jtype, 2000);
+			  cstmt.registerOutParameter(1, jtype, 2000);
+                          if (pass == 0) 
+                            cstmt.setObject(1,datatypes[i][2]);
 			}
 			else
 			{
-				cstmt.registerOutParameter(1, jtype);
+			  cstmt.registerOutParameter(1, jtype);
+                          if (pass == 0) 
+                            cstmt.setObject(1,datatypes[i][2]);
 			}
 
-			cstmt.execute();
+			if (!cstmt.execute())
+                          while(cstmt.getUpdateCount() != -1 && cstmt.getMoreResults()) ;
 
 			if (jtype == java.sql.Types.VARBINARY)
 			{
-				assertTrue(compareBytes(cstmt.getBytes(1), (byte[])datatypes[i][2]) == 0);
+		          assertTrue(compareBytes(cstmt.getBytes(1), (byte[])datatypes[i][2]) == 0);
 			}
 			else
+                        if (datatypes[i][2] instanceof Number) {
+                          Number n = (Number)cstmt.getObject(1);
+                          assertEquals("Failed on " + datatypes[i][0], ((Number)cstmt.getObject(1)).doubleValue(), ((Number)datatypes[i][2]).doubleValue(),0.001);
+                        }
+                        else
 			{
-				assertEquals("Failed on " + datatypes[i][0], cstmt.getObject(1), datatypes[i][2]);
+			  assertEquals("Failed on " + datatypes[i][0], cstmt.getObject(1), datatypes[i][2]);
 			}
 
-			dropProcedure("#freetds_outputTest");
-		}
+                        cstmt.executeUpdate(" drop procedure #freetds_outputTest");
+
+                  }  // for (pass
+		}  // for (int
 	}
 
 	public void testDatatypes0017() throws Exception

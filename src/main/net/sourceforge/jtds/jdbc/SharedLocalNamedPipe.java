@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.5 2005-02-05 22:12:32 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.6 2005-02-19 20:11:11 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -35,18 +35,25 @@ public class SharedLocalNamedPipe extends SharedSocket {
     /**
      * Creates a new instance of <code>SharedLocalNamedPipe</code>.
      *
+     * @param serverName name of the server
      * @param tdsVersion the TDS protocol version
      * @param serverType the server type (SQL Server or Sybase)
      * @param instance   the database instance name
      * @throws IOException if an I/O error occurs
      */
-    public SharedLocalNamedPipe(int tdsVersion, int serverType, String instance)
+    public SharedLocalNamedPipe(String serverName, int tdsVersion, int serverType, String instance)
             throws IOException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
 
         StringBuffer pipeName = new StringBuffer(64);
-        pipeName.append("\\\\.\\pipe\\");
+        pipeName.append("\\\\");
+        if (serverName == null || serverName.length() == 0) {
+            pipeName.append( "." );
+        } else {
+            pipeName.append(serverName);
+        }
+        pipeName.append("\\pipe\\");
         if (instance != null && !instance.equals("")) {
             pipeName.append("MSSQL$").append(instance).append("\\");
         }

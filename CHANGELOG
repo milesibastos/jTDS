@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.1
 =======================
 
+02/19/2005 - Alin Sinpalean
+ o Applied patch [1122494] SQL Server Authentication & Named pipes, submitted
+   by Kartik Shah. On Windows, local named pipes are always used, now, even for
+   remote servers.
+
 02/17/2005 - Alin Sinpalean
  o Corrected a problem related to cancel synchronization in TdsCore: a race
    condition occured between the cancelPending assignments that could cause

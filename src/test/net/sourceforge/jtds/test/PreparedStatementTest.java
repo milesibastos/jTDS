@@ -458,7 +458,6 @@ public class PreparedStatementTest extends TestBase {
             // Make sure this worked
             assertEquals(9, cnt);
         } catch (SQLException ex) {
-            ex.printStackTrace();
             assertEquals("22025", ex.getSQLState());
         }
     }

@@ -146,6 +146,24 @@ public class PreparedStatementTest extends TestBase {
     }
 
     /**
+     * Test for bug [1008882] Some queries with parameters cannot be executed with 0.9-rc1
+     */
+    public void testPreparedStatementParsing2() throws Exception {
+        PreparedStatement pstmt = con.prepareStatement(" SELECT ?");
+
+        pstmt.setString(1, "TEST");
+
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        assertEquals("TEST", rs.getString(1));
+        assertFalse(rs.next());
+
+        pstmt.close();
+        rs.close();
+    }
+    
+    /**
      * Test for [931090] ArrayIndexOutOfBoundsException in rollback()
      */
     public void testPreparedStatementRollback1() throws Exception {
@@ -372,7 +390,7 @@ public class PreparedStatementTest extends TestBase {
         pstmt.close();
         rs.close();
     }
-
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

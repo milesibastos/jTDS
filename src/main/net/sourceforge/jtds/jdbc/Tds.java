@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.31 2004-02-17 19:03:25 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.32 2004-02-19 00:14:37 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -110,7 +110,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.31 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.32 2004-02-19 00:14:37 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -607,8 +607,13 @@ public class Tds implements TdsDefinitions {
                             comm.appendByte((byte) 8);
                             comm.appendByte((byte) 0);
                         } else {
-                            final Number n = (Number) (actualParameterList[i].value);
-                            final Double d = new Double(n.doubleValue());
+                            Double d = null;
+                            if (actualParameterList[i].value instanceof Double) {
+                                d = (Double) (actualParameterList[i].value);
+                            } else {
+                                final Number n = (Number) (actualParameterList[i].value);
+                                d = new Double(n.doubleValue());
+                            }
 
                             comm.appendByte(SYBFLT8);
                             comm.appendFlt8(d);

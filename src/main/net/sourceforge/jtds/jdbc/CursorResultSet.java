@@ -798,7 +798,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     }
                     crtCol++;
                 } else {
-                    if (row.getObject(i) != null)
+                    if (opType == CURSOR_OP_INSERT && row.getObject(i) != null)
                         throw new SQLException(
                                 "Column " + i + "/" + cols.getName(i)
                                 + " is read-only.");

@@ -604,4 +604,35 @@ public class SAfeTest extends DatabaseTestCase
         assertEquals("Row X", rs.getString(1));
         rs.close();
     }
+
+    /**
+     * Test how an "out-of-order" close behaves (e.g. close the
+     * <code>Connection</code> first, then the <code>Statement</code> anf
+     * finally the <code>ResultSet</code>).
+     */
+    public void testOutOfOrderClose0013() throws Exception {
+        Logger.setActive(true);
+        Connection localConn = getConnection();
+        Statement stmt = localConn.createStatement();
+        stmt.execute("CREATE TABLE #SAfe0013(value VARCHAR(255) PRIMARY KEY)");
+
+        PreparedStatement insStmt = localConn.prepareStatement(
+                "INSERT INTO #SAfe0013(value) values (?)");
+        insStmt.setString(1, "Row 1");
+        assertEquals(1, insStmt.executeUpdate());
+        insStmt.setString(1, "Row 2");
+        assertEquals(1, insStmt.executeUpdate());
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0013");
+
+        // Close the connection first
+        localConn.close();
+
+        // Now, close the statements
+        stmt.close();
+        insStmt.close();
+
+        // And finally, close the ResultSet
+        rs.close();
+    }
 }

@@ -31,7 +31,6 @@
 //
 
 
-
 package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
@@ -53,19 +52,16 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.5 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.6 2004-02-19 00:14:37 alin_sinpalean Exp $";
 
-
-    public PacketRowResult( Context context )
-    {
-        super( TdsDefinitions.TDS_ROW );
+    public PacketRowResult(Context context) {
+        super(TdsDefinitions.TDS_ROW);
         this.context = context;
-        row = new Vector( realColumnCount() );
-        row.setSize( realColumnCount() );
+        row = new Vector(realColumnCount());
+        row.setSize(realColumnCount());
     }
 
-    public Context getContext()
-    {
+    public Context getContext() {
         return context;
     }
 
@@ -80,56 +76,128 @@ public class PacketRowResult extends PacketResult {
      * @param  index             Index to store the element at. First element is
      *      at index 1
      */
-    public void setElementAt( int index, Object obj )
-        throws SQLException
-    {
-        if ( index < 1 || index > realColumnCount() ) {
-            throw new SQLException( "Bad index " + index );
+    public void setElementAt(int index, Object obj)
+            throws SQLException {
+        if (index < 1 || index > realColumnCount()) {
+            throw new SQLException("Bad index " + index);
         }
 
-        row.setElementAt( obj, index - 1 );
+        if (obj != null) {
+            int colType = context.getColumnInfo().getNativeType(index);
+
+            switch (colType) {
+            case Tds.SYBINTN:
+            case Tds.SYBINT1:
+            case Tds.SYBINT2:
+            case Tds.SYBINT4:
+                if (!(obj instanceof Number)) {
+                    obj = Integer.valueOf(obj.toString());
+                }
+                break;
+
+            case Tds.SYBIMAGE:
+            case Tds.SYBVARBINARY:
+            case Tds.SYBBINARY:
+                if (!(obj instanceof byte[])) {
+                    throw new SQLException(
+                            "Only byte[] accepted for IMAGE/BINARY fields.");
+                }
+                break;
+
+            case Tds.SYBTEXT:
+            case Tds.SYBNTEXT:
+            case Tds.SYBCHAR:
+            case Tds.SYBVARCHAR:
+            case Tds.SYBNCHAR:
+            case Tds.SYBNVARCHAR:
+            case Tds.SYBUNIQUEID:
+                // Anything goes here
+                break;
+
+            case Tds.SYBREAL:
+            case Tds.SYBFLT8:
+            case Tds.SYBFLTN:
+                if (!(obj instanceof Number)) {
+                    obj = Double.valueOf(obj.toString());
+                }
+                break;
+
+            case Tds.SYBSMALLMONEY:
+            case Tds.SYBMONEY:
+            case Tds.SYBMONEYN:
+            case Tds.SYBNUMERIC:
+            case Tds.SYBDECIMAL:
+                if (!(obj instanceof Number)) {
+                    obj = new BigDecimal(obj.toString());
+                }
+                break;
+
+            case Tds.SYBDATETIME4:
+            case Tds.SYBDATETIMN:
+            case Tds.SYBDATETIME:
+                if (obj instanceof java.util.Date) {
+
+                } else {
+                    throw new SQLException(
+                            "Only java.util.Date values accepted for DATETIME fields.");
+                }
+                break;
+
+            case Tds.SYBBITN:
+            case Tds.SYBBIT:
+                if (obj instanceof Boolean) {
+                    break;
+                }
+                if (obj instanceof Number) {
+                    obj = new Boolean(((Number) obj).intValue() != 0);
+                } else {
+                    obj = new Boolean(!"0".equals(obj.toString()));
+                }
+                break;
+
+            default:
+                throw new SQLException("Don't now how to handle " +
+                                       "column type 0x" +
+                                       Integer.toHexString(colType));
+            }
+        }
+
+        row.setElementAt(obj, index - 1);
     }
 
-
-    private int realColumnCount()
-    {
+    private int realColumnCount() {
         return context.getColumnInfo().realColumnCount();
     }
 
-    public int getColumnType( int index )
-        throws SQLException
-    {
-        return context.getColumnInfo().getJdbcType( index );
+    public int getColumnType(int index)
+            throws SQLException {
+        return context.getColumnInfo().getJdbcType(index);
     }
 
-
-
     /**
-     * Get an element at the specified index.<p>
-     *
+     * Get the element at the specified index.<p>
      *
      * <UL>Note- <\UL>Unlike the vector class this starts the index with 1, not
      * 0.
      *
      * @param  index             Index to get the element from. First element is
      *                           at index 1
-     * @return                   The ElementAt value
-     * @exception  TdsException  @todo Description of Exception
+     * @return                   the ElementAt value
+     * @exception  SQLException  if the index is out of bounds
      */
-    public Object getElementAt( int index )
-        throws TdsException
-    {
-        if ( index < 1 || index > realColumnCount() ) {
-            throw new TdsException( "Bad index " + index );
+    public Object getElementAt(int index)
+            throws SQLException {
+        if (index < 1 || index > realColumnCount()) {
+            throw new SQLException("Bad index " + index);
         }
 
-        return row.elementAt( index - 1 );
+        Object res = row.elementAt(index - 1);
+        wasNull = (res == null);
+        return res;
     }
 
-
-    public Object getObject( int columnIndex )
-             throws SQLException
-    {
+    public Object getObject(int columnIndex)
+            throws SQLException {
         // This method is implicitly coupled to the getRow() method in the
         // Tds class.  Every type that getRow() could return must
         // be handled in this method.
@@ -142,378 +210,153 @@ public class PacketRowResult extends PacketResult {
 
         // XXX-  Needs modifications for JDBC 2.0
 
-        try
-        {
-            Object tmp = getElementAt( columnIndex );
-            wasNull = false;
+        // SAfe Now this method must support any type that can be set with the
+        //      updateXXX methods of ResultSet (after they have been filtered
+        //      by setElementAt).
 
-            if( tmp == null )
-            {
-                wasNull = true;
-                return null;
-            }
-            else
-            {
-                switch ( getColumnType( columnIndex ) )
-                {
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                        if( tmp instanceof String )
-                            return tmp;
-                        else
-                            throw new SQLException( "Was expecting CHAR data.  Got"
-                                     + tmp.getClass().getName() );
+        Object tmp = getElementAt(columnIndex);
 
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                        if( tmp instanceof Integer )
-                            return tmp;
-                        if(! (tmp instanceof Number) )
-                            throw new SQLException("Can't convert "+tmp.getClass().getName()+
-                                " to Integer.");
-                        return new Integer(((Number)tmp).intValue());
+        if (tmp == null) {
+            return null;
+        } else {
+            switch (getColumnType(columnIndex)) {
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
+                if (tmp instanceof String)
+                    return tmp;
+                else
+                    return tmp.toString();
 
-                    case java.sql.Types.BIGINT:
-                        if( tmp instanceof Long )
-                            return tmp;
-                        if(! (tmp instanceof Number))
-                            throw new SQLException("Internal error");
+            case java.sql.Types.TINYINT:
+            case java.sql.Types.SMALLINT:
+            case java.sql.Types.INTEGER:
+                if (tmp instanceof Integer)
+                    return tmp;
+                if (!(tmp instanceof Number))
+                    throw new SQLException("Can't convert " + tmp.getClass().getName() +
+                                           " to Integer.");
+                return new Integer(((Number) tmp).intValue());
 
-                      return new Long(((Number)tmp).longValue());
+            case java.sql.Types.BIGINT:
+                if (tmp instanceof Long)
+                    return tmp;
+                if (!(tmp instanceof Number))
+                    throw new SQLException("Internal error");
 
-                    case java.sql.Types.REAL:
-                        if (! (tmp instanceof Float))
-                            throw new SQLException("Internal error");
-                        return tmp;
+                return new Long(((Number) tmp).longValue());
 
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                        if( tmp instanceof Double )
-                            return tmp;
-                        else if ( tmp instanceof Number )
-                            return new Double( ( ( Number ) tmp ).doubleValue() );
-                        else
-                            throw new SQLException( "Was expecting Numeric data.  Got"
-                                     + tmp.getClass().getName() );
+            case java.sql.Types.REAL:
+                if (tmp instanceof Float)
+                    return tmp;
+                else if (tmp instanceof Number)
+                    return new Float(((Number) tmp).doubleValue());
+                else
+                    throw new SQLException("Was expecting Numeric data.  Got"
+                                           + tmp.getClass().getName());
 
-                    case java.sql.Types.DATE:
-                        // XXX How do the time types hold up with timezones?
-                        if( !( tmp instanceof Timestamp ) )
-                            throw new SQLException( "Internal error" );
+            case java.sql.Types.FLOAT:
+            case java.sql.Types.DOUBLE:
+                if (tmp instanceof Double)
+                    return tmp;
+                else if (tmp instanceof Number)
+                    return new Double(((Number) tmp).doubleValue());
+                else
+                    throw new SQLException("Was expecting Numeric data.  Got"
+                                           + tmp.getClass().getName());
 
-//                        java.util.Calendar  cal = new java.util.GregorianCalendar();
-//                        cal.setTime(getTimestamp(columnIndex));
-//                        result = cal.getTime();
-                        return new Date(((Timestamp) tmp).getTime());
-
-                    case java.sql.Types.TIME:
-                        if( !( tmp instanceof Timestamp ) )
-                            throw new SQLException("Internal error");
-                        return new Time(((Timestamp) tmp).getTime());
-
-                    case java.sql.Types.TIMESTAMP:
-                        if( !( tmp instanceof Timestamp ) )
-                            throw new SQLException("Internal error");
-                        return tmp;
-
-                    case java.sql.Types.BINARY:
-                    case java.sql.Types.VARBINARY:
-                        return getBytes(columnIndex);
-
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                        if (tmp instanceof BigDecimal) {
-                            return tmp;
-                        } else if(tmp instanceof Number) {
-                            return new BigDecimal(((Number) tmp).doubleValue());
-                        } else {
-                            throw new SQLException("Was expecting NUMERIC data.  Got"
-                                     + tmp.getClass().getName());
-                        }
-
-                    case java.sql.Types.LONGVARCHAR:
-                        if( tmp instanceof TdsAsciiInputStream )
-                            return tmp.toString();
-                        else if( tmp instanceof java.lang.String )
-                            return tmp;
-                        else
-                            throw new SQLException( "Was expecting LONGVARCHAR data. "
-                                     + "Got "
-                                     + tmp.getClass().getName() );
-
-                    case java.sql.Types.LONGVARBINARY:
-                        throw new SQLException( "Not implemented" );
-
-                    case java.sql.Types.NULL:
-                        throw new SQLException( "Not implemented" );
-
-                    case java.sql.Types.OTHER:
-                        throw new SQLException( "Not implemented" );
-
-                    case java.sql.Types.BIT:
-                        if( tmp instanceof Boolean )
-                            return tmp;
-                        else
-                            throw new SQLException( "Was expecting BIT data. "
-                                     + "Got"
-                                     + tmp.getClass().getName() );
-
-                    default:
-                        throw new SQLException( "Unknown datatype "
-                                     + getColumnType( columnIndex ));
+            case java.sql.Types.DATE:
+                if (tmp instanceof Date) {
+                    return tmp;
                 }
+                if (tmp instanceof java.util.Date)
+                    return new Date(((java.util.Date) tmp).getTime());
+                throw new SQLException("Internal error");
+
+            case java.sql.Types.TIME:
+                if (tmp instanceof Time) {
+                    return tmp;
+                }
+                if (tmp instanceof java.util.Date)
+                    return new Time(((java.util.Date) tmp).getTime());
+                throw new SQLException("Internal error");
+
+            case java.sql.Types.TIMESTAMP:
+                if (tmp instanceof Timestamp) {
+                    return tmp;
+                }
+                if (tmp instanceof java.util.Date)
+                    return new Timestamp(((java.util.Date) tmp).getTime());
+                throw new SQLException("Internal error");
+
+            case java.sql.Types.BINARY:
+            case java.sql.Types.VARBINARY:
+                return getBytes(columnIndex);
+
+            case java.sql.Types.DECIMAL:
+            case java.sql.Types.NUMERIC:
+                if (tmp instanceof BigDecimal) {
+                    return tmp;
+                } else if (tmp instanceof Number) {
+                    return new BigDecimal(((Number) tmp).doubleValue());
+                } else {
+                    throw new SQLException("Was expecting NUMERIC data.  Got"
+                                           + tmp.getClass().getName());
+                }
+
+            case java.sql.Types.LONGVARBINARY:
+                throw new SQLException("Not implemented");
+
+            case java.sql.Types.NULL:
+                throw new SQLException("Not implemented");
+
+            case java.sql.Types.OTHER:
+                throw new SQLException("Not implemented");
+
+            case java.sql.Types.BIT:
+                if (tmp instanceof Boolean)
+                    return tmp;
+                else
+                    throw new SQLException("Was expecting BIT data. "
+                                           + "Got"
+                                           + tmp.getClass().getName());
+
+            default:
+                throw new SQLException("Unknown datatype "
+                                       + getColumnType(columnIndex));
             }
-        }
-        catch ( net.sourceforge.jtds.jdbc.TdsException e )
-        {
-            throw new SQLException( e.getMessage() );
         }
     }
 
-
-    public byte[] getBytes( int columnIndex ) throws SQLException
-    {
+    public byte[] getBytes(int columnIndex) throws SQLException {
         byte result[];
 
-        try {
-            Object tmp = getElementAt( columnIndex );
-            wasNull = false;
-            if ( tmp == null ) {
-                wasNull = true;
+            Object tmp = getElementAt(columnIndex);
+
+            if (tmp == null) {
                 result = null;
+            } else if (tmp instanceof byte[]) {
+                result = (byte[]) tmp;
+            } else if (tmp instanceof String) {
+                result = context.getEncoder().getBytes((String) tmp);
+            } else {
+                throw new SQLException("Can't convert column " + columnIndex
+                                       + " from "
+                                       + tmp.getClass().getName()
+                                       + " to byte[]");
             }
-            else if ( tmp instanceof byte[] ) {
-                result = ( byte[] ) tmp;
-            }
-            else if ( tmp instanceof String ) {
-                result = context.getEncoder().getBytes( ( String ) tmp );
-            }
-            else {
-                throw new SQLException( "Can't convert column " + columnIndex
-                         + " from "
-                         + tmp.getClass().getName()
-                         + " to byte[]" );
-            }
-        }
-        catch ( TdsException e ) {
-            throw new SQLException( e.getMessage() );
-        }
         return result;
     }
 
-
-    public double getDouble( int columnIndex ) throws SQLException
-    {
+    public double getDouble(int columnIndex) throws SQLException {
         double result;
-        Object obj = getObject( columnIndex );
+        Object obj = getElementAt(columnIndex);
 
-        if ( obj == null ) {
+        if (obj == null) {
             result = 0.0;
-        }
-        else {
+        } else {
             try {
-                switch ( getColumnType( columnIndex ) ) {
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.DECIMAL:
-                    case java.sql.Types.NUMERIC:
-                    {
-                        result = ((Number)obj).doubleValue();
-                        break;
-                    }
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    {
-                        try {
-                            Double d = new Double( ( String ) obj );
-                            result = d.doubleValue();
-                        }
-                        catch ( NumberFormatException e ) {
-                            throw new SQLException( e.getMessage() );
-                        }
-                        break;
-                    }
-                    case java.sql.Types.BIT:
-                    {
-                        // XXX according to JDBC spec we need to handle these
-                        // for now just fall through
-                    }
-                    default:
-                    {
-                        throw new SQLException( "Internal error. "
-                                 + "Don't know how to convert from "
-                                 + "java.sql.Types." +
-                                TdsUtil.javaSqlTypeToString( getColumnType( columnIndex ) )
-                                 + " to an Dboule" );
-                    }
-                }
-            }
-            catch ( ClassCastException e ) {
-                throw new SQLException( "Couldn't convert column " + columnIndex
-                         + " to an long.  "
-                         + e.getMessage() );
-            }
-        }
-        return result;
-    }
-
-
-    public long getLong( int columnIndex ) throws SQLException
-    {
-        long result = 0;
-        Object obj = getObject( columnIndex );
-
-        if ( obj == null ) {
-            result = 0;
-        }
-        else {
-            try {
-                switch ( getColumnType( columnIndex ) ) {
-                    case java.sql.Types.TINYINT:
-                    case java.sql.Types.SMALLINT:
-                    case java.sql.Types.INTEGER:
-                    case java.sql.Types.BIGINT:
-                    case java.sql.Types.REAL:
-                    case java.sql.Types.FLOAT:
-                    case java.sql.Types.DOUBLE:
-                    case java.sql.Types.NUMERIC:
-                    case java.sql.Types.DECIMAL:
-                    {
-                        result = ((Number)obj).longValue();
-                        break;
-                    }
-                    case java.sql.Types.CHAR:
-                    case java.sql.Types.VARCHAR:
-                    case java.sql.Types.LONGVARCHAR:
-                    {
-                        try {
-                            Long i = new Long(obj.toString().trim());
-                            result = i.longValue();
-                        }
-                        catch ( NumberFormatException e ) {
-                            throw new SQLException("NumberFormatException: ["+e.getMessage()+"]");
-                        }
-                        break;
-                    }
-                    case java.sql.Types.BIT:
-                    {
-                        result = ((Boolean)obj).booleanValue() ? 1 : 0;
-                        break;
-                    }
-                    default:
-                    {
-                        throw new SQLException( "Internal error. "
-                                 + "Don't know how to convert from "
-                                 + "java.sql.Types " +
-                                TdsUtil.javaSqlTypeToString( getColumnType( columnIndex ) )
-                                 + " to an long" );
-                    }
-                }
-            }
-            catch ( ClassCastException e ) {
-                throw new SQLException( "Couldn't convert column " + columnIndex
-                         + " to an long.  "
-                         + e.getMessage() );
-            }
-        }
-        return result;
-    }
-
-
-    public java.sql.Timestamp getTimestamp( int columnIndex ) throws SQLException
-    {
-        Timestamp result;
-
-        try {
-            Object tmp = getElementAt( columnIndex );
-
-            wasNull = false;
-            if ( tmp == null ) {
-                wasNull = true;
-                result = null;
-            }
-            else if ( tmp instanceof Timestamp ) {
-                result = ( Timestamp ) tmp;
-            }
-            else {
-                throw new SQLException( "Can't convert column " + columnIndex
-                         + " from "
-                         + tmp.getClass().getName()
-                         + " to Timestamp" );
-            }
-        }
-        catch ( TdsException e ) {
-            throw new SQLException( e.getMessage() );
-        }
-        return result;
-    }
-
-    public BigDecimal getBigDecimal( int columnIndex )
-    throws SQLException
-    {
-        Object tmp = getObject( columnIndex );
-
-        if ( tmp == null ) {
-            return null;
-        }
-
-        BigDecimal result = null;
-
-        if ( tmp instanceof java.lang.Double ) {
-            result = new BigDecimal( ( ( Double ) tmp ).doubleValue() );
-        }
-        else if ( tmp instanceof java.lang.Float ) {
-            result = new BigDecimal( ( ( Float ) tmp ).doubleValue() );
-        }
-        else if ( tmp instanceof BigDecimal ) {
-            result = ( BigDecimal ) tmp;
-        }
-        else if ( tmp instanceof java.lang.Number ) {
-            // This handles Byte, Short, Integer, and Long
-            result = BigDecimal.valueOf( ( ( Number ) tmp ).longValue() );
-        }
-        else if ( tmp instanceof java.lang.String ) {
-            try {
-                result = new BigDecimal( ( String ) tmp );
-            }
-            catch ( NumberFormatException e ) {
-                throw new SQLException( e.getMessage() );
-            }
-        }
-        return result;
-    }
-
-    public BigDecimal getBigDecimal( int columnIndex, int scale )
-             throws SQLException
-    {
-
-        BigDecimal result = getBigDecimal( columnIndex );
-
-        if ( result == null ) {
-            return null;
-        }
-
-        return result.setScale( scale );
-
-    }
-
-    public boolean getBoolean( int columnIndex ) throws SQLException
-    {
-        Object obj = getObject( columnIndex );
-        boolean result;
-
-        if ( obj == null ) {
-            result = false;
-        }
-        else {
-            switch ( getColumnType( columnIndex ) ) {
+                switch (getColumnType(columnIndex)) {
                 case java.sql.Types.TINYINT:
                 case java.sql.Types.SMALLINT:
                 case java.sql.Types.INTEGER:
@@ -523,32 +366,206 @@ public class PacketRowResult extends PacketResult {
                 case java.sql.Types.DOUBLE:
                 case java.sql.Types.DECIMAL:
                 case java.sql.Types.NUMERIC:
+                    {
+                        result = ((Number) obj).doubleValue();
+                        break;
+                    }
+                case java.sql.Types.CHAR:
+                case java.sql.Types.VARCHAR:
+                case java.sql.Types.LONGVARCHAR:
+                    {
+                        try {
+                            Double d = new Double((String) obj);
+                            result = d.doubleValue();
+                        } catch (NumberFormatException e) {
+                            throw new SQLException(e.getMessage());
+                        }
+                        break;
+                    }
+                case java.sql.Types.BIT:
+                    {
+                        // XXX according to JDBC spec we need to handle these
+                        // for now just fall through
+                    }
+                default:
+                    {
+                        throw new SQLException("Internal error. "
+                                               + "Don't know how to convert from "
+                                               + "java.sql.Types." +
+                                               TdsUtil.javaSqlTypeToString(getColumnType(columnIndex))
+                                               + " to an Dboule");
+                    }
+                }
+            } catch (ClassCastException e) {
+                throw new SQLException("Couldn't convert column " + columnIndex
+                                       + " to an long.  "
+                                       + e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    public long getLong(int columnIndex) throws SQLException {
+        long result = 0;
+        Object obj = getElementAt(columnIndex);
+
+        if (obj == null) {
+            result = 0;
+        } else {
+            try {
+                switch (getColumnType(columnIndex)) {
+                case java.sql.Types.TINYINT:
+                case java.sql.Types.SMALLINT:
+                case java.sql.Types.INTEGER:
+                case java.sql.Types.BIGINT:
+                case java.sql.Types.REAL:
+                case java.sql.Types.FLOAT:
+                case java.sql.Types.DOUBLE:
+                case java.sql.Types.NUMERIC:
+                case java.sql.Types.DECIMAL:
+                    {
+                        result = ((Number) obj).longValue();
+                        break;
+                    }
+                case java.sql.Types.CHAR:
+                case java.sql.Types.VARCHAR:
+                case java.sql.Types.LONGVARCHAR:
+                    {
+                        try {
+                            Long i = new Long(obj.toString().trim());
+                            result = i.longValue();
+                        } catch (NumberFormatException e) {
+                            throw new SQLException("NumberFormatException: [" + e.getMessage() + "]");
+                        }
+                        break;
+                    }
+                case java.sql.Types.BIT:
+                    {
+                        result = ((Boolean) obj).booleanValue() ? 1 : 0;
+                        break;
+                    }
+                default:
+                    {
+                        throw new SQLException("Internal error. "
+                                               + "Don't know how to convert from "
+                                               + "java.sql.Types " +
+                                               TdsUtil.javaSqlTypeToString(getColumnType(columnIndex))
+                                               + " to an long");
+                    }
+                }
+            } catch (ClassCastException e) {
+                throw new SQLException("Couldn't convert column " + columnIndex
+                                       + " to an long.  "
+                                       + e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    public java.sql.Timestamp getTimestamp(int columnIndex)
+            throws SQLException {
+        Timestamp result;
+
+            Object tmp = getElementAt(columnIndex);
+
+            if (tmp == null) {
+                result = null;
+            } else if (tmp instanceof Timestamp) {
+                result = (Timestamp) tmp;
+            } else {
+                throw new SQLException("Can't convert column " + columnIndex
+                                       + " from "
+                                       + tmp.getClass().getName()
+                                       + " to Timestamp");
+            }
+        return result;
+    }
+
+    public BigDecimal getBigDecimal(int columnIndex)
+            throws SQLException {
+        Object tmp = getElementAt(columnIndex);
+
+        if (tmp == null) {
+            return null;
+        }
+
+        BigDecimal result = null;
+
+        if (tmp instanceof java.lang.Double) {
+            result = new BigDecimal(((Double) tmp).doubleValue());
+        } else if (tmp instanceof java.lang.Float) {
+            result = new BigDecimal(((Float) tmp).doubleValue());
+        } else if (tmp instanceof BigDecimal) {
+            result = (BigDecimal) tmp;
+        } else if (tmp instanceof java.lang.Number) {
+            // This handles Byte, Short, Integer, and Long
+            result = BigDecimal.valueOf(((Number) tmp).longValue());
+        } else if (tmp instanceof java.lang.String) {
+            try {
+                result = new BigDecimal((String) tmp);
+            } catch (NumberFormatException e) {
+                throw new SQLException(e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    public BigDecimal getBigDecimal(int columnIndex, int scale)
+            throws SQLException {
+
+        BigDecimal result = getBigDecimal(columnIndex);
+
+        if (result == null) {
+            return null;
+        }
+
+        return result.setScale(scale);
+
+    }
+
+    public boolean getBoolean(int columnIndex) throws SQLException {
+        Object obj = getElementAt(columnIndex);
+        boolean result;
+
+        if (obj == null) {
+            result = false;
+        } else {
+            switch (getColumnType(columnIndex)) {
+            case java.sql.Types.TINYINT:
+            case java.sql.Types.SMALLINT:
+            case java.sql.Types.INTEGER:
+            case java.sql.Types.BIGINT:
+            case java.sql.Types.REAL:
+            case java.sql.Types.FLOAT:
+            case java.sql.Types.DOUBLE:
+            case java.sql.Types.DECIMAL:
+            case java.sql.Types.NUMERIC:
                 {
-                    if ( !( obj instanceof java.lang.Number ) ) {
+                    if (!(obj instanceof java.lang.Number)) {
                         // Must be out of sync with the implementation of
                         // Tds.getRow() for this to happen.
-                        throw new SQLException( "Internal error" );
+                        throw new SQLException("Internal error");
                     }
                     // Would somebody like to tell what a true/false has
                     // to do with a double?
                     // SAfe It looks like it has to work just like with BIT columns ('0' or 'false' for false and '1' or
                     //      'true' for true).
-                    result = ( ( java.lang.Number ) obj ).intValue() != 0;
+                    result = ((java.lang.Number) obj).intValue() != 0;
                     break;
                 }
-                case java.sql.Types.BIT:
+            case java.sql.Types.BIT:
                 {
-                    if ( !( obj instanceof Boolean ) ) {
+                    if (!(obj instanceof Boolean)) {
                         // Must be out of sync with the implementation of
                         // Tds.getRow() for this to happen.
-                        throw new SQLException( "Internal error" );
+                        throw new SQLException("Internal error");
                     }
-                    result = ( ( Boolean ) obj ).booleanValue();
+                    result = ((Boolean) obj).booleanValue();
                     break;
                 }
-                case java.sql.Types.CHAR:
-                case java.sql.Types.VARCHAR:
-                case java.sql.Types.LONGVARCHAR:
+            case java.sql.Types.CHAR:
+            case java.sql.Types.VARCHAR:
+            case java.sql.Types.LONGVARCHAR:
                 {
                     // Okay, I'm really confused as to what you mean
                     // by a character string being true or false.  What
@@ -559,31 +576,28 @@ public class PacketRowResult extends PacketResult {
                     // SAfe It looks like it has to work just like with BIT columns ('0' or 'false' for false and '1' or
                     //      'true' for true).
 
-                    if ( !( obj instanceof String ) ) {
+                    if (!(obj instanceof String)) {
                         // Must be out of sync with the implementation of
                         // Tds.getRow() for this to happen.
-                        throw new SQLException( "Internal error" );
+                        throw new SQLException("Internal error");
                     }
 
                     String v = obj.toString().trim();
-                    if( v.equalsIgnoreCase("0") || v.equalsIgnoreCase("false") )
-                    {
+                    if (v.equalsIgnoreCase("0") || v.equalsIgnoreCase("false")) {
                         result = false;
                         break;
-                    }
-                    else if( v.equalsIgnoreCase("1") || v.equalsIgnoreCase("true") )
-                    {
+                    } else if (v.equalsIgnoreCase("1") || v.equalsIgnoreCase("true")) {
                         result = true;
                         break;
                     }
                     // SAfe Otherwise fall-through to the "default:" label and throw an exception.
                 }
-                default:
+            default:
                 {
-                    throw new SQLException( "Can't convert column " + columnIndex
-                             + " from "
-                             + obj.getClass().getName()
-                             + " to boolean" );
+                    throw new SQLException("Can't convert column " + columnIndex
+                                           + " from "
+                                           + obj.getClass().getName()
+                                           + " to boolean");
                 }
             }
         }
@@ -591,9 +605,7 @@ public class PacketRowResult extends PacketResult {
     }
     // getBoolean()
 
-
-    public boolean wasNull()
-    {
+    public boolean wasNull() {
         return wasNull;
     }
 }

@@ -35,7 +35,7 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.7 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.8 2004-02-19 00:14:37 alin_sinpalean Exp $";
 
     /**
      * Check that all items in parameterList have been given a value
@@ -173,9 +173,13 @@ public class ParameterUtils {
                     break;
                 }
                 case java.sql.Types.LONGVARBINARY:
-                case java.sql.Types.VARBINARY:
                 {
                     parameterList[i].formalType = "image";
+                    break;
+                }
+                case java.sql.Types.VARBINARY:
+                {
+                    parameterList[i].formalType = "varbinary(8000)";
                     break;
                 }
                 case java.sql.Types.BIT:

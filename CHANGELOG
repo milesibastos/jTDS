@@ -1,6 +1,20 @@
 Changes from jTDS 0.6
 ========================
 
+02/18/2004 - Alin Sinpalean
+ o Made PacketRowResult.setElementAt much more flexible. It now converts the
+   provided Objects into an acceptable internal type, to support the
+   ResultSet.updateXXX methods (i.e. if the updated object is different than
+   the one used internally by jTDS to represent that particular type, it is
+   first converted into an acceptable type). getElementAt was also partially
+   rewritten to support all these types, not only the fixed ones coming from
+   the Tds.
+ o Fixed a bug in CursorResultSet, which would cause an exception when updating
+   ResultSets with read-only columns.
+ o Improved handling of BINARY/VARBINARY data.
+ o Added a test for out-of-order closes (particularly closing the Connection
+   before the Statement, which caused an ArrayIndexOutOfBoundsException).
+
 02/18/2004 - Brian Heineman
  o Corrected CallableStatement parsing of stored procedure names containing
    spaces.

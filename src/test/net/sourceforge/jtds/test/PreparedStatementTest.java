@@ -387,17 +387,17 @@ public class PreparedStatementTest extends TestBase {
         assertEquals("TE", rs.getString(1));
         assertFalse(rs.next());
 
-        pstmt.close();
         rs.close();
+        pstmt.close();
     }
 
     /**
      * Test for bug [1022968] Long SQL expression error.
      * NB. Test must be run with TDS=7.0 to fail.
-     * @throws Exception
      */
     public void testLongStatement() throws Exception {
-        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        Statement stmt = con.createStatement(
+                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
         stmt.execute("CREATE TABLE #longStatement (id int primary key, data varchar(8000))");
 
@@ -415,8 +415,40 @@ public class PreparedStatementTest extends TestBase {
         assertNotNull(rs);
         assertFalse(rs.next());
 
-        stmt.close();
         rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test for bug [1010660] 0.9-rc1 setMaxRows causes unlimited temp stored
+     * procedures. This test has to be run with logging enabled or while
+     * monitoring it with SQL Profiler to see whether the temporary stored
+     * procedure is executed or the SQL is executed directly.
+     */
+    public void testMaxRows() throws SQLException {
+//        net.sourceforge.jtds.util.Logger.setActive(true);
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #maxRows (val int)"
+                + " INSERT INTO #maxRows VALUES (1)"
+                + " INSERT INTO #maxRows VALUES (2)");
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "SELECT * FROM #maxRows WHERE val<? ORDER BY val");
+        pstmt.setInt(1, 100);
+        pstmt.setMaxRows(1);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertFalse(rs.next());
+
+        rs.close();
+        pstmt.close();
+
+        stmt.executeUpdate("DROP TABLE #maxRows");
+        stmt.close();
     }
 
     public static void main(String[] args) {

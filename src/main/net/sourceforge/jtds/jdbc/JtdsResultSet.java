@@ -57,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.29 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.30 2005-01-05 08:34:10 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -708,7 +708,7 @@ public class JtdsResultSet implements ResultSet {
 
     public void updateAsciiStream(int columnIndex, InputStream inputStream, int length)
         throws SQLException {
-        if (inputStream == null || length < 1) {
+        if (inputStream == null || length < 0) {
              updateCharacterStream(columnIndex, null, 0);
         } else {
             try {
@@ -722,7 +722,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBinaryStream(int columnIndex, InputStream inputStream, int length)
         throws SQLException {
 
-        if (inputStream == null || length < 1) {
+        if (inputStream == null || length < 0) {
             updateBytes(columnIndex, null);
             return;
         }
@@ -743,7 +743,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateCharacterStream(int columnIndex, Reader reader, int length)
         throws SQLException {
 
-        if (reader == null || length < 1) {
+        if (reader == null || length < 0) {
             updateString(columnIndex, null);
             return;
         }

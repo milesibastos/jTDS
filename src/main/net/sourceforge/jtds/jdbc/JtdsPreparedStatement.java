@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.34 2004-12-20 16:49:11 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.35 2005-01-05 08:34:10 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -498,7 +498,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setAsciiStream(int parameterIndex, InputStream inputStream, int length)
         throws SQLException {
-        if (inputStream == null || length < 1) {
+        if (inputStream == null || length < 0) {
             setParameter(parameterIndex, null, java.sql.Types.LONGVARCHAR, 0, 0);
         } else {
             try {
@@ -513,7 +513,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
         checkOpen();
 
-        if (x == null || length < 1) {
+        if (x == null || length < 0) {
             setBytes(parameterIndex, null);
         } else {
             setParameter(parameterIndex, x, java.sql.Types.LONGVARBINARY, 0, length);
@@ -522,16 +522,16 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setUnicodeStream(int parameterIndex, InputStream inputStream, int length)
         throws SQLException {
-        if (inputStream == null || length < 1) {
+        if (inputStream == null || length < 0) {
             setString(parameterIndex, null);
         } else {
             try {
-               char[] tmp = new char[length];
+               char[] tmp = new char[length / 2];
                int pos = 0;
                int b1 = inputStream.read();
                int b2 = inputStream.read();
 
-               while (b1 >= 0 && b2 >= 0) {
+               while (b1 >= 0 && b2 >= 0 && pos < length) {
                    tmp[pos++] = (char) (((b1 << 8) &0xFF00) | (b2 & 0xFF));
                    b1 = inputStream.read();
                    b2 = inputStream.read();
@@ -546,7 +546,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setCharacterStream(int parameterIndex, Reader reader, int length)
         throws SQLException {
-        if (reader == null || length < 1) {
+        if (reader == null || length < 0) {
             setParameter(parameterIndex, null, java.sql.Types.LONGVARCHAR, 0, 0);
         } else {
             setParameter(parameterIndex, reader, java.sql.Types.LONGVARCHAR, 0, length);

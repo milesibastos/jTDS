@@ -1,6 +1,10 @@
 Changes from jTDS 0.9.1
 =======================
 
+01/05/2005 - Alin Sinpalean
+ o Applied Mike's fix to bug [1096086] Zero length streams generate null
+   values.
+
 01/04/2005 - Alin Sinpalean
  o Applied patch [1089891] Adding SSL, from Rob Worsnop. Wasn't able to test
    whether SSL really works (because I was not able to configure SQL Server to

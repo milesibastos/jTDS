@@ -1568,7 +1568,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobset4 (data) VALUES (?)");
 
         // Test PreparedStatement.setUnicodeStream()
-        pstmt.setUnicodeStream(1, new ByteArrayInputStream(data.getBytes("UTF-16BE")), data.length());
+        pstmt.setUnicodeStream(1, new ByteArrayInputStream(data.getBytes("UTF-16BE")), data.length() * 2);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
@@ -2862,6 +2862,62 @@ public class LOBTest extends TestBase {
         assertEquals(0, clob.length());
         assertEquals("", clob.getSubString(1, 0));
 
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test for incorrect handling of zero length streams (bug [1096086] Zero
+     * length streams generate null values).
+     */
+    public void testZeroLengthStreams() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_UPDATABLE);
+        stmt.execute("create table #test (id int primary key, s_ascii text," +
+                "s_char text, s_unicode text, s_bytes image)");
+        PreparedStatement pstmt =
+                con.prepareStatement("insert into #test values(?,?,?,?,?)");
+
+        // Write zero length fields
+        pstmt.setInt(1, 1);
+        pstmt.setAsciiStream(2, new ByteArrayInputStream(new byte[0]), 0);
+        pstmt.setCharacterStream(3, new StringReader(""), 0);
+        pstmt.setUnicodeStream(4, new ByteArrayInputStream(new byte[0]), 0);
+        pstmt.setBinaryStream(5, new ByteArrayInputStream(new byte[0]), 0);
+        assertEquals(1, pstmt.executeUpdate());
+
+        // Write non zero fields
+        pstmt.setInt(1, 2);
+        pstmt.setAsciiStream(2, new ByteArrayInputStream(new byte[1]), 1);
+        pstmt.setCharacterStream(3, new StringReader("TEST"), 4);
+        pstmt.setCharacterStream(4, new StringReader(""), 0);
+        pstmt.setUnicodeStream(4, new ByteArrayInputStream(new byte[2]), 2);
+        pstmt.setBinaryStream(5, new ByteArrayInputStream(new byte[1]), 1);
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        ResultSet rs = stmt.executeQuery("select * from #test order by id");
+        assertTrue(rs.next());
+        assertTrue(rs.next());
+
+        // Update non zero length fields to zero
+        rs.updateAsciiStream(2, new ByteArrayInputStream(new byte[0]), 0);
+        rs.updateCharacterStream(3, new StringReader(""), 0);
+        Clob clob = rs.getClob(4);
+        clob.truncate(0);
+        rs.updateClob(4, clob);
+        rs.updateBinaryStream(5, new ByteArrayInputStream(new byte[0]), 0);
+        rs.updateRow();
+        rs.close();
+
+        // Test all fields now zero length
+        rs = stmt.executeQuery("select * from #test order by id");
+        while (rs.next()) {
+            assertEquals("AsciiStream", "", rs.getString(2));
+            assertEquals("Reader", "", rs.getString(3));
+            assertEquals("UnicodeStream", "", rs.getString(4));
+            assertEquals("byteStream", 0, rs.getBytes(5).length);
+        }
         rs.close();
         stmt.close();
     }

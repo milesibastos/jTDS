@@ -19,6 +19,8 @@ import com.internetcds.util.Logger;
  */
 public class SAfeTest extends DatabaseTestCase
 {
+    /** @todo Add a test to check if CursorResultSets with 0 results work right. */
+
     public SAfeTest(String name)
     {
         super(name);

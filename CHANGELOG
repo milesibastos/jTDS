@@ -1,3 +1,17 @@
+
+Changes from jTDS 0.3.1
+=======================
+
+09/20/2002 - Alin Sinpalean
+
+ o Bugfix in CursorResultSet: next() always returned true for the first time,
+   even if there was no data in the ResultSet. Seems to have been there for a
+   long, long time. I added the beforeFirst() implementation but still didn't
+   see it (not to mention that the implementation was broken from the very
+   start because of the first row being prefetched). So, the first row is no
+   longer prefetched, there's a "FETCH PRIOR" call that doesn't do anything but
+   initializing the context. Thanks to wolfgang_a_h@gmx.at for finding the bug.
+
 ===============================================================================
 09/20/2002 - jTDS 0.3.2 released
 ===============================================================================
@@ -43,7 +57,6 @@ Changes from jTDS 0.3.1
    don't throw exceptions and return non-null ResultSets.)
  o Implemented DatabaseMetaData.supportsConvert(int, int)! Wasn't as hard as I
    thought it would be. :o)
-
 
 09/18/2002 - Alin Sinpalean
 

@@ -75,7 +75,7 @@ public class CursorResultSet extends AbstractResultSet {
     private void loadContext() throws SQLException
     {
         if ( current == null ) {
-            internalFetch( "FETCH NEXT FROM " + cursorName );
+            internalFetch("FETCH PRIOR FROM " + cursorName);
             // context = current.getContext();  Moved to internalFetch -- if no
             //            results are returned a NullPointerException is thrown
         }
@@ -208,10 +208,13 @@ public class CursorResultSet extends AbstractResultSet {
     {
         //If this is the first call then we ignore it,
         //as we have already pre-fetched to get metadata
-        if ( pos == POS_BEFORE_FIRST ) {
-            pos = 1;
-            return true;
-        }
+        // SAfe Metadata is now obtained through calling "FETCH PRIOR", so no
+        //      data is really prefetched. We're before the first result.
+        //      Thanks go to wolfgang_a_h@gmx.at for discovering the bug.
+//        if ( pos == POS_BEFORE_FIRST ) {
+//            pos = 1;
+//            return true;
+//        }
         if ( direction == ResultSet.FETCH_REVERSE ) {
             return internalFetch( "FETCH PRIOR FROM " + cursorName );
         }
@@ -303,9 +306,11 @@ public class CursorResultSet extends AbstractResultSet {
     {
         //We have prefetched the first row so we need to adjust the
         //relative setting
-        if ( pos == POS_BEFORE_FIRST ) {
-            rows = rows - 1;
-        }
+        // SAfe No longer true. We no longer prefetch the first row, we only
+        //      get the header with "FETCH PRIOR".
+//        if ( pos == POS_BEFORE_FIRST ) {
+//            rows = rows - 1;
+//        }
         if ( direction == ResultSet.FETCH_REVERSE ) {
             rows = -rows;
         }

@@ -1,6 +1,9 @@
 Changes from jTDS 0.8.1
 =========================
 
+07/25/2004 - David Kilzer
+ o Fixed bug when using instances with named pipes.
+
 07/25/2004 - Brian Heineman
  o Applied patch [991684] Implement named pipe IPC for SQL Server 6.5; (Thanks
    to David Kilzer <ddkilzer@users.sourceforge.net> for the patch)

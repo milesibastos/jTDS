@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.15 2002-08-05 14:02:14 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.15 2002-08-05 14:02:14 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.15 2002-08-05 14:02:14 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -113,6 +113,7 @@ public class Tds implements TdsDefinitions {
 
     String databaseProductName;
     String databaseProductVersion;
+    int databaseMajorVersion;
 
     java.sql.Connection connection;
     String host;
@@ -166,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.15 2002-08-05 14:02:14 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1094,13 +1095,23 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     *  Return the name that this database server program calls itself.
+     * Return the version that this database server program identifies itself with.
      *
-     *@return    The DatabaseProductVersion value
+     * @return    The DatabaseProductVersion value
      */
     String getDatabaseProductVersion()
     {
         return databaseProductVersion;
+    }
+
+    /**
+     * Return the major version that this database server program identifies itself with.
+     *
+     * @return    The databaseMajorVersion value
+     */
+    int getDatabaseMajorVersion()
+    {
+        return databaseMajorVersion;
     }
 
 
@@ -3460,16 +3471,16 @@ public class Tds implements TdsDefinitions {
             comm.skip(5);
             int nameLen = comm.getByte();
             databaseProductName = comm.getString(nameLen);
-            databaseProductVersion = ("" + comm.getByte() + "."
-                     + comm.getByte() + "."
-                     + ((256 * comm.getByte()) + comm.getByte()));
+            databaseProductVersion = ("0" + (databaseMajorVersion=comm.getByte()) + ".0"
+                     + comm.getByte() + ".0"
+                     + ((256 * (comm.getByte()+1)) + comm.getByte()));
         }
         else {
             comm.skip(5);
             short nameLen = comm.getByte();
             databaseProductName = comm.getString(nameLen);
             comm.skip(1);
-            databaseProductVersion = ("" + comm.getByte() + "." + comm.getByte());
+            databaseProductVersion = ("" + (databaseMajorVersion=comm.getByte()) + "." + comm.getByte());
             comm.skip(1);
         }
 

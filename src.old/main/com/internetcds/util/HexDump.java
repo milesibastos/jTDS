@@ -37,12 +37,12 @@ package com.internetcds.util;
 /**
  * A simple class to convert a raw buffer to a hex dump
  *
- * @version $Id: HexDump.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $
+ * @version $Id: HexDump.java,v 1.4 2001-09-14 16:05:03 aschoerk Exp $
  * @author Craig Spannring
  */ 
 public class HexDump
 {
-   public static final String cvsVersion = "$Id: HexDump.java,v 1.3 2001-09-10 06:08:18 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: HexDump.java,v 1.4 2001-09-14 16:05:03 aschoerk Exp $";
 
    static void appendByteToHexString(StringBuffer res, byte b)
    {
@@ -115,8 +115,8 @@ public class HexDump
          {
             if (((data[j] & 0xff) > 0x001f) && ((data[j] & 0xff) < 0x007f))
             {
-               Character ch = new Character((char) data[j]);
-               result.append(ch);
+               // Character ch = new Character();
+               result.append((char) data[j]);
             }
             else
             {

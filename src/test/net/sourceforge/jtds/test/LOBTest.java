@@ -11,21 +11,26 @@ import java.util.*;
 public class LOBTest extends TestBase {
     private static final int LOB_LENGTH = 8000;
     private static final byte[] blobData = new byte[LOB_LENGTH];
+    private static final byte[] newBlobData = new byte[LOB_LENGTH];
     private static final String clobData;
+    private static final String newClobData;
 
     static {
         for (int i = 0; i < blobData.length; i++) {
             blobData[i] = (byte) (Math.random() * 255);
+            newBlobData[i] = (byte) (Math.random() * 255);
         }
 
         StringBuffer data = new StringBuffer();
+        StringBuffer newData = new StringBuffer();
 
         for (int i = 0; i < LOB_LENGTH; i++) {
             data.append((char) (Math.random() * 90) + 32);
+            newData.append((char) (Math.random() * 90) + 32);
         }
 
         clobData = data.toString();
-
+        newClobData = newData.toString();
     }
 
     public LOBTest(String name) {
@@ -182,9 +187,7 @@ public class LOBTest extends TestBase {
 
         Blob blob = rs.getBlob(1);
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (Math.random() * 255);
-        }
+        data = getNewBlobTestData();
 
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
@@ -267,9 +270,7 @@ public class LOBTest extends TestBase {
 
         Blob blob = rs.getBlob(1);
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (Math.random() * 255);
-        }
+        data = getNewBlobTestData();
 
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
@@ -380,9 +381,7 @@ public class LOBTest extends TestBase {
 
         Blob blob = rs.getBlob(1);
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (Math.random() * 255);
-        }
+        data = getNewBlobTestData();
 
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
@@ -507,9 +506,7 @@ public class LOBTest extends TestBase {
 
         Blob blob = rs.getBlob(1);
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (Math.random() * 255);
-        }
+        data = getNewBlobTestData();
 
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
@@ -572,9 +569,7 @@ public class LOBTest extends TestBase {
 
         Blob blob = rs.getBlob(1);
 
-        for (int i = 0; i < data.length; i++) {
-            data[i] = (byte) (Math.random() * 255);
-        }
+        data = getNewBlobTestData();
 
         // Test Blob.setBytes()
         blob.setBytes((long) 1, data);
@@ -1232,13 +1227,8 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         Clob clob = rs.getClob(1);
-        int length = data.length();
 
-        data = "";
-
-        for (int i = 0; i < length; i++) {
-            data += (char) (Math.random() * 90) + 32;
-        }
+        data = getNewClobTestData();
 
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
@@ -1348,13 +1338,8 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         Clob clob = rs.getClob(1);
-        int length = data.length();
 
-        data = "";
-
-        for (int i = 0; i < length; i++) {
-            data += (char) (Math.random() * 90) + 32;
-        }
+        data = getNewClobTestData();
 
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
@@ -1436,13 +1421,8 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         Clob clob = rs.getClob(1);
-        int length = data.length();
 
-        data = "";
-
-        for (int i = 0; i < length; i++) {
-            data += (char) (Math.random() * 90) + 32;
-        }
+        data = getNewClobTestData();
 
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
@@ -1599,13 +1579,8 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         Clob clob = rs.getClob(1);
-        int length = data.length();
 
-        data = "";
-
-        for (int i = 0; i < length; i++) {
-            data += (char) (Math.random() * 90) + 32;
-        }
+        data = getNewClobTestData();
 
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
@@ -1667,13 +1642,8 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
 
         Clob clob = rs.getClob(1);
-        int length = data.length();
 
-        data = "";
-
-        for (int i = 0; i < length; i++) {
-            data += (char) (Math.random() * 90) + 32;
-        }
+        data = getNewClobTestData();
 
         // Test Clob.setBytes()
         clob.setString((long) 1, data);
@@ -2411,8 +2381,16 @@ public class LOBTest extends TestBase {
         return blobData;
     }
 
+    private byte[] getNewBlobTestData() {
+        return newBlobData;
+    }
+
     private String getClobTestData() {
         return clobData;
+    }
+
+    private String getNewClobTestData() {
+        return newClobData;
     }
 
     public static void main(String[] args) {

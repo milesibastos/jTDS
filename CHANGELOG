@@ -1,6 +1,10 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/27/2004 - Brian Heineman
+ o Corrected parsing bug in EscapeProcesser that occured when { or } was found
+   in a quoted string.
+
 03/26/2004 - Alin Sinpalean
  o Fixed the fix for bug #922802. ;o) There was a NPE thrown if the batch was
    empty at its first execution.

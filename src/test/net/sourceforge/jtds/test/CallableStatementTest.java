@@ -197,6 +197,64 @@ public class CallableStatementTest extends TestBase {
         }
     }
 
+    /**
+     * Test for [924030] EscapeProcesser problem with "{}" brackets
+     */
+    public void testCallableStatementParsing1() throws Exception {
+        String data = "New {order} plus {1} more";
+        Statement stmt = con.createStatement();
+
+        stmt.execute("CREATE TABLE #csp1 (data VARCHAR(32))");
+        stmt.close();
+
+        stmt = con.createStatement();
+        stmt.execute("create procedure #sp_csp1 @data VARCHAR(32) as INSERT INTO #csp1 (data) VALUES(@data)");
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{call #sp_csp1('" + data + "')}");
+
+        cstmt.execute();
+        cstmt.close();
+
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #csp1");
+
+        assertTrue(rs.next());
+
+        assertTrue(data.equals(rs.getString(1)));
+
+        assertTrue(!rs.next());
+        rs.close();
+    }
+
+    public void testCallableStatementParsing2() throws Exception {
+        String data = "New {order} plus {1} more";
+        Statement stmt = con.createStatement();
+
+        stmt.execute("CREATE TABLE #csp2 (data VARCHAR(32))");
+        stmt.close();
+
+        stmt = con.createStatement();
+        stmt.execute("create procedure #sp_csp2 @data VARCHAR(32) as INSERT INTO #csp2 (data) VALUES(@data)");
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{call #sp_csp2(?)}");
+
+        cstmt.setString(1, data);
+        cstmt.execute();
+        cstmt.close();
+
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #csp2");
+
+        assertTrue(rs.next());
+
+        assertTrue(data.equals(rs.getString(1)));
+
+        assertTrue(!rs.next());
+        rs.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

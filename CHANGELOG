@@ -5,9 +5,18 @@ Changes from jTDS 0.8.1
  o Made SharedNamedPipe constructor package-private to match SharedSocket
    constructor.
  o Made TdsCore.SQLSERVER and TdsCore.SYBASE public.  Removed use of
-   "magic" numbers and strings.
+   "magic" values.
  o Fixed default value of lobBuffer in AbstractDataSource.getReference().
    It was using "portNumber" instead of "lobBuffer" for its default.
+ o Made TdsCore.TDS42, TDS50, TDS70, TDS80 constants public for use with
+   testing.
+ o Made TdsCore.MIN_PKT_SIZE public, and created TdsCore.MAX_PKT_SIZE and
+   TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70.  Removed used of "magic" values.
+ o Wrote new SharedNamedPipeTest class for testing new
+   SharedNamedPipe.calculateBufferSize() method.
+ o Fixed bug in SharedNamedPipe that caused it to create a zero-length
+   BufferedInputStream internally when packetSize == 0 (which is common
+   for TDS 7.0 and TDS 8.0 to allow the server to set the packet size).
 
 07/26/2004 - Brian Heineman
  o Removed extraneous methods from SharedSocket and SharedNamedPipe.

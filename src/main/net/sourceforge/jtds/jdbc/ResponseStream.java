@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.3 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: ResponseStream.java,v 1.4 2004-07-27 03:05:33 ddkilzer Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */

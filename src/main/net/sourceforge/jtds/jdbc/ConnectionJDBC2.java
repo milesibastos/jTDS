@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.9 2004-07-26 03:10:10 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.10 2004-07-27 03:05:33 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -710,18 +710,18 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                                      Support.getMessage("prop.packetsize")), "08001");
         }
 
-        if (packetSize < 512) {
+        if (packetSize < TdsCore.MIN_PKT_SIZE) {
             if (tdsVersion >= TdsCore.TDS70) {
                 // Default of 0 means let the server specify packet size
-                packetSize = (packetSize == 0) ? 0 : 4096;
+                packetSize = (packetSize == 0) ? 0 : TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
             } else {
                 // Sensible minimum for all other versions of TDS
-                packetSize = 512;
+                packetSize = TdsCore.MIN_PKT_SIZE;
             }
         }
 
-        if (packetSize > 32768) {
-            packetSize = 32768;
+        if (packetSize > TdsCore.MAX_PKT_SIZE) {
+            packetSize = TdsCore.MAX_PKT_SIZE;
         }
 
         packetSize = (packetSize / 512) * 512;

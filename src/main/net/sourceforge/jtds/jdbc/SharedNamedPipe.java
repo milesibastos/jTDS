@@ -35,9 +35,10 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  * 
  * @author David D. Kilzer.
- * @version $Id: SharedNamedPipe.java,v 1.3 2004-07-27 00:43:23 ddkilzer Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.4 2004-07-27 03:05:33 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
+
     /**
      * The shared named pipe.
      */
@@ -46,7 +47,7 @@ public class SharedNamedPipe extends SharedSocket {
 
     /**
      * Constructed a SharedNamedPipe to the server.
-     *
+     * 
      * @param host The SQL Server host name.
      * @param tdsVersion The TDS protocol version.
      * @param serverType The server type (SQL Server or Sybase).
@@ -58,7 +59,8 @@ public class SharedNamedPipe extends SharedSocket {
      * @throws IOException If named pipe or its input or output streams do not open.
      * @throws UnknownHostException If host cannot be found for the named pipe.
      */
-    SharedNamedPipe(String host, int tdsVersion, int serverType,
+    SharedNamedPipe(
+            String host, int tdsVersion, int serverType,
             int packetSize, String instance, String domain, String user,
             String password)
             throws IOException, UnknownHostException {
@@ -85,12 +87,16 @@ public class SharedNamedPipe extends SharedSocket {
         pipe = new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth);
 
         this.out = new DataOutputStream(pipe.getNamedPipeOutputStream());
-        this.in = new DataInputStream(new BufferedInputStream(pipe.getNamedPipeInputStream(), packetSize));
+        this.in = new DataInputStream(
+                new BufferedInputStream(
+                        pipe.getNamedPipeInputStream(),
+                        calculateBufferSize(tdsVersion, packetSize)));
     }
+
 
     /**
      * Get the connected status of this socket.
-     *
+     * 
      * @return True if the underlying socket is connected.
      */
     boolean isConnected() {
@@ -116,22 +122,27 @@ public class SharedNamedPipe extends SharedSocket {
     void forceClose() {
         try {
             this.out.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // Ignore
-        } finally {
+        }
+        finally {
             this.out = null;
         }
 
         try {
             this.in.close();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // Ignore
-        } finally {
+        }
+        finally {
             this.in = null;
         }
 
         this.pipe = null;
     }
+
 
     /**
      * Set the socket timeout.
@@ -140,5 +151,27 @@ public class SharedNamedPipe extends SharedSocket {
      */
     protected void setTimeout(int timeout) {
         // FIXME - implement timeout functionality
+    }
+
+
+    /**
+     * Calculate the buffer size to use when buffering the {@link SmbNamedPipe}
+     * <code>InputStream</code>.
+     * <p/>
+     * <code>assert (packetSize == 0 || (packetSize >= {@link TdsCore.MIN_PKT_SIZE}
+     * && packetSize <= {@link TdsCore.MAX_PKT_SIZE}))</code>
+     * 
+     * @param packetSize The requested packet size for the connection.
+     * @return minimum default packet size if <code>packetSize == 0</code>, else <code>packetSize</code>
+     */
+    private static int calculateBufferSize(final int tdsVersion, final int packetSize) {
+
+        if (packetSize == 0) {
+            if (tdsVersion >= TdsCore.TDS70) {
+                return TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
+            }
+            return TdsCore.MIN_PKT_SIZE;
+        }
+        return packetSize;
     }
 }

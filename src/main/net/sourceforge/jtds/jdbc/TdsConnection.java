@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.12 2004-02-10 00:07:18 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.13 2004-02-10 05:14:52 bheineman Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -85,7 +85,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.12 2004-02-10 00:07:18 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.13 2004-02-10 05:14:52 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -123,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.12 2004-02-10 00:07:18 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.13 2004-02-10 05:14:52 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -885,7 +885,7 @@ public class TdsConnection implements Connection
 
         boolean returnKeys = false;
 
-        if (param == Statement.RETURN_GENERATED_KEYS
+        if (param == TdsStatement.RETURN_GENERATED_KEYS
             && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             StringBuffer tmpSQL = new StringBuffer(sql);
 
@@ -918,7 +918,7 @@ public class TdsConnection implements Connection
             throw new SQLException("One valid column index must be supplied.");
         }
 
-        return prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        return prepareStatement(sql, TdsStatement.RETURN_GENERATED_KEYS);
     }
 
     //
@@ -934,7 +934,7 @@ public class TdsConnection implements Connection
             throw new SQLException("One valid column name must be supplied.");
         }
 
-        return prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        return prepareStatement(sql, TdsStatement.RETURN_GENERATED_KEYS);
     }
 
     public java.sql.PreparedStatement prepareStatement(String str, int param, int param2, int param3) throws java.sql.SQLException

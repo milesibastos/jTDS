@@ -44,16 +44,22 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.16 2004-02-09 23:52:14 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
-
+import java.util.ArrayList;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.16 2004-02-09 23:52:14 alin_sinpalean Exp $";
+    /**
+     * NOTE: This value is carried over from Statement.RETURN_GENERATED_KEYS (which was
+     * introduced in 1.4) in order for the driver to compile with 1.3.
+     */
+    public static final int RETURN_GENERATED_KEYS = 1;
+
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -86,6 +92,8 @@ public class TdsStatement implements java.sql.Statement
     private GenKeyResultSet lastGeneratedKey = null;
 
     public OutputParamHandler outParamHandler;
+
+    protected ArrayList batchValues = null;
 
     public TdsStatement(TdsConnection con, int type, int concurrency)
         throws SQLException {
@@ -807,8 +815,12 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs, or the
      * driver does not support batch statements
      */
-    public void addBatch(String sql) throws SQLException {
-        NotImplemented();
+    public synchronized void addBatch(String sql) throws SQLException {
+        if (batchValues == null) {
+            batchValues = new ArrayList();
+        }
+
+        batchValues.add(sql);
     }
 
     /**
@@ -820,8 +832,8 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs or the
      * driver does not support batch statements
      */
-    public void clearBatch() throws SQLException {
-        NotImplemented();
+    public synchronized void clearBatch() throws SQLException {
+        batchValues.clear();
     }
 
     /**
@@ -836,9 +848,43 @@ public class TdsStatement implements java.sql.Statement
      * @exception SQLException if a database access error occurs or the
      * driver does not support batch statements
      */
-    public int[] executeBatch() throws SQLException {
-        NotImplemented();
-        return null;
+    public synchronized int[] executeBatch() throws SQLException {
+        if (batchValues == null || batchValues.size() == 0) {
+            throw new SQLException("Nothing has been batched for execution.");
+        }
+
+        int size = batchValues.size();
+        int[] updateCounts = new int[size];
+        int i = 0;
+
+        try {
+            for (; i < size; i++) {
+                Object value = batchValues.get(i);
+
+                if (value instanceof String) {
+                    updateCounts[i] = executeUpdate((String) value);
+                } else {
+                    updateCounts[i] = executeBatchOther(value);
+                }
+            }
+        } catch (SQLException e) {
+            int[] tmpUpdateCounts = new int[i + 1];
+
+            System.arraycopy(updateCounts, 0, tmpUpdateCounts, 0, i + 1);
+
+            tmpUpdateCounts[i] = Statement.EXECUTE_FAILED;
+            throw new BatchUpdateException(e.getMessage(), tmpUpdateCounts);
+        }
+
+        return updateCounts;
+    }
+
+    /**
+     * This method should be over-ridden by any sub-classes that place values other than
+     * Strings into the batchValues list to handle execution properly.
+     */
+    protected int executeBatchOther(Object value) throws SQLException {
+        throw new SQLException("Unable to execute batch value: " + value);
     }
 
     /**
@@ -870,7 +916,7 @@ public class TdsStatement implements java.sql.Statement
     public boolean execute(String str, int param) throws SQLException {
         checkClosed();
 
-        if (param == Statement.RETURN_GENERATED_KEYS
+        if (param == RETURN_GENERATED_KEYS
             && str.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             this.returnKeys = true;
         } else {
@@ -892,7 +938,7 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("One valid column name must be supplied");
         }
 
-        return execute(str, Statement.RETURN_GENERATED_KEYS);
+        return execute(str, RETURN_GENERATED_KEYS);
     }
 
     //
@@ -907,7 +953,7 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("One valid column index must be supplied.");
         }
 
-        return execute(str, Statement.RETURN_GENERATED_KEYS);
+        return execute(str, RETURN_GENERATED_KEYS);
     }
 
     //
@@ -922,7 +968,7 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("One valid column name must be supplied.");
         }
 
-        return executeUpdate(str, Statement.RETURN_GENERATED_KEYS);
+        return executeUpdate(str, RETURN_GENERATED_KEYS);
     }
 
     //
@@ -937,7 +983,7 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("One valid column index must be supplied.");
         }
 
-        return executeUpdate(str, Statement.RETURN_GENERATED_KEYS);
+        return executeUpdate(str, RETURN_GENERATED_KEYS);
     }
 
     //
@@ -946,7 +992,7 @@ public class TdsStatement implements java.sql.Statement
     public int executeUpdate(String str, int param) throws SQLException {
         checkClosed();
 
-        if (param == Statement.RETURN_GENERATED_KEYS
+        if (param == RETURN_GENERATED_KEYS
             && str.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             this.returnKeys = true;
         } else {

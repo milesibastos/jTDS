@@ -25,6 +25,12 @@ Changes from jTDS 0.6
  o Implemented ResultSet.updateBlob().
  o Implemented ResultSet.updateCharacterStream().
  o Implemented ResultSet.updateClob().
+ o Implemented initial batch support PreparedStatement.addBatch(),
+   Statement.addBatch(String), Statement.clearBatch() and
+   Statement.executeBatch(); the current implementation provides the proper
+   behavior but does not actually send batches of statements to the server
+   (yet).
+ o Corrected RETURN_GENERATED_KEYS usage to compile under 1.3.
 
 02/08/2004 - Brian Heineman
  o Improved parsing of callable statements to be case-insensitive, allow

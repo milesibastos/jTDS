@@ -35,6 +35,7 @@ package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -53,17 +54,18 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.16 2004-02-08 19:12:12 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.16 2004-02-08 19:12:12 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $";
+
+    static Map typemap = null;
 
     String rawQueryString;
     ParameterListItem[] parameterList;
-    static Map typemap = null;
 
     public PreparedStatement_base(TdsConnection conn_, String sql) throws SQLException {
         this(conn_, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -128,13 +130,13 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         Procedure procedure = null;
 
         // First make sure the caller has filled in all the parameters.
-        ParameterUtils.verifyThatParametersAreSet( parameterList );
+        ParameterUtils.verifyThatParametersAreSet(parameterList);
 
         // MJH
         // Create a unique signature for this the procedure by including parameters
         ParameterUtils.createParameterMapping(rawQueryString,
-                                             parameterList,
-                                             tds);
+                                              parameterList,
+                                              tds);
         StringBuffer signature = new StringBuffer();
         signature.append(rawQueryString);
 
@@ -144,7 +146,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         // Find a stored procedure that is compatible with this set of parameters if one exists.
         // MJH Lookup now includes parameter list
-        procedure = findCompatibleStoredProcedure( tds, signature.toString());
+        procedure = findCompatibleStoredProcedure(tds, signature.toString());
 
         // if we don't have a suitable match then create a new temporary stored procedure
         if (procedure == null) {
@@ -156,7 +158,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             // SAfe Submit it to the SQL Server before adding it to the cache or procedures of transaction list.
             //      Otherwise, if submitProcedure fails (e.g. because of a syntax error) it will be in our procedure
             //      cache, but not on the server.
-            submitProcedure( tds, procedure );
+            submitProcedure(tds, procedure);
 
             // store it in the procedureCache
             tds.addStoredProcedure(procedure);
@@ -761,9 +763,40 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      * @see                      Statement#addBatch
      */
-    public void addBatch() throws java.sql.SQLException
-    {
-        NotImplemented();
+    public synchronized void addBatch() throws java.sql.SQLException {
+        if (batchValues == null) {
+            batchValues = new ArrayList();
+        }
+
+        batchValues.add(parameterList);
+
+        parameterList = new ParameterListItem[parameterList.length];
+
+        for (int i = 0; i < parameterList.length; i++) {
+            parameterList[i] = new ParameterListItem();
+        }
+    }
+
+    /**
+     * This method should be over-ridden by any sub-classes that place values other than
+     * Strings into the batchValues list to handle execution properly.
+     */
+    protected int executeBatchOther(Object value) throws SQLException {
+        if (value instanceof ParameterListItem[]) {
+            ParameterListItem[] tmpParameterListItem = parameterList;
+
+            try {
+                parameterList = (ParameterListItem[]) value;
+
+                return executeUpdate();
+            } finally {
+                parameterList = tmpParameterListItem;
+            }
+        } else {
+            super.executeBatchOther(value);
+        }
+
+        return Integer.MIN_VALUE;
     }
 
     /**

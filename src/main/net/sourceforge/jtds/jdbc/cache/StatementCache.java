@@ -40,11 +40,12 @@ import java.util.Collection;
  *     the types of the parameters it is called with (hence the need to be able
  *     to map both keys and SQL strings to handles)</dd>
  * </dl>
- * The cache can retrieve statement handles using statement keys. 
+ * The cache can retrieve statement handles using statement keys.
  * <p>
  * The caching types provided by jTDS should be:
  * <ul>
- *   <li>Arbitrary first un-latched (initial default until other caches are implemented)</li>
+ *   <li>Arbitrary first un-latched (initial default until other caches are
+ *     implemented)</li>
  *   <li>Fast caching (never latches and never releases handles)</li>
  *   <li>FIFO</li>
  *   <li>LRU</li>
@@ -53,7 +54,7 @@ import java.util.Collection;
  * </ul>
  *
  * @author Brian Heineman
- * @version $Id: StatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
+ * @version $Id: StatementCache.java,v 1.4 2004-10-26 12:53:36 alin_sinpalean Exp $
  */
 public interface StatementCache {
 	/**
@@ -84,11 +85,12 @@ public interface StatementCache {
 	public void remove(String key);
 
 	/**
-	 * Returns an array of obsolete statement handles that may be released,
-	 * or <code>null</code> if no statement handles are obsolete.
+	 * Returns a <code>Collection</code> of obsolete statement handles that may
+     * be released, or <code>null</code> if no statement handles are obsolete.
 	 *
-     * @param handles the statement handles that are no longer being used.
-	 * @return collection of obsolete statement handles to be removed
+     * @param handles the statement handles that are no longer being used
+	 * @return <code>Collection</code> of obsolete statement handles to be
+     *         removed
 	 */
 	public Collection getObsoleteHandles(Collection handles);
 }

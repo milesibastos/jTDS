@@ -1,6 +1,9 @@
 Changes from jTDS 0.9
 =========================
 
+10/26/2004 - Alin Sinpalean
+ o Reviewed and cleaned up Brian's latest statement cache update.
+
 10/25/2004 - Brian Heineman
  o Created FastStatementCache for users with a limited number of unique
    prepared statements who want the fastest performance possible.

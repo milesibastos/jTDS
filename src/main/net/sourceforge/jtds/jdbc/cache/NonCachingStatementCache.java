@@ -20,17 +20,18 @@ package net.sourceforge.jtds.jdbc.cache;
 import java.util.Collection;
 
 /**
- * A caching implementation that performs no caching.  This cache implemenation is generally
- * only useful when the driver is not creating statement handles as it will save a slight
- * amount of memory and time by not performing any caching logic.
+ * A caching implementation that performs no caching. This cache implementation
+ * is generally only useful when the driver is not creating statement handles
+ * as it will save a slight amount of memory and time by not performing any
+ * caching logic.
  *
  * @author Brian Heineman
- * @version $Id: NonCachingStatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
+ * @version $Id: NonCachingStatementCache.java,v 1.4 2004-10-26 12:53:36 alin_sinpalean Exp $
  */
 public class NonCachingStatementCache implements StatementCache {
 	/**
-	 * Returns a statement handle associated with the specified key or <code>null</code>
-	 * if the key specified does not have an associated statement handle.
+	 * Always returns <code>null</code> for the statement handle, as no caching
+     * is performed.
 	 *
      * @param key the statement key whose associated handle is to be returned
      * @return statement handle
@@ -40,8 +41,7 @@ public class NonCachingStatementCache implements StatementCache {
 	}
 
 	/**
-	 * Places the specified statement handle in the cache for the given key.  If
-	 * a key already exists in the cache, the handle will be overwritten.
+	 * Does nothing.
 	 *
      * @param key the statement key to associated with the handle
      * @param handle the statement handle.
@@ -50,7 +50,7 @@ public class NonCachingStatementCache implements StatementCache {
 	}
 
 	/**
-	 * Removes a statement key and handle from the cache for the specified key.
+	 * Does nothing.
 	 *
      * @param key the statement key whose associated handle is to be removed
      *            from the cache
@@ -59,11 +59,12 @@ public class NonCachingStatementCache implements StatementCache {
 	}
 
 	/**
-	 * Returns an array of obsolete statement handles that may be released,
-	 * or <code>null</code> if no statement handles are obsolete.
+	 * Returns the same <code>Collection</code> of statement handles received
+     * as parameter, to ensure the <code>Statement</code> releases all the
+     * handles it has used.
 	 *
-     * @param handles the statement handles that are no longer being used.
-	 * @return collection of obsolete statement handles to be removed
+     * @param handles the statement handles that are no longer being used
+	 * @return the same <code>Collection</code> received as parameter
 	 */
 	public Collection getObsoleteHandles(Collection handles) {
 		return handles;

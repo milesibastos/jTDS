@@ -23,7 +23,7 @@ import java.util.*;
  * Implements a light-weight statement cache using a <code>HashMap</code>.
  *
  * @author Brian Heineman
- * @version $Id: DefaultStatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
+ * @version $Id: DefaultStatementCache.java,v 1.4 2004-10-26 12:53:36 alin_sinpalean Exp $
  */
 public class DefaultStatementCache extends AbstractStatementCache {
 	private HashMap cache = new HashMap();
@@ -77,8 +77,9 @@ public class DefaultStatementCache extends AbstractStatementCache {
      * (it might happen that all statements are actually in use and they cannot
      * be removed).
 	 *
-     * @param handles the statement handles that are no longer being used.
-	 * @return collection of obsolete statement handles to be removed
+     * @param handles the statement handles that are no longer being used
+	 * @return <code>Collection</code> of obsolete statement handles to be
+     *         removed
 	 */
 	public synchronized Collection getObsoleteHandles(Collection handles) {
 		int cacheOverrun = cache.size() - maximumCacheTarget;

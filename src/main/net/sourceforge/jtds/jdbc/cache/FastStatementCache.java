@@ -27,7 +27,7 @@ import java.util.*;
  * the life of the connection.
  *
  * @author Brian Heineman
- * @version $Id: FastStatementCache.java,v 1.1 2004-10-25 19:33:40 bheineman Exp $
+ * @version $Id: FastStatementCache.java,v 1.2 2004-10-26 12:53:36 alin_sinpalean Exp $
  */
 public class FastStatementCache implements StatementCache {
 	private HashMap cache = new HashMap();
@@ -66,13 +66,11 @@ public class FastStatementCache implements StatementCache {
 	}
 
 	/**
-	 * Removes and returns just enough statement handles to reduce the number
-	 * of cached statements to {@link #maximumCacheTarget}, if that's possible
-	 * (it might happen that all statements are actually in use and they cannot
-	 * be removed).
+	 * The <code>FastStatementCache</code> implementation does not release
+     * cached statements, so this method will always return <code>null</code>.
 	 *
-	 * @param handles the statement handles that are no longer being used.
-	 * @return collection of obsolete statement handles to be removed
+	 * @param handles the statement handles that are no longer being used
+	 * @return always <code>null</code>
 	 */
 	public Collection getObsoleteHandles(Collection handles) {
 		return null;

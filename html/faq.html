@@ -253,8 +253,11 @@
         <dt><code>maxStatements</code> (default - <code>500</code>)</dt>
         <dd>The number of statements each connection should keep open.
           A value of <code>0</code> will disable statement caching.
-          A value of <code>Integer.MAX_VALUE</code> (<code>2147483647</code>) will enable fast caching
-          (uses less memory and has no overhead associated with latching statements).</dd>
+          A value of <code>Integer.MAX_VALUE</code> (<code>2147483647</code>)
+          will enable fast caching (uses less memory and has no overhead
+          associated with removing statements); the cache will never release
+          any cached statements, so although experience has shown that this is
+          usually not a problem with most applications, use with care.</dd>
         <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
         <dd>The amount of time to wait (in milliseconds) for a successful connection
           before timing out.</dd>
@@ -547,7 +550,7 @@
         <code>PreparedStatement</code>s (which will probably never be reused),
         leading to memory leaks.</p>
       <p>We have decided to address this issue and implement a dynamic cache of
-        prepared procedures.  The number of statements that are kept open
+        prepared procedures. The number of statements that are kept open
         simultaneously can be controlled with the <code>maxStatements</code>
         parameter; see the <a href="#urlFormat">jTDS URL format</a> for more
         information.</p>

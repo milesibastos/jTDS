@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.18 2004-10-25 19:33:40 bheineman Exp $
+ * @version $Id: JtdsDataSource.java,v 1.19 2004-10-26 12:53:37 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -176,7 +176,7 @@ public class JtdsDataSource
         props.setProperty(Messages.get("prop.password"), password);
         props.setProperty(Messages.get("prop.logintimeout"), loginTimeout);
         props.setProperty(Messages.get("prop.lobbuffer"), lobBuffer);
-        props.setProperty(Messages.get("prop.maxstatement"), maxStatements);
+        props.setProperty(Messages.get("prop.maxstatements"), maxStatements);
         props.setProperty(Messages.get("prop.appname"), appName);
         props.setProperty(Messages.get("prop.progname"), progName);
 
@@ -420,14 +420,14 @@ public class JtdsDataSource
         return Long.parseLong(lobBuffer);
     }
 
-    public void setMaxStatements(long maxStatements) {
+    public void setMaxStatements(int maxStatements) {
         this.maxStatements = String.valueOf(maxStatements);
     }
 
-    public long getMaxStatements() {
-        return Long.parseLong(maxStatements);
+    public int getMaxStatements() {
+        return Integer.parseInt(maxStatements);
     }
-    
+
     public void setAppName(String appName) {
         this.appName = appName;
     }

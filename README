@@ -2,31 +2,35 @@ jTDS Ultra quick start
 ======================
 
 This software is based on the FreeTDS project that can be found at
-http://www.freetds.org/
+http://www.freetds.org/. Much kudos goes to the developers of that software.
 
-Much kudos goes to the developers of that software. More kudos will be included
-in this file once everything settles down.
+Lots of thanks go to SourceForge.net, who in a big part made possible the very
+existence of jTDS.
 
 Status
 ======
 
-Alpha (towards Beta)
+Alpha (Beta is really, really close)
 
-Stable for concurrent usage, as long as it's not on the same
-Statement/ResultSet. It might also work on the same Statement, there is some
-synchronization there, but it's not recommended (yet). An untested DataSource
-implementation is also provided.
+Stable for concurrent usage for forward-only result sets. Not that safe for
+multiple scrollable result sets. ;o)
 
-Meta data information is almost complete (both ResultSetMetaData and
-DatabaseMetaData), but there's still work to be done there.
+An untested DataSource implementation is also provided.
 
-I am using it in commercial products (web apps based on the servlet technology
--- quite serious stuff) and it has been tested with SQuirreL SQL Client
-(http://squirrel-sql.sourceforge.net/) and Db-Visualizer
-(http://www.minq.se/products/dbvis/index.html).
+Meta data information is 99.99% complete (both ResultSetMetaData and
+DatabaseMetaData).
 
-DataDino (http://www.datadino.com) comes with jTDS as its JDBC driver for
-Microsoft SQL Server (for the moment, it's only in the 1.1beta).
+I am personally using jTDS in high-end web apps and I have also personally
+tested with SQuirreL SQL Client (http://squirrel-sql.sourceforge.net/),
+Db-Visualizer (http://www.minq.se/products/dbvis/index.html) and SQL Developer
+(http://sqldeveloper.solyp.com/, really nice tool).
+
+DataDino (http://www.datadino.com/) comes bundled with jTDS as its interface
+for Microsoft SQL Server.
+
+For more information about jTDS check out the project's home
+(http://jtds.sourceforge.net). It has just been updated with a lot of new
+information.
 
 Supports
 ========
@@ -34,34 +38,30 @@ Supports
 Read only scrollable recordsets and cursors. Multiple (parallel) statements per
 connection.
 
-Requires JDBC 2.0 (JDK 1.3 recommended). Maybe JDBC 3.0 will be available
-sometime in the future.
+Works on both JDK 1.3 and 1.4 (although it's a JDBC 2.0 driver it implements
+stubs for JDBC 3.0, which currently only throw exceptions :o) ).
 
 Quick Start
 ===========
 
-1. Modify conf/properties to point to your server, and put
-in your username and password. All the tests use only temporary
-tables, so almost any user should do.
+1. Modify conf/properties to point to your server, and put in your username and
+password. All the tests (except PerformanceTest, which will probably fail for
+you anyway :o( ) use only temporary tables, so almost any user should do.
 
 2. In a command prompt, type:
 
 build test
 
-This will run a series of tests on your database (see
-src/test/freetds/BaseTest.java for an example). Note that some
-tests (PerformanceTest) use the odbc driver to compare results,
-so if you are running on another OS this test will fail.
-
-Also, please note that some of the tests use tables that you very
-probably don't have. I will try to fix this.
+This will run a series of JUnit tests on your database. Note that some tests
+(PerformanceTest) use the odbc driver to compare results, so if you are running
+on another OS this test will fail.
 
 URL Format
 ==========
 
 The URL format for jTDS is:
 
-jdbc:freetds:sqlserver://<hostname>[:<port]/<dbname>[;<property>=<value>[;...]]
+jdbc:jtds:sqlserver://<hostname>[:<port][/<dbname>][;<property>=<value>[;...]]
 
 For Sybase (although, as far as I know jTDS was never tested with Sybase)
 replace 'sqlserver' with 'sybase'.
@@ -70,25 +70,22 @@ As for the properties, you can specify them in the URL, as shown above or
 by using DriverManager.getConnection(String URL, Properties props). The
 most important properties (the ones I use) are 'user', 'password',
 'charset' and 'TDS'. The last one specifies the TDS version to be used:
-by default TDS 4.2 is used although the TDS 7.0 implementation works fine
-and 4.2 has some limitations (e.g. VARCHARs are limited to 255 chars).
-Maybe this will change in the future. So, if you want to use SQL Server
-7.0's features, you will have to specify 'TDS'='7.0' (either way -- URL
-or Properties).
+by default TDS 7.0 is used (the TDS 4.2 implementation has some limitations,
+e.g. VARCHARs are limited to 255 chars). So, if you want to use SQL Server 4.2
+ you will have to specify 'TDS'='4.2' (either way -- URL or Properties).
 
 To Do
 =====
 
-1. Update for scrollable recordsets.
-2. More metadata.
+1. Update and sync for scrollable recordsets.
+2. CallableStatement full support ("{?=call ...}" does not currently work)
 3. Connection pooling
 4. JDBC 3.0 compliance
-5. Change package names (I think this is going to happen pretty soon)
 
 Contacts
 ========
 
-Sourceforge home page:    http://jtds.sourceforge.net
+Sourceforge home page:    http://jtds.sourceforge.net/
 Sourceforge project page: http://sourceforge.net/projects/jtds/
 
 Alin Sinpalean  alin_sinpalean@acm.org
@@ -97,32 +94,33 @@ Chris Stevenson chris@ssabsa.sa.gov.au
 License
 =======
 
-// Copyright 1998, 1999 CDS Networks, Inc., Medford Oregon
-//
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-//      This product includes software developed by CDS Networks, Inc.
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
-//    products derived from this software without specific prior
-//    written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
+ Copyright 1998, 1999 CDS Networks, Inc., Medford Oregon
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. All advertising materials mentioning features or use of this software
+    must display the following acknowledgement:
+      This product includes software developed by CDS Networks, Inc.
+ 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
+    products derived from this software without specific prior
+    written permission.
+
+ THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
+ ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+ 

@@ -6,7 +6,7 @@
 # Replace DB-NAME with the name of the defult database
 # to use
 #
-url=jdbc:freetds:sqlserver://SERVER-NAME/DB-NAME
+url=jdbc:jtds:sqlserver://SERVER-NAME/DB-NAME
 user=libraries
 password=libraries
 
@@ -15,16 +15,16 @@ password=libraries
 #
 
 #
-# Use this for MS SQL Server 4 (default)
+# Use this for MS SQL Server 6.5+
 #
-TDS=4.2
+#TDS=4.2
 
 #
-# Use this for MS SQL Server 7.0+
+# Use this for MS SQL Server 7.0+ (default)
 #
-#TDS=7.0
+TDS=7.0
 
 #
-# Use this for MS SQL Server 2000 (not fully implemented)
+# Use this for MS SQL Server 2000 (not yet implemented)
 #
 #TDS=8.0

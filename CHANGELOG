@@ -1,6 +1,26 @@
 
-Changes from jTDS 0.3.1
+===============================================================================
+10/14/2002 - jTDS 0.4 released
+===============================================================================
+
+Changes from jTDS 0.3.2
 =======================
+
+10/14/2002 - Alin Sinpalean
+
+ o Finally renamed packages from com.internetcds.jdbc to net.sourceforge.jtds.
+   This calls for a new release of jTDS, as I promised. A lot of cosmetic
+   changes took place at the same time, it's really hard to make a list of
+   them. Currently there are 5 subpackages of net.sourceforge.jtds: jdbc (the
+   former tds package, where most of the implementation is), jdbcx (with the
+   TdsDataSource implementation), util (containing the Logger), test (with all
+   the JUnit tests) and tools (containing some TDS reverse engineering tools).
+   Hopefully the new structure will also help in getting more organized. The
+   old sources are still available in the repository with all their history,
+   under the src.old directory.
+ o Bugfix (bug #621842, submitted and fixed by Anton Decusar and Andrei
+   Chafirine): encoding Cp1251 is not recognized by jTDS because it is returned
+   by SQL Server as 'cp1251' (with 'c' instead of 'C').
 
 10/02/2002 - Alin Sinpalean
 

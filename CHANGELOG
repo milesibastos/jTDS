@@ -8,6 +8,13 @@ Changes from jTDS 0.8.1
  o Created overloaded DefaultProperties.getServerType() methods to convert
    server type from String to Integer and Integer to String.  Implemented in
    Driver and JtdsDataSource classes.
+ o Created JtdsDataSourceUnitTest class.  Cleaned up AbstractDataSource to
+   use DefaultProperties defaults, added missing appName and progName
+   properties, fixed type of prepareSql from boolean to int, and renamed
+   isLastUpdateCount() to getLastUpdateCount().  Fixed parsing of new type
+   of prepareSql property in JtdsObjectFactory.getObjectInstance().
+ o Updated DefaultPropertiesTestLibrary to contain flags for only testing a
+   default setup of SQL Server and/or TDS 7.0.
 
 08/06/2004 - Brian Heineman
  o Update the usage of the prepareSql parameter.  This parameter is now used to

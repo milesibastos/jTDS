@@ -43,15 +43,21 @@ import java.util.Properties;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.5 2004-08-05 16:25:27 bheineman Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.6 2004-08-07 01:32:16 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /** Test JDBC URL for SQL Server. */
-    private static final String URL_SQLSERVER = "jdbc:jtds:sqlserver://servername";
+    private static final String URL_SQLSERVER = 
+            "jdbc:jtds:" + DefaultProperties.SERVER_TYPE_SQLSERVER + "://servername";
     /** Test JDBC URL for Sybase. */
-    private static final String URL_SYBASE = "jdbc:jtds:sybase://servername";
+    private static final String URL_SYBASE = 
+            "jdbc:jtds:" + DefaultProperties.SERVER_TYPE_SYBASE + "://servername";
 
+    /** If true, only run tests for SQL Server, not Sybase. */
+    private boolean onlySqlServerTests = false;
+    /** If true, only run tests for TDS 7.0. */
+    private boolean onlyTds70Tests = false;
 
     /**
      * Provides a null test suite so that JUnit will not try to instantiate
@@ -84,7 +90,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String fieldName = "serverType";
         String messageKey = "prop.servertype";
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, String.valueOf(Driver.SQLSERVER));
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, String.valueOf(Driver.SYBASE));
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, String.valueOf(Driver.SYBASE));
+        }
     }
 
 
@@ -95,7 +103,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String fieldName = "tds";
         String messageKey = "prop.tds";
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, DefaultProperties.TDS_VERSION_70);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, DefaultProperties.TDS_VERSION_50);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, DefaultProperties.TDS_VERSION_50);
+        }
     }
 
 
@@ -110,8 +120,10 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.portnumber";
         assertDefaultPropertyByServerType(
                 URL_SQLSERVER, messageKey, fieldName, String.valueOf(DefaultProperties.PORT_NUMBER_SQLSERVER));
-        assertDefaultPropertyByServerType(
-                URL_SYBASE, messageKey, fieldName, String.valueOf(DefaultProperties.PORT_NUMBER_SYBASE));
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(
+                    URL_SYBASE, messageKey, fieldName, String.valueOf(DefaultProperties.PORT_NUMBER_SYBASE));
+        }
     }
 
 
@@ -123,7 +135,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.databasename";
         String expectedValue = DefaultProperties.DATABASE_NAME;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -135,7 +149,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.appname";
         String expectedValue = DefaultProperties.APP_NAME;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -147,7 +163,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.lastupdatecount";
         String expectedValue = String.valueOf(DefaultProperties.LAST_UPDATE_COUNT);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -159,7 +177,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.lobbuffer";
         String expectedValue = String.valueOf(DefaultProperties.LOB_BUFFER_SIZE);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -171,8 +191,11 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.logintimeout";
         String expectedValue = String.valueOf(DefaultProperties.LOGIN_TIMEOUT);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
+
 
     /**
      * Test the <code>macAddress</code> property.
@@ -183,7 +206,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.macaddress";
         String expectedValue = DefaultProperties.MAC_ADDRESS;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -195,7 +220,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.namedpipe";
         String expectedValue = String.valueOf(DefaultProperties.NAMED_PIPE);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -207,16 +234,21 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String fieldName = "packetSize";
         String messageKey = "prop.packetsize";
 
-        String expectedValue = String.valueOf(DefaultProperties.PACKET_SIZE_42_50);
-        assertDefaultPropertyByTdsVersion(
-                URL_SQLSERVER, DefaultProperties.TDS_VERSION_42, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByTdsVersion(URL_SYBASE, DefaultProperties.TDS_VERSION_50, messageKey, fieldName, expectedValue);
+        if (!isOnlyTds70Tests()) {
+            String expectedValue = String.valueOf(DefaultProperties.PACKET_SIZE_42_50);
+            assertDefaultPropertyByTdsVersion(
+                    URL_SQLSERVER, DefaultProperties.TDS_VERSION_42, messageKey, fieldName, expectedValue);
+            assertDefaultPropertyByTdsVersion(
+                    URL_SYBASE, DefaultProperties.TDS_VERSION_50, messageKey, fieldName, expectedValue);
+        }
 
-        expectedValue = String.valueOf(DefaultProperties.PACKET_SIZE_70_80);
+        String expectedValue = String.valueOf(DefaultProperties.PACKET_SIZE_70_80);
         assertDefaultPropertyByTdsVersion(
                 URL_SQLSERVER, DefaultProperties.TDS_VERSION_70, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByTdsVersion(
-                URL_SQLSERVER, DefaultProperties.TDS_VERSION_80, messageKey, fieldName, expectedValue);
+        if (!isOnlyTds70Tests()) {
+            assertDefaultPropertyByTdsVersion(
+                    URL_SQLSERVER, DefaultProperties.TDS_VERSION_80, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -228,7 +260,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.preparesql";
         String expectedValue = String.valueOf(DefaultProperties.PREPARE_SQL);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -240,7 +274,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.progname";
         String expectedValue = DefaultProperties.PROG_NAME;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -252,7 +288,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = "prop.useunicode";
         String expectedValue = String.valueOf(DefaultProperties.USE_UNICODE);
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
-        assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
     }
 
 
@@ -294,6 +332,46 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */ 
     private void assertDefaultPropertyByServerType(String url, String key, String fieldName, String expected) {
         getTester().assertDefaultProperty("Default property incorrect", url, new Properties(), fieldName, key, expected);
+    }
+
+
+    /**
+     * Getter for {@link #onlySqlServerTests}.
+     * 
+     * @return Value of {@link #onlySqlServerTests}.
+     */
+    public boolean isOnlySqlServerTests() {
+        return onlySqlServerTests;
+    }
+
+
+    /**
+     * Setter for {@link #onlySqlServerTests}.
+     * 
+     * @param onlySqlServerTests The value to set {@link #onlySqlServerTests} to.
+     */
+    protected void setOnlySqlServerTests(boolean onlySqlServerTests) {
+        this.onlySqlServerTests = onlySqlServerTests;
+    }
+
+
+    /**
+     * Getter for {@link #onlyTds70Tests}.
+     * 
+     * @return Value of {@link #onlyTds70Tests}.
+     */
+    public boolean isOnlyTds70Tests() {
+        return onlyTds70Tests;
+    }
+
+
+    /**
+     * Setter for {@link #onlyTds70Tests}.
+     * 
+     * @param onlyTds70Tests The value to set {@link #onlyTds70Tests} to.
+     */
+    protected void setOnlyTds70Tests(boolean onlyTds70Tests) {
+        this.onlyTds70Tests = onlyTds70Tests;
     }
 
 }

@@ -36,12 +36,12 @@ import net.sourceforge.jtds.util.Logger;
 *
 * @author Alin Sinplean
 * @since  jTDS 0.3
-* @version $Id: AbstractDataSource.java,v 1.15 2004-08-05 16:25:27 bheineman Exp $
+* @version $Id: AbstractDataSource.java,v 1.16 2004-08-07 01:32:14 ddkilzer Exp $
 */
 abstract class AbstractDataSource
 implements DataSource, Referenceable, Serializable {
-    protected int loginTimeout = 0;
-    protected String databaseName = "";
+    protected int loginTimeout = DefaultProperties.LOGIN_TIMEOUT;
+    protected String databaseName = DefaultProperties.DATABASE_NAME;
     protected int portNumber = DefaultProperties.PORT_NUMBER_SQLSERVER;
     protected String serverName;
     protected String user;
@@ -53,13 +53,15 @@ implements DataSource, Referenceable, Serializable {
     protected String language = "";
     protected String domain = "";
     protected String instance = "";
-    protected boolean lastUpdateCount = false;
-    protected boolean sendStringParametersAsUnicode = true;
-    protected boolean namedPipe = false;
-    protected String macAddress = "";
-    protected int packetSize = 0;
-    protected boolean prepareSql = true;
+    protected boolean lastUpdateCount = DefaultProperties.LAST_UPDATE_COUNT;
+    protected boolean sendStringParametersAsUnicode = DefaultProperties.USE_UNICODE;
+    protected boolean namedPipe = DefaultProperties.NAMED_PIPE;
+    protected String macAddress = DefaultProperties.MAC_ADDRESS;
+    protected int packetSize = DefaultProperties.PACKET_SIZE_70_80;
+    protected int prepareSql = DefaultProperties.PREPARE_SQL;
     protected long lobBuffer = DefaultProperties.LOB_BUFFER_SIZE;
+    protected String appName = DefaultProperties.APP_NAME;
+    protected String progName = DefaultProperties.PROG_NAME;
 
     public Reference getReference() throws NamingException {
         Reference ref = new Reference(getClass().getName(),
@@ -80,7 +82,7 @@ implements DataSource, Referenceable, Serializable {
         ref.add(new StringRefAddr(Messages.get("prop.domain"), domain));
         ref.add(new StringRefAddr(Messages.get("prop.instance"), instance));
         ref.add(new StringRefAddr(Messages.get("prop.lastupdatecount"),
-                                  String.valueOf(isLastUpdateCount())));
+                                  String.valueOf(getLastUpdateCount())));
         ref.add(new StringRefAddr(Messages.get("prop.logintimeout"),
                                   String.valueOf(loginTimeout)));
         ref.add(new StringRefAddr(Messages.get("prop.useunicode"),
@@ -94,6 +96,10 @@ implements DataSource, Referenceable, Serializable {
                                   String.valueOf(prepareSql)));
         ref.add(new StringRefAddr(Messages.get("prop.lobbuffer"),
                                   String.valueOf(lobBuffer)));
+        ref.add(new StringRefAddr(Messages.get("prop.appname"),
+                                  String.valueOf(appName)));
+        ref.add(new StringRefAddr(Messages.get("prop.progname"),
+                                  String.valueOf(progName)));
 
         return ref;
     }
@@ -210,7 +216,7 @@ implements DataSource, Referenceable, Serializable {
         this.namedPipe = namedPipe;
     }
 
-    public boolean isLastUpdateCount() {
+    public boolean getLastUpdateCount() {
         return lastUpdateCount;
     }
   
@@ -250,11 +256,11 @@ implements DataSource, Referenceable, Serializable {
         return packetSize;
     }
   
-    public void setPrepareSql(boolean value) {
-        this.prepareSql = value;
+    public void setPrepareSql(int prepareSql) {
+        this.prepareSql = prepareSql;
     }
   
-    public boolean getPrepareSql() {
+    public int getPrepareSql() {
         return prepareSql;
     }
     
@@ -264,5 +270,21 @@ implements DataSource, Referenceable, Serializable {
   
     public long getLobBuffer() {
         return lobBuffer;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setProgName(String progName) {
+        this.progName = progName;
+    }
+
+    public String getProgName() {
+        return progName;
     }
 }

@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.5 2004-08-05 16:25:27 bheineman Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.6 2004-08-07 01:32:14 ddkilzer Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -56,7 +56,7 @@ public class JtdsObjectFactory implements ObjectFactory {
             ds.setNamedPipe("true".equals(ref.get(Messages.get("prop.namedpipe")).getContent()));
             ds.setMacAddress((String) ref.get(Messages.get("prop.macaddress")).getContent());
             ds.setPacketSize(Integer.parseInt((String) ref.get(Messages.get("prop.packetsize")).getContent()));
-            ds.setPrepareSql("true".equals(ref.get(Messages.get("prop.preparesql")).getContent()));
+            ds.setPrepareSql(Integer.parseInt((String) ref.get(Messages.get("prop.preparesql")).getContent()));
             ds.setLobBuffer(Long.parseLong((String) ref.get(Messages.get("prop.lobbuffer")).getContent()));
 
             return ds;

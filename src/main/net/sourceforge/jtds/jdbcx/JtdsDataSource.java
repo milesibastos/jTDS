@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.7 2004-08-07 00:07:35 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.8 2004-08-07 01:32:14 ddkilzer Exp $
  */
 public class JtdsDataSource extends AbstractDataSource {
 
@@ -70,7 +70,7 @@ public class JtdsDataSource extends AbstractDataSource {
         props.setProperty(Messages.get("prop.domain"), domain);
         props.setProperty(Messages.get("prop.instance"), instance);
         props.setProperty(Messages.get("prop.lastupdatecount"),
-                          String.valueOf(isLastUpdateCount()));
+                          String.valueOf(getLastUpdateCount()));
         props.setProperty(Messages.get("prop.useunicode"),
                           String.valueOf(sendStringParametersAsUnicode));
         props.setProperty(Messages.get("prop.namedpipe"),

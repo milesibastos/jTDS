@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.12 2004-08-21 18:44:26 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.13 2004-08-22 15:44:11 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -394,7 +394,11 @@ public class MSCursorResultSet extends JtdsResultSet {
 
                     sql = buf.toString();
                     
-                    // Why is this required???
+                    // Per Mike's comment:
+                    // https://sourceforge.net/tracker/index.php?func=detail&aid=1013819&group_id=33291&atid=407762
+                    // The 0x1000 tells the server that there is a parameter
+                    // definition and user parameters present. If this flag is
+                    // not set the driver will ignore the additional parameters.
                     scrollOpt = scrollOpt | 0x1000;
 
                     // Setup parameter definitions
@@ -470,7 +474,6 @@ public class MSCursorResultSet extends JtdsResultSet {
             cursorHandle = (Integer) parameters[1].value;
             actualScroll = ((Number) parameters[2].value).intValue();
             actualCc = ((Number) parameters[3].value).intValue();
-            rowsInResult = ((Number) parameters[4].value).intValue();
         } else if (prepareSql == TdsCore.PREPEXEC) {
             Integer statementHandle = (Integer) parameters[0].value;
             
@@ -485,7 +488,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             rowsInResult = ((Number) parameters[4].value).intValue();
         }
 
-        if ((actualScroll != scrollOpt) || (actualCc != ccOpt)) {
+        if ((actualScroll != (scrollOpt & 0xFFF)) || (actualCc != ccOpt)) {
             if (actualScroll != scrollOpt) {
                 switch (actualScroll) {
                     case CURSOR_TYPE_FORWARD:

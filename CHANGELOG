@@ -7,6 +7,7 @@ Changes from jTDS 0.8.1
  o Corrected bug [994916] datetime decoding in TdsData.java; Added tests to
    ensure this functionality continues to work in the future.
  o Added test for bug [983432] Prepared call doesn't work with jTDS 0.8
+ o Added test for bug [981958] PreparedStatement doesn't work correctly
 
 07/20/2004 - Brian Heineman
  o Added test for bug [974284] retval on callable statement isn't handled

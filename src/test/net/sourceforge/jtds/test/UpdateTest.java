@@ -7,23 +7,18 @@ import java.sql.*;
  * @version    1.0
  */
 
-public class UpdateTest
-         extends TestBase {
-
-    public UpdateTest(String name)
-    {
+public class UpdateTest extends TestBase {
+    public UpdateTest(String name) {
         super(name);
     }
 
-    public void testTemp()
-    throws Exception
-    {
-        Statement stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+    public void testTemp() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
-        stmt.execute( "CREATE TABLE #temp ( pk INT PRIMARY KEY, f_string VARCHAR(30), f_float FLOAT )" );
+        stmt.execute("CREATE TABLE #temp (pk INT PRIMARY KEY, f_string VARCHAR(30), f_float FLOAT)");
 
         //populate in the traditional way
-        for ( int i=0; i<100; i++ ) {
+        for (int i = 0; i < 100; i++) {
             stmt.execute(
                 "INSERT INTO #temp "
                 + "VALUES( " + i
@@ -32,23 +27,20 @@ public class UpdateTest
             );
         }
 
-        dump( stmt.executeQuery( "SELECT Count(*) FROM #temp" ) );
+        dump(stmt.executeQuery("SELECT Count(*) FROM #temp"));
 
-        //Navigate around
-        ResultSet rs = stmt.executeQuery( "SELECT * FROM #temp" );
+        // Navigate around
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #temp");
 
         rs.first();
         rs.last();
         rs.first();
 
-        // SAfe Can no longer do this. It's going to be executed on a different Tds, which is wrong. :o(
-//        stmt.execute( "DROP TABLE #temp" );
-
+        stmt.execute("DROP TABLE #temp");
         stmt.close();
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         junit.textui.TestRunner.run(UpdateTest.class);
     }
 }

@@ -7,6 +7,7 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
+import java.math.BigDecimal;
 
 import junit.framework.TestSuite;
 import net.sourceforge.jtds.util.Logger;
@@ -320,7 +321,7 @@ public class SAfeTest extends DatabaseTestCase
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE PROCEDURE #SAfe0006 @p1 INT, @p2 VARCHAR(20) OUT AS "+
-            "SET @p2=CAST(@p1-1 AS VARCHAR(20)) RETURN @p1+1");
+                "SET @p2=CAST(@p1-1 AS VARCHAR(20)) RETURN @p1+1");
         stmt.close();
 
         // Try all formats: escaped, w/ exec and w/o exec
@@ -339,5 +340,88 @@ public class SAfeTest extends DatabaseTestCase
 
             cs.close();
         }
+    }
+
+    /**
+     * Helper method for <code>testBigDecimal0007</code>. Inserts a BigDecimal
+     * value obtained from a double value.
+     *
+     * @param stmt      <code>PreparedStatement</code> instance
+     * @param val       the <code>double</code> value to insert
+     * @param scaleFlag if <code>true</code> scale the value to 4, otherwise
+     *                  leave it as it is
+     */
+    private static void insertBigDecimal(PreparedStatement stmt, double val,
+                                         boolean scaleFlag)
+            throws Exception {
+        BigDecimal bd = new BigDecimal(val);
+        if (scaleFlag) {
+            bd = bd.setScale(4,
+                    BigDecimal.ROUND_HALF_EVEN);
+        }
+
+        stmt.setBigDecimal(1, bd);
+        int rowCount = stmt.executeUpdate();
+        assertEquals(1, rowCount);
+
+        assertTrue(stmt.getMoreResults());
+        ResultSet rs = stmt.getResultSet();
+        assertTrue(rs.next());
+
+        assertEquals("Values don't match.", val, rs.getDouble(1), 0);
+    }
+
+    /**
+     * Test <code>BigDecimal</code>s created from double values (i.e. with very
+     * large scales).
+     */
+    public void testBigDecimal0007() throws Exception {
+        Statement createStmt = con.createStatement();
+        createStmt.execute("CREATE TABLE #SAfe0007(value money)");
+        createStmt.close();
+
+        PreparedStatement stmt = con.prepareStatement(
+                "INSERT INTO #SAfe0007(value) values (?) "
+                + "SELECT * FROM #SAfe0007 DELETE #SAfe0007");
+        // Now test with certain values.
+        insertBigDecimal(stmt, 1.1, false);
+        insertBigDecimal(stmt, 0.1, false);
+        insertBigDecimal(stmt, 0.1, true);
+        insertBigDecimal(stmt, 0.01, false);
+        insertBigDecimal(stmt, 0.01, true);
+        insertBigDecimal(stmt, 0.02, false);
+        insertBigDecimal(stmt, 0.02, true);
+        insertBigDecimal(stmt, 0.25, false);
+
+        stmt.close();
+    }
+
+    /**
+     * Test <code>BigDecimal</code>s created from double values (i.e. with very
+     * large scales).
+     */
+    public void testLongToVarchar0008() throws Exception {
+        long myVal = 13;
+
+        Statement createStmt = con.createStatement();
+        createStmt.execute("CREATE TABLE #SAfe0008(value varchar(255))");
+        createStmt.close();
+
+        PreparedStatement stmt = con.prepareStatement(
+                "INSERT INTO #SAfe0008(value) values (?) "
+                + "SELECT * FROM #SAfe0008 DELETE #SAfe0008");
+
+        stmt.setLong(1, myVal);
+        int rowCount = stmt.executeUpdate();
+        assertEquals(1, rowCount);
+
+        assertTrue(stmt.getMoreResults());
+        ResultSet rs = stmt.getResultSet();
+        assertTrue(rs.next());
+
+        assertEquals("Values don't match.",
+                     String.valueOf(myVal), rs.getString(1));
+
+        stmt.close();
     }
 }

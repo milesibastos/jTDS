@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.13 2004-02-05 19:00:31 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.14 2004-02-05 23:57:52 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.13 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.14 2004-02-05 23:57:52 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -220,16 +220,16 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
         else {
             int res;
-            do {
-                res = getUpdateCount();
+            while (((res = getUpdateCount()) != -1)
+                && ((TdsConnection) getConnection()).returnLastUpdateCount()) {
+
                 // If we found a ResultSet, there's a problem.
                 if( getMoreResults() ) {
                     skipToEnd();
                     releaseTds();
                     throw new SQLException("executeUpdate can't return a result set");
                 }
-            } while ((getUpdateCount() != -1)
-                    && ((TdsConnection) getConnection()).returnLastUpdateCount());
+            }
 
             releaseTds();
             return res==-1 ? 0 : res;

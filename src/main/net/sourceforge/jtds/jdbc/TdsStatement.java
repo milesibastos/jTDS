@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.12 2004-02-05 19:00:31 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.13 2004-02-05 23:57:55 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.12 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.13 2004-02-05 23:57:55 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -241,16 +241,16 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("executeUpdate can't return a result set");
         } else {
             int res;
-            do {
-                res = getUpdateCount();
+            while (((res = getUpdateCount()) != -1)
+                    && connection.returnLastUpdateCount()) {
+
                 // If we found a ResultSet, there's a problem.
                 if( getMoreResults() ) {
                     skipToEnd();
                     releaseTds();
                     throw new SQLException("executeUpdate can't return a result set");
                 }
-            } while ((getUpdateCount() != -1)
-                    && connection.returnLastUpdateCount());
+            }
 
             releaseTds();
             // We should return 0 (at least that's what the javadoc above says)

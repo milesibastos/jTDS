@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.25 2004-02-05 19:00:31 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.26 2004-02-05 23:57:55 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -152,7 +152,7 @@ public class Tds implements TdsDefinitions
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.25 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.26 2004-02-05 23:57:55 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -3011,7 +3011,10 @@ public class Tds implements TdsDefinitions
                 }
 
                 if (reqScale != -1) {
-                    bd = bd.setScale(reqScale);
+                    bd = bd.setScale(reqScale, BigDecimal.ROUND_HALF_UP);
+                }
+                if (bd.scale() > prec) {
+                    bd = bd.setScale(prec, BigDecimal.ROUND_HALF_UP);
                 }
 
                 boolean repeat = false;

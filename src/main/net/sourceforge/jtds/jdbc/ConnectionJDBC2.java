@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.51 2004-12-01 15:37:19 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.52 2004-12-03 14:42:34 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -128,6 +128,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             + " (select csid from master.dbo.syscharsets, master.dbo.sysconfigures"
             + " where config=1123 and id = value)";
 
+    /** Sybase initial connection string. */
+    private String SYBASE_INITIAL_SQL     = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
+                                            "SET CHAINED OFF\r\n" +
+                                            "SET QUOTED_IDENTIFIER ON\r\n"+
+                                            "SET TEXTSIZE 2147483647";
+    /** SQL Server initial connection string. */
+    private String SQL_SERVER_INITIAL_SQL = "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
+                                            "SET IMPLICIT_TRANSACTIONS OFF\r\n" +
+                                            "SET QUOTED_IDENTIFIER ON\r\n"+
+                                            "SET TEXTSIZE 2147483647";
     /*
      * Conection attributes
      */
@@ -228,6 +238,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int sybaseInfo = 0;
     /** True if running distributed transaction. */
     private boolean xaTransaction = false;
+    /** Current emulated XA State eg start/end/prepare etc. */
+    private int xaState = 0;
+    /** Current XA Transaction ID. */
+    private Object xid;
+    /** True if driver should emulate distributed transactions. */
+    private boolean xaEmulation = true;
 
     /**
      * Default constructor.
@@ -371,19 +387,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         //
-        // Initial database settings
+        // Initial database settings.
+        // Sets: auto commit mode  = true
+        //       transaction isolation = read committed.
         //
-        String sql;
-
         if (serverType == Driver.SYBASE) {
-            sql = "SET QUOTED_IDENTIFIER ON SET TEXTSIZE 2147483647 ";
+            baseTds.submitSQL(SYBASE_INITIAL_SQL);
         } else {
-            sql = "SET QUOTED_IDENTIFIER ON SET TEXTSIZE 2147483647 ";
+            baseTds.submitSQL(SQL_SERVER_INITIAL_SQL);
         }
-
-        baseTds.submitSQL(sql);
-        setAutoCommit(true);
-        setTransactionIsolation(transactionIsolation);
     }
 
     /**
@@ -671,7 +683,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 info.getProperty(Messages.get(Driver.NAMEDPIPE)));
         tcpNoDelay = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.TCPNODELAY)));
-
+        xaEmulation = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.XAEMULATION)));
         charsetSpecified = serverCharset.length() > 0;
 
         // Don't default serverCharset at this point; if none specified,
@@ -1286,6 +1299,51 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             baseTds.enlistConnection(1, null);
             xaTransaction = false;
         }
+    }
+
+    /**
+     * Set the XA transaction ID when running in emulation mode.
+     *
+     * @param xid the XA Transaction ID
+     */
+    void setXid(Object xid) {
+        this.xid = xid;
+        xaTransaction = xid != null;
+    }
+
+    /**
+     * Get the XA transaction ID when running in emulation mode.
+     *
+     * @return the transaction ID as an <code>Object</code>
+     */
+    Object getXid() {
+        return xid;
+    }
+
+    /**
+     * Set the XA state variable.
+     *
+     * @param value the XA state value
+     */
+    void setXaState(int value) {
+        this.xaState = value;
+    }
+
+    /**
+     * Retrieve the XA state variable.
+     *
+     * @return the xa state variable as an <code>int</code>
+     */
+    int getXaState() {
+        return this.xaState;
+    }
+
+    /**
+     * Retrieve the XA Emulation flag.
+     * @return True if in XA emulation mode.
+     */
+    boolean isXaEmulation() {
+        return xaEmulation;
     }
 
     //

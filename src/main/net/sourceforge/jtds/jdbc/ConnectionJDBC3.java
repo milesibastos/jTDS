@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.9 2004-10-25 19:33:39 bheineman Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.10 2004-12-03 14:42:34 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -115,6 +115,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
         Object tmpSavepoint = savepoints.remove(index);
 
         if (savepointProcInTran != null) {
+            // FIXME Shouldn't procedures removed here be moved instead into the "wrapping" savepoint?
             savepointProcInTran.remove(tmpSavepoint);
         }
     }

@@ -24,7 +24,7 @@ import net.sourceforge.jtds.jdbc.Support;
 /**
  * jTDS implementation of the <code>Xid</code> interface.
  *
- * @version $Id: JtdsXid.java,v 1.1 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: JtdsXid.java,v 1.2 2004-12-03 14:42:35 alin_sinpalean Exp $
  */
 public class JtdsXid implements Xid {
     /** The global transaction ID. */
@@ -35,6 +35,8 @@ public class JtdsXid implements Xid {
     public static final int XID_SIZE = 140;
     /** The format ID. */
     public int fmtId;
+    /** Precalculated hash value. */
+    public int hash;
 
     public JtdsXid() {
     }
@@ -56,6 +58,7 @@ public class JtdsXid implements Xid {
         bqual = new byte[b];
         System.arraycopy(buf, 12+pos, gtran, 0, t);
         System.arraycopy(buf, 12+t+pos, bqual, 0, b);
+        calculateHash();
     }
 
     /**
@@ -68,6 +71,66 @@ public class JtdsXid implements Xid {
         fmtId = 0;
         gtran = global;
         bqual = branch;
+        calculateHash();
+    }
+
+    /**
+     * Construct an XID as a clone of another XID.
+     */
+    public JtdsXid(Xid xid) {
+        fmtId = xid.getFormatId();
+        gtran = new byte[xid.getGlobalTransactionId().length];
+        System.arraycopy(xid.getGlobalTransactionId(), 0, gtran, 0, gtran.length);
+        bqual = new byte[xid.getBranchQualifier().length];
+        System.arraycopy(xid.getBranchQualifier(), 0, bqual, 0, bqual.length);
+        calculateHash();
+    }
+
+    private void calculateHash() {
+        String x = Integer.toString(fmtId)+ new String(gtran) + new String(bqual);
+        hash = x.hashCode();
+    }
+
+    /**
+     * Get the hash code for this object.
+     *
+     * @return the hash value of this object as a <code>int</code>
+     */
+    public int hashCode() {
+        return hash;
+    }
+
+    /**
+     * Test for equality.
+     *
+     * @param obj the object to test for equality with this
+     * @return <code>boolean</code> true if the parameter equals this
+     */
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+
+        if (obj instanceof JtdsXid) {
+            JtdsXid xobj = (JtdsXid)obj;
+
+            if (gtran.length + bqual.length == xobj.gtran.length + xobj.bqual.length
+                    && fmtId == xobj.fmtId) {
+                for (int i = 0; i < gtran.length; ++i) {
+                    if (gtran[i] != xobj.gtran[i]) {
+                        return false;
+                    }
+                }
+
+                for (int i = 0; i < bqual.length; ++i) {
+                    if (bqual[i] != xobj.bqual[i]) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        }
+        return false;
     }
 
     //

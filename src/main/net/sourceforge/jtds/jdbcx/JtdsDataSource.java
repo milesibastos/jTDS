@@ -17,6 +17,8 @@
 //
 package net.sourceforge.jtds.jdbcx;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.sql.Connection;
@@ -42,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.22 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.23 2004-12-03 14:42:34 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -69,6 +71,8 @@ public class JtdsDataSource
     protected String maxStatements;
     protected String appName;
     protected String progName;
+    protected String xaEmulation;
+    protected String logFile;
 
     protected String description;
 
@@ -103,6 +107,8 @@ public class JtdsDataSource
         maxStatements = props.getProperty(Messages.get(Driver.MAXSTATEMENTS));
         appName = props.getProperty(Messages.get(Driver.APPNAME));
         progName = props.getProperty(Messages.get(Driver.PROGNAME));
+        xaEmulation = props.getProperty(Messages.get(Driver.XAEMULATION));
+        logFile = props.getProperty(Messages.get(Driver.LOGFILE));
     }
 
     /**
@@ -152,6 +158,19 @@ public class JtdsDataSource
             throw new SQLException(Messages.get("error.connection.nohost"), "08001");
         }
 
+        //
+        // This maybe the only way to initialise the logging subsystem
+        // with some containers such as JBOSS.
+        //
+        if (getLogWriter() == null && logFile != null && logFile.length() > 0) {
+            // Try to initialise a PrintWriter
+            try {
+                setLogWriter(new PrintWriter(new FileOutputStream(logFile), true));
+            } catch (IOException e) {
+                System.err.println("jTDS: Failed to set log file " + e);
+            }
+        }
+
         props.setProperty(Messages.get(Driver.SERVERNAME), serverName);
         props.setProperty(Messages.get(Driver.PORTNUMBER), portNumber);
         props.setProperty(Messages.get(Driver.DATABASENAME), databaseName);
@@ -175,6 +194,7 @@ public class JtdsDataSource
         props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
         props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
         props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
+        props.setProperty(Messages.get(Driver.XAEMULATION), xaEmulation);
         props.setProperty(Messages.get(Driver.USER), user);
         props.setProperty(Messages.get(Driver.PASSWORD), password);
         props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
@@ -211,6 +231,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.PREPARESQL), prepareSql));
         ref.add(new StringRefAddr(Messages.get(Driver.PACKETSIZE), packetSize));
         ref.add(new StringRefAddr(Messages.get(Driver.TCPNODELAY), tcpNoDelay));
+        ref.add(new StringRefAddr(Messages.get(Driver.XAEMULATION), xaEmulation));
         ref.add(new StringRefAddr(Messages.get(Driver.USER), user));
         ref.add(new StringRefAddr(Messages.get(Driver.PASSWORD), password));
         ref.add(new StringRefAddr(Messages.get(Driver.LOGINTIMEOUT), loginTimeout));
@@ -218,6 +239,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.MAXSTATEMENTS), maxStatements));
         ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
         ref.add(new StringRefAddr(Messages.get(Driver.PROGNAME), progName));
+        ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
 
         return ref;
     }
@@ -376,6 +398,14 @@ public class JtdsDataSource
         this.lastUpdateCount = String.valueOf(lastUpdateCount);
     }
 
+    public boolean getXaEmulation() {
+        return Boolean.valueOf(xaEmulation).booleanValue();
+    }
+
+    public void setXaEmulation(boolean xaEmulation) {
+        this.xaEmulation = String.valueOf(xaEmulation);
+    }
+
     public String getCharset() {
         return charset;
     }
@@ -454,5 +484,13 @@ public class JtdsDataSource
 
     public String getProgName() {
         return progName;
+    }
+
+    public void setLogFile(String logFile) {
+        this.logFile = logFile;
+    }
+
+    public String getLogFile() {
+        return logFile;
     }
 }

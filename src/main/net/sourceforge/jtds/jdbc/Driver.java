@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.42 2004-11-15 13:29:06 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.43 2004-12-03 14:42:34 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -98,6 +98,8 @@ public class Driver implements java.sql.Driver {
     public static final String TCPNODELAY    = "prop.tcpnodelay";
     public static final String USER          = "prop.user";
     public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";
+    public static final String XAEMULATION   = "prop.xaemulation";
+    public static final String LOGFILE       = "prop.logfile";
 
     static {
         try {

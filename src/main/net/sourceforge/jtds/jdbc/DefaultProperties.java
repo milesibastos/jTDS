@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.14 2004-11-15 13:29:06 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.15 2004-12-03 14:42:34 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -98,6 +98,10 @@ public final class DefaultProperties {
     public static final String USE_UNICODE = "true";
     /** Default <code>user</code> property. */
     public static final String USER = "";
+    /** Default <code>XaEmulation</code> property. */
+    public static final String XAEMULATION = "true";
+    /** Default <code>logfile</code> property. */
+    public static final String LOGFILE = "";
 
     /** Default <code>serverType</code> property for SQL Server. */
     public static final String SERVER_TYPE_SQLSERVER = "sqlserver";
@@ -174,6 +178,8 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.PREPARESQL, PREPARE_SQL);
         addDefaultPropertyIfNotSet(props, Driver.SENDSTRINGPARAMETERSASUNICODE, USE_UNICODE);
         addDefaultPropertyIfNotSet(props, Driver.TCPNODELAY, TCP_NODELAY);
+        addDefaultPropertyIfNotSet(props, Driver.XAEMULATION, XAEMULATION);
+        addDefaultPropertyIfNotSet(props, Driver.LOGFILE, LOGFILE);
 
         return props;
     }

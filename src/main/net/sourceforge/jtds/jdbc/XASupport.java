@@ -24,9 +24,13 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
 import net.sourceforge.jtds.jdbcx.JtdsXid;
+import net.sourceforge.jtds.util.Logger;
 
 /**
  * This class contains static utility methods used to implement distributed transactions.
+ * For SQL Server 2000 the driver can provide true distributed transactions provided that
+ * the external stored procedure in JtdsXA.dll is installed. For other types of server
+ * only an emulation is available at this stage.
  */
 public class XASupport {
     /**
@@ -40,20 +44,20 @@ public class XASupport {
     //
     // XA Switch constants
     //
-    private static final int XA_OPEN = 1;
-    private static final int XA_CLOSE = 2;
-    private static final int XA_START = 3;
-    private static final int XA_END = 4;
+    private static final int XA_OPEN     = 1;
+    private static final int XA_CLOSE    = 2;
+    private static final int XA_START    = 3;
+    private static final int XA_END      = 4;
     private static final int XA_ROLLBACK = 5;
-    private static final int XA_PREPARE = 6;
-    private static final int XA_COMMIT = 7;
-    private static final int XA_RECOVER = 8;
-    private static final int XA_FORGET = 9;
+    private static final int XA_PREPARE  = 6;
+    private static final int XA_COMMIT   = 7;
+    private static final int XA_RECOVER  = 8;
+    private static final int XA_FORGET   = 9;
     private static final int XA_COMPLETE = 10;
     /**
      * Set this field to 1 to enable XA tracing.
      */
-    private static final int XA_TRACE = 1;
+    private static final int XA_TRACE = 0;
 
     //
     //  ----- XA support routines -----
@@ -66,13 +70,34 @@ public class XASupport {
      */
     public static int xa_open(Connection connection)
             throws SQLException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_open method
+            //
+            Logger.println("xa_open: emulating distributed transaction support");
+            if (con.getXid() != null) {
+                throw new SQLException(
+                            Messages.get("error.xasupport.activetran", "xa_open"),
+                                            "HY000");
+            }
+            con.setXaState(XA_OPEN);
+            return 0;
+        }
+        //
+        // Execute xa_open via MSDTC
         //
         // Check that we are using SQL Server 2000+
         //
-        if (((ConnectionJDBC2) connection).getServerType() != Driver.SQLSERVER ||
-                ((ConnectionJDBC2) connection).getTdsVersion() < Driver.TDS80) {
+        if (((ConnectionJDBC2) connection).getServerType() != Driver.SQLSERVER
+                || ((ConnectionJDBC2) connection).getTdsVersion() < Driver.TDS80) {
             throw new SQLException(Messages.get("error.xasupport.nodist"), "HY000");
         }
+        Logger.println("xa_open: Using SQL2000 MSDTC to support distributed transactions");
+        //
+        // OK Now invoke extended stored procedure to register this connection.
+        //
         int args[] = new int[5];
         args[1] = XA_OPEN;
         args[2] = XA_TRACE;
@@ -80,8 +105,12 @@ public class XASupport {
         args[4] = XAResource.TMNOFLAGS;
         byte[][] id;
         id = ((ConnectionJDBC2) connection).sendXaPacket(args, TM_ID.getBytes());
-        if (args[0] != XAResource.XA_OK || id == null || id[0] == null || id[0].length != 4) {
-            throw new SQLException(Messages.get("error.xasupport.badopen"), "HY000");
+        if (args[0] != XAResource.XA_OK
+                || id == null
+                || id[0] == null
+                || id[0].length != 4) {
+            throw new SQLException(
+                            Messages.get("error.xasupport.badopen"), "HY000");
         }
         return (id[0][0] & 0xFF) |
                 ((id[0][1] & 0xFF) << 8) |
@@ -97,6 +126,34 @@ public class XASupport {
      */
     public static void xa_close(Connection connection, int xaConId)
             throws SQLException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_close method
+            //
+            con.setXaState(0);
+            if (con.getXid() != null) {
+                con.setXid(null);
+                try {
+                    con.rollback();
+                } catch(SQLException e) {
+                    Logger.println("xa_close: rollback() returned " + e);
+                }
+                try {
+                    con.setAutoCommit(true);
+                } catch(SQLException e) {
+                    Logger.println("xa_close: setAutoCommit() returned " + e);
+                }
+                throw new SQLException(
+                        Messages.get("error.xasupport.activetran", "xa_close"),
+                                        "HY000");
+            }
+            return;
+        }
+        //
+        // Execute xa_close via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_CLOSE;
         args[2] = xaConId;
@@ -117,6 +174,41 @@ public class XASupport {
      */
     public static void xa_start(Connection connection, int xaConId, Xid xid, int flags)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_start method
+            //
+            JtdsXid lxid = new JtdsXid(xid);
+            if (con.getXaState() == 0) {
+                // Connection not opened
+                raiseXAException(XAException.XAER_PROTO);
+            }
+            JtdsXid tran = (JtdsXid)con.getXid();
+            if (tran != null) {
+                if (tran.equals(lxid)) {
+                    raiseXAException(XAException.XAER_DUPID);
+                } else {
+                    raiseXAException(XAException.XAER_PROTO);
+                }
+            }
+            if (flags != XAResource.TMNOFLAGS) {
+                // TMJOIN and TMRESUME cannot be supported
+                raiseXAException(XAException.XAER_INVAL);
+            }
+            try {
+                connection.setAutoCommit(false);
+            } catch (SQLException e) {
+                raiseXAException(XAException.XAER_RMERR);
+            }
+            con.setXid(lxid);
+            con.setXaState(XA_START);
+            return;
+        }
+        //
+        // Execute xa_start via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_START;
         args[2] = xaConId;
@@ -148,6 +240,32 @@ public class XASupport {
      */
     public static void xa_end(Connection connection, int xaConId, Xid xid, int flags)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_end method
+            //
+            JtdsXid lxid = new JtdsXid(xid);
+            if (con.getXaState() != XA_START) {
+                // Connection not started
+                raiseXAException(XAException.XAER_PROTO);
+            }
+            JtdsXid tran = (JtdsXid)con.getXid();
+            if (tran == null || !tran.equals(lxid)) {
+                raiseXAException(XAException.XAER_NOTA);
+            }
+            if (flags != XAResource.TMSUCCESS &&
+                flags != XAResource.TMFAIL) {
+                // TMSUSPEND and TMMIGRATE cannot be supported
+                raiseXAException(XAException.XAER_INVAL);
+            }
+            con.setXaState(XA_END);
+            return;
+        }
+        //
+        // Execute xa_end via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_END;
         args[2] = xaConId;
@@ -176,6 +294,30 @@ public class XASupport {
      */
     public static int xa_prepare(Connection connection, int xaConId, Xid xid)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_prepare method
+            // In emulation mode this is essentially a noop as we
+            // are not able to offer true two phase commit.
+            //
+            JtdsXid lxid = new JtdsXid(xid);
+            if (con.getXaState() != XA_END) {
+                // Connection not ended
+                raiseXAException(XAException.XAER_PROTO);
+            }
+            JtdsXid tran = (JtdsXid)con.getXid();
+            if (tran == null || !tran.equals(lxid)) {
+                raiseXAException(XAException.XAER_NOTA);
+            }
+            con.setXaState(XA_PREPARE);
+            Logger.println("xa_prepare: Warning: Two phase commit not available in XA emulation mode.");
+            return XAResource.XA_OK;
+        }
+        //
+        // Execute xa_prepare via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_PREPARE;
         args[2] = xaConId;
@@ -204,6 +346,40 @@ public class XASupport {
      */
     public static void xa_commit(Connection connection, int xaConId, Xid xid, boolean onePhase)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_commit method
+            //
+            JtdsXid lxid = new JtdsXid(xid);
+            if (con.getXaState() != XA_END &&
+                con.getXaState() != XA_PREPARE) {
+                // Connection not ended or prepared
+                raiseXAException(XAException.XAER_PROTO);
+            }
+            JtdsXid tran = (JtdsXid)con.getXid();
+            if (tran == null || !tran.equals(lxid)) {
+                raiseXAException(XAException.XAER_NOTA);
+            }
+            con.setXid(null);
+            try {
+                con.commit();
+            } catch (SQLException e) {
+                raiseXAException(e);
+            } finally {
+                try {
+                    con.setAutoCommit(true);
+                } catch(SQLException e) {
+                    Logger.println("xa_close: setAutoCommit() returned " + e);
+                }
+                con.setXaState(XA_OPEN);
+            }
+            return;
+        }
+        //
+        // Execute xa_commit via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_COMMIT;
         args[2] = xaConId;
@@ -230,6 +406,39 @@ public class XASupport {
      */
     public static void xa_rollback(Connection connection, int xaConId, Xid xid)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_rollback method
+            //
+            JtdsXid lxid = new JtdsXid(xid);
+            if (con.getXaState()!= XA_END && con.getXaState() != XA_PREPARE) {
+                // Connection not ended
+                raiseXAException(XAException.XAER_PROTO);
+            }
+            JtdsXid tran = (JtdsXid)con.getXid();
+            if (tran == null || !tran.equals(lxid)) {
+                raiseXAException(XAException.XAER_NOTA);
+            }
+            con.setXid(null);
+            try {
+                con.rollback();
+            } catch (SQLException e) {
+                raiseXAException(e);
+            } finally {
+                try {
+                    con.setAutoCommit(true);
+                } catch(SQLException e) {
+                    Logger.println("xa_close: setAutoCommit() returned " + e);
+                }
+                con.setXaState(XA_OPEN);
+            }
+            return;
+        }
+        //
+        // Execute xa_rollback via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_ROLLBACK;
         args[2] = xaConId;
@@ -259,6 +468,24 @@ public class XASupport {
      */
     public static Xid[] xa_recover(Connection connection, int xaConId, int flags)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_recover method
+            //
+            // There is no state available all uncommited transactions
+            // will have been rolled back by the server.
+            if (flags != XAResource.TMSTARTRSCAN &&
+                flags != XAResource.TMENDRSCAN &&
+                flags != XAResource.TMNOFLAGS) {
+                raiseXAException(XAException.XAER_INVAL);
+            }
+            return new JtdsXid[0];
+        }
+        //
+        // Execute xa_recover via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_RECOVER;
         args[2] = xaConId;
@@ -302,6 +529,39 @@ public class XASupport {
      */
     public static void xa_forget(Connection connection, int xaConId, Xid xid)
             throws XAException {
+
+        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        if (con.isXaEmulation()) {
+            //
+            // Emulate xa_forget method
+            //
+            JtdsXid lxid = new JtdsXid(xid);
+            JtdsXid tran = (JtdsXid)con.getXid();
+            if (tran == null || !tran.equals(lxid)) {
+                raiseXAException(XAException.XAER_NOTA);
+            }
+            if (con.getXaState() != XA_END && con.getXaState() != XA_PREPARE) {
+               // Connection not ended
+               raiseXAException(XAException.XAER_PROTO);
+            }
+            con.setXid(null);
+            try {
+                 con.rollback();
+            } catch (SQLException e) {
+                raiseXAException(e);
+            } finally {
+                try {
+                    con.setAutoCommit(true);
+                } catch(SQLException e) {
+                    Logger.println("xa_close: setAutoCommit() returned " + e);
+                }
+                con.setXaState(XA_OPEN);
+            }
+            return;
+        }
+        //
+        // Execute xa_forget via MSDTC
+        //
         int args[] = new int[5];
         args[1] = XA_FORGET;
         args[2] = xaConId;
@@ -329,6 +589,7 @@ public class XASupport {
             throws XAException {
         XAException e = new XAException(sqle.getMessage());
         e.errorCode = XAException.XAER_RMFAIL;
+        Logger.println("XAException: " + e.getMessage());
         throw e;
     }
 
@@ -415,6 +676,7 @@ public class XASupport {
         }
         XAException e = new XAException(Messages.get("error.xaexception." + err));
         e.errorCode = errorCode;
+        Logger.println("XAException: " + e.getMessage());
         throw e;
     }
 

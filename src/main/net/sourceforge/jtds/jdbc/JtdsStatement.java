@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.3 2004-07-02 00:36:55 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -243,7 +243,7 @@ public class JtdsStatement implements java.sql.Statement {
             || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
             try {
                 if (connection.getServerType() == TdsCore.SQLSERVER) {
-                    JtdsResultSet rs = (JtdsResultSet)
+                    JtdsResultSet rs =
                         new MSCursorResultSet(this,
                                               sql,
                                               spName,
@@ -314,7 +314,7 @@ public class JtdsStatement implements java.sql.Statement {
             && !returnKeys) {
             try {
                  if (connection.getServerType() == TdsCore.SQLSERVER) {
-                     JtdsResultSet rs = (JtdsResultSet)
+                     JtdsResultSet rs =
                          new MSCursorResultSet(this,
                                                sql,
                                                spName,

@@ -28,7 +28,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.10 2004-07-01 21:14:30 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.11 2004-07-02 00:36:55 bheineman Exp $
  */
 public class BlobImpl implements Blob {
 	private static final int MAXIMUM_SIZE = 32768;
@@ -345,7 +345,7 @@ public class BlobImpl implements Blob {
                             if (curPos + 1 > _blob.length) {
                                 byte[] buffer = new byte[curPos + 1];
 
-                                System.arraycopy(_blob, 0, buffer, 0, buffer.length);
+                                System.arraycopy(_blob, 0, buffer, 0, _blob.length);
                                 _blob = buffer;
                             }
 

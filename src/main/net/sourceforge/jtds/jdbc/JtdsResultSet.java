@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.4 2004-07-02 00:36:55 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -644,8 +644,8 @@ public class JtdsResultSet implements ResultSet {
 
     public byte[] getBytes(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
-        String charSet = (statement != null)?
-                ((ConnectionJDBC2) statement.getConnection()).getCharSet(): null;
+        String charSet = (statement != null) ?
+                ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
         return (byte[]) Support.convert(data.getValue(), java.sql.Types.BINARY, charSet);
     }
 
@@ -1019,13 +1019,9 @@ public class JtdsResultSet implements ResultSet {
         }
 
         // Build in memory BLOB
-        byte[] value = getBytes(columnIndex);
+        ColData data = getColumn(columnIndex);
 
-        if (value == null) {
-            return null;
-        }
-
-        return new BlobImpl(value);
+        return (Blob) Support.convert(data.getValue(), java.sql.Types.BLOB, null);
     }
 
     public void updateBlob(int columnIndex, Blob x) throws SQLException {
@@ -1052,13 +1048,9 @@ public class JtdsResultSet implements ResultSet {
         }
 
         // Fall back on an in memory CLOB
-        String value = getString(columnIndex);
+        ColData data = getColumn(columnIndex);
 
-        if (value == null) {
-            return null;
-        }
-
-        return new ClobImpl(value);
+        return (Clob) Support.convert(data.getValue(), java.sql.Types.CLOB, null);
     }
 
     public void updateClob(int columnIndex, Clob x) throws SQLException {
@@ -1071,6 +1063,7 @@ public class JtdsResultSet implements ResultSet {
 
     public Date getDate(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
+        
         return (java.sql.Date)Support.convert(data.getValue(), java.sql.Types.DATE, null);
     }
 

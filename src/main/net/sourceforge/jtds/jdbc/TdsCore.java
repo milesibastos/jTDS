@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.4 2004-07-02 00:36:55 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -75,62 +75,63 @@ public class TdsCore {
         private ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
         private ColData[] dynamParamData;
+        
         /**
          * Retrieve the update count status.
+         * 
          * @return <code>boolean</code> true if the update count is valid.
          */
-        boolean isUpdateCount()
-        {
+        boolean isUpdateCount() {
             return isEndToken() && (status & DONE_ROW_COUNT) != 0;
         }
 
         /**
          * Retrieve the DONE token status.
+         * 
          * @return <code>boolean</code> true if the current token is a DONE packet.
          */
-        boolean isEndToken()
-        {
-            return token == TDS_DONE_TOKEN ||
-                                token == TDS_DONEINPROC_TOKEN ||
-                                        token == TDS_DONEPROC_TOKEN;
+        boolean isEndToken() {
+            return token == TDS_DONE_TOKEN
+                   || token == TDS_DONEINPROC_TOKEN
+                   || token == TDS_DONEPROC_TOKEN;
         }
 
         /**
          * Retrieve the NTLM challenge status.
+         * 
          * @return <code>boolean</code> true if the current token is an NTLM challenge.
          */
-        boolean isAuthToken()
-        {
+        boolean isAuthToken() {
             return token == TDS_AUTH_TOKEN;
         }
 
         /**
          * Retrieve the results pending status.
+         * 
          * @return <code>boolean</code> true if more results in input.
          */
-        boolean resultsPending()
-        {
+        boolean resultsPending() {
             return !isEndToken() || ((status & DONE_MORE_RESULTS) != 0);
         }
 
         /**
          * Retrieve the result set status.
+         * 
          * @return <code>boolean</code> true if the current token is a result set.
          */
-        boolean isResultSet()
-        {
-            return token == TDS_COLFMT_TOKEN  ||
-                   token == TDS7_RESULT_TOKEN ||
-                   token == TDS_RESULT_TOKEN  ||
-                   token == TDS_COLINFO_TOKEN;
+        boolean isResultSet() {
+            return token == TDS_COLFMT_TOKEN
+                   || token == TDS7_RESULT_TOKEN
+                   || token == TDS_RESULT_TOKEN
+                   || token == TDS_COLINFO_TOKEN;
         }
 
         /**
          * Retrieve the row data status.
+         * 
          * @return <code>boolean</code> true if the current token is a result row.
          */
-        public boolean isRowdata()
-        {
+        public boolean isRowdata() {
             return token == TDS_ROW_TOKEN;
         }
 
@@ -140,198 +141,205 @@ public class TdsCore {
     // Package private constants
     //
     /** TDS 4.2 protocol. */
-    static final int  TDS42 = 1;
+    static final int TDS42 = 1;
     /** TDS 5.0 protocol. */
-    static final int  TDS50 = 2;
+    static final int TDS50 = 2;
     /** TDS 7.0 protocol. */
-    static final int  TDS70 = 3;
+    static final int TDS70 = 3;
     /** TDS 8.0 protocol. */
-    static final int  TDS80 = 4;
+    static final int TDS80 = 4;
     /** Microsoft SQL Server. */
-    static final int  SQLSERVER = 1;
+    static final int SQLSERVER = 1;
     /** Sybase ASE. */
-    static final int  SYBASE = 2;
+    static final int SYBASE = 2;
     /** Default Sybase port. */
-    static final int  DEFAULT_SYBASE_PORT = 7100;
+    static final int DEFAULT_SYBASE_PORT = 7100;
     /** Default Microosoft port. */
-    static final int  DEFAULT_SQLSERVER_PORT = 1433;
+    static final int DEFAULT_SQLSERVER_PORT = 1433;
     /** Minimum network packet size. */
-    static final int  MIN_PKT_SIZE    = 512;
+    static final int MIN_PKT_SIZE = 512;
     /** The size of the packet header. */
-    static final int  PKT_HDR_LEN     = 8;
+    static final int PKT_HDR_LEN = 8;
     /** TDS 4.2 or 7.0 Query packet. */
-    static final byte QUERY_PKT       = 1;
+    static final byte QUERY_PKT = 1;
     /** TDS 4.2 or 5.0 Login packet. */
-    static final byte LOGIN_PKT       = 2;
+    static final byte LOGIN_PKT = 2;
     /** TDS Remote Procedure Call. */
-    static final byte RPC_PKT         = 3;
+    static final byte RPC_PKT = 3;
     /** TDS Reply packet. */
-    static final byte REPLY_PKT       = 4;
+    static final byte REPLY_PKT = 4;
     /** TDS Cancel packet. */
-    static final byte CANCEL_PKT      = 6;
+    static final byte CANCEL_PKT = 6;
     /** TDS 5.0 Query packet. */
-    static final byte SYBQUERY_PKT    = 15;
+    static final byte SYBQUERY_PKT = 15;
     /** TDS 7.0 Login packet. */
-    static final byte MSLOGIN_PKT     = 16;
+    static final byte MSLOGIN_PKT = 16;
     /** TDS 7.0 NTLM Authentication packet. */
-    static final byte NTLMAUTH_PKT    = 17;
+    static final byte NTLMAUTH_PKT = 17;
 
     //
     // Sub packet types
     //
     /** TDS 5.0 Parameter format token. */
-    private static final byte TDS5_PARAMFMT2_TOKEN  = (byte)32;   // 0x20
+    private static final byte TDS5_PARAMFMT2_TOKEN  = (byte) 32;   // 0x20
     /** TDS 5.0 Language token. */
-    private static final byte TDS_LANG_TOKEN        = (byte)33;   // 0x21
+    private static final byte TDS_LANG_TOKEN        = (byte) 33;   // 0x21
     /** TDS 5.0 Close token. */
-    private static final byte TDS_CLOSE_TOKEN       = (byte)113;  // 0x71
+    private static final byte TDS_CLOSE_TOKEN       = (byte) 113;  // 0x71
     /** TDS Procedure call return status token. */
-    private static final byte TDS_RETURNSTATUS_TOKEN= (byte)121;  // 0x79
+    private static final byte TDS_RETURNSTATUS_TOKEN= (byte) 121;  // 0x79
     /** TDS Procedure ID token. */
-    private static final byte TDS_PROCID            = (byte)124;  // 0x7C
+    private static final byte TDS_PROCID            = (byte) 124;  // 0x7C
     /** TDS 7.0 Result set column meta data token. */
-    private static final byte TDS7_RESULT_TOKEN     = (byte)129;  // 0x81
+    private static final byte TDS7_RESULT_TOKEN     = (byte) 129;  // 0x81
     /** TDS 7.0 Computed Result set column meta data token. */
-    private static final byte TDS7_COMP_RESULT_TOKEN= (byte)136;  // 0x88
+    private static final byte TDS7_COMP_RESULT_TOKEN= (byte) 136;  // 0x88
     /** TDS 4.2 Column names token. */
-    private static final byte TDS_COLNAME_TOKEN     = (byte)160;  // 0xA0
+    private static final byte TDS_COLNAME_TOKEN     = (byte) 160;  // 0xA0
     /** TDS 4.2 Column meta data token. */
-    private static final byte TDS_COLFMT_TOKEN      = (byte)161;  // 0xA1
+    private static final byte TDS_COLFMT_TOKEN      = (byte) 161;  // 0xA1
     /** TDS Table name token. */
-    private static final byte TDS_TABNAME_TOKEN     = (byte)164;  // 0xA4
+    private static final byte TDS_TABNAME_TOKEN     = (byte) 164;  // 0xA4
     /** TDS Cursor results column infomation token. */
-    private static final byte TDS_COLINFO_TOKEN     = (byte)165;  // 0xA5
+    private static final byte TDS_COLINFO_TOKEN     = (byte) 165;  // 0xA5
     /** TDS Optional command token. */
-    private static final byte TDS_OPTIONCMD_TOKEN   = (byte)166;  // 0xA6
+    private static final byte TDS_OPTIONCMD_TOKEN   = (byte) 166;  // 0xA6
     /** TDS Computed result set names token. */
-    private static final byte TDS_COMP_NAMES_TOKEN  = (byte)167;  // 0xA7
+    private static final byte TDS_COMP_NAMES_TOKEN  = (byte) 167;  // 0xA7
     /** TDS Computed result set token. */
-    private static final byte TDS_COMP_RESULT_TOKEN = (byte)168;  // 0xA8
+    private static final byte TDS_COMP_RESULT_TOKEN = (byte) 168;  // 0xA8
     /** TDS Order by columns token. */
-    private static final byte TDS_ORDER_TOKEN       = (byte)169;  // 0xA9
+    private static final byte TDS_ORDER_TOKEN       = (byte) 169;  // 0xA9
     /** TDS error result token. */
-    private static final byte TDS_ERROR_TOKEN       = (byte)170;  // 0xAA
+    private static final byte TDS_ERROR_TOKEN       = (byte) 170;  // 0xAA
     /** TDS Information message token. */
-    private static final byte TDS_INFO_TOKEN        = (byte)171;  // 0xAB
+    private static final byte TDS_INFO_TOKEN        = (byte) 171;  // 0xAB
     /** TDS Output parameter value token. */
-    private static final byte TDS_PARAM_TOKEN       = (byte)172;  // 0xAC
+    private static final byte TDS_PARAM_TOKEN       = (byte) 172;  // 0xAC
     /** TDS Login acknowledgement token. */
-    private static final byte TDS_LOGINACK_TOKEN    = (byte)173;  // 0xAD
+    private static final byte TDS_LOGINACK_TOKEN    = (byte) 173;  // 0xAD
     /** TDS control token. */
-    private static final byte TDS_CONTROL_TOKEN     = (byte)174;  // 0xAE
+    private static final byte TDS_CONTROL_TOKEN     = (byte) 174;  // 0xAE
     /** TDS Result set data row token. */
-    private static final byte TDS_ROW_TOKEN         = (byte)209;  // 0xD1
+    private static final byte TDS_ROW_TOKEN         = (byte) 209;  // 0xD1
     /** TDS Computed result set data row token. */
-    private static final byte TDS_ALTROW            = (byte)211;  // 0xD3
+    private static final byte TDS_ALTROW            = (byte) 211;  // 0xD3
     /** TDS 5.0 parameter value token. */
-    private static final byte TDS5_PARAMS_TOKEN     = (byte)215;  // 0xD7
+    private static final byte TDS5_PARAMS_TOKEN     = (byte) 215;  // 0xD7
     /** TDS 5.0 capabilities token. */
-    private static final byte TDS_CAP_TOKEN         = (byte)226;  // 0xE2
+    private static final byte TDS_CAP_TOKEN         = (byte) 226;  // 0xE2
     /** TDS environment change token. */
-    private static final byte TDS_ENVCHANGE_TOKEN   = (byte)227;  // 0xE3
+    private static final byte TDS_ENVCHANGE_TOKEN   = (byte) 227;  // 0xE3
     /** TDS 5.0 message token. */
-    private static final byte TDS_MSG50_TOKEN       = (byte)229;  // 0xE5
+    private static final byte TDS_MSG50_TOKEN       = (byte) 229;  // 0xE5
     /** TDS 5.0 RPC token. */
-    private static final byte TDS_DBRPC_TOKEN       = (byte)230;  // 0xE6
+    private static final byte TDS_DBRPC_TOKEN       = (byte) 230;  // 0xE6
     /** TDS 5.0 Dynamic SQL token. */
-    private static final byte TDS5_DYNAMIC_TOKEN    = (byte)231;  // 0xE7
+    private static final byte TDS5_DYNAMIC_TOKEN    = (byte) 231;  // 0xE7
     /** TDS 5.0 parameter descriptor token. */
-    private static final byte TDS5_PARAMFMT_TOKEN   = (byte)236;  // 0xEC
+    private static final byte TDS5_PARAMFMT_TOKEN   = (byte) 236;  // 0xEC
     /** TDS 7.0 NTLM authentication challenge token. */
-    private static final byte TDS_AUTH_TOKEN        = (byte)237;  // 0xED
+    private static final byte TDS_AUTH_TOKEN        = (byte) 237;  // 0xED
     /** TDS 5.0 Result set column meta data token. */
-    private static final byte TDS_RESULT_TOKEN      = (byte)238;  // 0xEE
+    private static final byte TDS_RESULT_TOKEN      = (byte) 238;  // 0xEE
     /** TDS done token. */
-    private static final byte TDS_DONE_TOKEN        = (byte)253;  // 0xFD DONE
+    private static final byte TDS_DONE_TOKEN        = (byte) 253;  // 0xFD DONE
     /** TDS done procedure token. */
-    private static final byte TDS_DONEPROC_TOKEN    = (byte)254;  // 0xFE DONEPROC
+    private static final byte TDS_DONEPROC_TOKEN    = (byte) 254;  // 0xFE DONEPROC
     /** TDS done in procedure token. */
-    private static final byte TDS_DONEINPROC_TOKEN  = (byte)255;  // 0xFF DONEINPROC
+    private static final byte TDS_DONEINPROC_TOKEN  = (byte) 255;  // 0xFF DONEINPROC
 
     //
     // Environment change payload codes
     //
     /** Environment change: database changed. */
-    private static final byte TDS_ENV_DATABASE      = (byte)1;
+    private static final byte TDS_ENV_DATABASE      = (byte) 1;
     /** Environment change: language changed. */
-    private static final byte TDS_ENV_LANG          = (byte)2;
+    private static final byte TDS_ENV_LANG          = (byte) 2;
     /** Environment change: charset changed. */
-    private static final byte TDS_ENV_CHARSET       = (byte)3;
+    private static final byte TDS_ENV_CHARSET       = (byte) 3;
     /** Environment change: network packet size changed. */
-    private static final byte TDS_ENV_PACKSIZE      = (byte)4;
+    private static final byte TDS_ENV_PACKSIZE      = (byte) 4;
     /** Environment change: locale changed. */
-    private static final byte TDS_ENV_LCID          = (byte)5;
+    private static final byte TDS_ENV_LCID          = (byte) 5;
     /** Environment change: TDS 8 collation changed. */
-    private static final byte TDS_ENV_SQLCOLLATION  = (byte)7; // TDS8 Collation
+    private static final byte TDS_ENV_SQLCOLLATION  = (byte) 7; // TDS8 Collation
 
+    //
+    // Static variables used only for performance
+    //
+    /** Used to optimize the {@link #getParameters()} call */
+    private static final ParamInfo[] EMPTY_PARAMETER_INFO = new ParamInfo[0];
+    
     //
     // Error status bytes
     //
     /** Done: more results are expected. */
-    private static final byte DONE_MORE_RESULTS     = (byte)0x01;
+    private static final byte DONE_MORE_RESULTS     = (byte) 0x01;
     /** Done: command caused an error. */
-    private static final byte DONE_ERROR            = (byte)0x02;
+    private static final byte DONE_ERROR            = (byte) 0x02;
     /** Done: There is a valid row count. */
-    private static final byte DONE_ROW_COUNT        = (byte)0x10;
+    private static final byte DONE_ROW_COUNT        = (byte) 0x10;
     /** Done: Cancel acknowledgement. */
-    private static final byte DONE_CANCEL           = (byte)0x20;
+    private static final byte DONE_CANCEL           = (byte) 0x20;
+    
     //
     // Instance variables
     //
     /** The Connection object that created this object. */
     private ConnectionJDBC2 connection;
     /** The TDS version being supported by this connection. */
-    private int             tdsVersion;
+    private int tdsVersion;
     /** The make of SQL Server (Sybase/Microsoft). */
-    private int             serverType;
+    private int serverType;
     /** The Shared network socket object. */
-    private SharedSocket    socket;
+    private SharedSocket socket;
     /** The output server request stream. */
-    private RequestStream   out;
+    private RequestStream out;
     /** The input server response stream. */
-    private ResponseStream  in;
+    private ResponseStream in;
     /** True if the server response is fully read. */
-    private boolean         endOfResponse = true;
+    private boolean endOfResponse = true;
     /** True if the current result set is at end of file. */
-    private boolean         endOfResults  = true;
+    private boolean endOfResults  = true;
     /** The array of column meta data objects for this result set. */
-    private ColInfo         columns[];
+    private ColInfo[] columns;
     /** The array of column data objects in the current row. */
-    private ColData         rowData[];
+    private ColData[] rowData;
     /** The array of table names associated with this result. */
-    private String          tables[];
+    private String[] tables;
     /** The descriptor object for the current TDS token. */
-    private TdsToken        currentToken = new TdsToken();
+    private TdsToken currentToken = new TdsToken();
     /** The stored procedure return status. */
-    private Integer         returnStatus;
+    private Integer returnStatus;
     /** The return parameter meta data object for the current procedure call. */
-    private ParamInfo       returnParam;
+    private ParamInfo returnParam;
     /** The array of parameter meta data objects for the current procedure call. */
-    private ParamInfo[]     parameters;
+    private ParamInfo[] parameters;
     /** The index of the next output parameter to populate. */
-    private int             nextParam = -1;
+    private int nextParam = -1;
     /** The head of the diagnostic messages chain. */
-    private SQLDiagnostic   messages;
+    private SQLDiagnostic messages;
     /** Indicates that this object is closed. */
-    private boolean         isClosed = false;
+    private boolean isClosed = false;
     /** Indicates reading results from READTEXT command. */
-    private boolean         readTextMode = false;
+    private boolean readTextMode = false;
 
     /**
      * Construct a TdsCore object.
+     * 
      * @param connection The connection which owns this object.
      * @param messages The SQLDiagnostic messages chain.
      */
-    TdsCore(ConnectionJDBC2 connection, SQLDiagnostic messages)
-    {
+    TdsCore(ConnectionJDBC2 connection, SQLDiagnostic messages) {
         this.connection = connection;
-        this.socket     = connection.getSocket();
-        this.messages   = messages;
-        tdsVersion      = connection.getTdsVersion();
-        serverType      = connection.getServerType();
-        tdsVersion      = socket.getTdsVersion();
-        out             = socket.getRequestStream();
-        in              = socket.getResponseStream(out);
+        this.socket = connection.getSocket();
+        this.messages = messages;
+        tdsVersion = connection.getTdsVersion();
+        serverType = connection.getServerType();
+        tdsVersion = socket.getTdsVersion();
+        out = socket.getRequestStream();
+        in = socket.getResponseStream(out);
         out.setBufferSize(connection.getNetPacketSize());
         out.setMaxPrecision(connection.getMaxPrecision());
     }
@@ -341,65 +349,67 @@ public class TdsCore {
      *
      * @throws SQLException
      */
-    private void checkOpen()
-        throws SQLException
-    {
-        if (isClosed)
+    private void checkOpen() throws SQLException {
+        if (isClosed) {
             throw new SQLException(
                 Support.getMessage("error.generic.closed", "Connection"),
                     "HY010");
+        }
     }
 
     /**
      * Retrieve the TDS protocol version.
+     * 
      * @return The protocol version as an <code>int</code>.
      */
-    int getTdsVersion()
-    {
+    int getTdsVersion() {
        return tdsVersion;
     }
 
     /**
      * Retrieve the current result set column descriptors.
+     * 
      * @return The column descriptors as a <code>ColInfo[]</code>.
      */
-    ColInfo[] getColumns()
-    {
+    ColInfo[] getColumns() {
         return columns;
     }
 
     /**
      * Retrieve the parameter meta data from a Sybase prepare.
+     * 
      * @return The parameter descriptors as a <code>ParamInfo[]</code>.
      */
-    ParamInfo[] getParameters()
-    {
+    ParamInfo[] getParameters() {
         if (currentToken.dynamParamInfo != null) {
             ParamInfo[] params = new ParamInfo[currentToken.dynamParamInfo.length];
+            
             for (int i = 0; i < params.length; i++) {
                 ColInfo ci = currentToken.dynamParamInfo[i];
                 ParamInfo pi = new ParamInfo();
-                pi.tdsType   = ci.tdsType;
-                pi.scale     = ci.scale;
+                
+                pi.tdsType = ci.tdsType;
+                pi.scale = ci.scale;
                 pi.precision = ci.precision;
-                pi.name      = ci.name;
-                pi.isOutput  = false;
-                pi.jdbcType  = ci.jdbcType;
-                pi.sqlType   = ci.sqlType;
-                params[i]    = pi;
+                pi.name = ci.name;
+                pi.isOutput = false;
+                pi.jdbcType = ci.jdbcType;
+                pi.sqlType = ci.sqlType;
+                params[i] = pi;
             }
+            
             return params;
-        } else {
-            return new ParamInfo[0];
         }
+        
+        return EMPTY_PARAMETER_INFO;
     }
 
     /**
      * Retrieve the current result set data items.
+     * 
      * @return The row data as a <code>ColData[]</code>.
      */
-    ColData[] getRowData()
-    {
+    ColData[] getRowData() {
         return rowData;
     }
 
@@ -429,16 +439,14 @@ public class TdsCore {
                final String libName,
                final String language,
                final String macAddress,
-               final int    packetSize)
-        throws SQLException
-    {
+               final int packetSize)
+        throws SQLException {
         try {
             if (tdsVersion >= TDS70) {
                 sendMSLoginPkt(serverName, database, user, password,
                                 domain, appName, libName, language,
                                 macAddress, packetSize);
-            } else
-            if (tdsVersion == TDS50) {
+            } else if (tdsVersion == TDS50) {
                 send50LoginPkt(serverName, user, password,
                                 charset, appName, libName,
                                 language, packetSize);
@@ -447,13 +455,17 @@ public class TdsCore {
                                 charset, appName, libName,
                                 language, packetSize);
             }
+            
             nextToken();
+            
             while (!endOfResponse) {
                 if (currentToken.isAuthToken()) {
                     sendNtlmChallengeResponse(currentToken.nonce, user, password, domain);
                 }
+                
                 nextToken();
             }
+            
             messages.checkErrors();
         } catch (IOException ioe) {
             throw Support.linkException(
@@ -466,37 +478,37 @@ public class TdsCore {
 
     /**
      * Get the next result set or update countf rom the TDS stream.
+     * 
      * @return <code>boolean</code> if the next item is a result set.
      * @throws SQLException
      */
-    boolean getMoreResults()
-        throws SQLException
-    {
+    boolean getMoreResults() throws SQLException {
         nextToken();
         messages.checkErrors();
-        while (!endOfResponse &&
-                !currentToken.isUpdateCount() &&
-                    !currentToken.isResultSet())
-        {
+        
+        while (!endOfResponse
+               && !currentToken.isUpdateCount()
+               && !currentToken.isResultSet()) {
             nextToken();
             messages.checkErrors();
         }
+        
         //
         // Cursor opens are followed by TDS_TAB_INFO and TDS_COL_INFO
         // Process these now so that the column descriptors are updated.
         //
         if (currentToken.isResultSet()) {
             try {
-                byte x = (byte)in.peek();
-                while (x == TDS_TABNAME_TOKEN ||
-                       x == TDS_COLINFO_TOKEN)
-                {
+                byte x = (byte) in.peek();
+                
+                while (x == TDS_TABNAME_TOKEN || x == TDS_COLINFO_TOKEN) {
                     nextToken();
                     x = (byte)in.peek();
                 }
             } catch (IOException e) {
                 isClosed = true;
                 connection.setClosed();
+                
                 throw Support.linkException(
                     new SQLException(
                            Support.getMessage(
@@ -504,97 +516,106 @@ public class TdsCore {
                                     "08S01"), e);
             }
         }
+        
         messages.checkErrors();
+        
         return currentToken.isResultSet();
     }
 
     /**
      * Retrieve the status of the next result item.
+     * 
      * @return <code>boolean</code> true if the next item is a result set.
      */
-    boolean isResultSet()
-    {
+    boolean isResultSet() {
         return currentToken.isResultSet();
     }
 
     /**
      * Retrieve the status of the next result item.
+     * 
      * @return <code>boolean</code> true if the next item is an update count.
      */
-    boolean isUpdateCount()
-    {
+    boolean isUpdateCount() {
         return currentToken.isUpdateCount();
     }
 
     /**
      * Retrieve the update count from the current TDS token.
+     * 
      * @return The update count as an <code>int</code>.
      */
-    int getUpdateCount()
-    {
-        if (currentToken.isEndToken())
+    int getUpdateCount() {
+        if (currentToken.isEndToken()) {
             return currentToken.updateCount;
-        else
-            return -1;
+        }
+        
+        return -1;
     }
 
     /**
      * Retrieve the status of the response stream.
+     * 
      * @return <code>boolean</code> true if the response has been entirely consumed.
      */
-    boolean isEndOfResponse()
-    {
+    boolean isEndOfResponse() {
         return endOfResponse;
     }
 
     /**
      * Empty the server response queue.
+     * 
      * @throws SQLException
      */
-    void clearResponseQueue()
-        throws SQLException
-    {
-        while (!endOfResponse)
+    void clearResponseQueue() throws SQLException {
+        while (!endOfResponse) {
             nextToken();
+        }
     }
 
     /**
      * Retrieve the next data row from the result set.
-     * @param readAhead True to force driver to skip to end of response
-     * when the last row has been read. This ensures all SP output
-     * parameters are processed. Only usable in executeQuery().
-     * @return <code>boolean</code> false if at end of results.
+     * 
+     * @param readAhead <code>true</code> to force driver to skip to end of
+     *        response when the last row has been read. This ensures all SP
+     *        output parameters are processed. Only usable in executeQuery().
+     * @return <code>boolean</code> - <code>false</code> if at end of results.
      */
-    boolean getNextRow(boolean readAhead)
-        throws SQLException
-    {
+    boolean getNextRow(boolean readAhead) throws SQLException {
         if (endOfResponse || endOfResults) {
             return false;
         }
+        
         nextToken();
+        
         // Will either be first or next data row or end.
-        while (!currentToken.isRowdata() && !currentToken.isEndToken() )
-        {
+        while (!currentToken.isRowdata() && !currentToken.isEndToken()) {
             nextToken(); // Could be messages
         }
+        
         boolean isResultSet = currentToken.isRowdata();
 
         if (readAhead && !endOfResponse) {
             // This will ensure that called procedure return parameters
             // and status are read in executeQuery()
             byte x;
+            
             try {
-                x = (byte)in.peek();
+                x = (byte) in.peek();
+                
                 while (x != TDS_ROW_TOKEN) {
                     nextToken();
+                    
                     if (endOfResponse) {
                         break;
                     }
-                    x = (byte)in.peek();
+                    
+                    x = (byte) in.peek();
                 }
             } catch (IOException e) {
                 isClosed = true;
                 connection.setClosed();
+                
                 throw Support.linkException(
                     new SQLException(
                            Support.getMessage(
@@ -602,31 +623,37 @@ public class TdsCore {
                                         "08S01"), e);
             }
         }
+        
         messages.checkErrors();
+        
         return isResultSet;
     }
 
     /**
      * Retrieve the status of result set.
-     * <p>This does a quick read ahead and is needed to support the
-     * isLast() method in the ResultSet.
-     * @return <code>boolean</code> true if there is more data in the result set.
+     * <p>
+     * This does a quick read ahead and is needed to support the isLast()
+     * method in the ResultSet.
+     * 
+     * @return <code>boolean</code> - <code>true</code> if there is more data
+     *          in the result set.
      */
-    boolean isDataInResultSet()
-        throws SQLException
-    {
+    boolean isDataInResultSet() throws SQLException {
         byte x;
+        
         checkOpen();
+        
         try {
-            x = (endOfResponse)? TDS_DONE_TOKEN: (byte)in.peek();
-            while (x != TDS_ROW_TOKEN &&
-                   x != TDS_DONE_TOKEN &&
-                   x != TDS_DONEINPROC_TOKEN &&
-                   x != TDS_DONEPROC_TOKEN)
-            {
+            x = (endOfResponse) ? TDS_DONE_TOKEN : (byte) in.peek();
+            
+            while (x != TDS_ROW_TOKEN
+                   && x != TDS_DONE_TOKEN
+                   && x != TDS_DONEINPROC_TOKEN
+                   && x != TDS_DONEPROC_TOKEN) {
                 nextToken();
-                x = (byte)in.peek();
+                x = (byte) in.peek();
             }
+            
             messages.checkErrors();
         } catch (IOException e) {
             isClosed = true;
@@ -637,26 +664,27 @@ public class TdsCore {
                                 "error.generic.ioerror", e.getMessage()),
                                     "08S01"), e);
         }
+        
         return x == TDS_ROW_TOKEN;
     }
 
     /**
      * Retrieve the return status for the current stored procedure.
+     * 
      * @return The return status as an <code>Integer</code>.
      */
-    Integer getReturnStatus()
-    {
+    Integer getReturnStatus() {
         return this.returnStatus;
     }
 
     /**
      * Inform the server that this connection is closing.
-     * <p> Used by Sybase a no op for Microsoft.
+     * <p>
+     * Used by Sybase a no op for Microsoft.
      *
      * @throws SQLException
      */
-    void closeConnection()
-    {
+    void closeConnection() {
         try {
             if (tdsVersion == TDS50) {
                 out.setPacketType(SYBQUERY_PKT);
@@ -675,12 +703,11 @@ public class TdsCore {
 
     /**
      * Close the TDSCore connection object and associated streams.
+     * 
      * @throws IOException
      * @throws SQLException
      */
-    void close()
-        throws SQLException
-    {
+    void close() throws SQLException {
        if (!isClosed) {
            try {
                clearResponseQueue();
@@ -703,22 +730,22 @@ public class TdsCore {
     /**
      * Send a cancel packet to the server.
      */
-    void cancel()
-    {
+    void cancel() {
         socket.cancel(out.getStreamId());
     }
 
     /**
      * Submit a simple SQL statement to the server and process all output.
+     * 
      * @param sql The statement to execute.
      * @throws SQLException
      */
-    void submitSQL(String sql)
-        throws SQLException
-    {
+    void submitSQL(String sql) throws SQLException {
         checkOpen();
-        if (sql.length() == 0)
+        
+        if (sql.length() == 0) {
             throw new IllegalArgumentException("submitSQL() called with empty SQL String");
+        }
 
         executeSQL(sql, null, null, false, 0, 0);
         clearResponseQueue();
@@ -727,6 +754,7 @@ public class TdsCore {
 
     /**
      * Send an SQL statement with optional parameters to the server.
+     * 
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -741,15 +769,15 @@ public class TdsCore {
                                  boolean noMetaData,
                                  int timeOut,
                                  int maxRows)
-        throws SQLException
-    {
+        throws SQLException {
         checkOpen();
         clearResponseQueue();
         messages.exceptions = null;
         setRowCount(maxRows);
         messages.clearWarnings();
         this.returnStatus = null;
-        this.parameters   = parameters;
+        this.parameters = parameters;
+        
         if (parameters != null && parameters.length > 0 && parameters[0].isRetVal) {
             returnParam = parameters[0];
             returnParam.isSet = false;
@@ -758,6 +786,7 @@ public class TdsCore {
             returnParam = null;
             nextParam = -1;
         }
+        
         if (parameters != null) {
             for (int i = 0; i < parameters.length; i++){
                 if (!parameters[i].isSet && !parameters[i].isOutput){
@@ -765,9 +794,11 @@ public class TdsCore {
                                                               Integer.toString(i+1)),
                                            "07000");
                 }
+                
                 TdsData.getNativeType(connection, parameters[i]);
             }
         }
+        
         try {
             switch (tdsVersion) {
                 case TDS42:
@@ -799,6 +830,7 @@ public class TdsCore {
 
     /**
      * Create a temporary stored procedure on a Microsoft server.
+     * 
      * @param sql The SQL statement to prepare.
      * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
@@ -806,23 +838,27 @@ public class TdsCore {
      * @throws SQLException
      */
     boolean microsoftPrepare(String sql, String procName, ParamInfo[] params)
-        throws SQLException
-    {
+        throws SQLException {
         StringBuffer spSql = new StringBuffer(sql.length()+64);
         spSql.append("create proc ");
         spSql.append(procName);
         spSql.append(' ');
+        
         for (int i = 0; i < params.length; i++) {
             spSql.append("@P");
             spSql.append(i);
             spSql.append(' ');
             spSql.append(params[i].sqlType);
-            if (i+1 < params.length)
-            spSql.append(',');
+            
+            if (i + 1 < params.length) {
+                spSql.append(',');
+            }
         }
+        
         // continue building proc
         spSql.append(" as ");
         spSql.append(Support.substituteParamMarkers(sql, params));
+        
         try {
             submitSQL(spSql.toString());
         } catch (SQLException e) {
@@ -830,15 +866,18 @@ public class TdsCore {
                 // Serious error rethrow
                 throw e;
             }
+            
             // This exception probably caused by failure to prepare
             // Return false;
             return false;
         }
+        
         return true;
     }
 
     /**
      * Create a light weight stored procedure on a Sybase server.
+     * 
      * @param sql The SQL statement to prepare.
      * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
@@ -846,34 +885,37 @@ public class TdsCore {
      * @throws SQLException
      */
     boolean sybasePrepare(String sql, String procName, ParamInfo[] params)
-        throws SQLException
-    {
+        throws SQLException {
         if (sql == null || sql.length() == 0) {
             throw new IllegalArgumentException(
                     "sql parameter must be at least 1 character long.");
         }
+        
         if (procName == null || procName.length() != 11) {
             throw new IllegalArgumentException(
                     "procName parameter must be 11 characters long.");
         }
+        
         // Check no text/image parameters
         for (int i = 0; i < params.length; i++) {
-            if (params[i].sqlType.equals("text") ||
-                params[i].sqlType.equals("image"))
-            {
+            if (params[i].sqlType.equals("text")
+                || params[i].sqlType.equals("image")) {
                 return false; // Sadly no way
             }
         }
+        
         try {
             out.setPacketType(SYBQUERY_PKT);
             out.write((byte)TDS5_DYNAMIC_TOKEN);
+            
             byte buf[] = Support.encodeString(connection.getCharSet(), sql);
-            out.write((short)(buf.length+41));
-            out.write((byte)1);
-            out.write((byte)0);
-            out.write((byte)10);
+            
+            out.write((short) (buf.length + 41));
+            out.write((byte) 1);
+            out.write((byte) 0);
+            out.write((byte) 10);
             out.writeAscii(procName.substring(1));
-            out.write((short)(buf.length+26));
+            out.write((short) (buf.length + 26));
             out.writeAscii("create proc ");
             out.writeAscii(procName.substring(1));
             out.writeAscii(" as ");
@@ -895,10 +937,12 @@ public class TdsCore {
                 // Serious error rethrow
                 throw e;
             }
+            
             // This exception probably caused by failure to prepare
             // Return false;
             return false;
         }
+        
         return true;
     }
 
@@ -964,39 +1008,43 @@ public class TdsCore {
 
     /**
      * Retrieve the length of a text or image column.
+     * 
      * @param tabName The parent table for this column.
      * @param colName The name of the text or image column.
      * @return The length of the column as a <code>int</code>.
      * @throws SQLException
      */
-    int dataLength(String tabName, String colName)
-        throws SQLException
-    {
-        if (colName == null || colName.length() == 0 ||
-            tabName == null || tabName.length() == 0)
-        {
+    int dataLength(String tabName, String colName) throws SQLException {
+        if (colName == null || colName.length() == 0
+            || tabName == null || tabName.length() == 0) {
             throw new SQLException(Support.getMessage("error.tdscore.badtext"), "HY000");
         }
+        
         Object results = null;
         StringBuffer sql = new StringBuffer(128);
+        
         sql.append("select datalength(");
         sql.append(colName);
         sql.append(") from ");
         sql.append(tabName);
         executeSQL(sql.toString(), null, null, false, 0, 0);
+        
         if (getMoreResults()) {
             if (getNextRow(false)) {
                 results = rowData[0].getValue();
             }
         }
+        
         clearResponseQueue();
         messages.checkErrors();
+        
         if (!(results instanceof Number)) {
             throw new SQLException(
-                Support.getMessage("error.tdscore.badlen", tabName+"."+colName),
+                Support.getMessage("error.tdscore.badlen", tabName + "." + colName),
                 "HY000");
         }
-        return ((Number)results).intValue();
+        
+        return ((Number) results).intValue();
     }
 
 // ---------------------- Private Methods from here ---------------------
@@ -1624,11 +1672,10 @@ public class TdsCore {
 
     /**
      * Process procedure ID token (function unknown).
+     * 
      * @throws IOException
      */
-    private void tdsProcIdToken()
-        throws IOException
-    {
+    private void tdsProcIdToken() throws IOException {
         in.skip(8);
     }
 
@@ -1638,9 +1685,7 @@ public class TdsCore {
      * @throws IOException
      * @throws ProtocolException
      */
-    private void tds7ResultToken()
-        throws IOException, ProtocolException
-    {
+    private void tds7ResultToken() throws IOException, ProtocolException {
         int colCnt = in.readShort();
         this.columns = new ColInfo[colCnt];
         this.rowData = new ColData[colCnt];
@@ -1648,21 +1693,27 @@ public class TdsCore {
 
         for (int i = 0; i < colCnt; i++) {
             ColInfo col = new ColInfo();
+            
             col.userType = in.readShort();
+            
             int flags = in.readShort();
-            col.nullable      = ((flags & 0x01) != 0)?
-                                        ResultSetMetaData.columnNullable:
-                                        ResultSetMetaData.columnNoNulls;
+            
+            col.nullable = ((flags & 0x01) != 0) ?
+                                ResultSetMetaData.columnNullable :
+                                ResultSetMetaData.columnNoNulls;
             col.isCaseSensitive = (flags & 0X02) != 0;
-            col.isIdentity      = (flags & 0x10) != 0;
-            col.isWriteable     = (flags & 0x0C) != 0;
+            col.isIdentity = (flags & 0x10) != 0;
+            col.isWriteable = (flags & 0x0C) != 0;
             TdsData.readType(in, col);
+            
             int clen = in.read();
+            
             col.name = in.readString(clen);
             col.label = col.name;
 
             this.columns[i] = col;
         }
+        
         endOfResults = false;
     }
 
@@ -1673,19 +1724,19 @@ public class TdsCore {
      *
      * @throws IOException
      */
-    private void tds4ColNamesToken()
-        throws IOException
-    {
+    private void tds4ColNamesToken() throws IOException {
         ArrayList colList = new ArrayList();
 
         final int pktLen = in.readShort();
 
         int bytesRead = 0;
         int i = 0;
+        
         while (bytesRead < pktLen) {
             ColInfo col = new ColInfo();
             int nameLen = in.read();
             String name = in.readString(nameLen);
+            
             bytesRead = bytesRead + 1 + nameLen;
             i++;
             col.name  = name;
@@ -1693,8 +1744,9 @@ public class TdsCore {
 
             colList.add(col);
         }
-        int  colCnt  = colList.size();
-        this.columns = (ColInfo[])colList.toArray(new ColInfo[colCnt]);
+        
+        int colCnt  = colList.size();
+        this.columns = (ColInfo[]) colList.toArray(new ColInfo[colCnt]);
         this.rowData = new ColData[colCnt];
     }
 
@@ -2017,10 +2069,9 @@ public class TdsCore {
      *
      * @throws IOException
      */
-    private void tdsControlToken()
-        throws IOException
-    {
+    private void tdsControlToken() throws IOException {
         int pktLen = in.readShort();
+        
         in.skip(pktLen);
     }
 
@@ -2030,28 +2081,27 @@ public class TdsCore {
      * @throws IOException
      * @throws ProtocolException
      */
-    private void tdsRowToken()
-        throws IOException, ProtocolException
-    {
+    private void tdsRowToken() throws IOException, ProtocolException {
         for (int i = 0; i < columns.length; i++) {
             rowData[i] =  new ColData(TdsData.readData(in, columns[i], readTextMode), tdsVersion);
         }
+        
         readTextMode = false;
     }
 
     /**
      * Process TDS 5.0 Params Token.
-     * This seems to be data returned in parameter format after
-     * a TDS Dynamic packet or as extended error information.
+     * This seems to be data returned in parameter format after a TDS Dynamic
+     * packet or as extended error information.
+     * 
      * @throws IOException
      */
-    private void tds5ParamsToken()
-        throws IOException, ProtocolException
-    {
+    private void tds5ParamsToken() throws IOException, ProtocolException {
         if (currentToken.dynamParamInfo == null) {
             throw new ProtocolException(
               "TDS 5 Param results token (0xD7) not preceded by param format (0xEC).");
         }
+        
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
                 new ColData(TdsData.readData(in, currentToken.dynamParamInfo[i], false), tdsVersion);

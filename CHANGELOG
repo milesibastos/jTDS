@@ -9,6 +9,7 @@ Changes from jTDS 0.8
    and the Blob/Clob data will remain in memory.  Also, the READTEXT mechanism
    will only convert to an in-memory or disk based Blob/Clob if a write attempt
    is made.
+ o Improved Blob and Clob conversions to/from other data types.
 
 06/29/2004 - Brian Heineman
  o Corrected bug with cached statements and savepoints.  If a statement was

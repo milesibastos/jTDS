@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.1 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.2 2004-07-02 00:36:55 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -402,58 +402,50 @@ public class TdsData {
      */
     static Object readData(ResponseStream in, ColInfo ci, boolean readTextMode)
     throws IOException, ProtocolException {
-        Object value = null;
         int len;
-        byte[] bytes;
-
+        
         switch (ci.tdsType) {
             case SYBINTN:
                 switch (in.read()) {
                     case 1:
-                        value = new Byte((byte) in.read());
-                        break;
+                        return new Byte((byte) in.read());
                     case 2:
-                        value = new Short((short) in.readShort());
-                        break;
+                        return new Short((short) in.readShort());
                     case 4:
-                        value = new Integer(in.readInt());
-                        break;
+                        return new Integer(in.readInt());
                     case 8:
-                        value = new Long(in.readLong());
-                        break;
+                        return new Long(in.readLong());
                 }
                 break;
 
             case SYBINT1:
-                value = new Byte((byte) in.read());
-                break;
+                return new Byte((byte) in.read());
 
             case SYBINT2:
-                value = new Short((short) in.readShort());
-                break;
+                return new Short((short) in.readShort());
 
             case SYBINT4:
-                value = new Integer(in.readInt());
-                break;
+                return new Integer(in.readInt());
 
             case SYBINT8:
-                value = new Long(in.readLong());
-                break;
+                return new Long(in.readLong());
 
             case SYBIMAGE:
                 len = in.read();
-
+                
                 if (len > 0) {
                     TextPtr tp = new TextPtr();
 
                     in.read(tp.ptr);
                     in.read(tp.ts);
                     tp.len = in.readInt();
-                    bytes = new byte[tp.len];
+                    byte[] bytes = new byte[tp.len];
                     in.read(bytes);
                     tp.value = bytes;
-                    value = tp;
+                    
+                    return tp;
                 }
+                
                 break;
 
             case SYBTEXT:
@@ -467,15 +459,16 @@ public class TdsData {
                     tp.len = in.readInt();
 
                     if (readTextMode) {
-                        bytes = new byte[tp.len];
+                        byte[] bytes = new byte[tp.len];
                         in.read(bytes);
                         tp.value = bytes;
                     } else {
                         tp.value = in.readAsciiString(tp.len);
                     }
 
-                    value = tp;
+                    return tp;
                 }
+                
                 break;
 
             case SYBNTEXT:
@@ -503,7 +496,7 @@ public class TdsData {
                         in.read(); // Discard!
                     }
 
-                    value = tp;
+                    return tp;
                 }
                 break;
 
@@ -512,7 +505,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    value = in.readAsciiString(len);
+                    return in.readAsciiString(len);
                 }
 
                 break;
@@ -521,7 +514,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    value = in.readString(len / 2);
+                    return in.readString(len / 2);
                 }
 
                 break;
@@ -531,7 +524,7 @@ public class TdsData {
                 len = in.readShort();
 
                 if (len != -1) {
-                    value = in.readAsciiString(len);
+                    return in.readAsciiString(len);
                 }
 
                 break;
@@ -541,7 +534,7 @@ public class TdsData {
                 len = in.readShort();
 
                 if (len != -1) {
-                    value = in.readString(len / 2);
+                    return in.readString(len / 2);
                 }
 
                 break;
@@ -551,9 +544,11 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    bytes = new byte[len];
+                    byte[] bytes = new byte[len];
+                    
                     in.read(bytes);
-                    value = bytes;
+                    
+                    return bytes;
                 }
 
                 break;
@@ -563,9 +558,11 @@ public class TdsData {
                 len = in.readShort();
 
                 if (len != -1) {
-                    bytes = new byte[len];
+                    byte[] bytes = new byte[len];
+                    
                     in.read(bytes);
-                    value = bytes;
+                    
+                    return bytes;
                 }
 
                 break;
@@ -573,43 +570,38 @@ public class TdsData {
             case SYBMONEY4:
             case SYBMONEY:
             case SYBMONEYN:
-                value = getMoneyValue(in, ci.tdsType);
-                break;
+                return getMoneyValue(in, ci.tdsType);
 
             case SYBDATETIME4:
             case SYBDATETIMN:
             case SYBDATETIME:
-                value = getDatetimeValue(in, ci.tdsType);
-                break;
+                return getDatetimeValue(in, ci.tdsType);
 
             case SYBBIT:
-                value = (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
-                break;
+                return (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
 
             case SYBBITN:
                 len = in.read();
 
                 if (len > 0) {
-                    value = (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
+                    return (in.read() != 0) ? Boolean.TRUE : Boolean.FALSE;
                 }
 
                 break;
 
             case SYBREAL:
-                value = new Float(Float.intBitsToFloat(in.readInt()));
-                break;
+                return new Float(Float.intBitsToFloat(in.readInt()));
 
             case SYBFLT8:
-                value = new Double(Double.longBitsToDouble(in.readLong()));
-                break;
+                return new Double(Double.longBitsToDouble(in.readLong()));
 
             case SYBFLTN:
                 len = in.read();
 
                 if (len == 4) {
-                    value = new Float(Float.intBitsToFloat(in.readInt()));
+                    return new Float(Float.intBitsToFloat(in.readInt()));
                 } else if (len == 8) {
-                    value = new Double(Double.longBitsToDouble(in.readLong()));
+                    return new Double(Double.longBitsToDouble(in.readLong()));
                 }
 
                 break;
@@ -618,9 +610,11 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    bytes = new byte[len];
+                    byte[] bytes = new byte[len];
+                    
                     in.read(bytes);
-                    value = new UniqueIdentifier(bytes);
+                    
+                    return new UniqueIdentifier(bytes);
                 }
 
                 break;
@@ -633,7 +627,7 @@ public class TdsData {
                     int sign = in.read();
 
                     len--;
-                    bytes = new byte[len];
+                    byte[] bytes = new byte[len];
                     BigInteger bi;
 
                     if (in.getServerType() == TdsCore.SYBASE) {
@@ -651,20 +645,20 @@ public class TdsData {
                         bi = new BigInteger((sign == 0) ? -1 : 1, bytes);
                     }
 
-                    value = new BigDecimal(bi, ci.scale);
+                    return new BigDecimal(bi, ci.scale);
                 }
+                
                 break;
 
             case SYBVARIANT:
-                value = getVariant(in);
-                break;
+                return getVariant(in);
 
             default:
-                throw new ProtocolException("Unsupported TDS data type 0x" +
-                                            Integer.toHexString(ci.tdsType));
+                throw new ProtocolException("Unsupported TDS data type 0x"
+                                            + Integer.toHexString(ci.tdsType));
         }
 
-        return value;
+        return null;
     }
 
     /**

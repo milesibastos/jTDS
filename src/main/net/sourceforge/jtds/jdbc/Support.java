@@ -45,7 +45,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.1 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: Support.java,v 1.2 2004-07-02 00:36:55 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -322,10 +322,12 @@ public class Support {
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
 
+                        // FIXME - Throw exception if length() is greater than Integer.MAX_VALUE
                         return clob.getSubString(1, (int) clob.length());
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
 
+                        // FIXME - Throw exception if length() is greater than Integer.MAX_VALUE
                         x = blob.getBytes(1, (int) blob.length());
                     }
 
@@ -363,6 +365,7 @@ public class Support {
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
 
+                        // FIXME - Throw exception if length() is greater than Integer.MAX_VALUE
                         x = clob.getSubString(1, (int) clob.length());
                     }
 
@@ -447,8 +450,30 @@ public class Support {
                         return x;
                     } else if (x instanceof byte[]) {
                         return new BlobImpl((byte[]) x);
+                    } else if (x instanceof Clob) {
+                        Clob clob = (Clob) x;
+                        
+                        x = clob.getSubString(0, (int) clob.length());
+                        // FIXME - Use reader to populate Blob
                     }
 
+                    if (x instanceof String) {
+                        Blob blob = new BlobImpl();
+                        String data = (String) x;
+                        
+                        if (charSet == null) {
+                            charSet = "ISO-8859-1";
+                        }
+
+                        try {
+                            blob.setBytes(1, data.getBytes(charSet));
+                        } catch (UnsupportedEncodingException e) {
+                            blob.setBytes(1, data.getBytes());
+                        }
+                        
+                        return blob;
+                    }
+                    
                     break;
 
                 case java.sql.Types.CLOB:
@@ -458,6 +483,28 @@ public class Support {
                         return x;
                     } else if (x instanceof String) {
                         return new ClobImpl((String) x);
+                    } else if (x instanceof Blob) {
+                        Blob blob = (Blob) x;
+                        
+                        x = blob.getBytes(0, (int) blob.length()); 
+                        // FIXME - Use input stream to populate Clob
+                    }
+                    
+                    if (x instanceof byte[]) {
+                        Clob clob = new ClobImpl();
+                        byte[] data = (byte[]) x;
+                        
+                        if (charSet == null) {
+                            charSet = "ISO-8859-1";
+                        }
+
+                        try {
+                            clob.setString(1, new String(data, charSet));
+                        } catch (UnsupportedEncodingException e) {
+                            clob.setString(1, new String(data));
+                        }
+                        
+                        return clob;
                     }
 
                     break;

@@ -21,7 +21,7 @@ package net.sourceforge.jtds.jdbc;
  * This class encapsulates a column data value.
  *
  * @author Mike Hutchinson
- * @version $Id: ColData.java,v 1.1 2004-06-27 17:00:50 bheineman Exp $
+ * @version $Id: ColData.java,v 1.2 2004-07-02 00:36:55 bheineman Exp $
  */
 public class ColData {
     /** The column value or null */
@@ -41,7 +41,7 @@ public class ColData {
     ColData(Object valueIn, int tdsVersion) {
         if (valueIn instanceof TextPtr) {
             txtPtr = (TextPtr) valueIn;
-            value  = txtPtr.value;
+            value = txtPtr.value;
         } else {
             value  = valueIn;
         }
@@ -115,9 +115,9 @@ public class ColData {
         }
 
         if (this.value instanceof String) {
-            length = ((String)this.value).length();
+            length = ((String) this.value).length();
         } else if (this.value instanceof byte[]) {
-            length = ((byte[])this.value).length;
+            length = ((byte[]) this.value).length;
         } else {
             length = 0;
         }

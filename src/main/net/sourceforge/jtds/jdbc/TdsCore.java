@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.56 2004-12-05 12:07:31 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.57 2004-12-13 12:36:55 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -67,6 +67,8 @@ public class TdsCore {
         int updateCount;
         /** The nonce from an NTLM challenge packet. */
         byte[] nonce;
+        /** NTLM authentication message. */
+        byte[] ntlmMessage;
         /** The dynamicID from the last TDS_DYNAMIC token. */
         String dynamicId;
         /** The TDS token that preceded the dynamic parameter data. */
@@ -362,6 +364,10 @@ public class TdsCore {
     private boolean isClosed = false;
     /** Indicates reading results from READTEXT command. */
     private boolean readTextMode = false;
+    /** A reference to ntlm.SSPIJNIClient. */
+    private SSPIJNIClient sspiJNIClient = null;
+    /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
+    private boolean ntlmAuthSSO = false;
 
     /**
      * Construct a TdsCore object.
@@ -1416,16 +1422,22 @@ public class TdsCore {
     /**
      * Send a TDS 7 login packet.
      * <p>
-     * @param serverName The server host name.
-     * @param database The required database.
-     * @param user The user name.
-     * @param password The user password.
-     * @param domain The Windows NT domain (or null).
-     * @param appName The application name.
-     * @param progName The program name.
-     * @param language The server language for messages
-     * @param macAddress The client network MAC address.
-     * @throws IOException
+     * This method incorporates the Windows single sign on code contributed by
+     * Magendran Sathaiah. To invoke single sign on just leave the user name
+     * blank or null. NB. This can only work if the driver is being executed on
+     * a Windows PC and <code>ntlmauth.dll</code> is on the path.
+     *
+     * @param serverName    server host name
+     * @param database      required database
+     * @param user          user name
+     * @param password      user password
+     * @param domain        Windows NT domain (or <code>null</code>)
+     * @param appName       application name
+     * @param progName      program name
+     * @param language      server language for messages
+     * @param macAddress    client network MAC address
+     * @param netPacketSize TDS packet size to use
+     * @throws IOException if an I/O error occurs
      */
     private void sendMSLoginPkt(final String serverName,
                                 final String database,
@@ -1437,12 +1449,37 @@ public class TdsCore {
                                 final String language,
                                 final String macAddress,
                                 final int netPacketSize)
-        throws IOException {
+            throws IOException, SQLException {
         final byte[] empty = new byte[0];
         final String clientName = getHostName();
+        boolean ntlmAuth = false;
+        byte[] ntlmMessage = null;
 
-        //mdb
-        final boolean ntlmAuth = (domain.length() > 0);
+        if (user == null || user.length() == 0) {
+            // See if executing on a Windows platform and if so try and
+            // use the single sign on native library.
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                ntlmAuthSSO = true;
+                ntlmAuth = true;
+            } else {
+                throw new SQLException(Messages.get("error.connection.sso"),
+                        "08001");
+            }
+        } else if (domain != null && domain.length() > 0) {
+            // Assume we want to use Windows authentication with
+            // supplied user and password.
+            ntlmAuth = true;
+        }
+
+        if (ntlmAuthSSO) {
+            try {
+                // Create the NTLM request block using the native library
+                sspiJNIClient = SSPIJNIClient.getInstance();
+                ntlmMessage = sspiJNIClient.invokePrepareSSORequest();
+            } catch (Exception e) {
+                throw new IOException("SSO Failed: " + e.getMessage());
+            }
+        }
 
         //mdb:begin-change
         short packSize = (short) (86 + 2 *
@@ -1455,7 +1492,11 @@ public class TdsCore {
         final short authLen;
         //NOTE(mdb): ntlm includes auth block; sql auth includes uname and pwd.
         if (ntlmAuth) {
-            authLen = (short) (32 + domain.length());
+            if (ntlmAuthSSO && ntlmMessage != null) {
+                authLen = (short) ntlmMessage.length;
+            } else {
+                authLen = (short) (32 + domain.length());
+            }
             packSize += authLen;
         } else {
             authLen = 0;
@@ -1581,28 +1622,33 @@ public class TdsCore {
 
         //mdb: add the ntlm auth info...
         if (ntlmAuth) {
-            // host and domain name are _narrow_ strings.
-            final byte[] domainBytes = domain.getBytes("UTF8");
-            //byte[] hostBytes   = localhostname.getBytes("UTF8");
+            if (ntlmAuthSSO) {
+                // Use the NTLM message generated by the native library
+                out.write(ntlmMessage);
+            } else {
+                // host and domain name are _narrow_ strings.
+                final byte[] domainBytes = domain.getBytes("UTF8");
+                //byte[] hostBytes   = localhostname.getBytes("UTF8");
 
-            final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
-            out.write(header); //header is ascii "NTLMSSP\0"
-            out.write((int)1);          //sequence number = 1
-            out.write((int)0xb201);     //flags (???)
+                final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
+                out.write(header); //header is ascii "NTLMSSP\0"
+                out.write((int)1);          //sequence number = 1
+                out.write((int)0xb201);     //flags (???)
 
-            //domain info
-            out.write((short) domainBytes.length);
-            out.write((short) domainBytes.length);
-            out.write((int)32); //offset, relative to start of auth block.
+                //domain info
+                out.write((short) domainBytes.length);
+                out.write((short) domainBytes.length);
+                out.write((int)32); //offset, relative to start of auth block.
 
-            //host info
-            //NOTE(mdb): not sending host info; hope this is ok!
-            out.write((short) 0);
-            out.write((short) 0);
-            out.write((int)32); //offset, relative to start of auth block.
+                //host info
+                //NOTE(mdb): not sending host info; hope this is ok!
+                out.write((short) 0);
+                out.write((short) 0);
+                out.write((int)32); //offset, relative to start of auth block.
 
-            // add the variable length data at the end...
-            out.write(domainBytes);
+                // add the variable length data at the end...
+                out.write(domainBytes);
+            }
         }
         out.flush(); // Send the packet
         endOfResponse = false;
@@ -1622,61 +1668,75 @@ public class TdsCore {
                                            final String domain)
             throws java.io.IOException {
         out.setPacketType(NTLMAUTH_PKT);
-        // host and domain name are _narrow_ strings.
-        //byte[] domainBytes = domain.getBytes("UTF8");
-        //byte[] user        = user.getBytes("UTF8");
 
-        final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
-        out.write(header); //header is ascii "NTLMSSP\0"
-        out.write((int)3); //sequence number = 3
-        final int domainLenInBytes = domain.length() * 2;
-        final int userLenInBytes = user.length() * 2;
-        //mdb: not sending hostname; I hope this is ok!
-        final int hostLenInBytes = 0; //localhostname.length()*2;
-        int pos = 64 + domainLenInBytes + userLenInBytes + hostLenInBytes;
-        // lan man response: length and offset
-        out.write((short)24);
-        out.write((short)24);
-        out.write((int)pos);
-        pos += 24;
-        // nt response: length and offset
-        out.write((short)24);
-        out.write((short)24);
-        out.write((int)pos);
-        pos = 64;
-        //domain
-        out.write((short) domainLenInBytes);
-        out.write((short) domainLenInBytes);
-        out.write((int)pos);
-        pos += domainLenInBytes;
+        // Prepare and Set NTLM Type 2 message appropriately
+        // Author: mahi@aztec.soft.net
+        if (ntlmAuthSSO) {
+            byte[] ntlmMessage = currentToken.ntlmMessage;
+            try {
+                // Create the challenge response using the native library
+                ntlmMessage = sspiJNIClient.invokePrepareSSOSubmit(ntlmMessage);
+            } catch (Exception e) {
+                throw new IOException("SSO Failed: " + e.getMessage());
+            }
+            out.write(ntlmMessage);
+        } else {
+            // host and domain name are _narrow_ strings.
+            //byte[] domainBytes = domain.getBytes("UTF8");
+            //byte[] user        = user.getBytes("UTF8");
 
-        //user
-        out.write((short) userLenInBytes);
-        out.write((short) userLenInBytes);
-        out.write((int)pos);
-        pos += userLenInBytes;
-        //local hostname
-        out.write((short) hostLenInBytes);
-        out.write((short) hostLenInBytes);
-        out.write((int)pos);
-        pos += hostLenInBytes;
-        //unknown
-        out.write((short) 0);
-        out.write((short) 0);
-        out.write((int)pos);
-        //flags
-        out.write((int)0x8201);     //flags (???)
-        //variable length stuff...
-        out.write(domain);
-        out.write(user);
-        //Not sending hostname...I hope this is OK!
-        //comm.appendChars(localhostname);
+            final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
+            out.write(header); //header is ascii "NTLMSSP\0"
+            out.write((int)3); //sequence number = 3
+            final int domainLenInBytes = domain.length() * 2;
+            final int userLenInBytes = user.length() * 2;
+            //mdb: not sending hostname; I hope this is ok!
+            final int hostLenInBytes = 0; //localhostname.length()*2;
+            int pos = 64 + domainLenInBytes + userLenInBytes + hostLenInBytes;
+            // lan man response: length and offset
+            out.write((short)24);
+            out.write((short)24);
+            out.write((int)pos);
+            pos += 24;
+            // nt response: length and offset
+            out.write((short)24);
+            out.write((short)24);
+            out.write((int)pos);
+            pos = 64;
+            //domain
+            out.write((short) domainLenInBytes);
+            out.write((short) domainLenInBytes);
+            out.write((int)pos);
+            pos += domainLenInBytes;
 
-        //the response to the challenge...
-        final byte[] lmAnswer = NtlmAuth.answerLmChallenge(password, nonce);
-        final byte[] ntAnswer = NtlmAuth.answerNtChallenge(password, nonce);
-        out.write(lmAnswer);
-        out.write(ntAnswer);
+            //user
+            out.write((short) userLenInBytes);
+            out.write((short) userLenInBytes);
+            out.write((int)pos);
+            pos += userLenInBytes;
+            //local hostname
+            out.write((short) hostLenInBytes);
+            out.write((short) hostLenInBytes);
+            out.write((int)pos);
+            pos += hostLenInBytes;
+            //unknown
+            out.write((short) 0);
+            out.write((short) 0);
+            out.write((int)pos);
+            //flags
+            out.write((int)0x8201);     //flags (???)
+            //variable length stuff...
+            out.write(domain);
+            out.write(user);
+            //Not sending hostname...I hope this is OK!
+            //comm.appendChars(localhostname);
+
+            //the response to the challenge...
+            final byte[] lmAnswer = NtlmAuth.answerLmChallenge(password, nonce);
+            final byte[] ntAnswer = NtlmAuth.answerNtChallenge(password, nonce);
+            out.write(lmAnswer);
+            out.write(ntAnswer);
+        }
         out.flush();
     }
 
@@ -2770,19 +2830,20 @@ public class TdsCore {
         if (pktLen < hdrLen)
             throw new ProtocolException("NTLM challenge: packet is too small:" + pktLen);
 
-        in.skip(8);  //header "NTLMSSP\0"
-        int seq = in.readInt(); //sequence number (2)
+        byte[] ntlmMessage = new byte[pktLen];
+        in.read(ntlmMessage);
+        int b1 = ((int) ntlmMessage[8] & 0xff);
+        int b2 = ((int) ntlmMessage[9] & 0xff) << 8;
+        int b3 = ((int) ntlmMessage[10] & 0xff) << 16;
+        int b4 = ((int) ntlmMessage[11] & 0xff) << 24;
+        final int seq =b4 | b3 | b2 | b1;
+
         if (seq != 2)
             throw new ProtocolException("NTLM challenge: got unexpected sequence number:" + seq);
-        in.skip(4); //domain length (repeated 2x)
-        in.skip(4); //domain offset
-        in.skip(4); //flags
-        currentToken.nonce = new byte[8];
-        in.read(currentToken.nonce);
-        in.skip(8); //?? unknown
 
-        //skip the end, which may include the domain name, among other things...
-        in.skip(pktLen - hdrLen);
+        currentToken.nonce = new byte[8];
+        currentToken.ntlmMessage = ntlmMessage;
+        System.arraycopy(ntlmMessage, 24, currentToken.nonce, 0, 8);
     }
 
     /**

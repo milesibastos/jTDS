@@ -40,7 +40,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: SocketFactories.java,v 1.5 2005-02-02 00:43:10 alin_sinpalean Exp $
+ * @version $Id: SocketFactories.java,v 1.6 2005-02-04 15:46:31 alin_sinpalean Exp $
  */
 public class SocketFactories {
     /**
@@ -77,25 +77,34 @@ public class SocketFactories {
         /**
          * Create the SSL socket.
          * <p/>
-         * NB. This method will actually create a connected socket
-         * over the TCP/IP network socket supplied via the constructor of
-         * this class.
+         * NB. This method will actually create a connected socket over the
+         * TCP/IP network socket supplied via the constructor of this factory
+         * class.
          */
-        public Socket createSocket() throws IOException
-        {
-            return (SSLSocket) getFactory().createSocket(new TdsTlsSocket(socket),
-                    socket.getInetAddress().getHostName(), socket.getPort(),
-                    true);
-        }
+        public Socket createSocket(String host, int port)
+                throws IOException, UnknownHostException {
+            SSLSocket sslSocket = (SSLSocket) getFactory()
+                    .createSocket(new TdsTlsSocket(socket), host, port, true);
+            //
+            // See if connecting to local server.
+            // getLocalHost() will normally return the address of a real
+            // local network interface so we check that one and the loopback
+            // address localhost/127.0.0.1
+            //
+            // XXX: Disable TLS resume altogether, because the cause of local
+            // server failures is unknown and it also seems to sometiles occur
+            // with remote servers.
+            //
+//            if (socket.getInetAddress().equals(InetAddress.getLocalHost()) ||
+//                host.equalsIgnoreCase("localhost") || host.startsWith("127.")) {
+                // Resume session causes failures with a local server
+                // Invalidate the session to prevent resumes.
+                sslSocket.startHandshake(); // Any IOException thrown here
+                sslSocket.getSession().invalidate();
+//                Logger.println("TLS Resume disabled");
+//            }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see javax.net.SocketFactory#createSocket(java.lang.String, int)
-         */
-        public Socket createSocket(String host, int port) throws IOException,
-                UnknownHostException {
-            return null;
+            return sslSocket;
         }
 
         /*

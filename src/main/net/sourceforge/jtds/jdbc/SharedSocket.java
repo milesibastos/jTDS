@@ -62,7 +62,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.23 2005-02-02 00:42:45 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.24 2005-02-04 15:46:21 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -193,7 +193,14 @@ class SharedSocket {
      * Count of packets received.
      */
     private int packetCount;
-
+    /**
+     * The server host name.
+     */
+    private String host;
+    /**
+     * The server port number.
+     */
+    private int port;
     /**
      * TDS done token.
      */
@@ -218,6 +225,8 @@ class SharedSocket {
             throws IOException, UnknownHostException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
+        this.host = host;
+        this.port = port;
         this.socket = new Socket(host, port);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
@@ -227,23 +236,24 @@ class SharedSocket {
     /**
      * Enable TLS encryption by creating a TLS socket over the
      * existing TCP/IP network socket.
-     * @param ssl The SSL URL property value.
-     * @throws IOException
+     *
+     * @param ssl the SSL URL property value
+     * @throws IOException if an I/O error occurs
      */
-    void enableEncryption(String ssl) throws IOException
-    {
+    void enableEncryption(String ssl) throws IOException {
         Logger.println("Enabling TLS encryption");
-        sslSocket = SocketFactories.getSocketFactory(ssl, socket).createSocket();
+        sslSocket = SocketFactories.getSocketFactory(ssl, socket)
+                .createSocket(getHost(), getPort());
         setOut(new DataOutputStream(sslSocket.getOutputStream()));
         setIn(new DataInputStream(sslSocket.getInputStream()));
     }
 
     /**
      * Disable TLS encryption and switch back to raw TCP/IP socket.
-     * @throws IOException
+     *
+     * @throws IOException if an I/O error occurs
      */
-    void disableEncryption() throws IOException
-    {
+    void disableEncryption() throws IOException {
         Logger.println("Disabling TLS encryption");
         sslSocket.close();
         sslSocket = null;
@@ -344,6 +354,7 @@ class SharedSocket {
      * <li>Microsoft SQL Server.
      * <li>Sybase SQL Server.
      * </ol>
+     *
      * @return the SQL Server type as an <code>int</code>
      */
     int getServerType() {
@@ -881,7 +892,7 @@ class SharedSocket {
     /**
      * Getter for {@link SharedSocket#in} field.
      *
-     * @return {@link InputStream} used for communication.
+     * @return {@link InputStream} used for communication
      */
     protected DataInputStream getIn() {
         return in;
@@ -890,7 +901,7 @@ class SharedSocket {
     /**
      * Setter for {@link SharedSocket#in} field.
      *
-     * @param in The {@link InputStream} to be used for communication.
+     * @param in the {@link InputStream} to be used for communication
      */
     protected void setIn(DataInputStream in) {
         this.in = in;
@@ -899,7 +910,7 @@ class SharedSocket {
     /**
      * Getter for {@link SharedSocket#out} field.
      *
-     * @return {@link OutputStream} used for communication.
+     * @return {@link OutputStream} used for communication
      */
     protected DataOutputStream getOut() {
         return out;
@@ -908,9 +919,27 @@ class SharedSocket {
     /**
      * Setter for {@link SharedSocket#out} field.
      *
-     * @param out The {@link OutputStream} to be used for communication.
+     * @param out the {@link OutputStream} to be used for communication
      */
     protected void setOut(DataOutputStream out) {
         this.out = out;
+    }
+
+    /**
+     * Get the server host name.
+     *
+     * @return the host name as a <code>String</code>
+     */
+    protected String getHost() {
+        return this.host;
+    }
+
+    /**
+     * Get the server port number.
+     *
+     * @return the host port as an <code>int</code>
+     */
+    protected int getPort() {
+        return this.port;
     }
 }

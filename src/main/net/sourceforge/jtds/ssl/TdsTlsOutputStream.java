@@ -39,7 +39,7 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsOutputStream.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
+ * @version $Id: TdsTlsOutputStream.java,v 1.3 2005-02-04 15:46:31 alin_sinpalean Exp $
  */
 class TdsTlsOutputStream extends FilterOutputStream {
     /**
@@ -51,7 +51,7 @@ class TdsTlsOutputStream extends FilterOutputStream {
     /**
      * Constructs a TdsTlsOutputStream based on an underlying output stream.
      *
-     * @param out the underlying output stream.
+     * @param out the underlying output stream
      */
     TdsTlsOutputStream(OutputStream out) {
         super(out);
@@ -151,19 +151,7 @@ class TdsTlsOutputStream extends FilterOutputStream {
                     if (hsLen != len - (Ssl.TLS_HEADER_SIZE + Ssl.HS_HEADER_SIZE) ||
                         hsType != Ssl.TYPE_CLIENTKEYEXCHANGE) {
                         // This is probably a finish record
-                        int size = 0;
-                        for (int i = 0; i < bufferedRecords.size(); i++) {
-                            size += ((byte[])bufferedRecords.get(i)).length;
-                        }
-                        byte tmp[] = new byte[size];
-                        size = 0;
-                        for (int i = 0; i < bufferedRecords.size(); i++) {
-                            byte x[] = (byte[])bufferedRecords.get(i);
-                            System.arraycopy(x, 0, tmp, size, x.length);
-                            size += x.length;
-                        }
-                        putTdsPacket(tmp, tmp.length);
-                        bufferedRecords.clear();
+                        flushBufferedRecords();
                     }
                     break;
                 }
@@ -182,7 +170,7 @@ class TdsTlsOutputStream extends FilterOutputStream {
      */
     void putTdsPacket(byte[] b, int len) throws IOException {
         byte tdsHdr[] = new byte[TdsCore.PKT_HDR_LEN];
-        tdsHdr[0] = 0x12;
+        tdsHdr[0] = TdsCore.PRELOGIN_PKT;
         tdsHdr[1] = 0x01;
         tdsHdr[2] = (byte)((len + TdsCore.PKT_HDR_LEN) >> 8);
         tdsHdr[3] = (byte)(len + TdsCore.PKT_HDR_LEN);

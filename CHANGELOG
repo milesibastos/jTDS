@@ -2,6 +2,9 @@ Changes from jTDS 1.0
 =======================
 
 02/04/2005 - Alin Sinpalean
+ o Applied Mike's fix for bugs [1116113] (SSL fails to build or run under java
+   1.3) and [1102505] (SSL Resume Failure). TLS resume is now disabled
+   altogether until we find out what the actual cause is and work around it.
  o Applied Mike's fix for bug [1116046] {fn} escape can't handle nested
    functions.
 

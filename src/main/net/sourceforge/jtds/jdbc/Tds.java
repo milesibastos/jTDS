@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.52 2004-04-12 15:56:13 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.53 2004-04-16 18:35:03 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.52 2004-04-12 15:56:13 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.53 2004-04-16 18:35:03 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -2760,32 +2760,36 @@ public class Tds implements TdsDefinitions {
 
     private void sendSybImage(final java.io.InputStream value, int length)
             throws java.io.IOException {
-        comm.appendByte(SYBIMAGE);
-
-        length = (value == null ? 0 : length);
-
-        // send the lenght of this piece of data
-        comm.appendTdsInt(length);
-
-        // send the length of this piece of data again
-        comm.appendTdsInt(length);
-
-        if (value != null) {
-            byte[] buffer = new byte[1024];
-
-            for (int i = 0; i < length; i += buffer.length) {
-                int result = value.read(buffer);
-
-                // TODO The connection should be closed if this happens
-                if (result == -1 && i < length) {
-                    throw new java.io.IOException(
-                            "Data in stream less than specified by length");
-                } else if (i + result > length) {
-                    throw new java.io.IOException(
-                            "More data in stream than specified with length");
+        if (value == null) {
+            comm.appendByte(SYBVARBINARY);
+            comm.appendByte((byte) 255);
+            comm.appendByte((byte) 0);
+        } else {
+            comm.appendByte(SYBIMAGE);
+    
+            // send the length of this piece of data
+            comm.appendTdsInt(Integer.MAX_VALUE);
+    
+            // send the length of this piece of data again
+            comm.appendTdsInt(length);
+    
+            if (value != null) {
+                byte[] buffer = new byte[1024];
+    
+                for (int i = 0; i < length; i += buffer.length) {
+                    int result = value.read(buffer);
+    
+                    // TODO The connection should be closed if this happens
+                    if (result == -1 && i < length) {
+                        throw new java.io.IOException(
+                                "Data in stream less than specified by length");
+                    } else if (i + result > length) {
+                        throw new java.io.IOException(
+                                "More data in stream than specified with length");
+                    }
+    
+                    comm.appendBytes(buffer, result, (byte) 0);
                 }
-
-                comm.appendBytes(buffer, result, (byte) 0);
             }
         }
     }
@@ -2793,12 +2797,13 @@ public class Tds implements TdsDefinitions {
     private void sendSybText(final java.io.Reader value, int length,
                              boolean isUnicode)
             throws java.io.IOException {
-        EncodingHelper encodingHelper = conn.getEncoder();
-        int sentLength;
-
         if (value == null) {
-            sentLength = 0;
+            comm.appendByte(SYBVARCHAR);
+            comm.appendByte((byte) 255);
+            comm.appendByte((byte) 0);
         } else {
+            EncodingHelper encodingHelper = conn.getEncoder();
+
             if (encodingHelper.isDBCS()) {
                 // Is this acceptable? Multi-byte character sets may send more
                 // bytes to the database than the number of characters.
@@ -2812,18 +2817,16 @@ public class Tds implements TdsDefinitions {
                 //      handle it
                 isUnicode = true;
             }
-            sentLength = isUnicode ? 2 * length : length;
-        }
 
-        comm.appendByte(isUnicode ? SYBNTEXT : SYBTEXT);
+            int sentLength = isUnicode ? 2 * length : length;
+            comm.appendByte(isUnicode ? SYBNTEXT : SYBTEXT);
 
-        // send the length of this piece of data
-        comm.appendTdsInt(sentLength);
+            // send the length of this piece of data
+            comm.appendTdsInt(Integer.MAX_VALUE);
 
-        // send the length of this piece of data again
-        comm.appendTdsInt(sentLength);
+            // send the length of this piece of data again
+            comm.appendTdsInt(sentLength);
 
-        if (value != null) {
             char[] buffer = new char[1024];
 
             for (int i = 0; i < length; i += buffer.length) {

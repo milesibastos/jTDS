@@ -17,10 +17,10 @@ import java.util.TimeZone;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.12 2004-04-01 19:24:43 bheineman Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.13 2004-04-16 18:35:02 bheineman Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.12 2004-04-01 19:24:43 bheineman Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.13 2004-04-16 18:35:02 bheineman Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
     public static final long HOUR_CONSTANT = 3600000;
@@ -600,8 +600,9 @@ public abstract class AbstractResultSet implements ResultSet {
 
     public void updateBinaryStream(int index, java.io.InputStream inputStream, int length)
     throws SQLException {
-        if (length == 0) {
+        if (inputStream == null || length == 0) {
             updateBytes(index, null);
+            return;
         }
 
         byte[] bs = new byte[length];
@@ -634,6 +635,7 @@ public abstract class AbstractResultSet implements ResultSet {
     throws SQLException {
         if (reader == null || length < 0) {
             updateString(index, null);
+            return;
         }
 
         StringBuffer value = new StringBuffer(length);
@@ -682,7 +684,11 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public void updateClob(int param, java.sql.Clob clob) throws SQLException {
-        updateCharacterStream(param, clob.getCharacterStream(), (int) clob.length());
+        if (clob == null) {
+            updateCharacterStream(param, null, 0);
+        } else {
+            updateCharacterStream(param, clob.getCharacterStream(), (int) clob.length());
+        }
     }
 
     public void updateClob(String columnName, java.sql.Clob clob) throws SQLException {
@@ -694,7 +700,11 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     public void updateBlob(int param, java.sql.Blob blob) throws SQLException {
-        updateBinaryStream(param, blob.getBinaryStream(), (int) blob.length());
+        if (blob == null) {
+            updateBinaryStream(param, null, 0);
+        } else {
+            updateBinaryStream(param, blob.getBinaryStream(), (int) blob.length());
+        }
     }
 
     public void updateArray(String columnName, java.sql.Array array) throws SQLException {

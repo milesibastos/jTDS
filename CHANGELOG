@@ -5,6 +5,16 @@ Changes from jTDS 0.7.1
  o The main Tds instance is now always created even if no cursor ResultSets are
    used, as it simplifies the internals of TdsConnection and doesn't create an
    additional physical connection anymore.
+ o Moved connection initialization from Tds to TdsConnection.
+ o Moved the EncodingHelper instance from Tds to TdsConnection.
+ o Removed the 'host' URL parameter as it was only duplicating 'serverName'.
+ o Replaced direct access to Tds instance 0 with synchronized access to the
+   main Tds instance (which now always exists) for database change, commit,
+   rollback or settings change. In the previous implementation access was not
+   synchronized and could interfere with (or completely consume the output of)
+   some Statement.
+ o Moved handling of current database and charset to TdsConnection and handling
+   of buffer size to TdsSocket (via TdsComm) from Tds.
 
 03/06/2004 - Alin Sinpalean
  o Applied Mike's single connection patch. It's the first time I see jTDS
@@ -17,7 +27,7 @@ Changes from jTDS 0.7.1
    specification.
  o Numerous minor performance enhancements that reduce memory allocations,
    assignments and cost of control logic.
-   
+
 03/03/2004 - Brian Heineman
  o Corrected bug [909169] jTDS 0.7: introduced another bug (Stored Procedure);
    added test to ensure functionality continues to work in the future.

@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.19 2004-02-16 20:14:31 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.20 2004-03-07 23:03:32 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.19 2004-02-16 20:14:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.20 2004-03-07 23:03:32 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -566,7 +566,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getDatabaseProductName() throws SQLException
     {
-        return tds.getDatabaseProductName();
+        return connection.getDatabaseProductName();
     }
 
     /**
@@ -577,7 +577,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      */
     public String getDatabaseProductVersion() throws SQLException
     {
-        return tds.getDatabaseProductVersion();
+        return connection.getDatabaseProductVersion();
     }
 
     //----------------------------------------------------------------------
@@ -3146,14 +3146,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * Returns the database major version.
      */
     public int getDatabaseMajorVersion() throws SQLException {
-        return tds.getDatabaseMajorVersion();
+        return connection.getDatabaseMajorVersion();
     }
 
     /**
      * Returns the database minor version.
      */
     public int getDatabaseMinorVersion() throws SQLException {
-        return tds.getDatabaseMinorVersion();
+        return connection.getDatabaseMinorVersion();
     }
 
     /**

@@ -43,7 +43,7 @@ import java.sql.Timestamp;
  * @author     Craig Spannring
  * @author     Igor Petrovski
  * @created    14 September 2001
- * @version    $Id: TdsComm.java,v 1.9 2004-03-07 14:33:20 alin_sinpalean Exp $
+ * @version    $Id: TdsComm.java,v 1.10 2004-03-07 23:03:32 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -105,7 +105,7 @@ public class TdsComm implements TdsDefinitions {
      */
     byte resBuffer[] = new byte[256];
 
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.9 2004-03-07 14:33:20 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.10 2004-03-07 23:03:32 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -170,8 +170,10 @@ public class TdsComm implements TdsDefinitions {
     public TdsComm(TdsSocket tdsSocket, int tdsVer) {
         this.tdsSocket = tdsSocket;
 
-        outBuffer = new byte[minPacketLength];
-        inBuffer = new byte[minPacketLength];
+        int packetSize = tdsSocket.getPacketSize() > 0 ?
+                tdsSocket.getPacketSize() : minPacketLength;
+        outBuffer = new byte[packetSize];
+        inBuffer = new byte[packetSize];
 
         // Added 2000-06-07
         this.tdsVer = tdsVer;
@@ -631,6 +633,7 @@ public class TdsComm implements TdsDefinitions {
 
     void resizeOutbuf(int newsize) {
         if (newsize > outBuffer.length) {
+            tdsSocket.setPacketSize(newsize);
             byte[] newBuf = new byte[newsize];
             System.arraycopy(outBuffer, 0, newBuf, 0, outBuffer.length);
             outBuffer = newBuf;

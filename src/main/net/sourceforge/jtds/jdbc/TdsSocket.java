@@ -140,6 +140,8 @@ public class TdsSocket {
     //
     private byte tdsVerByte = 0;
 
+    private int packetSize = -1;
+
     /**
      * Construct a TdsSocket object specifying host name and port.
      * @param host The SQL Server host name.
@@ -687,4 +689,11 @@ public class TdsSocket {
             Logger.println("TdsSocket: Send cancel packet");
     }
 
+    protected void setPacketSize(int packetSize) {
+        this.packetSize = packetSize;
+    }
+
+    protected int getPacketSize() {
+        return packetSize;
+    }
 }

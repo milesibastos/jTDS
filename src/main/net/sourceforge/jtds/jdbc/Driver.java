@@ -44,11 +44,11 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.10 2004-03-04 23:44:43 bheineman Exp $
+ * @version    $Id: Driver.java,v 1.11 2004-03-07 23:03:32 alin_sinpalean Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.10 2004-03-04 23:44:43 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.11 2004-03-07 23:03:32 alin_sinpalean Exp $";
 
     static final int MAJOR_VERSION = 0;
     static final int MINOR_VERSION = 7;
@@ -138,7 +138,7 @@ public class Driver implements java.sql.Driver {
             throws SQLException {
         DriverPropertyInfo[] dpi = new DriverPropertyInfo[] {
             new DriverPropertyInfo(Tds.PROP_SERVERTYPE, null),
-            new DriverPropertyInfo(Tds.PROP_HOST, null),
+            new DriverPropertyInfo(Tds.PROP_SERVERNAME, null),
             new DriverPropertyInfo(Tds.PROP_PORT, null),
             new DriverPropertyInfo(Tds.PROP_DBNAME, null),
             new DriverPropertyInfo(Tds.PROP_USER, null),
@@ -181,7 +181,7 @@ public class Driver implements java.sql.Driver {
                 if (dpi[i].value == null) {
                     dpi[i].value = dpi[i].choices[0]; // Tds.SQLSERVER
                 }
-            } else if (name.equals(Tds.PROP_HOST)) {
+            } else if (name.equals(Tds.PROP_SERVERNAME)) {
                 dpi[i].description = "The database hostname.";
                 dpi[i].required = true;
             } else if (name.equals(Tds.PROP_PORT)) {
@@ -339,7 +339,7 @@ public class Driver implements java.sql.Driver {
 
         // Set here to improve getPropertyInfo() support
         if (result != null) {
-            result.put(Tds.PROP_HOST, host);
+            result.put(Tds.PROP_SERVERNAME, host);
         }
 
         // Determine if a port is specified
@@ -455,7 +455,7 @@ public class Driver implements java.sql.Driver {
      * Returns the driver version.
      * <p>
      * Per [908906] 0.7: Static Version information, please.
-     * 
+     *
      * @return the driver version
      */
     public static final String getVersion() {
@@ -467,7 +467,7 @@ public class Driver implements java.sql.Driver {
      * <p>
      * Per [887120] DriverVersion.getDriverVersion(); this will return a short
      * version name.
-     * 
+     *
      * @return the driver version
      */
     public String toString() {

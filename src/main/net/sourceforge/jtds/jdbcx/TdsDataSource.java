@@ -61,7 +61,7 @@ implements ConnectionPoolDataSource, DataSource, Referenceable, Serializable {
     throws SQLException {
         Properties props = new Properties();
 
-        props.setProperty(Tds.PROP_HOST, serverName);
+        props.setProperty(Tds.PROP_SERVERNAME, serverName);
         props.setProperty(Tds.PROP_SERVERTYPE, String.valueOf(serverType));
         props.setProperty(Tds.PROP_PORT, String.valueOf(portNumber));
         props.setProperty(Tds.PROP_DBNAME, databaseName);

@@ -47,32 +47,19 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.37 2004-03-07 14:33:20 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.38 2004-03-07 23:03:32 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
     private TdsSocket sock = null;
     private TdsComm comm = null;
 
-    private String databaseProductName;
-    private String databaseProductVersion;
-    private int databaseMajorVersion;
-    private int databaseMinorVersion;
-
-    private final TdsConnection connection;
+    private final TdsConnection conn;
 
     /** Tds version we're using. */
     private int tdsVer = Tds.TDS70;
 
-    private final String host;
     private int serverType = -1; // either Tds.SYBASE or Tds.SQLSERVER
-    private String database;
-    private final String user;
-    private final String password;
-    private final String appName;
-    private final String serverName;
-    private final String progName;
-    private final String domain;   //mdb: used for NTLM authentication; if blank, then use sql auth.
 
     private boolean inUse; // MJH: Indicates that this Tds is active somewhere
 
@@ -82,71 +69,33 @@ public class Tds implements TdsDefinitions {
      */
     private final boolean useUnicode;
 
-    private EncodingHelper encoder = null;
-    private String charset = null;
-    /**
-     * This is set if the user specifies an explicit charset, so that we'll ignore the server
-     * charset.
-     */
-    private boolean charsetSpecified = false;
-
     /** True as long as there is incoming data available. */
-    private boolean moreResults = true;
+    private boolean moreResults = false;
 
     /** Time zone offset on client (disregarding DST). */
     private final int zoneOffset = Calendar.getInstance().get(Calendar.ZONE_OFFSET);
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.37 2004-03-07 14:33:20 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.38 2004-03-07 23:03:32 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
      */
     private Context currentContext;
 
-    public Tds(final TdsConnection connection, final Properties props, TdsSocket tdsSocket) {
-        this.connection = connection;
+    public Tds(final TdsConnection connection,
+               final TdsSocket tdsSocket,
+               final int tdsVer,
+               final int serverType,
+               final boolean useUnicode) {
+        this.conn = connection;
         this.sock = tdsSocket;
-
-        host = props.getProperty(PROP_HOST);
-        serverType = Integer.parseInt(props.getProperty(PROP_SERVERTYPE));
-        // SAfe We don't know what database we'll get (probably master)
-        database = null;
-        user = props.getProperty(PROP_USER);
-        password = props.getProperty(PROP_PASSWORD);
-        appName = props.getProperty(PROP_APPNAME, "jTDS");
-        serverName = props.getProperty(PROP_SERVERNAME, host);
-        progName = props.getProperty(PROP_PROGNAME, "jTDS");
-        final String verString = props.getProperty(PROP_TDS, "7.0");
-        useUnicode = "true".equalsIgnoreCase(props.getProperty(PROP_USEUNICODE, "true"));
-
-        //mdb: if the domain is set, then the user wants NT auth (instead of SQL)
-        domain = props.getProperty(PROP_DOMAIN, "");
-
-        // XXX This driver doesn't properly support TDS 5.0, AFAIK.
-        // Added 2000-06-07.
-
-        if (verString.equals("5.0")) {
-            tdsVer = Tds.TDS50;
-        }
-        else if (verString.equals("4.2")) {
-            tdsVer = Tds.TDS42;
-        }
-
-        final String cs = props.getProperty(PROP_CHARSET);
-        // Adellera
-        charsetSpecified = setCharset(cs);
+        this.tdsVer = tdsVer;
+        this.serverType = serverType;
+        this.useUnicode = useUnicode;
 
         comm = new TdsComm(sock, tdsVer);
-        moreResults = false;
-    }
-
-    /**
-     * The current working DB.
-     */
-    public String getDatabase() {
-        return database;
     }
 
     /**
@@ -178,7 +127,7 @@ public class Tds implements TdsDefinitions {
      * This does not eat any input.
      *
      * @return     true if the next piece of data to read is a result set.
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  TdsException
      * @exception  java.io.IOException
      */
     public synchronized boolean isResultSet()
@@ -198,7 +147,7 @@ public class Tds implements TdsDefinitions {
      * This does not eat any input.
      *
      * @return     true if the next piece of data to read is a result row.
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  TdsException
      * @exception  java.io.IOException
      */
     private synchronized boolean isResultRow()
@@ -214,7 +163,7 @@ public class Tds implements TdsDefinitions {
      * This does not eat any input.
      *
      * @return     true if the next piece of data to read is end of result set marker.
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  TdsException
      * @exception  java.io.IOException
      */
     private synchronized boolean isEndOfResults()
@@ -233,7 +182,7 @@ public class Tds implements TdsDefinitions {
     }
 
     public String toString() {
-        return database + ", "
+        return "Tds " + comm.getId() + ": "
                 + sock.getLocalAddress() + ":" + sock.getLocalPort()
                 + " -> " + sock.getInetAddress() + ":" + sock.getPort();
     }
@@ -285,10 +234,10 @@ public class Tds implements TdsDefinitions {
         } catch (java.io.IOException e) {
             wChain.addException(new SQLException(
                     "Network problem. " + e.getMessage(), "08S01"));
-        } catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+        } catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
                     "Unknown response. " + e.getMessage(), "08S01"));
-        } catch (net.sourceforge.jtds.jdbc.TdsException e) {
+        } catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         }
     }
@@ -321,11 +270,11 @@ public class Tds implements TdsDefinitions {
 //            wChain.addException(new SQLException(
 //                    "Network problem. " + e.getMessage(), "08S01"));
 //        }
-        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+        catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
                     "Unknown response. " + e.getMessage(), "08S01"));
         }
-        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+        catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         }
 
@@ -341,7 +290,7 @@ public class Tds implements TdsDefinitions {
      * @param  stmt
      * @param  timeout
      * @exception  java.sql.SQLException
-     * @exception  net.sourceforge.jtds.jdbc.TdsException
+     * @exception  TdsException
      */
     private synchronized void executeProcedureInternal(
             final String procedureName,
@@ -401,7 +350,7 @@ public class Tds implements TdsDefinitions {
                 comm.appendChars(procedureName);
             }
             else {
-                final byte[] nameBytes = encoder.getBytes(procedureName);
+                final byte[] nameBytes = conn.getEncoder().getBytes(procedureName);
                 comm.appendByte((byte) nameBytes.length);
                 comm.appendBytes(nameBytes);
             }
@@ -428,7 +377,7 @@ public class Tds implements TdsDefinitions {
                         comm.appendChars(name);
                     }
                     else {
-                        final byte[] nameBytes = encoder.getBytes(name);
+                        final byte[] nameBytes = conn.getEncoder().getBytes(name);
                         comm.appendBytes(nameBytes);
                     }
                 }
@@ -515,7 +464,7 @@ public class Tds implements TdsDefinitions {
                                 if (actualParameterList[i].value instanceof byte[])
                                     sendSybImage((byte[]) actualParameterList[i].value);
                                 else
-                                    sendSybImage(encoder.getBytes(val));
+                                    sendSybImage(conn.getEncoder().getBytes(val));
                             } else {
                                 // VARCHAR
                                 sendSybChar(val, formalParameterList[i].maxLength);
@@ -587,8 +536,8 @@ public class Tds implements TdsDefinitions {
                 case SYBTEXT:
                     {
                         comm.appendByte(SYBTEXT);
-                        sendSybImage(encoder.getBytes((String) actualParameterList[i].
-                                                               value));
+                        sendSybImage(conn.getEncoder().getBytes(
+                                (String) actualParameterList[i].value));
                         break;
                     }
                 case SYBBIT:
@@ -667,6 +616,7 @@ public class Tds implements TdsDefinitions {
             waitForDataOrTimeout(wChain, timeout);
 
         } catch (java.io.IOException e) {
+            e.printStackTrace();
             throw new SQLException("Network error-  " + e.getMessage(), "08S01");
         } finally {
             comm.packetType = 0;
@@ -704,11 +654,11 @@ public class Tds implements TdsDefinitions {
             wChain.addException(new SQLException(
                     "Network problem. " + e.getMessage(), "08S01"));
         }
-        catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+        catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
                     "Unknown response. " + e.getMessage(), "HY000"));
         }
-        catch (net.sourceforge.jtds.jdbc.TdsException e) {
+        catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         }
 
@@ -746,7 +696,7 @@ public class Tds implements TdsDefinitions {
                 if (tdsVer == Tds.TDS70) {
                     comm.appendChars(sql);
                 } else {
-                    final byte[] sqlBytes = encoder.getBytes(sql);
+                    final byte[] sqlBytes = conn.getEncoder().getBytes(sql);
                     comm.appendBytes(sqlBytes, sqlBytes.length, (byte) 0);
                 }
                 moreResults = true;
@@ -800,7 +750,7 @@ public class Tds implements TdsDefinitions {
     }
 
     EncodingHelper getEncoder() {
-        return encoder;
+        return conn.getEncoder();
     }
 
     /**
@@ -813,46 +763,10 @@ public class Tds implements TdsDefinitions {
     }
 
     /**
-     * Return the name that this database server program calls itself.
-     *
-     * @return    The DatabaseProductName value
-     */
-    String getDatabaseProductName() {
-        return databaseProductName;
-    }
-
-    /**
-     * Return the version that this database server program identifies itself with.
-     *
-     * @return    The DatabaseProductVersion value
-     */
-    String getDatabaseProductVersion() {
-        return databaseProductVersion;
-    }
-
-    /**
-     * Return the major version that this database server program identifies itself with.
-     *
-     * @return    the <code>databaseMajorVersion</code> value
-     */
-    int getDatabaseMajorVersion() {
-        return databaseMajorVersion;
-    }
-
-    /**
-     * Return the minor version that this database server program identifies itself with.
-     *
-     * @return    the <code>databaseMinorVersion</code> value
-     */
-    int getDatabaseMinorVersion() {
-        return databaseMinorVersion;
-    }
-
-    /**
      * Return the connection this Tds belongs ro.
      */
     TdsConnection getConnection() {
-        return connection;
+        return conn;
     }
 
     /**
@@ -864,14 +778,14 @@ public class Tds implements TdsDefinitions {
      * @return a <code>PacketOutputParamResult</code> wrapping an output
      *         parameter
      *
-     * @exception net.sourceforge.jtds.jdbc.TdsException
+     * @exception TdsException
      * @exception java.io.IOException
      * Thrown if some sort of error occured reading bytes from the network.
      */
     private PacketOutputParamResult processOutputParam()
-            throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException {
+            throws TdsException, java.io.IOException {
         getSubPacketLength(); // Packet length
-        comm.getString(comm.getByte() & 0xff, encoder); // Column name
+        comm.getString(comm.getByte() & 0xff, conn.getEncoder()); // Column name
         comm.skip(5);
 
         final byte colType = comm.getByte();
@@ -1130,41 +1044,6 @@ public class Tds implements TdsDefinitions {
         }
     }
 
-    private boolean setCharset(String charset) {
-        // If true at the end of the method, the specified charset was used. Otherwise, iso_1 was.
-        boolean used = charset != null;
-
-        if (charset == null || charset.length() > 30) {
-            charset = "iso_1";
-        }
-
-        if (charset.toLowerCase().startsWith("cp")) {
-            charset = "Cp" + charset.substring(2);
-        }
-
-        if (!charset.equals(this.charset)) {
-            encoder = EncodingHelper.getHelper(charset);
-
-            if (encoder == null) {
-                if (Logger.isActive()) {
-                    Logger.println("Invalid charset: " + charset + ". Trying iso_1 instead.");
-                }
-
-                charset = "iso_1";
-                encoder = EncodingHelper.getHelper(charset);
-                used = false;
-            }
-
-            this.charset = charset;
-        }
-
-        if (Logger.isActive()) {
-            Logger.println("Set charset to " + charset + '/' + encoder.getName());
-        }
-
-        return used;
-    }
-
     /**
      * Try to figure out what client name we should identify ourselves as. Get
      * the hostname of this machine,
@@ -1231,7 +1110,7 @@ public class Tds implements TdsDefinitions {
      *                          known datatype.
      */
     private static boolean isFixedSizeColumn(final byte nativeColumnType)
-            throws net.sourceforge.jtds.jdbc.TdsException {
+            throws TdsException {
         switch (nativeColumnType) {
         case SYBINT1:
         case SYBINT2:
@@ -1498,9 +1377,10 @@ public class Tds implements TdsDefinitions {
             Object result;
 
             if (wideChars) {
-                result = comm.getString(len >> 1, encoder);
+                result = comm.getString(len >> 1, conn.getEncoder());
             } else {
-                result = encoder.getString(comm.getBytes(len, false), 0, len);
+                result = conn.getEncoder().getString(
+                        comm.getBytes(len, false), 0, len);
             }
 
             // SAfe 2002-08-23
@@ -1545,9 +1425,10 @@ public class Tds implements TdsDefinitions {
             //else
             if (len >= 0) {
                 if (wideChars) {
-                    result = comm.getString(len / 2, encoder);
+                    result = comm.getString(len / 2, conn.getEncoder());
                 } else {
-                    result = encoder.getString(comm.getBytes(len, false), 0, len);
+                    result = conn.getEncoder().getString(
+                            comm.getBytes(len, false), 0, len);
                 }
 
                 // SAfe 2002-08-23
@@ -1794,7 +1675,15 @@ public class Tds implements TdsDefinitions {
      * @exception  java.io.IOException
      * @exception  SQLException
      */
-    protected synchronized void logon(String database, String macAddress)
+    protected synchronized void logon(final String serverName,
+                                      final String database,
+                                      final String user,
+                                      final String password,
+                                      final String domain,
+                                      final String charset,
+                                      final String appName,
+                                      final String libName,
+                                      final String macAddress)
             throws SQLException, TdsUnknownPacketSubType,
             java.io.IOException, TdsException {
         final byte pad = (byte) 0;
@@ -1803,9 +1692,11 @@ public class Tds implements TdsDefinitions {
         try {
             // Added 2000-06-07.
             if (tdsVer == Tds.TDS70) {
-                send70Login(database, macAddress);
-                database = "";
+                send70Login(serverName, database, user, password, domain,
+                            appName, libName, macAddress);
             } else {
+                EncodingHelper encoder = conn.getEncoder();
+
                 comm.startPacket(TdsComm.LOGON);
 
                 // hostname  (offset0)
@@ -1895,7 +1786,7 @@ public class Tds implements TdsDefinitions {
                 comm.appendByte((byte) 0);
 
                 // prog name
-                tmp = encoder.getBytes(progName);
+                tmp = encoder.getBytes(libName);
                 comm.appendBytes(tmp, 10, pad);
                 comm.appendByte((byte) (tmp.length < 10 ? tmp.length : 10));
 
@@ -1972,7 +1863,8 @@ public class Tds implements TdsDefinitions {
 
             //mdb: handle ntlm challenge by sending a response...
             if (res instanceof PacketAuthTokenResult) {
-                sendNtlmChallengeResponse((PacketAuthTokenResult) res);
+                sendNtlmChallengeResponse(
+                        (PacketAuthTokenResult) res, user, password, domain);
             }
         }
         wChain.checkForExceptions();
@@ -1985,12 +1877,17 @@ public class Tds implements TdsDefinitions {
      *
      * Added 2000-06-05.
      */
-    private void send70Login(final String _database, final String macAddress)
+    private void send70Login(final String serverName,
+                             final String database,
+                             final String user,
+                             final String password,
+                             final String domain,
+                             final String appName,
+                             final String libName,
+                             final String macAddress)
             throws java.io.IOException, TdsException {
-        final String libName = this.progName;
         final byte pad = (byte) 0;
         final byte[] empty = new byte[0];
-        final String appName = this.appName;
         final String clientName = getClientName();
 
         //mdb
@@ -2002,7 +1899,7 @@ public class Tds implements TdsDefinitions {
                 appName.length() +
                 serverName.length() +
                 libName.length() +
-                _database.length()));
+                database.length()));
         final short authLen;
         //NOTE(mdb): ntlm includes auth block; sql auth includes uname and pwd.
         if (ntlmAuth) {
@@ -2084,8 +1981,8 @@ public class Tds implements TdsDefinitions {
 
         // Database
         comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) _database.length());
-        curPos += _database.length() * 2;
+        comm.appendTdsShort((short) database.length());
+        curPos += database.length() * 2;
 
         // MAC address
         comm.appendBytes(getMACAddress(macAddress));
@@ -2110,7 +2007,7 @@ public class Tds implements TdsDefinitions {
         comm.appendChars(appName);
         comm.appendChars(serverName);
         comm.appendChars(libName);
-        comm.appendChars(_database);
+        comm.appendChars(database);
 
         //mdb: add the ntlm auth info...
         if (ntlmAuth) {
@@ -2190,8 +2087,9 @@ public class Tds implements TdsDefinitions {
      * @exception  TdsException
      */
     private PacketMsgResult processMsg(final byte packetSubType)
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
         final SqlMessage msg = new SqlMessage();
+        final EncodingHelper encoder = conn.getEncoder();
 
         getSubPacketLength(); // Packet length
 
@@ -2234,7 +2132,8 @@ public class Tds implements TdsDefinitions {
      * @exception TdsException
      */
     private PacketResult processEnvChange()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
+        final EncodingHelper encoder = conn.getEncoder();
         final int len = getSubPacketLength();
         final int type = comm.getByte();
 
@@ -2265,11 +2164,7 @@ public class Tds implements TdsDefinitions {
                 } else {
                     comm.skip(len - 2 - clen);
                 }
-                if (!charsetSpecified) {
-                    setCharset(charset);
-                } else if (Logger.isActive()) {
-                    Logger.println("Server charset " + charset + ". Ignoring.");
-                }
+                conn.setCharset(charset);
                 break;
             }
         case TDS_ENV_DATABASE:
@@ -2279,14 +2174,7 @@ public class Tds implements TdsDefinitions {
                 clen = comm.getByte() & 0xFF;
                 final String oldDb = comm.getString(clen, encoder);
 
-                if (database != null && !oldDb.equalsIgnoreCase(database)) {
-                    throw new TdsException("Old database mismatch.");
-                }
-
-                database = newDb;
-                if (Logger.isActive()) {
-                    Logger.println("Changed database to " + database);
-                }
+                conn.databaseChanged(newDb, oldDb);
                 break;
             }
         default:
@@ -2312,8 +2200,9 @@ public class Tds implements TdsDefinitions {
      * @exception  TdsException
      */
     private PacketColumnNamesResult processColumnNames()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
         final Columns columns = new Columns();
+        final EncodingHelper encoder = conn.getEncoder();
 
         final int totalLen = comm.getTdsShort();
 
@@ -2344,7 +2233,7 @@ public class Tds implements TdsDefinitions {
      * @exception  TdsException
      */
     private PacketColumnInfoResult processColumnInfo()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
         final Columns columns = new Columns();
         int precision;
         int scale;
@@ -2383,7 +2272,7 @@ public class Tds implements TdsDefinitions {
 
                 final int tableNameLen = comm.getTdsShort();
                 bytesRead += 2;
-                tableName = comm.getString(tableNameLen, encoder);
+                tableName = comm.getString(tableNameLen, conn.getEncoder());
                 bytesRead += tableNameLen;
 
                 bufLength = 2 << 31 - 1;
@@ -2442,7 +2331,7 @@ public class Tds implements TdsDefinitions {
             while (bytesRead < totalLen) {
                 int nameLen = comm.getTdsShort();
                 bytesRead += 2;
-                tabName = comm.getString(nameLen, encoder);
+                tabName = comm.getString(nameLen, conn.getEncoder());
                 bytesRead += (nameLen << 1);
                 tables.add(tabName);
             }
@@ -2450,7 +2339,7 @@ public class Tds implements TdsDefinitions {
             while (bytesRead < totalLen) {
                 int nameLen = comm.getByte() & 0xff;
                 bytesRead++;
-                tabName = comm.getString(nameLen, encoder);
+                tabName = comm.getString(nameLen, conn.getEncoder());
                 bytesRead += nameLen;
                 tables.add(tabName);
             }
@@ -2497,7 +2386,7 @@ public class Tds implements TdsDefinitions {
                 if ((flags & 0x20) != 0) {
                     final int nameLen = comm.getByte() & 0xff;
                     bytesRead += 1;
-                    final String colName = comm.getString(nameLen, encoder);
+                    final String colName = comm.getString(nameLen, conn.getEncoder());
                     columns.getColumn(columnIndex).setName(colName);
                     bytesRead += (tdsVer == TDS70)
                             ? 2*colName.length() : colName.length();
@@ -2561,7 +2450,7 @@ public class Tds implements TdsDefinitions {
      *                         is a variable sized data type.
      */
     private static int lookupBufferSize(final byte nativeColumnType)
-            throws net.sourceforge.jtds.jdbc.TdsException {
+            throws TdsException {
         switch (nativeColumnType) {
         case SYBINT1:
             return 1;
@@ -2601,7 +2490,7 @@ public class Tds implements TdsDefinitions {
     }
 
     private static int lookupDisplaySize(final byte nativeColumnType)
-            throws net.sourceforge.jtds.jdbc.TdsException {
+            throws TdsException {
         switch (nativeColumnType) {
         case SYBINT1:
             return 3;
@@ -2719,7 +2608,7 @@ public class Tds implements TdsDefinitions {
 
     private void writeDecimalValue(final Object o, final int jdbcType, final int reqScale)
             throws TdsException, java.io.IOException {
-        final byte prec = connection.getMaxPrecision();
+        final byte prec = conn.getMaxPrecision();
         final byte maxLen = (prec <= 28) ? (byte)13 : (byte)17;
 
         comm.appendByte(SYBDECIMAL);
@@ -2855,7 +2744,7 @@ public class Tds implements TdsDefinitions {
             comm.appendByte((byte) 0);
             return;
         } else
-            converted = encoder.getBytes(value);
+            converted = conn.getEncoder().getBytes(value);
 
         // set the type of the column
         // set the maximum length of the field
@@ -2884,37 +2773,36 @@ public class Tds implements TdsDefinitions {
 
 
     /**
-     * Process a login ack supacket
+     * Process a login ACK subpacket.
      *
      * @exception TdsException
      * @exception java.io.IOException
      */
     private PacketResult processLoginAck()
-            throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException {
+            throws TdsException, java.io.IOException {
+        String product;
+        int major, minor, build = 0;
         getSubPacketLength(); // Packet length
 
-        if (tdsVer == Tds.TDS70) {
-            comm.skip(5);
-            final int nameLen = comm.getByte() & 0xff;
-            databaseProductName = comm.getString(nameLen, encoder);
-            databaseProductVersion = ("0" + (databaseMajorVersion = (comm.getByte() & 0xff))
-                    + ".0" + (databaseMinorVersion = (comm.getByte() & 0xff))
-                    + ".0" + comm.getNetShort());
-        } else {
-            comm.skip(5);
-            final int nameLen = comm.getByte() & 0xff;
-            databaseProductName = comm.getString(nameLen, encoder);
+        comm.skip(5);
+        product = comm.getString(comm.getByte() & 0xff, conn.getEncoder());
+        if (product.length() > 1 && -1 != product.indexOf('\0')) {
+            product = product.substring(0, product.indexOf('\0'));
+        }
+
+        if (tdsVer < Tds.TDS70) {
             comm.skip(1);
-            databaseProductVersion = ("" + (databaseMajorVersion = (comm.getByte() & 0xff)) +
-                    "." + (databaseMinorVersion = (comm.getByte() & 0xff)));
+        }
+        major = comm.getByte() & 0xff;
+        minor = comm.getByte() & 0xff;
+
+        if (tdsVer == Tds.TDS70) {
+            build = comm.getNetShort();
+        } else {
             comm.skip(1);
         }
 
-        if (databaseProductName.length() > 1
-                && -1 != databaseProductName.indexOf('\0')) {
-            final int last = databaseProductName.indexOf('\0');
-            databaseProductName = databaseProductName.substring(0, last);
-        }
+        conn.setDBServerInfo(product, major, minor, build);
 
         return new PacketResult(TDS_LOGINACK);
     }
@@ -2928,7 +2816,7 @@ public class Tds implements TdsDefinitions {
      * @exception java.io.IOException thrown if some sort of error occured
      *                                reading bytes from the network.
      */
-    private PacketResult processProcId() throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+    private PacketResult processProcId() throws java.io.IOException, TdsException {
         // XXX Try to find out what meaning this subpacket has.
         comm.skip(8);
         return new PacketResult(TDS_PROCID);
@@ -2945,7 +2833,7 @@ public class Tds implements TdsDefinitions {
      *                                reading bytes from the network.
      */
     private PacketRetStatResult processRetStat()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
         // XXX Not completely sure of this.
         return new PacketRetStatResult(comm.getTdsInt());
     }
@@ -2958,7 +2846,8 @@ public class Tds implements TdsDefinitions {
      * @exception TdsException
      */
     private PacketResult processTds7Result()
-            throws java.io.IOException, net.sourceforge.jtds.jdbc.TdsException {
+            throws java.io.IOException, TdsException {
+        EncodingHelper encoder = conn.getEncoder();
         final int numColumns = comm.getTdsShort();
         final Columns columns = new Columns(numColumns);
 
@@ -3511,9 +3400,9 @@ public class Tds implements TdsDefinitions {
 
         // SAfe We also have to add these until we find out how to put them in
         //      the login packet (if that is possible at all)
-        sqlStatementToSetTransactionIsolationLevel(statement, this.connection.getTransactionIsolation());
+        sqlStatementToSetTransactionIsolationLevel(statement, this.conn.getTransactionIsolation());
         statement.append(' ');
-        sqlStatementToSetCommit(statement, this.connection.getAutoCommit());
+        sqlStatementToSetCommit(statement, this.conn.getAutoCommit());
 
         return statement.toString();
     }
@@ -3572,12 +3461,12 @@ public class Tds implements TdsDefinitions {
         //       setTransactionIsolationLevel
         res.append("IF @@TRANCOUNT>0 COMMIT TRAN ");
 
-        if (autoCommit != this.connection.getAutoCommit()) {
+        if (autoCommit != this.conn.getAutoCommit()) {
             sqlStatementToSetCommit(res, autoCommit);
             res.append(' ');
         }
 
-        if (transactionIsolationLevel != this.connection.getTransactionIsolation()) {
+        if (transactionIsolationLevel != this.conn.getTransactionIsolation()) {
             sqlStatementToSetTransactionIsolationLevel(res, transactionIsolationLevel);
             res.append(' ');
         }
@@ -3618,7 +3507,7 @@ public class Tds implements TdsDefinitions {
      * Added by mdb to handle NT authentication to MS SQL Server.
      */
     private PacketResult processNtlmChallenge()
-            throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException {
+            throws TdsException, java.io.IOException {
         final int packetLength = getSubPacketLength(); // Packet length
 
         final int headerLength = 40;
@@ -3642,7 +3531,10 @@ public class Tds implements TdsDefinitions {
         return new PacketAuthTokenResult(nonce);
     }
 
-    private void sendNtlmChallengeResponse(final PacketAuthTokenResult authToken)
+    private void sendNtlmChallengeResponse(final PacketAuthTokenResult authToken,
+                                           final String user,
+                                           final String password,
+                                           final String domain)
             throws TdsException, java.io.IOException {
         try {
             comm.startPacket(TdsComm.NTLMAUTH);
@@ -3747,9 +3639,9 @@ public class Tds implements TdsDefinitions {
             }
         } catch (java.io.IOException e) {
             wChain.addException(new SQLException("Network problem. " + e.getMessage(), "08S01"));
-        } catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+        } catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException("Unknown response. " + e.getMessage(), "HY000"));
-        } catch (net.sourceforge.jtds.jdbc.TdsException e) {
+        } catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         } catch (SQLException e) {
             wChain.addException(e);
@@ -3814,9 +3706,9 @@ public class Tds implements TdsDefinitions {
             }
         } catch (java.io.IOException e) {
             wChain.addException(new SQLException("Network problem. " + e.getMessage(), "08S01"));
-        } catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
+        } catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException("Unknown response. " + e.getMessage(), "HY000"));
-        } catch (net.sourceforge.jtds.jdbc.TdsException e) {
+        } catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         } catch (SQLException e) {
             wChain.addException(e);

@@ -37,6 +37,8 @@ import java.util.*;
 import java.io.IOException;
 import java.net.UnknownHostException;
 
+import net.sourceforge.jtds.util.Logger;
+
 /**
  * A Connection represents a session with a specific database. Within the
  * context of a Connection, SQL statements are executed and results are
@@ -56,7 +58,7 @@ import java.net.UnknownHostException;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.18 2004-03-07 14:33:20 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.19 2004-03-07 23:03:32 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -64,14 +66,13 @@ import java.net.UnknownHostException;
 public class TdsConnection implements Connection
 {
     private String host = null;
-    // Can be either Driver.SYBASE or Driver.SQLSERVER
+    // Can be either TdsDefinitions.SYBASE or TdsDefinitions.SQLSERVER
     private int serverType = -1;
     // Port numbers are _unsigned_ 16 bit, short is too small
     private int port = -1;
     private int tdsVer = -1;
-    private int serverVer = -1;
     private String database = null;
-    private Properties initialProps = null;
+    private boolean useUnicode;
     private byte maxPrecision = 38; // Sybase + MS SQL 2000 default
 
     private final Vector tdsPool = new Vector();
@@ -88,9 +89,23 @@ public class TdsConnection implements Connection
 
     private TdsSocket tdsSocket = null;
     private SQLWarningChain warningChain;
+
     // SAfe Access to both of these fields is synchronized on procedureCache
     private HashMap procedureCache = new HashMap();
     private ArrayList proceduresOfTra = new ArrayList();
+
+    private EncodingHelper encoder = null;
+    private String charset = null;
+    /**
+     * This is set if the user specifies an explicit charset, so that we'll ignore the server
+     * charset.
+     */
+    private boolean charsetSpecified = false;
+
+    private String databaseProductName;
+    private String databaseProductVersion;
+    private int databaseMajorVersion;
+    private int databaseMinorVersion;
 
     /**
      * Object used to sync access to the main <code>Tds</code> instance.
@@ -100,7 +115,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.18 2004-03-07 14:33:20 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.19 2004-03-07 23:03:32 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -113,13 +128,26 @@ public class TdsConnection implements Connection
     public TdsConnection(Properties props)
             throws SQLException, TdsException {
 
-        host = props.getProperty(Tds.PROP_HOST);
+        host = props.getProperty(Tds.PROP_SERVERNAME);
         serverType = Integer.parseInt(props.getProperty(Tds.PROP_SERVERTYPE));
         port = Integer.parseInt(props.getProperty(Tds.PROP_PORT));
-        database = props.getProperty(Tds.PROP_DBNAME);
         String user = props.getProperty(Tds.PROP_USER);
         String password = props.getProperty(Tds.PROP_PASSWORD);
-        initialProps = props;
+        useUnicode = "true".equalsIgnoreCase(
+                props.getProperty(Tds.PROP_USEUNICODE, "true"));
+        // SAfe We don't know what database we'll get (probably master)
+        database = null;
+
+        String verString = props.getProperty(Tds.PROP_TDS, "7.0");
+        if (verString.equals("5.0")) {
+            // XXX This driver doesn't properly support TDS 5.0, AFAIK.
+            // Added 2000-06-07.
+            tdsVer = Tds.TDS50;
+        } else if (verString.equals("4.2")) {
+            tdsVer = Tds.TDS42;
+        } else {
+            tdsVer = Tds.TDS70;
+        }
 
         warningChain = new SQLWarningChain();
 
@@ -163,17 +191,27 @@ public class TdsConnection implements Connection
             throw new SQLException(e.getMessage(), "08004");
         }
 
-        Tds tmpTds = new Tds(this, initialProps, this.tdsSocket);
+        // Adellera
+        setCharset(props.getProperty(Tds.PROP_CHARSET));
+
+        Tds tmpTds = new Tds(this, tdsSocket, tdsVer, serverType, useUnicode);
         tdsPool.addElement(tmpTds);
         try {
             try {
-                tmpTds.logon(props.getProperty(Tds.PROP_DBNAME),
+                tmpTds.logon(host,
+                             props.getProperty(Tds.PROP_DBNAME),
+                             user,
+                             password,
+                             props.getProperty(Tds.PROP_DOMAIN, ""),
+                             charset,
+                             props.getProperty(Tds.PROP_APPNAME, "jTDS"),
+                             props.getProperty(Tds.PROP_PROGNAME, "jTDS"),
                              props.getProperty(Tds.PROP_MAC_ADDR));
-            } catch (IOException ioe) {
-                throw new SQLException(ioe.getMessage(), "08S01");
+            } catch (IOException ex) {
+                throw new SQLException(ex.getMessage(), "08S01");
             }
             final SQLWarningChain wChain = new SQLWarningChain();
-            tmpTds.initSettings(database, wChain);
+            tmpTds.initSettings(props.getProperty(Tds.PROP_DBNAME), wChain);
             wChain.checkForExceptions();
         } catch( SQLException ex ) {
             throw new SQLException("Logon failed.  " + ex.getMessage(),
@@ -181,14 +219,10 @@ public class TdsConnection implements Connection
                                    ex.getErrorCode());
         }
 
-        tdsVer = tmpTds.getTdsVer();
-        serverVer = tmpTds.getDatabaseMajorVersion();
-        database = tmpTds.getDatabase();
         lastUpdateCount = "true".equalsIgnoreCase(
                 props.getProperty(Tds.PROP_LAST_UPDATE_COUNT, "false"));
 
-        if (String.valueOf(TdsDefinitions.SQLSERVER).equals(
-                props.getProperty(Tds.PROP_SERVERTYPE))) {
+        if (serverType == Tds.SQLSERVER) {
             TdsStatement stmt = null;
             try {
                 stmt = new TdsStatement(this);
@@ -286,8 +320,18 @@ public class TdsConnection implements Connection
     private void changeSettings(boolean autoCommit, int transactionIsolationLevel)
             throws SQLException
     {
-        ((Tds) tdsPool.elementAt(0)).changeSettings(
-                autoCommit, transactionIsolationLevel);
+        synchronized (mainTdsMonitor) {
+            Tds tds = allocateTds(true);
+            try {
+                tds.changeSettings(autoCommit, transactionIsolationLevel);
+            } finally {
+                try {
+                    freeTds(tds);
+                } catch (TdsException ex) {
+                    throw new SQLException(ex.getMessage());
+                }
+            }
+        }
     }
 
     /**
@@ -313,17 +357,24 @@ public class TdsConnection implements Connection
         if (database.equals(catalog))
             return;
 
-        Tds tds = ((Tds) tdsPool.get(0));
-
-        // SAfe We have to synchronize this so that the Statement doesn't
-        //      begin sending data while we're changing the database.
-        synchronized (tds) {
-            tds.skipToEnd();
-            tds.changeDB(catalog, warningChain);
+        synchronized (mainTdsMonitor) {
+            Tds tds = allocateTds(true);
+            try {
+                tds.skipToEnd();
+                tds.changeDB(catalog, warningChain);
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
+            } finally {
+                try {
+                    freeTds(tds);
+                } catch (TdsException ex) {
+                    warningChain.addException(
+                            new SQLException(ex.getMessage()));
+                }
+            }
         }
 
         warningChain.checkForExceptions();
-        database = catalog;
     }
 
     /**
@@ -620,45 +671,49 @@ public class TdsConnection implements Connection
      * @exception  SQLException  if a database-access error occurs.
      */
     public synchronized void close() throws SQLException {
-        SQLException exception = null;
-
         if (isClosed)
             return;
 
         // MJH Need to rollback if in manual commit mode
-        try {
-            // SAfe Maybe we should commit regardless of the fact that we're in manual commit mode or not. There
-            //      might be uncommited statements, anyway (e.g. we were in manual commit mode, executed some
-            //      queries, went into auto commit mode but did not commit them).
-            Tds tds = ((Tds) tdsPool.elementAt(0));
-            synchronized (tds) {
-                // Consume all remaining packets
+        synchronized (mainTdsMonitor) {
+            Tds tds = allocateTds(true);
+            try {
                 tds.skipToEnd();
-
                 if (!autoCommit)
                     tds.rollback(); // MJH
                 tds.close();
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
+            } finally {
+                try {
+                    freeTds(tds);
+                } catch (TdsException ex) {
+                    warningChain.addException(
+                            new SQLException(ex.getMessage()));
+                }
             }
-        } catch (SQLException ex) {
-            exception = ex;
+        }
+
+        // Close the other Tds instances
+        for (int i = 1; i < tdsPool.size(); i++ ) {
+            ((Tds) tdsPool.get(i)).close();
         }
 
         tdsPool.clear();
 
         clearWarnings();
         isClosed = true;
-        //
         // Close the physical socket
         //
+        // SAfe Seems to me like it's already closed by Tds.close()
         try {
             tdsSocket.close();
         } catch (IOException e) {
-            if (exception == null)
-                exception = new SQLException(e.getMessage(), "01002");
+            warningChain.addException(
+                    new SQLException(e.getMessage(), "01002"));
         }
 
-        if (exception != null)
-            throw exception;
+        warningChain.checkForExceptions();
     }
 
     /**
@@ -767,7 +822,8 @@ public class TdsConnection implements Connection
         } else {
             i = findAnAvailableTds();
             if (i == -1) {
-                Tds tmpTds = new Tds(this, initialProps, this.tdsSocket);
+                Tds tmpTds = new Tds(this, tdsSocket, tdsVer, serverType,
+                                     useUnicode);
                 tdsPool.addElement(tmpTds);
 
                 i = findAnAvailableTds();
@@ -853,15 +909,26 @@ public class TdsConnection implements Connection
         // @todo SAfe Check when must the warnings actually be cleared
         warningChain.clearWarnings();
 
-        // MJH  Commit or Rollback Tds connections directly rather than mess with TdsStatement
-        try {
-            if (commit) {
-                ((Tds) tdsPool.elementAt(0)).commit();
-            } else {
-                ((Tds) tdsPool.elementAt(0)).rollback();
+        // MJH  Commit or Rollback Tds connections directly rather than mess
+        //      with TdsStatement
+        synchronized (mainTdsMonitor) {
+            Tds tds = allocateTds(true);
+            try {
+                if (commit) {
+                    tds.commit();
+                } else {
+                    tds.rollback();
+                }
+            } catch (SQLException ex) {
+                warningChain.addException(ex);
+            } finally {
+                try {
+                    freeTds(tds);
+                } catch (TdsException ex) {
+                    warningChain.addException(
+                            new SQLException(ex.getMessage()));
+                }
             }
-        } catch (java.sql.SQLException e) {
-            warningChain.addException(e);
         }
 
         warningChain.checkForExceptions();
@@ -897,7 +964,7 @@ public class TdsConnection implements Connection
                 && sql.trim().substring(0, 6).equalsIgnoreCase("INSERT")) {
             StringBuffer tmpSQL = new StringBuffer(sql);
 
-            if (serverType == Tds.SQLSERVER && serverVer >= 8) {
+            if (serverType == Tds.SQLSERVER && databaseMajorVersion >= 8) {
                 tmpSQL.append("\r\nSELECT SCOPE_IDENTITY() AS ID");
             } else {
                 tmpSQL.append("\r\nSELECT @@IDENTITY AS ID");
@@ -973,5 +1040,128 @@ public class TdsConnection implements Connection
     public java.sql.Savepoint setSavepoint(String str) throws java.sql.SQLException {
         NotImplemented("setSavePoint(String)");
         return null;
+    }
+
+    protected void setCharset(String charset) {
+        // If the user specified a charset, ignore environment changes
+        if (encoder != null && charsetSpecified)
+        {
+            Logger.println("Server charset " + charset + ". Ignoring.");
+            return;
+        }
+
+        // If true at the end of the method, the specified charset was used. Otherwise, iso_1 was.
+        charsetSpecified = charset != null;
+
+        if (charset == null || charset.length() > 30) {
+            charset = "iso_1";
+        }
+
+        if (charset.toLowerCase().startsWith("cp")) {
+            charset = "Cp" + charset.substring(2);
+        }
+
+        if (!charset.equals(this.charset)) {
+            // SAfe Use an internal variable to avoid NPEs elsewhere
+            EncodingHelper encoder = EncodingHelper.getHelper(charset);
+
+            if (encoder == null) {
+                if (Logger.isActive()) {
+                    Logger.println("Invalid charset: " + charset + ". Trying iso_1 instead.");
+                }
+
+                charset = "iso_1";
+                encoder = EncodingHelper.getHelper(charset);
+                charsetSpecified = false;
+            }
+
+            this.encoder = encoder;
+            this.charset = charset;
+        }
+
+        if (Logger.isActive()) {
+            Logger.println("Set charset to " + charset + '/' + encoder.getName());
+        }
+    }
+
+    public EncodingHelper getEncoder() {
+        return encoder;
+    }
+
+    protected void setDBServerInfo(String databaseProductName,
+                                   int databaseMajorVersion,
+                                   int databaseMinorVersion,
+                                   int buildNumber) {
+        this.databaseProductName = databaseProductName;
+        this.databaseMajorVersion = databaseMajorVersion;
+        this.databaseMinorVersion = databaseMinorVersion;
+
+        if (tdsVer == Tds.TDS70) {
+            StringBuffer buf = new StringBuffer(10);
+            if (databaseMajorVersion < 10) {
+                buf.append('0');
+            }
+            buf.append(databaseMajorVersion).append('.');
+            if (databaseMinorVersion < 10) {
+                buf.append('0');
+            }
+            buf.append(databaseMinorVersion).append('.');
+            buf.append(buildNumber);
+            while (buf.length() < 10) {
+                buf.insert(6, '0');
+            }
+            this.databaseProductVersion = buf.toString();
+        } else {
+            databaseProductVersion =
+                    databaseMajorVersion + "." + databaseMinorVersion;
+        }
+    }
+
+    /**
+     * Return the name that this database server program calls itself.
+     *
+     * @return    The DatabaseProductName value
+     */
+    String getDatabaseProductName() {
+        return databaseProductName;
+    }
+
+    /**
+     * Return the version that this database server program identifies itself with.
+     *
+     * @return    The DatabaseProductVersion value
+     */
+    String getDatabaseProductVersion() {
+        return databaseProductVersion;
+    }
+
+    /**
+     * Return the major version that this database server program identifies itself with.
+     *
+     * @return    the <code>databaseMajorVersion</code> value
+     */
+    int getDatabaseMajorVersion() {
+        return databaseMajorVersion;
+    }
+
+    /**
+     * Return the minor version that this database server program identifies itself with.
+     *
+     * @return    the <code>databaseMinorVersion</code> value
+     */
+    int getDatabaseMinorVersion() {
+        return databaseMinorVersion;
+    }
+
+    protected void databaseChanged(final String newDb, final String oldDb)
+            throws TdsException {
+        if (database != null && !oldDb.equalsIgnoreCase(database)) {
+            throw new TdsException("Old database mismatch.");
+        }
+
+        database = newDb;
+        if (Logger.isActive()) {
+            Logger.println("Changed database to " + newDb);
+        }
     }
 }

@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -116,6 +116,7 @@ public class Tds implements TdsDefinitions {
     int databaseMajorVersion;
 
     java.sql.Connection connection;
+    java.sql.Statement statement;
     String host;
     int serverType = -1;
     // either Tds.SYBASE or Tds.SQLSERVER
@@ -167,7 +168,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.21 2002-08-20 09:11:13 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -249,6 +250,21 @@ public class Tds implements TdsDefinitions {
         }
     }
 
+    /**
+     * Set the <code>Statement</code> currently using the Tds.
+     */
+    public void setStatement(Statement s)
+    {
+        statement = s;
+    }
+
+    /**
+     * Get the <code>Statement</code> currently using the Tds.
+     */
+    public Statement getStatement()
+    {
+        return statement;
+    }
 
     /*
      * cvtNativeTypeToJdbcType()

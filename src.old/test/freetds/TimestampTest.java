@@ -102,10 +102,11 @@ public class TimestampTest extends DatabaseTestCase
         pStmt.setTimestamp(2, t1);
         int count = pStmt.executeUpdate();
         assertTrue(count == 1);
+        pStmt.close();
 
         pStmt = cx.prepareStatement("select t1, t2, t3, t4 from #t0001");
 
-        ResultSet rs = stmt.executeQuery("select t1, t2, t3, t4 from #t0001");
+        ResultSet rs = pStmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
@@ -138,6 +139,7 @@ public class TimestampTest extends DatabaseTestCase
 
         pStmt.setNull(2, java.sql.Types.TIMESTAMP);
         count = pStmt.executeUpdate();
+        pStmt.close();
 
         pStmt = cx.prepareStatement("select mytime, mytime2, mytime3 from #t0004");
 
@@ -262,6 +264,7 @@ public class TimestampTest extends DatabaseTestCase
             count += pStmt.executeUpdate();
         }
         assertTrue(count == rowsToAdd);
+        pStmt.close();
 
         ResultSet rs = stmt.executeQuery("select s, i from #t0008");
         assertNotNull(rs);
@@ -301,6 +304,7 @@ public class TimestampTest extends DatabaseTestCase
 
             count += pStmt.executeUpdate();
         }
+        pStmt.close();
         assertTrue(count == rowsToAdd);
         cx.rollback();
 
@@ -316,7 +320,9 @@ public class TimestampTest extends DatabaseTestCase
         }
         assertTrue(count == 0);
         cx.commit();
+        stmt.close();
 
+        pStmt = cx.prepareStatement("insert into #t0009 values (?, ?)");
         rowsToAdd = 6;
         count = 0;
         for (int i = 1; i <= rowsToAdd; i++)
@@ -328,6 +334,7 @@ public class TimestampTest extends DatabaseTestCase
         }
         assertTrue(count == rowsToAdd);
         cx.commit();
+        pStmt.close();
 
         rs = stmt.executeQuery("select s, i from #t0009");
 
@@ -339,6 +346,7 @@ public class TimestampTest extends DatabaseTestCase
         }
         assertTrue(count == rowsToAdd);
         cx.commit();
+        stmt.close();
         cx.setAutoCommit(true);
     }
 
@@ -505,6 +513,7 @@ public class TimestampTest extends DatabaseTestCase
             count += pStmt.executeUpdate();
         }
         assertTrue(count == rowsToAdd);
+        pStmt.close();
 
         pStmt = cx.prepareStatement("select i from #t0014 for browse");
         ResultSet rs = pStmt.executeQuery();
@@ -516,6 +525,7 @@ public class TimestampTest extends DatabaseTestCase
             count++;
         }
         assertTrue(count == rowsToAdd);
+        pStmt.close();
 
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
@@ -536,6 +546,7 @@ public class TimestampTest extends DatabaseTestCase
             count++;
         }
         assertTrue(count == 5);
+        stmt.close();
 
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
@@ -573,6 +584,7 @@ public class TimestampTest extends DatabaseTestCase
             count += pStmt.executeUpdate();
         }
         assertTrue(count == rowsToAdd);
+        pStmt.close();
 
         stmt = cx.createStatement();
         ResultSet rs = stmt.executeQuery("select s from #t0015 select i from #t0015");
@@ -1065,6 +1077,7 @@ public class TimestampTest extends DatabaseTestCase
 
         int count = insert.executeUpdate();
         assertTrue(count == 1);
+        insert.close();
 
         ResultSet rs = stmt.executeQuery("select * from #t0021");
         assertNotNull(rs);
@@ -1076,6 +1089,7 @@ public class TimestampTest extends DatabaseTestCase
 
         assertTrue(compareBytes(a1, array1) == 0);
         assertTrue(compareBytes(a2, array1) == 0);
+        cx.close();
     }
 
     public void testNestedStatements0022() throws Exception
@@ -1463,24 +1477,26 @@ public class TimestampTest extends DatabaseTestCase
             + " c255 char(255)     not null, "
             + " v255 varchar(255)  not null) ");
 
-        PreparedStatement pStmt1 = cx.prepareStatement("insert into #t0040 values (?, ?)");
-        PreparedStatement pStmt2 = cx.prepareStatement("select c255, v255 from #t0040 order by c255");
+        PreparedStatement pStmt = cx.prepareStatement("insert into #t0040 values (?, ?)");
 
         String along = getLongString('a');
         String blong = getLongString('b');
 
-        pStmt1.setString(1, along);
-        pStmt1.setString(2, along);
-        int count = pStmt1.executeUpdate();
+        pStmt.setString(1, along);
+        pStmt.setString(2, along);
+        int count = pStmt.executeUpdate();
         assertTrue(count == 1);
+        pStmt.close();
 
         count = stmt.executeUpdate(""
             + "insert into #t0040 values ( "
             + "'" + blong + "', "
             + "'" + blong + "')");
         assertTrue(count == 1);
+        stmt.close();
 
-        ResultSet rs = pStmt2.executeQuery();
+        pStmt = cx.prepareStatement("select c255, v255 from #t0040 order by c255");
+        ResultSet rs = pStmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
@@ -1492,6 +1508,7 @@ public class TimestampTest extends DatabaseTestCase
         assertEquals(rs.getString("v255"), blong);
 
         assertTrue("Expected no result set", !rs.next());
+        pStmt.close();
 
         rs = stmt.executeQuery("select c255, v255 from #t0040 order by c255");
         assertNotNull(rs);
@@ -1505,6 +1522,8 @@ public class TimestampTest extends DatabaseTestCase
         assertEquals(rs.getString("v255"), blong);
 
         assertTrue("Expected no result set", !rs.next());
+
+        cx.close();
     }
 
     public void testPreparedStatement0041() throws Exception
@@ -1532,6 +1551,7 @@ public class TimestampTest extends DatabaseTestCase
             count += pStmt.executeUpdate();
         }
         assertTrue(count == rowsToAdd);
+        pStmt.close();
 
         ResultSet  rs = stmt.executeQuery("select s, i from #t0041");
         assertNotNull(rs);
@@ -1543,6 +1563,8 @@ public class TimestampTest extends DatabaseTestCase
             count++;
         }
         assertTrue(count == rowsToAdd);
+
+        cx.close();
     }
 
     public void testPreparedStatement0042() throws Exception
@@ -1554,22 +1576,23 @@ public class TimestampTest extends DatabaseTestCase
         Statement stmt = cx.createStatement();
         stmt.executeUpdate("create table #t0042 (s char(5) null, i integer null, j integer not null)");
 
-        PreparedStatement pStmt1 = cx.prepareStatement("insert into #t0042 (s, i, j) values (?, ?, ?)");
-        PreparedStatement pStmt2 = cx.prepareStatement("select i from #t0042 order by j");
+        PreparedStatement pStmt = cx.prepareStatement("insert into #t0042 (s, i, j) values (?, ?, ?)");
 
-        pStmt1.setString(1, "hello");
-        pStmt1.setNull(2, java.sql.Types.INTEGER);
-        pStmt1.setInt(3, 1);
+        pStmt.setString(1, "hello");
+        pStmt.setNull(2, java.sql.Types.INTEGER);
+        pStmt.setInt(3, 1);
 
-        int count = pStmt1.executeUpdate();
+        int count = pStmt.executeUpdate();
         assertTrue(count == 1);
 
-        pStmt1.setInt(2, 42);
-        pStmt1.setInt(3, 2);
-        count = pStmt1.executeUpdate();
+        pStmt.setInt(2, 42);
+        pStmt.setInt(3, 2);
+        count = pStmt.executeUpdate();
         assertTrue(count == 1);
+        pStmt.close();
 
-        ResultSet rs = pStmt2.executeQuery();
+        pStmt = cx.prepareStatement("select i from #t0042 order by j");
+        ResultSet rs = pStmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
@@ -1581,6 +1604,8 @@ public class TimestampTest extends DatabaseTestCase
         assertTrue(!rs.wasNull());
 
         assertTrue("Expected no result set", !rs.next());
+
+        cx.close();
     }
 
     public void testResultSet0043() throws Exception

@@ -70,6 +70,7 @@ public class CSUnitTest extends DatabaseTestCase {
       count += pStmt.executeUpdate();
     }
     assertTrue("count: " + count + " rowsToAdd: " + rowsToAdd,count == rowsToAdd);
+    pStmt.close();
     pStmt = con.prepareStatement(
     "select i from #t0003 order by i");
     int   rowLimit = 32;
@@ -1045,11 +1046,12 @@ public class CSUnitTest extends DatabaseTestCase {
         throw e;
       }
     }
+    pstmt.close();
 
-    query = "insert into #t0049a (b) values ('a')";
-    count = stmt.executeUpdate(query);
+    count = stmt.executeUpdate("insert into #t0049a (b) values ('a')");
     output.println("insert affected " + count + " rows");
 
+    pstmt = con.prepareStatement(query);
     pstmt.setInt(1, 1);
     pstmt.setString(2, "a");
     count = pstmt.executeUpdate();
@@ -1111,11 +1113,12 @@ public class CSUnitTest extends DatabaseTestCase {
         throw e;
       }
     }
+    pstmt.close();
 
-    query = "insert into #t0050a (b) values ('a')";
-    count = stmt.executeUpdate(query);
+    count = stmt.executeUpdate("insert into #t0050a (b) values ('a')");
     output.println("insert affected " + count + " rows");
 
+    pstmt = con.prepareStatement(query);
     pstmt.setInt(1, 1);
     pstmt.setString(2, "a");
     count = pstmt.executeUpdate();
@@ -1568,6 +1571,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     else
     {
+       pStmt.close();
        pStmt = con.prepareStatement("select a, b from #t0057");
 
        ResultSet  rs = pStmt.executeQuery();

@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.9 2002-08-19 11:25:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2002-08-20 09:11:13 alin_sinpalean Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.9 2002-08-19 11:25:31 alin_sinpalean Exp $
+ *@version    $Id: TdsConnection.java,v 1.10 2002-08-20 09:11:13 alin_sinpalean Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -118,7 +118,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.9 2002-08-19 11:25:31 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.10 2002-08-20 09:11:13 alin_sinpalean Exp $";
 
     protected int getTdsVer()
     {
@@ -780,6 +780,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
         if (i < tdsPool.size()) {
             // System.out.println("dealloacting a tds instance");
             ((TdsInstance) tdsPool.elementAt(i)).inUse = false;
+            tds.setStatement(null);
 
             // XXX Should also send a cancel to the server and throw out any
             // data that has already been sent.

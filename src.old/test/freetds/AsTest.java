@@ -59,18 +59,18 @@ public class AsTest extends DatabaseTestCase {
         "insert #tmp execute #spTestExec2 " +
         "select * from #tmp");
     CallableStatement cstmt = con.prepareCall("#spTestExec");
-    assertTrue(cstmt.execute());
+    assertTrue(!cstmt.execute());
 
 //    The JDBC-ODBC driver does not return update counts from stored procedures
 //    so we won't, either.
-//    assertTrue(cstmt.getUpdateCount() == 0);  // set
-//    assertTrue(!cstmt.getMoreResults());
-//    assertTrue(cstmt.getUpdateCount() == 0);  // create
-//    assertTrue(!cstmt.getMoreResults());
-//    assertTrue(cstmt.getUpdateCount() == 0);  // execute
-//    assertTrue(!cstmt.getMoreResults());
-//    assertTrue(cstmt.getUpdateCount() == 1);  // insert
-//    assertTrue(cstmt.getMoreResults());
+    assertTrue(cstmt.getUpdateCount() == 0);  // set
+    assertTrue(!cstmt.getMoreResults());
+    assertTrue(cstmt.getUpdateCount() == 0);  // create
+    assertTrue(!cstmt.getMoreResults());
+    assertTrue(cstmt.getUpdateCount() == 0);  // execute
+    assertTrue(!cstmt.getMoreResults());
+    assertTrue(cstmt.getUpdateCount() == 1);  // insert
+    assertTrue(cstmt.getMoreResults());
 
     ResultSet rs = cstmt.getResultSet();
     while (rs.next()) {
@@ -448,10 +448,11 @@ public class AsTest extends DatabaseTestCase {
   private void checkTime(long time) throws Throwable
   {
     PreparedStatement pstmt = con.prepareStatement("insert into #testTimestamp values (?)");
-    Statement stmt = con.createStatement();
     java.sql.Timestamp ts = new java.sql.Timestamp(time);
     pstmt.setTimestamp(1,ts);
-    pstmt.execute();
+    pstmt.executeUpdate();
+    pstmt.close();
+    Statement stmt = con.createStatement();
     ResultSet rs = stmt.executeQuery("select * from #testTimestamp");
     rs.next();
     java.sql.Timestamp tsres = rs.getTimestamp(1);

@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.29 2004-04-03 19:59:05 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.30 2004-04-03 21:01:38 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.29 2004-04-03 19:59:05 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.30 2004-04-03 21:01:38 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -888,23 +888,11 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length)
         throws SQLException {
-        if (reader == null || length < 0) {
-            setString(parameterIndex, null);
+        if (reader == null || length == 0) {
+            setParam(parameterIndex, null, java.sql.Types.CLOB, -1);
+        } else {
+            setParam(parameterIndex, reader, java.sql.Types.CLOB, length);
         }
-
-        StringBuffer value = new StringBuffer(length);
-        char[] buffer = new char[1024];
-        int bytes;
-
-        try {
-            while ((bytes = reader.read(buffer, 0, buffer.length)) != -1) {
-                value.append(buffer, 0, bytes);
-            }
-        } catch (java.io.IOException e) {
-            throw new SQLException("Error reading stream: " + e.getMessage());
-        }
-
-        setParam(parameterIndex, value, java.sql.Types.LONGVARCHAR, -1);
     }
 
     /**

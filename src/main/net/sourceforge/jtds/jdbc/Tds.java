@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.47 2004-04-03 19:59:05 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.48 2004-04-03 21:01:38 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.47 2004-04-03 19:59:05 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.48 2004-04-03 21:01:38 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -548,8 +548,15 @@ public class Tds implements TdsDefinitions {
                 case SYBTEXT:
                     {
                         comm.appendByte(SYBTEXT);
-                        sendSybImage(conn.getEncoder().getBytes(
-                                (String) actualParameterList[i].value));
+
+                        if (actualParameterList[i].value instanceof java.io.Reader) {
+                            sendSybImage((java.io.Reader) actualParameterList[i].value,
+                                         actualParameterList[i].scale);
+                        } else {
+                            sendSybImage(conn.getEncoder().getBytes(
+                                    (String) actualParameterList[i].value));
+                        }
+
                         break;
                     }
                 case SYBBIT:
@@ -2811,6 +2818,52 @@ public class Tds implements TdsDefinitions {
                 }
 
                 comm.appendBytes(buffer);
+            }
+        }
+    }
+
+    private void sendSybImage(final java.io.Reader value, int length)
+            throws java.io.IOException {
+        EncodingHelper encodingHelper = conn.getEncoder();
+        int sentLength = length;
+
+        if (value == null) {
+            sentLength = 0;
+        } else {
+            if (encodingHelper.isDBCS()) {
+                // Is this acceptable? Multi-byte character sets may send more
+                // bytes to the database than the number of characters.
+                // How does SQL Server/Sybase treat this length value?
+                // Is it the maximum amount of data that is expected or the
+                // exact length of the data expected or???
+                sentLength = length * 2;
+            }
+        }
+
+        // send the lenght of this piece of data
+        comm.appendTdsInt(sentLength);
+
+        // send the length of this piece of data again
+        comm.appendTdsInt(sentLength);
+
+        if (value != null) {
+            char[] buffer = new char[1024];
+
+            for (int i = 0; i < length; i += buffer.length) {
+                int result = value.read(buffer);
+
+                if (result == -1 && i < length) {
+                    throw new java.io.IOException("Data in stream less than specified by length");
+                } else if (i + result > length) {
+                    throw new java.io.IOException("More data in stream than specified with length");
+                } else if (result < buffer.length) {
+                    char[] tmpBuffer = new char[result];
+
+                    System.arraycopy(buffer, 0, tmpBuffer, 0, result);
+                    buffer = tmpBuffer;
+                }
+
+                comm.appendBytes(encodingHelper.getBytes(new String(buffer)));
             }
         }
     }

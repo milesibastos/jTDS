@@ -890,7 +890,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                                 + " are not suported.");
                         }
 
-                        param[crtCol].value = clob.getSubString(1, (int) clob.length());
+                        param[crtCol].value = clob.getCharacterStream();
                         param[crtCol].scale = (int) length;
                     }
 

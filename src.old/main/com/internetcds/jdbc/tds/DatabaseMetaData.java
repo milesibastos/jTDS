@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.16 2002-09-03 19:57:47 justinsb Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.17 2002-09-13 00:17:10 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
@@ -86,7 +86,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.16 2002-09-03 19:57:47 justinsb Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.17 2002-09-13 00:17:10 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -555,7 +555,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
             "   " + cat + ".dbo.syscolumns c,                 " +
             "   " + cat + ".dbo.systypes t                    " +
             "where o.type in ('S', 'V', 'U') and o.id=c.id    " +
-            "   and t.usertype=c.usertype                     " +
+            "   and t.xusertype=c.xusertype                   " +
             "   and USER_NAME(o.uid) LIKE                     " +
             "           '" + schemaPattern + "'               " +
             "   and o.name LIKE '" + tableNamePattern + "'    " ;
@@ -3473,85 +3473,85 @@ rs = m.getColumns("webstats", "%", "%", "%");
 
         System.out.println( "Done" );
     }
-    
+
     public java.sql.ResultSet getAttributes(String str, String str1, String str2, String str3) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getDatabaseMajorVersion() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getDatabaseMinorVersion() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getJDBCMajorVersion() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getJDBCMinorVersion() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getResultSetHoldability() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public int getSQLStateType() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.ResultSet getSuperTables(String str, String str1, String str2) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public java.sql.ResultSet getSuperTypes(String str, String str1, String str2) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean locatorsUpdateCopy() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean supportsGetGeneratedKeys() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean supportsMultipleOpenResults() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean supportsNamedParameters() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean supportsResultSetHoldability(int param) throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean supportsSavepoints() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
     public boolean supportsStatementPooling() throws java.sql.SQLException
     {
         throw new UnsupportedOperationException();
     }
-    
+
 }

@@ -1,6 +1,14 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/13/2002 - Alin Sinpalean
+
+ o Fixed DatabaseMetaData.getColumns() (temporarily, the final solution would
+   be to use a system stored procedure as with all the other meta data methods)
+   thanks to Dale Anderson (entraspan), author of the bug, and ultimately,
+   solver. I'm not sure this works on SQL Server 6.5, but it seems like no one
+   is using that anymore.
+
 09/11/2002 - Alin Sinpalean
 
  o Optimized TdsComm.getBytes() to use a fixed buffer and not allocate a new

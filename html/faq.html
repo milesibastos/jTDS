@@ -1,0 +1,306 @@
+<html>
+<head>
+<title>jTDS Project Home</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, driver, type 4, pure Java, SQL Server, JDBC 2.0, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SourceForge">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+
+<body>
+<table class="mainTable" cellpadding="0" cellspacing="0">
+  <tr>
+    <td colspan="3" class="logoWrapper">
+      <table cellpadding="0" cellspacing="0" class="logo">
+        <tr>
+          <td class="logo"><img src="images/logo.gif" alt="The jTDS Project" class="logo"></td>
+          <td class="logo"><img src="images/logoBg.gif" class="logoBg"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+  <tr>
+    <td width="9" height="9"><img src="images/maintl.gif" width="9" height="9"></td>
+    <td height="9" background="images/maint.gif"><img src="images/spacer.gif"></td>
+    <td width="9" height="9"><img src="images/maintr.gif" width="9" height="9"></td>
+  </tr>
+  <tr>
+    <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
+    <td class="content">
+      <p class="links">
+        <a href="index.html">Home</a>
+        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        | <span class="selected">FAQ</span>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
+        | <a href="doc.html">Documentation</a>
+        | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
+        | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
+        | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+      </p>
+      <p class="title">Frequently Asked Questions</p>
+      <ol>
+        <li><a href="#urlFormat">What is the URL format used by jTDS?</a></li>
+        <li><a href="#driverImplementation">What is the class name of the <code>Driver</code>/<code>DataSource</code> 
+          implementation?</a></li>
+        <li> <a href="#classNotFound">Why do I get a <code>ClassNotFoundError</code> 
+          when doing <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</a></li>
+        <li><a href="#noSuitableDriver">Why do I get a <code>&quot;java.sql.SQLException: 
+          No suitable driver&quot;</code> when trying to get a connection?</a></li>
+        <li><a href="#features">Which JDBC 2.0 features are and which features 
+          are not supported by jTDS?</a></li>
+        <li><a href="#windowsAuth">I was hoping that appending <code>";domain=X"</code> 
+          to the URL would be enough on a workstation that was already logged 
+          into domain X. Why do I still need to provide a username and password?</a></li>
+        <li><a href="#instanceName">Where does one place an instance name in the 
+          connect string? Connecting with <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code>
+          gives an SQLException with the message "Logon failed".</a></li>
+        <li><a href="#getConnectionHangs">I'm trying to connect to SQL Server 
+          6.5, but it hangs when calling <code>getConnection()</code>.</a></li>
+        <li><a href="#longColumnNames">Why do column names more than 30 characters 
+          long, get chopped off at 30 characters?</a></li>
+        <li><a href="#imageData4k">jTDS fetches only the first 4Kb of <code>IMAGE</code> 
+          data.</a></li>
+        <li><a href="#other">I didn't manage to find an answer to my problem in
+          this FAQ. What should I do?</a></li>
+      </ol>
+      <p class="question"><a name="urlFormat"></a>What is the URL format used 
+        by jTDS?</p>
+      <p>The URL format for jTDS is:</p>
+      <pre>    jdbc:jtds:&lt;server_type&gt;://&lt;server&gt;[:&lt;port&gt;][/&lt;database&gt;][;&lt;property&gt;=&lt;value&gt;[;...]]</pre>
+      <p>where <code>&lt;server_type&gt;</code> is one of either <code>'sqlserver'</code> 
+        or <code>'sybase'</code> (their meaning is quite obvious), <code>&lt;port&gt;</code> 
+        is the port the database server is listening to (default is 1433 for SQL 
+        Server and 4000 for Sybase) and <code>&lt;database&gt;</code> is the database 
+        name -- JDBC term: catalog -- (if not specified, the user's default database 
+        is used). The set of properties supported by jTDS is:</p>
+      <dl> 
+        <dt><code>user</code> (required)</dt>
+        <dd>User name to use for login. When using <code>getConnection(String 
+          url, String user, String password)</code> it's not required to set this 
+          property as it is passed as parameter, but you will have to set it when 
+          using <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
+        <dt><code>password</code> (required)</dt>
+        <dd>Password to use for login. When using <code>getConnection(String url, 
+          String user, String password)</code> it's not required to set this property 
+          as it is passed as parameter, but you will have to set it when using 
+          <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
+        <dt><code>TDS</code> (default - <code>&quot;7.0&quot;</code>)</dt>
+        <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol 
+          used by Microsoft SQL Server and Sybase to communicate with database 
+          clients. jTDS can use TDS 4.2 and 7.0. Version 4.2 is used by SQL Server 
+          6.5 and Sybase 10, version 7.0 is used by SQL Server 7.0. SQL Server 
+          2000 uses version 8.0 of the protocol, but jTDS can still communicate 
+          with SQL Server 2000 because newer database server versions understand 
+          older protocol versions.<br>
+          This means on one hand that SQL Server 7.0 can be used with TDS 4.2 
+          and on the other hand that the limitations of the protocol apply regardless 
+          of the server version (e.g. when using TDS 4.2 <code>VARCHAR</code>s 
+          are limited to 255 characters). As a conclusion, you must set this property 
+          to <code>&quot;4.2&quot;</code> when connecting to SQL Server 6.5 or 
+          Sybase and you should not set it (or set it to <code>&quot;7.0&quot;</code>) 
+          when connecting to any newer version of SQL Server.</dd>
+        <dt><code>charset</code> (default - the character set the server was installed 
+          with)</dt>
+        <dd>Very important setting, determines the byte value to character mapping 
+          for <code>CHAR</code>/<code>VARCHAR</code>/<code>TEXT</code> values. 
+          Applies for characters from the extended set (codes 128-255). For <code>NCHAR</code>/<code>NVARCHAR</code>/<code>NTEXT</code> 
+          values doesn't have any effect since these are stored using Unicode.</dd>
+        <dt><code>domain</code></dt>
+        <dd>Specifies the Windows domain to authenticate in. If present, jTDS 
+          uses Windows (NTLM) authentication instead of the usual SQL Server authentication 
+          (i.e. the user and password provided are the domain user and password).</dd>
+        <dt><code>instance</code></dt>
+        <dd>Named instance to connect to. SQL Server can run multiple so-called 
+          "named instances" (i.e. different server instances, running on different 
+          TCP ports) on the same machine. When using Microsoft tools, selecting 
+          one of these instances is made by using "&lt;host_name&gt;\&lt;instance_name&gt;" 
+          instead of the usual "&lt;host_name&gt". With jTDS you will have to 
+          split the two and use the instance name as a property.</dd>
+        <dt><code>appName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
+        <dd>Client library name. No practical use, it's displayed by Enterprise 
+          Manager or Profiler associated with the connection.</dd>
+        <dt><code>progName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
+        <dd>Application name. No practical use, it's displayed by Enterprise Manager 
+          or Profiler associated with the connection.</dd>
+        <dt><code>SendStringParametersAsUnicode</code> (default - <code>true</code>)</dt>
+        <dd>Determines whether string parameters are sent to the SQL Server database 
+          in Unicode or in the default character encoding of the database. This 
+          seriously affects SQL Server 2000 performance since it does not automatically 
+          cast the types (as 7.0 does), meaning that if a index column is Unicode 
+          and the string is submitted using the default character encoding (or 
+          the other way around) SQLServer will perform an index scan instead of 
+          an index seek.</dd>
+        <dt><code>lastUpdateCount</code> (default - <code>false</code>)</dt>
+        <dd>If <code>true</code> only the last update count will be returned by 
+          <code>executeUpdate()</code>. This is useful in case you are updating 
+          or inserting into tables that have triggers (such as replicated tables); 
+          there's no way to make the difference between an update count returned 
+          by a trigger and the actual update count but the actual update count 
+          is always the last as the triggers execute first. If <code>false</code> 
+          all update counts are returned; use <code>getMoreResults()</code> to 
+          loop through them.</dd>
+      </dl>
+      <p>These properties can be passed to jTDS in one of three ways: in the URL, in 
+        a <code>Properties</code> object passed to <code>getConnection()</code> 
+        or by using the <code>TdsDataSource</code>'s setters (if connections are 
+        obtained through a <code>DataSource</code> rather than using the <code>DriverManager</code>).
+        Because there is no URL when using the <code>TdsDataSource</code> there are
+        three other properties (with setters and getters) to take its place:
+        serverName, portNumber and databaseName (their meaning is quite clear).</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="driverImplementation"></a>What is the class name of the 
+        <code>Driver</code>/<code>DataSource</code> implementation?</p>
+      <p>The class name of jTDS' <code>java.sql.Driver</code> implementation is 
+        <code>net.sourceforge.jtds.jdbc.Driver</code>. The class name of the <code>javax.sql.DataSource</code> 
+        implementation is <code>net.sourceforge.jtds.jdbcx.TdsDataSource</code>.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="features"></a>Why do I get a <code>ClassNotFoundError</code> 
+        when doing <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code>?</p>
+      <p><code>ClassNotFoundError</code> is thrown by the Java VM when the classloader 
+        can not find a certain class. In this case it's the <code>net.sourceforge.jtds.jdbc.Driver</code>, 
+        which means that <code>jtds.jar</code> is not in the classpath. If you 
+        are getting this in an application start your application with</p>
+      <pre>    java -cp &lt;path_to_jtds&gt;/jtds.jar &lt;your_class&gt;</pre>
+      <p>If you experience this problem in a servlet/JSP you will have to add 
+        <code>jtds.jar</code> to your wep application's class path (e.g. in the 
+        application's web.xml file).</p>
+      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-0.6.jar</code> 
+        or something similar. If that's the case, replace <code>jtds.jar</code> 
+        in the above example with <code>jtds-0.6.jar</code> or whatever your specific 
+        file name is.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="noSuitableDriver"></a>Why do I get a <code>&quot;java.sql.SQLException: 
+        No suitable driver&quot;</code> when trying to get a connection?</p>
+      <p>The <code>&quot;No suitable driver&quot;</code> exception is thrown by 
+        the <code>DriverManager</code> when none of the registered <code>Driver</code> 
+        implementations recognizes the supplied URL. This means that you either 
+        did not register jTDS with the <code>DriverManager</code> (by doing a 
+        <code>Class.forName(&quot;net.sourceforge.jtds.jdbc.Driver&quot;)</code> 
+        first) or you mistyped the URL (e.g. <code>&quot;jbdc:jtds:...&quot;</code> 
+        instead of <code>&quot;jdbc:jtds:...&quot;</code>).</p>
+      <p>A common mistake is to append a semicolon (";") to the end of the URL
+        (e.g. <code>"jdbc:jtds:sqlserver://server/db;TDS=7.0;"</code> is wrong!).
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="features"></a>Which JDBC 2.1 features are and 
+        which features are not supported by jTDS?</p>
+      <p>jTDS offers full support for forward-only and scrollable/updateable result 
+        sets, batch updates, prepared and callable statements, unlimited number 
+        of statements per connection, complete database and result set meta data, 
+        and a <code>DataSource</code> implementation (which also implements <code>ConnectionPoolDataSource</code>). 
+        Support for a few JDBC 3.0 features such as generated keys retrieval is 
+        also implemented. There is currently no support for XA (distributed) transactions. 
+        Check out the jTDS <a href="features.html">feature matrix</a> for more 
+        details.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="windowsAuth"></a>I was hoping that appending 
+        <code>";domain=X"</code> to the URL would be enough on a workstation that 
+        was already logged into domain X. Why do I still need to provide a username 
+        and password?</p>
+      <p>jTDS is a type 4 (pure Java) JDBC driver. This means (among other things)
+        that it cannot access platform-specific features, such as determining the
+        currently logged user and his credentials. So the answer is simple: you still
+        have to provide the username and password because otherwise jTDS cannot log
+        into SQL Server.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="instanceName"></a>Where does one place an instance
+        name in the connect string? Connecting with 
+        <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code> gives an 
+        SQLException with the message "Logon failed".
+      <p>You will have to use the <code>instance</code> property (either append it to the 
+        URL or place it into the <code>Properties</code> you supply to <code>getConnection</code>) 
+        instead of doing it the Microsoft way. Sorry, but jTDS (and its ancestor 
+        FreeTDS) existed a long time before named instances so the URL could not 
+        be changed (and using it this way confuses the URL parser). 
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="getConnectionHangs"></a>I'm trying to connect 
+        to SQL Server 6.5, but it hangs when calling <code>getConnection()</code>.</p>
+      <p>jTDS uses by default TDS 7.0 (which is SQL Server 7.0's protocol) to 
+        communicate with the database server. When jTDS sends the 7.0 login request 
+        SQL Server 6.5 doesn't understand the it so it returns an error (<code>Login 
+        failed</code>). But because jTDS is expecting a TDS 7.0 packet as a response 
+        (not a TDS 4.2 packet) it doesn't properly understand the response packet 
+        and it hangs waiting for more data from the server. The solution is to set 
+        the <code>&quot;TDS&quot;</code> property to <code>&quot;4.2&quot;</code> 
+        (through the URL or <code>Properties</code> object passed to <code>getConnection()</code> 
+        or using the appropriate setter of <code>TdsDataSource</code>, if you 
+        are using the <code>TdsDataSource</code>).</p>
+      <p>For more information about URL format and the properties that may be 
+        passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="longColumnNames"></a>Why do column names more 
+        than 30 characters long, get chopped off at 30 characters?</p>
+      <p>You are very probably using TDS 4.2 to communicate with the SQL Server. 
+        TDS 4.2 is the protocol used by SQL Server 6.5 and it has the limitations 
+        of SQL Server 6.5 (among which a maximum column name size of 30 characters). 
+        jTDS 0.2 and earlier use TDS 4.2 by default. In order to change that you 
+        have to specify it explicitly in the <code>Properties</code> or the URL 
+        you supply when you create the connection. If you experience this problem 
+        with versions 0.3 or later, then you have specified (in the connection 
+        properties or URL) that TDS 4.2 should be used; remove that setting.</p>
+      <p>For more information about URL format and the properties that may be 
+        passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="imageData4k"></a>jTDS fetches only the first 
+        4Kb of <code>IMAGE</code> data.</p>
+      <p>You are very probably using TDS 4.2 to communicate with the SQL Server. 
+        TDS 4.2 is the protocol used by SQL Server 6.5 and it has the limitations 
+        of SQL Server 6.5 (among which a maximum size for <code>IMAGE</code> data 
+        of 4Kb). jTDS 0.2 and earlier use TDS 4.2 by default. In order to change 
+        that you have to specify it explicitly in the <code>Properties</code> 
+        or the URL you supply when you create the connection. If you experience 
+        this problem with versions 0.3 or later, then you have specified (in the 
+        connection properties or URL) that TDS 4.2 should be used; remove that 
+        setting.</p>
+      <p>For more information about URL format and the properties that may be 
+        passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
+      <p><a href="#">^ top ^</a></p>
+      <p class="question"><a name="other"></a>I didn't manage to find an answer 
+        to my problem in this FAQ. What should I do?</p>
+      <p>If you need help with any jTDS-related issue, post a message in the Help
+        forum (click <a href="http://sourceforge.net/forum/?group_id=33291">here</a>,
+        then click on "Help"). One thing, though: please register as a SourceForge
+        member if you haven't done so yet, so you can be automatically notified of
+        updates to the questions you post.</p>
+      <p>If you encountered an issue that you have tested and retested and you're 
+        sure it's a bug, use the Bugs link on top of the page. Again, make sure you
+        are a SourceForge member AND that you are logged in when you post.
+      <p><a href="#">^ top ^</a></p>
+    </td>
+    <td width="9" background="images/mainr.gif"><img src="images/spacer.gif"></td>
+  </tr>
+  <tr>
+    <td width="9" height="9"><img src="images/mainbl.gif" width="9" height="9"></td>
+    <td height="9" background="images/mainb.gif"><img src="images/spacer.gif"></td>
+    <td width="9" height="9"><img src="images/mainbr.gif" width="9" height="9"></td>
+  </tr>
+  <tr>
+    <td colspan="3">
+      <table border="0" cellspacing="0" width="100%" class="outer">
+        <tr>
+          <td class="copyright" width="150">
+            Project hosted by<br><br>
+            <A href="http://sourceforge.net/projects/jtds" target="_top"><IMG src="http://sourceforge.net/sflogo.php?group_id=33291&amp;type=2" border="0" alt="SourceForge Logo" class="otherLogo"></A><br>
+          </td>
+          <td class="copyright" width="500">WebRing member<br><br>
+            <script language=javascript src="http://ss.webring.com/navbar?f=j;y=alin_sinpalean;u=10063174"></script>
+            <noscript><center><table bgcolor=gray cellspacing=0 border=2 bordercolor=red>
+            <tr><td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center>
+            <font face=arial size=-1>This site is a member of WebRing.
+            To browse visit <a href="http://ss.webring.com/navbar?f=l;y=alin_sinpalean;u=10063174">
+            here</a>.</font></td></tr></table></td></tr></table></center></noscript>
+          </td>
+          <td class="copyright" width="150">
+            Web Design<br><br>
+            <a href="http://anca13.go.ro" class="outer">Anca Sinpalean</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

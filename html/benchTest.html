@@ -1,15 +1,60 @@
 <html>
 <head>
-<title>i-net Software BenchTest 2.1 for MS SQL Server Results</title>
+<title>jTDS Project Home</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, driver, type 4, pure Java, SQL Server, JDBC 2.0, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SourceForge">
 <link rel="stylesheet" href="style.css" type="text/css">
 <style>
-td.number { text-align: right; }
-td.failed { text-align: right; color: red; }
-td.fastest { color: #00ff00; }
+table.inner td.number { text-align: right; }
+table.inner td.failed { text-align: right; color: red; }
+table.inner td.fastest { color: #00ff00; }
 </style>
 </head>
-<body bgcolor="#ffffff">
+
+<body>
+<table class="mainTable" cellpadding="0" cellspacing="0">
+  <tr>
+    <td colspan="3" class="logoWrapper">
+      <table cellpadding="0" cellspacing="0" class="logo">
+        <tr>
+          <td class="logo"><img src="images/logo.gif" alt="The jTDS Project" class="logo"></td>
+          <td class="logo"><img src="images/logoBg.gif" class="logoBg"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+  <tr>
+    <td width="9" height="9"><img src="images/maintl.gif" width="9" height="9"></td>
+    <td height="9" background="images/maint.gif"><img src="images/spacer.gif"></td>
+    <td width="9" height="9"><img src="images/maintr.gif" width="9" height="9"></td>
+  </tr>
+  <tr>
+    <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
+    <td class="content">
+      <p class="links">
+        | <a href="index.html">Home</a>
+        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        | <a href="faq.html">FAQ</a>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
+        | <a href="doc.html">Documentation</a>
+        | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
+        | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
+        | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+      </p>
+
+
+<!--
+==================================
+  Content starts here
+==================================
+-->
+
+
 <p class="title">i-net Software BenchTest 2.1 for MS SQL Server Results</p>
 <p>These are the results of running i-net Software's <a href="http://www.inetsoftware.de/English/Produkte/JDBC2/BenchTest2_1.zip">BenchTest 
   2.1 for MS SQL Server</a>. The tests were run against an SQL Server 2000 over 
@@ -24,7 +69,7 @@ td.fastest { color: #00ff00; }
   would not have affected the final standings too much. If you want some more 
   exact results for JSQLConnect, download it and the i-net Software BenchTest 
   and do the testing yourself. It's very easy.</p>
-<table cellspacing="0">
+<table class="inner" cellspacing="0">
   <tr> 
     <td colspan="6"> 
       <p class="title">Tests run with rowcount = 1000</p>
@@ -261,10 +306,10 @@ td.fastest { color: #00ff00; }
   </tr>
 </table>
 <p class="title">The tests explained</p>
-<p>All tests were run on a table having one INT primary key column and nullable 
-  columns for each SQL Server type (about 20 in all). The rowcount is a parameter 
-  that determines the size of each test (number of rows inserted/updated/retrieved 
-  or Blob size).</p>
+      <p>All tests use a table with an INT primary key and nullable columns of 
+        each SQL Server base type (about 20 in all). The rowcount is a parameter 
+        that determines the size of each test (number of rows inserted/updated/retrieved 
+        or Blob size).</p>
 <ul>
   <li>UnpreparedInsert - Insert rowcount rows with default values with a classic 
     INSERT using a plain statement.</li>
@@ -298,5 +343,46 @@ td.fastest { color: #00ff00; }
   (the other uses the default 'Direct' method).<br>
   <a name="_note_ODBC"></a><sup>2</sup> The JDBC-ODBC bridge failed on the CursorDelete 
   test and closed the connection causing the rest of the tests to also fail.</p>
+
+
+<!--
+==================================
+  Content ends here
+==================================
+-->
+
+    </td>
+    <td width="9" background="images/mainr.gif"><img src="images/spacer.gif"></td>
+  </tr>
+  <tr>
+    <td width="9" height="9"><img src="images/mainbl.gif" width="9" height="9"></td>
+    <td height="9" background="images/mainb.gif"><img src="images/spacer.gif"></td>
+    <td width="9" height="9"><img src="images/mainbr.gif" width="9" height="9"></td>
+  </tr>
+  <tr>
+    <td colspan="3">
+      <table border="0" cellspacing="0" width="100%" class="outer">
+        <tr>
+          <td class="copyright" width="150">
+            Project hosted by<br><br>
+            <A href="http://sourceforge.net/projects/jtds" target="_top"><IMG src="http://sourceforge.net/sflogo.php?group_id=33291&amp;type=2" border="0" alt="SourceForge Logo" class="otherLogo"></A><br>
+          </td>
+          <td class="copyright" width="500">WebRing member<br><br>
+            <script language=javascript src="http://ss.webring.com/navbar?f=j;y=alin_sinpalean;u=10063174"></script>
+            <noscript><center><table bgcolor=gray cellspacing=0 border=2 bordercolor=red>
+            <tr><td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center>
+            <font face=arial size=-1>This site is a member of WebRing.
+            To browse visit <a href="http://ss.webring.com/navbar?f=l;y=alin_sinpalean;u=10063174">
+            here</a>.</font></td></tr></table></td></tr></table></center></noscript>
+          </td>
+          <td class="copyright" width="150">
+            Web Design<br><br>
+            <a href="http://anca13.go.ro" class="outer">Anca Sinpalean</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>

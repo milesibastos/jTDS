@@ -1,0 +1,109 @@
+<html>
+<head>
+<title>jTDS Project Home</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, driver, type 4, pure Java, SQL Server, JDBC 2.0, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SourceForge">
+<link rel="stylesheet" href="style.css" type="text/css">
+</head>
+
+<body>
+<table class="mainTable" cellpadding="0" cellspacing="0">
+  <tr>
+    <td colspan="3" class="logoWrapper">
+      <table cellpadding="0" cellspacing="0" class="logo">
+        <tr>
+          <td class="logo"><img src="images/logo.gif" alt="The jTDS Project" class="logo"></td>
+          <td class="logo"><img src="images/logoBg.gif" class="logoBg"></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="3">&nbsp;</td>
+  </tr>
+  <tr>
+    <td width="9" height="9"><img src="images/maintl.gif" width="9" height="9"></td>
+    <td height="9" background="images/maint.gif"><img src="images/spacer.gif"></td>
+    <td width="9" height="9"><img src="images/maintr.gif" width="9" height="9"></td>
+  </tr>
+  <tr>
+    <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
+    <td class="content">
+      <p class="links">
+        <span class="selected">Home</span>
+        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        | <a href="faq.html">FAQ</a>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
+        | <a href="doc.html">Documentation</a>
+        | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
+        | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
+        | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+      </p>
+      <p class="title">Overview</p>
+      <p> jTDS is an open source 100% pure Java (type 4) JDBC 2.1 driver for the 
+        Microsoft SQL Server series (6.5, 7.x and 2000) and Sybase 10. jTDS is 
+        based on the work of the <a href="http://www.freetds.org">FreeTDS</a> 
+        project and is currently the fastest complete JDBC driver for SQL Server 
+        and Sybase. Release 0.7.1 is 100% JDBC 2.1 compatible, supporting forward-only 
+        and scrollable/updateable ResultSets, multiple concurrent (completely 
+        independent) Statements per Connection and implementing all of the DatabaseMetaData 
+        and ResultSetMetaData methods. A few JDBC 3.0 features (such as retrieval 
+        of generated keys) are also implemented.</p>
+      <p> Quite a few of the commercial JDBC drivers out there are based on jTDS 
+        (or FreeTDS), even if they no longer acknowledge this. jTDS has been tested 
+        with virtually all of the available JDBC-based database management tools 
+        and is the driver of choice for most of these (DataDino and Aqua DataStudio 
+        even contain it). jTDS is also becoming a common choice for enterprise-level 
+        applications.</p>
+      <p class="title">Installation and usage</p>
+      <p> Because it's a type 4 driver, jTDS does not need any installation whatsoever. 
+        Just add the jar file to your application's classpath and you're done. 
+        All you need to know is the Driver and DataSource implementation class 
+        names and the URL format. The class names are <code>net.sourceforge.jtds.jdbc.Driver</code> 
+        and <code>net.sourceforge.jtds.jdbcx.TdsDataSource</code> and the URL 
+        looks like this:</p>
+      <pre>    jdbc:jtds:&lt;server_type&gt;://&lt;server&gt;[:&lt;port&gt;][/&lt;database&gt;][;&lt;property&gt;=&lt;value&gt;[;...]]</pre>
+      <p> where <code>&lt;server_type&gt;</code> is one of either 'sqlserver' 
+        or 'sybase' (the meaning is quite obvious), <code>&lt;port&gt;</code> 
+        is the server's TCP port (with a default of 1433 for SQL Server and 4000 
+        for Sybase) and <code>&lt;database&gt;</code> is the database name -- 
+        or catalog in the JDBC terminology -- (default is 'master'). For more 
+        information, check out the <a href="faq.html">Frequently Asked Questions</a> 
+        page.</p>
+    </td>
+    <td width="9" background="images/mainr.gif"><img src="images/spacer.gif"></td>
+  </tr>
+  <tr>
+    <td width="9" height="9"><img src="images/mainbl.gif" width="9" height="9"></td>
+    <td height="9" background="images/mainb.gif"><img src="images/spacer.gif"></td>
+    <td width="9" height="9"><img src="images/mainbr.gif" width="9" height="9"></td>
+  </tr>
+  <tr>
+    <td colspan="3">
+      <table border="0" cellspacing="0" width="100%" class="outer">
+        <tr>
+          <td class="copyright" width="150">
+            Project hosted by<br><br>
+            <A href="http://sourceforge.net/projects/jtds" target="_top"><IMG src="http://sourceforge.net/sflogo.php?group_id=33291&amp;type=2" border="0" alt="SourceForge Logo" class="otherLogo"></A><br>
+          </td>
+          <td class="copyright" width="500">WebRing member<br><br>
+            <script language=javascript src="http://ss.webring.com/navbar?f=j;y=alin_sinpalean;u=10063174"></script>
+            <noscript><center><table bgcolor=gray cellspacing=0 border=2 bordercolor=red>
+            <tr><td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center>
+            <font face=arial size=-1>This site is a member of WebRing.
+            To browse visit <a href="http://ss.webring.com/navbar?f=l;y=alin_sinpalean;u=10063174">
+            here</a>.</font></td></tr></table></td></tr></table></center></noscript>
+          </td>
+          <td class="copyright" width="150">
+            Web Design<br><br>
+            <a href="http://anca13.go.ro" class="outer">Anca Sinpalean</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

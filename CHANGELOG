@@ -4,6 +4,8 @@ Changes from jTDS 0.7.1
 03/14/2004 - Alin Sinpalean
  o Applied Mike's version 4 of the single connection patch fixing a number of
    issues (see patch #912364 for the exact description).
+ o Updated the home page with a lot of new stuff and added it to the CVS
+   repository.
 
 03/13/2004 - Alin Sinpalean
  o Applied a patch by jarek_woloszyn fixing the behavior of lastUpdateCount

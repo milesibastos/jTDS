@@ -181,9 +181,13 @@ public class ResultSetTest extends TestBase {
     /**
      * Test BIGINT data type.
      */
-/*
     public void testGetObject5() throws Exception {
-        long data = 1;
+        if (!props.getProperty("TDS", "7.0").equals("8.0")) {
+            System.out.println("testGetObject5() requires TDS 8");
+            return;
+        }
+
+    	long data = 1;
 
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #getObject5 (data BIGINT)");
@@ -220,7 +224,37 @@ public class ResultSetTest extends TestBase {
         stmt2.close();
         rs.close();
     }
-*/
+
+    /**
+     * Test for bug [961594] ResultSet.
+     */
+    public void testResultSetScroll1() throws Exception {
+    	int count = 100;
+    	
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #resultSetScroll1 (data INT)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll1 (data) VALUES (?)");
+
+        for (int i = 1; i <= count; i++) {
+        	pstmt.setInt(1, i);
+        	assertTrue(pstmt.executeUpdate() == 1);
+        }
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+        		ResultSet.CONCUR_READ_ONLY);
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #resultSetScroll1");
+
+        assertTrue(rs.last());
+        assertTrue(rs.getRow() == count);
+        
+        stmt2.close();
+        rs.close();
+    }
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

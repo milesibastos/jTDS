@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.9 2004-01-29 19:42:10 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.10 2004-01-29 23:30:32 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.9 2004-01-29 19:42:10 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.10 2004-01-29 23:30:32 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -209,29 +209,22 @@ public class TdsStatement implements java.sql.Statement
     }
 
     private boolean executeCallImpl(Tds tds, String name, ParameterListItem[] formalParameterList,
-        ParameterListItem[] actualParameterList, SQLWarningChain wChain) throws SQLException
-    {
+        ParameterListItem[] actualParameterList, SQLWarningChain wChain) throws SQLException {
         wChain.clearWarnings();
         // SAfe This is where all outstanding results must be skipped, to make
         //      sure they don't interfere with the the current ones.
         skipToEnd();
 
-        boolean result;
-
         try {
             // execute the stored procedure.
             tds.executeProcedure(name, formalParameterList, actualParameterList, this, wChain, getQueryTimeout());
 
-            result = getMoreResults(tds, warningChain, true);
+            return getMoreResults(tds, warningChain, true);
+        } catch (TdsException e) {
+            throw new SQLException(e.toString());
+        } catch (java.io.IOException e) {
+            throw new SQLException(e.toString());
         }
-        catch ( TdsException e ) {
-            throw new SQLException( e.toString() );
-        }
-        catch ( java.io.IOException e ) {
-            throw new SQLException( e.toString() );
-        }
-
-        return result;
     }
 
     /**

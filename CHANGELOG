@@ -1,6 +1,10 @@
 Changes from jTDS 0.6
 ========================
 
+02/18/2004 - Brian Heineman
+ o Corrected CallableStatement parsing of stored procedure names containing
+   spaces.
+
 02/17/2004 - Alin Sinpalean
  o Seems like yesterday I didn't commit part of the files. So here they are.
  o Fixed the ArrayIndexOutOfBoundsException thrown by TdsConnection.freeTds

@@ -64,15 +64,16 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.14 2004-02-17 19:03:25 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.15 2004-02-18 19:17:53 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.14 2004-02-17 19:03:25 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.15 2004-02-18 19:17:53 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
     private int lastOutParam = -1;
+
     /**
      * Return value of the procedure call.
      */
@@ -114,15 +115,18 @@ implements java.sql.CallableStatement {
             i = 4;
         }
 
+        boolean inString = false;
+
         // Find start of stored procedure name or return variable.
         for (; i < length; i++) {
             char ch = rawQueryString.charAt(i);
 
             if (Character.isLetterOrDigit(ch)
                 || ch == '#'                
-                || ch == '['
-                || ch == '"'
                 || ch == '?') {
+                break;
+            } else if (ch == '[' || ch == '"') {
+                inString = true;
                 break;
             }
         }
@@ -146,17 +150,33 @@ implements java.sql.CallableStatement {
         }
 
         // Find the end of the procedure name
-        for (; i < length; i++) {
+        for (i++; i < length; i++) {
             char ch = rawQueryString.charAt(i);
 
-            if (!Character.isLetterOrDigit(ch)
-                && ch != '#'
-                && ch != '_'
-                && ch != '.'
-                && ch != ']'
-                && ch != '"') {
-                break;
+            // While this parsing does not validate that a quoted identifier ends
+            // with the the same style as it was opened, id does detect the procedure
+            // name properly and lets the database validate the identifiers
+            // (which it does anyway).
+            if (inString) {
+                if (ch == ']' || ch == '"') {
+                    inString = false;
+                }
+            } else {
+                if (ch == '[' || ch == '"') {
+                    inString = true;
+                } else if (!Character.isLetterOrDigit(ch)
+                    && ch != '#'
+                    && ch != '_'
+                    && ch != '.') {
+                    break;
+                }
             }
+        }
+
+        if (inString) {
+            throw new SQLException("Invalid procedure name detected; expected "
+                                   + "idendifer to be closed properly by \" or ]: "
+                                   + sql);
         }
 
         // Skip non-whitespace characters.

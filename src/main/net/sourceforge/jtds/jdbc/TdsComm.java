@@ -43,7 +43,7 @@ import java.sql.Timestamp;
  * @author     Craig Spannring
  * @author     Igor Petrovski
  * @created    14 September 2001
- * @version    $Id: TdsComm.java,v 1.11 2004-03-14 16:07:03 alin_sinpalean Exp $
+ * @version    $Id: TdsComm.java,v 1.12 2004-04-04 00:42:01 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -100,7 +100,7 @@ public class TdsComm implements TdsDefinitions {
      */
     byte resBuffer[] = new byte[256];
 
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.11 2004-03-14 16:07:03 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.12 2004-04-04 00:42:01 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -357,6 +357,26 @@ public class TdsComm implements TdsDefinitions {
     }
 
     /**
+     * Appends the 16-bit characters from the <code>char</code> array, without
+     * narrowing the characters. Sybase lets the client decide what byte order
+     * to use but it appears that SQLServer 7.0 only uses little-endian byte
+     * order.
+     *
+     * @param  chars                    <code>char</code> array to append
+     * @param  len                      number of characters to append
+     * @exception  java.io.IOException  if an I/O error occurs
+     */
+    public void appendChars(char[] chars, int len) throws java.io.IOException {
+        for (int i = 0; i < len; ++i) {
+            int c = chars[i];
+            byte b1 = (byte) (c & 0xFF);
+            byte b2 = (byte) ((c >> 8) & 0xFF);
+            appendByte(b1);
+            appendByte(b2);
+        }
+    }
+
+    /**
      * Send the logical packet that has been constructed.
      *
      * @exception  java.io.IOException  if an I/O error occurs
@@ -412,12 +432,11 @@ public class TdsComm implements TdsDefinitions {
             storeByte(6, (byte) (tdsVer == TDS70 ? 1 : 0));
             storeByte(7, (byte) 0);
             //
-            // Store the returnred buffer as the original output
+            // Store the returned buffer as the original output
             // buffer may be cached by TdsSocket
             //
-            outBuffer = tdsSocket.sendNetPacket(this, outBuffer);
-            packetsSent++;
-
+            // SAfe Also log before sending, to make sure we don't log zeros.
+            //      Probably should move this to TdsSocket at some point.
             if (Logger.isActive()) {
                 String dump = HexDump.hexDump(outBuffer, nextOutBufferIndex);
                 String t = (new Timestamp(
@@ -425,6 +444,9 @@ public class TdsComm implements TdsDefinitions {
                 Logger.println("Instance " + id + " @ " + t
                                + " sent packet #" + packetsSent + "\n" + dump);
             }
+
+            outBuffer = tdsSocket.sendNetPacket(this, outBuffer);
+            packetsSent++;
         }
     }
 

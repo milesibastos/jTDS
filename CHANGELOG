@@ -1,6 +1,14 @@
 Changes from jTDS 0.8-rc1
 =========================
 
+04/04/2004 - Alin Sinpalean
+ o Cleaned up TEXT and IMAGE sending. Now there's only one method for each of
+   them. Also simplified CHAR/VARCHAR and BINARY/VARBINARY sending code.
+ o Added an appendChars method to TdsComm that accepts a char array and a length
+   as parameters.
+ o Moved output logging before the call to TdsSocket.sendNetPacket() to avoid
+   logging zeros (if the method returned a new buffer and buffered the old one).
+
 04/03/2004 - Brian Heineman
  o Updated binary data support so that data set via a stream or Blob is not
    cached entirely in memory before being sent to the server.  No more than

@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.16 2004-09-23 14:26:59 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.17 2004-09-23 16:13:02 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -208,6 +208,17 @@ public class JtdsResultSet implements ResultSet {
         }
 
         columns[colIndex - 1].jdbcType = jdbcType;
+    }
+
+    /**
+     * Set the specified column's data value.
+     *
+     * @param colIndex The index of the column in the row.
+     * @param value The new column value.
+     */
+    protected void setColValue(int colIndex, Object value, int length)
+        throws SQLException {
+        checkUpdateable();
     }
 
     /**
@@ -719,7 +730,10 @@ public class JtdsResultSet implements ResultSet {
 
     public void updateBinaryStream(int columnIndex, InputStream inputStream, int length)
         throws SQLException {
-        ColData data = getColumn(columnIndex);
+        if (columnIndex < 1 || columnIndex > columns.length) {
+            throw new IllegalArgumentException("columnIndex "
+                    + columnIndex + " invalid");
+        }
 
         checkUpdateable();
 
@@ -740,8 +754,7 @@ public class JtdsResultSet implements ResultSet {
 
         }
 
-        data.setValue(inputStream);
-        data.setLength(length);
+        setColValue(columnIndex, inputStream, length);
     }
 
     public Reader getCharacterStream(int columnIndex) throws SQLException {
@@ -756,7 +769,10 @@ public class JtdsResultSet implements ResultSet {
 
     public void updateCharacterStream(int columnIndex, Reader reader, int length)
         throws SQLException {
-        ColData data = this.getColumn(columnIndex);
+        if (columnIndex < 1 || columnIndex > columns.length) {
+            throw new IllegalArgumentException("columnIndex "
+                    + columnIndex + " invalid");
+        }
 
         checkUpdateable();
 
@@ -776,9 +792,7 @@ public class JtdsResultSet implements ResultSet {
                                     Support.getJdbcTypeName(ci.jdbcType)), "22005");
 
         }
-
-        data.setValue(reader);
-        data.setLength(length);
+        setColValue(columnIndex, reader, length);
     }
 
     public Object getObject(int columnIndex) throws SQLException {
@@ -794,9 +808,13 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateObject(int columnIndex, Object x) throws SQLException {
-        ColData data = getColumn(columnIndex);
         checkUpdateable();
-        int length = -1;
+        if (columnIndex < 1 || columnIndex > columnCount) {
+            throw new SQLException(Messages.get("error.resultset.colindex",
+                    Integer.toString(columnIndex)),
+                    "07009");
+        }
+        int length = 0;
 
         if (x != null) {
             ColInfo ci = columns[columnIndex - 1];
@@ -818,10 +836,12 @@ public class JtdsResultSet implements ResultSet {
             }
         }
 
-        data.setValue(x);
-        if (length != -1) {
-            data.setLength(length);
+        if (x instanceof String) {
+            length = ((String)x).length();
+        } else if (x instanceof byte[]) {
+            length = ((byte[])x).length;
         }
+        setColValue(columnIndex, x, length);
     }
 
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {

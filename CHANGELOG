@@ -2,6 +2,9 @@ Changes from jTDS 0.9-rc2
 =========================
 
 09/23/2004 - Alin Sinpalean
+ o Applied Mike's patch [1030475] Scrollable/Updateable result sets for Sybase.
+
+09/23/2004 - Alin Sinpalean
  o Changed the default TDS version to 8.0 when connecting to SQL Server.
  o Corrected bug [1032278] metadata.getColumnClassName not match
    resultset.getObject. Also improved handling of LOB columns in updateable

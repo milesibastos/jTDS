@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.17 2004-09-16 09:12:16 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.18 2004-09-23 16:13:02 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -246,7 +246,17 @@ public class JtdsStatement implements java.sql.Statement {
 
                     return rs;
                 } else {
-                    // Sybase cursor logic goes here (one day).
+                    // Use client side cursor for Sybase
+                    JtdsResultSet rs =
+                        new CachedResultSet(this,
+                                sql,
+                                spName,
+                                params,
+                                resultSetType,
+                                resultSetConcurrency);
+                    currentResult = rs;
+
+                    return rs;
                 }
             } catch (SQLException e) {
                 if (connection == null || connection.isClosed()) {
@@ -328,7 +338,17 @@ public class JtdsStatement implements java.sql.Statement {
 
                     return true;
                 } else {
-                    // Sybase cursor logic goes here (one day).
+                    // Use client side cursor for Sybase
+                    JtdsResultSet rs = new CachedResultSet(
+                            this,
+                            sql,
+                            spName,
+                            params,
+                            resultSetType,
+                            resultSetConcurrency);
+                    currentResult = rs;
+
+                    return true;
                 }
             } catch (SQLException e) {
                 if (connection == null || connection.isClosed()) {

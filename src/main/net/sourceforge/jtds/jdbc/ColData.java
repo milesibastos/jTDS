@@ -21,7 +21,7 @@ package net.sourceforge.jtds.jdbc;
  * This class encapsulates a column data value.
  *
  * @author Mike Hutchinson
- * @version $Id: ColData.java,v 1.5 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: ColData.java,v 1.6 2004-09-23 16:13:02 alin_sinpalean Exp $
  */
 public class ColData {
     /** The column value or null */
@@ -49,6 +49,16 @@ public class ColData {
         } else if (this.value instanceof byte[]) {
             length = ((byte[]) this.value).length;
         }
+    }
+
+    /**
+     * Construct a column data item as a copy of an existing one.
+     * @param col A populated column data item to clone.
+     */
+    ColData(ColData col) {
+        this.length  = col.length;
+        this.updated = col.updated;
+        this.value   = col.value;
     }
 
     /**
@@ -101,15 +111,6 @@ public class ColData {
      */
     void setValue(Object value) {
         this.value = value;
-
-        if (this.value instanceof String) {
-            length = ((String) this.value).length();
-        } else if (this.value instanceof byte[]) {
-            length = ((byte[]) this.value).length;
-        } else {
-            length = 0;
-        }
-
         this.updated = true;
     }
 

@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.19 2004-09-23 14:26:59 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.20 2004-09-23 16:13:03 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -130,6 +130,28 @@ public class MSCursorResultSet extends JtdsResultSet {
         super(statement, resultSetType, concurrency, null, false);
 
         cursorCreate(sql, procName, procedureParams);
+    }
+
+    /**
+     * Set the specified column's data value.
+     *
+     * @param colIndex The index of the column in the row.
+     * @param value The new column value.
+     */
+    protected void setColValue(int colIndex, Object value, int length)
+    throws SQLException {
+
+        if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
+            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
+        }
+        ColData col;
+        if (onInsertRow) {
+            col = insertRow[colIndex - 1];
+        } else {
+            col = currentRow[colIndex - 1];
+        }
+        col.setValue(value);
+        col.setLength(length);
     }
 
     /**
@@ -897,7 +919,6 @@ public class MSCursorResultSet extends JtdsResultSet {
 
     public void refreshRow() throws SQLException {
         checkOpen();
-        checkUpdateable();
 
         if (onInsertRow) {
             throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
@@ -983,21 +1004,18 @@ public class MSCursorResultSet extends JtdsResultSet {
 
     public boolean rowDeleted() throws SQLException {
         checkOpen();
-        checkUpdateable();
 
         return getRowStat() == SQL_ROW_DELETED;
     }
 
     public boolean rowInserted() throws SQLException {
         checkOpen();
-        checkUpdateable();
 
         return getRowStat() == SQL_ROW_ADDED;
     }
 
     public boolean rowUpdated() throws SQLException {
         checkOpen();
-        checkUpdateable();
 
         return getRowStat() == SQL_ROW_UPDATED;
     }

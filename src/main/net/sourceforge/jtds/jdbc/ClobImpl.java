@@ -49,7 +49,7 @@ import java.sql.SQLException;
  * An in-memory representation of character data.
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.4 2004-02-02 18:19:17 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.5 2004-02-06 19:25:32 bheineman Exp $";
 
     private String _clob;
 
@@ -109,8 +109,7 @@ public class ClobImpl implements Clob {
         long length = searchStr.length();
 
         if (length > Integer.MAX_VALUE) {
-            throw new SQLException("searchStr.length() must be <= "
-                                               + Integer.MAX_VALUE);
+            throw new SQLException("searchStr.length() must be <= " + Integer.MAX_VALUE);
         }
 
         return _clob.indexOf(searchStr.getSubString(0, (int) length),
@@ -138,34 +137,36 @@ public class ClobImpl implements Clob {
             throw new SQLException("pos must be < " + Integer.MAX_VALUE);
         }
 
+        final byte[] clob;
+
+        try {
+            clob = _clob.getBytes("ASCII");
+        } catch (UnsupportedEncodingException e) {
+            // This should never happen...
+            throw new SQLException("Unexpected encoding exception: " + e.getMessage());
+        }
+
         return new ByteArrayOutputStream() {
-                    {
-                        try {
-                            byte[] clob = _clob.getBytes("ASCII");
-                            write(clob, 0, (int) pos);
-                        } catch (UnsupportedEncodingException e) {
-                            // This should never happen...
-                            // @todo Do something about this exception; it doesn't compile
-                            //       under 1.3.
-                            // throw new SQLException("Unexpected encoding exception: "
-                            //                        + e.getMessage());
-                        }
-                    }
+            {
+                write(clob, 0, (int) pos);
+            }
 
-                    public void flush() throws IOException {
-                        String clob = new String(toByteArray(), "ASCII");
+            public void flush() throws IOException {
+                synchronized (ClobImpl.this) {
+                    String clob = new String(toByteArray(), "ASCII");
 
-                        if (clob.length() < _clob.length()) {
-                            _clob = clob + _clob.substring(clob.length());
-                        } else {
-                            _clob = clob;
-                        }
+                    if (clob.length() < _clob.length()) {
+                        _clob = clob + _clob.substring(clob.length());
+                    } else {
+                        _clob = clob;
                     }
+                }
+            }
 
-                    public void close() throws IOException {
-                        flush();
-                    }
-                };
+            public void close() throws IOException {
+                flush();
+            }
+        };
     }
 
     public synchronized Writer setCharacterStream(final long pos) throws SQLException {
@@ -178,22 +179,24 @@ public class ClobImpl implements Clob {
         }
 
         return new StringWriter() {
-                    {write(_clob, 0, (int) pos);}
+            {write(_clob, 0, (int) pos);}
 
-                    public void flush() {
-                        String clob = this.toString();
+            public void flush() {
+                synchronized (ClobImpl.this) {
+                    String clob = this.toString();
 
-                        if (clob.length() < _clob.length()) {
-                            _clob = clob + _clob.substring(clob.length());
-                        } else {
-                            _clob = clob;
-                        }
+                    if (clob.length() < _clob.length()) {
+                        _clob = clob + _clob.substring(clob.length());
+                    } else {
+                        _clob = clob;
                     }
+                }
+            }
 
-                    public void close() throws IOException {
-                        flush();
-                    }
-                };
+            public void close() throws IOException {
+                flush();
+            }
+        };
     }
 
     public synchronized int setString(long pos, String str) throws SQLException {
@@ -227,8 +230,7 @@ public class ClobImpl implements Clob {
         if (len < 0) {
             throw new SQLException("len must be >= 0.");
         } else if (len > _clob.length()) {
-            throw new SQLException("length specified is more than length of "
-                                               + "value.");
+            throw new SQLException("length specified is more than length of value.");
         }
 
         _clob = _clob.substring(0, (int) len);

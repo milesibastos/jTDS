@@ -3,6 +3,8 @@ Changes from jTDS 0.6
 02/06/2004 - Brian Heineman
  o Applied patch [884180] Implement getGeneratedKeys() (thanks to Mike 
    Hutchinson for the patch)
+ o Corrected Blob and Clob threading issues that could have occured when
+   streams were flushed.
 
 02/02/2004 - Brian Heineman
  o Synchronized Blob and Clob methods for thread safety.

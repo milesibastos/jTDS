@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * An in-memory representation of binary data.
  */
 public class BlobImpl implements Blob {
-    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.3 2004-02-02 18:19:10 bheineman Exp $";
+    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.4 2004-02-06 19:25:32 bheineman Exp $";
 
     private byte[] _blob;
 
@@ -150,13 +150,15 @@ public class BlobImpl implements Blob {
                     {write(_blob, 0, (int) pos);}
 
                     public void flush() throws IOException {
-                        byte[] blob = toByteArray();
+                        synchronized (BlobImpl.this) {
+                            byte[] blob = toByteArray();
 
-                        if (blob.length < _blob.length) {
-                            // Possible synchronization problem...
-                            System.arraycopy(blob, 0, _blob, 0, blob.length);
-                        } else {
-                            _blob = blob;
+                            if (blob.length < _blob.length) {
+                                // Possible synchronization problem...
+                                System.arraycopy(blob, 0, _blob, 0, blob.length);
+                            } else {
+                                _blob = blob;
+                            }
                         }
                     }
 

@@ -1,6 +1,12 @@
 Changes from jTDS 0.8
 =========================
 
+06/29/2004 - Brian Heineman
+ o Corrected bug with cached statements and savepoints.  If a statement was
+   cached after a savepoint was set, that statement would not be removed
+   from the cache if the savepoint was rolledback.  Added test to ensure
+   this functionality continues to work in the future.
+
 06/23/2004 - Brian Heineman
  o Applied patch [950028] Jtds enhancement - TDS 5.0 (thanks to code provided
    by Mike Hutchinson this patch corrects a number of bugs and adds initial

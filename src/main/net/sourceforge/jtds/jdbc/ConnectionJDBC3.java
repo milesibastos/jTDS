@@ -29,11 +29,12 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.2 2004-06-29 15:55:45 bheineman Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.3 2004-06-29 17:16:25 bheineman Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
     private ArrayList savepoints = null;
+    private Map savepointProcInTran = null;
     private int savepointId = 0;
 
     /**
@@ -81,6 +82,10 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
             savepoints.clear();
         }
 
+        if (savepointProcInTran != null) {
+            savepointProcInTran.clear();
+        }
+
         savepointId = 0;
     }
 
@@ -103,7 +108,11 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
                 Support.getMessage("error.connection.badsavep"), "25000");
         }
 
-        savepoints.remove(index);
+        Object tmpSavepoint = savepoints.remove(index);
+
+        if (savepointProcInTran != null) {
+            savepointProcInTran.remove(tmpSavepoint);
+        }
     }
 
     public synchronized void rollback(Savepoint savepoint) throws SQLException {
@@ -136,7 +145,23 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
         int size = savepoints.size();
 
         for (int i = size - 1; i >= index; i--) {
-            savepoints.remove(i);
+            Object tmpSavepoint = savepoints.remove(i);
+
+            if (savepointProcInTran == null) {
+                continue;
+            }
+
+            List keys = (List) savepointProcInTran.get(tmpSavepoint);
+
+            if (keys == null) {
+                continue;
+            }
+
+            for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
+                String key = (String) iterator.next();
+
+                removeCachedProcedure(key);
+            }
         }
     }
 
@@ -181,5 +206,45 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
      */
     private synchronized int getNextSavepointId() {
         return ++savepointId;
+    }
+
+    /**
+     * Add a stored procedure to the cache.
+     *
+     * @param key The signature of the procedure to cache.
+     * @param proc The stored procedure descriptor.
+     */
+    void addCachedProcedure(String key, ProcEntry proc) {
+        super.addCachedProcedure(key, proc);
+
+        addCachedProcedure(key);
+    }
+
+    /**
+     * Add a stored procedure to the savepoint cache.
+     *
+     * @param key The signature of the procedure to cache.
+     */
+    synchronized void addCachedProcedure(String key) {
+        if (savepoints == null || savepoints.size() == 0) {
+            return;
+        }
+
+        if (savepointProcInTran == null) {
+            savepointProcInTran = new HashMap();
+        }
+
+        // Retrieve the current savepoint
+        Object savepoint = savepoints.get(savepoints.size() - 1);
+
+        List keys = (List) savepointProcInTran.get(savepoint);
+
+        if (keys == null) {
+            keys = new ArrayList();
+        }
+
+        keys.add(key);
+
+        savepointProcInTran.put(savepoint, keys);
     }
 }

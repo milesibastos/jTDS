@@ -266,6 +266,65 @@ public class SavepointTest extends TestBase {
         con.setAutoCommit(true);
     }
 
+    /**
+     * Test to ensure savepoint ids restart at 1. Also ensures that the
+     * procedure cache is managed properly with savepoints.
+     */
+    public void testSavepoint4() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #savepoint4 (data int)");
+        stmt.close();
+
+        con.setAutoCommit(false);
+
+        for (int i = 0; i < 3; i++) {
+            System.out.println("iteration: " + i);
+            PreparedStatement pstmt = con.prepareStatement("INSERT INTO #savepoint4 (data) VALUES (?)");
+
+            pstmt.setInt(1, 1);
+            assertTrue(pstmt.executeUpdate() == 1);
+
+            Savepoint savepoint = con.setSavepoint();
+            assertTrue(savepoint != null);
+            assertTrue(savepoint.getSavepointId() == 1);
+
+            try {
+                savepoint.getSavepointName();
+                assertTrue(false);
+            } catch (SQLException e) {
+                // Ignore, we should get this exception
+            }
+
+            pstmt.setInt(1, 2);
+            assertTrue(pstmt.executeUpdate() == 1);
+            pstmt.close();
+
+            pstmt = con.prepareStatement("SELECT SUM(data) FROM #savepoint4");
+            ResultSet rs = pstmt.executeQuery();
+
+            assertTrue(rs.next());
+            assertTrue(rs.getInt(1) == 3);
+            assertTrue(!rs.next());
+            pstmt.close();
+            rs.close();
+
+            con.rollback(savepoint);
+
+            pstmt = con.prepareStatement("SELECT SUM(data) FROM #savepoint4");
+            rs = pstmt.executeQuery();
+
+            assertTrue(rs.next());
+            assertTrue(rs.getInt(1) == 1);
+            assertTrue(!rs.next());
+            pstmt.close();
+            rs.close();
+
+            con.rollback();
+        }
+
+        con.setAutoCommit(true);
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(SavepointTest.class);
     }

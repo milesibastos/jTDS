@@ -58,13 +58,13 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.2 2004-06-29 15:55:45 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.3 2004-06-29 17:16:25 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
      * Class used to describe a cached stored procedure for prepared statements.
      */
-    private static class ProcEntry {
+    protected static class ProcEntry {
         /** The stored procedure name. */
         private String name;
         /** The column meta data (Sybase only). */
@@ -537,6 +537,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (!autoCommit) {
             procInTran.add(key);
+        }
+    }
+
+    /**
+     * Remove a stored procedure from the cache.
+     *
+     * @param key The signature of the procedure to remove from the cache.
+     */
+    void removeCachedProcedure(String key) {
+        procedures.remove(key);
+
+        if (!autoCommit) {
+            procInTran.remove(key);
         }
     }
 

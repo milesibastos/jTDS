@@ -1,13 +1,22 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/07/2004 - Alin Sinpalean
+ o The main Tds instance is now always created even if no cursor ResultSets are
+   used, as it simplifies the internals of TdsConnection and doesn't create an
+   additional physical connection anymore.
+
+03/06/2004 - Alin Sinpalean
+ o Applied Mike's single connection patch. It's the first time I see jTDS
+   passing ALL the tests. Thanks a million, Mike! :o)
+ o Fixed an issue that rendered the 'macAddress' parameter unusable.
+ o Reformatted TdsComm and cleaned up a bit the javadoc.
+
 03/04/2004 - Brian Heineman
  o Corrected Blob and Clob methods to be 1 based not 0 based per the JDBC
    specification.
  o Numerous minor performance enhancements that reduce memory allocations,
    assignments and cost of control logic.
- o Added static Driver.getVersion() method that returns the current version
-   per enhancement request [908906] 0.7: Static Version information, please.
    
 03/03/2004 - Brian Heineman
  o Corrected bug [909169] jTDS 0.7: introduced another bug (Stored Procedure);

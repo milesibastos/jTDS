@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.24 2004-02-25 01:24:47 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.25 2004-03-07 14:33:20 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.24 2004-02-25 01:24:47 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.25 2004-03-07 14:33:20 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -160,7 +160,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         // Find a stored procedure that is compatible with this set of parameters if one exists.
         // MJH Lookup now includes parameter list
-        procedure = findCompatibleStoredProcedure(tds, signature.toString());
+        procedure = findCompatibleStoredProcedure(signature.toString());
 
         // if we don't have a suitable match then create a new temporary stored procedure
         if (procedure == null) {
@@ -175,14 +175,15 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             submitProcedure(tds, procedure);
 
             // store it in the procedureCache
-            tds.addStoredProcedure(procedure);
+            ((TdsConnection)this.getConnection()).addStoredProcedure(procedure);
         }
 
         return procedure;
     }
 
-    private Procedure findCompatibleStoredProcedure(Tds tds, String rawQueryString) {
-        return tds.findCompatibleStoredProcedure(rawQueryString);
+    private Procedure findCompatibleStoredProcedure(String rawQueryString)
+            throws SQLException {
+        return ((TdsConnection)this.getConnection()).findCompatibleStoredProcedure(rawQueryString);
     }
 
     private void submitProcedure(Tds tds, Procedure proc)

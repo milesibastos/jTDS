@@ -34,7 +34,6 @@ package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.Socket;
 import java.sql.*;
 import java.util.*;
 import java.io.InterruptedIOException;
@@ -48,11 +47,11 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.36 2004-03-04 17:11:54 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.37 2004-03-07 14:33:20 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
-    private Socket sock = null;
+    private TdsSocket sock = null;
     private TdsComm comm = null;
 
     private String databaseProductName;
@@ -67,7 +66,6 @@ public class Tds implements TdsDefinitions {
 
     private final String host;
     private int serverType = -1; // either Tds.SYBASE or Tds.SQLSERVER
-    private int port;            // Port numbers are _unsigned_ 16 bit, short is too small
     private String database;
     private final String user;
     private final String password;
@@ -76,23 +74,13 @@ public class Tds implements TdsDefinitions {
     private final String progName;
     private final String domain;   //mdb: used for NTLM authentication; if blank, then use sql auth.
 
+    private boolean inUse; // MJH: Indicates that this Tds is active somewhere
+
     /**
      * If set, character parameters are sent as Unicode (NTEXT, NVARCHAR),
      * otherwise they are sent using the default encoding.
      */
     private final boolean useUnicode;
-
-    /**
-     * If set, only return the last update count. For example, if set update
-     * counts from triggers will not be returned to the application.
-     */
-    private final boolean lastUpdateCount;
-
-    // SAfe Access to both of these fields is synchronized on procedureCache
-    private HashMap procedureCache = new HashMap();
-    private ArrayList proceduresOfTra = new ArrayList();
-
-    private Boolean cancelActive = Boolean.FALSE;
 
     private EncodingHelper encoder = null;
     private String charset = null;
@@ -110,30 +98,19 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.36 2004-03-04 17:11:54 bheineman Exp $";
-
-    /**
-     * The last transaction isolation level set for this <code>Tds</code>.
-     */
-    private int transactionIsolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
-
-    /**
-     * The last auto commit mode set on this <code>Tds</code>.
-     */
-    private boolean autoCommit = true;
+    public final static String cvsVersion = "$Id: Tds.java,v 1.37 2004-03-07 14:33:20 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
      */
     private Context currentContext;
 
-    public Tds(final TdsConnection connection, final Properties props)
-            throws java.io.IOException, SQLException, TdsException {
+    public Tds(final TdsConnection connection, final Properties props, TdsSocket tdsSocket) {
         this.connection = connection;
+        this.sock = tdsSocket;
 
         host = props.getProperty(PROP_HOST);
         serverType = Integer.parseInt(props.getProperty(PROP_SERVERTYPE));
-        port = Integer.parseInt(props.getProperty(PROP_PORT));
         // SAfe We don't know what database we'll get (probably master)
         database = null;
         user = props.getProperty(PROP_USER);
@@ -143,21 +120,9 @@ public class Tds implements TdsDefinitions {
         progName = props.getProperty(PROP_PROGNAME, "jTDS");
         final String verString = props.getProperty(PROP_TDS, "7.0");
         useUnicode = "true".equalsIgnoreCase(props.getProperty(PROP_USEUNICODE, "true"));
-        lastUpdateCount = "true".equalsIgnoreCase(
-                props.getProperty(PROP_LAST_UPDATE_COUNT, "false"));
 
         //mdb: if the domain is set, then the user wants NT auth (instead of SQL)
         domain = props.getProperty(PROP_DOMAIN, "");
-
-        //mdb: get the instance port, if it is specified...
-        final String instanceName = props.getProperty(PROP_INSTANCE, "");
-        if (instanceName.length() > 0) {
-            final MSSqlServerInfo info = new MSSqlServerInfo(host);
-            port = info.getPortForInstance(instanceName);
-            if (port == -1) {
-                throw new SQLException("Server " + host + " has no instance named " + instanceName);
-            }
-        }
 
         // XXX This driver doesn't properly support TDS 5.0, AFAIK.
         // Added 2000-06-07.
@@ -169,28 +134,12 @@ public class Tds implements TdsDefinitions {
             tdsVer = Tds.TDS42;
         }
 
-        // Send the logon packet to the server
-        sock = new Socket(host, port);
-        sock.setTcpNoDelay(true);
-        comm = new TdsComm(sock, tdsVer);
-
         final String cs = props.getProperty(PROP_CHARSET);
         // Adellera
         charsetSpecified = setCharset(cs);
 
-        // These are set by initSettings (who uses sqlStatementToInitialize()
-        // to obtain a full setup query).
-        autoCommit = this.connection.getAutoCommit();
-        transactionIsolationLevel = this.connection.getTransactionIsolation();
-
-        try {
-            logon(props.getProperty(PROP_DBNAME),
-                  props.getProperty(PROP_MAC_ADDR));
-        } catch( SQLException ex ) {
-            throw new SQLException("Logon failed.  " + ex.getMessage(),
-                ex.getSQLState(),
-                ex.getErrorCode());
-        }
+        comm = new TdsComm(sock, tdsVer);
+        moreResults = false;
     }
 
     /**
@@ -207,6 +156,20 @@ public class Tds implements TdsDefinitions {
      */
     public int getServerType() {
         return serverType;
+    }
+
+    /**
+     * Get in use status of this Tds object.
+     * @return The in use value as a <code>boolean</code>.
+     */
+    public boolean isInUse()
+    {
+        return this.inUse;
+    }
+
+    public void setInUse(boolean value)
+    {
+        this.inUse = value;
     }
 
     /**
@@ -280,7 +243,8 @@ public class Tds implements TdsDefinitions {
      *
      * @param   database  the database name to change to
      */
-    private void initSettings(final String database, final SQLWarningChain wChain) {
+    protected synchronized void initSettings(
+            final String database, final SQLWarningChain wChain) {
         try {
             if (database.length() > 0) {
                 changeDB(database, wChain);
@@ -292,21 +256,8 @@ public class Tds implements TdsDefinitions {
         }
     }
 
-    public void cancel()
-             throws java.io.IOException, TdsException {
-        // MJH - 06/02/04 Replace use of the cancel controller by direct
-        // Send of cancel packet. If no query is active we should still
-        // get a cancel ack from the server so send anyway as long as there
-        // are not cancels outstanding.
-        // If this method() is invoked from a different thread from the one
-        // that created the statement things should still work OK.
-        synchronized (cancelActive) {
-            if (!cancelActive.booleanValue()) {
-                comm.startPacket(TdsComm.CANCEL);
-                comm.sendPacket();
-                cancelActive = Boolean.TRUE;
-            }
-        }
+    public void cancel() throws java.io.IOException, TdsException {
+        sock.cancel(comm);
     }
 
     public boolean moreResults() {
@@ -333,12 +284,12 @@ public class Tds implements TdsDefinitions {
             } while (moreResults);
         } catch (java.io.IOException e) {
             wChain.addException(new SQLException(
-                    "Network problem. " + e.getMessage()));
+                    "Network problem. " + e.getMessage(), "08S01"));
         } catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
-                    "Unknown response. " + e.getMessage()));
+                    "Unknown response. " + e.getMessage(), "08S01"));
         } catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(new SQLException(e.toString()));
+            wChain.addException(new SQLException(e.toString(), "HY000"));
         }
     }
 
@@ -366,16 +317,16 @@ public class Tds implements TdsDefinitions {
             executeProcedureInternal(procedureName, formalParameterList,
                     actualParameterList, stmt, wChain, timeout, noMetaData);
         }
-        catch (java.io.IOException e) {
-            wChain.addException(new SQLException(
-                    "Network problem. " + e.getMessage()));
-        }
+//        catch (java.io.IOException e) {
+//            wChain.addException(new SQLException(
+//                    "Network problem. " + e.getMessage(), "08S01"));
+//        }
         catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
-                    "Unknown response. " + e.getMessage()));
+                    "Unknown response. " + e.getMessage(), "08S01"));
         }
         catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(new SQLException(e.toString()));
+            wChain.addException(new SQLException(e.toString(), "HY000"));
         }
 
         wChain.checkForExceptions();
@@ -400,16 +351,16 @@ public class Tds implements TdsDefinitions {
             final SQLWarningChain wChain,
             final int timeout,
             final boolean noMetaData)
-            throws java.sql.SQLException, TdsException, java.io.IOException {
+            throws java.sql.SQLException, TdsException {
         // SAfe We need to check if all cancel requests were processed and wait
         //      for any outstanding cancel. It could happen that we sent the
         //      CANCEL after the server sent us all the data, so the answer is
         //      going to come in a packet of its own.
-        while (cancelActive.booleanValue()) {
-            waitForDataOrTimeout(wChain, timeout);
-            // @todo Make sure the statement/resultset are not left in an inconsistent state.
-            processSubPacket();
-        }
+//        while (cancelActive.booleanValue()) {
+//            waitForDataOrTimeout(wChain, timeout);
+//            // @todo Make sure the statement/resultset are not left in an inconsistent state.
+//            processSubPacket();
+//        }
 
         // A stored procedure has a packet type of 0x03 in the header packet.
         // for non-image date the packets consists of
@@ -706,7 +657,7 @@ public class Tds implements TdsDefinitions {
                 default:
                     {
                         throw new SQLException("Not implemented for nativeType 0x"
-                                               + Integer.toHexString(nativeType));
+                                               + Integer.toHexString(nativeType), "HY000");
                     }
                 }
             }
@@ -716,7 +667,7 @@ public class Tds implements TdsDefinitions {
             waitForDataOrTimeout(wChain, timeout);
 
         } catch (java.io.IOException e) {
-            throw new SQLException("Network error-  " + e.getMessage());
+            throw new SQLException("Network error-  " + e.getMessage(), "08S01");
         } finally {
             comm.packetType = 0;
         }
@@ -751,14 +702,14 @@ public class Tds implements TdsDefinitions {
         }
         catch (java.io.IOException e) {
             wChain.addException(new SQLException(
-                    "Network problem. " + e.getMessage()));
+                    "Network problem. " + e.getMessage(), "08S01"));
         }
         catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
-                    "Unknown response. " + e.getMessage()));
+                    "Unknown response. " + e.getMessage(), "HY000"));
         }
         catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(new SQLException(e.toString()));
+            wChain.addException(new SQLException(e.toString(), "HY000"));
         }
 
         wChain.checkForExceptions();
@@ -780,11 +731,11 @@ public class Tds implements TdsDefinitions {
         //      for any outstanding cancel. It could happen that we sent the
         //      CANCEL after the server sent us all the data, so the answer is
         //      going to come in a packet of its own.
-        while (cancelActive.booleanValue()) {
-            waitForDataOrTimeout(wChain, timeout);
-            // @todo Make sure the statement/resultset are not left in an inconsistent state.
-            processSubPacket();
-        }
+//        while (cancelActive.booleanValue()) {
+//            waitForDataOrTimeout(wChain, timeout);
+//            // @todo Make sure the statement/resultset are not left in an inconsistent state.
+//            processSubPacket();
+//        }
 
         checkMaxRows(stmt, wChain);
 
@@ -842,7 +793,7 @@ public class Tds implements TdsDefinitions {
             } else if (res instanceof PacketEndTokenResult) {
                 if (((PacketEndTokenResult) res).wasCanceled()) {
                     warningChain.addException(
-                            new SQLException("Query was cancelled or timed out."));
+                            new SQLException("Query was cancelled or timed out.", "HY008"));
                 }
             }
         }
@@ -1843,7 +1794,7 @@ public class Tds implements TdsDefinitions {
      * @exception  java.io.IOException
      * @exception  SQLException
      */
-    private void logon(String database, String macAddress)
+    protected synchronized void logon(String database, String macAddress)
             throws SQLException, TdsUnknownPacketSubType,
             java.io.IOException, TdsException {
         final byte pad = (byte) 0;
@@ -2025,10 +1976,6 @@ public class Tds implements TdsDefinitions {
             }
         }
         wChain.checkForExceptions();
-
-        // XXX Should we move this to the Connection class?
-        initSettings(database, wChain);
-        wChain.checkForExceptions();
     }
 
     /**
@@ -2203,7 +2150,7 @@ public class Tds implements TdsDefinitions {
 
         if (database.length() > 32 || database.length() < 1) {
             wChain.addException(
-                    new SQLException("Name too long - " + database));
+                    new SQLException("Name too long - " + database, "3D000"));
         }
 
         for (int i = 0; i < database.length(); i++) {
@@ -2215,7 +2162,7 @@ public class Tds implements TdsDefinitions {
                     || (ch >= 'A' && ch <= 'Z')
                     || (ch >= '0' && ch <= '9'))) {
                 wChain.addException(
-                        new SQLException("Bad database name- " + database));
+                        new SQLException("Bad database name- " + database, "3D000"));
             }
         }
 
@@ -2594,11 +2541,11 @@ public class Tds implements TdsDefinitions {
 
         // MJH - 06/02/04 We will send a cancel anyway as long as there are
         // none outstanding
-        if (result.wasCanceled()) {
-            synchronized (cancelActive) {
-                cancelActive = Boolean.FALSE;
-            }
-        }
+        //if (result.wasCanceled()) {
+        //     synchronized (cancelActive) {
+        //       cancelActive = Boolean.FALSE;
+        //    }
+        //}
 
         // XXX Problem handling cancels that were sent after the server
         //     send the endToken packet
@@ -3268,14 +3215,14 @@ public class Tds implements TdsDefinitions {
         else {
             // MJH - 06/02/04 Use the socket time out option
             // rather than the timeout handler.
-            sock.setSoTimeout(timeout * 1000);
+            sock.setSoTimeout(comm, timeout * 1000);
             try {
                 comm.peek();
             } catch (InterruptedIOException e) {
-                wChain.addException(new SQLException("Query has timed out."));
-                cancel();
+                moreResults = false;
+                wChain.addException(new SQLException("Query has timed out.", "HYT00"));
             } finally {
-                sock.setSoTimeout(0); // restore default no time out
+                sock.setSoTimeout(comm, 0); // restore default no time out
             }
         }
     }
@@ -3392,11 +3339,12 @@ public class Tds implements TdsDefinitions {
             return java.sql.Types.FLOAT;
 
         case SYBFLTN:
-            if (size == 4) {
+            switch (size) {
+            case 4:
                 return java.sql.Types.REAL;
-            } else if (size == 8) {
+            case 8:
                 return java.sql.Types.FLOAT;
-            } else {
+            default:
                 throw new TdsException("Bad size of SYBFLTN");
             }
 
@@ -3410,13 +3358,14 @@ public class Tds implements TdsDefinitions {
             return java.sql.Types.INTEGER;
 
         case SYBINTN:
-            if (size == 1) {
+            switch (size) {
+            case 1:
                 return java.sql.Types.TINYINT;
-            } else if (size == 2) {
+            case 2:
                 return java.sql.Types.SMALLINT;
-            } else if (size == 4) {
+            case 4:
                 return java.sql.Types.INTEGER;
-            } else {
+            default:
                 throw new TdsException("Bad size of SYBINTN");
             }
 
@@ -3512,14 +3461,7 @@ public class Tds implements TdsDefinitions {
         // SAfe Consume all outstanding packets first
         skipToEnd();
 
-        // MJH Move commit code from TdsStatement to Tds as this
-        // object represents the connection which the server uses
-        // to control the session.
         submitProcedure("IF @@TRANCOUNT>0 COMMIT TRAN", new SQLWarningChain());
-
-        synchronized (procedureCache) {
-            proceduresOfTra.clear();
-        }
     }
 
     /**
@@ -3529,36 +3471,7 @@ public class Tds implements TdsDefinitions {
         // SAfe Consume all outstanding packets first
         skipToEnd();
 
-        // MJH Move the rollback code from TdsStatement to Tds as this
-        // object represents the connection which the server uses
-        // to control the session.
-        // Also reinstate code to add back procedures after rollback as
-        // this does lead to performance benefits with EJB.
-        SQLException exception = null;
-        try {
-            submitProcedure("IF @@TRANCOUNT>0 ROLLBACK TRAN", new SQLWarningChain());
-        } catch (SQLException e) {
-            exception = e;
-        }
-
-        synchronized (procedureCache) {
-            // SAfe No need to reinstate procedures. This ONLY leads to performance
-            //      benefits if the statement is reused. The overhead is the same
-            //      (plus some memory that's freed and reallocated).
-            final Iterator it = proceduresOfTra.iterator();
-            while (it.hasNext()) {
-                final Procedure p = (Procedure) it.next();
-                // MJH Use signature (includes parameters)
-                // rather than rawSqlQueryString
-                procedureCache.remove(p.getSignature());
-            }
-
-            proceduresOfTra.clear();
-        }
-
-        if (exception != null) {
-            throw exception;
-        }
+        submitProcedure("IF @@TRANCOUNT>0 ROLLBACK TRAN", new SQLWarningChain());
     }
 
     // SAfe This method is *completely* unsafe (although I was the brilliant
@@ -3577,7 +3490,7 @@ public class Tds implements TdsDefinitions {
                 throw (SQLException) ex;
             }
             throw new SQLException(
-                    "Error occured while consuming output: " + ex);
+                    "Error occured while consuming output: " + ex, "HY000");
         }
     }
 
@@ -3598,18 +3511,19 @@ public class Tds implements TdsDefinitions {
 
         // SAfe We also have to add these until we find out how to put them in
         //      the login packet (if that is possible at all)
-        sqlStatementToSetTransactionIsolationLevel(statement);
+        sqlStatementToSetTransactionIsolationLevel(statement, this.connection.getTransactionIsolation());
         statement.append(' ');
-        sqlStatementToSetCommit(statement);
+        sqlStatementToSetCommit(statement, this.connection.getAutoCommit());
 
         return statement.toString();
     }
 
-    private void sqlStatementToSetTransactionIsolationLevel(final StringBuffer sql)
+    private void sqlStatementToSetTransactionIsolationLevel(
+            final StringBuffer sql, int transactionIsolation)
             throws SQLException {
         sql.append("SET TRANSACTION ISOLATION LEVEL ");
 
-        switch (transactionIsolationLevel) {
+        switch (transactionIsolation) {
         case Connection.TRANSACTION_READ_UNCOMMITTED:
             sql.append("READ UNCOMMITTED");
             break;
@@ -3628,11 +3542,12 @@ public class Tds implements TdsDefinitions {
 
         case Connection.TRANSACTION_NONE:
         default:
-            throw new SQLException("Bad transaction level");
+            throw new SQLException("Bad transaction level", "HY024");
         }
     }
 
-    private void sqlStatementToSetCommit(final StringBuffer sql) {
+    private void sqlStatementToSetCommit(
+            final StringBuffer sql, boolean autoCommit) {
         if (serverType == Tds.SYBASE) {
             if (autoCommit) {
                 sql.append("SET CHAINED OFF");
@@ -3657,15 +3572,13 @@ public class Tds implements TdsDefinitions {
         //       setTransactionIsolationLevel
         res.append("IF @@TRANCOUNT>0 COMMIT TRAN ");
 
-        if (autoCommit != this.autoCommit) {
-            this.autoCommit = autoCommit;
-            sqlStatementToSetCommit(res);
+        if (autoCommit != this.connection.getAutoCommit()) {
+            sqlStatementToSetCommit(res, autoCommit);
             res.append(' ');
         }
 
-        if (transactionIsolationLevel != this.transactionIsolationLevel) {
-            this.transactionIsolationLevel = transactionIsolationLevel;
-            sqlStatementToSetTransactionIsolationLevel(res);
+        if (transactionIsolationLevel != this.connection.getTransactionIsolation()) {
+            sqlStatementToSetTransactionIsolationLevel(res, transactionIsolationLevel);
             res.append(' ');
         }
 
@@ -3674,17 +3587,19 @@ public class Tds implements TdsDefinitions {
     }
 
     protected synchronized void changeSettings(
-            final boolean autoCommit, final int transactionIsolationLevel) throws SQLException {
+            final boolean autoCommit, final int transactionIsolationLevel)
+            throws SQLException {
         final String query = sqlStatementForSettings(autoCommit, transactionIsolationLevel);
-        if (query != null)
+        if (query != null) {
             try {
                 skipToEnd();
                 changeSettings(query);
             } catch (SQLException ex) {
                 throw ex;
             } catch (Exception ex) {
-                throw new SQLException(ex.toString());
+                throw new SQLException(ex.toString(), "HY000");
             }
+        }
     }
 
     private void changeSettings(final String query) throws SQLException {
@@ -3808,33 +3723,8 @@ public class Tds implements TdsDefinitions {
         return currentContext;
     }
 
-    public Procedure findCompatibleStoredProcedure(final String signature) {
-        synchronized (procedureCache) {
-            return (Procedure) procedureCache.get(signature);
-        }
-    }
-
-    public void addStoredProcedure(final Procedure procedure)
-            throws SQLException {
-        synchronized (procedureCache) {
-            // store the procedure in the procedureCache
-            // MJH Use the signature (includes parameters)
-            // rather than rawQueryString
-            procedureCache.put(procedure.getSignature(), procedure);
-
-            // MJH Only record the proc name in proceduresOfTra if in manual commit mode
-            if (!connection.getAutoCommit()) {
-                proceduresOfTra.add(procedure);
-            }
-        }
-    }
-
     public boolean useUnicode() {
         return useUnicode;
-    }
-
-    public boolean lastUpdateCount() {
-        return lastUpdateCount;
     }
 
     synchronized void startResultSet(final SQLWarningChain wChain,
@@ -3851,16 +3741,16 @@ public class Tds implements TdsDefinitions {
                 } else if (res instanceof PacketEndTokenResult) {
                     if (((PacketEndTokenResult) res).wasCanceled()) {
                         wChain.addException(
-                                new SQLException("Query was cancelled or timed out."));
+                                new SQLException("Query was cancelled or timed out.", "HYT00"));
                     }
                 }
             }
         } catch (java.io.IOException e) {
-            wChain.addException(new SQLException("Network problem. " + e.getMessage()));
+            wChain.addException(new SQLException("Network problem. " + e.getMessage(), "08S01"));
         } catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
-            wChain.addException(new SQLException("Unknown response. " + e.getMessage()));
+            wChain.addException(new SQLException("Unknown response. " + e.getMessage(), "HY000"));
         } catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(new SQLException(e.toString()));
+            wChain.addException(new SQLException(e.toString(), "HY000"));
         } catch (SQLException e) {
             wChain.addException(e);
         }
@@ -3884,7 +3774,7 @@ public class Tds implements TdsDefinitions {
                 case TDS_COLMETADATA:
                     // SAfe This shouldn't really happen
                     wChain.addException(
-                            new SQLException("Unexpected packet type."));
+                            new SQLException("Unexpected packet type.", "HY000"));
                     break;
 
                 case TDS_DONE:
@@ -3892,7 +3782,7 @@ public class Tds implements TdsDefinitions {
                 case TDS_DONEPROC:
                     if (((PacketEndTokenResult) res).wasCanceled()) {
                         wChain.addException(
-                                new SQLException("Query was cancelled or timed out."));
+                                new SQLException("Query was cancelled or timed out.", "HYT00"));
                     }
                     goToNextResult(wChain, stmt);
                     return null;
@@ -3918,16 +3808,16 @@ public class Tds implements TdsDefinitions {
                     wChain.addException(new SQLException(
                             "Protocol confusion. Got a 0x"
                             + Integer.toHexString((res.getPacketType() & 0xff))
-                            + " packet"));
+                            + " packet", "HY000"));
                     break;
                 }
             }
         } catch (java.io.IOException e) {
-            wChain.addException(new SQLException("Network problem. " + e.getMessage()));
+            wChain.addException(new SQLException("Network problem. " + e.getMessage(), "08S01"));
         } catch (net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType e) {
-            wChain.addException(new SQLException("Unknown response. " + e.getMessage()));
+            wChain.addException(new SQLException("Unknown response. " + e.getMessage(), "HY000"));
         } catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            wChain.addException(new SQLException(e.toString()));
+            wChain.addException(new SQLException(e.toString(), "HY000"));
         } catch (SQLException e) {
             wChain.addException(e);
         }
@@ -3939,7 +3829,7 @@ public class Tds implements TdsDefinitions {
         byte[] mac = new byte[6];
         boolean ok = false;
 
-        if (macString != null && macString.length() == 6) {
+        if (macString != null && macString.length() == 12) {
             try {
                 for (int i=0, j=0; i<6; i++, j+=2) {
                     mac[i] = (byte) Integer.parseInt(

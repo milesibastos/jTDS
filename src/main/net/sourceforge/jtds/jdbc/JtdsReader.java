@@ -27,7 +27,7 @@ import java.sql.SQLException;
  * READTEXT command for text and ntext columns.
  *
  * @author Mike Hutchinson.
- * @version $Id: JtdsReader.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: JtdsReader.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 public class JtdsReader extends Reader {
     private TdsCore tds;
@@ -134,7 +134,7 @@ public class JtdsReader extends Reader {
         try {
             tds.close();
         } catch (SQLException e) {
-            ; // Ignore
+            // Ignore
         } finally {
             tds = null;
             buffer = new char[0];

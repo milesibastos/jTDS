@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.3 2004-06-29 17:16:25 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.4 2004-06-29 20:53:26 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1015,7 +1015,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     }
                 }
             } catch (SQLException e) {
-                ; // Ignore
+                // Ignore
             }
         }
     }
@@ -1074,7 +1074,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 baseTds.close();
                 socket.close();
             } catch (IOException e) {
-                ; // Ignore
+                // Ignore
             } finally {
                 closed = true;
             }

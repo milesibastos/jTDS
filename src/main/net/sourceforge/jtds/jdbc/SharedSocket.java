@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.1 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -423,7 +423,7 @@ class SharedSocket {
                 try {
                     sendCancel(streamId);
                 } catch (IOException e) {
-                    ; // Ignore error as network is probably dead anyway
+                    // Ignore error as network is probably dead anyway
                 }
             }
         }
@@ -446,7 +446,7 @@ class SharedSocket {
                         vsock.diskQueue.close();
                         vsock.queueFile.delete();
                     } catch (IOException ioe) {
-                        ; // Ignore errors
+                        // Ignore errors
                     }
                 }
             }
@@ -467,7 +467,7 @@ class SharedSocket {
             try {
                 socket.close();
             } catch (IOException ioe) {
-                ; // Ignore
+                // Ignore
             } finally {
                 socket = null;
             }
@@ -487,7 +487,7 @@ class SharedSocket {
                     vsock.diskQueue.close();
                     vsock.queueFile.delete();
                 } catch (IOException ioe) {
-                    ; // Ignore errors
+                    // Ignore errors
                 }
             }
             socketTable.set(streamId, null);

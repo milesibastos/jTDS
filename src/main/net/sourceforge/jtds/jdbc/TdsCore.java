@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.1 2004-06-27 17:00:53 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -66,7 +66,7 @@ public class TdsCore {
         /** The operation field from a DONE packet. */
         private byte operation;
         /** The update count from a DONE packet. */
-        private int  updateCount;
+        private int updateCount;
         /** The nonce from an NTLM challenge packet. */
         private byte[] nonce;
         /** The dynamicID from the last TDS_DYNAMIC token. */
@@ -134,7 +134,8 @@ public class TdsCore {
             return token == TDS_ROW_TOKEN;
         }
 
-    };
+    }
+    
     //
     // Package private constants
     //
@@ -666,8 +667,8 @@ public class TdsCore {
                 clearResponseQueue();
             }
         } catch (Exception e) {
-            ; // Ignore any exceptions as this connection
-              // is closing anyway.
+            // Ignore any exceptions as this connection
+            // is closing anyway.
             isClosed = true;
         }
     }

@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: ResponseStream.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -43,8 +43,6 @@ public class ResponseStream {
     private int bufferPtr;
     /** The length of current input packet. */
     private int bufferLen;
-    /** The response packet type. */
-    private byte pktType;
     /** The unique stream id. */
     private int streamId;
     /** True if stream is closed. */

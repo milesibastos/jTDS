@@ -35,7 +35,7 @@ import java.sql.SQLWarning;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -110,14 +110,6 @@ public class MSCursorResultSet extends JtdsResultSet {
     private ColData[] insertRow = null;
     /** True if this result set is closed. */
     private boolean closed = false;
-    /** True if the query has been cancelled by another thread. */
-    private boolean cancelled = false;
-    /** The fetch direction. */
-    private int fetchDirection = FETCH_FORWARD;
-    /** The fetch size (always one at present). */
-    private int fetchSize = 1;
-    /** True if the resultset should read ahead to ensure return parameters are processed. */
-    private boolean readAhead = true;
 
     /**
      * Construct a cursor result set using Microsoft sp_cursorcreate etc.

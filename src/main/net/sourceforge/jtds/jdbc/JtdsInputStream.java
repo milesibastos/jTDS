@@ -26,7 +26,7 @@ import java.sql.SQLException;
  * READTEXT command for image,text and ntext columns.
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsInputStream.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: JtdsInputStream.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 public class JtdsInputStream extends InputStream {
     private TdsCore tds;
@@ -137,7 +137,7 @@ public class JtdsInputStream extends InputStream {
         try {
             tds.close();
         } catch (SQLException e) {
-            ; // Ignore
+            // Ignore
         } finally {
             tds = null;
             buffer = new byte[0];

@@ -38,7 +38,6 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.GregorianCalendar;
 import java.text.NumberFormat;
 import java.io.UnsupportedEncodingException;
 import java.io.InputStreamReader;
@@ -55,7 +54,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.1 2004-06-27 17:00:52 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -86,8 +85,6 @@ public class JtdsResultSet implements ResultSet {
     protected ColInfo[] columns;
     /** The current result set row. */
     protected ColData[] currentRow = null;
-    /** Dummy row used in single row result sets. */
-    private ColData[] dummyRow = null;
     /** True if last column retrieved was null. */
     protected boolean wasNull = false;
     /** The parent statement or null if this is a dummy result set. */
@@ -105,8 +102,6 @@ public class JtdsResultSet implements ResultSet {
     /*
      * Private instance variables.
      */
-    /** Used to normalize date and time values. */
-    private static Calendar staticCalendar = new GregorianCalendar();
     /** Used to format numeric values when scale is specified. */
     private static NumberFormat f = NumberFormat.getInstance();
 

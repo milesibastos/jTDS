@@ -2,9 +2,6 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 
-import net.sourceforge.jtds.jdbc.Driver;
-import net.sourceforge.jtds.jdbc.JtdsStatement;
-
 /**
  * @version 1.0
  */
@@ -53,12 +50,7 @@ public class ResultSetTest extends TestBase {
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
         
         assertTrue(resultSetMetaData != null);
-        
-        if (Driver.JDBC3) {
-            assertTrue(resultSetMetaData.getColumnType(1) == JtdsStatement.BOOLEAN);
-        } else {
-            assertTrue(resultSetMetaData.getColumnType(1) == Types.BIT);
-        }
+        assertTrue(resultSetMetaData.getColumnType(1) == Types.BIT);
         
         assertTrue(!rs.next());
         stmt2.close();

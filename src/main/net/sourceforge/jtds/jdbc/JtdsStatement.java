@@ -52,20 +52,20 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.6 2004-07-13 22:52:48 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.7 2004-07-14 15:13:38 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
      * Constants used for backwards compatibility with JDK 1.3
      */
-    public static final int RETURN_GENERATED_KEYS = 1;
-    public static final int NO_GENERATED_KEYS = 2;
-    public static final int CLOSE_CURRENT_RESULT = 1;
-    public static final int KEEP_CURRENT_RESULT = 2;
-    public static final int CLOSE_ALL_RESULTS = 3;
-    public static final int EXECUTE_FAILED = -3;
-    public static final int BOOLEAN = 16;
-    public static final int DATALINK = 70;
+    static final int RETURN_GENERATED_KEYS = 1;
+    static final int NO_GENERATED_KEYS = 2;
+    static final int CLOSE_CURRENT_RESULT = 1;
+    static final int KEEP_CURRENT_RESULT = 2;
+    static final int CLOSE_ALL_RESULTS = 3;
+    static final int EXECUTE_FAILED = -3;
+    static final int BOOLEAN = 16;
+    static final int DATALINK = 70;
 	
     /** The connection owning this statement object. */
     protected ConnectionJDBC2 connection;

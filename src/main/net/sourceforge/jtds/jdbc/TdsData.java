@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.6 2004-07-13 22:52:48 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.7 2004-07-14 15:13:38 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -177,7 +177,7 @@ public class TdsData {
         types[SYBINT8]      = new TypeInfo("bigint",         8, 20, 20, true,  false, java.sql.Types.BIGINT);
         types[SYBFLT8]      = new TypeInfo("float",          8, 15, 24, true,  false, java.sql.Types.DOUBLE);
         types[SYBDATETIME]  = new TypeInfo("datetime",       8, 23, 23, false, false, java.sql.Types.TIMESTAMP);
-        types[SYBBIT]       = new TypeInfo("bit",            1,  1,  1, false, false, JtdsStatement.BOOLEAN);
+        types[SYBBIT]       = new TypeInfo("bit",            1,  1,  1, false, false, java.sql.Types.BIT);
         types[SYBTEXT]      = new TypeInfo("text",          -4, -1,  1, false, true,  java.sql.Types.LONGVARCHAR);
         types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -2, false, true,  java.sql.Types.LONGVARCHAR);
         types[SYBIMAGE]     = new TypeInfo("image",         -4, -1,  2, false, false, java.sql.Types.LONGVARBINARY);
@@ -189,7 +189,7 @@ public class TdsData {
         types[SYBVOID]      = new TypeInfo("void",          -1,  1,  1, false, false, 0);
         types[SYBVARBINARY] = new TypeInfo("varbinary",     -1, -1,  2, false, false, java.sql.Types.VARBINARY);
         types[SYBNVARCHAR]  = new TypeInfo("nvarchar",      -1, -1, -2, false, false, java.sql.Types.VARCHAR);
-        types[SYBBITN]      = new TypeInfo("bit",           -1,  1,  1, false, false, JtdsStatement.BOOLEAN);
+        types[SYBBITN]      = new TypeInfo("bit",           -1,  1,  1, false, false, java.sql.Types.BIT);
         types[SYBNUMERIC]   = new TypeInfo("numeric",       -1, -1, -1, true,  false, java.sql.Types.NUMERIC);
         types[SYBDECIMAL]   = new TypeInfo("decimal",       -1, -1, -1, true,  false, java.sql.Types.DECIMAL);
         types[SYBFLTN]      = new TypeInfo("float",         -1, 15, 24, true,  false, java.sql.Types.DOUBLE);
@@ -313,11 +313,7 @@ public class TdsData {
         ci.sqlType = types[type].sqlType;
 
         // Now fine tune sizes for specific types
-        if (type == SYBBIT || type == SYBBITN) {
-            if (!Driver.JDBC3) {
-                ci.jdbcType = java.sql.Types.BIT;
-            }
-        } else if (type == SYBDATETIMN) {
+        if (type == SYBDATETIMN) {
             ci.nullable = java.sql.ResultSetMetaData.columnNullable;
             
             if (ci.bufferSize == 8) {

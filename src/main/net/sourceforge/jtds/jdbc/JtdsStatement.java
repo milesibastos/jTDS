@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.29 2005-02-08 15:23:35 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.30 2005-02-09 09:57:35 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -317,7 +317,8 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // Could not open a Cursor so try a direct select
         //
-        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows, true);
+        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
+                maxFieldSize, true);
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
@@ -408,7 +409,8 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // Could not open a Cursor or not a SELECT so just execute
         //
-        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows, true);
+        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
+                maxFieldSize, true);
 
         if (warningMessage != null) {
             // Update warning chain if cursor was downgraded
@@ -614,7 +616,7 @@ public class JtdsStatement implements java.sql.Statement {
                 ++i;
 
                 if (value instanceof String) {
-                    tds.executeSQL((String)value, null, null, true, 0, -1,
+                    tds.executeSQL((String)value, null, null, true, 0, -1, -1,
                             i == size);
                 } else {
                     executeBatchOther(value, i == size);
@@ -713,11 +715,6 @@ public class JtdsStatement implements java.sql.Statement {
                     "HY092");
         }
 
-        if (max == 0) {
-            max = 2147483647;
-        }
-
-        tds.submitSQL("set textsize " + max);
         maxFieldSize = max;
     }
 

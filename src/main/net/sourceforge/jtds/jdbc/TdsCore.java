@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.67 2005-02-02 00:42:48 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.68 2005-02-09 09:57:36 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -845,7 +845,7 @@ public class TdsCore {
             throw new IllegalArgumentException("submitSQL() called with empty SQL String");
         }
 
-        executeSQL(sql, null, null, false, 0, -1, true);
+        executeSQL(sql, null, null, false, 0, -1, -1, true);
         clearResponseQueue();
         messages.checkErrors();
     }
@@ -865,13 +865,16 @@ public class TdsCore {
     /**
      * Send an SQL statement with optional parameters to the server.
      *
-     * @param sql        SQL statement to execute
-     * @param procName   stored procedure to execute or <code>null</code>
-     * @param parameters parameters for call or null
-     * @param noMetaData suppress meta data for cursor calls
-     * @param timeOut    optional query timeout or 0
-     * @param maxRows    the maximum number of data rows to return
-     * @param sendNow    whether to send the request now or not
+     * @param sql          SQL statement to execute
+     * @param procName     stored procedure to execute or <code>null</code>
+     * @param parameters   parameters for call or null
+     * @param noMetaData   suppress meta data for cursor calls
+     * @param timeOut      optional query timeout or 0
+     * @param maxRows      the maximum number of data rows to return (-1 to
+     *                     leave unaltered)
+     * @param maxFieldSize the maximum number of bytes in a column to return
+     *                     (-1 to leave unaltered)
+     * @param sendNow      whether to send the request now or not
      * @throws SQLException if an error occurs
      */
     synchronized void executeSQL(String sql,
@@ -880,6 +883,7 @@ public class TdsCore {
                                  boolean noMetaData,
                                  int timeOut,
                                  int maxRows,
+                                 int maxFieldSize,
                                  boolean sendNow)
             throws SQLException {
         boolean sendFailed = true; // Used to ensure mutex is released.
@@ -903,14 +907,14 @@ public class TdsCore {
             messages.exceptions = null;
 
             //
-            // Set the connection row count if required.
-            // Once set this will not be changed within a
+            // Set the connection row count and text size if required.
+            // Once set these will not be changed within a
             // batch so execution of the set rows query will
             // only occur once a the start of a batch.
             // No other thread can send until this one has finished.
             //
-            setRowCount(maxRows);
-            //
+            setRowCountAndTextSize(maxRows, maxFieldSize);
+
             messages.clearWarnings();
             this.returnStatus = null;
             //
@@ -1110,7 +1114,7 @@ public class TdsCore {
             columns = null; // Will be populated if preparing a select
 
             executeSQL(null, needCursor ? "sp_cursorprepare" : "sp_prepare",
-                    prepParam, false, 0, -1, true);
+                    prepParam, false, 0, -1, -1, true);
 
             clearResponseQueue();
 
@@ -1244,7 +1248,7 @@ public class TdsCore {
             Logger.println(sql.toString());
         }
 
-        executeSQL(sql.toString(), null, null, false, 0, -1, true);
+        executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
         readTextMode = true;
 
         if (getMoreResults()) {
@@ -1282,7 +1286,7 @@ public class TdsCore {
         sql.append(colName);
         sql.append(") from ");
         sql.append(tabName);
-        executeSQL(sql.toString(), null, null, false, 0, -1, true);
+        executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
 
         if (getMoreResults()) {
             if (getNextRow()) {
@@ -3673,24 +3677,42 @@ public class TdsCore {
     }
 
     /**
-     * Set the server row count used to limit the number of rows in a result set.
+     * Set the server row count (to limit the number of rows in a result set)
+     * and text size (to limit the size of returned TEXT/NTEXT fields).
      *
      * @param rowCount the number of rows to return or 0 for no limit or -1 to
      *                 leave as is
+     * @param textSize the maximum number of bytes in a TEXT column to return
+     *                 or -1 to leave as is
      * @throws SQLException if an error is returned by the server
      */
-    private void setRowCount(int rowCount) throws SQLException {
-        if (rowCount >= 0 && rowCount != connection.getRowCount()) {
+    private void setRowCountAndTextSize(int rowCount, int textSize)
+            throws SQLException {
+        boolean newRowCount =
+                rowCount >= 0 && rowCount != connection.getRowCount();
+        boolean newTextSize =
+                textSize >= 0 && textSize != connection.getTextSize();
+        if (newRowCount || newTextSize) {
             try {
+                StringBuffer query = new StringBuffer(64);
+                if (newRowCount) {
+                    query.append("SET ROWCOUNT ").append(rowCount);
+                }
+                if (newTextSize) {
+                    query.append(" SET TEXTSIZE ")
+                            .append(textSize == 0 ? 2147483647 : textSize);
+                }
                 out.setPacketType(QUERY_PKT);
-                out.write("SET ROWCOUNT " + rowCount);
+                out.write(query.toString());
                 out.flush();
                 endOfResponse = false;
                 endOfResults  = true;
                 wait(0);
                 clearResponseQueue();
                 messages.checkErrors();
+                // Update the values stored in the Connection
                 connection.setRowCount(rowCount);
+                connection.setTextSize(textSize);
             } catch (IOException ioe) {
                 throw new SQLException(
                             Messages.get("error.generic.ioerror",

@@ -49,7 +49,7 @@ import java.util.HashSet;
  * <ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.9 2005-01-24 09:13:36 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.10 2005-02-09 09:57:35 alin_sinpalean Exp $
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -295,9 +295,9 @@ public class CachedResultSet extends JtdsResultSet {
             }
             StringBuffer cursorSQL = new StringBuffer(sql.length() + cursorName.length()+ 128);
             cursorSQL.append("DECLARE ").append(cursorName).append(" CURSOR FOR ").append(sql);
-            cursorTds.executeSQL(cursorSQL.toString(), procName, parameters, false,
-                    statement.getQueryTimeout(),
-                        statement.getMaxRows(), true);
+            cursorTds.executeSQL(cursorSQL.toString(), procName, parameters,
+                    false, statement.getQueryTimeout(), statement.getMaxRows(),
+                    statement.getMaxFieldSize(), true);
             cursorTds.clearResponseQueue();
             cursorSQL.setLength(0);
             cursorSQL.append("\r\nOPEN ").append(cursorName);
@@ -310,8 +310,8 @@ public class CachedResultSet extends JtdsResultSet {
             // OK Declare cursor, open it and fetch first (fetchSize) rows.
             //
             cursorTds.executeSQL(cursorSQL.toString(), null, null, false,
-                   statement.getQueryTimeout(),
-                       statement.getMaxRows(), true);
+                    statement.getQueryTimeout(), statement.getMaxRows(),
+                    statement.getMaxFieldSize(), true);
 
             while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
@@ -332,9 +332,10 @@ public class CachedResultSet extends JtdsResultSet {
                 // OK Should have an SQL select statement
                 // append " FOR BROWSE" to obtain table names
                 // NB. We can't use any jTDS temporary stored proc
-                    cursorTds.executeSQL(sql + " FOR BROWSE", null, parameters, false,
-                                    statement.getQueryTimeout(),
-                                    statement.getMaxRows(), true);
+                    cursorTds.executeSQL(sql + " FOR BROWSE", null, parameters,
+                            false, statement.getQueryTimeout(),
+                            statement.getMaxRows(), statement.getMaxFieldSize(),
+                            true);
                 while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
                 if (!cursorTds.isResultSet()) {
                     throw new SQLException(Messages.get("error.statement.noresult"), "24000");
@@ -377,8 +378,8 @@ public class CachedResultSet extends JtdsResultSet {
             // Create a read only cursor using direct SQL
             //
             cursorTds.executeSQL(sql, procName, parameters, false,
-                       statement.getQueryTimeout(),
-                       statement.getMaxRows(), true);
+                    statement.getQueryTimeout(), statement.getMaxRows(),
+                    statement.getMaxFieldSize(), true);
             while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
             if (!cursorTds.isResultSet()) {
@@ -473,13 +474,8 @@ public class CachedResultSet extends JtdsResultSet {
             sql.append(" FROM tempdb..sysindexes WHERE id = object_id('tempdb..");
             sql.append(tableName).append("') AND indid > 0 AND ");
             sql.append("(status & 2048) = 2048");
-            cursorTds.executeSQL(sql.toString(),
-                                 null,
-                                 null,
-                                 false,
-                                 0,
-                                 statement.getMaxRows(),
-                                 true);
+            cursorTds.executeSQL(sql.toString(), null, null, false, 0,
+                    statement.getMaxRows(), statement.getMaxFieldSize(), true);
             while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
             if (cursorTds.isResultSet() && cursorTds.getNextRow())
@@ -547,12 +543,9 @@ public class CachedResultSet extends JtdsResultSet {
                 }
                 sql.append("FETCH ").append(cursorName);
                 // Get the next row or block of rows.
-                cursorTds.executeSQL(sql.toString(),
-                                null,
-                                null,
-                                false,
-                                statement.getQueryTimeout(),
-                                statement.getMaxRows(), true);
+                cursorTds.executeSQL(sql.toString(), null, null, false,
+                        statement.getQueryTimeout(), statement.getMaxRows(),
+                        statement.getMaxFieldSize(), true);
                 while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
                 sizeChanged = false; // Indicate fetch size updated
@@ -819,7 +812,8 @@ public class CachedResultSet extends JtdsResultSet {
         // Execute the select
         //
         TdsCore tds = statement.getTds();
-        tds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+        tds.executeSQL(sql.toString(), null, parameters, false, 0,
+                statement.getMaxRows(), statement.getMaxFieldSize(), true);
         if (!tds.isEndOfResponse()) {
             if (tds.getMoreResults() && tds.getNextRow()) {
                 // refresh the row data
@@ -935,7 +929,8 @@ public class CachedResultSet extends JtdsResultSet {
          //
          // Execute the delete statement
          //
-         updateTds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+         updateTds.executeSQL(sql.toString(), null, parameters, false, 0,
+                 statement.getMaxRows(), statement.getMaxFieldSize(), true);
          int updateCount = 0;
          while (!updateTds.isEndOfResponse()) {
              if (!updateTds.getMoreResults()) {
@@ -1030,7 +1025,8 @@ public class CachedResultSet extends JtdsResultSet {
              //
              // execute the insert statement
              //
-             updateTds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+             updateTds.executeSQL(sql.toString(), null, parameters, false, 0,
+                     statement.getMaxRows(), statement.getMaxFieldSize(), true);
              int updateCount = 0;
              while (!updateTds.isEndOfResponse()) {
                  if (!updateTds.getMoreResults()) {
@@ -1186,7 +1182,8 @@ public class CachedResultSet extends JtdsResultSet {
          //
          // Now execute update
          //
-         updateTds.executeSQL(sql.toString(), null, parameters, false, 0, statement.getMaxRows(), true);
+         updateTds.executeSQL(sql.toString(), null, parameters, false, 0,
+                 statement.getMaxRows(), statement.getMaxFieldSize(), true);
          int updateCount = 0;
          while (!updateTds.isEndOfResponse()) {
              if (!updateTds.getMoreResults()) {

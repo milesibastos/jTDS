@@ -58,7 +58,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.36 2005-01-24 09:07:08 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.37 2005-02-09 09:57:35 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -210,7 +210,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         if (value instanceof ParamInfo[]) {
             // procName will contain the procedure name for CallableStatements
             // and null for PreparedStatements
-            tds.executeSQL(sql, procName, (ParamInfo[])value, false, 0, -1, last);
+            tds.executeSQL(sql, procName, (ParamInfo[])value, false, 0, -1, -1, last);
         } else {
             super.executeBatchOther(value, last);
         }

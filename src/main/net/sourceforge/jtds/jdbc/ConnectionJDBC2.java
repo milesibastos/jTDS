@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.67 2005-02-09 08:28:50 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.68 2005-02-09 09:57:35 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -177,8 +177,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean autoCommit = true;
     /** Diagnostc messages for this connection. */
     private SQLDiagnostic messages;
-    /** Connections current rowcount limit. */
+    /** Connection's current rowcount limit. */
     private int rowCount = 0;
+    /** Connection's current maximum field size limit. */
+    private int textSize = 0;
     /** Maximum decimal precision. */
     private int maxPrecision = 38; // Sybase default
     /** Stored procedure unique ID number. */
@@ -586,89 +588,107 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrive the server type.
+     * Retrieves the server type.
      *
-     * @return The server type as an <code>int</code> where
-     * 1 = SQLSERVER and 2 = SYBASE.
+     * @return the server type as an <code>int</code> where 1 == SQLSERVER and
+     *         2 == SYBASE.
      */
     int getServerType() {
         return this.serverType;
     }
 
     /**
-     * Set the network packet size.
+     * Sets the network packet size.
      *
-     * @param size The new packet size.
+     * @param size the new packet size
      */
     void setNetPacketSize(int size) {
         this.netPacketSize = size;
     }
 
     /**
-     * Retrive the network packet size.
+     * Retrieves the network packet size.
      *
-     * @return The packet size as an <code>int</code>.
+     * @return the packet size as an <code>int</code>
      */
     int getNetPacketSize() {
         return this.netPacketSize;
     }
 
     /**
-     * Retrive the current row count on this connection.
+     * Retrieves the current row count on this connection.
      *
-     * @return The packet size as an <code>int</code>.
+     * @return the row count as an <code>int</code>
      */
     int getRowCount() {
         return this.rowCount;
     }
 
     /**
-     * Set the current row count on this connection.
+     * Sets the current row count on this connection.
      *
-     * @param count The new row count.
+     * @param count the new row count
      */
     void setRowCount(int count) {
         rowCount = count;
     }
 
     /**
-     * Retrieve the status of the lastUpdateCount flag.
+     * Retrieves the current maximum textsize on this connection.
      *
-     * @return The lastUpdateCount flag as a <code>boolean</code>.
+     * @return the maximum textsize as an <code>int</code>
+     */
+    public int getTextSize() {
+        return textSize;
+    }
+
+    /**
+     * Sets the current maximum textsize on this connection.
+     *
+     * @param textSize the new maximum textsize
+     */
+    public void setTextSize(int textSize) {
+        this.textSize = textSize;
+    }
+
+    /**
+     * Retrieves the status of the lastUpdateCount flag.
+     *
+     * @return the lastUpdateCount flag as a <code>boolean</code>
      */
     boolean isLastUpdateCount() {
         return this.lastUpdateCount;
     }
 
     /**
-     * Retrive the maximum decimal precision.
+     * Retrieves the maximum decimal precision.
      *
-     * @return The precision as an <code>int</code>.
+     * @return the precision as an <code>int</code>
      */
     int getMaxPrecision() {
         return this.maxPrecision;
     }
 
     /**
-     * Retrive the LOB buffer size.
+     * Retrieves the LOB buffer size.
      *
-     * @return The LOB buffer size as a <code>long</code>.
+     * @return the LOB buffer size as a <code>long</code>
      */
     long getLobBuffer() {
         return this.lobBuffer;
     }
 
     /**
-     * Retrive the Prepared SQL method.
+     * Retrieves the Prepared SQL method.
      *
-     * @return the Prepared SQL method.
+     * @return the Prepared SQL method
      */
     int getPrepareSql() {
         return this.prepareSql;
     }
 
     /**
-     * Transfer the properties to the local instance variables.
+     * Transfers the properties to the local instance variables.
      *
      * @param info The connection properties Object.
      * @throws SQLException If an invalid property value is found.
@@ -1104,7 +1124,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     cleanupSql.append('\n');
                 }
 
-                baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0, -1, true);
+                baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0,
+                        -1, -1, true);
                 baseTds.clearResponseQueue();
             }
         }
@@ -1257,7 +1278,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         //
         // Execute our extended stored procedure (let's hope it is installed!).
         //
-        baseTds.executeSQL(null, "master..xp_jtdsxa", params, false, 0, 0, true);
+        baseTds.executeSQL(null, "master..xp_jtdsxa", params, false, 0, -1, -1,
+                true);
         //
         // Now process results
         //

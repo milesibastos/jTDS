@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.40 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.41 2005-02-09 09:57:36 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -482,7 +482,8 @@ public class MSCursorResultSet extends JtdsResultSet {
             columns = null; // Will be populated if preparing a select
 
             // Use sp_cursorprepare approach
-            tds.executeSQL(null, "sp_cursorprepare", params, false, statement.getQueryTimeout(), -1, true);
+            tds.executeSQL(null, "sp_cursorprepare", params, false,
+                    statement.getQueryTimeout(), -1, -1, true);
             tds.clearResponseQueue();
 
             // columns will now hold meta data for select statements
@@ -582,7 +583,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         }
 
         tds.executeSQL(null, procName, parameters, false,
-                statement.getQueryTimeout(), statement.getMaxRows(), true);
+                statement.getQueryTimeout(), statement.getMaxRows(),
+                statement.getMaxFieldSize(), true);
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
@@ -626,7 +628,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             PARAM_OPTYPE.value = new Integer(2);
             params[1] = PARAM_OPTYPE;
             params[2] = new ParamInfo(Types.VARCHAR, cursorName, ParamInfo.INPUT);
-            tds.executeSQL(null, "sp_cursoroption", params, true, 0, -1, true);
+            tds.executeSQL(null, "sp_cursoroption", params, true, 0, -1, -1, true);
             tds.clearResponseQueue();
             if (tds.getReturnStatus().intValue() != 0) {
                 throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
@@ -726,7 +728,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         synchronized (tds) {
             // No meta data, no timeout (we're not sending it yet), no row
             // limit, don't send yet
-            tds.executeSQL(null, "sp_cursorfetch", param, true, 0, 0, false);
+            tds.executeSQL(null, "sp_cursorfetch", param, true, 0, 0,
+                    statement.getMaxFieldSize(), false);
 
             // Setup fetchtype param
             PARAM_FETCHTYPE.value = FETCH_INFO;
@@ -740,9 +743,9 @@ public class MSCursorResultSet extends JtdsResultSet {
             param[3] = PARAM_NUMROWS_OUT;
 
             // No meta data, use the statement timeout, leave max rows as it is
-            // (no limit), send now
+            // (no limit), leave max field size as it is, send now
             tds.executeSQL(null, "sp_cursorfetch", param, true,
-                    statement.getQueryTimeout(), -1, true);
+                    statement.getQueryTimeout(), -1, -1, true);
         }
 
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
@@ -875,8 +878,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         synchronized (tds) {
             // With meta data (we're not expecting any ResultSets), no timeout
             // (because we're not sending the request yet), don't alter max
-            // rows, don't send yet
-            tds.executeSQL(null, "sp_cursor", param, false, 0, -1, false);
+            // rows, don't alter max field size, don't send yet
+            tds.executeSQL(null, "sp_cursor", param, false, 0, -1, -1, false);
 
             if (param.length != 4) {
                 param = new ParamInfo[4];
@@ -895,9 +898,9 @@ public class MSCursorResultSet extends JtdsResultSet {
             param[3] = PARAM_NUMROWS_OUT;
 
             // No meta data (no ResultSets expected), use statement timeout,
-            // don't alter max rows, send now
+            // don't alter max rows, don't alter max field size, send now
             tds.executeSQL(null, "sp_cursorfetch", param, true,
-                    statement.getQueryTimeout(), -1, true);
+                    statement.getQueryTimeout(), -1, -1, true);
         }
 
         // Consume the sp_cursor response
@@ -954,7 +957,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Setup cursor handle param
         param[0] = PARAM_CURSOR_HANDLE;
 
-        tds.executeSQL(null, "sp_cursorclose", param, false, statement.getQueryTimeout(), -1, true);
+        tds.executeSQL(null, "sp_cursorclose", param, false,
+                statement.getQueryTimeout(), -1, -1, true);
         tds.clearResponseQueue();
         statement.getMessages().checkErrors();
         //
@@ -962,7 +966,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (prepStmtHandle != null) {
             param[0].value = prepStmtHandle;
-            tds.executeSQL(null, "sp_cursorunprepare", param, false, statement.getQueryTimeout(), -1, true);
+            tds.executeSQL(null, "sp_cursorunprepare", param, false,
+                    statement.getQueryTimeout(), -1, -1, true);
             tds.clearResponseQueue();
             statement.getMessages().checkErrors();
         }

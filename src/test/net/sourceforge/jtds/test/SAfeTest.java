@@ -1357,4 +1357,55 @@ public class SAfeTest extends DatabaseTestCase {
             // Expected DataTruncation
         }
     }
+
+    /**
+     * Test <code>Statement.setMaxFieldSize()</code>.
+     */
+    public void testMaxFieldSize() throws Exception {
+        // TODO Should it also work for fields other than TEXT, per JDBC spec?
+        Statement stmt = con.createStatement();
+
+        stmt.executeUpdate("create table #testMaxFieldSize (i int primary key, t text)");
+        stmt.executeUpdate("insert into #testMaxFieldSize (i, t) values (1, 'This is a test')");
+
+        PreparedStatement pstmt = con.prepareStatement("select * from #testMaxFieldSize");
+
+        // Set different max field sizes for two concurrent statements
+        // Also set max rows, to test setting field size and max rows at the
+        // same time works ok
+        stmt.setMaxFieldSize(3);
+        stmt.setMaxRows(1);
+        pstmt.setMaxFieldSize(5);
+
+        // Test plain statement
+        ResultSet rs = stmt.executeQuery("select * from #testMaxFieldSize");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals(3, rs.getString(2).length());
+        rs.close();
+
+        // Test prepared statement
+        rs = pstmt.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals(5, rs.getString(2).length());
+        rs.close();
+
+        stmt.close();
+
+        // Test scrollable statement
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+        stmt.setMaxFieldSize(3);
+        rs = stmt.executeQuery("select * from #testMaxFieldSize");
+        assertNotNull(rs);
+        assertNull(stmt.getWarnings());
+        assertNull(rs.getWarnings());
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals(3, rs.getString(2).length());
+        rs.close();
+    }
 }

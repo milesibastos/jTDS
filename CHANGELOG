@@ -4,6 +4,8 @@ Changes from jTDS 0.7.1
 03/27/2004 - Brian Heineman
  o Corrected parsing bug in EscapeProcesser that occured when { or } was found
    in a quoted string.
+ o Added test to demonstrate bug [924030] EscapeProcesser problem with "{}"
+   brackets
 
 03/26/2004 - Alin Sinpalean
  o Fixed the fix for bug #922802. ;o) There was a NPE thrown if the batch was
@@ -16,7 +18,7 @@ Changes from jTDS 0.7.1
  o Added ResultSet.getObject() support for IMAGE, TEXT and NTEXT fields to return
    Blob and Clob objects.  Added tests for new functionality.
  o Added Blob and Clob support to ResultSetMetaData.getColumnClassName().
- o Corrected bug [887508] getObject returns Integer-Object on Types.Smallint and
+ o Corrected bug [887508] getObject returns Integer-Object on Types.Smallint;
    added test to ensure functionality continues to work in the future.
 
 03/25/2004 - Alin Sinpalean

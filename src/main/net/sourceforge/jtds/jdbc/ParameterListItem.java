@@ -35,7 +35,7 @@ package net.sourceforge.jtds.jdbc;
 
 
 public class ParameterListItem implements Cloneable {
-    public static final String cvsVersion = "$Id: ParameterListItem.java,v 1.2 2004-02-05 19:00:31 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: ParameterListItem.java,v 1.3 2004-02-17 19:56:15 bheineman Exp $";
 
     /************************************************************
      * Information about the formal parameter
@@ -89,11 +89,6 @@ public class ParameterListItem implements Cloneable {
     public Object value = null;
 
     /**
-     * True if the actual parameter is an input parameter
-     */
-    public boolean isInput = true;
-
-    /**
      * True if the actual parameter is an output parameter.  This value is set
      * by one of the registerOutParam functions.
      */
@@ -111,7 +106,6 @@ public class ParameterListItem implements Cloneable {
         value = null;
         formalName = null;
         formalType = null;
-        isInput = true;
         isOutput = false;
     }
 

@@ -8,6 +8,10 @@ Changes from jTDS 0.6
  o Updated the README and added a features.html file containing the feature
    matrix of jTDS.
 
+02/17/2004 - Brian Heineman
+ o Reduced memory allocated for Callable and Prepared statements by removing
+   unused instance variable created for each SQL parameter.
+
 02/16/2004 - Alin Sinpalean
  o Implemented updateRow and insertRow in CursorResultSet. Updateable
    ResultSets are now fully supported.

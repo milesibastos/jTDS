@@ -5,6 +5,27 @@
 <LINK REL="stylesheet" TYPE="text/css" HREF="sqldoc.css">
 </HEAD>
 <BODY bgcolor="#FFFFFF">
+<h2>System stored procedures</h2>
+<p>This document contains information on undocumented stored procedures in Microsoft SQL Server.</p>
+<BL>
+<table>
+<tr><td>&nbsp;</td><th align="left">Name</th><th align="left">Function</th></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursor">sp_cursor</a></td><td>Update a cursor</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursorclose">sp_cursorclose</a></td><td>close a cursor</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursorexecute">sp_cursorexecute</a></td><td>Open a prepared cursor</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursorfetch">sp_cursorfetch</a></td><td>Fetch rows</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursoropen">sp_cursoropen</a></td><td>Open a cursor</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursoroption">sp_cursoroption</a></td><td>Set cursor options</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursorprepare">sp_cursorprepare</a></td><td>Prepare a cursor statement</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursorprepexec">sp_cursorprepexec</a></td><td>Prepare a cursor statement and open</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_cursorunprepare">sp_cursorunprepare&nbsp;</a></td><td>Free a prepared cursor statement</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_execute">sp_execute</a></td><td>Execute a prepared statement</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_prepare">sp_prepare</a></td><td>Prepare an SQL statement</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_prepexec">sp_prepexec</a></td><td>Prepare and execute an SQL statement</td></tr>
+<tr><td>&nbsp;</td><td><a href="#_sp_unprepare">sp_unprepare</a></td><td>Free a prepared statement</td></tr>
+</table>
+</BL>
+
 <h2><A NAME="_sp_cursoropen"></A>sp_cursoropen</h2>
 <P>Defines the attributes of an API server cursor, such as its scrolling behavior 
   and the statement used to build the result set on which the cursor operates, 
@@ -495,5 +516,322 @@
 <P class="ex"><CODE>-- Close the cursor</CODE></P>
 <P class="ex"><CODE>EXEC sp_cursorclose @cursor</CODE></P>
 <P class="ex"><CODE>&nbsp;</CODE></P>
+
+<h2><A NAME="_sp_cursorprepare"></A>sp_cursorprepare</h2>
+<P>Used to prepare a parameterized cursor statement.</P>
+<h5>Syntax</h5>
+<P><B>sp_cursorprepare</b> [<B>@handle =</B>] <I>statement_handle</I> OUTPUT,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp; [<B>@paramdef =</B>] N'<I>parameter_name data_type</I> 
+  [,<i>...n</i>]', <BR>
+  &nbsp;&nbsp;&nbsp;&nbsp; [<B>@stmt =</B>] N'<I>stmt</I>',<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp; [<B>@flag =</B>] <I>flag</I>, <BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@scrollopt =</B>] <I>scroll_options</I> OUTPUT]<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@ccopt =</B>] <I>concurrency_options</I> OUTPUT]<BR>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the name of a declared integer variable to receive the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@paramdef =</B>] N'<i>parameter_name data_type</i> [,<i>...n</i>]'</DT>
+  <DD>Is one string that contains the definitions of all parameters that have 
+    been embedded in <i>stmt</i>. Each parameter definition consists of a parameter 
+    name and a data type. <i>n</i> is a placeholder indicating additional parameter 
+    definitions. Every parameter specified in <i>stmt</i> must be defined in <b>@paramdef</b>. </DD>
+  <DT>[<B>@stmt =</B>] '<I>stmt</I>'</DT>
+  <DD> 
+    <P>Is a string containing a single SELECT statement or a single stored procedure 
+      call. The size of the string is limited only by available database server 
+      memory. <I>stmt</i> can contain parameters having the same form as a variable 
+      name, for example:</P>
+    <P class="ex"><CODE>'SELECT * FROM Employees WHERE EmployeeID = @IDParameter'</CODE></P>
+    <P>Each parameter included in <i>stmt</i> must have a corresponding entry 
+      in both the <b>@paramdef</b> parameter definition list.</P>
+  </DD>
+  <dt>[<B>@flag =</B>] <I>flag</i></dt>
+  <DD>An integer value. The exact function of this flag is unknown. 
+    <I>flag</I> is <B>int</B>, with value of 1.</DD>
+  <DT>[<B>@scrollopt =</B>] <I>scroll_options</I> OUTPUT</DT>
+  <DD> Is the cursor scroll type. <I>scroll_options</I> is <B>int</B> with a default 
+    of 1 (keyset-driven). See sp_cursoropen for more information.
+   <BR>
+    On return, <b>@scrollopt</b> contains the type of cursor actually created, 
+    which may not match what was requested.</DD>
+  <DT>[<B>@ccopt =</B>] <I>concurrency_options</i> OUTPUT</DT>
+  <DD>Is the cursor concurrency. <I>concurrency_options</I> is <B>int</B>, with 
+    a default of 4 (optimistic). See sp_cursoropen for more information.
+  <BR>
+    On return, <b>@ccopt</b> contains the type of cursor actually created, which 
+    may not match what was requested.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>None.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_cursorprepexec"></A>sp_cursorprepexec</h2>
+<P>Used to prepare and open a parameterized cursor statement. This command combines the 
+functions of the sp_cursorprepare and sp_cursorexecute procedures and is available from SQL2000 onwards.</P>
+<h5>Syntax</h5>
+<P><B>sp_cursorprepexec</b> [<B>@handle =</B>] <I>statement_handle</I> OUTPUT,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;  [<B>@cursor =</B>] <I>cursor_handle</I> OUTPUT,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;  [<B>@paramdef =</B>] N'<I>parameter_name data_type,</I> 
+  [,<i>...n</i>]' <BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;  [<B>@stmt =</B>] N'<I>stmt</I>',<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@scrollopt =</B>] <I>scroll_options</I> OUTPUT]<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@ccopt =</B>] <I>concurrency_options</I> OUTPUT]<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@rowcount =</B>] <I>rowcount</I> OUTPUT]</P>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the name of a declared integer variable to receive the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@cursor =</B>] <I>cursor_handle</I> OUTPUT</DT>
+  <DD>Is the name of a declared integer variable to receive the cursor handle. 
+    <I>cursor_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@paramdef =</B>] N'<i>parameter_name data_type</i> [,<i>...n</i>]'</DT>
+  <DD>Is one string that contains the definitions of all parameters that have 
+    been embedded in <i>stmt</i>. Each parameter definition consists of a parameter 
+    name and a data type. <i>n</i> is a placeholder indicating additional parameter 
+    definitions. Every parameter specified in <i>stmt</i> must be defined in <b>@paramdef</b>. </DD>
+  <DT>[<B>@stmt =</B>] '<I>stmt</I>'</DT>
+  <DD> 
+    <P>Is a string containing a single SELECT statement or a single stored procedure 
+      call. The size of the string is limited only by available database server 
+      memory. <I>stmt</i> can contain parameters having the same form as a variable 
+      name, for example:</P>
+    <P class="ex"><CODE>'SELECT * FROM Employees WHERE EmployeeID = @IDParameter'</CODE></P>
+    <P>Each parameter included in <i>stmt</i> must have a corresponding entry 
+      in both the <b>@paramdef</b> parameter definition list.</P>
+  </DD>
+  <DT>[<B>@scrollopt =</B>] <I>scroll_options</I> OUTPUT</DT>
+  <DD> Is the cursor scroll type. <I>scroll_options</I> is <B>int</B> with a default 
+    of 1 (keyset-driven). See sp_cursoropen for more information.
+   <BR>
+    On return, <b>@scrollopt</b> contains the type of cursor actually created, 
+    which may not match what was requested.</DD>
+  <DT>[<B>@ccopt =</B>] <I>concurrency_options</i> OUTPUT</DT>
+  <DD>Is the cursor concurrency. <I>concurrency_options</I> is <B>int</B>, with 
+    a default of 4 (optimistic). See sp_cursoropen for more information.
+  <BR>
+    On return, <b>@ccopt</b> contains the type of cursor actually created, which 
+    may not match what was requested.</DD>
+  <DT>[<B>@rowcount =</B>] <I>rowcount</I> OUTPUT</DT>
+  <DD> Is the name of a declared integer variable to receive the number of affected 
+    rows. <I>rowcount</I> is <B>int</B> with no default value.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>Returns the result set generated by <i>stmt</i>, but containing no rows.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_cursorexecute"></A>sp_cursorexecute</h2>
+<P>Used to execute (open) a prepared cursor statement.</P>
+<h5>Syntax</h5>
+<P><B>sp_cursorexecute</b> [<B>@handle =</B>] <I>statement_handle</I>,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;  [<B>@cursor =</B>] <I>cursor_handle</I> OUTPUT,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@scrollopt =</B>] <I>scroll_options</I> OUTPUT]<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@ccopt =</B>] <I>concurrency_options</I> OUTPUT]<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;[, [<B>@rowcount =</B>] <I>rowcount</I> OUTPUT]<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;{, [<B>@</B><i>param1</i><B> =</B>] <I>value1</I> [,<i>...n</i>] 
+  }</P>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the integer value of the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@cursor =</B>] <I>cursor_handle</I> OUTPUT</DT>
+  <DD>Is the name of a declared integer variable to receive the cursor handle. 
+    <I>cursor_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@scrollopt =</B>] <I>scroll_options</I> OUTPUT</DT>
+  <DD> Is the cursor scroll type. <I>scroll_options</I> is <B>int</B> with a default 
+    of 1 (keyset-driven). See sp_cursoropen for more information.
+   <BR>
+    On return, <b>@scrollopt</b> contains the type of cursor actually created, 
+    which may not match what was requested.</DD>
+  <DT>[<B>@ccopt =</B>] <I>concurrency_options</i> OUTPUT</DT>
+  <DD>Is the cursor concurrency. <I>concurrency_options</I> is <B>int</B>, with 
+    a default of 4 (optimistic). See sp_cursoropen for more information.
+  <BR>
+    On return, <b>@ccopt</b> contains the type of cursor actually created, which 
+    may not match what was requested.</DD>
+  <DT>[<B>@rowcount =</B>] <I>rowcount</I> OUTPUT</DT>
+  <DD> Is the name of a declared integer variable to receive the number of affected 
+    rows. <I>rowcount</I> is <B>int</B> with no default value.</DD>
+  <DT>[<b>@</b><i>param1</i><b> =</b>] <i>value1</i></DT>
+  <DD>Is a value for the first parameter defined in the parameter string. The 
+    value can be a constant or a variable. There must be a parameter value supplied 
+    for every parameter included in <i>stmt</i>. The values are not needed if 
+    the Transact-SQL statement in <i>stmt</i> has no parameters.</DD>
+  <DT><i>n</i></DT>
+  <DD>Is a placeholder for the values of additional parameters. Values can be 
+    only constants or variables. Values cannot be more complex expressions such 
+    as functions, or expressions built using operators.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>Returns the result set generated by the prepared statement <i>handle</i>, but containing no rows.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_cursorunprepare"></A>sp_cursorunprepare</h2>
+<P>Used to free a prepared cursor statement.</P>
+<h5>Syntax</h5>
+<P><B>sp_cursorunprepare</b> [<B>@handle =</B>] <I>statement_handle</I></P>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the integer value of the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>None.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_prepare"></A>sp_prepare</h2>
+<P>Used to prepare a parameterized SQL statement.</P>
+<h5>Syntax</h5>
+<P><B>sp_prepare</b> [<B>@handle =</B>] <I>statement_handle</I> OUTPUT,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp; [<B>@paramdef =</B>] N'<I>parameter_name data_type</I> 
+  [,<i>...n</i>]', <BR>
+  &nbsp;&nbsp;&nbsp;&nbsp; [<B>@stmt =</B>] N'<I>stmt</I>',<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp; [<B>@flag =</B>] <I>flag</I>, <BR>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the name of a declared integer variable to receive the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@paramdef =</B>] N'<i>parameter_name data_type</i> [,<i>...n</i>]'</DT>
+  <DD>Is one string that contains the definitions of all parameters that have 
+    been embedded in <i>stmt</i>. Each parameter definition consists of a parameter 
+    name and a data type. <i>n</i> is a placeholder indicating additional parameter 
+    definitions. Every parameter specified in <i>stmt</i> must be defined in <b>@paramdef</b>. </DD>
+  <DT>[<B>@stmt =</B>] '<I>stmt</I>'</DT>
+  <DD> 
+    <P>Is a string containing a single SELECT statement or a single stored procedure 
+      call. The size of the string is limited only by available database server 
+      memory. <I>stmt</i> can contain parameters having the same form as a variable 
+      name, for example:</P>
+    <P class="ex"><CODE>'SELECT * FROM Employees WHERE EmployeeID = @IDParameter'</CODE></P>
+    <P>Each parameter included in <i>stmt</i> must have a corresponding entry 
+      in both the <b>@paramdef</b> parameter definition list.</P>
+  </DD>
+  <dt>[<B>@flag =</B>] <I>flag</i></dt>
+  <DD>An integer value. The exact function of this flag is unknown. 
+    <I>flag</I> is <B>int</B>, with value of 1.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>None.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_execute"></A>sp_execute</h2>
+<P>Used to execute a prepared SQL statement.</P>
+<h5>Syntax</h5>
+<P><B>sp_execute</b> [<B>@handle =</B>] <I>statement_handle</I><BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;{, [<B>@</B><i>param1</i><B> =</B>] <I>value1</I> [,<i>...n</i>] 
+  }</P>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the integer value of the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<b>@</b><i>param1</i><b> =</b>] <i>value1</i></DT>
+  <DD>Is a value for the first parameter defined in the parameter string. The 
+    value can be a constant or a variable. There must be a parameter value supplied 
+    for every parameter included in prepared statement <i>handle</i>. The values are not needed if 
+    the Transact-SQL statement in <i>stmt</i> has no parameters.</DD>
+  <DT><i>n</i></DT>
+  <DD>Is a placeholder for the values of additional parameters. Values can be 
+    only constants or variables. Values cannot be more complex expressions such 
+    as functions, or expressions built using operators.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>Returns a result set if specified by the prepared statement.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_unprepare"></A>sp_unprepare</h2>
+<P>Used to free a prepared SQL statement.</P>
+<h5>Syntax</h5>
+<P><B>sp_unprepare</b> [<B>@handle =</B>] <I>statement_handle</I></P>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the integer value of the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>None.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
+<h2><A NAME="_sp_prepexec"></A>sp_prepexec</h2>
+<P>Used to prepare and execute a parameterized SQL statement. This command combines the 
+functions of the sp_prepare and sp_execute procedures and is available from SQL2000 onwards.</P>
+<h5>Syntax</h5>
+<P><B>sp_prepexec</b> [<B>@handle =</B>] <I>statement_handle</I> OUTPUT,<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;  [<B>@paramdef =</B>] N'<I>parameter_name data_type,</I> 
+  [,<i>...n</i>]' <BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;  [<B>@stmt =</B>] N'<I>stmt</I>',<BR>
+  &nbsp;&nbsp;&nbsp;&nbsp;{, [<B>@</B><i>param1</i><B> =</B>] <I>value1</I> [,<i>...n</i>] 
+  }</P>
+<h5>Arguments</h5>
+<dl> 
+  <dt>[<B>@handle =</B>] <I>statement_handle</i></dt>
+  <DD>Is the name of a declared integer variable to receive the statement handle. 
+    <I>statement_handle</I> is <B>int</B>, with no default.</DD>
+  <DT>[<B>@paramdef =</B>] N'<i>parameter_name data_type</i> [,<i>...n</i>]'</DT>
+  <DD>Is one string that contains the definitions of all parameters that have 
+    been embedded in <i>stmt</i>. Each parameter definition consists of a parameter 
+    name and a data type. <i>n</i> is a placeholder indicating additional parameter 
+    definitions. Every parameter specified in <i>stmt</i> must be defined in <b>@paramdef</b>. </DD>
+  <DT>[<B>@stmt =</B>] '<I>stmt</I>'</DT>
+  <DD> 
+    <P>Is a string containing a valid SQL statement. The size of the string is limited only by available database server 
+      memory. <I>stmt</i> can contain parameters having the same form as a variable 
+      name, for example:</P>
+    <P class="ex"><CODE>'SELECT * FROM Employees WHERE EmployeeID = @IDParameter'</CODE></P>
+    <P>Each parameter included in <i>stmt</i> must have a corresponding entry 
+      in both the <b>@paramdef</b> parameter definition list.</P>
+  </DD>
+  <DT>[<b>@</b><i>param1</i><b> =</b>] <i>value1</i></DT>
+  <DD>Is a value for the first parameter defined in the parameter string. The 
+    value can be a constant or a variable. There must be a parameter value supplied 
+    for every parameter included in <i>stmt</i>. The values are not needed if 
+    the Transact-SQL statement in <i>stmt</i> has no parameters.</DD>
+  <DT><i>n</i></DT>
+  <DD>Is a placeholder for the values of additional parameters. Values can be 
+    only constants or variables. Values cannot be more complex expressions such 
+    as functions, or expressions built using operators.</DD>
+</dl>
+<h5>Return Code Values</h5>
+<P>0 (success) or 1 (failure).</P>
+<h5>Result Sets</h5>
+<P>Returns a result set if specified by the prepared statement.</P>
+<h5>Permissions</h5>
+<P>Execute permissions default to the <b>public</b> role.</P>
+<h5>Example</h5>
+
 </BODY>
 </HTML>

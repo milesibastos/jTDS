@@ -30,13 +30,13 @@ import java.sql.*;
  * @author     Brian Heineman
  * @author     Mike Hutchinson
  * @created    March 30, 2004
- * @version    $Id: TdsConnectionJDBC3.java,v 1.1 2004-03-30 19:54:57 alin_sinpalean Exp $
+ * @version    $Id: TdsConnectionJDBC3.java,v 1.2 2004-04-01 20:22:38 bheineman Exp $
  */
 public class TdsConnectionJDBC3 extends TdsConnection {
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnectionJDBC3.java,v 1.1 2004-03-30 19:54:57 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnectionJDBC3.java,v 1.2 2004-04-01 20:22:38 bheineman Exp $";
 
     private ArrayList savepoints = null;
 
@@ -93,7 +93,7 @@ public class TdsConnectionJDBC3 extends TdsConnection {
 
         try {
             statement = createStatement();
-            statement.execute("ROLLBACK TRANSACTION s" + ((SavepointImpl) savepoint).getId());
+            statement.execute("ROLLBACK TRAN s" + ((SavepointImpl) savepoint).getId());
         } finally {
             statement.close();
         }
@@ -148,7 +148,7 @@ public class TdsConnectionJDBC3 extends TdsConnection {
 
         try {
             statement = createStatement();
-            statement.execute("SAVE TRANSACTION s" + savepoint.getId());
+            statement.execute("SAVE TRAN s" + savepoint.getId());
         } finally {
             statement.close();
         }

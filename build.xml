@@ -98,7 +98,7 @@
     </copy>
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.XA,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
+      <fileset dir="." includes="README,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
     <delete dir="${dist}/tmp"/>
@@ -106,13 +106,17 @@
     <!-- Binary package -->
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.XA,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
+      <fileset dir="." includes="README,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
       <fileset dir="${build}" includes="*.jar"/>
     </copy>
     <mkdir dir="${dist}/tmp/XA"/>
     <copy todir="${dist}/tmp/XA">
-      <fileset dir="lib" includes="*.dll"/>
+      <fileset dir="lib" includes="JtdsXA.dll"/>
       <fileset dir="src/XA" includes="*.sql"/>
+    </copy>
+    <mkdir dir="${dist}/tmp/SSO"/>
+    <copy todir="${dist}/tmp/SSO">
+      <fileset dir="lib" includes="ntlmauth.dll"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-dist.zip"/>
     <delete dir="${dist}/tmp"/>

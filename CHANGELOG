@@ -1,6 +1,9 @@
 Changes from jTDS 0.9.1
 =======================
 
+12/21/2004 - Alin Sinpalean
+ o Included the SSO patch in the build.
+
 12/20/2004 - Alin Sinpalean
  o Fixed bug [1086477] RETURN_GENERATED_KEYS on select returns 1 row.
  o Applied patch [1088293] Simplified multi threaded execution with a few minor

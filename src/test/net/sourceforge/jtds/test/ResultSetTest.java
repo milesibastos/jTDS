@@ -2,6 +2,9 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 
+import net.sourceforge.jtds.jdbc.Driver;
+import net.sourceforge.jtds.jdbc.JtdsStatement;
+
 /**
  * @version 1.0
  */
@@ -47,6 +50,16 @@ public class ResultSetTest extends TestBase {
         assertTrue(tmpData instanceof Boolean);
         assertTrue(data == ((Boolean) tmpData).booleanValue());
 
+        ResultSetMetaData resultSetMetaData = rs.getMetaData();
+        
+        assertTrue(resultSetMetaData != null);
+        
+        if (Driver.JDBC3) {
+            assertTrue(resultSetMetaData.getColumnType(1) == JtdsStatement.BOOLEAN);
+        } else {
+            assertTrue(resultSetMetaData.getColumnType(1) == Types.BIT);
+        }
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -89,6 +102,11 @@ public class ResultSetTest extends TestBase {
         assertTrue(tmpData instanceof Byte);
         assertTrue(data == ((Byte) tmpData).byteValue());
 
+        ResultSetMetaData resultSetMetaData = rs.getMetaData();
+        
+        assertTrue(resultSetMetaData != null);
+        assertTrue(resultSetMetaData.getColumnType(1) == Types.TINYINT);
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -131,6 +149,11 @@ public class ResultSetTest extends TestBase {
         assertTrue(tmpData instanceof Short);
         assertTrue(data == ((Short) tmpData).shortValue());
 
+        ResultSetMetaData resultSetMetaData = rs.getMetaData();
+        
+        assertTrue(resultSetMetaData != null);
+        assertTrue(resultSetMetaData.getColumnType(1) == Types.SMALLINT);
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();
@@ -173,6 +196,11 @@ public class ResultSetTest extends TestBase {
         assertTrue(tmpData instanceof Integer);
         assertTrue(data == ((Integer) tmpData).intValue());
 
+        ResultSetMetaData resultSetMetaData = rs.getMetaData();
+        
+        assertTrue(resultSetMetaData != null);
+        assertTrue(resultSetMetaData.getColumnType(1) == Types.INTEGER);
+        
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.5 2004-07-13 20:07:37 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.6 2004-07-13 22:52:48 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -313,7 +313,11 @@ public class TdsData {
         ci.sqlType = types[type].sqlType;
 
         // Now fine tune sizes for specific types
-        if (type == SYBDATETIMN) {
+        if (type == SYBBIT || type == SYBBITN) {
+            if (!Driver.JDBC3) {
+                ci.jdbcType = java.sql.Types.BIT;
+            }
+        } else if (type == SYBDATETIMN) {
             ci.nullable = java.sql.ResultSetMetaData.columnNullable;
             
             if (ci.bufferSize == 8) {
@@ -342,13 +346,7 @@ public class TdsData {
             if (ci.bufferSize == 8) {
                 ci.displaySize = types[SYBINT8].displaySize;
                 ci.precision = types[SYBINT8].precision;
-                
-                if (Driver.JDBC3 && isTds8) {
-                    ci.jdbcType = types[SYBINT8].jdbcType;
-                } else {
-                    ci.jdbcType = java.sql.Types.NUMERIC;
-                }
-                
+                ci.jdbcType = java.sql.Types.BIGINT;
                 ci.sqlType = types[SYBINT8].sqlType;
             } else if (ci.bufferSize == 4) {
                 ci.displaySize = types[SYBINT4].displaySize;

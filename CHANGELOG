@@ -11,6 +11,7 @@ Changes from jTDS 0.8.1
  o Corrected bug [991088] Data type 0x3E is unknown error with SQL Server 2005;
    SYBFLTN values are now properly formed and are no longer sent as SYBFLT8
    when they are not null.
+ o Updated documentation to reflect SQL Server 2005 compliance.
 
 07/13/2004 - Brian Heineman
  o Corrected bug [989963] BigInt becomes Numeric;

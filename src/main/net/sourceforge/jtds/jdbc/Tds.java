@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.19 2004-01-29 18:43:01 bheineman Exp $
+ *@version    $Id: Tds.java,v 1.20 2004-01-29 22:04:23 bheineman Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.19 2004-01-29 18:43:01 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.20 2004-01-29 22:04:23 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -2524,13 +2524,15 @@ public class Tds implements TdsDefinitions
         byte pad = (byte) 0;
         byte[] empty = new byte[0];
         String appName = this.appName;
+        String clientName = getClientName();
 
         //mdb
         boolean ntlmAuth = (domain.length() > 0);
 
         //mdb:begin-change
         short packSize = (short)( 86 + 2 *
-               (appName.length() +
+               (clientName.length() +
+                appName.length() +
                 serverName.length() +
                 libName.length() +
                 _database.length()) );
@@ -2570,7 +2572,8 @@ public class Tds implements TdsDefinitions
 
         // Hostname
         comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) 0);
+        comm.appendTdsShort((short) clientName.length());
+        curPos += clientName.length() * 2;
 
         // Username
         //mdb: ntlm doesn't send username...
@@ -2639,6 +2642,8 @@ public class Tds implements TdsDefinitions
         //"next position" (same as total packet size)
         comm.appendTdsInt(packSize);
 
+        comm.appendChars(clientName);
+
         // Pack up the login values.
         //mdb: for ntlm auth, uname and pwd aren't sent up...
         if( ! ntlmAuth )
@@ -2647,6 +2652,7 @@ public class Tds implements TdsDefinitions
             comm.appendChars(user);
             comm.appendChars(scrambledPw);
         }
+
         comm.appendChars(appName);
         comm.appendChars(serverName);
         comm.appendChars(libName);

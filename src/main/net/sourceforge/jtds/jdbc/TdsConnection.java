@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2003-08-30 15:43:48 matt_brinkley Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.4 2003-08-30 15:43:48 matt_brinkley Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -124,7 +124,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.4 2003-08-30 15:43:48 matt_brinkley Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -602,7 +602,8 @@ public class TdsConnection implements Connection
             catch( SQLException ex )
             {
                 // SAfe Add the exception to the chain
-                exception.setNextException(ex);
+                ex.setNextException(exception);
+                exception = ex;
             }
         }
 

@@ -13,8 +13,7 @@ import net.sourceforge.jtds.jdbc.*;
  * @author Alin Sinplean
  * @since  jTDS 0.3
  */
-public class TdsDataSource implements DataSource, Referenceable, Serializable
-{
+public class TdsDataSource implements DataSource, Referenceable, Serializable {
     private int loginTimeout;
     private String databaseName = "";
     private String description;
@@ -24,19 +23,19 @@ public class TdsDataSource implements DataSource, Referenceable, Serializable
     private String user;
     private String tdsVersion = "7.0";
     private int serverType = Tds.SQLSERVER;
-    private String domain;
-    private String instance;
-    private boolean sendStringParametersAsUnicode;
+    private String domain = "";
+    private String instance = "";
+    private boolean sendStringParametersAsUnicode = true;
 
-    public TdsDataSource() {}
+    public TdsDataSource() {
+    }
 
-    public Connection getConnection() throws SQLException
-    {
+    public Connection getConnection() throws SQLException {
         return getConnection(getUser(), getPassword());
     }
 
-    public Connection getConnection(String username, String password) throws SQLException
-    {
+    public Connection getConnection(String username, String password)
+    throws SQLException {
         Properties props = new Properties();
 
         props.setProperty(Tds.PROP_HOST, getServerName());
@@ -47,160 +46,136 @@ public class TdsDataSource implements DataSource, Referenceable, Serializable
         props.setProperty(Tds.PROP_DOMAIN, getDomain());
         props.setProperty(Tds.PROP_INSTANCE, getInstance());
         props.setProperty(Tds.PROP_USEUNICODE,
-            String.valueOf(getSendStringParametersAsUnicode()));
+                          String.valueOf(getSendStringParametersAsUnicode()));
 
         props.setProperty(Tds.PROP_USER, username);
         props.setProperty(Tds.PROP_PASSWORD, password);
 
-        try
-        {
+        try {
             return new TdsConnection(props);
-        }
-        catch( TdsException ex )
-        {
+        } catch (TdsException ex) {
             throw new SQLException(ex.getMessage());
         }
     }
 
-    public PrintWriter getLogWriter() throws SQLException
-    {
+    public PrintWriter getLogWriter() throws SQLException {
         throw new java.lang.UnsupportedOperationException("Method getLogWriter() not yet implemented.");
     }
 
-    public void setLogWriter(PrintWriter out) throws SQLException
-    {
+    public void setLogWriter(PrintWriter out) throws SQLException {
         throw new java.lang.UnsupportedOperationException("Method setLogWriter() not yet implemented.");
     }
 
-    public void setLoginTimeout(int seconds) throws SQLException
-    {
+    public void setLoginTimeout(int seconds) throws SQLException {
         loginTimeout = seconds;
     }
 
-    public int getLoginTimeout() throws SQLException
-    {
+    public int getLoginTimeout() throws SQLException {
         return loginTimeout;
     }
 
-    public Reference getReference() throws NamingException
-    {
+    public Reference getReference() throws NamingException {
         Reference ref = new Reference(getClass().getName(),
-            TdsObjectFactory.class.getName(), null);
+                                      TdsObjectFactory.class.getName(), null);
 
-        ref.add( new StringRefAddr("serverName", getServerName()));
-        ref.add( new StringRefAddr("portNumber", String.valueOf(getPortNumber())));
-        ref.add( new StringRefAddr("databaseName", getDatabaseName()));
-        ref.add( new StringRefAddr("user", getUser()));
-        ref.add( new StringRefAddr("password", getPassword()));
-        ref.add( new StringRefAddr("tdsVersion", getTdsVersion()));
-        ref.add( new StringRefAddr("serverType", String.valueOf(getServerType())));
-        ref.add( new StringRefAddr("domain", getDomain()));
-        ref.add( new StringRefAddr("instance", getInstance()));
-        ref.add( new StringRefAddr("sendStringParametersAsUnicode",
-            String.valueOf(getSendStringParametersAsUnicode())));
+        ref.add(new StringRefAddr("serverName", getServerName()));
+        ref.add(new StringRefAddr("portNumber", String.valueOf(getPortNumber())));
+        ref.add(new StringRefAddr("databaseName", getDatabaseName()));
+        ref.add(new StringRefAddr("user", getUser()));
+        ref.add(new StringRefAddr("password", getPassword()));
+        ref.add(new StringRefAddr("tdsVersion", getTdsVersion()));
+        ref.add(new StringRefAddr("serverType", String.valueOf(getServerType())));
+        ref.add(new StringRefAddr("domain", getDomain()));
+        ref.add(new StringRefAddr("instance", getInstance()));
+        ref.add(new StringRefAddr("sendStringParametersAsUnicode",
+                                  String.valueOf(getSendStringParametersAsUnicode())));
 
         return ref;
     }
 
-    public void setDatabaseName(String newDatabaseName)
-    {
+    public void setDatabaseName(String newDatabaseName) {
         databaseName = newDatabaseName;
     }
-    public String getDatabaseName()
-    {
+
+    public String getDatabaseName() {
         return databaseName;
     }
 
-    public void setDescription(String newDescription)
-    {
+    public void setDescription(String newDescription) {
         description = newDescription;
     }
-    public String getDescription()
-    {
+    public String getDescription() {
         return description;
     }
 
-    public void setPassword(String newPassword)
-    {
+    public void setPassword(String newPassword) {
         password = newPassword;
     }
-    public String getPassword()
-    {
+
+    public String getPassword() {
         return password;
     }
 
-    public void setPortNumber(int newPortNumber)
-    {
+    public void setPortNumber(int newPortNumber) {
         portNumber = newPortNumber;
     }
-    public int getPortNumber()
-    {
+
+    public int getPortNumber() {
         return portNumber;
     }
 
-    public void setServerName(String newServerName)
-    {
+    public void setServerName(String newServerName) {
         serverName = newServerName;
     }
-    public String getServerName()
-    {
+
+    public String getServerName() {
         return serverName;
     }
 
-    public void setUser(String newUser)
-    {
+    public void setUser(String newUser) {
         user = newUser;
     }
-    public String getUser()
-    {
+
+    public String getUser() {
         return user;
     }
 
-    public void setTdsVersion(String newTdsVersion)
-    {
+    public void setTdsVersion(String newTdsVersion) {
         tdsVersion = newTdsVersion;
     }
-    public String getTdsVersion()
-    {
+
+    public String getTdsVersion() {
         return tdsVersion;
     }
 
-    public void setServerType(int newServerType)
-    {
+    public void setServerType(int newServerType) {
         serverType = newServerType;
     }
-    public int getServerType()
-    {
+    public int getServerType() {
         return serverType;
     }
 
-    public String getDomain()
-    {
+    public String getDomain() {
         return domain;
     }
 
-    public void setDomain(String domain)
-    {
+    public void setDomain(String domain) {
         this.domain = domain;
     }
 
-    public String getInstance()
-    {
+    public String getInstance() {
         return instance;
     }
 
-    public void setInstance(String instance)
-    {
+    public void setInstance(String instance) {
         this.instance = instance;
     }
 
-    public boolean getSendStringParametersAsUnicode()
-    {
+    public boolean getSendStringParametersAsUnicode() {
         return sendStringParametersAsUnicode;
     }
 
-    public void setSendStringParametersAsUnicode(boolean sendStringParametersAsUnicode)
-    {
+    public void setSendStringParametersAsUnicode(boolean sendStringParametersAsUnicode) {
         this.sendStringParametersAsUnicode = sendStringParametersAsUnicode;
     }
 }

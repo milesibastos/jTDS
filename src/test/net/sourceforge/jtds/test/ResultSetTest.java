@@ -25,7 +25,7 @@ public class ResultSetTest extends TestBase {
         pstmt.setBoolean(1, data);
         pstmt.setBoolean(2, false);
         pstmt.setBoolean(3, true);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -52,12 +52,12 @@ public class ResultSetTest extends TestBase {
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
-        assertEquals(resultSetMetaData.getColumnType(1), Types.BIT);
+        assertEquals(Types.BIT, resultSetMetaData.getColumnType(1));
 
-        assertTrue(!rs.getBoolean(2));
+        assertFalse(rs.getBoolean(2));
         assertTrue(rs.getBoolean(3));
         
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -77,7 +77,7 @@ public class ResultSetTest extends TestBase {
         pstmt.setByte(1, data);
         pstmt.setByte(2, Byte.MIN_VALUE);
         pstmt.setByte(3, Byte.MAX_VALUE);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -104,12 +104,12 @@ public class ResultSetTest extends TestBase {
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
-        assertEquals(resultSetMetaData.getColumnType(1), Types.TINYINT);
+        assertEquals(Types.TINYINT, resultSetMetaData.getColumnType(1));
 
         assertEquals(rs.getByte(2), Byte.MIN_VALUE);
         assertEquals(rs.getByte(3), Byte.MAX_VALUE);
 
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -129,7 +129,7 @@ public class ResultSetTest extends TestBase {
         pstmt.setShort(1, data);
         pstmt.setShort(2, Short.MIN_VALUE);
         pstmt.setShort(3, Short.MAX_VALUE);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -156,12 +156,12 @@ public class ResultSetTest extends TestBase {
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
-        assertEquals(resultSetMetaData.getColumnType(1), Types.SMALLINT);
+        assertEquals(Types.SMALLINT, resultSetMetaData.getColumnType(1));
 
         assertEquals(rs.getShort(2), Short.MIN_VALUE);
         assertEquals(rs.getShort(3), Short.MAX_VALUE);
         
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -181,7 +181,7 @@ public class ResultSetTest extends TestBase {
         pstmt.setInt(1, data);
         pstmt.setInt(2, Integer.MIN_VALUE);
         pstmt.setInt(3, Integer.MAX_VALUE);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -208,12 +208,12 @@ public class ResultSetTest extends TestBase {
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
-        assertEquals(resultSetMetaData.getColumnType(1), Types.INTEGER);
+        assertEquals(Types.INTEGER, resultSetMetaData.getColumnType(1));
 
         assertEquals(rs.getInt(2), Integer.MIN_VALUE);
         assertEquals(rs.getInt(3), Integer.MAX_VALUE);
         
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -233,7 +233,7 @@ public class ResultSetTest extends TestBase {
         pstmt.setLong(1, data);
         pstmt.setLong(2, Long.MIN_VALUE);
         pstmt.setLong(3, Long.MAX_VALUE);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -260,12 +260,12 @@ public class ResultSetTest extends TestBase {
         ResultSetMetaData resultSetMetaData = rs.getMetaData();
 
         assertNotNull(resultSetMetaData);
-        //assertEquals(resultSetMetaData.getColumnType(1), Types.BIGINT);
+        //assertEquals(Types.BIGINT, resultSetMetaData.getColumnType(1));
 
         assertEquals(rs.getLong(2), Long.MIN_VALUE);
         assertEquals(rs.getLong(3), Long.MAX_VALUE);
         
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
         stmt2.close();
         rs.close();
     }
@@ -284,7 +284,7 @@ public class ResultSetTest extends TestBase {
 
         for (int i = 1; i <= count; i++) {
             pstmt.setInt(1, i);
-            assertEquals(pstmt.executeUpdate(), 1);
+            assertEquals(1, pstmt.executeUpdate());
         }
 
         pstmt.close();
@@ -311,7 +311,7 @@ public class ResultSetTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll2 (data) VALUES (?)");
 
         pstmt.setInt(1, 1);
-        assertEquals(pstmt.executeUpdate(), 1);
+        assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
 
@@ -324,12 +324,72 @@ public class ResultSetTest extends TestBase {
         assertNotNull(rs);
         assertTrue(rs.next());
         assertEquals(rs.getInt(1), 1);
-        assertTrue(!rs.next());
+        assertFalse(rs.next());
 
         stmt2.close();
         rs.close();
     }
 
+    /**
+     * Test for bug [1008208] 0.9-rc1 updateNull doesn't work
+     */
+    public void testResultSetUpdate1() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #resultSetUpdate1 (id INT PRIMARY KEY, dsi SMALLINT NULL, di INT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetUpdate1 (id, dsi, di) VALUES (?, ?, ?)");
+
+        pstmt.setInt(1, 1);
+        pstmt.setShort(2, (short) 1);
+        pstmt.setInt(3, 1);
+        assertEquals(1, pstmt.executeUpdate());
+
+        pstmt.close();
+
+        stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        stmt.executeQuery("SELECT id, dsi, di FROM #resultSetUpdate1");
+
+        ResultSet rs = stmt.getResultSet();
+
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        rs.updateNull(2);
+        rs.updateNull(3);
+        rs.updateRow();
+        rs.moveToInsertRow();
+        rs.updateInt(1, 2);
+        rs.updateNull(2);
+        rs.updateNull(3);
+        rs.insertRow();
+
+        stmt.close();
+        rs.close();
+
+        stmt = con.createStatement();
+        stmt.executeQuery("SELECT id, dsi, di FROM #resultSetUpdate1 ORDER BY id");
+
+        rs = stmt.getResultSet();
+
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        rs.getShort(2);
+        assertTrue(rs.wasNull());
+        rs.getInt(3);
+        assertTrue(rs.wasNull());
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        rs.getShort(2);
+        assertTrue(rs.wasNull());
+        rs.getInt(3);
+        assertTrue(rs.wasNull());        
+        assertFalse(rs.next());
+        
+        stmt.close();
+        rs.close();
+    }
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

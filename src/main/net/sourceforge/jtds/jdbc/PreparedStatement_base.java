@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.32 2004-04-19 16:24:45 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.33 2004-04-19 23:23:43 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.32 2004-04-19 16:24:45 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.33 2004-04-19 23:23:43 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -145,8 +145,6 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // the actual procedure until the statement is executed.  By
         // that time we know all the types of all of the parameters.
         //
-        Procedure procedure = null;
-
         // Map parameters to native types and assign them generated names
         ParameterUtils.createParameterMapping(
                 rawQueryString, parameterList, tds, true);
@@ -154,6 +152,9 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // MJH
         // Create a unique signature for this the procedure by including parameters
         StringBuffer signature = new StringBuffer();
+        // Add the catalog the the signature so that the same procedure will not
+        // be called for each catalog.
+        signature.append(connection.getCatalog());
         signature.append(rawQueryString);
 
         for (int i = 0; i < parameterList.length; i++) {
@@ -162,7 +163,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         // Find a stored procedure that is compatible with this set of parameters if one exists.
         // MJH Lookup now includes parameter list
-        procedure = findCompatibleStoredProcedure(signature.toString());
+        Procedure procedure = findCompatibleStoredProcedure(signature.toString());
 
         // if we don't have a suitable match then create a new temporary stored procedure
         if (procedure == null) {
@@ -177,7 +178,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             submitProcedure(tds, procedure);
 
             // store it in the procedureCache
-            ((TdsConnection)this.getConnection()).addStoredProcedure(procedure);
+            connection.addStoredProcedure(procedure);
         }
 
         return procedure;
@@ -185,7 +186,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
     private Procedure findCompatibleStoredProcedure(String rawQueryString)
             throws SQLException {
-        return ((TdsConnection)this.getConnection()).findCompatibleStoredProcedure(rawQueryString);
+        return connection.findCompatibleStoredProcedure(rawQueryString);
     }
 
     private void submitProcedure(Tds tds, Procedure proc)
@@ -430,7 +431,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // when this method creates the parameter the formal type should
         // be a varbinary if the length of 'x' is <=255, image if length>255.
         if (x == null || x.length <= 255 || (x.length <= 8000
-            && ((TdsConnection) getConnection()).getTdsVer() == Tds.TDS70)) {
+            && connection.getTdsVer() == Tds.TDS70)) {
             setParam(parameterIndex, x, java.sql.Types.VARBINARY, -1);
         } else {
             setParam(parameterIndex, x, java.sql.Types.LONGVARBINARY, -1);

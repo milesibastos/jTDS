@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.30 2004-04-17 03:48:50 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.31 2004-04-19 23:23:43 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,9 +66,9 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.30 2004-04-17 03:48:50 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.31 2004-04-19 23:23:43 bheineman Exp $";
 
-    private TdsConnection connection; // The connection that created us
+    protected TdsConnection connection; // The connection that created us
 
     SQLWarningChain warningChain = new SQLWarningChain(); // The warning chain
     TdsResultSet results = null;

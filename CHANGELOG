@@ -6,6 +6,7 @@ Changes from jTDS 0.8-rc1
    PreparedStatement.getMetaData(); both implementations are currently
    sub-optimal due to the fact they are executing the query to obtain the
    ResultSetMetaData.
+ o Corrected PreparedStatement caching bug related to changing catalogs.
 
 04/16/2004 - Brian Heineman
  o Corrected bug [934273] setNull does not set IMAGE type to null; added tests

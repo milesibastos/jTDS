@@ -35,11 +35,7 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testBigint0000() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0000");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0000 "
             + "  (i  decimal(28,10) not null, "
             + "   s  char(10) not null) ");
@@ -52,54 +48,54 @@ public class TimestampTest extends DatabaseTestCase {
             count += stmt.executeUpdate(sql);
         }
 
+        stmt.close();
         assertEquals(count, rowsToAdd);
 
-        PreparedStatement pStmt = cx.prepareStatement("select i from #t0000 where i = ?");
+        PreparedStatement pstmt = con.prepareStatement("select i from #t0000 where i = ?");
 
-        pStmt.setLong(1, 7);
-        ResultSet rs = pStmt.executeQuery();
+        pstmt.setLong(1, 7);
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
         assertEquals(rs.getLong(1), 7);
         assertTrue("Expected no result set", !rs.next());
 
-        pStmt.setLong(1, 8);
-        rs = pStmt.executeQuery();
+        pstmt.setLong(1, 8);
+        rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
         assertEquals(rs.getLong(1), 8);
         assertTrue("Expected no result set", !rs.next());
+
+        pstmt.close();
     }
 
     public void testTimestamps0001() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0001");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0001             "
                            + "  (t1 datetime not null,       "
                            + "   t2 datetime null,           "
                            + "   t3 smalldatetime not null,  "
                            + "   t4 smalldatetime null)");
+        stmt.close();
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0001 values (?, '1998-03-09 15:35:06.4',        "
             + "                         ?, '1998-03-09 15:35:00')");
         Timestamp   t0 = Timestamp.valueOf("1998-03-09 15:35:06.4");
         Timestamp   t1 = Timestamp.valueOf("1998-03-09 15:35:00");
 
-        pStmt.setTimestamp(1, t0);
-        pStmt.setTimestamp(2, t1);
-        int count = pStmt.executeUpdate();
+        pstmt.setTimestamp(1, t0);
+        pstmt.setTimestamp(2, t1);
+        int count = pstmt.executeUpdate();
         assertTrue(count == 1);
-        pStmt.close();
+        pstmt.close();
 
-        pStmt = cx.prepareStatement("select t1, t2, t3, t4 from #t0001");
+        pstmt = con.prepareStatement("select t1, t2, t3, t4 from #t0001");
 
-        ResultSet rs = pStmt.executeQuery();
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
@@ -108,34 +104,33 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(t0, rs.getTimestamp(2));
         assertEquals(t1, rs.getTimestamp(3));
         assertEquals(t1, rs.getTimestamp(4));
+
+        pstmt.close();
     }
 
     public void testTimestamps0004() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0004");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0004 "
             + "  (mytime  datetime not null, "
             + "   mytime2 datetime null,     "
             + "   mytime3 datetime null     )");
+        stmt.close();
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0004 values ('1964-02-14 10:00:00.0', ?, ?)");
 
         Timestamp   t0 = Timestamp.valueOf("1964-02-14 10:00:00.0");
-        pStmt.setTimestamp(1, t0);
-        pStmt.setTimestamp(2, t0);
-        assertEquals(1, pStmt.executeUpdate());
+        pstmt.setTimestamp(1, t0);
+        pstmt.setTimestamp(2, t0);
+        assertEquals(1, pstmt.executeUpdate());
 
-        pStmt.setNull(2, java.sql.Types.TIMESTAMP);
-        assertEquals(1, pStmt.executeUpdate());
-        pStmt.close();
+        pstmt.setNull(2, java.sql.Types.TIMESTAMP);
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
 
-        pStmt = cx.prepareStatement("select mytime, mytime2, mytime3 from #t0004");
+        pstmt = con.prepareStatement("select mytime, mytime2, mytime3 from #t0004");
 
-        ResultSet rs = pStmt.executeQuery();
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
         Timestamp t1, t2, t3;
 
@@ -154,6 +149,8 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(t0, t1);
         assertEquals(t0, t2);
         assertEquals(null, t3);
+
+        pstmt.close();
     }
 
     public void testEscape(String sql, String expected) throws Exception {
@@ -192,11 +189,7 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testPreparedStatement0007() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0007");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0007 "
             + "  (i  integer  not null, "
             + "   s  char(10) not null) ");
@@ -210,38 +203,37 @@ public class TimestampTest extends DatabaseTestCase {
             count += stmt.executeUpdate(sql);
         }
 
+        stmt.close();
         assertEquals(count, rowsToAdd);
 
-        PreparedStatement pStmt = cx.prepareStatement("select s from #t0007 where i = ?");
+        PreparedStatement pstmt = con.prepareStatement("select s from #t0007 where i = ?");
 
-        pStmt.setInt(1, 7);
-        ResultSet rs = pStmt.executeQuery();
+        pstmt.setInt(1, 7);
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
         assertEquals(rs.getString(1).trim(), "row7");
         // assertTrue("Expected no result set", !rs.next());
 
-        pStmt.setInt(1, 8);
-        rs = pStmt.executeQuery();
+        pstmt.setInt(1, 8);
+        rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
         assertEquals(rs.getString(1).trim(), "row8");
         assertTrue("Expected no result set", !rs.next());
+
+        pstmt.close();
     }
 
     public void testPreparedStatement0008() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0008");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0008              "
             + "  (i  integer  not null,      "
             + "   s  char(10) not null)      ");
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0008 values (?, ?)");
 
         final int rowsToAdd = 8;
@@ -249,14 +241,14 @@ public class TimestampTest extends DatabaseTestCase {
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            pStmt.setString(2, theString.substring(0, i));
+            pstmt.setInt(1, i);
+            pstmt.setString(2, theString.substring(0, i));
 
-            count += pStmt.executeUpdate();
+            count += pstmt.executeUpdate();
         }
 
         assertEquals(count, rowsToAdd);
-        pStmt.close();
+        pstmt.close();
 
         ResultSet rs = stmt.executeQuery("select s, i from #t0008");
         assertNotNull(rs);
@@ -268,21 +260,19 @@ public class TimestampTest extends DatabaseTestCase {
             assertEquals(rs.getString(1).trim().length(), rs.getInt(2));
         }
         assertTrue(count == rowsToAdd);
+        stmt.close();
+        pstmt.close();
     }
 
     public void testPreparedStatement0009() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0009");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0009 "
             + "  (i  integer  not null,      "
             + "   s  char(10) not null)      ");
 
-        cx.setAutoCommit(false);
+        con.setAutoCommit(false);
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0009 values (?, ?)");
 
         int rowsToAdd = 8;
@@ -290,17 +280,16 @@ public class TimestampTest extends DatabaseTestCase {
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            pStmt.setString(2, theString.substring(0, i));
+            pstmt.setInt(1, i);
+            pstmt.setString(2, theString.substring(0, i));
 
-            count += pStmt.executeUpdate();
+            count += pstmt.executeUpdate();
         }
 
-        pStmt.close();
+        pstmt.close();
         assertEquals(count, rowsToAdd);
-        cx.rollback();
+        con.rollback();
 
-        stmt = cx.createStatement();
         ResultSet rs = stmt.executeQuery("select s, i from #t0009");
         assertNotNull(rs);
 
@@ -312,25 +301,23 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, 0);
-        cx.commit();
-        stmt.close();
+        con.commit();
 
-        pStmt = cx.prepareStatement("insert into #t0009 values (?, ?)");
+        pstmt = con.prepareStatement("insert into #t0009 values (?, ?)");
         rowsToAdd = 6;
         count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            pStmt.setString(2, theString.substring(0, i));
+            pstmt.setInt(1, i);
+            pstmt.setString(2, theString.substring(0, i));
 
-            count += pStmt.executeUpdate();
+            count += pstmt.executeUpdate();
         }
 
         assertEquals(count, rowsToAdd);
-        cx.commit();
-        pStmt.close();
+        con.commit();
+        pstmt.close();
 
-        stmt = cx.createStatement();
         rs = stmt.executeQuery("select s, i from #t0009");
 
         count = 0;
@@ -341,24 +328,20 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, rowsToAdd);
-        cx.commit();
+        con.commit();
         stmt.close();
-        cx.setAutoCommit(true);
+        con.setAutoCommit(true);
     }
 
     public void testTransactions0010() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0010");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0010 "
             + "  (i  integer  not null,      "
             + "   s  char(10) not null)      ");
 
-        cx.setAutoCommit(false);
+        con.setAutoCommit(false);
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0010 values (?, ?)");
 
         int rowsToAdd = 8;
@@ -366,16 +349,15 @@ public class TimestampTest extends DatabaseTestCase {
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            pStmt.setString(2, theString.substring(0, i));
+            pstmt.setInt(1, i);
+            pstmt.setString(2, theString.substring(0, i));
 
-            count += pStmt.executeUpdate();
+            count += pstmt.executeUpdate();
         }
 
         assertEquals(count, rowsToAdd);
-        cx.rollback();
+        con.rollback();
 
-        stmt = cx.createStatement();
         ResultSet rs = stmt.executeQuery("select s, i from #t0010");
         assertNotNull(rs);
 
@@ -387,7 +369,6 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, 0);
-        cx.commit();
 
         rowsToAdd = 6;
 
@@ -395,14 +376,14 @@ public class TimestampTest extends DatabaseTestCase {
             count = 0;
 
             for (int i = 1; i <= rowsToAdd; i++) {
-                pStmt.setInt(1, i + ((j - 1) * rowsToAdd));
-                pStmt.setString(2, theString.substring(0, i));
+                pstmt.setInt(1, i + ((j - 1) * rowsToAdd));
+                pstmt.setString(2, theString.substring(0, i));
 
-                count += pStmt.executeUpdate();
+                count += pstmt.executeUpdate();
             }
 
             assertEquals(count, rowsToAdd);
-            cx.commit();
+            con.commit();
         }
 
         rs = stmt.executeQuery("select s, i from #t0010");
@@ -422,16 +403,14 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, (2 * rowsToAdd));
-        cx.commit();
-        cx.setAutoCommit(true);
+
+        stmt.close();
+        pstmt.close();
+        con.setAutoCommit(true);
     }
 
     public void testEmptyResults0011() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0011");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0011 "
             + "  (mytime  datetime not null, "
             + "   mytime2 datetime null     )");
@@ -439,45 +418,34 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = stmt.executeQuery("select mytime, mytime2 from #t0011");
         assertNotNull(rs);
         assertTrue("Expected no result set", !rs.next());
-        stmt.close();
 
-        stmt = cx.createStatement();
         rs = stmt.executeQuery("select mytime, mytime2 from #t0011");
         assertTrue("Expected no result set", !rs.next());
         stmt.close();
     }
 
     public void testEmptyResults0012() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0012");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0012 "
             + "  (mytime  datetime not null, "
             + "   mytime2 datetime null     )");
-//		cx.close();
+        stmt.close();
 
-//		cx = getConnection();
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "select mytime, mytime2 from #t0012");
 
-        ResultSet rs = pStmt.executeQuery();
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
-        assertTrue("Expected no result set", !rs.next());
+        assertTrue("Expected no result", !rs.next());
         rs.close();
 
-        rs = pStmt.executeQuery();
-        assertTrue("Expected no result set", !rs.next());
-        pStmt.close();
+        rs = pstmt.executeQuery();
+        assertTrue("Expected no result", !rs.next());
+        pstmt.close();
     }
 
     public void testEmptyResults0013() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0013");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0013 "
             + "  (mytime  datetime not null, "
             + "   mytime2 datetime null     )");
@@ -485,38 +453,36 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs1 = stmt.executeQuery("select mytime, mytime2 from #t0013");
         assertNotNull(rs1);
         assertTrue("Expected no result set", !rs1.next());
+        stmt.close();
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "select mytime, mytime2 from #t0013");
-        ResultSet rs2 = pStmt.executeQuery();
+        ResultSet rs2 = pstmt.executeQuery();
         assertNotNull(rs2);
-        assertTrue("Expected no result set", !rs2.next());
+        assertTrue("Expected no result", !rs2.next());
+        pstmt.close();
     }
 
     public void testForBrowse0014() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0014");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0014 (i integer not null)");
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0014 values (?)");
 
         final int rowsToAdd = 100;
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            count += pStmt.executeUpdate();
+            pstmt.setInt(1, i);
+            count += pstmt.executeUpdate();
         }
 
         assertEquals(count, rowsToAdd);
-        pStmt.close();
+        pstmt.close();
 
-        pStmt = cx.prepareStatement("select i from #t0014 for browse");
-        ResultSet rs = pStmt.executeQuery();
+        pstmt = con.prepareStatement("select i from #t0014 for browse");
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
         count = 0;
 
@@ -526,7 +492,7 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, rowsToAdd);
-        pStmt.close();
+        pstmt.close();
 
         rs = stmt.executeQuery("select * from #t0014");
         assertNotNull(rs);
@@ -563,16 +529,12 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testMultipleResults0015() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0015");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0015 "
             + "  (i  integer  not null,      "
             + "   s  char(10) not null)      ");
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0015 values (?, ?)");
 
         int rowsToAdd = 8;
@@ -580,16 +542,15 @@ public class TimestampTest extends DatabaseTestCase {
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            pStmt.setString(2, theString.substring(0, i));
+            pstmt.setInt(1, i);
+            pstmt.setString(2, theString.substring(0, i));
 
-            count += pStmt.executeUpdate();
+            count += pstmt.executeUpdate();
         }
 
         assertEquals(count, rowsToAdd);
-        pStmt.close();
+        pstmt.close();
 
-        stmt = cx.createStatement();
 		stmt.execute("select s from #t0015 select i from #t0015");
         ResultSet rs = stmt.getResultSet();
         assertNotNull(rs);
@@ -621,21 +582,15 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, rowsToAdd);
-
-        cx.close();
     }
 
     public void testMissingParameter0016() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0016");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0016 "
             + "  (i  integer  not null,      "
             + "   s  char(10) not null)      ");
 
-        stmt = cx.createStatement();
+        stmt = con.createStatement();
 
         final int rowsToAdd = 20;
         int count = 0;
@@ -647,12 +602,12 @@ public class TimestampTest extends DatabaseTestCase {
 
         assertEquals(count, rowsToAdd);
 
-        PreparedStatement   pStmt = cx.prepareStatement(
+        PreparedStatement   pstmt = con.prepareStatement(
             "select s from #t0016 where i=? and s=?");
 
         // see what happens if neither is set
         try {
-            pStmt.executeQuery();
+            pstmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -660,14 +615,14 @@ public class TimestampTest extends DatabaseTestCase {
                     || e.getMessage().indexOf('2') >= 0));
         }
 
-        pStmt.clearParameters();
+        pstmt.clearParameters();
 
         try {
-            pStmt.setInt(1, 7);
-            pStmt.setString(2, "row7");
-            pStmt.clearParameters();
+            pstmt.setInt(1, 7);
+            pstmt.setString(2, "row7");
+            pstmt.clearParameters();
 
-            pStmt.executeQuery();
+            pstmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -675,22 +630,22 @@ public class TimestampTest extends DatabaseTestCase {
                     || e.getMessage().indexOf('2') >= 0));
         }
 
-        pStmt.clearParameters();
+        pstmt.clearParameters();
 
         try {
-            pStmt.setInt(1, 7);
-            pStmt.executeQuery();
+            pstmt.setInt(1, 7);
+            pstmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
                     && e.getMessage().indexOf('2') >= 0);
         }
 
-        pStmt.clearParameters();
+        pstmt.clearParameters();
 
         try {
-            pStmt.setString(2, "row7");
-            pStmt.executeQuery();
+            pstmt.setString(2, "row7");
+            pstmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -857,13 +812,7 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testStatements0020() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0020a");
-        dropTable("#t0020b");
-        dropTable("#t0020c");
-
-        Statement  stmt    = cx.createStatement();
+        Statement  stmt    = con.createStatement();
         stmt.executeUpdate("create table #t0020a ( " +
             "  i1   int not null,     " +
             "  s1   char(10) not null " +
@@ -908,10 +857,10 @@ public class TimestampTest extends DatabaseTestCase {
             }
         }
 
-        Statement stmtA = cx.createStatement();
-        PreparedStatement stmtB = cx.prepareStatement(
+        Statement stmtA = con.createStatement();
+        PreparedStatement stmtB = con.prepareStatement(
             "select i2b, s2 from #t0020b where i2a=?");
-        PreparedStatement stmtC = cx.prepareStatement(
+        PreparedStatement stmtC = con.prepareStatement(
             "select s3 from #t0020c where i3=?");
 
         ResultSet rs1 = stmtA.executeQuery("select i1 from #t0020a");
@@ -932,6 +881,10 @@ public class TimestampTest extends DatabaseTestCase {
                 }
             }
         }
+
+        stmt.close();
+        stmtA.close();
+        stmtB.close();
     }
 
     public void testBlob0021() throws Exception {
@@ -1014,8 +967,7 @@ public class TimestampTest extends DatabaseTestCase {
             "abcdefghijklmnop" +
             "";
 
-        Connection cx = getConnection();
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
 
         dropTable("#t0021");
 
@@ -1028,7 +980,7 @@ public class TimestampTest extends DatabaseTestCase {
             " mynulltext       text null) ");
 
         // Insert a row without nulls via a Statement
-        PreparedStatement insert = cx.prepareStatement(
+        PreparedStatement insert = con.prepareStatement(
             "insert into #t0021(     " +
                 " mybinary,             " +
                 " myimage,              " +
@@ -1062,16 +1014,12 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(0, compareBytes(a2, array1));
         assertEquals(bigtext1, s1);
         assertEquals(bigtext1, s2);
-        cx.close();
+
+        stmt.close();
     }
 
     public void testNestedStatements0022() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0022a");
-        dropTable("#t0022b");
-
-        Statement  stmt    = cx.createStatement();
+        Statement  stmt    = con.createStatement();
         stmt.executeUpdate("create table #t0022a "
             + "  (i   integer not null, "
             + "   str char(254) not null) ");
@@ -1080,9 +1028,9 @@ public class TimestampTest extends DatabaseTestCase {
             + "  (i   integer not null,      "
             + "   t   datetime not null)     ");
 
-        PreparedStatement  pStmtA = cx.prepareStatement(
+        PreparedStatement  pStmtA = con.prepareStatement(
             "insert into #t0022a values (?, ?)");
-        PreparedStatement  pStmtB = cx.prepareStatement(
+        PreparedStatement  pStmtB = con.prepareStatement(
             "insert into #t0022b values (?, getdate())");
 
         final int rowsToAdd = 100;
@@ -1105,8 +1053,8 @@ public class TimestampTest extends DatabaseTestCase {
 
         assertEquals(count, rowsToAdd);
 
-        Statement stmtA = cx.createStatement();
-        Statement stmtB = cx.createStatement();
+        Statement stmtA = con.createStatement();
+        Statement stmtB = con.createStatement();
 
         count = 0;
         ResultSet rsA = stmtA.executeQuery("select * from #t0022a");
@@ -1125,6 +1073,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         assertEquals(count, rowsToAdd);
 
+        stmt.close();
         stmtA.close();
         stmtB.close();
     }
@@ -1146,11 +1095,7 @@ public class TimestampTest extends DatabaseTestCase {
             new Double(1.7E-307)        // jikes 1.04 has a bug and can't handle 1.7E-308
         };
 
-        Connection cx = getConnection();
-
-        dropTable("#t0023");
-
-        Statement  stmt    = cx.createStatement();
+        Statement  stmt    = con.createStatement();
         stmt.executeUpdate(""
             + "create table #t0023 "
             + "  (pk   float not null, "
@@ -1160,13 +1105,13 @@ public class TimestampTest extends DatabaseTestCase {
             + "   t int identity(1,1), "
             + "   primary key (pk, type))    ");
 
-        PreparedStatement  pStmt = cx.prepareStatement(
+        PreparedStatement  pstmt = con.prepareStatement(
             "insert into #t0023 (pk, type, b, str) values(?, 'prepared', 0, ?)");
 
         for (int i = 0; i < d.length; i++) {
-            pStmt.setDouble(1, d[i].doubleValue());
-            pStmt.setString(2, (d[i]).toString());
-            int preparedCount = pStmt.executeUpdate();
+            pstmt.setDouble(1, d[i].doubleValue());
+            pstmt.setString(2, (d[i]).toString());
+            int preparedCount = pstmt.executeUpdate();
 
             assertEquals(preparedCount, 1);
 
@@ -1202,6 +1147,9 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, d.length);
+
+        stmt.close();
+        pstmt.close();
     }
 
     public void testPrimaryKeyReal0024() throws Exception {
@@ -1221,11 +1169,7 @@ public class TimestampTest extends DatabaseTestCase {
             new Float(3.4E-38)
         };
 
-        Connection cx = getConnection();
-
-        dropTable("#t0024");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate(""
             + "create table #t0024                  "
             + "  (pk   real not null,             "
@@ -1235,13 +1179,13 @@ public class TimestampTest extends DatabaseTestCase {
             + "   t int identity(1,1), "
             + "    primary key (pk, type))    ");
 
-        PreparedStatement pStmt = cx.prepareStatement(
+        PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0024 (pk, type, b, str) values(?, 'prepared', 0, ?)");
 
         for (int i=0; i < d.length; i++) {
-            pStmt.setFloat(1, d[i].floatValue());
-            pStmt.setString(2, (d[i]).toString());
-            int preparedCount = pStmt.executeUpdate();
+            pstmt.setFloat(1, d[i].floatValue());
+            pstmt.setString(2, (d[i]).toString());
+            int preparedCount = pstmt.executeUpdate();
             assertTrue(preparedCount == 1);
 
             int adhocCount = stmt.executeUpdate(""
@@ -1281,14 +1225,13 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         assertEquals(count, d.length);
+
+        stmt.close();
+        pstmt.close();
     }
 
     public void testGetBoolean0025() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0025");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0025 " +
             "  (i      integer, " +
             "   b      bit,     " +
@@ -1333,6 +1276,8 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue(rs.getBoolean("f"));
 
         assertTrue("Expected no result set", !rs.next());
+
+        stmt.close();
     }
 
     /**
@@ -1344,12 +1289,7 @@ public class TimestampTest extends DatabaseTestCase {
      * @throws Exception if an Exception occurs (very relevant, huh?)
      */
     public void testNestedStatements0026() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0026a");
-        dropTable("#t0026b");
-
-        Statement  stmt    = cx.createStatement();
+        Statement  stmt    = con.createStatement();
         stmt.executeUpdate("create table #t0026a "
             + "  (i   integer not null, "
             + "   str char(254) not null) ");
@@ -1359,35 +1299,35 @@ public class TimestampTest extends DatabaseTestCase {
         + "   t   datetime not null)     ");
         stmt.close();
 
-        PreparedStatement pStmtA = cx.prepareStatement(
+        PreparedStatement pstmtA = con.prepareStatement(
             "insert into #t0026a values (?, ?)");
-        PreparedStatement pStmtB = cx.prepareStatement(
+        PreparedStatement pstmtB = con.prepareStatement(
             "insert into #t0026b values (?, getdate())");
 
         final int rowsToAdd = 100;
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmtA.setInt(1, i);
+            pstmtA.setInt(1, i);
             String tmp = "";
 
             while (tmp.length() < 240) {
                 tmp = tmp + "row " + i + ". ";
             }
 
-            pStmtA.setString(2, tmp);
-            count += pStmtA.executeUpdate();
+            pstmtA.setString(2, tmp);
+            count += pstmtA.executeUpdate();
 
-            pStmtB.setInt(1, i);
-            pStmtB.executeUpdate();
+            pstmtB.setInt(1, i);
+            pstmtB.executeUpdate();
         }
 
         assertEquals(count, rowsToAdd);
-        pStmtA.close();
-        pStmtB.close();
+        pstmtA.close();
+        pstmtB.close();
 
-        Statement stmtA = cx.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        Statement stmtB = cx.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        Statement stmtA = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        Statement stmtB = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         count = 0;
         ResultSet rsA = stmtA.executeQuery("select * from #t0026a");
@@ -1412,8 +1352,7 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testErrors0036() throws Exception {
-        Connection cx = getConnection();
-        Statement  stmt = cx.createStatement();
+        Statement  stmt = con.createStatement();
 
         final int numberToTest = 5;
 
@@ -1422,27 +1361,26 @@ public class TimestampTest extends DatabaseTestCase {
 
             try {
                 stmt.executeUpdate("drop table " + table);
-
-                assertTrue("Did not expect to reach here", false);
+                fail("Did not expect to reach here");
             } catch (SQLException e) {
-                assertTrue(e.getMessage().startsWith("Cannot drop the table '" + table+"', because it does"));
+                assertEquals("42S02", e.getSQLState());
             }
         }
+
+        stmt.close();
     }
 
     public void testTimestamps0037() throws Exception {
-        Connection cx = getConnection();
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         ResultSet rs   = stmt.executeQuery(
-            "select                                    " +
-            "  convert(smalldatetime, '1999-01-02') a, " +
-            "  convert(smalldatetime, null)         b, " +
-            "  convert(datetime, '1999-01-02')      c, " +
-            "  convert(datetime, null)              d  " +
-            "");
+                "select                                    " +
+                "  convert(smalldatetime, '1999-01-02') a, " +
+                "  convert(smalldatetime, null)         b, " +
+                "  convert(datetime, '1999-01-02')      c, " +
+                "  convert(datetime, null)              d  ");
         assertNotNull(rs);
 
-        assertTrue("Expected a result set", rs.next());
+        assertTrue("Expected a result", rs.next());
 
         assertNotNull(rs.getDate("a"));
         assertNull(rs.getDate("b"));
@@ -1459,15 +1397,13 @@ public class TimestampTest extends DatabaseTestCase {
         assertNotNull(rs.getTimestamp("c"));
         assertNull(rs.getTimestamp("d"));
 
-        assertTrue("Expected no result set", !rs.next());
+        assertTrue("Expected no more results", !rs.next());
+
+        stmt.close();
     }
 
     public void testConnection0038() throws Exception {
-        Connection conn = getConnection();
-
-        dropTable("#t0038");
-
-        Statement stmt = conn.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0038 ("
             + " keyField char(255)     not null, "
             + " descField varchar(255)  not null) ");
@@ -1475,22 +1411,19 @@ public class TimestampTest extends DatabaseTestCase {
         int count = stmt.executeUpdate("insert into #t0038 values ('value', 'test')");
         assertEquals(count, 1);
 
-        conn.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
-        conn.setAutoCommit(false);
-        PreparedStatement ps = conn.prepareStatement("update #t0038 set descField=descField where keyField=?");
+        con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
+        con.setAutoCommit(false);
+        PreparedStatement ps = con.prepareStatement("update #t0038 set descField=descField where keyField=?");
         ps.setString(1, "value");
         ps.executeUpdate();
         ps.close();
-        conn.commit();
+        con.commit();
         // conn.rollback();
 
-        Statement statement = conn.createStatement();
-
-        ResultSet resultSet = statement.executeQuery(
+        ResultSet resultSet = stmt.executeQuery(
             "select descField from #t0038 where keyField='value'");
         assertTrue(resultSet.next());
-        statement.close();
-        conn.close();
+        stmt.close();
     }
 
     public void testConnection0039() throws Exception {
@@ -1507,27 +1440,23 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     public void testPreparedStatement0040() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0040");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0040 ("
             + " c255 char(255)     not null, "
             + " v255 varchar(255)  not null) ");
 
-        PreparedStatement pStmt = cx.prepareStatement("insert into #t0040 values (?, ?)");
+        PreparedStatement pstmt = con.prepareStatement("insert into #t0040 values (?, ?)");
 
         String along = getLongString('a');
         String blong = getLongString('b');
 
-        pStmt.setString(1, along);
-        pStmt.setString(2, along);
+        pstmt.setString(1, along);
+        pstmt.setString(2, along);
 
-        int count = pStmt.executeUpdate();
+        int count = pstmt.executeUpdate();
 
         assertEquals(count, 1);
-        pStmt.close();
+        pstmt.close();
 
         count = stmt.executeUpdate(""
             + "insert into #t0040 values ( "
@@ -1535,8 +1464,8 @@ public class TimestampTest extends DatabaseTestCase {
             + "'" + blong + "')");
         assertEquals(count, 1);
 
-        pStmt = cx.prepareStatement("select c255, v255 from #t0040 order by c255");
-        ResultSet rs = pStmt.executeQuery();
+        pstmt = con.prepareStatement("select c255, v255 from #t0040 order by c255");
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
@@ -1548,7 +1477,7 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(rs.getString("v255"), blong);
 
         assertTrue("Expected no result set", !rs.next());
-        pStmt.close();
+        pstmt.close();
 
         rs = stmt.executeQuery("select c255, v255 from #t0040 order by c255");
         assertNotNull(rs);
@@ -1563,21 +1492,15 @@ public class TimestampTest extends DatabaseTestCase {
 
         assertTrue("Expected no result set", !rs.next());
         stmt.close();
-
-        cx.close();
     }
 
     public void testPreparedStatement0041() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0041");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0041 "
             + "  (i  integer  not null, "
             + "   s  text     not null) ");
 
-        PreparedStatement pStmt = cx.prepareStatement("insert into #t0041 values (?, ?)");
+        PreparedStatement pstmt = con.prepareStatement("insert into #t0041 values (?, ?)");
 
         // TODO: Check values
         final int rowsToAdd = 400;
@@ -1585,14 +1508,14 @@ public class TimestampTest extends DatabaseTestCase {
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
-            pStmt.setInt(1, i);
-            pStmt.setString(2, theString.substring(0, i));
+            pstmt.setInt(1, i);
+            pstmt.setString(2, theString.substring(0, i));
 
-            count += pStmt.executeUpdate();
+            count += pstmt.executeUpdate();
         }
 
-        assertEquals(count, rowsToAdd);
-        pStmt.close();
+        assertEquals(rowsToAdd, count);
+        pstmt.close();
 
         ResultSet  rs = stmt.executeQuery("select s, i from #t0041");
         assertNotNull(rs);
@@ -1604,36 +1527,32 @@ public class TimestampTest extends DatabaseTestCase {
             count++;
         }
 
-        assertEquals(count, rowsToAdd);
-
-        cx.close();
+        assertEquals(rowsToAdd, count);
+        stmt.close();
     }
 
     public void testPreparedStatement0042() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0042");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0042 (s char(5) null, i integer null, j integer not null)");
+        stmt.close();
 
-        PreparedStatement pStmt = cx.prepareStatement("insert into #t0042 (s, i, j) values (?, ?, ?)");
+        PreparedStatement pstmt = con.prepareStatement("insert into #t0042 (s, i, j) values (?, ?, ?)");
 
-        pStmt.setString(1, "hello");
-        pStmt.setNull(2, java.sql.Types.INTEGER);
-        pStmt.setInt(3, 1);
+        pstmt.setString(1, "hello");
+        pstmt.setNull(2, java.sql.Types.INTEGER);
+        pstmt.setInt(3, 1);
 
-        int count = pStmt.executeUpdate();
+        int count = pstmt.executeUpdate();
         assertEquals(count, 1);
 
-        pStmt.setInt(2, 42);
-        pStmt.setInt(3, 2);
-        count = pStmt.executeUpdate();
+        pstmt.setInt(2, 42);
+        pstmt.setInt(3, 2);
+        count = pstmt.executeUpdate();
         assertEquals(count, 1);
-        pStmt.close();
+        pstmt.close();
 
-        pStmt = cx.prepareStatement("select i from #t0042 order by j");
-        ResultSet rs = pStmt.executeQuery();
+        pstmt = con.prepareStatement("select i from #t0042 order by j");
+        ResultSet rs = pstmt.executeQuery();
         assertNotNull(rs);
 
         assertTrue("Expected a result set", rs.next());
@@ -1645,69 +1564,65 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue(!rs.wasNull());
 
         assertTrue("Expected no result set", !rs.next());
-
-        cx.close();
+        pstmt.close();
     }
 
     public void testResultSet0043() throws Exception {
-        Connection cx = getConnection();
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
 
         try {
             ResultSet rs = stmt.executeQuery("select 1");
             assertNotNull(rs);
-
             rs.getInt(1);
 
-            assertTrue("Did not expect to reach here", false);
+            fail("Did not expect to reach here");
         } catch (SQLException e) {
-            assertTrue(e.getMessage().startsWith("No current row in the ResultSet"));
+            assertEquals("24000", e.getSQLState());
         }
+
+        stmt.close();
     }
 
     public void testResultSet0044() throws Exception {
-        Connection cx = getConnection();
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("select 1");
         assertNotNull(rs);
         rs.close();
 
         try {
-            assertTrue("Expected no result set", !rs.next());
+            rs.next();
+            fail("Was expecting ResultSet.next() to throw an exception if the ResultSet was closed");
         } catch (SQLException e) {
-            assertTrue(e.getMessage().startsWith("Invalid state"));
+            assertEquals("HY010", e.getSQLState());
         }
+
+        stmt.close();
     }
 
     public void testResultSet0045() throws Exception {
+        Statement stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("select 1");
+        assertNotNull(rs);
+
+        assertTrue("Expected a result set", rs.next());
+        rs.getInt(1);
+
+        assertTrue("Expected no result set", !rs.next());
+
         try {
-            Connection cx = getConnection();
-            Statement stmt = cx.createStatement();
-
-            ResultSet rs = stmt.executeQuery("select 1");
-            assertNotNull(rs);
-
-            assertTrue("Expected a result set", rs.next());
-
             rs.getInt(1);
-
-            assertTrue("Expected no result set", !rs.next());
-
-            rs.getInt(1);
-
-            assertTrue("Did not expect to reach here", false);
+            fail("Did not expect to reach here");
         } catch (java.sql.SQLException e) {
-            assertTrue(e.getMessage().startsWith("No current row in the ResultSet"));
+            assertEquals("24000", e.getSQLState());
         }
+
+        stmt.close();
     }
 
     public void testMetaData0046() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0046");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate("create table #t0046 ("
             + "   i integer identity, "
             + "   a integer not null, "
@@ -1738,14 +1653,11 @@ public class TimestampTest extends DatabaseTestCase {
         // assert(md.isNullable(4) == java.sql.ResultSetMetaData.columnNoNulls);
 
         rs.close();
+        stmt.close();
     }
 
     public void testTimestamps0047() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0047");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate(
             "create table #t0047 " +
             "(                               " +
@@ -1783,14 +1695,12 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(r1, t2);
         assertEquals(r2, t3);
         assertEquals(r2, t4);
+
+        stmt.close();
     }
 
     public void testTimestamps0048() throws Exception {
-        Connection cx = getConnection();
-
-        dropTable("#t0048");
-
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
         stmt.executeUpdate(
             "create table #t0048              " +
             "(                               " +
@@ -1805,7 +1715,7 @@ public class TimestampTest extends DatabaseTestCase {
         r1 = Timestamp.valueOf("2000-01-02 19:35:01");
         r2 = Timestamp.valueOf("2000-01-02 19:35:00");
 
-        java.sql.PreparedStatement pstmt = cx.prepareStatement(
+        java.sql.PreparedStatement pstmt = con.prepareStatement(
             "insert into #t0048 (t1, t2, t3, t4) values(?, ?, ?, ?)");
 
         pstmt.setTimestamp(1, r1);
@@ -1830,11 +1740,12 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(r1, t2);
         assertEquals(r2, t3);
         assertEquals(r2, t4);
+
+        stmt.close();
     }
 
     public void testDecimalConversion0058() throws Exception {
-        Connection cx = getConnection();
-        Statement stmt = cx.createStatement();
+        Statement stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("select convert(DECIMAL(4,0), 0)");
         assertNotNull(rs);
@@ -1853,6 +1764,8 @@ public class TimestampTest extends DatabaseTestCase {
         assertTrue("Expected a result set", rs.next());
         assertEquals(rs.getInt(1), -1);
         assertTrue("Expected no result set", !rs.next());
+
+        stmt.close();
     }
 
     /**

@@ -53,20 +53,20 @@ public class CSUnitTest extends DatabaseTestCase {
         dropTable("#t0003");
         Statement stmt = con.createStatement();
 
-        int count = stmt.executeUpdate("create table #t0003              "
-                                       + "  (i  integer not null)       ");
+        stmt.executeUpdate("create table #t0003           "
+                         + "  (i  integer not null)       ");
         PreparedStatement  pStmt = con.prepareStatement(
-                                                       "insert into #t0003 values (?)");
+                "insert into #t0003 values (?)");
 
         final int rowsToAdd = 100;
-        count = 0;
+        int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmt.setInt(1, i);
             count += pStmt.executeUpdate();
         }
 
-        assertTrue("count: " + count + " rowsToAdd: " + rowsToAdd,count == rowsToAdd);
+        assertEquals("count: " + count + " rowsToAdd: " + rowsToAdd, rowsToAdd, count);
         pStmt.close();
         pStmt = con.prepareStatement("select i from #t0003 order by i");
         int rowLimit = 32;
@@ -81,7 +81,7 @@ public class CSUnitTest extends DatabaseTestCase {
             assertEquals(rs.getInt("i"), count);
         }
 
-        assertTrue(count == rowLimit);
+        assertEquals(rowLimit, count);
     }
 
 
@@ -262,7 +262,7 @@ public class CSUnitTest extends DatabaseTestCase {
 
 
     public void testMoneyHandling0019() throws Exception {
-        java.sql.Statement  stmt   = null;
+        java.sql.Statement  stmt;
         int                 i;
         BigDecimal          money[] = {
             new BigDecimal("922337203685477.5807"),
@@ -593,7 +593,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     public void testCallStoredProcedures0028() throws Exception {
         Statement   stmt = con.createStatement();
-        ResultSet   rs       = null;
+        ResultSet   rs;
 
         boolean isResultSet;
         int updateCount;
@@ -648,7 +648,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     public void testxx0029() throws Exception {
         Statement   stmt = con.createStatement();
-        ResultSet   rs       = null;
+        ResultSet   rs;
 
         boolean isResultSet;
         int updateCount;
@@ -830,20 +830,12 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     public void testTextColumns0031() throws Exception {
         Statement   stmt = con.createStatement();
-        boolean   passed = true;
 
-
-        output.println("Starting test #t0031-  test text columns");
-
-
-        int         count    = 0;
-        dropTable("#t0031");
-
-        count = stmt.executeUpdate("create table #t0031                " +
-                                   "  (t_nullable      text null,     " +
-                                   "   t_notnull       text not null, " +
-                                   "   i               int not null)  ");
-        output.println("Creating table affected " + count + " rows");
+        assertEquals(0, stmt.executeUpdate(
+                "create table #t0031                " +
+                "  (t_nullable      text null,     " +
+                "   t_notnull       text not null, " +
+                "   i               int not null)  "));
 
         stmt.executeUpdate("insert into #t0031 values(null, '',   1)");
         stmt.executeUpdate("insert into #t0031 values(null, 'b1', 2)");
@@ -852,64 +844,47 @@ public class CSUnitTest extends DatabaseTestCase {
         stmt.executeUpdate("insert into #t0031 values('a1', '',   5)");
         stmt.executeUpdate("insert into #t0031 values('a2', 'b3', 6)");
 
-
         ResultSet  rs = stmt.executeQuery("select * from #t0031 " +
                                           " order by i ");
 
+        assertTrue(rs.next());
+        assertEquals(null, rs.getString(1));
+        assertEquals("", rs.getString(2));
+        assertEquals(1, rs.getInt(3));
 
+        assertTrue(rs.next());
+        assertEquals(null, rs.getString(1));
+        assertEquals("b1", rs.getString(2));
+        assertEquals(2, rs.getInt(3));
 
-        if (!rs.next()) {
-            throw new SQLException("Failed");
-        }
-        passed = passed && (rs.getString(1) == null);
-        passed = passed && (rs.getString(2).equals(""));
-        passed = passed && (rs.getInt(3) == 1);
+        assertTrue(rs.next());
+        assertEquals("", rs.getString(1));
+        assertEquals("", rs.getString(2));
+        assertEquals(3, rs.getInt(3));
 
-        if (!rs.next()) {
-            throw new SQLException("Failed");
-        }
-        passed = passed && (rs.getString(1) == null);
-        passed = passed && (rs.getString(2).equals("b1"));
-        passed = passed && (rs.getInt(3) == 2);
+        assertTrue(rs.next());
+        assertEquals("", rs.getString(1));
+        assertEquals("b2", rs.getString(2));
+        assertEquals(4, rs.getInt(3));
 
-        if (!rs.next()) {
-            throw new SQLException("Failed");
-        }
-        passed = passed && (rs.getString(1).equals(""));
-        passed = passed && (rs.getString(2).equals(""));
-        passed = passed && (rs.getInt(3) == 3);
+        assertTrue(rs.next());
+        assertEquals("a1", rs.getString(1));
+        assertEquals("", rs.getString(2));
+        assertEquals(5, rs.getInt(3));
 
-        if (!rs.next()) {
-            throw new SQLException("Failed");
-        }
-        passed = passed && (rs.getString(1).equals(""));
-        passed = passed && (rs.getString(2).equals("b2"));
-        passed = passed && (rs.getInt(3) == 4);
-
-        if (!rs.next()) {
-            throw new SQLException("Failed");
-        }
-        passed = passed && (rs.getString(1).equals("a1"));
-        passed = passed && (rs.getString(2).equals(""));
-        passed = passed && (rs.getInt(3) == 5);
-
-        if (!rs.next()) {
-            throw new SQLException("Failed");
-        }
-        passed = passed && (rs.getString(1).equals("a2"));
-        passed = passed && (rs.getString(2).equals("b3"));
-        passed = passed && (rs.getInt(3) == 6);
-
-        assertTrue(passed);
+        assertTrue(rs.next());
+        assertEquals("a2", rs.getString(1));
+        assertEquals("b3", rs.getString(2));
+        assertEquals(6, rs.getInt(3));
     }
 
     public void testSpHelpSysUsers0032() throws Exception {
         Statement   stmt = con.createStatement();
         boolean   passed = true;
         boolean   isResultSet;
-        boolean   done = false;
+        boolean   done;
         int       i;
-        int       updateCount = 0;
+        int       updateCount;
 
         output.println("Starting test #t0032-  test sp_help sysusers");
 
@@ -967,116 +942,102 @@ public class CSUnitTest extends DatabaseTestCase {
     }
 
     public void testInsertConflict0049() throws Exception {
-        Statement   stmt = con.createStatement();
-
-        int         count    = 0;
-        dropTable("#t0049b");    // important: first drop this because of foreign key
-        dropTable("#t0049a");
-
-        String query =
-        "create table #t0049a(                    " +
-        "  a integer identity(1,1) primary key,  " +
-        "  b char    not null)";
-
-        count = stmt.executeUpdate(query);
-        output.println("Creating table affected " + count + " rows");
-
-
-        query =
-        "create table #t0049b(                    " +
-        "  a integer not null,                   " +
-        "  c char    not null,                   " +
-        "  foreign key (a) references #t0049a(a)) ";
-        count = stmt.executeUpdate(query);
-        output.println("Creating table affected " + count + " rows");
-
-
-        query = "insert into #t0049b (a, c) values (?, ?)";
-        java.sql.PreparedStatement pstmt = con.prepareStatement(query);
-
         try {
+            dropTable("t0049b");    // important: first drop this because of foreign key
+            dropTable("t0049a");
+
+            Statement   stmt = con.createStatement();
+
+            String query =
+                    "create table t0049a(                    " +
+                    "  a integer identity(1,1) primary key,  " +
+                    "  b char    not null)";
+
+            assertEquals(0, stmt.executeUpdate(query));
+
+            query = "create table t0049b(                    " +
+                    "  a integer not null,                   " +
+                    "  c char    not null,                   " +
+                    "  foreign key (a) references t0049a(a)) ";
+            assertEquals(0, stmt.executeUpdate(query));
+
+            query = "insert into t0049b (a, c) values (?, ?)";
+            java.sql.PreparedStatement pstmt = con.prepareStatement(query);
+
+            try {
+                pstmt.setInt(1, 1);
+                pstmt.setString(2, "a");
+                pstmt.executeUpdate();
+                fail("Was expecting INSERT to fail");
+            } catch (SQLException e) {
+                assertEquals("23000", e.getSQLState());
+            }
+            pstmt.close();
+
+            assertEquals(1, stmt.executeUpdate("insert into t0049a (b) values ('a')"));
+
+            pstmt = con.prepareStatement(query);
             pstmt.setInt(1, 1);
             pstmt.setString(2, "a");
-            count = pstmt.executeUpdate();
-        } catch (SQLException e) {
-            if (! (e.getMessage().startsWith("INSERT statement conflicted"))) {
-                throw e;
-            }
+            assertEquals(1, pstmt.executeUpdate());
+
+            stmt.close();
+            pstmt.close();
+        } finally {
+            dropTable("t0049b");    // important: first drop this because of foreign key
+            dropTable("t0049a");
         }
-        pstmt.close();
-
-        count = stmt.executeUpdate("insert into #t0049a (b) values ('a')");
-        output.println("insert affected " + count + " rows");
-
-        pstmt = con.prepareStatement(query);
-        pstmt.setInt(1, 1);
-        pstmt.setString(2, "a");
-        count = pstmt.executeUpdate();
-
-
     }
 
     public void testxx0050() throws Exception {
-        Statement   stmt = con.createStatement();
-        boolean passed = true;
-        int         count    = 0;
-
         try {
-            stmt.executeUpdate("drop procedure p0050");
-        } catch (SQLException e) {
-            if (! (e.getMessage().startsWith("Cannot drop the procedure 'p0050', because it does"))) {
-                throw e;
+            Statement   stmt = con.createStatement();
+
+            dropTable("t0050b");
+            dropTable("t0050a");
+
+            String query =
+                    "create table t0050a(                    " +
+                    "  a integer identity(1,1) primary key,  " +
+                    "  b char    not null)";
+
+            assertEquals(0, stmt.executeUpdate(query));
+
+            query =
+                    "create table t0050b(                    " +
+                    "  a integer not null,                   " +
+                    "  c char    not null,                   " +
+                    "  foreign key (a) references t0050a(a)) ";
+            assertEquals(0, stmt.executeUpdate(query));
+
+            query =
+                "create procedure #p0050 (@a integer, @c char) as " +
+                "   insert into t0050b (a, c) values (@a, @c)    ";
+            assertEquals(0, stmt.executeUpdate(query));
+
+            query = "exec #p0050 ?, ?";
+            java.sql.CallableStatement cstmt = con.prepareCall(query);
+
+            try {
+                cstmt.setInt(1, 1);
+                cstmt.setString(2, "a");
+                cstmt.executeUpdate();
+                fail("Expecting INSERT to fail");
+            } catch (SQLException e) {
+                assertEquals("23000", e.getSQLState());
             }
+
+            assertEquals(1, stmt.executeUpdate(
+                    "insert into t0050a (b) values ('a')"));
+
+            assertEquals(1, cstmt.executeUpdate());
+
+            stmt.close();
+            cstmt.close();
+        } finally {
+            dropTable("t0050b");
+            dropTable("t0050a");
         }
-        dropTable("#t0050b");
-        dropTable("#t0050a");
-
-        String query =
-        "create table #t0050a(                    " +
-        "  a integer identity(1,1) primary key,  " +
-        "  b char    not null)";
-
-        count = stmt.executeUpdate(query);
-        output.println("Creating table affected " + count + " rows");
-
-
-        query =
-        "create table #t0050b(                    " +
-        "  a integer not null,                   " +
-        "  c char    not null,                   " +
-        "  foreign key (a) references #t0050a(a)) ";
-        count = stmt.executeUpdate(query);
-        output.println("Creating table affected " + count + " rows");
-
-        query =
-        "create procedure #p0050 (@a integer, @c char) as " +
-        "   insert into #t0050b (a, c) values (@a, @c)    ";
-        count = stmt.executeUpdate(query);
-        output.println("Creating procedure affected " + count + " rows");
-
-
-        query = "exec #p0050 ?, ?";
-        java.sql.PreparedStatement pstmt = con.prepareStatement(query);
-
-        try {
-            pstmt.setInt(1, 1);
-            pstmt.setString(2, "a");
-            count = pstmt.executeUpdate();
-        } catch (SQLException e) {
-            if (! (e.getMessage().startsWith("INSERT statement conflicted"))) {
-                throw e;
-            }
-        }
-        pstmt.close();
-
-        count = stmt.executeUpdate("insert into #t0050a (b) values ('a')");
-        output.println("insert affected " + count + " rows");
-
-        pstmt = con.prepareStatement(query);
-        pstmt.setInt(1, 1);
-        pstmt.setString(2, "a");
-        count = pstmt.executeUpdate();
-        assertTrue(passed);
     }
 
     public void testxx0051() throws Exception {
@@ -1120,11 +1081,9 @@ public class CSUnitTest extends DatabaseTestCase {
             ResultSetMetaData rsMetaData = rs.getMetaData();
 
             if (rsMetaData.getColumnCount() != 5) {
-                if (passed) {
-                    passed = false;
-                    output.println("Bad column count.  Should be 5, was "
-                                   + rsMetaData.getColumnCount());
-                }
+                passed = false;
+                output.println("Bad column count.  Should be 5, was "
+                               + rsMetaData.getColumnCount());
             }
 
             for (i=0; passed && i<expectedNames.length; i++) {
@@ -1163,7 +1122,7 @@ public class CSUnitTest extends DatabaseTestCase {
         };
 
         int         i;
-        int         count    = 0;
+        int         count;
         Statement   stmt     = con.createStatement();
 
         dropTable("#t0052");
@@ -1472,7 +1431,7 @@ public class CSUnitTest extends DatabaseTestCase {
 
         // open the database
 
-        int         count    = 0;
+        int         count;
         Statement   stmt     = con.createStatement();
 
         dropTable("#t0057");

@@ -25,7 +25,12 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Properties;
+import java.util.Iterator;
+import java.util.Enumeration;
 import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import net.sourceforge.jtds.util.*;
 
@@ -44,7 +49,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.22 2004-09-29 17:41:50 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.23 2004-10-07 09:12:48 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -60,8 +65,8 @@ public class Support {
     private static final BigDecimal BIG_DECIMAL_ONE = new BigDecimal(1.0);
     private static final java.sql.Date DATE_ZERO = new java.sql.Date(0);
     private static final java.sql.Time TIME_ZERO = new java.sql.Time(0);
-    private static BigInteger maxValue28 = new BigInteger("9999999999999999999999999999");
-    private static BigInteger maxValue38 = new BigInteger("99999999999999999999999999999999999999");
+    private static final BigInteger maxValue28 = new BigInteger("9999999999999999999999999999");
+    private static final BigInteger maxValue38 = new BigInteger("99999999999999999999999999999999999999");
 
     /**
      * Convert java clases to java.sql.Type constant.
@@ -99,6 +104,103 @@ public class Support {
      * Static utility Calendar object.
      */
     private static final GregorianCalendar cal = new GregorianCalendar();
+
+    /**
+     * Charset mapping list.
+     */
+    private static final Properties charsets = new Properties();
+
+    /**
+     * Charset mapping list.
+     */
+    private static final HashMap lcidToCharsetMap = new HashMap();
+
+    /**
+     * Charset mapping list.
+     */
+    private static final HashMap sortToCharsetMap = new HashMap();
+
+    static {
+        // Load character set mappings
+        try {
+            InputStream stream;
+            // getContextClassLoader needed to ensure driver
+            // works with Tomcat class loading rules.
+            ClassLoader classLoader =
+                    Thread.currentThread().getContextClassLoader();
+
+            if (classLoader == null) {
+                classLoader = Support.class.getClassLoader();
+            }
+
+            stream = classLoader.getResourceAsStream(
+                    "net/sourceforge/jtds/jdbc/Charsets.properties");
+
+            if (stream != null) {
+                Properties tmp = new Properties();
+                tmp.load(stream);
+
+                for (Enumeration e = tmp.propertyNames(); e.hasMoreElements();) {
+                    String key = (String) e.nextElement();
+                    String value = tmp.getProperty(key);
+
+                    if (key.startsWith("LCID_")) {
+                        Integer lcid = new Integer(key.substring(5));
+                        lcidToCharsetMap.put(lcid, value);
+                    } else if (key.startsWith("SORT_")) {
+                        Integer sort = new Integer(key.substring(5));
+                        sortToCharsetMap.put(sort, value);
+                    } else {
+                        charsets.setProperty(key, value);
+                    }
+                }
+            } else {
+                Logger.println("Can't load Charsets.properties");
+            }
+        } catch (IOException e) {
+            Logger.logException(e);
+            // Can't load properties file for some reason
+        }
+    }
+
+    /**
+     * Retrieves the Java character set name asociated with the specified
+     * server charset, preceded by a numeric value indicating whether it's a
+     * multibyte character set (!=1) or not (1) and a vertical bar (|), E.g.
+     * "1|Cp1252" or "2|MS936".
+     *
+     * @param serverCharset the server-specific character set name
+     * @return the equivalent Java character set name, formatted as explained
+     */
+    public static String getCharset(String serverCharset) {
+        return charsets.getProperty(serverCharset.toUpperCase());
+    }
+
+    /**
+     * Retrieves the Java character set name asociated with the specified
+     * LCID, preceded by a numeric value indicating whether it's a multibyte
+     * character set (!=1) or not (1) and a vertical bar (|), E.g. "1|Cp1252"
+     * or "2|MS936".
+     *
+     * @param lcid the server LCID
+     * @return the equivalent Java character set name, formatted as explained
+     */
+    public static String getCharsetForLCID(int lcid) {
+        return (String) lcidToCharsetMap.get(new Integer(lcid));
+    }
+
+    /**
+     * Retrieves the Java character set name asociated with the specified
+     * sort order, preceded by a numeric value indicating whether it's a
+     * multibyte character set (!=1) or not (1) and a vertical bar (|), E.g.
+     * "1|Cp1252" or "2|MS936".
+     *
+     * @param sortOrder the server sort order
+     * @return the equivalent Java character set name, formatted as explained
+     */
+    public static String getCharsetForSortOrder(int sortOrder) {
+        return (String) sortToCharsetMap.get(new Integer(sortOrder));
+    }
 
     /**
      * Convert a byte[] object to a hex string.

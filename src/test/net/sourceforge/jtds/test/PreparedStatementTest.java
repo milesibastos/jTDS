@@ -169,44 +169,38 @@ public class PreparedStatementTest extends TestBase {
      * Test for [931090] ArrayIndexOutOfBoundsException in rollback()
      */
     public void testPreparedStatementRollback1() throws Exception {
+        Connection localCon = getConnection();
+        Statement stmt = localCon.createStatement();
+
+        stmt.execute("CREATE TABLE #psr1 (data BIT)");
+
+        localCon.setAutoCommit(false);
+        PreparedStatement pstmt = localCon.prepareStatement("INSERT INTO #psr1 (data) VALUES (?)");
+
+        pstmt.setBoolean(1, true);
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        localCon.rollback();
+
+        ResultSet rs = stmt.executeQuery("SELECT data FROM #psr1");
+        assertFalse(rs.next());
+        rs.close();
+
+        localCon.close();
+
         try {
-            Statement stmt = con.createStatement();
+            localCon.commit();
+            fail("Expecting commit to fail, connection was closed");
+        } catch (SQLException ex) {
+            assertEquals("HY010", ex.getSQLState());
+        }
 
-            stmt.execute("CREATE TABLE #psr1 (data BIT)");
-            stmt.close();
-
-            con.setAutoCommit(false);
-            PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psr1 (data) VALUES (?)");
-
-            pstmt.setBoolean(1, true);
-            assertEquals(1, pstmt.executeUpdate());
-            pstmt.close();
-
-            con.rollback();
-
-            stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT data FROM #psr1");
-
-            assertFalse(rs.next());
-
-            rs.close();
-            con.close();
-
-            try {
-                con.commit();
-                assertTrue(false);
-            } catch (Exception e) {
-                assertTrue(e instanceof SQLException);
-            }
-
-            try {
-                con.rollback();
-                assertTrue(false);
-            } catch (Exception e) {
-                assertTrue(e instanceof SQLException);
-            }
-        } finally {
-            connect();
+        try {
+            localCon.rollback();
+            fail("Expecting rollback to fail, connection was closed");
+        } catch (SQLException ex) {
+            assertEquals("HY010", ex.getSQLState());
         }
     }
 

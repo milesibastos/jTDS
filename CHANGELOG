@@ -1,6 +1,16 @@
 Changes from jTDS 0.9
 =========================
 
+10/07/2004 - Alin Sinpalean
+ o Applied patch [1040214] "Changes to allow use of default charset", with a
+   number of minor modifications, including always throwing an SQLException if
+   the charset cannot be determined or loaded.
+ o Implemented support for SQL Server 2000 collations. The default charset is
+   now determined from the collation in the ENVCHANGE packets sent by the
+   server. Still need to extend this support for collations preceding column
+   and output parameter descriptions.
+ o Cleaned up and fixed some of the unit tests.
+
 10/05/2004 - Alin Sinpalean
  o Corrected bug [1040475] Possible bug when converting to and from datetime.
    SQL Server seems to accept datetime values outside the 1753-9999 range as

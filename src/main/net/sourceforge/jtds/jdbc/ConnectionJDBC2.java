@@ -30,7 +30,6 @@ import java.util.Properties;
 import java.net.UnknownHostException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.lang.ref.WeakReference;
@@ -58,7 +57,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.36 2004-10-03 11:08:22 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.37 2004-10-07 09:12:48 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -105,6 +104,21 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             this.interrupt();
         }
     }
+
+    /**
+     * SQL query to determine the server charset on Sybase.
+     */
+    private static final String SYBASE_SERVER_CHARSET_QUERY
+            = "select name from master.dbo.syscharsets where id ="
+            + " (select value from master.dbo.sysconfigures where config=131)";
+
+    /**
+     * SQL query to determine the server charset on MS SQL Server 6.5.
+     */
+    private static final String SQL_SERVER_65_CHARSET_QUERY
+            = "select name from master.dbo.syscharsets where id ="
+            + " (select csid from master.dbo.syscharsets, master.dbo.sysconfigures"
+            + " where config=1123 and id = value)";
 
     /*
      * Conection attributes
@@ -184,8 +198,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private HashMap procedures = new HashMap();
     /** Procedures in this transaction. */
     private ArrayList procInTran = new ArrayList();
-    /** Charset properties list. */
-    private static Properties charsets = new Properties();
     /** Indicates current charset is wide. */
     private boolean wideChars = false;
     /** java charset for encoding. */
@@ -258,7 +270,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType);
             }
 
-            loadCharset(serverCharset);
+            // Don't call loadCharset if serverCharset not specified; discover
+            // the actual serverCharset later
+            if ( charsetSpecified ) {
+                loadCharset(serverCharset);
+            }
+
             //
             // Create TDS protocol object
             //
@@ -330,6 +347,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             stmt.close();
         }
 
+        // If charset is still unknown and the collation is not set either,
+        // determine the charset by querying (we're using Sybase or SQL Server
+        // 6.5)
+        if ((serverCharset == null || serverCharset.length() == 0)
+                && collation == null) {
+            loadCharset(determineServerCharset());
+        }
+
         //
         // Initial database settings
         //
@@ -347,52 +372,73 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Load the correct Charset to match the server character set.
+     * Discovers the server charset for server versions that do not send
+     * <code>ENVCHANGE</code> packets on login ack, by executing a DB
+     * vendor/version specific query.
+     * <p>
+     * Will throw an <code>SQLException</code> if used on SQL Server 7.0 or
+     * 2000; the idea is that the charset should already be determined from
+     * <code>ENVCHANGE</code> packets for these DB servers.
+     * <p>
+     * Should only be called from the constructor.
      *
-     * @param charset The Server character set.
+     * @return the default server charset
+     * @throws SQLException if an error condition occurs
      */
-    private void loadCharset(String charset) {
-        synchronized (charsets) {
-            if (charsets.size() == 0) {
-                try {
-                    InputStream stream;
-                    // getContextClassLoader needed to ensure driver
-                    // works with Tomcat class loading rules.
-                    ClassLoader classLoader =
-                    Thread.currentThread().getContextClassLoader();
+    private String determineServerCharset() throws SQLException {
+        String queryStr = null;
 
-                    if (classLoader == null) {
-                        classLoader = getClass().getClassLoader();
-                    }
-
-                    stream = classLoader.getResourceAsStream(
-                            "net/sourceforge/jtds/jdbc/Charsets.properties");
-
-                    if (stream != null) {
-                        charsets.load(stream);
-                    } else {
-                        Logger.println("Can't load charset.properties");
-                    }
-                } catch (IOException e) {
-                    Logger.logException(e);
-                    // Can't load properties file for some reason
+        switch (serverType) {
+            case Driver.SQLSERVER:
+                if (databaseProductVersion.indexOf("6.5") >= 0) {
+                    queryStr = SQL_SERVER_65_CHARSET_QUERY;
+                } else {
+                    // This will never happen. Versions 7.0 and 2000 of SQL
+                    // Server always send ENVCHANGE packets, even over TDS 4.2.
+                    throw new SQLException(
+                            "Please use TDS protocol version 7.0 or higher");
                 }
-            }
+                break;
+            case Driver.SYBASE:
+                // There's no need to check for versions here
+                queryStr = SYBASE_SERVER_CHARSET_QUERY;
+                break;
         }
 
-        String tmp = charsets.getProperty(charset.toUpperCase(), "1|Cp1252");
+        Statement stmt = this.createStatement();
+        ResultSet rs = stmt.executeQuery(queryStr);
+        rs.next();
+        String charset = rs.getString(1);
+        rs.close();
+        stmt.close();
 
-        wideChars = !tmp.substring(0, 1).equals("1");
-        javaCharset = tmp.substring(2);
+        return charset;
+    }
+
+    /**
+     * Load the Java charset to match the server character set.
+     *
+     * @param charset the server character set
+     */
+    private void loadCharset(String charset) throws SQLException {
+        // Do not default to any charset; if the charset is not found we want
+        // to know about it
+        String tmp = Support.getCharset(charset);
+
+        if (tmp == null) {
+            throw new SQLException(
+                    Messages.get("error.charset.nomapping", charset), "2C000");
+        }
 
         try {
+            wideChars = !tmp.substring(0, 1).equals("1");
+            javaCharset = tmp.substring(2);
+
             "This is a test".getBytes(javaCharset);
-        } catch (UnsupportedEncodingException e) {
-            Logger.println("Can't load charset " + charset + "/" + javaCharset
-                    + ". Falling back to iso_1/Cp1252.");
-            javaCharset = "Cp1252"; // Fall back iso_1
-            wideChars = false;
-            charsetSpecified = false; // Even if the user specified something, it was wrong
+        } catch (UnsupportedEncodingException ex) {
+            throw new SQLException(
+                    Messages.get("error.charset.invalid", charset, javaCharset),
+                    "2C000");
         }
 
         socket.setCharset(javaCharset);
@@ -693,8 +739,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         namedPipe = info.getProperty(Messages.get("prop.namedpipe")).equalsIgnoreCase("true");
         charsetSpecified = (serverCharset != null && serverCharset.length() > 0);
 
+        // Don't default serverCharset at this point; if none specified,
+        // initialize to an empty String & discover value later
         if (!charsetSpecified) {
-            serverCharset = "iso_1";
+            serverCharset = "";
         }
 
         Integer parsedTdsVersion =
@@ -780,7 +828,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieve the java Charset to use for encoding.
+     * Retrieve the Java charset to use for encoding.
      *
      * @return The Charset name as a <code>String</code>.
      */
@@ -827,9 +875,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /**
      * Called by the protocol to change the current character set.
      *
-     * @param charset The new character set name.
+     * @param charset the server character set name
      */
-    protected void setCharset(String charset) {
+    protected void setServerCharset(final String charset) throws SQLException {
         // If the user specified a charset, ignore environment changes
         if (charsetSpecified) {
             Logger.println("Server charset " + charset +
@@ -837,17 +885,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             return;
         }
 
-        // Empty string is equivalent to null (because of DataSource)
-        if (charset == null || charset.length() == 0 || charset.length() > 30) {
-            charset = "iso_1";
-        }
-
         if (!charset.equals(serverCharset)) {
             loadCharset(charset);
-        }
 
-        if (Logger.isActive()) {
-            Logger.println("Set charset to " + serverCharset + '/' + javaCharset);
+            if (Logger.isActive()) {
+                Logger.println("Set charset to " + serverCharset + '/' + javaCharset);
+            }
         }
     }
 
@@ -918,17 +961,54 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /**
      * Set the default collation for this connection.
-     * <p>Set by a SQL Server 2000 environment change packet.
-     * The collation consists of the following fields:
-     * <ol>
-     * <li>short - The LCID eg 0x0409 for US English which maps to code page 1252 (Latin1_General).
-     * <li>short - Unknown flags.
-     * <li>byte  - CSID from syscharsets?
-     * </ol>
+     * <p>
+     * Set by a SQL Server 2000 environment change packet. The collation
+     * consists of the following fields:
+     * <ul>
+     * <li>bits 0-19  - The locale eg 0x0409 for US English which maps to code
+     *                  page 1252 (Latin1_General).
+     * <li>bits 20-31 - Reserved.
+     * <li>bits 32-39 - Sort order (csid from syscharsets)
+     * </ul>
+     * If the sort order is non-zero it determines the character set, otherwise
+     * the character set is determined by the locale id.
      *
      * @param collation The new collation.
      */
-    void setCollation(byte[] collation) {
+    void setCollation(byte[] collation) throws SQLException {
+        String tmp;
+
+        if (collation[4] != 0) {
+            // The charset is determined by the sort order
+            tmp = Support.getCharsetForSortOrder(collation[4]);
+        } else {
+            // The charset is determined by the LCID
+            tmp = Support.getCharsetForLCID(
+                    ((int) collation[2] & 0x0f) << 16
+                    | ((int) collation[1]) << 8
+                    | (int) collation[0]);
+        }
+
+        if (tmp == null) {
+            throw new SQLException(
+                    Messages.get("error.charset.nocollation", Support.toHex(collation)),
+                    "2C000");
+        }
+
+        try {
+            wideChars = !tmp.substring(0, 1).equals("1");
+            javaCharset = tmp.substring(2);
+
+            "This is a test".getBytes(javaCharset);
+        } catch (UnsupportedEncodingException ex) {
+            throw new SQLException(
+                    Messages.get("error.charset.invalid", Support.toHex(collation), javaCharset),
+                    "2C000");
+        }
+
+        socket.setCharset(javaCharset);
+        socket.setWideChars(wideChars);
+
         this.collation = collation;
     }
 
@@ -975,14 +1055,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             for (int i = 0; i < statements.size(); i++) {
                 WeakReference wr = (WeakReference) statements.get(i);
 
-                if (wr != null) {
-                    Statement stmt = (Statement)wr.get();
-
-                    if (stmt == null) {
-                        statements.set(i, new WeakReference(statement));
-                        return;
-                    }
-                } else {
+                if (wr == null) {
                     statements.set(i, new WeakReference(statement));
                     return;
                 }

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.42 2004-10-04 21:16:43 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.43 2004-10-07 09:12:48 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2507,7 +2507,7 @@ public class TdsCore {
                     } else {
                         in.skip(len - 2 - clen);
                     }
-                    connection.setCharset(charset);
+                    connection.setServerCharset(charset);
                     break;
                 }
 

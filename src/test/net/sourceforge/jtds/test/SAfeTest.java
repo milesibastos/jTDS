@@ -106,9 +106,9 @@ public class SAfeTest extends DatabaseTestCase {
 
         Statement stmt = con.createStatement();
         assertTrue(!stmt.execute(
-            "create table #SAfe0002 (id int primary key, val varchar(20) null) "+
-            "insert into #SAfe0002 values (1, 'Line 1') "+
-            "insert into #SAfe0002 values (2, 'Line 2')"));
+            "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
+            "insert into ##SAfe0002 values (1, 'Line 1') "+
+            "insert into ##SAfe0002 values (2, 'Line 2')"));
         assertEquals(0, stmt.getUpdateCount());
         assertTrue(!stmt.getMoreResults());
         assertEquals(1, stmt.getUpdateCount());
@@ -119,18 +119,18 @@ public class SAfeTest extends DatabaseTestCase {
 
         con.setAutoCommit(false);
         // This is where we lock the first line in the table
-        stmt.executeUpdate("update #SAfe0002 set val='Updated Line' where id=1");
+        stmt.executeUpdate("update ##SAfe0002 set val='Updated Line' where id=1");
 
         Statement stmt2 = con2.createStatement();
         stmt2.setQueryTimeout(1);
 
         try {
-            stmt2.executeQuery("select * from #SAfe0002");
-            fail();
+            stmt2.executeQuery("select * from ##SAfe0002");
+            fail("Expecting timeout exception");
         } catch( SQLException ex ) {
-            // SAfe We won't do an ex.getMessage().equals(...) test here
-            //      because the message could change and the test would fail.
-            //      We'll just assume we got here because of the timeout. ;o)
+            assertEquals(
+                    "Expecting timeout exception. Got " + ex.getMessage(),
+                    "HYT00", ex.getSQLState());
         }
 
         // SAfe What should we do with the results if the execution timed out?!
@@ -138,7 +138,7 @@ public class SAfeTest extends DatabaseTestCase {
         con.commit();
         con.setAutoCommit(true);
 
-        stmt.execute("drop table #SAfe0002");
+        stmt.execute("drop table ##SAfe0002");
         stmt.close();
 
         // Just run a tiny query to make sure the stream is still in working
@@ -147,6 +147,7 @@ public class SAfeTest extends DatabaseTestCase {
         assertTrue(rs.next());
         assertEquals(1, rs.getInt(1));
         assertTrue(!rs.next());
+        stmt2.close();
         con2.close();
     }
 
@@ -786,12 +787,11 @@ public class SAfeTest extends DatabaseTestCase {
      * Test batch updates for both plain and prepared statements.
      */
     public void testBatchUpdates0015() throws Exception {
-        Connection localConn = getConnection();
-        Statement stmt = localConn.createStatement();
+        Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #SAfe0015(value VARCHAR(255) PRIMARY KEY)");
 
         // Execute prepared batch
-        PreparedStatement insStmt = localConn.prepareStatement(
+        PreparedStatement insStmt = con.prepareStatement(
                 "INSERT INTO #SAfe0015(value) values (?)");
         insStmt.setString(1, "Row 1");
         insStmt.addBatch();
@@ -818,8 +818,8 @@ public class SAfeTest extends DatabaseTestCase {
         res = stmt.executeBatch();
         assertEquals(0, res.length);
 
-        // Close the connection first
-        localConn.close();
+        // Close the statement
+        stmt.close();
     }
 
     /**

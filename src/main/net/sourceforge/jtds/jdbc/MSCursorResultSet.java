@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.38 2004-12-14 15:00:29 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.39 2004-12-19 17:34:53 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -474,14 +474,15 @@ public class MSCursorResultSet extends JtdsResultSet {
             tds.clearResponseQueue();
 
             // columns will now hold meta data for select statements
-            prepStmtHandle = (Integer) pStmtHand.value;
+            prepStmtHandle = (Integer) pStmtHand.getOutValue();
 
             if (prepStmtHandle == null) {
                 // Some types of statements cannot be prepared
                 prepareSql = TdsCore.UNPREPARED;
                 if (parameters != null) {
                     // Ensure that sp_cursoropen will recognise user params
-                    pScrollOpt.value = new Integer(((Integer)pScrollOpt.value).intValue() | 0x1000);
+                    pScrollOpt.value = new Integer(
+                            ((Integer)pScrollOpt.getOutValue()).intValue() | 0x1000);
                 }
             }
         }
@@ -494,11 +495,13 @@ public class MSCursorResultSet extends JtdsResultSet {
             System.arraycopy(parameters, 0, params, 5, parameters.length);
             // Setup statement handle param
             pStmtHand.isOutput = false;
+            pStmtHand.value = prepStmtHandle;
             params[0] = pStmtHand;
             // Setup cursor handle param
             params[1] = pCursor;
             // Setup scroll options (mask off parameter flag)
-            pScrollOpt.value = new Integer(((Integer)pScrollOpt.value).intValue() & 0XFF);
+            pScrollOpt.value = new Integer(
+                    ((Integer)pScrollOpt.getOutValue()).intValue() & 0XFF);
             params[2] = pScrollOpt;
             // Setup concurrency options
             params[3] = pConCurOpt;
@@ -594,7 +597,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         actualCc     = ((Integer)pConCurOpt.getOutValue()).intValue();
         rowsInResult = ((Integer)pRowCount.getOutValue()).intValue();
         if (prepareSql == TdsCore.PREPEXEC) {
-            prepStmtHandle = (Integer)pStmtHand.value;
+            prepStmtHandle = (Integer)pStmtHand.getOutValue();
         }
         //
         // Check for downgrade of scroll or concurrency options

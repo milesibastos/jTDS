@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.59 2004-12-19 09:40:20 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.60 2004-12-19 17:34:54 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1015,7 +1015,7 @@ public class TdsCore {
             clearResponseQueue();
 
             // columns will now hold meta data for select statements
-            Integer prepareHandle = (Integer) prepParam[0].value;
+            Integer prepareHandle = (Integer) prepParam[0].getOutValue();
 
             if (prepareHandle != null) {
                 return prepareHandle.toString();

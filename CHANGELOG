@@ -2,6 +2,8 @@ Changes from jTDS 0.9.1
 =======================
 
 12/19/2004 - Alin Sinpalean
+ o Fixed bug [1082986] prepareSQL=3 Does Not Function (caused by the separation
+   of input and output values).
  o Applied Mike's fix for bug [1086494] DatabaseMetaData.getProcedureColumns
    broken on Sybase.
  o Fixed bug [1087057] Connection is closed during XA Transaction. Also added

@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.18 2004-01-22 23:49:48 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.19 2004-01-29 18:43:01 bheineman Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.18 2004-01-22 23:49:48 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.19 2004-01-29 18:43:01 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -4026,30 +4026,6 @@ public class Tds implements TdsDefinitions
         }
     }
 
-
-    /**
-     *  Convert a JDBC escaped SQL string into the native SQL
-     *
-     *@param  input             escaped string to convert
-     *@param  serverType        Description of Parameter
-     *@return                   native SQL string
-     *@exception  SQLException  Description of Exception
-     */
-    public static String toNativeSql(String input, int serverType)
-             throws SQLException
-    {
-        EscapeProcessor escape;
-        if (serverType == TdsDefinitions.SYBASE) {
-            escape = new SybaseEscapeProcessor(input);
-        }
-        else {
-            escape = new MSSqlServerEscapeProcessor(input);
-        }
-
-        return escape.nativeString();
-    }
-
-
     /**
      *  Convert a JDBC java.sql.Types identifier to a SQLServer type identifier
      *
@@ -4430,21 +4406,24 @@ public class Tds implements TdsDefinitions
         }
     }
 
-    private String sqlStatementToInitialize() throws SQLException
-    {
+    private String sqlStatementToInitialize() throws SQLException {
         StringBuffer statement = new StringBuffer(100);
-        if( serverType == Tds.SYBASE )
+
+        if (serverType == Tds.SYBASE) {
             statement.append("set quoted_identifier on set textsize 50000 ");
-        // Patch 861821: Seems like there is some kind of initial limitation to
-        // the size of the written data to 4000 characters (???)
-        else if( tdsVer == TDS70 )
+        } else if (tdsVer == TDS70) {
+            // Patch 861821: Seems like there is some kind of initial limitation to
+            // the size of the written data to 4000 characters (???)
+            // Yes - SQL Server 2000 Developer Edition defaults to 4k...
             statement.append("set textsize 2147483647 ");
+        }
 
         // SAfe We also have to add these until we find out how to put them in
         //      the login packet (if that is possible at all)
         statement.append(sqlStatementToSetTransactionIsolationLevel());
         statement.append(' ');
         statement.append(sqlStatementToSetCommit());
+
         return statement.toString();
     }
 

@@ -160,8 +160,14 @@ extends TestBase
             assertTrue(!rs.next());
 
             rs.close();
+            con.close();
 
-            disconnect();
+            try {
+                con.commit();
+                assertTrue(false);
+            } catch (Exception e) {
+                assertTrue(e instanceof SQLException);
+            }
 
             try {
                 con.rollback();

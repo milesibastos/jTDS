@@ -17,15 +17,15 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.DatabaseMetaData;
-import java.sql.ResultSetMetaData;
+import java.sql.ResultSet;
 
 /**
- * Test JDBC3 extensions to DatabaseMetaData
+ * Test JDBC3 extensions to <code>DatabaseMetaData</code>.
+ *
+ * @version $Id: DatabaseMetaDataJDBC3Test.java,v 1.2 2005-01-05 12:24:14 alin_sinpalean Exp $
  */
-public class DatabaseMetaDataJDBC3Test extends DatabaseTestCase {
+public class DatabaseMetaDataJDBC3Test extends MetaDataTestCase {
 
     public DatabaseMetaDataJDBC3Test(String name) {
         super(name);
@@ -93,28 +93,6 @@ public class DatabaseMetaDataJDBC3Test extends DatabaseTestCase {
                 "SUPERTYPE_CAT", "SUPERTYPE_SCHEM", "SUPERTYPE_NAME"}));
         assertFalse(rs.next());
         rs.close();
-    }
-
-    /**
-     * Utility method to check column names and number.
-     *
-     * @param rs    the result set to check
-     * @param names the list of column names to compare to result set
-     * @return      the <code>boolean</code> value true if the columns match.
-     */
-    private boolean checkColumnNames(ResultSet rs, String[] names) throws SQLException{
-        ResultSetMetaData rsmd = rs.getMetaData();
-        if (rsmd.getColumnCount() < names.length) {
-            System.out.println("Cols="+rsmd.getColumnCount());
-            return false;
-        }
-        for (int i = 1; i <= names.length; i++) {
-            if (names[i-1].length() > 0 && !rsmd.getColumnLabel(i).equals(names[i-1])) {
-                System.out.println(names[i-1]+" = "+rsmd.getColumnLabel(i));
-                return false;
-            }
-        }
-        return true;
     }
 
     public static void main(String[] args) {

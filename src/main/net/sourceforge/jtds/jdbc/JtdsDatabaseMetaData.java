@@ -18,6 +18,11 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * jTDS implementation of the java.sql.DatabaseMetaData interface.
@@ -38,7 +43,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.22 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.23 2005-01-05 12:24:12 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -202,7 +207,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         while (rs.next()) {
             for (int i = 1; i <= colCnt; i++) {
                 if (i == 3) {
-                    int type = normalizeDataType(rs.getInt(i));
+                    int type = TypeInfo.normalizeDataType(rs.getInt(i));
                     rsTmp.updateInt(i, type);
                 } else {
                     rsTmp.updateObject(i, rs.getObject(i));
@@ -426,7 +431,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                 for (int i = 1; i <= 4; i++) {
                     rsTmp.updateObject(i, rs.getObject(i));
                 }
-                rsTmp.updateInt(5, normalizeDataType(rs.getInt(5)));
+                rsTmp.updateInt(5, TypeInfo.normalizeDataType(rs.getInt(5)));
                 String typeName = rs.getString(6);
                 rsTmp.updateString(6, typeName);
                 for (int i = 8; i <= 12; i++) {
@@ -457,7 +462,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                 // MS SQL Server - Mainly OK but we need to fix some data types.
                 for (int i = 1; i <= colCnt; i++) {
                     if (i == 5) {
-                        int type = normalizeDataType(rs.getInt(i));
+                        int type = TypeInfo.normalizeDataType(rs.getInt(i));
                         rsTmp.updateInt(i, type);
                     } else {
                         rsTmp.updateObject(i, rs.getObject(i));
@@ -1409,7 +1414,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     }
                     rsTmp.updateString(i + offset, name);
                 } else if (rsmd.getColumnName(i).equalsIgnoreCase("data_type")) {
-                    int type = normalizeDataType(rs.getInt(i));
+                    int type = TypeInfo.normalizeDataType(rs.getInt(i));
                     rsTmp.updateInt(i + offset, type);
                 } else {
                     rsTmp.updateObject(i + offset, rs.getObject(i));
@@ -1883,28 +1888,21 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public java.sql.ResultSet getTypeInfo() throws SQLException {
         Statement s = connection.createStatement();
-        JtdsResultSet rs = (JtdsResultSet)s.executeQuery("exec sp_datatype_info @ODBCVer=3");
-        CachedResultSet rsTmp = new CachedResultSet(rs);
-        rsTmp.setColumnCount(18);
-        rsTmp.setColLabel(3, "PRECISION");
-        rsTmp.setColLabel(11, "FIXED_PREC_SCALE");
-        upperCaseColumnNames(rsTmp);
-        int colCnt = 18;
-        rsTmp.moveToInsertRow();
-        while (rs.next()) {
-            rsTmp.updateString(1, rs.getString(1));
-            int type = normalizeDataType(rs.getInt(2));
-            rsTmp.updateInt(2, type);
-            for (int i = 3; i <= colCnt; i++) {
-                rsTmp.updateObject(i, rs.getObject(i));
-            }
-            rsTmp.insertRow();
+        JtdsResultSet rs;
+
+        try {
+            rs = (JtdsResultSet) s.executeQuery("exec sp_datatype_info @ODBCVer=3");
+        } catch (SQLException ex) {
+            s.close();
+            throw ex;
         }
-        rs.close();
-        rsTmp.moveToCurrentRow();
-        rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
-        // TODO Sort output into data type order
-        return rsTmp;
+
+        try {
+            return createTypeInfoResultSet(rs);
+        } finally {
+            // CachedResultSet retains reference to same statement as rs, so don't close statement
+            rs.close();
+        }
     }
 
     /**
@@ -3298,7 +3296,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param results the result set to modify
      * @throws SQLException
      */
-    private void upperCaseColumnNames(JtdsResultSet results)
+    private static void upperCaseColumnNames(JtdsResultSet results)
             throws SQLException {
         ResultSetMetaData rsmd = results.getMetaData();
         int cnt = rsmd.getColumnCount();
@@ -3311,41 +3309,35 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    /**
-     * Return a {@link java.sql.Types}-defined type for an SQL Server specific
-     * data type.
-     *
-     * @param serverDataType the data type, as returned by the server
-     * @return the equivalent data type defined by <code>java.sql.Types</code>
-     */
-    private int normalizeDataType(int serverDataType) {
-        switch (serverDataType) {
-            case   35: // Sybase UNIVARCHAR
-                return Types.VARCHAR;
-            case   11: // Sybase DATETIME
-                return Types.TIMESTAMP;
-            case   10: // Sybase TIME
-                return Types.TIME;
-            case    9: // Sybase DATE
-                return Types.DATE;
-            case    6: // FLOAT
-                return Types.DOUBLE;
-            case   -1: // LONGVARCHAR
-                return Types.CLOB;
-            case   -4: // LONVARBINARY
-                return Types.BLOB;
-            case   -8: // NCHAR
-                return Types.CHAR;
-            case   -9: // NVARCHAR
-                return Types.VARCHAR;
-            case  -10: // NTEXT
-                return Types.CLOB;
-            case  -11: // UNIQUEIDENTIFIER
-                return Types.CHAR;
-            case -150: // SQL_VARIANT
-                return Types.VARCHAR;
-            default:
-                return serverDataType;
+    private static CachedResultSet createTypeInfoResultSet(JtdsResultSet rs) throws SQLException {
+        CachedResultSet result = new CachedResultSet(rs);
+        result.setColumnCount(TypeInfo.NUM_COLS);
+        result.setColLabel(3, "PRECISION");
+        result.setColLabel(11, "FIXED_PREC_SCALE");
+        upperCaseColumnNames(result);
+        result.moveToInsertRow();
+
+        for (Iterator iter = getSortedTypes(rs).iterator(); iter.hasNext();) {
+            TypeInfo ti = (TypeInfo) iter.next();
+            ti.update(result);
+            result.insertRow();
         }
+
+        result.moveToCurrentRow();
+        result.setConcurrency(ResultSet.CONCUR_READ_ONLY);
+
+        return result;
+    }
+
+    private static Collection getSortedTypes(ResultSet rs) throws SQLException {
+        List types = new ArrayList(40);  // 40 should be enough capacity to hold all types
+
+        while (rs.next()) {
+            types.add(new TypeInfo(rs));
+        }
+
+        Collections.sort(types);
+
+        return types;
     }
 }

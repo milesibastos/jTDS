@@ -2,6 +2,8 @@ Changes from jTDS 0.9.1
 =======================
 
 01/05/2005 - Alin Sinpalean
+ o Applied patch [1096296] DatabaseMetaData.getTypeInfo() ordering submitted by
+   David Eaves.
  o Applied Mike's fix to bug [1096086] Zero length streams generate null
    values.
 

@@ -18,17 +18,21 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.sql.Types;
 
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSetMetaData;
-
-public class DatabaseMetaDataTest extends DatabaseTestCase {
+/**
+ * Test <code>DatabaseMetaData</code>.
+ *
+ * @version $Id: DatabaseMetaDataTest.java,v 1.11 2005-01-05 12:24:14 alin_sinpalean Exp $
+ */
+public class DatabaseMetaDataTest extends MetaDataTestCase {
 
     public DatabaseMetaDataTest(String name) {
         super(name);
@@ -401,27 +405,6 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
         }
     }
 
-    /**
-     * Utility method to check column names and number.
-     * @param rs The result set to check.
-     * @param names The list of column names to compare to result set.
-     * @return The <code>boolean</code> value true if the columns match.
-     * @throws SQLException
-     */
-    private boolean checkColumnNames(ResultSet rs, String[] names) throws SQLException{
-        ResultSetMetaData rsmd = rs.getMetaData();
-        if (rsmd.getColumnCount() < names.length) {
-            System.out.println("Cols="+rsmd.getColumnCount());
-            return false;
-        }
-        for (int i = 1; i <= names.length; i++) {
-            if (names[i-1].length() > 0 && !rsmd.getColumnLabel(i).equals(names[i-1])) {
-                System.out.println(names[i-1]+" = "+rsmd.getColumnLabel(i));
-                return false;
-            }
-        }
-        return true;
-    }
     /**
      * Test for bug [974036] Bug in 0.8rc1 DatabaseMetaData method getTableTypes()
      */

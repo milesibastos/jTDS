@@ -2,6 +2,8 @@ Changes from jTDS 0.9
 =========================
 
 11/17/2004 - Alin Sinpalean
+ o Corrected a problem in ReaderOutputStream that was causing read(byte[]) to
+   always return the size of the byte array even if less data was read.
  o Fixed a problem with absolute(-1) (the row position was incorrectly
    updated).
  o Improved performance of MSCursorResultSet, by replacing sp_cursor FETCH_INFO

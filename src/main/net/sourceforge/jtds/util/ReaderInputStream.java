@@ -23,7 +23,7 @@ import java.io.*;
  * Provides the opposite functionality of InputStreamReader.
  *
  * @author Brian Heineman
- * @version $Id: ReaderInputStream.java,v 1.2 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: ReaderInputStream.java,v 1.3 2004-11-17 14:01:04 alin_sinpalean Exp $
  */
 public class ReaderInputStream extends InputStream {
     protected Reader _reader;
@@ -34,20 +34,20 @@ public class ReaderInputStream extends InputStream {
 
     /**
      * Constructs a new ReaderInputStream for the specified reader.
-     * 
+     *
      * @param reader
      */
     public ReaderInputStream(Reader reader) {
         if (reader == null) {
             throw new NullPointerException();
         }
-        
+
         _reader = reader;
     }
-    
+
     /**
      * Constructs a new ReaderInputStream for the specified reader.
-     * 
+     *
      * @param reader
      * @param encoding
      */
@@ -57,7 +57,7 @@ public class ReaderInputStream extends InputStream {
         } else if (encoding == null) {
             throw new NullPointerException();
         }
-        
+
         _reader = reader;
         _encoding = encoding;
     }
@@ -66,7 +66,7 @@ public class ReaderInputStream extends InputStream {
         if (read(_singleByte, 0, 1) == -1) {
             return -1;
         }
-        
+
         return _singleByte[0];
     }
 
@@ -75,7 +75,7 @@ public class ReaderInputStream extends InputStream {
         if (_reader == null) {
             throw new IOException("stream closed");
         }
-        
+
         if (b == null) {
             throw new NullPointerException();
         } else if (off < 0
@@ -87,73 +87,75 @@ public class ReaderInputStream extends InputStream {
             return 0;
         }
 
+        int bytesRead = 0;
         // Consume all data from the buffer first
         if (_buffer != null) {
             int bufferLength = readBuffer(b, off, len);
-            
+
             if (bufferLength == len) {
                 return len;
             }
-            
+
             len -= bufferLength;
             off += bufferLength;
+            bytesRead += bufferLength;
         }
-        
+
         if (_buffer == null) {
             char[] buffer = new char[len];
             int result = _reader.read(buffer, 0, len);
-            
+
             if (result == -1) {
-                return -1;
+                return bytesRead > 0 ? bytesRead : -1;
             }
-            
-            String data = new String(buffer);
-            
+
+            String data = new String(buffer, 0, result);
+
             if (_encoding == null) {
                 _buffer = data.getBytes();
             } else {
                 _buffer = data.getBytes(_encoding);
             }
-            
+
             return readBuffer(b, off, len);
         }
-        
+
         return -1;
     }
 
     private int readBuffer(byte[] b, int off, int len) {
         int bufferLength = _buffer.length - _pointer;
-        
+
         if (bufferLength >= len) {
             System.arraycopy(_buffer, _pointer, b, off, len);
-            
+
             _pointer += len;
-            
+
             return len;
         }
-        
+
         System.arraycopy(_buffer, _pointer, b, off, bufferLength);
-        
+
         _buffer = null;
         _pointer = 0;
-            
+
         return bufferLength;
     }
-    
+
     public synchronized void reset() throws IOException {
         if (_reader == null) {
             throw new IOException("stream closed");
         }
-        
+
         _reader.reset();
     }
-    
+
     public synchronized void close() throws IOException {
         if (_reader != null) {
             _reader.close();
             _reader = null;
         }
-        
+
         _encoding = null;
     }
 }

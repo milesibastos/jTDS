@@ -19,6 +19,7 @@ package net.sourceforge.jtds.test;
 
 import java.sql.*;
 import java.math.BigDecimal;
+import java.io.InputStream;
 
 /**
  * @version 1.0
@@ -783,6 +784,28 @@ public class ResultSetTest extends TestBase {
         assertTrue(rs.isLast());
         assertEquals(3, rs.getInt(1));
         assertFalse(rs.next());
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that <code>read()</code> works ok on the stream returned by
+     * <code>ResultSet.getUnicodeStream()</code> (i.e. it doesn't always fill
+     * the buffer, regardless of whether there's available data or not).
+     */
+    public void testUnicodeStream() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #unicodeStream (val varchar(255))");
+        stmt.executeUpdate("insert into #unicodeStream (val) values ('test')");
+        ResultSet rs = stmt.executeQuery("select val from #unicodeStream");
+
+        if (rs.next()) {
+            byte[] buf = new byte[8000];
+            InputStream is = rs.getUnicodeStream(1);
+            int length = is.read(buf);
+            assertEquals(4 * 2, length);
+        }
 
         rs.close();
         stmt.close();

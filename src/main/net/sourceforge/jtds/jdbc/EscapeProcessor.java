@@ -36,7 +36,7 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $";
 
     String   input;
     private static final String ESCAPE_PREFIX_DATE = "d ";
@@ -259,9 +259,6 @@ abstract public class EscapeProcessor
         String str    = new String(escapeSequence);
         String result = null;
 
-        // XXX Is it always okay to trim leading and trailing blanks?
-        str = str.trim();
-
         if( startsWithIgnoreCase(str, ESCAPE_PREFIX_FUNCTION) )
         {
             str = str.substring(ESCAPE_PREFIX_FUNCTION.length());
@@ -401,6 +398,9 @@ abstract public class EscapeProcessor
                 {
                     if( ch == '}' )
                     {
+                        // XXX Is it always okay to trim leading and trailing blanks?
+                        escape = escape.trim();
+
                         // At this point there are a couple of things to
                         // consider.  First, if the escape is of the form
                         // "{escape 'c'} but it is not at the end of the SQL
@@ -424,7 +424,7 @@ abstract public class EscapeProcessor
                             // parse the sql again, this time without the ending string but with the
                             // escape character set
 
-                            c = findEscapeCharacter(sql.substring(escapeStartedAt));
+                            c = findEscapeCharacter(escape);
 
                             result.delete(0,result.length());
                             result.append(nativeString(sql.substring(0, escapeStartedAt), c));
@@ -453,7 +453,9 @@ abstract public class EscapeProcessor
                         state = inEscapeInString;
                     else
                     {
-                        if( ch == '\\' ) state = inEscapeInStringWithBackquote;
+                        // SAfe This backslash in escape string is wrong. Someone might want to use backslash as escape
+                        //      character. Then it would look like: {escape '\'} <- no backslash escaping.
+//                        if( ch == '\\' ) state = inEscapeInStringWithBackquote;
                         if( ch == '\'' ) state = inEscape;
                     }
                     break;
@@ -470,25 +472,17 @@ abstract public class EscapeProcessor
         return result.toString();
     } // nativeString()
 
-    static char findEscapeCharacter(String original_str)
+    static char findEscapeCharacter(String escape)
         throws SQLException
     {
-        String str = new String(original_str);
-
-        str = str.trim();
-        if( str.charAt(0)!='{' || str.charAt(str.length()-1)!='}' || str.length()<12 )
-            throw new SQLException("Internal Error");
-
-        str = str.substring(1, str.length()-1);
-        str = str.trim();
+        String str = escape.trim();
 
         if( !str.substring(0, 6).equalsIgnoreCase("escape") )
             throw new SQLException("Internal Error");
 
-        str = str.substring(6);
-        str = str.trim();
+        str = str.substring(6).trim();
         if( str.length()!=3 || str.charAt(0)!='\'' || str.charAt(2)!='\'' )
-            throw new SQLException("Malformed escape clause: |" + original_str + "|");
+            throw new SQLException("Malformed escape clause: |" + escape + "|");
 
         return str.charAt(1);
     }

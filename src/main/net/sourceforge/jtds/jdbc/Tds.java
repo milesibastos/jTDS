@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.2 2002-10-18 15:21:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.3 2002-10-21 16:28:52 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -764,10 +764,13 @@ public class Tds implements TdsDefinitions {
                     {
                         String val;
                         try {
-                          val = (String)actualParameterList[i].value;
+                            val = (String)actualParameterList[i].value;
                         }
                         catch (ClassCastException e) {
-                          val = actualParameterList[i].value.toString();
+                            if( actualParameterList[i].value instanceof Boolean )
+                                val = ((Boolean)actualParameterList[i].value).booleanValue() ? "1" : "0";
+                            else
+                                val = actualParameterList[i].value.toString();
                         }
                         if( tdsVer<TDS70 && val!=null && val.length()==0 )
                             val = " ";
@@ -812,16 +815,14 @@ public class Tds implements TdsDefinitions {
                             if (tdsVer != TDS70 && max > 255) {
                                 // TEXT
                                 comm.appendByte(SYBTEXT);
-                                if (len > 0)
-                                  sendSybImage(encoder.getBytes((String) actualParameterList[i]
-                                        .value));
+                                if( actualParameterList[i].value instanceof byte[] )
+                                    sendSybImage((byte[]) actualParameterList[i].value);
                                 else
-                                  sendSybImage((byte[]) actualParameterList[i].value);
+                                    sendSybImage(encoder.getBytes(val));
                             }
                             else {
                                 // VARCHAR
-                                sendSybChar(((String) actualParameterList[i].value),
-                                        formalParameterList[i].maxLength);
+                                sendSybChar(val, formalParameterList[i].maxLength);
                             }
                         }
                         break;

@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.2 2002-10-21 16:28:52 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.2 2002-10-21 16:28:52 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -1867,6 +1867,98 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
+     *  JDBC 2.0 Gets a description of the user-defined types defined in a
+     *  particular schema. Schema-specific UDTs may have type JAVA_OBJECT,
+     *  STRUCT, or DISTINCT. <P>
+     *
+     *  Only types matching the catalog, schema, type name and type criteria are
+     *  returned. They are ordered by DATA_TYPE, TYPE_SCHEM and TYPE_NAME. The
+     *  type name parameter may be a fully-qualified name. In this case, the
+     *  catalog and schemaPattern parameters are ignored. <P>
+     *
+     *  Each type description has the following columns:
+     *  <OL>
+     *    <LI> <B>TYPE_CAT</B> String =>the type's catalog (may be null)
+     *    <LI> <B>TYPE_SCHEM</B> String =>type's schema (may be null)
+     *    <LI> <B>TYPE_NAME</B> String =>type name
+     *    <LI> <B>CLASS_NAME</B> String =>Java class name
+     *    <LI> <B>DATA_TYPE</B> String =>type value defined in java.sql.Types.
+     *    One of JAVA_OBJECT, STRUCT, or DISTINCT
+     *    <LI> <B>REMARKS</B> String =>explanatory comment on the type
+     *  </OL>
+     *  <P>
+     *
+     *  <B>Note:</B> If the driver does not support UDTs, an empty result set is
+     *  returned.
+     *
+     *@param  catalog           a catalog name; "" retrieves those without a
+     *      catalog; null means drop catalog name from the selection criteria
+     *@param  schemaPattern     a schema name pattern; "" retrieves those
+     *      without a schema
+     *@param  typeNamePattern   a type name pattern; may be a fully-qualified
+     *      name
+     *@param  types             a list of user-named types to include
+     *      (JAVA_OBJECT, STRUCT, or DISTINCT); null returns all types
+     *@return                   ResultSet - each row is a type description
+     *@exception  SQLException  if a database access error occurs
+     */
+    public java.sql.ResultSet getUDTs( String catalog, String schemaPattern,
+            String typeNamePattern, int[] types )
+             throws SQLException
+    {
+        String colNames[] = {"TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME", "CLASS_NAME", "DATA_TYPE", "REMARKS"};
+        Columns cols = new Columns(6);
+        final Context ctx = new Context(cols, null);
+
+        for( int i=0; i<6; i++ )
+        {
+            cols.setNativeType(i+1, Tds.SYBVARCHAR);
+            cols.setLabel(i+1, colNames[i]);
+            cols.setName(i+1, colNames[i]);
+        }
+
+        return new AbstractResultSet()
+        {
+            public SQLWarning getWarnings() throws SQLException{ return null;}
+            public String getCursorName() throws SQLException{ return null;}
+            public boolean isBeforeFirst() throws SQLException{ return false; }
+            public boolean isFirst() throws SQLException{ return false; }
+            public boolean first() throws SQLException{ return false; }
+            public boolean last() throws SQLException{ return false; }
+            public boolean absolute(int row) throws SQLException{ return false; }
+            public boolean relative(int rows) throws SQLException{ return false; }
+            public boolean previous() throws SQLException{ return false; }
+            public void setFetchDirection(int direction) throws SQLException {}
+            public int getFetchDirection() throws SQLException{ return FETCH_FORWARD; }
+            public int getFetchSize() throws SQLException{ return 0; }
+            public int getType() throws SQLException{ return TYPE_FORWARD_ONLY; }
+            public boolean rowUpdated() throws SQLException{ return false; }
+            public boolean rowInserted() throws SQLException{ return false; }
+            public boolean rowDeleted() throws SQLException{ return false; }
+            public void insertRow() throws SQLException {}
+            public void updateRow() throws SQLException {}
+            public void deleteRow() throws SQLException {}
+            public void refreshRow() throws SQLException {}
+            public void cancelRowUpdates() throws SQLException {}
+            public void moveToInsertRow() throws SQLException {}
+            public void moveToCurrentRow() throws SQLException {}
+            public Statement getStatement() throws SQLException{ return null; }
+            public boolean isLast() throws SQLException{ return false; }
+            public boolean isAfterLast() throws SQLException{ return false; }
+            public void setFetchSize(int rows) throws SQLException {}
+            public void clearWarnings() throws SQLException {}
+            public void beforeFirst() throws SQLException {}
+            public int getRow() throws SQLException{ return 0; }
+            public void close() throws SQLException {}
+            public void afterLast() {}
+            public boolean next() throws SQLException{ return false; }
+            public int getConcurrency(){ return TYPE_FORWARD_ONLY; }
+            public Context getContext(){ return ctx; }
+            public PacketRowResult currentRow() throws SQLException{ return null; }
+        };
+    }
+
+    /**
      *  What's the url for this database?
      *
      *@return                   the url or null if it can't be generated
@@ -1991,50 +2083,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     public boolean isReadOnly() throws SQLException
     {
         return false;
-    }
-
-    /**
-     *  JDBC 2.0 Gets a description of the user-defined types defined in a
-     *  particular schema. Schema-specific UDTs may have type JAVA_OBJECT,
-     *  STRUCT, or DISTINCT. <P>
-     *
-     *  Only types matching the catalog, schema, type name and type criteria are
-     *  returned. They are ordered by DATA_TYPE, TYPE_SCHEM and TYPE_NAME. The
-     *  type name parameter may be a fully-qualified name. In this case, the
-     *  catalog and schemaPattern parameters are ignored. <P>
-     *
-     *  Each type description has the following columns:
-     *  <OL>
-     *    <LI> <B>TYPE_CAT</B> String =>the type's catalog (may be null)
-     *    <LI> <B>TYPE_SCHEM</B> String =>type's schema (may be null)
-     *    <LI> <B>TYPE_NAME</B> String =>type name
-     *    <LI> <B>CLASS_NAME</B> String =>Java class name
-     *    <LI> <B>DATA_TYPE</B> String =>type value defined in java.sql.Types.
-     *    One of JAVA_OBJECT, STRUCT, or DISTINCT
-     *    <LI> <B>REMARKS</B> String =>explanatory comment on the type
-     *  </OL>
-     *  <P>
-     *
-     *  <B>Note:</B> If the driver does not support UDTs, an empty result set is
-     *  returned.
-     *
-     *@param  catalog           a catalog name; "" retrieves those without a
-     *      catalog; null means drop catalog name from the selection criteria
-     *@param  schemaPattern     a schema name pattern; "" retrieves those
-     *      without a schema
-     *@param  typeNamePattern   a type name pattern; may be a fully-qualified
-     *      name
-     *@param  types             a list of user-named types to include
-     *      (JAVA_OBJECT, STRUCT, or DISTINCT); null returns all types
-     *@return                   ResultSet - each row is a type description
-     *@exception  SQLException  if a database access error occurs
-     */
-    public java.sql.ResultSet getUDTs( String catalog, String schemaPattern,
-            String typeNamePattern, int[] types )
-             throws SQLException
-    {
-        NotImplemented();
-        return null;
     }
 
     /**

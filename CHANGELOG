@@ -2,6 +2,18 @@
 Changes from jTDS 0.4
 =======================
 
+10/21/2002 - Alin Sinpalean
+
+ o Fix in Tds.executeProcedure() if a Boolean was supplied as value for a
+   parameter of type CHAR/VARCHAR, it crashed with a type cast exception. This
+   should be checked when selecting the procedure, anyway (i.e. also check that
+   the parameter types are compatible in addition to the generator string).
+ o Fix in EscapeProcessor: for one reason or another backslash was treated as
+   an escape sequence even inside the 'escape' string (e.g. "{escape '\'}" was
+   incorrect because the backslash was considered an escape character).
+ o Implementede DatabaseMetaData.getUDTs(). It now returns a hand-made empty
+   result set; inspired from the MS driver's docs. :o)
+
 10/18/2002 - Alin Sinpalean
 
  o Bugfix in PacketResultSet.getLong(): CHAR values were not trimmed before

@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.16 2004-02-09 03:22:07 bheineman Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.17 2004-02-09 03:34:53 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.16 2004-02-09 03:22:07 bheineman Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.17 2004-02-09 03:34:53 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -3226,9 +3226,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         throw new UnsupportedOperationException();
     }
 
-    public boolean supportsSavepoints() throws SQLException
-    {
-        throw new UnsupportedOperationException();
+    /**
+     * Returns <code>true</code> if savepoints are supported; returns
+     * <code>false</code> otherwise
+     */
+    public boolean supportsSavepoints() throws SQLException {
+        return false;
     }
 
     public boolean supportsStatementPooling() throws SQLException

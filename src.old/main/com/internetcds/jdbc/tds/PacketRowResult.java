@@ -53,15 +53,15 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.7 2002-08-05 15:35:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.8 2002-08-19 11:25:30 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
     {
         super( TdsDefinitions.TDS_ROW_TOKEN );
         this.context = context;
-        row = new Vector( getColumnCount() );
-        row.setSize( getColumnCount() );
+        row = new Vector( realColumnCount() );
+        row.setSize( realColumnCount() );
     }
 
     public Context getContext()
@@ -84,7 +84,7 @@ public class PacketRowResult extends PacketResult {
     public void setElementAt( int index, Object obj )
         throws SQLException
     {
-        if ( index < 1 || index > getColumnCount() ) {
+        if ( index < 1 || index > realColumnCount() ) {
             throw new SQLException( "Bad index " + index );
         }
 
@@ -92,9 +92,9 @@ public class PacketRowResult extends PacketResult {
     }
 
 
-    public int getColumnCount()
+    private int realColumnCount()
     {
-        return context.getColumnInfo().getColumnCount();
+        return context.getColumnInfo().realColumnCount();
     }
 
     public int getColumnType( int index )
@@ -120,7 +120,7 @@ public class PacketRowResult extends PacketResult {
     public Object getElementAt( int index )
         throws TdsException
     {
-        if ( index < 1 || index > getColumnCount() ) {
+        if ( index < 1 || index > realColumnCount() ) {
             throw new TdsException( "Bad index " + index );
         }
 

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.13 2002-08-16 15:22:10 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.14 2002-08-19 11:25:31 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.13 2002-08-16 15:22:10 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.14 2002-08-19 11:25:31 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -773,10 +773,12 @@ public class TdsStatement implements java.sql.Statement
                  break; // No more results but no update count either
               }
             }
-            else  // process whatever comes now, isParamResult
-              if (tds.isParamResult())
+            else if( tds.isParamResult() )
                 handleParamResult((PacketOutputParamResult)tds.processSubPacket());
-              else
+            else if( tds.isEnvChange() )
+                // Process the environment change.
+                tds.processSubPacket();
+            else  // process whatever comes now, isParamResult
                 throw new SQLException("Protocol confusion.  "
                                       + "Got a 0x"
                                       + Integer.toHexString((tds.peek() & 0xff))

@@ -565,7 +565,7 @@ public abstract class AbstractResultSet
 
         Columns info = currentRow().getContext().getColumnInfo();
 
-        for (i = 1; i <= info.getColumnCount(); i++) {
+        for (i = 1; i <= info.fakeColumnCount(); i++) {
             if ( info.getName(i).equalsIgnoreCase( columnName ) ) {
                 return i;
             }

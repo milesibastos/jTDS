@@ -40,15 +40,15 @@ import java.sql.*;
 
 public class Microsoft7MetaData extends DatabaseMetaData
 {
-   public static final String cvsVersion = "$Id: Microsoft7MetaData.java,v 1.1 2001-09-18 08:38:07 aschoerk Exp $";
+   public static final String cvsVersion = "$Id: Microsoft7MetaData.java,v 1.2 2002-08-19 11:25:30 alin_sinpalean Exp $";
 
 
    protected Microsoft7MetaData(
       Object        connection_,
       Tds           tds_)
    {
-   	  super(connection_, tds_);
-   	  sysnameLength = 128;
+      super(connection_, tds_);
+      sysnameLength = 128;
    }
 
 
@@ -163,7 +163,7 @@ public class Microsoft7MetaData extends DatabaseMetaData
     */
    public java.sql.ResultSet getProcedures(String catalog,
                                            String schemaPattern,
-                                           String procedureNamePattern) 
+                                           String procedureNamePattern)
       throws SQLException
    {
      /*
@@ -172,16 +172,17 @@ public class Microsoft7MetaData extends DatabaseMetaData
       debugPrintln("  schemaPattern is " + schemaPattern);
       debugPrintln("  procedurePattern is " + procedureNamePattern);
       */
-      
-      schemaPattern = schemaPattern.trim();
+
+      if( schemaPattern != null )
+         schemaPattern = schemaPattern.trim();
 
       String query;
-      
+
       query = ("select PROCEDURE_CAT=?, "
                + " PROCEDURE_SCHEM=substring(u.name, 1, 32), "
                + " PROCEDURE_NAME=substring(o.name, 1, 32), "
                + " '', '', '', "
-               + " REMARKS='', PROCEDURE_TYPE=" 
+               + " REMARKS='', PROCEDURE_TYPE="
                + java.sql.DatabaseMetaData.procedureResultUnknown
                + " from ");
       if (catalog != null && (!catalog.equals("")))
@@ -190,22 +191,22 @@ public class Microsoft7MetaData extends DatabaseMetaData
          query = query + catalog + ".";
       }
       query = query + "dbo.sysobjects o,  ";
-      
+
       if (catalog != null && (!catalog.equals("")))
       {
          // XXX need to make sure user doesn't pass in funky strings
          query = query + catalog + ".";
       }
       query = query + "dbo.sysusers u ";
- 
+
       query = query + " where o.uid=u.uid and xtype='P' ";
       query = query + " and u.name like ? "; // schema name
       query = query + " and o.name like ? ";   // procedure name
- 
+
       // debugPrintln("Query is |" + query + "|");
- 
+
       java.sql.PreparedStatement ps = connection.prepareStatement(query);
- 
+
       // debugPrintln("ps.setString(1, \"" + catalog + "\")");
       ps.setString(1, catalog);
       if (schemaPattern==null || schemaPattern.equals(""))
@@ -228,9 +229,9 @@ public class Microsoft7MetaData extends DatabaseMetaData
          // debugPrintln("ps.setString(3, \"" + procedureNamePattern + "\")");
          ps.setString(3, procedureNamePattern);
       }
-      
+
       java.sql.ResultSet rs = ps.executeQuery();
- 
+
       return rs;
    }
 }

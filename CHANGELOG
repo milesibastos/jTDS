@@ -1,6 +1,17 @@
 Changes from jTDS 0.2
 =====================
 
+08/19/2002 - Alin Sinpalean
+
+ o Check for ENVCHANGE packets in TdsStatement.getMoreResultsImpl (if a query
+   that changed the environment was executed, the driver crashed because of
+   unrecognized packet types - ENVCHANGE).
+ o Added a fakeColumnCount to Columns to mask columns to the end user (e.g. for
+   meta data use).
+ o Implemented methods in DatabaseMetaData: getColumnPrivileges,
+   getTablePrivileges, getTypeInfo, getBestRowIdentifier, getVersionColumns.
+   Also some minor changes to methods returning constant values.
+
 08/16/2002 - Alin Sinpalean
 
  o DatabaseMetaData.getSchemas() fix: TABLE_CATALOG column was also returned as
@@ -11,6 +22,8 @@ Changes from jTDS 0.2
    which locked a Tds that was never released again; commented out.
  o Fixes in the tests: AsTest, CSUnitTest, PreparedStatementTest, TestBase,
    TimestampTest.
+ o Condition in Microsoft7MetaData.getProcedures() to avoid
+   NullPointerExceptions when a null schema pattern was provided.
 
 08/15/2002 - Alin Sinpalean
 

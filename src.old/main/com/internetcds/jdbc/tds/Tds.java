@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -167,7 +167,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.19 2002-08-14 13:04:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.20 2002-08-19 11:25:30 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -507,6 +507,22 @@ public class Tds implements TdsDefinitions {
         byte type = comm.peek();
 
         return type == TDS_PROCID;
+    }
+
+    /**
+     * Determine if the next subpacket is an environment change subpacket <p>
+     *
+     * This does not eat any input.
+     *
+     *@return     true if the next piece of data to read is end of result set
+     *            marker.
+     *@exception  com.internetcds.jdbc.tds.TdsException
+     *@exception  java.io.IOException
+     */
+    public synchronized boolean isEnvChange()
+        throws com.internetcds.jdbc.tds.TdsException, java.io.IOException
+    {
+        return comm.peek() == TDS_ENV_CHG_TOKEN;
     }
 
 
@@ -2021,7 +2037,7 @@ public class Tds implements TdsDefinitions {
 
         Columns columnsInfo = result.getContext().getColumnInfo();
 
-        for (i = 1; i <= columnsInfo.getColumnCount(); i++) {
+        for (i = 1; i <= columnsInfo.realColumnCount(); i++) {
             Object element;
             int colType = columnsInfo.getNativeType(i);
 

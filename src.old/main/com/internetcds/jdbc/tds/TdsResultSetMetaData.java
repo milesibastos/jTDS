@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.3 2002-08-14 11:44:21 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.4 2002-08-19 11:25:31 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.3 2002-08-14 11:44:21 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.4 2002-08-19 11:25:31 alin_sinpalean Exp $";
 
 
    /**
@@ -101,7 +101,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
     */
    public int getColumnCount() throws SQLException
    {
-      return columnsInfo.getColumnCount();
+      return columnsInfo.fakeColumnCount();
    }
 
 

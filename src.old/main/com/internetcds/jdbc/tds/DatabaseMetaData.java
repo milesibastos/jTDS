@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.11 2002-08-16 15:22:10 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.12 2002-08-19 11:25:30 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.11 2002-08-16 15:22:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.12 2002-08-19 11:25:30 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -446,14 +446,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             boolean nullable )
              throws SQLException
     {
-      /*
-        debugPrintln( "Inside getBestRowIdentifier with catalog=|" + catalog
-                 + "|, schema=|" + schema + "|, table=|" + table + "|, "
-                 + " scope=" + scope + ", nullable=" + nullable );
+        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?";
 
-       */
-        NotImplemented();
-        return null;
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, table);
+        s.setString(2, schema);
+        s.setString(3, catalog);
+        s.setString(4, "R");
+        s.setString(5, "T");
+        s.setString(6, "U");
+
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
+
+        col.setName(5, "COLUMN_SIZE");
+        col.setLabel(5, "COLUMN_SIZE");
+        col.setName(6, "BUFFER_LENGTH");
+        col.setLabel(6, "BUFFER_LENGTH");
+        col.setName(7, "DECIMAL_DIGITS");
+        col.setLabel(7, "DECIMAL_DIGITS");
+
+        return rs;
     }
 
 
@@ -583,8 +598,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String table, String columnNamePattern )
              throws SQLException
     {
-        NotImplemented();
-        return null;
+        String query = "exec sp_column_privileges ?, ?, ?, ?";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_column_privileges ?, ?, ?, ?";
+
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, table);
+        s.setString(2, schema);
+        s.setString(3, catalog);
+        s.setString(4, columnNamePattern);
+
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
+
+        col.setName(1, "TABLE_CAT");
+        col.setLabel(1, "TABLE_CAT");
+        col.setName(2, "TABLE_SCHEM");
+        col.setLabel(2, "TABLE_SCHEM");
+
+        return rs;
     }
 
 
@@ -913,6 +945,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String foreignCatalog, String foreignSchema, String foreignTable
              ) throws SQLException
     {
+        // See sp_fkeys
         NotImplemented();
         return null;
     }
@@ -1508,7 +1541,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public int getMaxCatalogNameLength() throws SQLException
     {
 //      NotImplemented();
-        return 0;
+        return sysnameLength;
     }
 
 
@@ -1703,7 +1736,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public int getMaxSchemaNameLength() throws SQLException
     {
 //      NotImplemented();
-        return 0;
+        return sysnameLength;
     }
 
 
@@ -1731,7 +1764,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public int getMaxStatements() throws SQLException
     {
-        return 1; // XXX: as NotImplemented();
+        return 0; // XXX: as NotImplemented();
         // return 0;
     }
 
@@ -2366,8 +2399,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
             String schemaPattern,
             String tableNamePattern ) throws SQLException
     {
-        NotImplemented();
-        return null;
+        String query = "exec sp_table_privileges ?, ?, ?";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_table_privileges ?, ?, ?";
+
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, tableNamePattern);
+        s.setString(2, schemaPattern);
+        s.setString(3, catalog);
+
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
+
+        col.setName(1, "TABLE_CAT");
+        col.setLabel(1, "TABLE_CAT");
+        col.setName(2, "TABLE_SCHEM");
+        col.setLabel(2, "TABLE_SCHEM");
+
+        return rs;
     }
 
 
@@ -2568,8 +2617,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public java.sql.ResultSet getTypeInfo() throws SQLException
     {
-        NotImplemented();
-        return null;
+        Statement s = connection.createStatement();
+        TdsResultSet rs = (TdsResultSet)s.executeQuery(
+            "exec sp_datatype_info");
+
+        Columns col = rs.getContext().getColumnInfo();
+        col.setFakeColumnCount(18);
+        col.setName(11, "FIXED_PREC_SCALE");
+        col.setLabel(11, "FIXED_PREC_SCALE");
+
+        return rs;
     }
 
 
@@ -2654,8 +2711,29 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     public java.sql.ResultSet getVersionColumns( String catalog, String schema,
             String table ) throws SQLException
     {
-        NotImplemented();
-        return null;
+        String query = "exec sp_special_columns ?, ?, ?, ?, ?, ?";
+        if( catalog != null )
+            query = "exec "+catalog+"..sp_special_columns ?, ?, ?, ?, ?, ?";
+
+        CallableStatement s = connection.prepareCall(query);
+        s.setString(1, table);
+        s.setString(2, schema);
+        s.setString(3, catalog);
+        s.setString(4, "V");
+        s.setString(5, "C");
+        s.setString(6, "O");
+
+        TdsResultSet rs = (TdsResultSet)s.executeQuery();
+        Columns col = rs.getContext().getColumnInfo();
+
+        col.setName(5, "COLUMN_SIZE");
+        col.setLabel(5, "COLUMN_SIZE");
+        col.setName(6, "BUFFER_LENGTH");
+        col.setLabel(6, "BUFFER_LENGTH");
+        col.setName(7, "DECIMAL_DIGITS");
+        col.setLabel(7, "DECIMAL_DIGITS");
+
+        return rs;
     }
 
 
@@ -3892,7 +3970,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsBatchUpdates() throws SQLException
     {
-        NotImplemented();
+        // It doesn't so why throw an exception?
+//        NotImplemented();
         return false;
     }
 

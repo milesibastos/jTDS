@@ -318,7 +318,8 @@ public class CursorResultSet extends AbstractResultSet {
     private int getRowStat()
     throws SQLException
     {
-        return current.getContext().getColumnInfo().getColumnCount();
+        return (int)current.getLong(
+            current.getContext().getColumnInfo().realColumnCount());
     }
 
 

@@ -48,17 +48,24 @@ import com.internetcds.jdbc.tds.Column;
 public class Columns {
 
     private Vector columns = null;
+    /**
+     * Real column count. Number of columns really returned by the server.
+     */
     private int columnCount = 0;
+    /**
+     * Fake column count. Number of columns visible to the user. Used for
+     * hiding columns returned by <code>DatabaseMetaData</code> methods.
+     */
+    private int fakeColCount = 0;
     /**
      *@todo    Description of the Field
      */
-    public final static String cvsVersion = "$Id: Columns.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.3 2002-08-19 11:25:30 alin_sinpalean Exp $";
 
 
     public Columns()
     {
         columns = new Vector();
-        columnCount = 0;
     }
 
 
@@ -144,11 +151,20 @@ public class Columns {
     /**
      *@return    The ColumnCount value
      */
-    public int getColumnCount()
+    public int realColumnCount()
     {
         return columnCount;
     }
 
+    public int fakeColumnCount()
+    {
+        return fakeColCount;
+    }
+
+    public void setFakeColumnCount(int count)
+    {
+        fakeColCount = count;
+    }
 
     public String getName(int columnNumber)
     {
@@ -367,6 +383,7 @@ public class Columns {
     {
         if (columnNumber > columnCount) {
             columnCount = columnNumber;
+            fakeColCount = columnNumber;
         }
 
         if (columns.size() <= columnNumber) {

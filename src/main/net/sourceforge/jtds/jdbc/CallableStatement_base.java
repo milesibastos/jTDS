@@ -64,11 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.10 2004-02-11 19:10:24 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.11 2004-02-13 23:50:54 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
 implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.10 2004-02-11 19:10:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.11 2004-02-13 23:50:54 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -210,24 +210,6 @@ implements java.sql.CallableStatement {
         }
 
         throw new SQLException("More output params than expected.");
-    }
-
-    /**
-     * Remove the &quot;&#63=&quot; from the SQL string (e.g <code>{&#63=call
-     * sp_x(&#63)}</code> becomes <code>{call sp_x(&#63)}</code>.
-     *
-     * @param sql the SQL string
-     * @return    the string with the &quot;?=&quot; removed, or the same
-     *            string if the sequence is not found
-     */
-    private static String removeRetVal(String sql) {
-        int pos = sql.indexOf("?=");
-
-        if (pos != -1) {
-            sql = sql.substring(0, pos) + sql.substring(pos+2);
-        }
-
-        return sql;
     }
 
     // called by TdsStatement.moreResults

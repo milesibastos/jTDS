@@ -36,7 +36,7 @@ import java.sql.*;
 import java.util.HashMap;
 
 abstract public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.7 2004-01-29 00:36:45 bheineman Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.8 2004-01-29 18:41:57 bheineman Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -86,15 +86,18 @@ abstract public class EscapeProcessor {
      * Also, IN_ESCAPE is not checked for and a simple 'else' is used instead as it is the
      * only other state that can exist.
      * <p>
-     * char ch = chars[i] is used in conjunction with input.toCharArray() to avoid the
+     * char ch = chars[i] is used in conjunction with sql.toCharArray() to avoid the
      * getfield opcode.
      * <p>
      * If any changes are made to this method, please test the performance of the change
      * to ensure that there is no degradation.  The cost of parsing SQL for JDBC escapes
      * needs to be as close to zero as possible.
+     * 
+     * @param sql the sql string to be translated
+     * @return the translated sql string
      */
-    public String nativeString() throws SQLException {
-        char[] chars = input.toCharArray(); // avoid getfield opcode
+    public static String nativeSQL(String sql) throws SQLException {
+        char[] chars = sql.toCharArray(); // avoid getfield opcode
         StringBuffer result = new StringBuffer(chars.length);
         StringBuffer escape = null;
         int state = NORMAL;
@@ -163,16 +166,19 @@ abstract public class EscapeProcessor {
             translateFunction(str, result);
         } else if (escape.equals(ESCAPE_PREFIX_CALL) || escape.startsWith("?")) {
             translateCall(str, result);
+        } else if (escape.equals(ESCAPE_PREFIX_ESCAPE_CHAR)) {
+            // There is no need to validate or translate this, let the database take
+            // the raw value
+            result.append(str);
+        } else if (escape.equals(ESCAPE_PREFIX_OUTER_JOIN)) {
+            // Pull off the prefix and send the string as it is to the database
+            result.append(str.substring(ESCAPE_PREFIX_OUTER_JOIN.length()));
         } else if (escape.equals(ESCAPE_PREFIX_DATE)) {
             translateDate(str, result);
         } else if (escape.equals(ESCAPE_PREFIX_TIME)) {
             translateTime(str, result);
         } else if (escape.equals(ESCAPE_PREFIX_TIMESTAMP)) {
             translateTimestamp(str, result);
-        } else if (escape.equals(ESCAPE_PREFIX_OUTER_JOIN)) {
-            result.append(str.substring(ESCAPE_PREFIX_OUTER_JOIN.length()));
-        } else if (escape.equals(ESCAPE_PREFIX_ESCAPE_CHAR)) {
-            getEscape(str, result);
         } else {
             throw new SQLException("Unrecognized escape sequence: " + escapeSequence);
         }
@@ -491,31 +497,6 @@ abstract public class EscapeProcessor {
         result.append(fraction);
         result.append("'");
     }
-
-    /**
-     * Returns ANSI ESCAPE sequence with the specified escape character
-     */
-    private static void getEscape(String str, StringBuffer result) throws SQLException {
-        String tmpStr = str.substring(ESCAPE_PREFIX_ESCAPE_CHAR.length()).trim();
-
-        // Escape string should be 3 characters long unless a single quote is being used
-        // (which is probably a bad idea but the ANSI specification allows it) as an
-        // escape character in which case the length should be 4.  The escape
-        // sequence needs to be handled in this manner (with two single quotes) or else
-        // parameters will not be counted properly as the string will remain open.
-        if (!((tmpStr.length() == 3 && tmpStr.charAt(1) != '\'')
-               || (tmpStr.length() == 4
-                   && tmpStr.charAt(1) == '\''
-                   && tmpStr.charAt(2) == '\''))
-             || tmpStr.charAt(0) != '\''
-             || tmpStr.charAt(tmpStr.length() - 1) != '\'') {
-            throw new SQLException("Malformed escape: " + str);
-        }
-
-        result.append("ESCAPE ");
-        result.append(tmpStr);
-    }
-
 
     /**
      * Is the string made up only of digits?

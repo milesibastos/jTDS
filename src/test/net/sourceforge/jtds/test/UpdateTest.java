@@ -39,13 +39,8 @@ public class UpdateTest
         ResultSet rs = stmt.executeQuery( "SELECT * FROM #temp" );
 
         rs.first();
-        dumpRow( rs );
-
         rs.last();
-        dumpRow( rs );
-
         rs.first();
-        dumpRow( rs );
 
         // SAfe Can no longer do this. It's going to be executed on a different Tds, which is wrong. :o(
 //        stmt.execute( "DROP TABLE #temp" );

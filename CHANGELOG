@@ -1,5 +1,11 @@
 Changes from jTDS 0.6
-=========================
+========================
+
+02/09/2004 - Alin Sinpalean
+ o Inplementer CursorResultSet.isLast() and added a check to currentRow() to
+   see if there is actually a current row (otherwise a NPE was thrown).
+ o Updated SanityTest and UpdateTest to test the new features implemented in
+   CursorResultSet.
 
 02/08/2004 - Brian Heineman
  o Improved parsing of callable statements to be case-insensitive, allow
@@ -9,36 +15,64 @@ Changes from jTDS 0.6
  o Implemented DatabaseMetaData.supportsSavepoints().
 
 02/07/2004 - Brian Heineman
- o Moved TdsStatement.releaseTds() calls into try {} finally {} statements
-   to ensure connections are released back into internal pool even if an
-   exception is thrown.
- 
+ o Moved TdsStatement.releaseTds() calls into try {} finally {} statements to
+   ensure connections are released back into internal pool even if an exception
+   is thrown.
+
 02/06/2004 - Brian Heineman
  o Applied patch [884180] Implement getGeneratedKeys() (thanks to Mike 
    Hutchinson for the patch)
  o Corrected Blob and Clob threading issues that could have occured when
    streams were flushed.
 
+02/05/2004 - Alin Sinpalean
+ o Added the "lastUpdateCount" parameter to the URL and DataSource properties.
+   If set to true, only the last update count is returned by executeUpdate(),
+   as to avoid update counts returned by triggers being mistaken for the actual
+   update count for PreparedStatements.
+ o Reformatted code in Tds.java, CallableStatement_base.java.
+ o Fixed an issue with update count handling when lastUpdateCount was false.
+ o Fixed bug [729370], caused by BigDecimals with the scale greater than their
+   precision (which is technically possible, but not supported by SQL Server).
+ o Fixed some issues with Long and BigDecimal precision and scale handling,
+   including using the correct precision for DECIMAL/NUMERIC fields, as
+   supported by the server (either 28 or 38 decimals).
+ o Added the "charset" parameter to the DataSource (it worked before, but only
+   with the Driver, in the URL or Properties).
+ o Removed redundant call to ParameterUtils.createParameterMapping() in
+   Procedure.
+ o Fixed a possible string length limitation issue for cursor result sets
+   creation.
+ o Fixed an issue that caused CallableStatement_base.registerOutParameter() to
+   reset any value previously set for the parameter.
+ o CallableStatement.execute now calls ParameterUtils.createParameterMapping()
+   to correctly map parameters to native types. This fixes bug [815348 -
+   CallableStatement truncates varchar to 255] caused by the parameter being
+   sent as a "short" VARCHAR (length up to 255) instead of long (length up to
+   8000 for VARCHAR and 4000 for NVARCHAR).
+
 02/02/2004 - Brian Heineman
  o Synchronized Blob and Clob methods for thread safety.
- o Changed IllegalArgumentExceptions that were being thrown in BlobImpl
-   and ClobImpl to SQLExceptions per JDBC specification recommendations.
- o Removed extranous DriverVersion class which was only being used to hold
-   two variables.
+ o Changed IllegalArgumentExceptions that were being thrown in BlobImpl and
+   ClobImpl to SQLExceptions per JDBC specification recommendations.
+ o Removed extranous DriverVersion class which was only being used to hold two
+   variables.
  o Added Driver.toString() method that returns the current version per
    enhancement request [887120] DriverVersion.getDriverVersion(). 
  o TdsDataSource now implements ConnectionPoolDataSource.
 
 01/31/2004 - Brian Heineman
  o Implemented Driver.getPropertyInfo().
- 
+
 01/30/2004 - Alin Sinpalean
  o Completely reimplemented CursorResultSet, to use the sp_cursor stored
-   procedures instead of standard SQL cursors. Cleaned up a lot packet
-   processing: now it's mostly done inside Tds.
- 
+   procedures instead of standard SQL cursors. This should fix a number of
+   issues regarding scrollable result sets.
+ o Cleaned up a lot packet processing. Tds does now all the low-level packet
+   handling, with TdsResultSet no longer directly using packets.
+
 01/30/2004 - Brian Heineman
- o Improved performance of Driver URL parsing by ~40%.  URL's are now
+ o Improved performance of Driver URL parsing by ~40%. URL's are now
    case-insensitive and provide better validation of the expected format.
  o Reduced Driver memory footprint.
  o Corrected bug in {fn concat()} translation; Sun javadoc shows double quotes 
@@ -74,15 +108,15 @@ Changes from jTDS 0.6
    11.9.2, jTDS 0.5.1
  o Set instance variables to empty strings per bug [886449] TdsDataSource
    default null values cause issues.
-   
+
 01/28/2004 - Brian Heineman
- o Implemented mutator methods for BlobImpl and ClobImpl.  Changes to LOBs will
+ o Implemented mutator methods for BlobImpl and ClobImpl. Changes to LOBs will
    not be reflected in the database until the LOB reference is passed as a 
    parameter to setBlob() or setClob().
  o Implemented getDatabaseMajorVersion().
  o Implemented getDatabaseMinorVersion().
  o Updated getJDBCMinorVersion() to return 1 instead of 0.
-   
+
 01/27/2004 - Brian Heineman
  o Added CONCAT to list of return values from
    DatabaseMetaData.getStringFunctions().
@@ -91,13 +125,14 @@ Changes from jTDS 0.6
  o Implemented DatabaseMetaData.locatorsUpdateCopy().
  o Implemented DatabaseMetaData.supportsGetGeneratedKeys().
  o Corrected bug where {escape '''} was causing parameters to be calulcated
-   incorrectly (this specific escape value is now invalid and an exception is thrown).
- o Improved parsing of {? = call} in EscapeProcessor to support whitespace around the
-   '=' and to be case-insensitive.
+   incorrectly (this specific escape value is now invalid and an exception is
+   thrown).
+ o Improved parsing of {? = call} in EscapeProcessor to support whitespace
+   around the '=' and to be case-insensitive.
  o Implemented {fn CONCAT()}
  o Improved SQL parsing performance when translating JDBC escape sequences.
  o Improved escape sequence error messages.
-   
+
 ===============================================================================
 1/25/2004 - jTDS 0.6 released
 ===============================================================================
@@ -107,12 +142,12 @@ Changes from jTDS 0.6-rc1
 
 01/22/2004 - Alin Sinpalean
  o Modified again the DatabaseMetaData. Instead of just applying the patch
-   provided by Mike I chose to do it my way, which was REALLY bad, so it finally
-   ended up as it was initially.
+   provided by Mike I chose to do it my way, which was REALLY bad, so it
+   finally ended up as it was initially.
 
 01/21/2004 - Alin Sinpalean
- o Applied patch #880905 (EscapeProcessor does not handle {escape 'x'} properly)
-   submitted by Brian Heineman, with some minor modifications.
+ o Applied patch #880905 (EscapeProcessor does not handle {escape 'x'}
+   properly) submitted by Brian Heineman, with some minor modifications.
 
 01/20/2004 - Alin Sinpalean
  o Added the "sendStringParametersAsUnicode" parameter, to control whether

@@ -155,8 +155,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     public boolean isLast() throws SQLException {
-        throw new java.lang.UnsupportedOperationException(
-                "Method isLast() not yet implemented.");
+        return pos == rowsInResult;
     }
 
     public int getRow() throws SQLException {
@@ -316,7 +315,10 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 "Method moveToCurrentRow() not yet implemented.");
     }
 
-    public PacketRowResult currentRow() {
+    public PacketRowResult currentRow() throws SQLException {
+        if( current == null )
+            throw new SQLException("No current row in the ResultSet");
+
         return current;
     }
 

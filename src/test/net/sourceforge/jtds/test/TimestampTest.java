@@ -5,6 +5,7 @@ import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.util.Logger;
 
 import junit.framework.TestSuite;
@@ -1812,7 +1813,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -1858,7 +1859,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -1904,7 +1905,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -1950,7 +1951,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -1996,7 +1997,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -2042,7 +2043,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -2088,7 +2089,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -2134,7 +2135,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -2180,7 +2181,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -2226,7 +2227,7 @@ public class TimestampTest extends DatabaseTestCase {
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.next());
-        assertEquals(receiveValue.getTime().getTime(), rs.getTimestamp(1).getTime());
+        assertEquals(receiveValue.getTime().getTime(), getTimeInMs(rs));
         assertTrue(!rs.next());
 
         pstmt.close();
@@ -2297,5 +2298,24 @@ public class TimestampTest extends DatabaseTestCase {
         assertFalse("Row was inserted even though date was out of range.", rs.next());
         rs.close();
         stmt.close();
+    }
+    
+    /**
+     * Java 1.3 Timestamp.getDate() does not add the nano seconds to 
+     * the millisecond value returned. This causes the timestamp tests
+     * to fail. If running under java 1.3 we add the nanos ourselves.
+     * @param rs The result set returning the Timstamp value in column 1 
+     * @return The millisecond date value as a <code>long</code>.
+     * @throws SQLException
+     */
+    public long getTimeInMs(ResultSet rs)
+        throws SQLException {
+        Timestamp value = rs.getTimestamp(1);
+        long ms = value.getTime();
+        if (!Driver.JDBC3) {
+            // Not Running under 1.4 so need to add milliseconds
+            ms += ((java.sql.Timestamp)value).getNanos() / 1000000;
+        }
+        return ms;
     }
 }

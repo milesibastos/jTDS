@@ -146,7 +146,6 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
         assertFalse("supportsSelectForUpdate", dbmd.supportsSelectForUpdate());
         assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_REPEATABLE_READ));
 
-        assertTrue("locatorsUpdateCopy",dbmd.locatorsUpdateCopy());
         assertTrue("ownDeletesAreVisible", dbmd.ownDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
         assertTrue("ownDeletesAreVisible", dbmd.ownDeletesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
         assertTrue("ownDeletesAreVisible", dbmd.ownDeletesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
@@ -155,16 +154,6 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
         assertTrue("supportsLikeEscapeClause", dbmd.supportsLikeEscapeClause());
         assertTrue("supportsOpenCursorsAcrossCommit", dbmd.supportsOpenCursorsAcrossCommit());
         assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_NONE));
-        //
-        // Test JDBC 3 items
-        //
-        assertTrue("supportsGetGeneratedKeys", dbmd.supportsGetGeneratedKeys());
-        assertTrue("supportsMultipleOpenResults", dbmd.supportsMultipleOpenResults());
-        assertTrue("supportsNamedParameters", dbmd.supportsNamedParameters());
-        assertFalse("supportsResultSetHoldability", dbmd.supportsResultSetHoldability(ResultSet.HOLD_CURSORS_OVER_COMMIT));
-        assertFalse("supportsResultSetHoldability", dbmd.supportsResultSetHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT));
-        assertTrue("supportsSavepoints", dbmd.supportsSavepoints());
-        assertTrue("supportsStatementPooling", dbmd.supportsStatementPooling());
 
         if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
             assertTrue("allTablesAreSelectable", dbmd.allTablesAreSelectable());
@@ -211,14 +200,10 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
      */
     public void testIntOptions() throws Exception {
         DatabaseMetaData dbmd = con.getMetaData();
-        int sysnamelen = (dbmd.getDatabaseMajorVersion() < 7 || dbmd.getDatabaseMajorVersion() > 9)? 30: 128;
-        assertTrue("getDatabaseMajorVersion", dbmd.getDatabaseMajorVersion() >= 0);
-        assertTrue("getDatabaseMinorVersion", dbmd.getDatabaseMinorVersion() >= 0);
+        int sysnamelen = (dbmd.getDatabaseProductName().startsWith("Microsoft"))? 128: 30;
         assertEquals("getDefaultTransactionIsolation",Connection.TRANSACTION_READ_COMMITTED, dbmd.getDefaultTransactionIsolation());
         assertTrue("getDriverMajorVersion", dbmd.getDriverMajorVersion() >= 0);
         assertTrue("getDriverMinorVersion", dbmd.getDriverMinorVersion() >=0);
-        assertEquals("getJDBCMajorVersion", 3, dbmd.getJDBCMajorVersion());
-        assertEquals("getJDBCMinorVersion", 0, dbmd.getJDBCMinorVersion());
         assertEquals("getMaxBinaryLiteralLength", 131072, dbmd.getMaxBinaryLiteralLength());
         assertEquals("getMaxCatalogNameLength",sysnamelen, dbmd.getMaxCatalogNameLength());
         assertEquals("getMaxCharLiteralLength", 131072, dbmd.getMaxCharLiteralLength());
@@ -233,8 +218,6 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
         assertEquals("getMaxStatements", 0, dbmd.getMaxStatements());
         assertEquals("getMaxTableNameLength",sysnamelen, dbmd.getMaxTableNameLength());
         assertEquals("getMaxUserNameLength",sysnamelen, dbmd.getMaxUserNameLength());
-        assertEquals("getResultSetHoldability",ResultSet.HOLD_CURSORS_OVER_COMMIT, dbmd.getResultSetHoldability());
-        assertEquals("getSQLStateType",1, dbmd.getSQLStateType());
         if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
             assertEquals("getMaxColumnsInGroupBy",0, dbmd.getMaxColumnsInGroupBy());
             assertEquals("getMaxColumnsInOrderBy",0, dbmd.getMaxColumnsInOrderBy());
@@ -272,13 +255,6 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
             stmt.execute("CREATE TABLE jTDS_META (id int NOT NULL primary key , data nvarchar(255) NULL, ts timestamp)");
             stmt.execute("CREATE TABLE jTDS_META2 (id int NOT NULL, data2 varchar(255) NULL "+
                             ",  FOREIGN KEY (id) REFERENCES jTDS_META(id)) ");
-            //
-            rs = dbmd.getAttributes(null, null, null, null);
-            assertTrue(checkColumnNames(rs, new String[]{"TYPE_CAT", "TYPE_SCHEM","TYPE_NAME","ATTR_NAME",
-                    "DATA_TYPE","ATTR_TYPE_NAME","ATTR_SIZE","DECIMAL_DIGITS","NUM_PREC_RADIX","NULLABLE",
-                    "REMARKS","ATTR_DEF","SQL_DATA_TYPE","SQL_DATETIME_SUB","CHAR_OCTET_LENGTH",
-                    "ORDINAL_POSITION","IS_NULLABLE","SCOPE_CATALOG","SCOPE_SCHEMA","SCOPE_TABLE","SOURCE_DATA_TYPE"}));
-            assertFalse(rs.next());
             //
             rs = dbmd.getBestRowIdentifier(null, null, "jTDS_META", DatabaseMetaData.bestRowUnknown, true);
             assertTrue(checkColumnNames(rs, new String[]{"SCOPE", "COLUMN_NAME", "DATA_TYPE",
@@ -368,17 +344,12 @@ public class DatabaseMetaDataTest extends DatabaseTestCase {
             assertEquals("jtds_spmeta", rs.getString(3));
             //
             rs = dbmd.getSchemas();
-            assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
+            if (net.sourceforge.jtds.jdbc.Driver.JDBC3) {
+                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
+            } else {
+                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM"}));
+            }
             assertTrue(rs.next());
-            //
-            rs = dbmd.getSuperTables(null, null, "%");
-            assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME","SUPERTABLE_NAME"}));
-            assertFalse(rs.next());
-            //
-            rs = dbmd.getSuperTypes(null, null, "%");
-            assertTrue(checkColumnNames(rs, new String[]{"TYPE_CAT", "TYPE_SCHEM", "TYPE_NAME",
-                    "SUPERTYPE_CAT", "SUPERTYPE_SCHEM", "SUPERTYPE_NAME"}));
-            assertFalse(rs.next());
             //
             rs = dbmd.getTablePrivileges(null, null, "jTDS_META");
             assertTrue(checkColumnNames(rs, new String[]{"TABLE_CAT", "TABLE_SCHEM", "TABLE_NAME",

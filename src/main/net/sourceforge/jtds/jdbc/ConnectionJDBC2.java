@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.44 2004-11-08 20:14:06 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.45 2004-11-15 09:05:27 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -593,16 +593,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         // OK we have built a proc so add it to the cache.
         addCachedProcedure(key, proc);
-        
+
         // Add the handle to the prepared statement so that the handles
         // can be used to clean up the statement cache properly when the
         // prepared statement is closed.
         if (pstmt.handles == null) {
         	pstmt.handles = new ArrayList(1);
         }
-        
+
         pstmt.handles.add(proc);
-        
+
 
         // Give the user the name
         return proc.name;
@@ -782,7 +782,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
         lobBuffer = parseLongProperty(info, "prop.lobbuffer");
         maxStatements = parseIntegerProperty(info, "prop.maxstatements");
-        
+
         if (maxStatements <= 0) {
         	statementCache = new NonCachingStatementCache();
         } else if (maxStatements == Integer.MAX_VALUE) {
@@ -790,7 +790,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         } else {
         	statementCache = new DefaultStatementCache(maxStatements);
         }
-        
+
         // The TdsCore.PREPEXEC method is only available with TDS 8.0+ (SQL
         // Server 2000+); downgrade to TdsCore.PREPARE if an invalid option
         // is selected.
@@ -1076,7 +1076,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     } else {
                         cleanupSql.append("DROP PROC ");
                     }
-                    
+
                     cleanupSql.append(handle);
                     cleanupSql.append('\n');
                 }

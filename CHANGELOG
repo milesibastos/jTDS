@@ -13,6 +13,8 @@ Changes from jTDS 0.5
    number of seconds and only in this case adds the nanoseconds (otherwise they
    were already added by getTime()). For the rounding problem .33 milliseconds
    are added to the value before converting it to jiffies. Seems to work fine.
+ o Fixed a problem with MONEY and SMALLMONEY datatypes where the third and
+   fourth decimals were intentionally dropped (no idea why).
 
 12/18/2002 - Alin Sinpalean
 

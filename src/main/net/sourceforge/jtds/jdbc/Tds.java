@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -161,7 +161,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.5 2003-01-20 11:02:57 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.6 2003-01-20 14:28:57 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1739,8 +1739,7 @@ public class Tds implements TdsDefinitions {
                 throw new TdsConfused("Don't know what to do with len of "
                          + len);
             }
-            x = x.divide(BigInteger.valueOf(100));
-            result = new BigDecimal(x, 2);
+            result = new BigDecimal(x, 4);
         }
         return result;
     }

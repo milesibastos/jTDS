@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.85 2005-03-18 11:46:52 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.86 2005-03-18 14:52:33 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -794,7 +794,7 @@ public class TdsCore {
     synchronized void closeConnection() {
         try {
             if (tdsVersion == Driver.TDS50) {
-                socket.setTimeout(10000);
+                socket.setTimeout(1000);
                 out.setPacketType(SYBQUERY_PKT);
                 out.write((byte)TDS_CLOSE_TOKEN);
                 out.write((byte)0);

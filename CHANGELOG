@@ -8,6 +8,9 @@ Changes from jTDS 1.0.2
  o Corrected bug [1164219] possible incorrect synchronization in
    BlobImpl.java (removed all synchronizations from BlobImpl and ClobImpl).
  o Added a description of jTDS' support for multi threading to the FAQ.
+ o Update for bug [1161601] Connection.close() can take a long time when Sybase 
+   down. The close timeout has been reduced to 1 second, just to make sure the
+   logout request makes it through to the server.
 
 03/14/2005 - Alin Sinpalean
  o Applied Mike's additional fix to bug [1158509] Various problems with

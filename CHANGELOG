@@ -1,9 +1,13 @@
 Changes from jTDS 0.9
 =========================
 
+10/12/2004 - Alin Sinpalean
+ o Applied Mike's fix for bug [1042272] jTDS doesn't allow null value into
+   Boolean.
+
 10/10/2004 - Alin Sinpalean
  o Applied patch [1038937] Support for XA connections. Mike strikes again! :o)
- o Added a test for bug [1042272] jTDS doesn?t allow null value into Boolean.
+ o Added a test for bug [1042272] jTDS doesn't allow null value into Boolean.
    Haven't had the time to look into it, but it's good to have the failing test
    as a reminder.
 

@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.28 2004-10-10 20:37:14 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.29 2004-10-12 13:32:07 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -948,7 +948,8 @@ public class TdsData {
 
             case JtdsStatement.BOOLEAN:
             case java.sql.Types.BIT:
-                if (connection.getSybaseInfo(TdsCore.SYB_BITNULL)) {
+                if (connection.getTdsVersion() >= Driver.TDS70 ||
+                        connection.getSybaseInfo(TdsCore.SYB_BITNULL)) {
                     pi.tdsType = SYBBITN;
                 } else {
                     pi.tdsType = SYBBIT;

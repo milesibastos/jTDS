@@ -14,16 +14,14 @@ Status
 Production, Beta.
 
 Stable for concurrent usage (Connections, Statements and ResultSets are
-completely multithread-safe). Full support is provided for forward-only
-ResultSets, PreparedStatements, and CallableStatements. Scrollable and/or
-updateable ResultSets are currently only supported by plain Statements.
+completely multithread-safe). Full support is provided for both forward-only and
+scrollable/updateable ResultSets, PreparedStatements, and CallableStatements.
 
 A DataSource and a very basic ConnectionPoolDataSource implementation are also
 provided.
 
 Meta data information is 99.99% complete and accurate (both ResultSetMetaData
-and 
-DatabaseMetaData).
+and DatabaseMetaData).
 
 jTDS is used in a number of commercial applications. It has been tested with and
 is actually recommended as the driver to use for MS SQL Server by pretty much
@@ -59,12 +57,16 @@ retrieval, the others throw exceptions).
 Quick Start
 ===========
 
+These are the steps you should follow to run the JUnit tests provided with jTDS
+(they are also included in the jar file, along with some reverse-engineering
+tools):
+
 1. Duplicate conf/connection.properties.tmpl as conf/connection.properties.
 
 2. Modify conf/connection.properties to point to your server/database, and put
-in your username and password. All the tests (except PerformanceTest, which will
-surely fail because it uses some tables you will not ahve) use only temporary
-tables, so almost any user should do.
+in your username and password. All the tests use only temporary tables, so
+almost any user should do (there is an exception: PerformanceTest creates a
+permanent table, but it also deletes it, at least in theory).
 
 3. Set the JAVA_HOME system property to point to your Java instalation location.
 
@@ -74,12 +76,11 @@ tables, so almost any user should do.
 
 This will run a series of JUnit tests on your database. Note that some tests
 (PerformanceTest) use the odbc driver to compare results, so if you are running
-on another OS this test will fail (it will probably fail anyway from the reason
-explained in step 2). You should also expect two other tests to fail: one
-failure is caused by PreparedStatements not (yet) supporting scrollable
-ResultSets and the other by jTDS (still) using multiple phyiscal connections to
-support concurrent Statements. These two issues are expected to be fixed in a
-coming release.
+on another OS this test will fail. You should also expect one other test to
+fail: the failure is caused by jTDS (still) using multiple phyiscal connections
+to support concurrent Statements. These issue will befixed in the next release
+(there is already a patch for that, it just needs some more work and a lot of
+testing).
 
 
 URL Format
@@ -101,14 +102,16 @@ The last one specifies the TDS version to be used: by default TDS 7.0 is used
 255 chars). So, if you want to use SQL Server 6.5 you will have to specify
 'TDS'='4.2' (in the URL or the provided Properties).
 
+Please see the FAQ page for a more detailed explanation of all the properties
+that can be specified in the URL.
+
 
 To Do
 =====
 
 1. Switch to using a single physical connection (per Connection object). This
    will fix a number of locking issues.
-2. Implement support for scrollable and/or updatable ResultSets created by
-   prepared and callable statements.
+2. Fix outstanding minor bugs.
 3. JDBC 3.0 compliance.
 
 
@@ -116,7 +119,7 @@ Contacts
 ========
 
 jTDS homepage:            http://jtds.sourceforge.net/
-Sourceforge project page: http://sourceforge.net/projects/jtds/
+SourceForge project info: http://sourceforge.net/projects/jtds/
 
 
 License

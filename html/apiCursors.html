@@ -379,7 +379,7 @@
 <h2><A NAME="_sp_cursoroption"></A>sp_cursoroption</h2>
 <P>Sets various options for API server cursors.</P>
 <h5>Syntax</h5>
-<P><B>sp_cursorclose</b> [<B>@cursor =</B>] <I>cursor_handle</i>,<BR>
+<P><B>sp_cursoroption</b> [<B>@cursor =</B>] <I>cursor_handle</i>,<BR>
   &nbsp;&nbsp;&nbsp;&nbsp;[<B>@code =</B>] <I>code</i>,<BR>
   &nbsp;&nbsp;&nbsp;&nbsp;{ [<B>@value =</B>] <I>value</i><BR>
   &nbsp;&nbsp;&nbsp;&nbsp;| [<B>@cursorname =</B>] <I>cursorname</I> }</P>
@@ -399,7 +399,7 @@
       </TR>
       <TR VALIGN="top">
         <TD>1</TD>
-        <TD>???</TD>
+        <TD>Only return the TEXTPTR of the LOB column specified by <i>value</i></TD>
       </TR>
       <TR VALIGN="top">
         <TD>2</TD>
@@ -408,10 +408,10 @@
     </table>
   </dd>
   <dt>[<B>@value =</B>] <I>value</i></dt>
-  <dd>Is the value of the selected option. <I>value</I> is <B>int</B>,
-    with no default.</dd>
+  <dd>Is the value of the selected option (for option 1 it's the index of the
+    LOB column). <I>value</I> is <B>int</B>, with no default.</dd>
   <dt>[<B>@cursorname =</B>] <I>cursorname</i></dt>
-  <dd>Is the name of the cursor. <I>cursorname</I> is <B>sysname</B>,
+  <dd>Is the name for the cursor. <I>cursorname</I> is <B>sysname</B>,
     with no default.</dd>
 </dl>
 <h5>Return Code Values</h5>

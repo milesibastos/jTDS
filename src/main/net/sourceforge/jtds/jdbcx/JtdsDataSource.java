@@ -29,6 +29,7 @@ import javax.naming.StringRefAddr;
 import javax.sql.DataSource;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
+import javax.sql.ConnectionPoolDataSource;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
@@ -36,14 +37,15 @@ import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.util.Logger;
 
 /**
- * A plain <code>DataSource</code> implementation.
+ * The jTDS <code>DataSource</code>, <code>ConnectionPoolDataSource</code> and
+ * <code>XADataSource</code> implementation.
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.16 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.17 2004-10-20 12:58:26 alin_sinpalean Exp $
  */
 public class JtdsDataSource
-        implements DataSource, XADataSource, Referenceable, Serializable {
+        implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
     protected String serverName;
     protected String serverType;
     protected String portNumber;
@@ -211,6 +213,39 @@ public class JtdsDataSource
 
         return ref;
     }
+
+    //
+    // ConnectionPoolDataSource methods
+    //
+
+    /**
+     * Returns a new pooled database connection.
+     *
+     * @return a new pooled database connection
+     * @throws SQLException if an error occurs
+     */
+    public javax.sql.PooledConnection getPooledConnection()
+            throws SQLException {
+        return getPooledConnection(user, password);
+    }
+
+    /**
+     * Returns a new pooled database connection for the user and password specified.
+     *
+     * @param user the user name to connect with
+     * @param password the password to connect with
+     * @return a new pooled database connection
+     * @throws SQLException if an error occurs
+     */
+    public synchronized javax.sql.PooledConnection getPooledConnection(String user,
+                                                                       String password)
+            throws SQLException {
+        return new net.sourceforge.jtds.jdbcx.PooledConnection(getConnection(user, password));
+    }
+
+    //
+    // Getters and setters
+    //
 
     public PrintWriter getLogWriter() throws SQLException {
         return Logger.getLogWriter();

@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.18 2004-10-08 13:08:23 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.19 2004-10-20 12:58:25 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -645,7 +645,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         checkOpen();
 
         if (colMetaData == null) {
-            if (connection.getServerType() == Driver.SYBASE) {
+            if (currentResult != null) {
+                colMetaData = currentResult.columns;
+            } else if (connection.getServerType() == Driver.SYBASE) {
                 // Sybase can provide meta data as a by product of preparing the call.
                 connection.prepareSQL(this, sql, new ParamInfo[0], false);
 
@@ -676,7 +678,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             }
         }
 
-        return  new JtdsResultSetMetaData(colMetaData, colMetaData.length);
+        return new JtdsResultSetMetaData(colMetaData, colMetaData.length);
     }
 
     public void setTime(int parameterIndex, Time x) throws SQLException {

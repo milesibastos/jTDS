@@ -422,7 +422,6 @@ public class PreparedStatementTest extends TestBase {
      * procedure is executed or the SQL is executed directly.
      */
     public void testMaxRows() throws SQLException {
-//        net.sourceforge.jtds.util.Logger.setActive(true);
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #maxRows (val int)"
                 + " INSERT INTO #maxRows VALUES (1)"
@@ -445,6 +444,47 @@ public class PreparedStatementTest extends TestBase {
 
         stmt.executeUpdate("DROP TABLE #maxRows");
         stmt.close();
+    }
+
+    /**
+     * Test for bug [1050660] PreparedStatement.getMetaData() clears resultset.
+     */
+    public void testMetaDataClearsResultSet() throws Exception {
+        Statement stmt = con.createStatement(
+                ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+
+        stmt.executeUpdate(
+                "CREATE TABLE #metaDataClearsResultSet (id int primary key, data varchar(8000))");
+        stmt.executeUpdate("INSERT INTO #metaDataClearsResultSet (id, data)"
+                + " VALUES (1, '1')");
+        stmt.executeUpdate("INSERT INTO #metaDataClearsResultSet (id, data)"
+                + " VALUES (2, '2')");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "SELECT * FROM #metaDataClearsResultSet ORDER BY id");
+        ResultSet rs = pstmt.executeQuery();
+
+        assertNotNull(rs);
+
+        ResultSetMetaData rsmd = pstmt.getMetaData();
+        assertEquals(2, rsmd.getColumnCount());
+        assertEquals("id", rsmd.getColumnName(1));
+        assertEquals("data", rsmd.getColumnName(2));
+        assertEquals(8000, rsmd.getColumnDisplaySize(2));
+
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals("1", rs.getString(2));
+
+        assertTrue(rs.next());
+        assertEquals(2, rs.getInt(1));
+        assertEquals("2", rs.getString(2));
+
+        assertFalse(rs.next());
+
+        rs.close();
+        pstmt.close();
     }
 
     public static void main(String[] args) {

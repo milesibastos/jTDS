@@ -1,6 +1,17 @@
 Changes from jTDS 0.9
 =========================
 
+10/20/2004 - Alin Sinpalean
+ o Corrected a bug that was preventing the ConnectionPoolDataSource
+   implementation from working correctly with JNDI, by having JtdsDataSource
+   implement this interface, too.
+ o Corrected bug [1050660] PreparedStatement.getMetaData() clears resultset.
+   JtdsPreparedStatement.getMetaData() always submitted a request to obtain the
+   meta data, even if the ResultSet was already available, effectively dumping
+   the ResultSet. Now it tests for a current ResultSet. An even better approach
+   would be to use a different TdsCore instance altogether, in any case, but I
+   think it's unnecessary overhead.
+
 10/15/2004 - Alin Sinpalean
  o Applied Mike's fix for bug [1047094] Problem with the store procedure's
    return.

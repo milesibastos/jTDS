@@ -60,7 +60,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.38 2004-10-10 20:37:14 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.39 2004-10-20 12:58:25 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -780,7 +780,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
         lobBuffer = parseLongProperty(info, "prop.lobbuffer");
 
-        // The TdsCore.PREPARE method is only available with TDS 8.0+ (SQL
+        // The TdsCore.PREPEXEC method is only available with TDS 8.0+ (SQL
         // Server 2000+); downgrade to TdsCore.PREPARE if an invalid option
         // is selected.
         if (tdsVersion < Driver.TDS80 && prepareSql == TdsCore.PREPEXEC) {

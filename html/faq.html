@@ -54,7 +54,8 @@
       <p class="question">Getting Started</p>
       <ul>
         <li><a href="#driverImplementation">What are the class names of the <code>Driver</code>,
-          <code>DataSource</code> and <code>ConnectionPoolDataSource</code> implementations?</a></li>
+          <code>DataSource</code>, <code>ConnectionPoolDataSource</code> and
+          <code>XADataSource</code> implementations?</a></li>
         <li><a href="#urlFormat">What is the URL format used by jTDS?</a></li>
         <li><a href="#benchmarks">jTDS is supposed to be the fastest JDBC driver
           around. Have you got any figures to prove that? Or even better, a
@@ -123,7 +124,8 @@
 
       <p class="title">Getting Started</p>
       <p class="question"><a name="driverImplementation"></a>What are the class names of the <code>Driver</code>,
-          <code>DataSource</code> and <code>ConnectionPoolDataSource</code> implementations?</p>
+          <code>DataSource</code>, <code>ConnectionPoolDataSource</code> and
+          <code>XADataSource</code> implementations?</p>
       <table class="inner" cellpadding="0" cellspacing="0">
         <thead>
           <tr><th>Interface</th><th>jTDS Implementation</th></tr>
@@ -131,7 +133,8 @@
         <tbody>
           <tr><td><code>java.sql.Driver</code></td><td><code>net.sourceforge.jtds.jdbc.Driver</code></td></tr>
           <tr><td><code>javax.sql.DataSource</code></td><td><code>net.sourceforge.jtds.jdbcx.JtdsDataSource</code></td></tr>
-          <tr><td><code>javax.sql.ConnectionPoolDataSource</code></td><td><code>net.sourceforge.jtds.jdbcx.JtdsConnectionPoolDataSource</code></td></tr>
+          <tr><td><code>javax.sql.ConnectionPoolDataSource</code></td><td><code>net.sourceforge.jtds.jdbcx.JtdsDataSource</code></td></tr>
+          <tr><td><code>javax.sql.XADataSource</code></td><td><code>net.sourceforge.jtds.jdbcx.JtdsDataSource</code></td></tr>
         </tbody>
       </table>
       <p><a href="#">^ top ^</a></p>
@@ -296,11 +299,11 @@
         scrollable/updateable result sets, batch updates, prepared and callable
         statements, unlimited number of statements per connection, complete
         database and result set meta data, and a <code>DataSource</code>
-        implementation (which also implements <code>ConnectionPoolDataSource</code>).
-        Features such as generated keys retrieval, named stored procedure parameters,
-        and save points are also implemented. There is currently no support for
-        XA (distributed) transactions. Check out the jTDS
-        <a href="features.html">feature matrix</a> for more details.</p>
+        implementation (which also implements <code>ConnectionPoolDataSource</code>
+        and <code>XADataSource</code>). Features such as generated keys
+        retrieval, named stored procedure parameters, and save points are also
+        implemented. Check out the jTDS <a href="features.html">feature
+        matrix</a> for more details.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Error Conditions</p>

@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.9 2004-01-22 23:49:47 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.10 2004-01-29 19:43:10 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.9 2004-01-22 23:49:47 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.10 2004-01-29 19:43:10 bheineman Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -83,11 +83,6 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         for ( i = 0; i < numberOfParameters; i++ )
             parameterList[i] = new ParameterListItem();
-    }
-
-    protected void NotImplemented() throws java.sql.SQLException
-    {
-        throw new SQLException( "Not Implemented" );
     }
 
     /**

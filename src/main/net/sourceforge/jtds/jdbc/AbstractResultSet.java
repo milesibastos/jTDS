@@ -17,10 +17,10 @@ import java.util.TimeZone;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.13 2004-04-16 18:35:02 bheineman Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.14 2004-04-16 21:14:10 bheineman Exp $
  */
 public abstract class AbstractResultSet implements ResultSet {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.13 2004-04-16 18:35:02 bheineman Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.14 2004-04-16 21:14:10 bheineman Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
     public static final long HOUR_CONSTANT = 3600000;
@@ -195,7 +195,7 @@ public abstract class AbstractResultSet implements ResultSet {
             return new ByteArrayInputStream(val.getBytes("ASCII"));
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw new SQLException("Unexpected encoding exception: " + e.getMessage());
+            throw new SQLException("Unexpected encoding exception: " + TdsUtil.getException(e));
         }
     }
 
@@ -424,7 +424,7 @@ public abstract class AbstractResultSet implements ResultSet {
             return new ByteArrayInputStream(val.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw new SQLException("Unexpected encoding exception: " + e.getMessage());
+            throw new SQLException("Unexpected encoding exception: " + TdsUtil.getException(e));
         }
     }
 
@@ -593,7 +593,7 @@ public abstract class AbstractResultSet implements ResultSet {
             } catch( java.io.UnsupportedEncodingException e ) {
                 // This should never happen...
                 throw new SQLException("Unexpected encoding exception: "
-                                       + e.getMessage());
+                                       + TdsUtil.getException(e));
             }
         }
     }
@@ -647,7 +647,7 @@ public abstract class AbstractResultSet implements ResultSet {
                 value.append(buffer, 0, bytes);
             }
         } catch (java.io.IOException e) {
-            throw new SQLException("Error reading stream: " + e.getMessage());
+            throw new SQLException("Error reading stream: " + TdsUtil.getException(e));
         }
 
         updateString(index, value.toString());

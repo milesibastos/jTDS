@@ -33,7 +33,7 @@
 package net.sourceforge.jtds.jdbc;
 
 public class TdsUtil {
-    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.3 2004-04-02 18:37:22 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsUtil.java,v 1.4 2004-04-16 21:14:12 bheineman Exp $";
 
     private static char hex[] =
             {
@@ -145,6 +145,22 @@ public class TdsUtil {
         buf[35] = hex[bin[15] & 0xf];
 
         return new String(buf);
+    }
+
+    /**
+     * Returns an exception as a string so that it may be nested in another exception.
+     *
+     * @param the exception to return as a string
+     * @return the string form of an exception
+     */
+    public static String getException(Exception exception) {
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        java.io.PrintStream ps = new java.io.PrintStream(baos);
+
+        ps.print("\n\n");
+        exception.printStackTrace(ps);
+
+        return baos.toString();
     }
 }
 

@@ -43,7 +43,7 @@ import java.sql.*;
  */
 public class Columns
 {
-    public final static String cvsVersion = "$Id: Columns.java,v 1.1 2002-10-14 10:48:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Columns.java,v 1.2 2004-04-16 21:14:11 bheineman Exp $";
 
     private Vector columns = null;
     /**
@@ -152,7 +152,7 @@ public class Columns
         }
         catch( TdsException e )
         {
-            throw new SQLException("TDS error- " + e.getMessage());
+            throw new SQLException("TDS error- " + TdsUtil.getException(e));
         }
     }
 
@@ -235,7 +235,7 @@ public class Columns
             return Tds.cvtNativeTypeToJdbcType(getNativeType(index), getBufferSize(index));
         }
         catch (TdsException e) {
-            throw new SQLException("TDS error- " + e.getMessage());
+            throw new SQLException("TDS error- " + TdsUtil.getException(e));
         }
     }
 

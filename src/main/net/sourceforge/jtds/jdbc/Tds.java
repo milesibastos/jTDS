@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.54 2004-04-16 20:38:17 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.55 2004-04-16 21:14:11 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.54 2004-04-16 20:38:17 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.55 2004-04-16 21:14:11 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -200,8 +200,8 @@ public class Tds implements TdsDefinitions {
             }
 
             changeSettings(sqlStatementToInitialize());
-        } catch (SQLException ex) {
-            wChain.addException(ex);
+        } catch (SQLException e) {
+            wChain.addException(e);
         }
     }
 
@@ -236,12 +236,12 @@ public class Tds implements TdsDefinitions {
             } while (moreResults);
         } catch (java.io.IOException e) {
             wChain.addException(new SQLException(
-                    "Network problem. " + e.getMessage(), "08S01"));
+                    "Network problem. " + TdsUtil.getException(e), "08S01"));
         } catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
-                    "Unknown response. " + e.getMessage(), "08S01"));
+                    "Unknown response. " + TdsUtil.getException(e), "08S01"));
         } catch (TdsException e) {
-            wChain.addException(new SQLException(e.toString(), "HY000"));
+            wChain.addException(new SQLException(TdsUtil.getException(e), "HY000"));
         }
     }
 
@@ -271,14 +271,14 @@ public class Tds implements TdsDefinitions {
         }
 //        catch (java.io.IOException e) {
 //            wChain.addException(new SQLException(
-//                    "Network problem. " + e.getMessage(), "08S01"));
+//                    "Network problem. " + TdsUtil.getException(e), "08S01"));
 //        }
         catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
-                    "Unknown response. " + e.getMessage(), "08S01"));
+                    "Unknown response. " + TdsUtil.getException(e), "08S01"));
         }
         catch (TdsException e) {
-            wChain.addException(new SQLException(e.toString(), "HY000"));
+            wChain.addException(new SQLException(TdsUtil.getException(e), "HY000"));
         }
 
         wChain.checkForExceptions();
@@ -637,7 +637,7 @@ public class Tds implements TdsDefinitions {
             waitForDataOrTimeout(wChain, timeout);
 
         } catch (java.io.IOException e) {
-            throw new SQLException("Network error-  " + e.getMessage(), "08S01");
+            throw new SQLException("Network error-  " + TdsUtil.getException(e), "08S01");
         } finally {
             comm.packetType = 0;
         }
@@ -672,14 +672,14 @@ public class Tds implements TdsDefinitions {
         }
         catch (java.io.IOException e) {
             wChain.addException(new SQLException(
-                    "Network problem. " + e.getMessage(), "08S01"));
+                    "Network problem. " + TdsUtil.getException(e), "08S01"));
         }
         catch (TdsUnknownPacketSubType e) {
             wChain.addException(new SQLException(
-                    "Unknown response. " + e.getMessage(), "HY000"));
+                    "Unknown response. " + TdsUtil.getException(e), "HY000"));
         }
         catch (TdsException e) {
-            wChain.addException(new SQLException(e.toString(), "HY000"));
+            wChain.addException(new SQLException(TdsUtil.getException(e), "HY000"));
         }
 
         wChain.checkForExceptions();
@@ -2082,9 +2082,9 @@ public class Tds implements TdsDefinitions {
 
         try {
             submitProcedure(query, wChain);
-        } catch (SQLException ex) {
+        } catch (SQLException e) {
             // SAfe Have to do this because submitProcedure
-            wChain.addException(ex);
+            wChain.addException(e);
         }
     }
 
@@ -3494,12 +3494,13 @@ public class Tds implements TdsDefinitions {
             while (moreResults) {
                 processSubPacket();
             }
-        } catch (Exception ex) {
-            if (ex instanceof SQLException) {
-                throw (SQLException) ex;
+        } catch (Exception e) {
+            if (e instanceof SQLException) {
+                throw (SQLException) e;
             }
-            throw new SQLException(
-                    "Error occured while consuming output: " + ex, "HY000");
+
+            throw new SQLException("Error occured while consuming output: "
+                                   + TdsUtil.getException(e), "HY000");
         }
     }
 
@@ -3599,14 +3600,15 @@ public class Tds implements TdsDefinitions {
             final boolean autoCommit, final int transactionIsolationLevel)
             throws SQLException {
         final String query = sqlStatementForSettings(autoCommit, transactionIsolationLevel);
+
         if (query != null) {
             try {
                 skipToEnd();
                 changeSettings(query);
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (Exception ex) {
-                throw new SQLException(ex.toString(), "HY000");
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new SQLException(TdsUtil.getException(e), "HY000");
             }
         }
     }
@@ -3753,9 +3755,9 @@ public class Tds implements TdsDefinitions {
                 }
             }
         } catch (java.io.IOException e) {
-            wChain.addException(new SQLException("Network problem. " + e.getMessage(), "08S01"));
+            wChain.addException(new SQLException("Network problem. " + TdsUtil.getException(e), "08S01"));
         } catch (TdsUnknownPacketSubType e) {
-            wChain.addException(new SQLException("Unknown response. " + e.getMessage(), "HY000"));
+            wChain.addException(new SQLException("Unknown response. " + TdsUtil.getException(e), "HY000"));
         } catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         } catch (SQLException e) {
@@ -3817,9 +3819,9 @@ public class Tds implements TdsDefinitions {
                 }
             }
         } catch (java.io.IOException e) {
-            wChain.addException(new SQLException("Network problem. " + e.getMessage(), "08S01"));
+            wChain.addException(new SQLException("Network problem. " + TdsUtil.getException(e), "08S01"));
         } catch (TdsUnknownPacketSubType e) {
-            wChain.addException(new SQLException("Unknown response. " + e.getMessage(), "HY000"));
+            wChain.addException(new SQLException("Unknown response. " + TdsUtil.getException(e), "HY000"));
         } catch (TdsException e) {
             wChain.addException(new SQLException(e.toString(), "HY000"));
         } catch (SQLException e) {
@@ -3867,7 +3869,7 @@ public class Tds implements TdsDefinitions {
                             macString.substring(j, j+2), 16);
                 }
                 ok = true;
-            } catch (Exception ex) {
+            } catch (Exception e) {
                 // Ignore it. ok will be false.
             }
         }

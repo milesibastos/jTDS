@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.28 2004-04-04 22:12:03 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.29 2004-04-16 21:14:12 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -66,7 +66,7 @@ public class TdsStatement implements java.sql.Statement
     public static final int KEEP_CURRENT_RESULT = 2;
     public static final int CLOSE_ALL_RESULTS = 3;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.28 2004-04-04 22:12:03 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.29 2004-04-16 21:14:12 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -193,12 +193,12 @@ public class TdsStatement implements java.sql.Statement
                 ResultSet rs = new CursorResultSet(this, sql, fetchDir, null);
                 cursorResults.add(rs);
                 return rs;
-            } catch (SQLException ex) {
+            } catch (SQLException e) {
                 // @todo Should check the error code, to make sure it was not
                 //       caused by something else
                 // Cursor creation failed, add a warning
                 warn = new SQLWarning(
-                        ex.getMessage(), ex.getSQLState(), ex.getErrorCode());
+                        e.getMessage(), e.getSQLState(), e.getErrorCode());
             }
         }
 
@@ -569,9 +569,9 @@ public class TdsStatement implements java.sql.Statement
                 actTds.cancel();
             }
         } catch (net.sourceforge.jtds.jdbc.TdsException e) {
-            throw new SQLException(e.getMessage());
+            throw new SQLException(TdsUtil.getException(e));
         } catch (java.io.IOException e) {
-            throw new SQLException(e.getMessage());
+            throw new SQLException(TdsUtil.getException(e));
         }
     }
 
@@ -743,13 +743,13 @@ public class TdsStatement implements java.sql.Statement
 
                 wChain.checkForExceptions();
                 return false;
-            } catch (Exception ex) {
+            } catch (Exception e) {
                 releaseTds();
 
-                if (ex instanceof SQLException) {
-                    throw (SQLException)ex;
+                if (e instanceof SQLException) {
+                    throw (SQLException) e;
                 } else {
-                    throw new SQLException("Network error: " + ex.toString());
+                    throw new SQLException("Network error: " + TdsUtil.getException(e));
                 }
             }
         }
@@ -930,7 +930,7 @@ public class TdsStatement implements java.sql.Statement
             System.arraycopy(updateCounts, 0, tmpUpdateCounts, 0, i + 1);
 
             tmpUpdateCounts[i] = EXECUTE_FAILED;
-            throw new BatchUpdateException(e.getMessage(), tmpUpdateCounts);
+            throw new BatchUpdateException(TdsUtil.getException(e), tmpUpdateCounts);
         } finally {
             clearBatch();
         }
@@ -1130,10 +1130,10 @@ public class TdsStatement implements java.sql.Statement
                     throw new SQLException(
                             "Expected generated keys ResultSet.");
                 }
-            } catch (SQLException ex) {
-                throw ex;
-            } catch (Exception ex) {
-                throw new SQLException(ex.getMessage());
+            } catch (SQLException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new SQLException(TdsUtil.getException(e));
             } finally {
                 this.results = null; // Tidy up.
                 this.updateCount = saveCount; // Restore original count.

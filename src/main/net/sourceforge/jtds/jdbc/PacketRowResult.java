@@ -52,7 +52,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.8 2004-03-27 05:26:14 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.9 2004-04-16 21:14:11 bheineman Exp $";
 
     public PacketRowResult(Context context) {
         super(TdsDefinitions.TDS_ROW);
@@ -416,7 +416,7 @@ public class PacketRowResult extends PacketResult {
                             Double d = new Double((String) obj);
                             result = d.doubleValue();
                         } catch (NumberFormatException e) {
-                            throw new SQLException(e.getMessage());
+                            throw new SQLException(TdsUtil.getException(e));
                         }
                         break;
                     }
@@ -436,7 +436,7 @@ public class PacketRowResult extends PacketResult {
             } catch (ClassCastException e) {
                 throw new SQLException("Couldn't convert column " + columnIndex
                                        + " to an long.  "
-                                       + e.getMessage());
+                                       + TdsUtil.getException(e));
             }
         }
         return result;
@@ -472,7 +472,8 @@ public class PacketRowResult extends PacketResult {
                             Long i = new Long(obj.toString().trim());
                             result = i.longValue();
                         } catch (NumberFormatException e) {
-                            throw new SQLException("NumberFormatException: [" + e.getMessage() + "]");
+                            throw new SQLException("NumberFormatException: ["
+                                                   + TdsUtil.getException(e) + "]");
                         }
                         break;
                     }
@@ -493,7 +494,7 @@ public class PacketRowResult extends PacketResult {
             } catch (ClassCastException e) {
                 throw new SQLException("Couldn't convert column " + columnIndex
                                        + " to an long.  "
-                                       + e.getMessage());
+                                       + TdsUtil.getException(e));
             }
         }
         return result;
@@ -539,7 +540,7 @@ public class PacketRowResult extends PacketResult {
             try {
                 return new BigDecimal((String) tmp);
             } catch (NumberFormatException e) {
-                throw new SQLException(e.getMessage());
+                throw new SQLException(TdsUtil.getException(e));
             }
         } else if (tmp instanceof Boolean) {
             return ((Boolean) tmp).booleanValue() ? new BigDecimal(1) : new BigDecimal(0);

@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.24 2004-04-12 17:03:30 bheineman Exp $
+ * @version    $Id: TdsConnection.java,v 1.25 2004-04-16 21:14:12 bheineman Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -106,7 +106,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.24 2004-04-12 17:03:30 bheineman Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.25 2004-04-16 21:14:12 bheineman Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -179,7 +179,7 @@ public class TdsConnection implements Connection
         } catch (UnknownHostException e) {
             throw new SQLException("Uknown server host name " + host, "08003");
         } catch (IOException e) {
-            throw new SQLException(e.getMessage(), "08004");
+            throw new SQLException(TdsUtil.getException(e), "08004");
         }
 
         // Adellera
@@ -199,16 +199,16 @@ public class TdsConnection implements Connection
                              props.getProperty(Tds.PROP_APPNAME, "jTDS"),
                              props.getProperty(Tds.PROP_PROGNAME, "jTDS"),
                              props.getProperty(Tds.PROP_MAC_ADDR));
-            } catch (IOException ex) {
-                throw new SQLException(ex.getMessage(), "08S01");
+            } catch (IOException e) {
+                throw new SQLException(TdsUtil.getException(e), "08S01");
             }
             final SQLWarningChain wChain = new SQLWarningChain();
             tmpTds.initSettings(props.getProperty(Tds.PROP_DBNAME), wChain);
             wChain.checkForExceptions();
-        } catch( SQLException ex ) {
-            throw new SQLException("Logon failed.  " + ex.getMessage(),
-                                   ex.getSQLState(),
-                                   ex.getErrorCode());
+        } catch (SQLException e) {
+            throw new SQLException("Logon failed.  " + TdsUtil.getException(e),
+                                   e.getSQLState(),
+                                   e.getErrorCode());
         }
 
         lastUpdateCount = "true".equalsIgnoreCase(
@@ -338,8 +338,8 @@ public class TdsConnection implements Connection
             } finally {
                 try {
                     freeTds(tds);
-                } catch (TdsException ex) {
-                    throw new SQLException(ex.getMessage());
+                } catch (TdsException e) {
+                    throw new SQLException(TdsUtil.getException(e));
                 }
             }
         }
@@ -373,14 +373,14 @@ public class TdsConnection implements Connection
             try {
                 tds.skipToEnd();
                 tds.changeDB(catalog, warningChain);
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
             }
         }
@@ -693,14 +693,14 @@ public class TdsConnection implements Connection
                 if (!autoCommit)
                     tds.rollback(); // MJH
                 tds.close();
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
             }
         }
@@ -721,7 +721,7 @@ public class TdsConnection implements Connection
             tdsSocket.close();
         } catch (IOException e) {
             warningChain.addException(
-                    new SQLException(e.getMessage(), "01002"));
+                    new SQLException(TdsUtil.getException(e), "01002"));
         }
 
         warningChain.checkForExceptions();
@@ -933,14 +933,14 @@ public class TdsConnection implements Connection
                 } else {
                     tds.rollback();
                 }
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
 
                 clearSavepoints();

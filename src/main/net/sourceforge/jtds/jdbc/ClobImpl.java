@@ -49,7 +49,7 @@ import java.sql.SQLException;
  * An in-memory representation of character data.
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.6 2004-03-04 16:08:23 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.7 2004-04-16 21:14:11 bheineman Exp $";
 
     private String _clob;
 
@@ -73,7 +73,7 @@ public class ClobImpl implements Clob {
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
             throw new SQLException("Unexpected encoding exception: "
-                                   + e.getMessage());
+                                   + TdsUtil.getException(e));
         }
     }
 
@@ -94,7 +94,7 @@ public class ClobImpl implements Clob {
         try {
             return _clob.substring((int) --pos, length);
         } catch (Exception e) {
-            throw new SQLException(e.getMessage());
+            throw new SQLException(TdsUtil.getException(e));
         }
     }
 
@@ -149,7 +149,7 @@ public class ClobImpl implements Clob {
             clob = _clob.getBytes("ASCII");
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw new SQLException("Unexpected encoding exception: " + e.getMessage());
+            throw new SQLException("Unexpected encoding exception: " + TdsUtil.getException(e));
         }
 
         return new ByteArrayOutputStream() {
@@ -221,7 +221,7 @@ public class ClobImpl implements Clob {
             writer.write(str, offset, len);
             writer.close();
         } catch (IOException e) {
-            throw new SQLException("Unable to write value: " + e.getMessage());
+            throw new SQLException("Unable to write value: " + TdsUtil.getException(e));
         }
 
         return len;

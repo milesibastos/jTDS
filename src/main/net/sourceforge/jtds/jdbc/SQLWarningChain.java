@@ -8,17 +8,15 @@ import java.sql.SQLWarning;
  *
  * @author Stefan Bodewig <a href="mailto:stefan.bodewig@megabit.net">stefan.bodewig@megabit.net</a>
  * @author Alin Sinpalean
- * @version $Id: SQLWarningChain.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $
+ * @version $Id: SQLWarningChain.java,v 1.4 2004-04-16 21:14:11 bheineman Exp $
  */
-class SQLWarningChain
-{
-    public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $";
+class SQLWarningChain {
+    public static final String cvsVersion = "$Id: SQLWarningChain.java,v 1.4 2004-04-16 21:14:11 bheineman Exp $";
 
     private SQLWarning warnings;
     private SQLException exceptions;
 
-    SQLWarningChain ()
-    {
+    SQLWarningChain() {
         warnings = null;
     }
 
@@ -26,8 +24,7 @@ class SQLWarningChain
      * The first warning added with {@link #addWarning addWarning}.
      * Subsequent warnings will be chained to this SQLWarning.
      */
-    synchronized SQLWarning getWarnings()
-    {
+    synchronized SQLWarning getWarnings() {
         return warnings;
     }
 
@@ -42,10 +39,8 @@ class SQLWarningChain
      * <code>getExceptions()</code> should be called and, if an exception was
      * returned, take needed action and then throw the exception.
      */
-    synchronized void checkForExceptions() throws SQLException
-    {
-        if( exceptions != null )
-        {
+    synchronized void checkForExceptions() throws SQLException {
+        if (exceptions != null) {
             // SAfe Clear the exceptions first. Otherwise, the same exception
             //      will be thrown when this method is called, even if no other
             //      exception was thrown
@@ -60,8 +55,7 @@ class SQLWarningChain
      * After this call {@link #getWarnings getWarnings} returns null
      * until {@link #addWarning addWarning} has been called again.
      */
-    synchronized void clearWarnings()
-    {
+    synchronized void clearWarnings() {
         warnings = null;
         exceptions = null;
     }
@@ -69,39 +63,36 @@ class SQLWarningChain
     /**
      * Adds an SQLWarning to the warning chain.
      */
-    synchronized void addWarning(SQLWarning warn)
-    {
-        if( warnings == null )
+    synchronized void addWarning(SQLWarning warn) {
+        if (warnings == null) {
             warnings = warn;
-        else
+        } else {
             warnings.setNextWarning(warn);
+        }
     }
 
     /**
      * Adds an SQLException to the exception chain.
      */
-    synchronized void addException(SQLException ex)
-    {
-        if( exceptions == null )
-            exceptions = ex;
-        else
-            exceptions.setNextException(ex);
+    synchronized void addException(SQLException sqlException) {
+        if (exceptions == null) {
+            exceptions = sqlException;
+        } else {
+            exceptions.setNextException(sqlException);
+        }
     }
 
     /**
      * Adds the SQLWarning wrapped in the packet if it's not an ErrorResult.
      * Adds and returns the wrapped SQLException otherwise.
      */
-    SQLException addOrReturn(PacketMsgResult pack)
-    {
-        if( pack instanceof PacketErrorResult )
-        {
-            SQLException ex = pack.getMsg().toSQLException();
-            addException(ex);
-            return ex;
-        }
-        else
-        {
+    SQLException addOrReturn(PacketMsgResult pack) {
+        if (pack instanceof PacketErrorResult) {
+            SQLException e = pack.getMsg().toSQLException();
+
+            addException(e);
+            return e;
+        } else {
             addWarning(pack.getMsg().toSQLWarning());
             return null;
         }

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * An in-memory representation of binary data.
  */
 public class BlobImpl implements Blob {
-    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.6 2004-03-21 01:53:44 bheineman Exp $";
+    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.7 2004-04-16 21:14:11 bheineman Exp $";
 
     private byte[] _blob;
 
@@ -184,7 +184,7 @@ public class BlobImpl implements Blob {
             outputStream.write(bytes, offset, len);
             outputStream.close();
         } catch (IOException e) {
-            throw new SQLException("Unable to write value: " + e.getMessage());
+            throw new SQLException("Unable to write value: " + TdsUtil.getException(e));
         }
 
         return len;

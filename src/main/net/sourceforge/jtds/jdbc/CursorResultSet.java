@@ -144,7 +144,7 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     protected void finalize() {
         try {
             close();
-        } catch (SQLException ex) {
+        } catch (SQLException e) {
         }
     }
 
@@ -228,10 +228,11 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 open = false;
                 stmt = null;
                 conn = null;
+
                 try {
                     internalStmt.close();
-                } catch (SQLException ex) {
-                    warningChain.addException(ex);
+                } catch (SQLException e) {
+                    warningChain.addException(e);
                     internalStmt = null;
                 }
             }
@@ -582,14 +583,14 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 // There are some TDS_DONEINPROC packets that need to be handled
                 while (internalStmt.getMoreResults(tds, warningChain, true)
                         || (internalStmt.getUpdateCount() != -1));
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     conn.freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
 
                 warningChain.checkForExceptions();
@@ -712,14 +713,14 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                 // There are some TDS_DONEINPROC packets that need to be handled
                 while (internalStmt.getMoreResults(tds, warningChain, true)
                         || (internalStmt.getUpdateCount() != -1));
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     conn.freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
 
                 warningChain.checkForExceptions();
@@ -766,14 +767,14 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException("Cursor close failed."));
                 }
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     conn.freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
 
                 warningChain.checkForExceptions();
@@ -929,14 +930,14 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(
                             new SQLException("Cursor operation failed."));
                 }
-            } catch (SQLException ex) {
-                warningChain.addException(ex);
+            } catch (SQLException e) {
+                warningChain.addException(e);
             } finally {
                 try {
                     conn.freeTds(tds);
-                } catch (TdsException ex) {
+                } catch (TdsException e) {
                     warningChain.addException(
-                            new SQLException(ex.getMessage()));
+                            new SQLException(TdsUtil.getException(e)));
                 }
 
                 warningChain.checkForExceptions();

@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.30 2004-04-03 21:01:38 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.31 2004-04-16 21:14:11 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.30 2004-04-03 21:01:38 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.31 2004-04-16 21:14:11 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -227,9 +227,9 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                 } finally {
                     try {
                         conn.freeTds(tds);
-                    } catch (TdsException ex) {
+                    } catch (TdsException e) {
                         warningChain.addException(
-                                new SQLException(ex.getMessage()));
+                                new SQLException(TdsUtil.getException(e)));
                     }
                 }
             }
@@ -244,12 +244,12 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                         parameterList);
                 cursorResults.add(rs);
                 return rs;
-            } catch (SQLException ex) {
+            } catch (SQLException e) {
                 // @todo Should check the error code, to make sure it was not
                 //       caused by something else
                 // Cursor creation failed, add a warning
                 warn = new SQLWarning(
-                        ex.getMessage(), ex.getSQLState(), ex.getErrorCode());
+                        e.getMessage(), e.getSQLState(), e.getErrorCode());
             }
         }
 
@@ -347,7 +347,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             } catch (java.io.UnsupportedEncodingException e) {
                 // This should never happen...
                 throw new SQLException("Unexpected encoding exception: "
-                    + e.getMessage());
+                    + TdsUtil.getException(e));
             }
         }
     }
@@ -820,7 +820,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             } catch (java.io.UnsupportedEncodingException e) {
                 // This should never happen...
                 throw new SQLException("Unexpected encoding exception: "
-                    + e.getMessage());
+                    + TdsUtil.getException(e));
             }
         }
     }

@@ -39,123 +39,111 @@ import java.io.*;
 /**
  * This class will log messages into a file.
  *
- * @version $Id: Logger.java,v 1.3 2004-02-06 00:01:03 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.4 2004-04-16 21:16:02 bheineman Exp $
  * @author Craig Spannring
  */
-public class Logger
-{
-   public static final String cvsVersion = "$Id: Logger.java,v 1.3 2004-02-06 00:01:03 alin_sinpalean Exp $";
+public class Logger {
+    public static final String cvsVersion = "$Id: Logger.java,v 1.4 2004-04-16 21:16:02 bheineman Exp $";
 
-   private static String       filename = "log.out";
-   private static boolean      active   = false;
-   private static PrintStream  out      = null;
+    private static String filename = "log.out";
+    private static boolean active = false;
+    private static PrintStream out = null;
 
-   /**
-    * Initialize the logger facility.
-    * <p>
-    * If the log facility hasn't been initialized yet this routine will
-    * open the log file.
-    * <p>
-    * The routine must be called before any logging takes place.
-    * All of the functions in this class that log messages should
-    * call this routine.  It doesn't hurt anything if this is called
-    * multiple times.
-    */
-   private static void init()
-   {
-      // check to see if the file is already open
-      if( out == null )
-         try
-         {
-            if( filename != null )
-               out = new PrintStream(new FileOutputStream(filename), true);
-         }
-         catch( FileNotFoundException ex )
-         {
-            // Ignore
-         }
-         finally
-         {
-            if( out == null )
-               out = System.out;
-         }
-   }
+    /**
+     * Initialize the logger facility.
+     * <p>
+     * If the log facility hasn't been initialized yet this routine will
+     * open the log file.
+     * <p>
+     * The routine must be called before any logging takes place.
+     * All of the functions in this class that log messages should
+     * call this routine.  It doesn't hurt anything if this is called
+     * multiple times.
+     */
+    private static void init() {
+        // check to see if the file is already open
+        if (out == null)
+            try {
+                if (filename != null) {
+                    out = new PrintStream(new FileOutputStream(filename), true);
+                }
+            } catch (FileNotFoundException e) {
+                // Ignore
+            } finally {
+                if (out == null) {
+                    out = System.out;
+                }
+            }
+    }
 
-   /**
-    * Turn the logging on or off.
-    * <p>
-    * The first time logging is turned on it will create the log file.
-    *
-    * @param value   when value is true it will turn the logging on,
-    *                if it is false it will turn the logging off.
-    */
-   synchronized public static void setActive(boolean value)
-   {
-      if( value )
-         init();
-      else
-         if( out != null )
+    /**
+     * Turn the logging on or off.
+     * <p>
+     * The first time logging is turned on it will create the log file.
+     *
+     * @param value   when value is true it will turn the logging on,
+     *                if it is false it will turn the logging off.
+     */
+    synchronized public static void setActive(boolean value) {
+        if (value) {
+            init();
+        } else if (out != null) {
             out.close();
+        }
 
-      active = value;
-   }
+        active = value;
+    }
 
-   /**
-    * Is logging turned on?
-    */
-   public static boolean isActive()
-   {
-      return active;
-   }
+    /**
+     * Is logging turned on?
+     */
+    public static boolean isActive() {
+        return active;
+    }
 
-   /**
-    * set the name of the log file.
-    * <p>
-    * This method allows you to set the name of the log file.
-    * <B>Note-</B> Once the log file is open you can not change the
-    * name.
-    *
-    * @param value  name of the log file.
-    */
-   public synchronized static void setFilename(String value)
-   {
-      if( filename != value )
-      {
-         filename = value;
-         if( out != null )
-            out.close();
-      }
-   }
+    /**
+     * set the name of the log file.
+     * <p>
+     * This method allows you to set the name of the log file.
+     * <B>Note-</B> Once the log file is open you can not change the
+     * name.
+     *
+     * @param value  name of the log file.
+     */
+    public synchronized static void setFilename(String value) {
+        if (filename != value) {
+            filename = value;
 
-   /**
-    * return the name of the log file.
-    */
-   public static String getFilename()
-   {
-      return filename;
-   }
+            if (out != null) {
+                out.close();
+            }
+        }
+    }
 
-   /**
-    * Print a string into the log file if and only if logging is active
-    */
-   synchronized public static void print(String msg)
-   {
-      if (active)
-      {
-         init();
-         out.print(msg);
-      }
-   }
+    /**
+     * return the name of the log file.
+     */
+    public static String getFilename() {
+        return filename;
+    }
 
-   /**
-    * Print a string into the log file if and only if logging is active
-    */
-   synchronized public static void println(String msg)
-   {
-      if (active)
-      {
-         init();
-         out.println(msg);
-      }
-   }
+    /**
+     * Print a string into the log file if and only if logging is active
+     */
+    synchronized public static void print(String msg) {
+        if (active) {
+            init();
+            out.print(msg);
+        }
+    }
+
+    /**
+     * Print a string into the log file if and only if logging is active
+     */
+    synchronized public static void println(String msg) {
+        if (active) {
+            init();
+            out.println(msg);
+        }
+    }
 }

@@ -79,47 +79,51 @@ public class MSSqlServerInfo
      * @return port the given instance is listening on, or -1 if it can't be
      * found.
      */
-    public int getPortForInstance( String instanceName ) throws TdsException
-    {
-        if( m_serverInfoStrings == null )
+    public int getPortForInstance(String instanceName) throws TdsException {
+        if (m_serverInfoStrings == null) {
             return -1;
+        }
 
         //NOTE: default instance is called MSSQLSERVER
-        if( instanceName == null || instanceName.length() == 0)
+        if (instanceName == null || instanceName.length() == 0) {
             instanceName = "MSSQLSERVER";
+        }
 
         String curInstance = null;
-        String curPort     = null;
-        for( int index = 0; index < m_serverInfoStrings.length; index++ )
-        {
-            if( m_serverInfoStrings[index].length() == 0 )
-            {
+        String curPort = null;
+
+        for (int index = 0; index < m_serverInfoStrings.length; index++) {
+            if (m_serverInfoStrings[index].length() == 0) {
                 curInstance = null;
-                curPort     = null;
-            }
-            else
-            {
+                curPort = null;
+            } else {
                 String key = m_serverInfoStrings[index];
                 index++;
                 String value = "";
-                if( index < m_serverInfoStrings.length )
+
+                if (index < m_serverInfoStrings.length) {
                     value = m_serverInfoStrings[index];
-                if( key.equals("InstanceName") )
+                }
+
+                if (key.equals("InstanceName")) {
                     curInstance = value;
-                if( key.equals("tcp") )
+                }
+
+                if (key.equals("tcp")) {
                     curPort = value;
-                if( curInstance != null &&
-                    curPort != null &&
-                    curInstance.equalsIgnoreCase(instanceName) )
-                    try
-                    {
+                }
+                
+                if (curInstance != null
+                    && curPort != null
+                    && curInstance.equalsIgnoreCase(instanceName)) {
+
+                    try {
                         return Integer.parseInt(curPort);
-                    }
-                    catch( NumberFormatException ex )
-                    {
+                    } catch (NumberFormatException e) {
                         throw new TdsException("Could not parse instance port number ["
-                            +instanceName+"].");
+                            + instanceName + "].");
                     }
+                }
             }
         }
         //didn't find it...

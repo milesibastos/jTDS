@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.33 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.34 2004-09-28 09:15:15 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -727,7 +727,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             prepareSql = TdsCore.PREPARE;
         }
         // For SQL Server 6.5, only sp_executesql is available.
-        // TODO Should also check for Sybase. Are there sp_ procedures for it?
         if (tdsVersion < Driver.TDS70 && prepareSql == TdsCore.PREPARE) {
             prepareSql = TdsCore.EXECUTE_SQL;
         }

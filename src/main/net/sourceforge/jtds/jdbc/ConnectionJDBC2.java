@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.62 2005-01-24 09:07:07 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.63 2005-01-28 10:16:56 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1478,6 +1478,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
         checkLocal("commit");
 
+        if (getAutoCommit()) {
+            throw new SQLException(
+                    Messages.get("error.connection.autocommit"), "25000");
+        }
+
         baseTds.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
         procInTran.clear();
         clearSavepoints();
@@ -1486,6 +1491,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     synchronized public void rollback() throws SQLException {
         checkOpen();
         checkLocal("rollback");
+
+        if (getAutoCommit()) {
+            throw new SQLException(
+                    Messages.get("error.connection.autocommit"), "25000");
+        }
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
 
@@ -1534,6 +1544,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     synchronized public void setTransactionIsolation(int level) throws SQLException {
         checkOpen();
+
+        if (transactionIsolation == level) {
+            // No need to submit a request
+            return;
+        }
+
         String sql = "SET TRANSACTION ISOLATION LEVEL ";
 
         switch (level) {
@@ -1567,8 +1583,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
         checkLocal("setAutoCommit");
 
-        if (this.autoCommit != autoCommit) {
+        if (!this.autoCommit) {
+            // If we're in manual commit mode the spec requires that we commit
+            // the transaction when setAutoCommit() is called
             commit();
+        }
+
+        if (this.autoCommit == autoCommit) {
+            // If we don't need to change the current auto commit mode, don't
+            // submit a request
+            return;
         }
 
         String sql;

@@ -1,6 +1,12 @@
 Changes from jTDS 1.0
 =======================
 
+01/28/2005 - Alin Sinpalean
+ o commit() and rollback() now throw SQLException if called in auto-commit
+   mode, per API documentation.
+ o Added checks to setAutoCommit() and setTransactionIsolation() to no longer
+   submit requests to the server if already in the correct mode.
+
 01/27/2005 - Alin Sinpalean
  o Fixed bug in CharsetInfo, caused by getClassLoader() returning null when the
    class loader is the bootstrap classloader.

@@ -17,7 +17,7 @@ echo Building with classpath %LOCALCLASSPATH%
 echo.
 echo Starting Ant...
 
-%JAVA_HOME%\bin\java.exe -Xmx512M -Dant.home="." -classpath "%LOCALCLASSPATH%" org.apache.tools.ant.Main %1 %2 %3 %4 %5
+%JAVA_HOME%\bin\java.exe -Dant.home="." -classpath "%LOCALCLASSPATH%" org.apache.tools.ant.Main %1 %2 %3 %4 %5
 
 goto end
 

@@ -10,4 +10,4 @@ do
 	LCP=$LCP:$i
 done
 
-java -Xmx512M -Dbuild.compiler=modern -cp $LCP org.apache.tools.ant.Main $1 $2 $3 $4
+java -Dbuild.compiler=modern -cp $LCP org.apache.tools.ant.Main $1 $2 $3 $4

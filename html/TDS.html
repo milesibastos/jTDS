@@ -692,15 +692,27 @@ VARCHAR).</p>
   </tr>
   <tr>
    <td class="offset">04</td>
+   <td class="length">1</td>
+   <td class="value">XX</td>
+   <td class="description">New database name length</td>
+  </tr>
+  <tr>
+   <td class="offset">05</td>
    <td class="length">X</td>
    <td class="value">XX XX XX ...</td>
-   <td class="description">New database name (length, then value)</td>
+   <td class="description">New database name</td>
+  </tr>
+  <tr>
+   <td class="offset">XX</td>
+   <td class="length">1</td>
+   <td class="value">XX</td>
+   <td class="description">Old database name length</td>
   </tr>
   <tr>
    <td class="offset">XX</td>
    <td class="length">X</td>
    <td class="value">XX XX XX ...</td>
-   <td class="description">Old database name (length, then value)</td>
+   <td class="description">Old database name</td>
   </tr>
  </table>
 </div>
@@ -715,9 +727,21 @@ VARCHAR).</p>
   </tr>
   <tr>
    <td class="offset">04</td>
+   <td class="length">1</td>
+   <td class="value">XX</td>
+   <td class="description">Charset length</td>
+  </tr>
+  <tr>
+   <td class="offset">05</td>
    <td class="length">X</td>
    <td class="value">XX XX XX ...</td>
-   <td class="description">New charset (length, then value)</td>
+   <td class="description">Charset</td>
+  </tr>
+  <tr>
+   <td class="offset">XX</td>
+   <td class="length">2</td>
+   <td class="value">XX XX</td>
+   <td class="description">Unknown (maybe charset code)</td>
   </tr>
   <tr>
    <td class="offset">XX</td>
@@ -738,9 +762,15 @@ VARCHAR).</p>
   </tr>
   <tr>
    <td class="offset">04</td>
+   <td class="length">1</td>
+   <td class="value">XX</td>
+   <td class="description">Blocksize length</td>
+  </tr>
+  <tr>
+   <td class="offset">05</td>
    <td class="length">X</td>
    <td class="value">XX XX XX ...</td>
-   <td class="description">Blocksize (as string; length, then value))</td>
+   <td class="description">Blocksize (as string)</td>
   </tr>
   <tr>
    <td class="offset">XX</td>

@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.42 2004-03-21 19:24:11 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.43 2004-03-25 20:23:50 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.42 2004-03-21 19:24:11 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.43 2004-03-25 20:23:50 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -294,6 +294,9 @@ public class Tds implements TdsDefinitions {
      */
     private synchronized void executeProcedureInternal(
             final String procedureName,
+            //  MJH 14/03/04 The next parameter is redundant and should
+            //  be removed. Will impact a number of calls so left for
+            //  now until everyone is happy.
             final ParameterListItem[] formalParameterList,
             final ParameterListItem[] actualParameterList,
             final TdsStatement stmt,
@@ -360,17 +363,17 @@ public class Tds implements TdsDefinitions {
             comm.appendShort((short) (noMetaData ? 512 : 0));
 
             // Now handle the parameters
-            for (i = 0; i < formalParameterList.length; i++) {
+            for (i = 0; i < actualParameterList.length; i++) {
                 // SAfe We could try using actualParameterList here, instead
                 //      of formalParameterList. If it works (although it
                 //      shouldn't) it will solve a lot of problems.
-                byte nativeType = cvtJdbcTypeToNativeType(formalParameterList[i].type);
+                byte nativeType = cvtJdbcTypeToNativeType(actualParameterList[i].type);
 
-                if (formalParameterList[i].formalName == null) {
+                if (actualParameterList[i].formalName == null) {
                     comm.appendByte((byte) 0);
                 } else {
                     // Send parameter name
-                    final String name = formalParameterList[i].formalName;
+                    final String name = actualParameterList[i].formalName;
 
                     comm.appendByte((byte) name.length());
                     if (tdsVer == Tds.TDS70) {
@@ -414,18 +417,12 @@ public class Tds implements TdsDefinitions {
                             val = " ";
                         }
                         final int len = val != null ? val.length() : 0;
-                        final int max = formalParameterList[i].maxLength;
+                        final int max = actualParameterList[i].maxLength;
 
-                        // MJH - Do not use the formalType from the actual parameters as
-                        // this will be null where a cached stored procedure is reused by a
-                        // different PreparedStatement from the one that created it in the fist
-                        // place. Use the formalParameter data instead.
-                        //
-                        //if (actualParameterList[i].formalType != null &&
-                        //   actualParameterList[i].formalType.startsWith("n")) {
-                        //
-                        if (formalParameterList[i].formalType != null
-                                && formalParameterList[i].formalType.startsWith("n")) {
+                        // MJH - 14/03/04 OK to use actual parameter list as this is now
+                        // always created in PreparedStatement_base prior to the call.
+                        if (actualParameterList[i].formalType != null
+                                && actualParameterList[i].formalType.startsWith("n")) {
                             /*
                              * This is a Unicode column, safe to assume TDS 7.0
                              */
@@ -467,7 +464,7 @@ public class Tds implements TdsDefinitions {
                                     sendSybImage(conn.getEncoder().getBytes(val));
                             } else {
                                 // VARCHAR
-                                sendSybChar(val, formalParameterList[i].maxLength);
+                                sendSybChar(val, actualParameterList[i].maxLength);
                             }
                         }
                         break;
@@ -569,7 +566,7 @@ public class Tds implements TdsDefinitions {
                 case SYBVARBINARY:
                     {
                         final byte[] value = (byte[]) actualParameterList[i].value;
-                        final int maxLength = formalParameterList[i].maxLength;
+                        final int maxLength = actualParameterList[i].maxLength;
                         if (value == null) {
                             comm.appendByte(SYBVARBINARY);
                             comm.appendByte((byte) (maxLength));

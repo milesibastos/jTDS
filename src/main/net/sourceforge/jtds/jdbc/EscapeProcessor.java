@@ -36,7 +36,7 @@ import java.sql.*;
 import java.util.HashMap;
 
 public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.11 2004-03-04 17:11:54 bheineman Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.12 2004-03-25 20:23:50 alin_sinpalean Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -69,7 +69,7 @@ public class EscapeProcessor {
 
     /**
      * Converts JDBC escape syntax to native SQL.
-     * 
+     *
      * @param sql the sql string to be translated
      * @return the translated sql string
      */
@@ -79,6 +79,18 @@ public class EscapeProcessor {
         parameterNativeSQL(sql, result);
 
         return result.toString();
+    }
+
+    /**
+     * Converts JDBC escape syntax to native SQL.
+     * <p>
+     * @param sql the sql string to be translated
+     * @param result the StringBuffer to write the results to
+     * @return the number of parameters specified
+     */
+    public static int parameterNativeSQL(String sql, StringBuffer result)
+    throws SQLException {
+        return parameterNativeSQL(sql, result, false);
     }
 
     /**
@@ -100,12 +112,13 @@ public class EscapeProcessor {
      * If any changes are made to this method, please test the performance of the change
      * to ensure that there is no degradation.  The cost of parsing SQL for JDBC escapes
      * needs to be as close to zero as possible.
-     * 
+     *
      * @param sql the sql string to be translated
      * @param result the StringBuffer to write the results to
+     * @param substitute true if parameter markers should be replaced with @Pn
      * @return the number of parameters specified
      */
-    public static int parameterNativeSQL(String sql, StringBuffer result)
+    public static int parameterNativeSQL(String sql, StringBuffer result, boolean substitute)
     throws SQLException {
         final char[] chars = sql.toCharArray(); // avoid getfield opcode
         StringBuffer escape = null;
@@ -135,12 +148,19 @@ public class EscapeProcessor {
                         escape.delete(0, escape.length());
                     }
                 } else {
-                    result.append(ch);
-
                     if (ch == '?') {
                         parameters++;
+                        if (substitute) {
+                            result.append("@P");
+                            result.append(parameters);
+                        } else {
+                            result.append(ch);
+                        }
                     } else if (ch == '\'') {
                         state = IN_STRING;
+                        result.append(ch);
+                    } else {
+                        result.append(ch);
                     }
                 }
             } else if (state == IN_STRING) {
@@ -175,7 +195,7 @@ public class EscapeProcessor {
 
     /**
      * Translates the JDBC escape sequence into the database specific call.
-     * 
+     *
      * @param escapeSequence the escapeSequence to translate
      * @param result the <code>StringBuffer</code> to write the results to
      */

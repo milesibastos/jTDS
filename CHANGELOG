@@ -1,6 +1,11 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/24/2004 - Alin Sinpalean
+ o Applied Mike's "Streamlined stored proc processing" patch (#916084). Seems
+   like all I'm doing lately is answering forum questions and applying Mike's
+   great patches. ;o)
+
 03/21/2004 - Alin Sinpalean
  o Applied Mike's SqlMessage patch to generate SQL state values based on native
    error codes, changed the implementation (from sorted array to HashMap) and
@@ -66,7 +71,7 @@ Changes from jTDS 0.7.1
 03/03/2004 - Brian Heineman
  o Corrected bug [909169] jTDS 0.7: introduced another bug (Stored Procedure);
    added test to ensure functionality continues to work in the future.
- o Updated CallableStatements to parse SQL according to ANSI specifications. 
+ o Updated CallableStatements to parse SQL according to ANSI specifications.
 
 ===============================================================================
 03/03/2004 - jTDS 0.7.1 released
@@ -244,7 +249,7 @@ Changes from jTDS 0.6
    while running the methods, but also if the execution only returns an update
    count (in which case, the result is completely processed and the Tds can be
    released).
-   
+
 02/11/2004 - Brian Heineman
  o Updated DatabaseMetaData.supportsBatchUpdates() to return true.
 
@@ -298,7 +303,7 @@ Changes from jTDS 0.6
    is thrown.
 
 02/06/2004 - Brian Heineman
- o Applied patch [884180] Implement getGeneratedKeys() (thanks to Mike 
+ o Applied patch [884180] Implement getGeneratedKeys() (thanks to Mike
    Hutchinson for the patch)
  o Corrected Blob and Clob threading issues that could have occured when
    streams were flushed.
@@ -336,7 +341,7 @@ Changes from jTDS 0.6
  o Removed extranous DriverVersion class which was only being used to hold two
    variables.
  o Added Driver.toString() method that returns the current version per
-   enhancement request [887120] DriverVersion.getDriverVersion(). 
+   enhancement request [887120] DriverVersion.getDriverVersion().
  o TdsDataSource now implements ConnectionPoolDataSource.
 
 01/31/2004 - Brian Heineman
@@ -353,7 +358,7 @@ Changes from jTDS 0.6
  o Improved performance of Driver URL parsing by ~40%. URL's are now
    case-insensitive and provide better validation of the expected format.
  o Reduced Driver memory footprint.
- o Corrected bug in {fn concat()} translation; Sun javadoc shows double quotes 
+ o Corrected bug in {fn concat()} translation; Sun javadoc shows double quotes
    but single quotes are expected.
  o Updated Sybase stored procedure name generation to "jTDS" + last 26
    characters of NEWID() [without the dashes].  This should solve the problem
@@ -381,7 +386,7 @@ Changes from jTDS 0.6
  o Applied patch [851982] Client name not set in send70Login(). (thanks to
    mhilpert for the fix) This also fixed the following issues:
      [708727] hostname not set
-     [886897] jTDS 0.6: Hostname still not set 
+     [886897] jTDS 0.6: Hostname still not set
  o Added missing "exec" per bug [822544] Issue connecting using alias on Sybase
    11.9.2, jTDS 0.5.1
  o Set instance variables to empty strings per bug [886449] TdsDataSource
@@ -389,7 +394,7 @@ Changes from jTDS 0.6
 
 01/28/2004 - Brian Heineman
  o Implemented mutator methods for BlobImpl and ClobImpl. Changes to LOBs will
-   not be reflected in the database until the LOB reference is passed as a 
+   not be reflected in the database until the LOB reference is passed as a
    parameter to setBlob() or setClob().
  o Implemented getDatabaseMajorVersion().
  o Implemented getDatabaseMinorVersion().
@@ -528,7 +533,7 @@ Changes from jTDS 0.5.1
  o Removed some weird type checking and matching in TdsResultSetMetaData
    .getColumnType, which would define NCHAR, NVARCHAR and NTEXT as Types.OTHER
    rather than the correct Java type (this was causing problems with SQuirreL
-   SQL when the column type of a ResultSet was checked -- particularly when 
+   SQL when the column type of a ResultSet was checked -- particularly when
    browsing stored procedures and their parameters).
  o Removed the "synchronized" qualifier from TdsStatement.executeQuery, because
    it was causing deadlocks between threads creating scrollable result sets and

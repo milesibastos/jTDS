@@ -35,7 +35,7 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.12 2004-03-21 01:54:59 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.13 2004-03-25 20:23:50 alin_sinpalean Exp $";
 
     /**
      * Check that all items in parameterList have been given a value
@@ -51,7 +51,7 @@ public class ParameterUtils {
             }
 
             if (!parameterList[i].isSet) {
-                throw new SQLException("parameter #" + (i + 1) + " has not been set");
+                throw new SQLException("parameter #" + (i + 1) + " has not been set", "07001");
             }
         }
     }
@@ -79,19 +79,24 @@ public class ParameterUtils {
         // First make sure the caller has filled in all the parameters.
         verifyThatParametersAreSet(parameterList);
 
-        int nextParameterNumber = 0;
+//      int nextParameterNumber = 0;  MJH 14/03/04 Not needed
         int tdsVer = tds.getTdsVer();
         EncodingHelper encoder = tds.getEncoder();
 
         for (int i = 0; i < parameterList.length; i++) {
             if (assignNames) {
-                String nextFormal;
-                do {
-                    nextParameterNumber++;
-                    nextFormal = "P" + nextParameterNumber;
-                } while (-1 != rawQueryString.indexOf(nextFormal));
-
-                parameterList[i].formalName = '@' + nextFormal;
+//
+// MJH 14/03/04  Not sure what the point of this code was.
+// What would happen if SQL string contained embedded strings
+// such as P1 for example.
+//              String nextFormal;
+//              do {
+//                  nextParameterNumber++;
+//                  nextFormal = "P" + nextParameterNumber;
+//              } while (-1 != rawQueryString.indexOf(nextFormal));
+//
+//              parameterList[i].formalName = '@' + nextFormal;
+                parameterList[i].formalName = "@P" + (i+1);
             }
 
             switch (parameterList[i].type) {
@@ -239,12 +244,12 @@ public class ParameterUtils {
                 {
                     throw new SQLException("Not implemented (type is java.sql.Types."
                                            + TdsUtil.javaSqlTypeToString(parameterList[i].type)
-                                           + ")");
+                                           + ")", "HY004");
                 }
                 default:
                 {
                     throw new SQLException("Internal error.  Unrecognized type "
-                                           + parameterList[i].type);
+                                           + parameterList[i].type, "HY000");
                 }
             }
         }

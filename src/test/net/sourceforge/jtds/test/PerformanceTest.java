@@ -80,20 +80,20 @@ public class PerformanceTest extends DatabaseTestCase {
                     pstmt.setNull(j, Types.VARCHAR);
                 }
             }
-//            pstmt.setObject(1, vBit[i % vBit.length], Types.BIT);
-//            pstmt.setShort(2, (short) i);
-//            pstmt.setByte(3, (byte) i);
-//            pstmt.setBigDecimal(4, dec);
-//            pstmt.setBigDecimal(5, money);
-//            pstmt.setBigDecimal(6, smoney);
-//            pstmt.setDouble(7, i*13.131313);
-//            pstmt.setFloat(8, (float) (i*13.131313));
-//            pstmt.setTimestamp(9, ts);
-//            pstmt.setTimestamp(10, ts);
-//            pstmt.setString(11, "This is a test.");
-//            pstmt.setString(12, "This is a test, too.");
-//            pstmt.setBytes(13, smallBinary);
-//            pstmt.setBytes(14, smallBinary);
+            pstmt.setObject(1, vBit[i % vBit.length], Types.BIT);
+            pstmt.setShort(2, (short) i);
+            pstmt.setByte(3, (byte) i);
+            pstmt.setBigDecimal(4, dec);
+            pstmt.setBigDecimal(5, money);
+            pstmt.setBigDecimal(6, smoney);
+            pstmt.setDouble(7, i*13.131313);
+            pstmt.setFloat(8, (float) (i*13.131313));
+            pstmt.setTimestamp(9, ts);
+            pstmt.setTimestamp(10, ts);
+            pstmt.setString(11, "This is a test.");
+            pstmt.setString(12, "This is a test, too.");
+            pstmt.setBytes(13, smallBinary);
+            pstmt.setBytes(14, smallBinary);
             assertEquals(1, pstmt.executeUpdate());
             progress();
         }

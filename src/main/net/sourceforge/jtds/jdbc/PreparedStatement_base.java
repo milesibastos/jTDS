@@ -56,13 +56,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.27 2004-03-21 01:54:59 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.28 2004-03-25 20:23:50 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.27 2004-03-21 01:54:59 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.28 2004-03-25 20:23:50 alin_sinpalean Exp $";
 
     static Map typemap = null;
 
@@ -77,8 +77,8 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     throws SQLException {
         this(conn_, type, concurrency);
 
-        StringBuffer result = new StringBuffer(sql.length());
-        int numberOfParameters = EscapeProcessor.parameterNativeSQL(sql, result);
+        StringBuffer result = new StringBuffer(sql.length()+16); // MJH Allow for substitution
+        int numberOfParameters = EscapeProcessor.parameterNativeSQL(sql, result, true);
 
         rawQueryString = result.toString();
         parameterList = new ParameterListItem[numberOfParameters];
@@ -127,10 +127,12 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public boolean execute(Tds tds) throws SQLException {
         closeResults(false);
-
         Procedure procedure = findOrCreateProcedure(tds);
 
-        return internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
+// MJH 14/03/04 Formal parameters no longer required
+//        return internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
+//            warningChain);
+        return internalExecuteCall(procedure.getProcedureName(), null, parameterList, tds,
             warningChain);
     }
 

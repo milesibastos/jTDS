@@ -42,12 +42,12 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 
 public class Procedure {
-    public static final String cvsVersion = "$Id: Procedure.java,v 1.10 2004-02-26 19:00:51 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: Procedure.java,v 1.11 2004-03-25 20:23:50 alin_sinpalean Exp $";
 
     // next number to return from the getUniqueId() method
     private static long  id = 1;
 
-    private ParameterListItem _parameterList[]; // Intentionally not initialized
+//    private ParameterListItem _parameterList[]; MJH 14/03/04 Local copy no needed
     private String _sqlProcedureName; // Intentionally not initialized
     private String _procedureString; // Intentionally not initialized
     private String _signature; // Intentionally not initialized
@@ -64,14 +64,13 @@ public class Procedure {
         // SAfe No need for this. It's already done by PreparedStatement_base.
         // ParameterUtils.createParameterMapping(rawQueryString, parameterListIn, tds);
 
-        // MJH - OK now clone parameter details minus data values.
+        // MJH - 14/03/04 Local copy of parameters is no longer needed.
         // copy back the formal types and check for LOBs
-        _parameterList = new ParameterListItem[parameterListIn.length];
-
-        for (int i = 0; i < _parameterList.length; i++) {
-            _parameterList[i] = (ParameterListItem) parameterListIn[i].clone();
-            _parameterList[i].value = null; // MJH allow value to be garbage collected
-        }
+//        _parameterList = new ParameterListItem[parameterListIn.length];
+//      for (int i = 0; i < _parameterList.length; i++) {
+//            _parameterList[i] = (ParameterListItem) parameterListIn[i].clone();
+//            _parameterList[i].value = null; // MJH allow value to be garbage collected
+//        }
 
         // Create the procedure text; allocate a buffer large enough for the raw string
         // plus a little extra for the procedure name and parameters.
@@ -82,41 +81,45 @@ public class Procedure {
         procedureString.append(_sqlProcedureName);
 
         // add the formal parameter list to the sql string
-        createFormalParameterList(_parameterList, procedureString);
+        createFormalParameterList(parameterListIn, procedureString);
         procedureString.append(" as ");
 
+// MJH 14/03/04
+// The code below is no longer needed as the raw query string has alread
+// had the parameter markers replaced with variables in the escape processor
         // Go through the raw sql and substitute a parameter name
         // for each '?' placeholder in the raw sql
-        boolean inString = false;
-        char[] chars = rawQueryString.toCharArray(); // avoid getfield opcode
-        int nextParameterIndex = 0;
+//        boolean inString = false;
+//        char[] chars = rawQueryString.toCharArray(); // avoid getfield opcode
+//        int nextParameterIndex = 0;
 
-        for (int i = 0; i < chars.length; i++) {
-            char ch = chars[i]; // avoid getfield opcode
+//        for (int i = 0; i < chars.length; i++) {
+//            char ch = chars[i]; // avoid getfield opcode
 
-            if (!inString) {
-                if (ch == '?') {
-                    procedureString.append(_parameterList[nextParameterIndex].formalName);
-                    nextParameterIndex++;
-                } else {
-                    if (ch == '\'') {
-                        inString = true;
-                    }
-
-                    procedureString.append(ch);
-                }
-            } else {
+//            if (!inString) {
+//                if (ch == '?') {
+//                    procedureString.append(_parameterList[nextParameterIndex].formalName);
+//                    nextParameterIndex++;
+//                } else {
+//                    if (ch == '\'') {
+//                        inString = true;
+//                    }
+//
+//                    procedureString.append(ch);
+//                }
+//            } else {
                 // NOTE: This works even if a single quote is being used as an escape
                 // character since the next single quote found will force the state
                 // to be inString == true again.
-                if (ch == '\'') {
-                    inString = false;
-                }
+//                if (ch == '\'') {
+//                    inString = false;
+//               }
+//
+//                procedureString.append(ch);
+//            }
+//        }
 
-                procedureString.append(ch);
-            }
-        }
-
+        procedureString.append(rawQueryString);
         _procedureString = procedureString.toString();
     }
 
@@ -131,10 +134,10 @@ public class Procedure {
     public String getSignature() {
         return _signature;
     }
-
-    public ParameterListItem[] getParameterList() {
-        return _parameterList;
-    }
+// MJH 14/03/04 - Delete as not needed.
+//    public ParameterListItem[] getParameterList() {
+//        return _parameterList;
+//    }
 
     private void createFormalParameterList(ParameterListItem[] parameterList,
                                            StringBuffer result) {

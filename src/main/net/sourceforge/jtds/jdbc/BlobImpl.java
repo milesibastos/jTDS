@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.23 2004-11-24 06:42:00 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.24 2004-12-03 14:55:44 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -154,7 +154,8 @@ public class BlobImpl implements Blob {
         } else if (length < 0) {
             throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (pos - 1 + length > length()) {
-            throw new SQLException(Messages.get("error.blobclob.lentoolong"), "HY090");
+            // Don't throw an exception, just return as much data as available
+            length = (int) (length() - pos + 1);
         }
 
         if (length == 0) {

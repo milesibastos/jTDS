@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.27 2004-11-29 17:41:14 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.28 2004-12-03 14:55:44 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -229,7 +229,8 @@ public class ClobImpl implements Clob {
         } else if (length < 0) {
             throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         } else if (pos - 1 + length > length()) {
-            throw new SQLException(Messages.get("error.blobclob.lentoolong"), "HY090");
+            // Don't throw an exception, just return as much data as available
+            length = (int) (length() - pos + 1);
         }
 
         if (length == 0) {

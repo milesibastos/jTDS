@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.23 2004-01-30 18:01:55 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.24 2004-01-30 23:00:37 bheineman Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -124,12 +124,6 @@ public class Tds implements TdsDefinitions
      */
     private boolean useUnicode;
 
-    // Commented out as part of fix for bug 822544
-    /*
-    private String procNameGeneratorName = null;
-    private String procNameTableName = null;
-    */
-
     // SAfe Access to both of these fields is synchronized on procedureCache
     private HashMap   procedureCache = null;
     private ArrayList proceduresOfTra = null;
@@ -152,7 +146,7 @@ public class Tds implements TdsDefinitions
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.23 2004-01-30 18:01:55 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.24 2004-01-30 23:00:37 bheineman Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -312,25 +306,6 @@ public class Tds implements TdsDefinitions
             // by a system administrator.
             return "jTDS" + result.substring(6, 8) + result.substring(9, 13)
                     + result.substring(14, 18) + result.substring(19, 23) + result.substring(24);
-
-            // Commented out as part of fix for bug 822544
-            /*
-            if (null == procNameTableName) {
-                procNameTableName = database + "." + user
-                         + ".jdbc_temp_stored_proc_names";
-                procNameGeneratorName = user + ".jdbc_gen_temp_sp_names";
-            }
-
-            //
-            // Attempt to create the table for the stored procedure names
-            // If it already exists we'll get an error, but we don't care.
-            // Also create a stored procedure for generating the unique
-            // names.
-            //
-            createStoredProcedureNameTable();
-
-            return generateUniqueProcName();
-            */
         } else {
             return "#jdbc#" + UniqueId.getUniqueId();
         }
@@ -3462,94 +3437,6 @@ public class Tds implements TdsDefinitions
     }
     // getRow()
 
-    // Commented out as part of fix for bug 822544
-    /*
-    private boolean createStoredProcedureNameTable()
-    {
-        boolean result = false;
-        String sql = null;
-
-        try {
-            java.sql.Statement stmt = connection.createStatement();
-
-            // ignore any of the exceptions thrown because they either
-            // don't matter or they will make themselves known when we try
-            // to use the name generator stored procedure.
-            try {
-                sql = ""
-                         + "create table " + procNameTableName
-                         + "(                                       "
-                         + "     id        NUMERIC(10, 0) IDENTITY, "
-                         + "     session   int not null,            "
-                         + "     name      char(29) not null        "
-                         + ")                                       ";
-                stmt.executeUpdate(sql);
-            }
-            catch (java.sql.SQLException e) {
-                // don't care
-            }
-
-            try {
-                sql = ""
-                         + "create procedure " + procNameGeneratorName + "        "
-                         + "as                                                    "
-                         + "begin tran                                            "
-                         + "insert into " + procNameTableName + "                 "
-                         + "    (session, name)                                   "
-                         + " values                                               "
-                         + "    (@@spid, '')                                      "
-                         + "                                                      "
-                         + "update " + procNameTableName + "                      "
-                         + "  set name=('" + user + ".jdbctmpsp' +                "
-                         + "            convert(varchar, @@IDENTITY))             "
-                         + "  where id = @@IDENTITY                               "
-                         + "                                                      "
-                         + "select name from " + procNameTableName + "            "
-                         + "   where id=@@IDENTITY                                "
-                         + "                                                      "
-                         + "commit tran                                           "
-                         + "";
-
-                stmt.execute(sql);
-                stmt.execute("exec sp_procxmode " +
-                        procNameGeneratorName +
-                        ", 'anymode' ");
-            }
-            catch (java.sql.SQLException e) {
-                // don't care
-            }
-
-            stmt = null;
-        }
-        catch (java.sql.SQLException e) {
-            // don't care
-        }
-        return result;
-    }
-
-
-    private String generateUniqueProcName()
-             throws java.sql.SQLException
-    {
-        java.sql.Statement stmt = connection.createStatement();
-
-        boolean wasRs;
-
-        wasRs = stmt.execute("exec " + procNameGeneratorName);
-        if (!wasRs) {
-            throw new java.sql.SQLException(
-                    "Confused.  Was expecting a result set.");
-        }
-
-        java.sql.ResultSet rs;
-        rs = stmt.getResultSet();
-        if (!rs.next()) {
-            throw new java.sql.SQLException("Couldn't get stored proc name");
-        }
-        return rs.getString(1);
-    }
-    */
-
     /*
      * executeProcedure()
      */
@@ -4346,78 +4233,70 @@ public class Tds implements TdsDefinitions
     }
 
     private String sqlStatementToInitialize() throws SQLException {
-        StringBuffer statement = new StringBuffer(100);
+        StringBuffer statement = new StringBuffer(150);
 
-        if( serverType == Tds.SYBASE ) {
-            statement.append("set quoted_identifier on set textsize 50000 ");
-        } else if( tdsVer == TDS70 ) {
-            // Patch 861821: Seems like there is some kind of initial limitation to
-            // the size of the written data to 4000 characters (???)
-            // Yes - SQL Server 2000 Developer Edition defaults to 4k...
-            statement.append("set textsize 2147483647 ");
+        statement.append("SET QUOTED_IDENTIFIER ON ");
+
+        if (serverType == Tds.SYBASE) {
+            statement.append("SET TEXTSIZE 50000 ");
+        } else {
+            // Options set per Microsoft ODBC/ANSI-92 recommendations:
+            // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/odbcsql/od_6_015_0tf7.asp
+            statement.append("SET TEXTSIZE 2147483647 ");
+//            statement.append("SET ANSI_DEFAULTS ON ");
+//            statement.append("SET CURSOR_CLOSE_ON_COMMIT OFF ");
         }
 
         // SAfe We also have to add these until we find out how to put them in
         //      the login packet (if that is possible at all)
-        statement.append(sqlStatementToSetTransactionIsolationLevel());
+        sqlStatementToSetTransactionIsolationLevel(statement);
         statement.append(' ');
-        statement.append(sqlStatementToSetCommit());
+        sqlStatementToSetCommit(statement);
 
         return statement.toString();
     }
 
-    private String sqlStatementToSetTransactionIsolationLevel() throws SQLException
-    {
-        StringBuffer sql = new StringBuffer(64);
-        sql.append("set transaction isolation level ");
+    private void sqlStatementToSetTransactionIsolationLevel(StringBuffer sql)
+    throws SQLException {
+        sql.append("SET TRANSACTION ISOLATION LEVEL ");
 
-        switch (transactionIsolationLevel)
-        {
-            case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                sql.append("read uncommitted");
+        switch (transactionIsolationLevel) {
+            case Connection.TRANSACTION_READ_UNCOMMITTED:
+                sql.append("READ UNCOMMITTED");
                 break;
 
-            case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                sql.append("read committed");
+            case Connection.TRANSACTION_READ_COMMITTED:
+                sql.append("READ COMMITTED");
                 break;
 
-            case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                sql.append("repeatable read");
+            case Connection.TRANSACTION_REPEATABLE_READ:
+                sql.append("REPEATABLE READ");
                 break;
 
-            case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                sql.append("serializable");
+            case Connection.TRANSACTION_SERIALIZABLE:
+                sql.append("SERIALIZABLE");
                 break;
 
-            case java.sql.Connection.TRANSACTION_NONE:
+            case Connection.TRANSACTION_NONE:
             default:
                 throw new SQLException("Bad transaction level");
         }
-
-        return sql.toString();
     }
 
-    private String sqlStatementToSetCommit()
-    {
-        String result;
-
+    private void sqlStatementToSetCommit(StringBuffer sql) {
         if (serverType == Tds.SYBASE) {
             if (autoCommit) {
-                result = "set CHAINED off";
+                sql.append("SET CHAINED OFF");
+            } else {
+                sql.append("SET CHAINED ON");
             }
-            else {
-                result = "set CHAINED on";
-            }
-        }
-        else {
+        } else {
             if (autoCommit) {
-                result = "set implicit_transactions off";
-            }
-            else {
-                result = "set implicit_transactions on";
+                sql.append("SET IMPLICIT_TRANSACTIONS OFF");
+            } else {
+                sql.append("SET IMPLICIT_TRANSACTIONS ON");
             }
         }
-        return result;
     }
 
     private String sqlStatementForSettings(
@@ -4438,13 +4317,15 @@ public class Tds implements TdsDefinitions
             //      closed.
 //            if( autoCommit )
 //                res.append("if @@trancount>0 commit tran ");
-            res.append(sqlStatementToSetCommit()).append(' ');
+            sqlStatementToSetCommit(res);
+            res.append(' ');
         }
 
         if( transactionIsolationLevel != this.transactionIsolationLevel )
         {
             this.transactionIsolationLevel = transactionIsolationLevel;
-            res.append(sqlStatementToSetTransactionIsolationLevel()).append(' ');
+            sqlStatementToSetTransactionIsolationLevel(res);
+            res.append(' ');
         }
 
         res.setLength(res.length()-1);

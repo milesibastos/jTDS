@@ -56,7 +56,7 @@ public class EncodingTest extends TestBase {
      */
     public void testBytesToVarchar() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #test (id INT PRIMARY KEY, data VARCHAR(255))");
+        stmt.execute("CREATE TABLE #test (id INT PRIMARY KEY, data VARCHAR(255) NULL)");
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #test (id, data) VALUES (?, ?)");

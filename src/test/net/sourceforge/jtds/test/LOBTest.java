@@ -909,7 +909,7 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull7() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull7 (id NUMERIC IDENTITY, data IMAGE, "
+        stmt.execute("CREATE TABLE #blobsetnull7 (id NUMERIC IDENTITY, data IMAGE NULL, "
                      + "CONSTRAINT pk_blobsetnull7 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -954,7 +954,7 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull8() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull8 (id NUMERIC IDENTITY, data IMAGE, "
+        stmt.execute("CREATE TABLE #blobsetnull8 (id NUMERIC IDENTITY, data IMAGE NULL, "
                      + "CONSTRAINT pk_blobsetnull8 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -999,7 +999,7 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull9() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull9 (id NUMERIC IDENTITY, data IMAGE, "
+        stmt.execute("CREATE TABLE #blobsetnull9 (id NUMERIC IDENTITY, data IMAGE NULL, "
                      + "CONSTRAINT pk_blobsetnull9 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -1044,7 +1044,7 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull10() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull10 (id NUMERIC IDENTITY, data IMAGE, "
+        stmt.execute("CREATE TABLE #blobsetnull10 (id NUMERIC IDENTITY, data IMAGE NULL, "
                      + "CONSTRAINT pk_blobsetnull10 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -1089,7 +1089,7 @@ public class LOBTest extends TestBase {
 
     public void testBlobSetNull11() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #blobsetnull11 (id NUMERIC IDENTITY, data IMAGE, "
+        stmt.execute("CREATE TABLE #blobsetnull11 (id NUMERIC IDENTITY, data IMAGE NULL, "
                      + "CONSTRAINT pk_blobsetnull11 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -2358,7 +2358,7 @@ public class LOBTest extends TestBase {
 
     public void testClobSetNull9() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobsetnull9 (id NUMERIC IDENTITY, data TEXT, "
+        stmt.execute("CREATE TABLE #clobsetnull9 (id NUMERIC IDENTITY, data TEXT NULL, "
                      + "CONSTRAINT pk_clobsetnull9 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -2411,7 +2411,7 @@ public class LOBTest extends TestBase {
 
     public void testClobSetNull10() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobsetnull10 (id NUMERIC IDENTITY, data TEXT, "
+        stmt.execute("CREATE TABLE #clobsetnull10 (id NUMERIC IDENTITY, data TEXT NULL, "
                      + "CONSTRAINT pk_clobsetnull10 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -2464,7 +2464,7 @@ public class LOBTest extends TestBase {
 
     public void testClobSetNull11() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobsetnull11 (id NUMERIC IDENTITY, data TEXT, "
+        stmt.execute("CREATE TABLE #clobsetnull11 (id NUMERIC IDENTITY, data TEXT NULL, "
                      + "CONSTRAINT pk_clobsetnull11 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -2517,7 +2517,7 @@ public class LOBTest extends TestBase {
 
     public void testClobSetNull12() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobsetnull12 (id NUMERIC IDENTITY, data TEXT, "
+        stmt.execute("CREATE TABLE #clobsetnull12 (id NUMERIC IDENTITY, data TEXT NULL, "
                      + "CONSTRAINT pk_clobsetnull12 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -2570,7 +2570,7 @@ public class LOBTest extends TestBase {
 
     public void testClobSetNull13() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobsetnull13 (id NUMERIC IDENTITY, data TEXT, "
+        stmt.execute("CREATE TABLE #clobsetnull13 (id NUMERIC IDENTITY, data TEXT NULL, "
                      + "CONSTRAINT pk_clobsetnull13 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 
@@ -2623,7 +2623,7 @@ public class LOBTest extends TestBase {
 
     public void testClobSetNull14() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #clobsetnull14 (id NUMERIC IDENTITY, data TEXT, "
+        stmt.execute("CREATE TABLE #clobsetnull14 (id NUMERIC IDENTITY, data TEXT NULL, "
                      + "CONSTRAINT pk_clobsetnull14 PRIMARY KEY CLUSTERED (id))");
         stmt.close();
 

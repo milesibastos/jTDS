@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * Used for acquiring a socket factory when SSL is enabled.
  *
  * @author Rob Worsnop
- * @version $Id: SocketFactories.java,v 1.3 2005-01-14 05:47:59 alin_sinpalean Exp $
+ * @version $Id: SocketFactories.java,v 1.4 2005-01-24 14:10:04 alin_sinpalean Exp $
  */
 public class SocketFactories {
     /**
@@ -187,10 +187,11 @@ public class SocketFactories {
             // The chain will end up looking like this:
             //
             // SSLSocket-->TdsTlsSocket-->plainsocket
-            return (SSLSocket) getFactory().createSocket(new TdsTlsSocket(socket),
+            SSLSocket tlsSocket = (SSLSocket) getFactory().createSocket(new TdsTlsSocket(socket),
                     socket.getInetAddress().getHostName(), socket.getPort(),
                     true);
-
+            tlsSocket.startHandshake();
+            return tlsSocket;
         }
 
         /**

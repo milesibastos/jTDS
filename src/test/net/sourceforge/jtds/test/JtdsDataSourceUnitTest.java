@@ -19,7 +19,7 @@ import javax.naming.NamingException;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.9 2004-12-14 15:00:37 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.10 2005-01-24 14:10:04 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -261,6 +261,8 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
             ds.setUser(TestBase.props.getProperty(Messages.get(Driver.USER)));
             ds.setPassword(TestBase.props.getProperty(Messages.get(Driver.PASSWORD)));
             ds.setDatabaseName(TestBase.props.getProperty(Messages.get(Driver.DATABASENAME)));
+            ds.setTds(TestBase.props.getProperty(Messages.get(Driver.TDS)));
+            ds.setServerType("2".equals(TestBase.props.getProperty(Messages.get(Driver.SERVERTYPE))) ? 2 : 1);
             try {
                 ds.setPortNumber(Integer.parseInt(
                         TestBase.props.getProperty(Messages.get(Driver.PORTNUMBER))));

@@ -61,14 +61,14 @@ import com.internetcds.jdbc.tds.TdsException;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    March 16, 2001
- *@version    $Id: Driver.java,v 1.6 2002-09-18 19:47:53 alin_sinpalean Exp $
+ *@version    $Id: Driver.java,v 1.7 2002-10-02 11:57:53 alin_sinpalean Exp $
  *@see        Connection
  */
 public class Driver implements java.sql.Driver {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Driver.java,v 1.6 2002-09-18 19:47:53 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.7 2002-10-02 11:57:53 alin_sinpalean Exp $";
 
     final static boolean debug = false;
     final static String oldSQLServerUrlPrefix = "jdbc:freetds://";
@@ -80,10 +80,8 @@ public class Driver implements java.sql.Driver {
 
     /**
      *  Construct a new driver and register it with DriverManager
-     *
-     *@exception  SQLException
      */
-    public Driver() throws SQLException
+    public Driver()
     {
     }
 
@@ -307,7 +305,6 @@ public class Driver implements java.sql.Driver {
                          ? defaultSybasePort
                          : defaultSQLServerPort);
                 String database = "";
-                String tdsVer = "42";
 
                 // Get the hostname
                 host = tokenizer.nextToken();
@@ -319,10 +316,11 @@ public class Driver implements java.sql.Driver {
                     if (tmp.equals(":")) {
                         port = tokenizer.nextToken();
                         // Skip the '/' character
-                        tmp = tokenizer.nextToken();
+                        if (tokenizer.hasMoreTokens())
+                            tmp = tokenizer.nextToken();
                     }
 
-                    if (tmp.equals("/")) {
+                    if( tmp.equals("/") ) {
                         // find the database name
                         database = tokenizer.nextToken();
                         if (tokenizer.hasMoreTokens()) {
@@ -372,8 +370,6 @@ public class Driver implements java.sql.Driver {
 
         return true;
     }
-
-
 
     private boolean isValidHostname(String host)
     {

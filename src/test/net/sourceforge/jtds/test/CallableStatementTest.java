@@ -267,6 +267,45 @@ public class CallableStatementTest extends TestBase {
         }
     }
 
+    /**
+     * Test for reature request [956800] setNull(): Not implemented
+     */
+    public void testCallableSetNull1() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #callablesetnull1 (data CHAR(1) NULL)");
+        stmt.close();
+    	
+        try {
+            stmt = con.createStatement();
+            stmt.execute("create procedure callableSetNull1 @data char(1) "
+            		+ "as INSERT INTO #callablesetnull1 (data) VALUES (@data)");
+            stmt.close();
+
+            CallableStatement cstmt = con.prepareCall("{call callableSetNull1(?)}");
+            // Test CallableStatement.setNull(int,Types.NULL)
+            cstmt.setNull(1, Types.NULL);
+            cstmt.execute();
+            cstmt.close();
+            
+            stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT data FROM #callablesetnull1");
+
+            assertTrue(rs.next());
+
+            // Test ResultSet.getString()
+            assertTrue(rs.getString(1) == null);
+            assertTrue(rs.wasNull());
+
+            assertTrue(!rs.next());
+            stmt.close();
+            rs.close();
+        } finally {
+            stmt = con.createStatement();
+            stmt.execute("drop procedure callableSetNull1");
+            stmt.close();
+        }
+    }
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

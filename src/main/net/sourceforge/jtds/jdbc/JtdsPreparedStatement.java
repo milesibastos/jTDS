@@ -56,7 +56,7 @@ import java.lang.reflect.Constructor;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.3 2004-07-07 18:39:04 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.4 2004-07-07 18:57:03 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -374,10 +374,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
         if (sqlType == java.sql.Types.CLOB) {
             sqlType = java.sql.Types.LONGVARCHAR;
-        } else
-        if (sqlType == java.sql.Types.BLOB) {
+        } else if (sqlType == java.sql.Types.BLOB) {
             sqlType = java.sql.Types.LONGVARBINARY;
         }
+        
         setParameter(parameterIndex, null, sqlType, -1, 0);
     }
 

@@ -44,11 +44,11 @@ import java.util.Properties;
  * @author     Igor Petrovski
  * @author     Alin Sinpalean
  * @created    March 16, 2001
- * @version    $Id: Driver.java,v 1.9 2004-03-03 22:14:13 alin_sinpalean Exp $
+ * @version    $Id: Driver.java,v 1.10 2004-03-04 23:44:43 bheineman Exp $
  * @see        Connection
  */
 public class Driver implements java.sql.Driver {
-    public final static String cvsVersion = "$Id: Driver.java,v 1.9 2004-03-03 22:14:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.10 2004-03-04 23:44:43 bheineman Exp $";
 
     static final int MAJOR_VERSION = 0;
     static final int MINOR_VERSION = 7;
@@ -452,12 +452,25 @@ public class Driver implements java.sql.Driver {
     }
 
     /**
+     * Returns the driver version.
+     * <p>
+     * Per [908906] 0.7: Static Version information, please.
+     * 
+     * @return the driver version
+     */
+    public static final String getVersion() {
+        return "jTDS " + MAJOR_VERSION + "." + MINOR_VERSION;
+    }
+
+    /**
      * Returns the string form of the object.
-     *
+     * <p>
      * Per [887120] DriverVersion.getDriverVersion(); this will return a short
      * version name.
+     * 
+     * @return the driver version
      */
     public String toString() {
-        return "jTDS " + MAJOR_VERSION + "." + MINOR_VERSION;
+        return getVersion();
     }
 }

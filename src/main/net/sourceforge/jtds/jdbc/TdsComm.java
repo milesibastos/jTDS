@@ -45,20 +45,18 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.7 2004-02-09 23:52:13 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.8 2004-02-11 00:10:48 bheineman Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
     // in and out are the sockets used for all communication with the
     // server.
-    private DataOutputStream out = null;
-    private DataInputStream in = null;
+    private DataOutputStream out;
+    private DataInputStream in;
 
     // outBuffer is used to construct the physical packets that will
     // be sent to the database server.
     byte outBuffer[];
-
-    int outBufferLen;
 
     // nextOutBufferIndex is an index into outBuffer where the next
     // byte of data will be stored while constructing a packet.
@@ -99,7 +97,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.7 2004-02-09 23:52:13 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.8 2004-02-11 00:10:48 bheineman Exp $";
 
     final static int headerLength = 8;
 
@@ -159,8 +157,7 @@ public class TdsComm implements TdsDefinitions {
         out = new DataOutputStream( sock.getOutputStream() );
         in = new DataInputStream( sock.getInputStream() );
 
-        outBufferLen = maxPacketLength;
-        outBuffer = new byte[outBufferLen];
+        outBuffer = new byte[maxPacketLength];
         inBuffer = new byte[maxPacketLength];
 
         // Added 2000-06-07
@@ -249,17 +246,19 @@ public class TdsComm implements TdsDefinitions {
      * @param  b                        byte to add to the TDS packet
      * @exception  java.io.IOException
      */
-    public void appendByte( byte b )
-             throws java.io.IOException
-    {
-        if ( nextOutBufferIndex == outBufferLen ) {
+    public void appendByte(byte b) throws java.io.IOException {
+        if (nextOutBufferIndex == outBuffer.length) {
             // If we have a full physical packet then ship it out to the
             // network.
-            sendPhysicalPacket( false );
+            sendPhysicalPacket(false);
             nextOutBufferIndex = headerLength;
         }
 
-        storeByte( nextOutBufferIndex, b );
+// NOTE: I understand the usefulness of the storeByte() abstraction; however, there is
+// no need to incur the expense (however minor) of a function call for this trivial
+// piece of code.
+//        storeByte(nextOutBufferIndex, b);
+        outBuffer[nextOutBufferIndex] = b;
         nextOutBufferIndex++;
     }
 
@@ -269,10 +268,8 @@ public class TdsComm implements TdsDefinitions {
      * @param  b                        bytes to add to the TDS packet
      * @exception  java.io.IOException
      */
-    public void appendBytes( byte[] b )
-             throws java.io.IOException
-    {
-        appendBytes( b, b.length, ( byte ) 0 );
+    public void appendBytes(byte[] b) throws java.io.IOException {
+        appendBytes(b, b.length, (byte) 0);
     }
 
     /**
@@ -283,15 +280,16 @@ public class TdsComm implements TdsDefinitions {
      * @param  pad                      fill with this byte until len is reached
      * @exception  java.io.IOException
      */
-    public void appendBytes( byte[] b, int len, byte pad )
-             throws java.io.IOException
-    {
+    public void appendBytes(byte[] b, int len, byte pad) throws java.io.IOException {
         int i = 0;
-        for ( ; i < b.length && i < len; i++ ) {
-            appendByte( b[i] );
+        int min = (b.length < len) ? b.length : len;
+
+        for (; i < min; i++) {
+            appendByte(b[i]);
         }
-        for ( ; i < len; i++ ) {
-            appendByte( pad );
+
+        for (; i < len; i++) {
+            appendByte(pad);
         }
     }
 
@@ -416,10 +414,7 @@ public class TdsComm implements TdsDefinitions {
      * @param  index  position in outBuffer to store data
      * @param  value  value to store in the outBuffer.
      */
-    private void storeByte(
-            int index,
-            byte value )
-    {
+    private void storeByte(int index, byte value) {
         outBuffer[index] = value;
     }
 
@@ -429,12 +424,9 @@ public class TdsComm implements TdsDefinitions {
      * @param  index  position in outBuffer to store data
      * @param  s      @todo Description of Parameter
      */
-    private void storeShort(
-            int index,
-            short s )
-    {
-        outBuffer[index] = ( byte ) ( ( s >> 8 ) & 0xff );
-        outBuffer[index + 1] = ( byte ) ( ( s >> 0 ) & 0xff );
+    private void storeShort(int index, short s) {
+        outBuffer[index] = (byte) ((s >> 8) & 0xff);
+        outBuffer[index + 1] = (byte) ((s >> 0) & 0xff);
     }
 
     /**
@@ -515,15 +507,12 @@ public class TdsComm implements TdsDefinitions {
              throws net.sourceforge.jtds.jdbc.TdsException,
             java.io.IOException
     {
-        byte result;
-
         if ( inBufferIndex >= inBufferLen ) {
             // out of data, read another physical packet.
             getPhysicalPacket();
         }
 
-        result = inBuffer[inBufferIndex++];
-        return result;
+        return inBuffer[inBufferIndex++];
     }
 
     /**
@@ -536,27 +525,27 @@ public class TdsComm implements TdsDefinitions {
     public byte[] getBytes(int len, boolean exclusiveBuffer)
         throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
     {
-        byte result[] = null;
-        int i;
+        byte result[];
 
         // Do not keep an internal result buffer larger than 16k.
         // This would unnecessarily use up memory.
-        if( exclusiveBuffer || len>16384 )
+        if (exclusiveBuffer || len > 16384) {
             result = new byte[len];
-        else
-        {
-            if( resBuffer.length < len )
+        } else {
+            if (resBuffer.length < len) {
                 resBuffer = new byte[len];
+            }
+
             result = resBuffer;
         }
 
-        for( i=0; i<len; )
-        {
-            if( inBufferIndex >= inBufferLen )
+        for (int i = 0; i < len;) {
+            if (inBufferIndex >= inBufferLen) {
                 getPhysicalPacket();
+            }
 
             int avail = inBufferLen - inBufferIndex;
-            avail = avail>len-i ? len-i : avail;
+            avail = avail > len - i ? len - i : avail;
 
             System.arraycopy(inBuffer, inBufferIndex, result, i, avail);
             i += avail;
@@ -629,16 +618,12 @@ public class TdsComm implements TdsDefinitions {
     public int getTdsInt()
              throws net.sourceforge.jtds.jdbc.TdsException, java.io.IOException
     {
-        int result;
-
         int b1 = ( ( int ) getByte() & 0xff );
         int b2 = ( ( int ) getByte() & 0xff ) << 8;
         int b3 = ( ( int ) getByte() & 0xff ) << 16;
         int b4 = ( ( int ) getByte() & 0xff ) << 24;
 
-        result = b4 | b3 | b2 | b1;
-
-        return result;
+        return b4 | b3 | b2 | b1;
     }
 
     public long getTdsInt64()
@@ -735,12 +720,10 @@ public class TdsComm implements TdsDefinitions {
         }
     }
 
-    void resizeOutbuf( int newsize )
-    {
-        if ( newsize > outBufferLen ) {
+    void resizeOutbuf(int newsize) {
+        if (newsize > outBuffer.length) {
             byte[] newBuf = new byte[newsize];
-            System.arraycopy( outBuffer, 0, newBuf, 0, outBufferLen );
-            outBufferLen = newsize;
+            System.arraycopy(outBuffer, 0, newBuf, 0, outBuffer.length);
             outBuffer = newBuf;
         }
     }

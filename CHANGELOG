@@ -5,6 +5,8 @@ Changes from jTDS 1.0
  o Applied a modified version of patch [1107090] Revised query timeout logic,
    submitted by Mike. Timeouts should now have millisecond precision, using a
    single timer thread per VM.
+ o Fixed bug [1113040] Small bug in net.sourceforge.jtds.jdbcx.PooledConnection
+   Thanks go to Marcus Nylander for finding the bug and providing a fix.
 
 02/01/2005 - Alin Sinpalean
  o Updated FAQ to include information about local named pipes.

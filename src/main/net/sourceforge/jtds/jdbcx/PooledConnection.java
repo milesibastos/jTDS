@@ -27,10 +27,10 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.10 2004-12-19 09:40:23 alin_sinpalean Exp $
+ * @version $Id: PooledConnection.java,v 1.11 2005-02-01 23:52:50 alin_sinpalean Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
-    private final ArrayList listeners = new ArrayList();
+    private ArrayList listeners = new ArrayList();
 
     protected Connection connection;
 
@@ -45,6 +45,12 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @see #removeConnectionEventListener
      */
     public synchronized void addConnectionEventListener(ConnectionEventListener listener) {
+        // Clone the list of listeners to avoid concurrent modifications. See
+        // bug [1113040] Small bug in net.sourceforge.jtds.jdbcx.PooledConnection
+        // for a description of how these can occur. The method still needs to
+        // be synchronized to prevent race conditions.
+        listeners = (ArrayList) listeners.clone();
+        // Now add the listener to the new, cloned list
         listeners.add(listener);
     }
 
@@ -115,6 +121,12 @@ public class PooledConnection implements javax.sql.PooledConnection {
      * @see #fireConnectionEvent
      */
     public synchronized void removeConnectionEventListener(ConnectionEventListener listener) {
+        // Clone the list of listeners to avoid concurrent modifications. See
+        // bug [1113040] Small bug in net.sourceforge.jtds.jdbcx.PooledConnection
+        // for a description of how these can occur. The method still needs to
+        // be synchronized to prevent race conditions.
+        listeners = (ArrayList) listeners.clone();
+        // Now remove the listener from the new, cloned list
         listeners.remove(listener);
     }
 }

@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.20 2004-03-07 23:03:32 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.21 2004-03-28 18:33:25 bheineman Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.20 2004-03-07 23:03:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.21 2004-03-28 18:33:25 bheineman Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -3209,18 +3209,25 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         return true;
     }
 
-    public boolean supportsMultipleOpenResults() throws SQLException
-    {
-        throw new UnsupportedOperationException();
+    /**
+     * Returns <code>true</code> if Callable statements can return multiple result sets;
+     * returns <code>false</code> if they can only return one result set.
+     */
+    public boolean supportsMultipleOpenResults() throws SQLException {
+        return true;
     }
 
-    public boolean supportsNamedParameters() throws SQLException
-    {
-        throw new UnsupportedOperationException();
+    /**
+     * Returns <code>true</code> if the database supports named parameters;
+     * returns <code>false</code> if the database does not support named parameters.
+     */
+    public boolean supportsNamedParameters() throws SQLException {
+        // NOTE: Event though the database supports named parameters, the driver does
+        // not (currently); until the driver supports this I would leave this set to false
+        return false;
     }
 
-    public boolean supportsResultSetHoldability(int param) throws SQLException
-    {
+    public boolean supportsResultSetHoldability(int param) throws SQLException {
         throw new UnsupportedOperationException();
     }
 
@@ -3229,11 +3236,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
      * <code>false</code> otherwise
      */
     public boolean supportsSavepoints() throws SQLException {
-        return false;
+        return true;
     }
 
-    public boolean supportsStatementPooling() throws SQLException
-    {
-        throw new UnsupportedOperationException();
+    /**
+     * Returns <code>true</code> if the database supports statement pooling;
+     * returns <code>false</code> otherwise.
+     */
+    public boolean supportsStatementPooling() throws SQLException {
+        return false;
     }
 }

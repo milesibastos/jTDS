@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.10 2002-06-28 18:01:15 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.11 2002-07-16 13:05:30 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.10 2002-06-28 18:01:15 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.11 2002-07-16 13:05:30 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -540,7 +540,10 @@ public class TdsStatement implements java.sql.Statement
     */
    public boolean execute(Tds tds, String sql) throws SQLException
    {
+      // Clear warnings before closing results, otherwise the last exception will be thrown.
+      clearWarnings();
       closeResults();
+      // SAfe: Don't know if this is ok, but it's here
       clearWarnings();
       updateCount = -1;
 

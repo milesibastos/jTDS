@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $";
 
 
     public TimeoutHandler(
@@ -103,7 +103,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -166,7 +166,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.13 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.14 2002-07-16 13:05:30 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -1339,9 +1339,10 @@ public class Tds implements TdsDefinitions {
 
         byte packetSubType = comm.getByte();
 
-        Logger.println("processSubPacket: " +
-                Integer.toHexString(packetSubType & 0xFF) + " " +
-                "moreResults: " + moreResults());
+        if( Logger.isActive() )
+            Logger.println("processSubPacket: " +
+                    Integer.toHexString(packetSubType & 0xFF) + " " +
+                    "moreResults: " + moreResults());
 
         switch (packetSubType) {
             case TDS_ENV_CHG_TOKEN:
@@ -1461,12 +1462,13 @@ public class Tds implements TdsDefinitions {
 
     private void setCharset(String charset)
     {
-        try {
-            Logger.println("Trying to change charset to " + charset);
-        }
-        catch (java.io.IOException e) {
-            // nop
-        }
+        if( Logger.isActive() )
+            try {
+                Logger.println("Trying to change charset to " + charset);
+            }
+            catch (java.io.IOException e) {
+                // nop
+            }
 
         if (charset == null || charset.length() > 30) {
             charset = "iso_1";
@@ -2006,9 +2008,10 @@ public class Tds implements TdsDefinitions {
             Object element;
             int colType = columnsInfo.getNativeType(i);
 
-            Logger.println("colno=" + i +
-                    " type=" + colType +
-                    " offset=" + Integer.toHexString(comm.inBufferIndex));
+            if( Logger.isActive() )
+                Logger.println("colno=" + i +
+                        " type=" + colType +
+                        " offset=" + Integer.toHexString(comm.inBufferIndex));
 
             switch (colType) {
                 case SYBINTN:

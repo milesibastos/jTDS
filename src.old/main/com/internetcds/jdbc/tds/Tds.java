@@ -57,7 +57,7 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
@@ -67,7 +67,7 @@ class TimeoutHandler extends Thread {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $";
 
     public TimeoutHandler(TdsStatement stmt_, int timeout_)
     {
@@ -111,7 +111,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -176,7 +176,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.34 2002-09-18 19:47:53 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -271,6 +271,14 @@ public class Tds implements TdsDefinitions {
     public Statement getStatement()
     {
         return statement;
+    }
+
+    /**
+     * Get the <code>Statement</code> currently using the Tds.
+     */
+    public String getDatabase()
+    {
+        return database;
     }
 
     /*
@@ -580,18 +588,18 @@ public class Tds implements TdsDefinitions {
      *      changes, false if rejected.
      *@exception  java.sql.SQLException  Description of Exception
      */
-    private synchronized boolean initSettings(String database)
+    private synchronized boolean initSettings(String _database)
              throws java.sql.SQLException
     {
         boolean isOkay = true;
 
         try
         {
-            if( database != null )
-                isOkay = changeDB(database);
+            if( _database.length() > 0 )
+                isOkay = changeDB(_database);
 
             if( isOkay )
-                isOkay = changeSettings(sqlStatementForInit());
+                isOkay = changeSettings(sqlStatementToInitialize());
         }
         catch (com.internetcds.jdbc.tds.TdsUnknownPacketSubType e) {
             throw new SQLException("Unknown response. " + e.getMessage());
@@ -2275,7 +2283,7 @@ public class Tds implements TdsDefinitions {
      *@exception  java.sql.SQLException
      *@author                                            Craig Spannring
      */
-    private boolean logon(String database)
+    private boolean logon(String _database)
              throws java.sql.SQLException,
             TdsUnknownPacketSubType, java.io.IOException,
             com.internetcds.jdbc.tds.TdsException
@@ -2288,7 +2296,8 @@ public class Tds implements TdsDefinitions {
         {
             // Added 2000-06-07.
             if (tdsVer == Tds.TDS70) {
-                send70Login();
+                send70Login(_database);
+                _database = "";
             }
             else
             {
@@ -2462,7 +2471,7 @@ public class Tds implements TdsDefinitions {
 
         if (isOkay) {
             // XXX Should we move this to the Connection class?
-            isOkay = initSettings(database);
+            isOkay = initSettings(_database);
         }
 
         // XXX Possible bug.  What happend if this is cancelled before the logon
@@ -2479,39 +2488,37 @@ public class Tds implements TdsDefinitions {
      *
      * Added 2000-06-05.
      */
-    private void send70Login() throws java.io.IOException, TdsException
+    private void send70Login(String _database)
+        throws java.io.IOException, TdsException
     {
-
-        byte[] magic1 = {(byte) 0006, (byte) 0203, (byte) 0362, (byte) 0370,
-                (byte) 0377, (byte) 0000, (byte) 0000, (byte) 0000,
-                (byte) 0000, (byte) 0340, (byte) 0003, (byte) 0000,
-                (byte) 0000, (byte) 0210, (byte) 0377, (byte) 0377,
-                (byte) 0377, (byte) 0066, (byte) 0004, (byte) 0000,
-                (byte) 0000};
-        byte[] magic2 = {(byte) 0000, (byte) 0100, (byte) 0063, (byte) 0232,
-                (byte) 0153, (byte) 0120};
-        byte[] magic3 = encoder.getBytes("NTLMSSP");
-        String libName = "DB-Library";
+        String libName = "jTDS";
         byte pad = (byte) 0;
         byte[] empty = new byte[0];
-        String appName = "CDR";
-        short len = (short) (86 + 2 * (user.length() +
+        String appName = "jTDS";
+
+        short packSize = (short)( 86 + 2 *
+               (user.length() +
                 password.length() +
                 appName.length() +
                 serverName.length() +
-                libName.length()));
-        short packSize = (short) (len + 48);
+                libName.length() +
+                _database.length()) );
+
         comm.startPacket(TdsComm.LOGON70);
-        comm.appendTdsShort(packSize);
-        comm.appendBytes(empty, 5, pad);
-        comm.appendByte((byte) 0x70);
-        comm.appendBytes(empty, 7, pad);
-        comm.appendBytes(magic1, 21, pad);
+        comm.appendTdsInt(packSize);
+        // TDS version
+        comm.appendTdsInt(0x70000000);
+
+        comm.appendBytes(empty, 16, pad);
+        // Magic!
+        comm.appendByte((byte)0xE0);
+        comm.appendByte((byte)0x03);
+        comm.appendBytes(empty, 10, pad);
 
         // Pack up value lengths, positions.
         short curPos = 86;
 
-        // Unknown
+        // Hostname
         comm.appendTdsShort(curPos);
         comm.appendTdsShort((short) 0);
 
@@ -2535,7 +2542,7 @@ public class Tds implements TdsDefinitions {
         comm.appendTdsShort((short) serverName.length());
         curPos += serverName.length() * 2;
 
-        // Another unknown value
+        // Unknown
         comm.appendTdsShort((short) 0);
         comm.appendTdsShort((short) 0);
 
@@ -2544,18 +2551,22 @@ public class Tds implements TdsDefinitions {
         comm.appendTdsShort((short) libName.length());
         curPos += libName.length() * 2;
 
-        // Two more unknowns
-        comm.appendTdsShort(curPos);
-        comm.appendTdsShort((short) 0);
+        // Another unknown value
         comm.appendTdsShort(curPos);
         comm.appendTdsShort((short) 0);
 
-        // More magic.
-        comm.appendBytes(magic2, 6, pad);
-        comm.appendTdsShort(len);
-        comm.appendTdsShort((short) 0x30);
-        comm.appendTdsShort(packSize);
+        // Database
+        comm.appendTdsShort(curPos);
+        comm.appendTdsShort((short) _database.length());
+        curPos += _database.length() * 2;
+
+        // MAC address
+        comm.appendBytes(empty, 6, pad);
+        comm.appendTdsShort(curPos);
+
+        // Seems like this is the size of the appended magic (was 0x30)
         comm.appendTdsShort((short) 0);
+        comm.appendTdsInt(packSize);
 
         // Pack up the login values.
         String scrambledPw = tds7CryptPass(password);
@@ -2564,19 +2575,7 @@ public class Tds implements TdsDefinitions {
         comm.appendChars(appName);
         comm.appendChars(serverName);
         comm.appendChars(libName);
-
-        // Still more magic!
-        comm.appendBytes(magic3, 7, pad);
-        comm.appendByte((byte) 0);
-        comm.appendByte((byte) 1);
-        comm.appendBytes(empty, 3, pad);
-        comm.appendByte((byte) 6);
-        comm.appendByte((byte) 130);
-        comm.appendBytes(empty, 22, pad);
-        comm.appendByte((byte) 48);
-        comm.appendBytes(empty, 7, pad);
-        comm.appendByte((byte) 48);
-        comm.appendBytes(empty, 3, pad);
+        comm.appendChars(_database);
     }
 
 
@@ -4434,13 +4433,6 @@ public class Tds implements TdsDefinitions {
         return result;
     }
 
-    private String sqlStatementForInit() throws SQLException
-    {
-        return sqlStatementToInitialize()+' '+
-               sqlStatementToSetTransactionIsolationLevel()+' '+
-               sqlStatementToSetCommit();
-    }
-
     protected String sqlStatementForSettings(boolean autoCommit, int transactionIsolationLevel) throws SQLException
     {
         if( autoCommit==this.autoCommit && transactionIsolationLevel==this.transactionIsolationLevel )
@@ -4489,6 +4481,9 @@ public class Tds implements TdsDefinitions {
     {
         boolean isOkay = true;
         PacketResult result;
+
+        if( query.length() == 0 )
+            return true;
 
         try
         {

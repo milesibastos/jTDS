@@ -61,14 +61,14 @@ import com.internetcds.jdbc.tds.TdsException;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    March 16, 2001
- *@version    $Id: Driver.java,v 1.5 2002-08-28 07:44:24 alin_sinpalean Exp $
+ *@version    $Id: Driver.java,v 1.6 2002-09-18 19:47:53 alin_sinpalean Exp $
  *@see        Connection
  */
 public class Driver implements java.sql.Driver {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Driver.java,v 1.5 2002-08-28 07:44:24 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Driver.java,v 1.6 2002-09-18 19:47:53 alin_sinpalean Exp $";
 
     final static boolean debug = false;
     final static String oldSQLServerUrlPrefix = "jdbc:freetds://";
@@ -306,7 +306,7 @@ public class Driver implements java.sql.Driver {
                 String port = (serverType == Tds.SYBASE
                          ? defaultSybasePort
                          : defaultSQLServerPort);
-                String database = "master";
+                String database = "";
                 String tdsVer = "42";
 
                 // Get the hostname

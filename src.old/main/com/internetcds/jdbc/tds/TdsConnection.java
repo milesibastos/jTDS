@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.19 2002-09-18 19:47:54 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.19 2002-09-18 19:47:54 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.19 2002-09-18 19:47:54 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -166,6 +166,7 @@ public class TdsConnection implements ConnectionHelper, Connection
 
         Tds tmpTds = this.allocateTds();
         tdsVer = tmpTds.getTdsVer();
+        database = tmpTds.getDatabase();
         freeTds(tmpTds);
     }
 

@@ -3,6 +3,25 @@ Changes from jTDS 0.3.1
 
 09/18/2002 - Alin Sinpalean
 
+ o Rewrote (or should I say, 'partially deleted') Tds.sendTds70Login() based on
+   the information obtained from packet sniffing I did during the weekend. Much
+   shorter and more concise.
+ o Removed the initialization of the Tds where the default values for
+   transaction isolation level and implicit_transactions were reinstated by
+   jTDS. This way, creating a connection is 'a bit' faster.
+ o Bugfix (#600286): when using TDS 7.0 jTDS sends the database name in the
+   login packet or sends an empty string (like it did until now) if no database
+   is specified in the URL/properties. TDS 4.2 sends a "use <database>" query
+   if the database length is not 0. The database that was selected ultimately
+   by the server is obtained through processing all TDS_ENVCHANGE packets, then
+   TdsConnection gets it from Tds (the relevant TDS_ENVCHANGE packet is parsed
+   in the Tds constructor, so the database name is already there for
+   TdsConnection. This way, Driver TdsDataSource don't have to define a default
+   database name ("master") so they start with an empty string. That's about
+   it! :o)
+
+09/18/2002 - Alin Sinpalean
+
  o Lots of changes and improvements here! All of them were done until yesterday
    but unfortunately I could not commit them last night so I'm going to do it
    now. I'll also try to do a list of changes, as exact as possible. Here goes.

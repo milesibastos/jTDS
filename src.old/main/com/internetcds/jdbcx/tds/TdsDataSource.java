@@ -16,7 +16,7 @@ import com.internetcds.jdbc.tds.*;
 public class TdsDataSource implements DataSource, Referenceable, Serializable
 {
     private int loginTimeout;
-    private String databaseName = "master";
+    private String databaseName = "";
     private String description;
     private String password;
     private int portNumber = 1433;

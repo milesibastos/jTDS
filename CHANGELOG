@@ -1,15 +1,47 @@
 Changes from jTDS 0.2
 =====================
 
- o TdsStatement checks if it isn't already closed on a call to close() and the
-   allocated Tds object isn't freed until no more results are available
+08/16/2002 - Alin Sinpalean
 
-08/05/2002 - Jason Banes (patch)
+ o DatabaseMetaData.getSchemas() fix: TABLE_CATALOG column was also returned as
+   a result column; removed it.
+ o TdsResultSet.fetchNextRow() fix: the Tds was not released when the end of
+   data was reached; now it is.
+ o TdsConnection.prepareCall() fix: a useless call to allocateTds() was made,
+   which locked a Tds that was never released again; commented out.
+ o Fixes in the tests: AsTest, CSUnitTest, PreparedStatementTest, TestBase,
+   TimestampTest.
 
- o Fixed the following methods in DatabaseMetaData: getSchemas, getTables,
-   getColumns, supportSchemasInTableDefinitions.
- o Implemented the following methods of DatabaseMetaData: getIndexes,
-   getPrimaryKeys, getImportedKeys.
+08/15/2002 - Alin Sinpalean
+
+ o Rewrote build.xml.
+
+08/14/2002 - Alin Sinpalean
+
+ o Added support for the UNIQUEIDENTIFIER datatype.
+ o Created a com.internetcds.jdbcx.tds package containing a DataSource
+   implementation and an object factory (alpha version, not even tested with
+   JNDI - I tried to do it but it doesn't seem that easy). Anyway, it's a
+   starting point.
+
+08/13/2002 - Alin Sinpalean
+
+ o Fix in CursorResultSet: if no rows were returned by the query, loadContext
+   failed with a NullPointerException when trying to get the current row's
+   context. Now the context is loaded in internalFetch -- not very elegant, but
+   at least it works. ;o)
+
+08/08/2002 - Alin Sinpalean
+
+ o DatabaseMetaData.getInstance() now returns a DatabaseMetaData or
+   Microsoft7MetaData based on the TDS version rather than the server version.
+
+08/06/2002 - Alin Sinpalean
+
+ o Optimized the implementations of TdsComm.getBytes(int) and TdsComm.peek();
+   they are no longer using TdsComm.getByte(), which was slowing them down.
+ o Implemented getExportedKeys.
+ o TDS 7.0 is now the default protocol used by jTDS.
 
 08/05/2002 - Alin Sinpalean
 
@@ -25,29 +57,13 @@ Changes from jTDS 0.2
    other drivers).
  o Bugfix 587749: Bit to Int conversion works. So does Binary to String.
 
-08/06/2002 - Alin Sinpalean
+08/05/2002 - Jason Banes (patch)
 
- o Optimized the implementations of TdsComm.getBytes(int) and TdsComm.peek();
-   they are no longer using TdsComm.getByte(), which was slowing them down.
- o Implemented getExportedKeys.
- o TDS 7.0 is now the default protocol used by jTDS.
+ o Fixed the following methods in DatabaseMetaData: getSchemas, getTables,
+   getColumns, supportSchemasInTableDefinitions.
+ o Implemented the following methods of DatabaseMetaData: getIndexes,
+   getPrimaryKeys, getImportedKeys.
 
-08/08/2002 - Alin Sinpalean
-
- o DatabaseMetaData.getInstance() now returns a DatabaseMetaData or
-   Microsoft7MetaData based on the TDS version rather than the server version.
-
-08/13/2002 - Alin Sinpalean
-
- o Fix in CursorResultSet: if no rows were returned by the query, loadContext
-   failed with a NullPointerException when trying to get the current row's
-   context. Now the context is loaded in internalFetch -- not very elegant, but
-   at least it works. ;o)
-
-08/14/2002 - Alin Sinpalean
-
- o Added support for the UNIQUEIDENTIFIER datatype.
- o Created a com.internetcds.jdbcx.tds package containing a DataSource
-   implementation and an object factory (alpha version, not even tested with
-   JNDI - I tried to do it but it doesn't seem that easy). Anyway, it's a
-   starting point.
+07/xx/2002
+ o TdsStatement checks if it isn't already closed on a call to close() and the
+   allocated Tds object isn't freed until no more results are available

@@ -58,7 +58,7 @@ class TdsInstance {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2002-08-14 13:04:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.8 2002-08-16 15:22:10 alin_sinpalean Exp $";
 
 
     public TdsInstance(Tds tds_)
@@ -89,7 +89,7 @@ class TdsInstance {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 16, 2001
- *@version    $Id: TdsConnection.java,v 1.7 2002-08-14 13:04:30 alin_sinpalean Exp $
+ *@version    $Id: TdsConnection.java,v 1.8 2002-08-16 15:22:10 alin_sinpalean Exp $
  *@see        DriverManager#getConnection
  *@see        Statement
  *@see        ResultSet
@@ -118,7 +118,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.7 2002-08-14 13:04:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.8 2002-08-16 15:22:10 alin_sinpalean Exp $";
 
     protected int getTdsVer()
     {
@@ -666,7 +666,7 @@ public class TdsConnection implements ConnectionHelper, Connection {
             int resultSetConcurrency) throws SQLException
     {
         java.sql.CallableStatement result;
-        Tds tmpTds = this.allocateTds();
+//        Tds tmpTds = this.allocateTds();  Why was this here?
         result = new CallableStatement_base(
             this, sql, resultSetType, resultSetConcurrency);
         allStatements.addElement(result);

@@ -50,7 +50,7 @@ extends TestBase
 
         PreparedStatement pstmt = con.prepareStatement(
             "SELECT * FROM #test",
-            ResultSet.TYPE_SCROLL_INSENSITIVE,
+            ResultSet.TYPE_SCROLL_SENSITIVE,
             ResultSet.CONCUR_READ_ONLY );
 
         ResultSet rs = pstmt.executeQuery();

@@ -85,7 +85,7 @@ import java.io.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.8 2002-06-28 18:01:15 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.9 2002-08-16 15:22:10 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -110,7 +110,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.8 2002-06-28 18:01:15 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.9 2002-08-16 15:22:10 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, Columns columns)
     {
@@ -443,6 +443,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
                     tds.processSubPacket(context)).wasCanceled();
                 row = null;
                 hitEndOfData = true;
+                stmt.eofResults();
             }
             else if( !tds.isResultSet() )
                 throw new SQLException("Protocol confusion. "

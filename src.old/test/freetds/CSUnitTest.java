@@ -1602,8 +1602,8 @@ public class CSUnitTest extends DatabaseTestCase {
        ResultSet         rs         = dbMetaData.getSchemas();
        ResultSetMetaData rsm        = rs.getMetaData();
 
-       passed = passed && rsm.getColumnCount()==1;
-       passed = passed && rsm.getColumnName(1).equals("TABLE_SCHEM");
+       assertTrue(rsm.getColumnCount()==1);
+       assertTrue(rsm.getColumnName(1).equals("TABLE_SCHEM"));
 
        while(rs.next())
        {
@@ -1612,12 +1612,9 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     catch(java.sql.SQLException e)
     {
-       passed = false;
        output.println("Exception caught.  " + e.getMessage());
        e.printStackTrace();
+       fail();
     }
-    assertTrue(passed);
   }
-
-
 }

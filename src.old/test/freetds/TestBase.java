@@ -42,6 +42,14 @@ public class TestBase extends TestCase {
     public Connection getConnection()
              throws Exception
     {
+//        Class.forName( "sun.jdbc.odbc.JdbcOdbcDriver" );
+//        String fileName = "conf/odbc-connection.properties";
+//        Properties props = loadProperties( fileName );
+//        String url = props.getProperty( "url" );
+//        Connection con = DriverManager.getConnection( url, props );
+//        showWarnings( con.getWarnings() );
+//        initLanguage( con );
+//        return con;
         Class.forName( "com.internetcds.jdbc.tds.Driver" );
         String fileName = "conf/connection.properties";
 

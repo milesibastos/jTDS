@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.10 2002-08-08 08:35:41 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.11 2002-08-16 15:22:10 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.10 2002-08-08 08:35:41 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.11 2002-08-16 15:22:10 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -2213,8 +2213,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
         String sql =
             "select                                         " +
-            "  u.name as TABLE_SCHEM,                       " +
-            "  DB_NAME() as TABLE_CATALOG                   " +
+            "  u.name as TABLE_SCHEM                        " +
+//            "  DB_NAME() as TABLE_CATALOG                   " +  This should not be here
             "from                                           " +
             "  dbo.sysusers as u                            " +
             "where                                          " +

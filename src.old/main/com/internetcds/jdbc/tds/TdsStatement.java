@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.12 2002-07-17 10:30:22 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.13 2002-08-16 15:22:10 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.12 2002-07-17 10:30:22 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.13 2002-08-16 15:22:10 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -724,10 +724,7 @@ public class TdsStatement implements java.sql.Statement
 
       try
       {
-         tds.isResultSet();
-
          // Keep eating garbage and warnings until we reach the next result
-
          while (true)
          {
             if (tds.isProcId())

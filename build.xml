@@ -1,91 +1,92 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project basedir="." default="compile" name="jtds">
 
-
-    <path id="libs">
-        <fileset dir="lib" includes="*.jar" />
-    </path>
+  <path id="libs">
+    <fileset dir="lib" includes="*.jar"/>
+  </path>
 
   <target name="init">
-
     <tstamp/>
 
     <property name="build" value="build"/>
 
     <property name="build.compiler" value="modern"/>
+    <property name="javac.debug" value="off"/>
 
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
     <property name="version" value="0.2"/>
-    <property name="year" value="2002"/>
-
   </target>
 
-  <target depends="init" name="clean">
-    <deltree dir="${build}"/>
-    <deltree dir="${dist}"/>
+  <target name="clean" depends="init">
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
   </target>
 
-  <target depends="init" name="prepare">
+  <target name="prepare" depends="init">
     <mkdir dir="${build}"/>
     <mkdir dir="${build}/classes"/>
-  </target>
-
-  <target depends="init,prepare" name="compile">
     <mkdir dir="${build}/src"/>
-    <copydir dest="${build}/src" includes="**/*.java" src="${src}/main"/>
-    <copydir dest="${build}/src" includes="**/*.java" src="${src}/test"/>
-    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs"/>
 
+    <copy todir="${build}/src">
+      <fileset dir="${src}/main" includes="**/*.java"/>
+    </copy>
+    <copy todir="${build}/src">
+      <fileset dir="${src}/test" includes="**/*.java"/>
+    </copy>
   </target>
 
-  <target depends="prepare" name="javadoc">
+  <target name="compile" depends="init,prepare">
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}"/>
+  </target>
 
+  <target name="javadoc" depends="prepare">
     <mkdir dir="${build}/doc"/>
-
-    <javadoc author="true" bottom="Released under the LGPL" destdir="${build}/doc" doctitle="jTDS API Documentation" packagenames="com.*,freetds" sourcepath="${build}/src" use="true" version="true" windowtitle="${ant.project.name} API">
-    </javadoc>
-
+    <javadoc sourcepath="${build}/src" destdir="${build}/doc" packagenames="com.*,freetds" Author="true"
+             Doctitle="jTDS API Documentation" Use="true" Version="true" bottom="Generated on ${TODAY}"
+             Windowtitle="jTDS API"/>
   </target>
 
-  <target depends="compile" name="test">
-
-    <taskdef classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask" name="junit"/>
+  <target name="test" depends="compile">
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask"/>
 
     <junit fork="yes" haltonfailure="no" printsummary="yes">
-
-        <classpath>
-            <pathelement path="build/classes"/>
-            <pathelement path="${java.class.path}"/>
-        </classpath>
-
+      <jvmarg line="-Xint -Xbatch"/>
+      <classpath>
+        <pathelement location="build/classes"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
       <formatter type="plain"/>
-
       <batchtest>
         <fileset dir="${build}/src">
           <include name="**/*Test.java"/>
           <exclude name="**/AllTests.java"/>
         </fileset>
       </batchtest>
-
     </junit>
-
   </target>
 
-  <target depends="clean,compile,javadoc" name="dist">
+  <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}"/>
-    <!-- Runtime jar only -->
-    <jar basedir="${build}/classes" excludes="**Test/*" includes="**/*" jarfile="${dist}/${ant.project.name}-${version}.jar"/>
-    <!-- Full dist -->
-    <mkdir dir="${dist}/doc"/>
-    <copydir dest="${dist}/tmp/doc" includes="**/*" src="${build}/doc"/>
-    <mkdir dir="${dist}/tmp"/>
-    <copydir dest="${dist}/tmp" includes="README,*.bat,*.xml,*.jpx,*.library,src/**/*,lib/**/*,conf/**/*" src="."/>
-    <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
-    <deltree dir="${dist}/tmp"/>
-  </target>
 
+    <!-- Runtime jar only -->
+    <jar basedir="${build}/classes" excludes="**Test/*" includes="**/*"
+         jarfile="${dist}/${ant.project.name}-${version}.jar"/>
+
+    <!-- Full dist -->
+    <copy todir="${dist}/tmp/doc">
+      <fileset dir="${build}/doc" includes="**/*"/>
+    </copy>
+    <mkdir dir="${dist}/tmp"/>
+    <copy todir="${dist}/tmp">
+      <fileset dir="." includes="README,CHANGELOG,*.bat,*.xml,jtds.jpx,*.library,src/**/*,lib/**/*,conf/**/*"/>
+    </copy>
+    <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
+
+    <delete dir="${dist}/tmp"/>
+  </target>
 
 </project>

@@ -55,19 +55,23 @@ public class AsTest extends DatabaseTestCase {
                     "select 'Did it work?' as Result");
     stmt.executeUpdate("create procedure #spTestExec as " +
                 "set nocount off " +
-		"create table #tmp ( Result varchar(50) ) " +
-		"insert #tmp execute #spTestExec2 " +
-		"select * from #tmp");
+        "create table #tmp ( Result varchar(50) ) " +
+        "insert #tmp execute #spTestExec2 " +
+        "select * from #tmp");
     CallableStatement cstmt = con.prepareCall("#spTestExec");
-    assertTrue(!cstmt.execute());
-    assertTrue(cstmt.getUpdateCount() == 0);  // set
-    assertTrue(!cstmt.getMoreResults());
-    assertTrue(cstmt.getUpdateCount() == 0);  // create
-    assertTrue(!cstmt.getMoreResults());
-    assertTrue(cstmt.getUpdateCount() == 0);  // execute
-    assertTrue(!cstmt.getMoreResults());
-    assertTrue(cstmt.getUpdateCount() == 1);  // insert
-    assertTrue(cstmt.getMoreResults());
+    assertTrue(cstmt.execute());
+
+//    The JDBC-ODBC driver does not return update counts from stored procedures
+//    so we won't, either.
+//    assertTrue(cstmt.getUpdateCount() == 0);  // set
+//    assertTrue(!cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 0);  // create
+//    assertTrue(!cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 0);  // execute
+//    assertTrue(!cstmt.getMoreResults());
+//    assertTrue(cstmt.getUpdateCount() == 1);  // insert
+//    assertTrue(cstmt.getMoreResults());
+
     ResultSet rs = cstmt.getResultSet();
     while (rs.next()) {
       passed = true;
@@ -370,7 +374,7 @@ public class AsTest extends DatabaseTestCase {
   public void testBigInt() throws Throwable
   {
     // String crtab = "create table #testBigInt (a bigint)";
-    String crtab = "create table #testBigInt (a NUMERIC(19))";
+    String crtab = "create table #testBigInt (a NUMERIC(19) NULL)";
     dropTable("#testBigInt");
     Statement stmt = con.createStatement();
     stmt.executeUpdate(crtab);
@@ -397,7 +401,7 @@ public class AsTest extends DatabaseTestCase {
   public void testBoolean() throws Throwable
   {
     // String crtab = "create table #testBigInt (a bigint)";
-    String crtab = "create table #testBit (a BIT)";
+    String crtab = "create table #testBit (a BIT NULL)";
     dropTable("#testBit");
     Statement stmt = con.createStatement();
     stmt.executeUpdate(crtab);
@@ -462,15 +466,15 @@ public class AsTest extends DatabaseTestCase {
     Statement stmt = con.createStatement();
     stmt.executeUpdate(crtab);
     checkTime(92001000);
-    checkTime(4200000);  // sent in 4 Bytes 
+    checkTime(4200000);  // sent in 4 Bytes
     checkTime(4201000);
     checkTime(1234567000);
     checkTime(420000000000L);   // sent in 4 Bytes
-    checkTime(840000000000L);   
+    checkTime(840000000000L);
   }
 
   public void testBigDecimal() throws Throwable
-  {    String crtab = "create table #testBigDecimal (a decimal(28,10))";
+  {    String crtab = "create table #testBigDecimal (a decimal(28,10) NULL)";
     dropTable("#testBigDecimal");
     Statement stmt = con.createStatement();
     stmt.executeUpdate(crtab);
@@ -500,5 +504,5 @@ public class AsTest extends DatabaseTestCase {
     pstmt.setDouble(1,1.1);
     pstmt.execute();
   }
-}
+    }
 

@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.20 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.21 2004-08-07 01:22:12 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -178,6 +178,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int rowCount = 0;
     /** Maximum decimal precision. */
     private int maxPrecision = 38; // Sybase default
+    /** Stored procedure unique ID number. */
+    private int spSequenceNo = 1;
     /** Procedure cache.*/
     private HashMap procedures = new HashMap();
     /** Procedures in this transaction. */
@@ -399,6 +401,25 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     int getTdsVersion() {
         return this.tdsVersion;
+    }
+
+    /**
+     * Retrieve the next unique stored procedure name.
+     * <p>Notes:
+     * <ol>
+     * <li>Some versions of Sybase require an id with
+     * a length of &lt;= 10.
+     * <li>The format of this name works for sybase and Microsoft
+     * and allows for 16M names per session.
+     * <li>The leading '#jtds' indicates this is a temporary procedure and
+     * the '#' is removed by the lower level TDS5 routines.
+     * </ol>
+     * @return The sp name as a <code>String</code>.
+     */
+    String getProcName() {
+        String seq = "000000" + Integer.toHexString(spSequenceNo++).toUpperCase();
+
+        return "#jtds" + seq.substring(seq.length() - 6, seq.length());
     }
 
     /**

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.22 2004-08-06 21:07:41 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.23 2004-08-07 01:22:12 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -327,8 +327,6 @@ public class TdsCore {
     private boolean isClosed = false;
     /** Indicates reading results from READTEXT command. */
     private boolean readTextMode = false;
-    /** Stored procedure unique ID number. */
-    private int spSequenceNo = 1;
 
     /**
      * Construct a TdsCore object.
@@ -845,25 +843,6 @@ public class TdsCore {
     }
 
     /**
-     * Retrieve the next unique stored procedure name.
-     * <p>Notes:
-     * <ol>
-     * <li>Some versions of Sybase require an id with
-     * a length of &lt;= 10.
-     * <li>The format of this name works for sybase and Microsoft
-     * and allows for 16M names per session.
-     * <li>The leading '#jtds' indicates this is a temporary procedure and
-     * the '#' is removed by the lower level TDS5 routines.
-     * </ol>
-     * @return The sp name as a <code>String</code>.
-     */
-    String getProcName() {
-        String seq = "000000" + Integer.toHexString(spSequenceNo++).toUpperCase();
-
-        return "#jtds" + seq.substring(seq.length() - 6, seq.length());
-    }
-
-    /**
      * Create a temporary stored procedure on a Microsoft server.
      *
      * @param sql The SQL statement to prepare.
@@ -878,7 +857,7 @@ public class TdsCore {
         int prepareSql = connection.getPrepareSql();
 
         if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
-            String procName = getProcName();
+            String procName = connection.getProcName();
 
             spSql.append("create proc ");
             spSql.append(procName);
@@ -976,7 +955,7 @@ public class TdsCore {
                     "sql parameter must be at least 1 character long.");
         }
 
-        String procName = getProcName();
+        String procName = connection.getProcName();
 
         if (procName == null || procName.length() != 11) {
             throw new IllegalArgumentException(

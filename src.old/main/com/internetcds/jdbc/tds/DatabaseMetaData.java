@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.12 2002-08-19 11:25:30 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.13 2002-08-21 15:26:37 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData {
 
@@ -294,7 +294,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.12 2002-08-19 11:25:30 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.13 2002-08-21 15:26:37 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -1022,7 +1022,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public String getDriverName() throws SQLException
     {
-        return "InternetCDS Type 4 JDBC driver for MS SQLServer";
+        return "jTDS Type 4 JDBC 2.0 driver for MS SQL Server";
     }
 
 

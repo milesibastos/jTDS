@@ -1,6 +1,13 @@
 Changes from jTDS 0.3
 =====================
 
+08/21/2002 - Alin Sinpalean
+
+ o jTDS officially became "jTDS Type 4 JDBC 2.0 driver for MS SQL Server", as
+   DatabaseMetaData.getDriverName() returns this value.
+ o Not directly related to the development of jTDS, The jTDS Project finally
+   has its own homepage: http://jtds.sourceforge.net
+
 08/20/2002 - Alin Sinpalean
 
  o Added a Statement member to the Tds class, that should point to the

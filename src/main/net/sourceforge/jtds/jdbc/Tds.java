@@ -47,9 +47,10 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.58 2004-05-07 04:38:08 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.59 2004-05-30 22:06:53 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
+    private static GregorianCalendar cal = new GregorianCalendar();
 
     private TdsSocket sock = null;
     private TdsComm comm = null;
@@ -77,7 +78,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.58 2004-05-07 04:38:08 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.59 2004-05-30 22:06:53 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -1244,88 +1245,132 @@ public class Tds implements TdsDefinitions {
         return new BigDecimal(bigInt, scale);
     }
 
+    /**
+     * Convert a Julian date from the Sybase epoch of 1900-01-01
+     * to a Calendar object.
+     * @param julianDate The Sybase days from 1900 value.
+     * @param cal The Calendar object to populate.
+     *
+     * Algorithm  from Fliegel, H F and van Flandern, T C (1968). 
+     * Communications of the ACM, Vol 11, No 10 (October, 1968). 
+     * <pre>
+     *           SUBROUTINE GDATE (JD, YEAR,MONTH,DAY)
+     *     C
+     *     C---COMPUTES THE GREGORIAN CALENDAR DATE (YEAR,MONTH,DAY)
+     *     C   GIVEN THE JULIAN DATE (JD).
+     *     C
+     *           INTEGER JD,YEAR,MONTH,DAY,I,J,K
+     *     C
+     *           L= JD+68569
+     *           N= 4*L/146097
+     *           L= L-(146097*N+3)/4
+     *           I= 4000*(L+1)/1461001
+     *           L= L-1461*I/4+31
+     *           J= 80*L/2447
+     *           K= L-2447*J/80
+     *           L= J/11
+     *           J= J+2-12*L
+     *           I= 100*(N-49)+I+L
+     *     C
+     *           YEAR= I
+     *           MONTH= J
+     *           DAY= K
+     *     C
+     *           RETURN
+     *           END
+     * </pre>
+     */
+    private static void sybaseToCalendar(int julianDate, GregorianCalendar cal)
+    {
+        int l = julianDate + 68569 + 2415021;
+        int n = 4 * l / 146097;
+        l = l - (146097 * n + 3) / 4;
+        int i = 4000 * (l + 1) / 1461001;
+        l = l - 1461 * i / 4 + 31;
+        int j = 80 * l / 2447;
+        int k = l - 2447 * j / 80;
+        l = j / 11;
+        j = j + 2 - 12 * l;
+        i = 100 * (n - 49) + i + l;
+        cal.set(Calendar.YEAR, i);
+        cal.set(Calendar.MONTH, j-1);
+        cal.set(Calendar.DAY_OF_MONTH, k);
+    }
+    
+    /**
+     * Get a DATETIME value from the server response stream.
+     * @param type The TDS data type.
+     * @return The java.sql.Timestamp value or null.
+     * @throws java.io.IOException
+     */
     private Object getDatetimeValue(final int type)
-             throws java.io.IOException, TdsException {
-        // Some useful constants
-        final long SECONDS_PER_DAY = 24L * 60L * 60L;
-        final long DAYS_BETWEEN_1900_AND_1970 = 25567L;
-
+            throws java.io.IOException, TdsException {
         int len;
-        final long tdsDays, tdsTime, sqlDays, minutes, seconds, micros;
-        long millis;
-
-        if (type == SYBDATETIMN) {
-            len = comm.getByte(); // No need to & with 0xff
-        } else if (type == SYBDATETIME4) {
-            len = 4;
-        } else {
-            len = 8;
-            // XXX shouldn't this be an error?
-        }
-
-        switch (len) {
-        case 0:
-            return null;
-
-        case 8:
-            // It appears that a datetime is made of of 2 32bit ints
-            // The first one is the number of days since 1900
-            // The second integer is the number of seconds*300
-            // The reason the calculations below are sliced up into
-            // such small baby steps is to avoid a bug in JDK1.2.2's
-            // runtime, which got confused by the original complexity.
-            tdsDays = (long) comm.getTdsInt();
-            tdsTime = (long) comm.getTdsInt();
-            sqlDays = tdsDays - DAYS_BETWEEN_1900_AND_1970;
-            seconds = sqlDays * SECONDS_PER_DAY + tdsTime / 300L;
-            micros = ((tdsTime % 300L) * 1000000L) / 300L;
-            millis = seconds * 1000L + micros / 1000L - zoneOffset;
-
-            // Round up if appropriate.
-            if (micros % 1000L >= 500L) {
-                millis++;
+        int daysSince1900;
+        int time;
+        int hours;
+        int minutes;
+        int seconds;
+        synchronized (cal) {
+            if (type == SYBDATETIMN) {
+                len = comm.getByte(); // No need to & with 0xff
+            } else if (type == SYBDATETIME4) {
+                len = 4;
+            } else {
+                len = 8;
             }
 
-            return new Timestamp(millis - getDstOffset(millis));
+            switch (len) {
+            case 0:
+                return null;
 
-        case 4:
-            // Accroding to Transact SQL Reference
-            // a smalldatetime is two small integers.
-            // The first is the number of days past January 1, 1900,
-            // the second smallint is the number of minutes past
-            // midnight.
-
-            tdsDays = (long) comm.getTdsShort();
-            minutes = (long) comm.getTdsShort();
-            sqlDays = tdsDays - DAYS_BETWEEN_1900_AND_1970;
-            seconds = sqlDays * SECONDS_PER_DAY + minutes * 60L;
-            millis = seconds * 1000L - zoneOffset;
-
-            return new Timestamp(millis - getDstOffset(millis));
-
-        default:
-            throw new TdsNotImplemented("Don't now how to handle "
-                                        + "date with size of "
-                                        + len);
+            case 8:
+                // A datetime is made of of two 32 bit integers
+                // The first one is the number of days since 1900
+                // The second integer is the number of seconds*300
+                // Negative days indicate dates earlier than 1900.
+                // The full range is 1753-01-01 to 9999-12-31.
+                daysSince1900 = comm.getTdsInt();
+                sybaseToCalendar(daysSince1900, cal);
+                time = comm.getTdsInt();
+                hours = time / 1080000;
+                cal.set(Calendar.HOUR_OF_DAY, hours);
+                time = time - hours * 1080000;
+                minutes = time / 18000;
+                cal.set(Calendar.MINUTE, minutes);
+                time = time - (minutes * 18000);
+                seconds = time / 300;
+                cal.set(Calendar.SECOND, seconds);
+                time = time - seconds * 300;
+                time = time * 1000 / 300;
+                cal.set(Calendar.MILLISECOND, (int)(time));
+//
+//              getTimeInMillis() is protected in java vm 1.3 :-(
+//              return new Timestamp(cal.getTimeInMillis());
+//
+                return new Timestamp(cal.getTime().getTime());
+            case 4:
+                // A smalldatetime is two 16 bit integers.
+                // The first is the number of days past January 1, 1900,
+                // the second smallint is the number of minutes past
+                // midnight. 
+                // The full range is 1900-01-01 to 2079-06-06.
+                daysSince1900 = ((int) comm.getTdsShort()) & 0xFFFF;
+                sybaseToCalendar(daysSince1900, cal);
+                minutes = comm.getTdsShort();
+                hours = minutes / 60;
+                cal.set(Calendar.HOUR_OF_DAY, hours);
+                minutes = minutes - hours * 60;
+                cal.set(Calendar.MINUTE, minutes);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+//                return new Timestamp(cal.getTimeInMillis());
+                return new Timestamp(cal.getTime().getTime());
+            default:
+                throw new TdsNotImplemented("Invalid DATETIME value with size of " +
+                                        len + " bytes.");
+            }
         }
-    }
-
-    /**
-     * Determines the number of milliseconds needed to adjust for daylight
-     * savings time for a given date/time value. Note that there is a problem
-     * with the way SQL Server sends a DATETIME value, since it is constructed
-     * to represent the local time for the server. This means that each fall
-     * there is a window of approximately one hour during which a single value
-     * can represent two different times.
-     *
-     * @param  time  Description of Parameter
-     * @return       The DstOffset value
-     * @todo SAfe Try to find a better way to do this, because it doubles the time it takes to process datetime values!!!
-     */
-    private static long getDstOffset(final long time) {
-        final Calendar cal = Calendar.getInstance();
-        cal.setTime(new java.util.Date(time));
-        return cal.get(Calendar.DST_OFFSET);
     }
 
     private Object getIntValue(final int type)
@@ -2566,80 +2611,81 @@ public class Tds implements TdsDefinitions {
         }
     }
 
-    private void writeDatetimeValue(final Object value_in)
+    /**
+     * Convert a calendar date into days since 1900 (Sybase epoch).
+     * <p>
+     * Algorithm  from Fliegel, H F and van Flandern, T C (1968). 
+     * Communications of the ACM, Vol 11, No 10 (October, 1968). 
+     * 
+     * <pre> 
+     *           INTEGER FUNCTION JD (YEAR,MONTH,DAY)
+     *     C
+     *     C---COMPUTES THE JULIAN DATE (JD) GIVEN A GREGORIAN CALENDAR
+     *     C   DATE (YEAR,MONTH,DAY).
+     *     C
+     *           INTEGER YEAR,MONTH,DAY,I,J,K
+     *     C
+     *           I= YEAR
+     *           J= MONTH
+     *           K= DAY
+     *     C
+     *           JD= K-32075+1461*(I+4800+(J-14)/12)/4+367*(J-2-(J-14)/12*12)
+     *          2    /12-3*((I+4900+(J-14)/12)/100)/4
+     *     C
+     *           RETURN
+     *           END
+     * </pre>
+     * @param year The year eg 2003.
+     * @param month The month 1-12.
+     * @param day The day in month 1-31.
+     * @return The julian date adjusted for Sybase epoch of 1900.
+     */
+    private static int calendarToSybase(int year, int month, int day) {
+        return day - 32075 + 1461 * (year + 4800 + (month - 14) / 12) / 
+                   4 + 367 * (month - 2 - (month - 14) / 12 * 12) /
+                        12 - 3 * ((year + 4900 + (month -14) / 12) / 100) / 
+                            4 - 2415021;
+    }
+
+    private void writeDatetimeValue(final Object value)
             throws java.io.IOException {
         comm.appendByte(SYBDATETIMN);
+        comm.appendByte((byte) 8);
 
-        if (value_in == null) {
-            comm.appendByte((byte) 8);
+        if (value == null) {
             comm.appendByte((byte) 0);
         } else {
-            final int secondsPerDay = 24 * 60 * 60;
-            final int msPerDay = secondsPerDay * 1000;
-            final int nsPerMs = 1000 * 1000;
-            final int msPerMinute = 1000 * 60;
-            // epochsDifference is the number of days between unix
-            // epoch (1970 based) and the sybase epoch (1900 based)
-            final int epochsDifference = 25567;
+            int daysSince1900;
+            int time;
 
-            // ms is the number of milliseconds into unix epoch
-            long ms;
+            synchronized (cal) {
+                cal.setTime((java.util.Date) value);
 
-            if (value_in instanceof java.sql.Timestamp) {
-                final Timestamp value = (Timestamp) value_in;
-                ms = value.getTime();
+                if (!Driver.JDBC3) {
+                    // Not Running under 1.4 so need to add milliseconds
+                    cal.set(Calendar.MILLISECOND, 
+                        ((java.sql.Timestamp) value).getNanos() / 1000000);
+                }
 
-                // SAfe If the value contains only an integral number of seconds, add the nanoseconds,
-                //      otherwise they have probably already been added. This seems to be a problem with
-                //      J2SE 1.4 and later, which override the java.util.Date.getTime() implementation
-                //      and add the nanos there (although the javadoc comment hasn't changed).
-                if (ms % 1000 == 0)
-                    ms += (value.getNanos() / nsPerMs);
-            } else {
-                ms = ((java.util.Date) value_in).getTime();
+                if (value instanceof java.sql.Time) {
+                    daysSince1900 = 0;
+                } else {
+                    daysSince1900 = calendarToSybase(cal.get(Calendar.YEAR), 
+                                                     cal.get(Calendar.MONTH) + 1,
+                                                     cal.get(Calendar.DAY_OF_MONTH));
+                }   
+                time  = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
+                time += cal.get(Calendar.MINUTE) * 18000;
+                time += cal.get(Calendar.SECOND) * 300;
+
+                if (value instanceof java.sql.Timestamp) {
+                    time += cal.get(Calendar.MILLISECOND) * 300 / 1000;
+                }
             }
 
-            ms += zoneOffset;
-            ms += getDstOffset(ms);
-
-            long msIntoCurrentDay = ms % msPerDay;
-            long daysIntoUnixEpoch = ms / msPerDay;
-
-            // SAfe This happens with dates prior to 1970 (UNIX epoch)
-            if (msIntoCurrentDay < 0) {
-                msIntoCurrentDay += msPerDay;
-                daysIntoUnixEpoch -= 1;
-            }
-
-            if (value_in instanceof java.sql.Date) {
-                msIntoCurrentDay = 0;
-            } else if (value_in instanceof java.sql.Time) {
-                daysIntoUnixEpoch = 0;
-            }
-
-            final int daysIntoSybaseEpoch = (int) daysIntoUnixEpoch + epochsDifference;
-
-            // If the number of seconds and milliseconds are set to zero, then
-            // pass this as a smalldatetime parameter.  Otherwise, pass it as
-            // a datetime parameter
-
-            if ((msIntoCurrentDay % msPerMinute) == 0
-                    && daysIntoSybaseEpoch > Short.MIN_VALUE
-                    && daysIntoSybaseEpoch < Short.MAX_VALUE) {
-                comm.appendByte((byte) 4);
-                comm.appendByte((byte) 4);
-                comm.appendTdsShort((short) daysIntoSybaseEpoch);
-                comm.appendTdsShort((short) (msIntoCurrentDay / msPerMinute));
-            } else {
-                // SAfe Rounding problem: without the +100, 'Jan 4 2003 2:22:39:803' would get passed as
-                //                        'Jan 4 2003 2:22:39:800'. Should we use +500 instead?
-                final int jiffies = (int) ((msIntoCurrentDay * 300 + 100) / 1000);
-
-                comm.appendByte((byte) 8);
-                comm.appendByte((byte) 8);
-                comm.appendTdsInt(daysIntoSybaseEpoch);
-                comm.appendTdsInt(jiffies);
-            }
+            comm.appendByte((byte) 8);
+            comm.appendTdsInt((int) daysSince1900);
+            comm.appendTdsInt((int) time);
         }
     }
 

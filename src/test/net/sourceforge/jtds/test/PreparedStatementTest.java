@@ -64,6 +64,48 @@ extends TestBase
 
     }
 
+    public void testPreparedStatementAddBatch1()
+        throws Exception {
+        int count = 50;
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #psbatch1 (f_int INT)");
+        stmt.close();
+
+        int sum = 0;
+
+        con.setAutoCommit(false);
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #psbatch1 (f_int) VALUES (?)");
+
+        for (int i = 0; i < count; i++) {
+            pstmt.setInt(1, i);
+            pstmt.addBatch();
+            sum += i;
+        }
+
+        int[] results = pstmt.executeBatch();
+
+        assertTrue(results.length == count);
+
+        for (int i = 0; i < count; i++) {
+            assertTrue(results[i] == 1);
+        }
+
+        pstmt.close();
+    
+        con.commit();
+        con.setAutoCommit(true);
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT SUM(f_int) FROM #psbatch1");
+
+        assertTrue(rs.next());
+        System.out.println(rs.getInt(1));
+        assertTrue(rs.getInt(1) == sum);
+        stmt2.close();
+        rs.close();
+    }
+
     public static void main(String[] args)
     {
         junit.textui.TestRunner.run( PreparedStatementTest.class );

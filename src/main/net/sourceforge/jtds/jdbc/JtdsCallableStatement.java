@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.5 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.6 2004-09-23 14:26:58 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**
@@ -66,7 +66,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
     /**
      * Find a parameter by name.
-     * 
+     *
      * @param name The name of the parameter to locate.
      * @param set True if function is called from a set / register method.
      * @return The parameter index as an <code>int</code>.
@@ -94,7 +94,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
     /**
      * Check that this statement is still open.
-     * 
+     *
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
@@ -186,10 +186,17 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         pi.scale = scale;
     }
 
+    // FIXME Throw an exception if the parameter is not set. Or just a warning?
     public Object getObject(int parameterIndex) throws SQLException {
-        ParamInfo pi = getParameter(parameterIndex);
+        Object value = getParameter(parameterIndex).value;
 
-        return pi.value;
+        // Don't return UniqueIdentifier objects as the user won't know how to
+        // handle them
+        if (value instanceof UniqueIdentifier) {
+            return value.toString();
+        }
+
+        return value;
     }
 
     public String getString(int parameterIndex) throws SQLException {

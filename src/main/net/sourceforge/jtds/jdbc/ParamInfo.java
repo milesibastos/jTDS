@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.4 2004-09-05 16:45:29 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.5 2004-09-23 14:26:59 alin_sinpalean Exp $
  */
 class ParamInfo {
     /** Internal TDS data type */
@@ -149,7 +149,9 @@ class ParamInfo {
         }
 
         if (value instanceof Reader) {
-            value = loadFromReader((Reader) value, length);
+            String tmp = loadFromReader((Reader) value, length);
+            value = tmp.getBytes();
+            return (byte[]) value;
         }
 
         if (value instanceof String) {

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.39 2004-09-16 13:53:45 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.40 2004-09-23 14:26:59 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -758,7 +758,7 @@ public class TdsCore {
             throw new IllegalArgumentException("submitSQL() called with empty SQL String");
         }
 
-        executeSQL(sql, null, null, false, 0, 0);
+        executeSQL(sql, null, null, false, 0, -1);
         clearResponseQueue();
         messages.checkErrors();
     }
@@ -934,7 +934,7 @@ public class TdsCore {
 
             columns = null; // Will be populated if preparing a select
 
-            executeSQL(null, "sp_prepare", prepParam, false, 0, 0);
+            executeSQL(null, "sp_prepare", prepParam, false, 0, -1);
 
             clearResponseQueue();
 
@@ -1067,7 +1067,7 @@ public class TdsCore {
             Logger.println(sql.toString());
         }
 
-        executeSQL(sql.toString(), null, null, false, 0, 0);
+        executeSQL(sql.toString(), null, null, false, 0, -1);
         readTextMode = true;
 
         if (getMoreResults()) {
@@ -1105,7 +1105,7 @@ public class TdsCore {
         sql.append(colName);
         sql.append(") from ");
         sql.append(tabName);
-        executeSQL(sql.toString(), null, null, false, 0, 0);
+        executeSQL(sql.toString(), null, null, false, 0, -1);
 
         if (getMoreResults()) {
             if (getNextRow()) {
@@ -2200,22 +2200,24 @@ public class TdsCore {
         TdsData.readType(in, col);
         Object value = TdsData.readData(connection, in, col, false);
 
-        if (tdsVersion >= Driver.TDS80
-            && returnParam != null
-            && !returnParam.isSet) {
-            // TDS 8 Allows function return values of types other than int
-            if (value != null) {
-                parameters[nextParam].value =
-                    Support.convert(connection, value,
-                                    parameters[nextParam].jdbcType,
-                                    connection.getCharSet());
-                parameters[nextParam].collation = col.collation;
+        if (parameters != null) {
+            if (tdsVersion >= Driver.TDS80
+                && returnParam != null
+                && !returnParam.isSet) {
+                // TDS 8 Allows function return values of types other than int
+                if (value != null) {
+                    parameters[nextParam].value =
+                        Support.convert(connection, value,
+                                        parameters[nextParam].jdbcType,
+                                        connection.getCharSet());
+                    parameters[nextParam].collation = col.collation;
+                } else {
+                    parameters[nextParam].value = null;
+                }
+
+                parameters[nextParam].isSet = true;
             } else {
-                parameters[nextParam].value = null;
-            }
-        } else {
-            // Look for next output parameter in list
-            if (parameters != null) {
+                // Look for next output parameter in list
                 while (++nextParam < parameters.length) {
                     if (parameters[nextParam].isOutput) {
                         if (value != null) {
@@ -2228,12 +2230,13 @@ public class TdsCore {
                             parameters[nextParam].value = null;
                         }
 
+                        parameters[nextParam].isSet = true;
                         break;
                     }
                 }
             }
         }
-     }
+    }
 
     /**
      * Process a login acknowledgement packet.
@@ -2808,7 +2811,6 @@ public class TdsCore {
                                        parameters[i]);
                 }
             }
-            out.flush();
         } else if (sql.length() > 0) {
             if (parameters != null) {
                 sql = Support.substituteParameters(sql, parameters, tdsVersion);
@@ -2816,8 +2818,9 @@ public class TdsCore {
 
             out.setPacketType(QUERY_PKT);
             out.write(sql);
-            out.flush();
         }
+
+        out.flush();
     }
 
     /**
@@ -3139,8 +3142,6 @@ public class TdsCore {
                                        parameters[i]);
                 }
             }
-
-            out.flush();
         } else if (sql.length() > 0) {
             if (parameters != null) {
                 sql = Support.substituteParameters(sql, parameters, tdsVersion);
@@ -3149,8 +3150,9 @@ public class TdsCore {
             // Simple query
             out.setPacketType(QUERY_PKT);
             out.write(sql);
-            out.flush();
         }
+
+        out.flush();
     }
 
     /**

@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.15 2004-08-28 15:46:50 bheineman Exp $
+ * @version $Id: JtdsResultSet.java,v 1.16 2004-09-23 14:26:59 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -64,7 +64,7 @@ public class JtdsResultSet implements ResultSet {
      */
     static final int HOLD_CURSORS_OVER_COMMIT = 1;
     static final int CLOSE_CURSORS_AT_COMMIT = 2;
-	
+
     protected static final int POS_BEFORE_FIRST = 0;
     protected static final int POS_AFTER_LAST = -1;
 
@@ -103,7 +103,7 @@ public class JtdsResultSet implements ResultSet {
     protected boolean readAhead = true;
     /** Cache to optimize findColumn(String) lookups */
     private HashMap columnMap;
-    
+
     /*
      * Private instance variables.
      */
@@ -208,20 +208,6 @@ public class JtdsResultSet implements ResultSet {
         }
 
         columns[colIndex - 1].jdbcType = jdbcType;
-    }
-
-    /**
-     * Set the specified column's data value.
-     *
-     * @param colIndex The index of the column in the row.
-     * @param value The new column value.
-     */
-    protected void setColValue(int colIndex, Object value, int length)
-        throws SQLException {
-        if (colIndex < 1 || colIndex > columns.length) {
-            throw new IllegalArgumentException("columnIndex "
-                    + colIndex + " invalid");
-        }
     }
 
     /**
@@ -510,8 +496,7 @@ public class JtdsResultSet implements ResultSet {
 
         if (!statement.getTds().getNextRow()) {
             if (readAhead) {
-                // Process rest of response to set output 
-                // variables.
+                // Process rest of response to set output variables.
                 statement.getTds().clearResponseQueue();
             }
 
@@ -797,14 +782,21 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public Object getObject(int columnIndex) throws SQLException {
-        ColData data = getColumn(columnIndex);
+        Object value = getColumn(columnIndex).getValue();
 
-        return data.getValue();
+        // Don't return UniqueIdentifier objects as the user won't know how to
+        // handle them
+        if (value instanceof UniqueIdentifier) {
+            return value.toString();
+        }
+
+        return value;
     }
 
     public void updateObject(int columnIndex, Object x) throws SQLException {
         ColData data = getColumn(columnIndex);
         checkUpdateable();
+        int length = -1;
 
         if (x != null) {
             ColInfo ci = columns[columnIndex - 1];
@@ -815,10 +807,21 @@ public class JtdsResultSet implements ResultSet {
             if (x instanceof BigDecimal) {
                 int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
                 x = Support.normalizeBigDecimal((BigDecimal)x, prec);
+            } else if (x instanceof Blob) {
+                Blob blob = (Blob) x;
+                x = blob.getBinaryStream();
+                length = (int) blob.length();
+            } else if (x instanceof Clob) {
+                Clob clob = (Clob) x;
+                x = clob.getCharacterStream();
+                length = (int) clob.length();
             }
         }
 
         data.setValue(x);
+        if (length != -1) {
+            data.setLength(length);
+        }
     }
 
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
@@ -845,15 +848,15 @@ public class JtdsResultSet implements ResultSet {
     public String getString(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
         Object tmp = data.getValue();
-        
+
         if (tmp instanceof String) {
             return (String) tmp;
         }
-        
+
         String charSet = (statement != null) ?
                 ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
 
-        return (String) Support.convert(this, tmp, java.sql.Types.LONGVARCHAR, charSet);
+        return (String) Support.convert(this, tmp, java.sql.Types.VARCHAR, charSet);
     }
 
     public void updateString(int columnIndex, String x) throws SQLException {
@@ -876,22 +879,22 @@ public class JtdsResultSet implements ResultSet {
 
     public int findColumn(String columnName) throws SQLException {
          checkOpen();
-         
+
          if (columnMap == null) {
              columnMap = new HashMap();
-             
+
              for (int i = 0; i < columnCount; i++) {
-                 columnMap.put(columns[i].name.toUpperCase(), 
+                 columnMap.put(columns[i].name.toUpperCase(),
                                new Integer(i + 1));
              }
          }
-         
+
          Integer colIndex = (Integer) columnMap.get(columnName.toUpperCase());
-         
+
          if (colIndex != null) {
              return colIndex.intValue();
          }
-         
+
          throw new SQLException(Messages.get("error.resultset.colname", columnName), "07009");
     }
 

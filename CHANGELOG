@@ -1,6 +1,20 @@
 Changes from jTDS 0.9-rc2
 =========================
 
+09/23/2004 - Alin Sinpalean
+ o Changed the default TDS version to 8.0 when connecting to SQL Server.
+ o Corrected bug [1032278] metadata.getColumnClassName not match
+   resultset.getObject. Also improved handling of LOB columns in updateable
+   ResultSets: until now, updateObject with a LOB value caused the whole
+   content to be cached into memory.
+ o getObject() (both in JtdsResultSet and JtdsCallableStatement) returned
+   UniqueIdentifier objects for UNIQUEIDENTIFIER columns. Fixed.
+ o Modified some TdsCore.executeSQL() calls to send -1 for maxRows (in order to
+   avoid unnecessary SET ROWCOUNT queries).
+ o JtdsDataSource uses the default values from DefaultProperties instead of
+   duplicating the initialization. Also, for easier handling, all values are
+   kept internally as Strings.
+
 09/16/2004 - Alin Sinpalean
  o Applied Mike's patch [1028856] Sybase 12 support. Added a Tds5Test class.
  o Cleaned up some minor things in tests.

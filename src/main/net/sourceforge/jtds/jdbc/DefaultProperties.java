@@ -26,7 +26,7 @@ import java.util.HashMap;
 /**
  * Container for default property constants.
  * <p/>
- * This class also provides static utility methods for 
+ * This class also provides static utility methods for
  * {@link Properties} and <code>Settings</code> objects.
  * <p/>
  * To add new properties to the jTDS driver, do the following:
@@ -35,7 +35,7 @@ import java.util.HashMap;
  *     properties to <code>Messages.properties</code>.</li>
  * <li>Add a <code>static final</code> default field to {@link DefaultProperties}.</li>
  * <li>Update {@link #addDefaultProperties(java.util.Properties)} to set the default.</li>
- * <li>Update {@link Driver#createChoicesMap()} and 
+ * <li>Update {@link Driver#createChoicesMap()} and
  *     <code>DriverUnitTest.test_getPropertyInfo_Choices()</code> if the property
  *     has a specific set of inputs, e.g., "true" and "false", or "1" and "2".</li>
  * <li>Update {@link Driver#createRequiredTrueMap()} and
@@ -44,9 +44,9 @@ import java.util.HashMap;
  * <li>Add a new test to <code>DefaultPropertiesTestLibrary</code> for the new
  *     property.</li>
  * </ol>
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.10 2004-08-24 17:45:02 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.11 2004-09-23 14:26:58 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -55,35 +55,35 @@ public final class DefaultProperties {
     /** Default <code>databaseName</code> property. */
     public static final String DATABASE_NAME = "";
     /** Default <code>lastUpdateCount</code> property. */
-    public static final boolean LAST_UPDATE_COUNT = true;
+    public static final String LAST_UPDATE_COUNT = "true";
     /** Default <code>lobBufferSize</code> property. */
-    public static final int LOB_BUFFER_SIZE = 32768;
+    public static final String LOB_BUFFER_SIZE = "32768";
     /** Default <code>loginTimeout</code> property. */
-    public static final int LOGIN_TIMEOUT = 0;
+    public static final String LOGIN_TIMEOUT = "0";
     /** Default <code>macAddress</code> property. */
     public static final String MAC_ADDRESS = "000000000000";
     /** Default <code>namedPipe</code> property. */
-    public static final boolean NAMED_PIPE = false;
+    public static final String NAMED_PIPE = "false";
     /** Default <code>namedPipePath</code> property for SQL Server. */
     public static final String NAMED_PIPE_PATH_SQLSERVER = "/sql/query";
     /** Default <code>namedPipePath</code> property for Sybase. */
     public static final String NAMED_PIPE_PATH_SYBASE = "/sybase/query";
     /** Default <code>packetSize</code> property for TDS 4.2 and TDS 5.0. */
-    public static final int PACKET_SIZE_42_50 = TdsCore.MIN_PKT_SIZE;
+    public static final String PACKET_SIZE_42_50 = String.valueOf(TdsCore.MIN_PKT_SIZE);
     /** Default <code>packetSize</code> property for TDS 7.0 and TDS 8.0. */
-    public static final int PACKET_SIZE_70_80 = 0; // server sets packet size
+    public static final String PACKET_SIZE_70_80 = "0"; // server sets packet size
     /** Default <code>password</code> property. */
     public static final String PASSWORD = "";
     /** Default <code>portNumber</code> property for SQL Server. */
-    public static final int PORT_NUMBER_SQLSERVER = 1433;
+    public static final String PORT_NUMBER_SQLSERVER = "1433";
     /** Default <code>portNumber</code> property for Sybase. */
-    public static final int PORT_NUMBER_SYBASE = 7100;
+    public static final String PORT_NUMBER_SYBASE = "7100";
     /** Default <code>prepareSql</code> property. */
-    public static final int PREPARE_SQL = TdsCore.TEMPORARY_STORED_PROCEDURES;
+    public static final String PREPARE_SQL = String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES);
     /** Default <code>progName</code> property. */
     public static final String PROG_NAME = "jTDS";
     /** Default <code>sendStringParametersAsUnicode</code> property. */
-    public static final boolean USE_UNICODE = true;
+    public static final String USE_UNICODE = "true";
     /** Default <code>user</code> property. */
     public static final String USER = "";
 
@@ -101,14 +101,36 @@ public final class DefaultProperties {
     /** Default <code>tds</code> property for TDS 8.0. */
     public static final String TDS_VERSION_80 = "8.0";
 
+    /** Default TDS version based on server type */
+    private static final HashMap tdsDefaults;
+    /** Default port number based on server type */
+    private static final HashMap portNumberDefaults;
+    /** Default packet size based on TDS version */
+    private static final HashMap packetSizeDefaults;
+
+    static {
+        tdsDefaults = new HashMap(2);
+        tdsDefaults.put(String.valueOf(Driver.SQLSERVER), TDS_VERSION_80);
+        tdsDefaults.put(String.valueOf(Driver.SYBASE), TDS_VERSION_50);
+
+        portNumberDefaults = new HashMap(2);
+        portNumberDefaults.put(String.valueOf(Driver.SQLSERVER), PORT_NUMBER_SQLSERVER);
+        portNumberDefaults.put(String.valueOf(Driver.SYBASE), PORT_NUMBER_SYBASE);
+
+        packetSizeDefaults = new HashMap(4);
+        packetSizeDefaults.put(TDS_VERSION_42, PACKET_SIZE_42_50);
+        packetSizeDefaults.put(TDS_VERSION_50, PACKET_SIZE_42_50);
+        packetSizeDefaults.put(TDS_VERSION_70, PACKET_SIZE_70_80);
+        packetSizeDefaults.put(TDS_VERSION_80, PACKET_SIZE_70_80);
+    }
 
     /**
      * Add default properties to the <code>props</code> properties object.
-     * 
+     *
      * @param props The properties object.
      * @return The updated <code>props</code> object, or <code>null</code>
      *         if the <code>serverType</code> property is not set.
-     */ 
+     */
     public static Properties addDefaultProperties(final Properties props) {
         final String serverType = props.getProperty(Messages.get("prop.servertype"));
 
@@ -116,15 +138,8 @@ public final class DefaultProperties {
             return null;
         }
 
-
-        final HashMap tdsDefaults = new HashMap(2);
-        tdsDefaults.put(String.valueOf(Driver.SQLSERVER), TDS_VERSION_70);
-        tdsDefaults.put(String.valueOf(Driver.SYBASE), TDS_VERSION_50);
         addDefaultPropertyIfNotSet(props, "prop.tds", "prop.servertype", tdsDefaults);
 
-        final HashMap portNumberDefaults = new HashMap(2);
-        portNumberDefaults.put(String.valueOf(Driver.SQLSERVER), String.valueOf(PORT_NUMBER_SQLSERVER));
-        portNumberDefaults.put(String.valueOf(Driver.SYBASE), String.valueOf(PORT_NUMBER_SYBASE));
         addDefaultPropertyIfNotSet(props, "prop.portnumber", "prop.servertype", portNumberDefaults);
 
         addDefaultPropertyIfNotSet(props, "prop.user", USER);
@@ -132,22 +147,17 @@ public final class DefaultProperties {
 
         addDefaultPropertyIfNotSet(props, "prop.databasename", DATABASE_NAME);
         addDefaultPropertyIfNotSet(props, "prop.appname", APP_NAME);
-        addDefaultPropertyIfNotSet(props, "prop.lastupdatecount", String.valueOf(LAST_UPDATE_COUNT));
-        addDefaultPropertyIfNotSet(props, "prop.lobbuffer", String.valueOf(LOB_BUFFER_SIZE));
-        addDefaultPropertyIfNotSet(props, "prop.logintimeout", String.valueOf(LOGIN_TIMEOUT));
+        addDefaultPropertyIfNotSet(props, "prop.lastupdatecount", LAST_UPDATE_COUNT);
+        addDefaultPropertyIfNotSet(props, "prop.lobbuffer", LOB_BUFFER_SIZE);
+        addDefaultPropertyIfNotSet(props, "prop.logintimeout", LOGIN_TIMEOUT);
         addDefaultPropertyIfNotSet(props, "prop.macaddress", MAC_ADDRESS);
-        addDefaultPropertyIfNotSet(props, "prop.namedpipe", String.valueOf(NAMED_PIPE));
+        addDefaultPropertyIfNotSet(props, "prop.namedpipe", NAMED_PIPE);
 
-        final HashMap packetSizeDefaults = new HashMap(4);
-        packetSizeDefaults.put(TDS_VERSION_42, String.valueOf(PACKET_SIZE_42_50));
-        packetSizeDefaults.put(TDS_VERSION_50, String.valueOf(PACKET_SIZE_42_50));
-        packetSizeDefaults.put(TDS_VERSION_70, String.valueOf(PACKET_SIZE_70_80));
-        packetSizeDefaults.put(TDS_VERSION_80, String.valueOf(PACKET_SIZE_70_80));
         addDefaultPropertyIfNotSet(props, "prop.packetsize", "prop.tds", packetSizeDefaults);
 
-        addDefaultPropertyIfNotSet(props, "prop.preparesql", String.valueOf(PREPARE_SQL));
+        addDefaultPropertyIfNotSet(props, "prop.preparesql", PREPARE_SQL);
         addDefaultPropertyIfNotSet(props, "prop.progname", PROG_NAME);
-        addDefaultPropertyIfNotSet(props, "prop.useunicode", String.valueOf(USE_UNICODE));
+        addDefaultPropertyIfNotSet(props, "prop.useunicode", USE_UNICODE);
 
         return props;
     }
@@ -155,15 +165,15 @@ public final class DefaultProperties {
 
     /**
      * Sets a default property if the property is not already set.
-     * 
+     *
      * @param props The properties object.
      * @param key The message key to set.
      * @param defaultValue The default value to set.
-     */ 
+     */
     private static void addDefaultPropertyIfNotSet(
             final Properties props, final String key, final String defaultValue) {
         final String messageKey = Messages.get(key);
-        
+
         if (props.getProperty(messageKey) == null) {
             props.setProperty(messageKey, defaultValue);
         }
@@ -174,27 +184,27 @@ public final class DefaultProperties {
      * Sets a default property if the property is not already set, using
      * the <code>defaultKey</code> and the <code>defaults</code> map to
      * determine the correct value.
-     * 
+     *
      * @param props The properties object.
      * @param key The message key to set.
      * @param defaultKey The key whose value determines which default
      *        value to set from <code>defaults</code>.
      * @param defaults The mapping of <code>defaultKey</code> values to
      *        the correct <code>key</code> value to set.
-     */ 
+     */
     private static void addDefaultPropertyIfNotSet(
             final Properties props, final String key, final String defaultKey, final Map defaults) {
         final String defaultKeyValue = props.getProperty(Messages.get(defaultKey));
-        
+
         if (defaultKeyValue == null) {
             return;
         }
 
         final String messageKey = Messages.get(key);
-        
+
         if (props.getProperty(messageKey) == null) {
             final Object defaultValue = defaults.get(defaultKeyValue);
-            
+
             if (defaultValue != null) {
                 props.setProperty(messageKey, String.valueOf(defaultValue));
             }
@@ -204,7 +214,7 @@ public final class DefaultProperties {
 
     /**
      * Converts an integer server type to its string representation.
-     * 
+     *
      * @param serverType The server type as an integer.
      * @return The server type as a string if known, or <code>null</code> if unknown.
      */
@@ -221,7 +231,7 @@ public final class DefaultProperties {
 
     /**
      * Converts a string server type to its integer representation.
-     * 
+     *
      * @param serverType The server type as a string.
      * @return The server type as an integer if known, or <code>null</code> if unknown.
      */
@@ -238,7 +248,7 @@ public final class DefaultProperties {
 
     /**
      * Converts a string TDS version to its integer representation.
-     * 
+     *
      * @param tdsVersion The TDS version as a string.
      * @return The TDS version as an integer if known, or <code>null</code> if unknown.
      */

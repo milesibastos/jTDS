@@ -32,7 +32,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.12 2004-09-13 21:24:15 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.13 2004-09-23 14:26:58 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -2216,6 +2216,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             return true;
         }
 
+        // TODO Shouldn't BLOB and CLOB be handled here, too?
         switch (fromType) {
             // SAfe Most types will convert to anything but IMAGE and
             //      TEXT/NTEXT (and UNIQUEIDENTIFIER, but that's not a standard

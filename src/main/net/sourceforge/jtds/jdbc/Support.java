@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.19 2004-09-05 16:45:29 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.20 2004-09-23 14:26:59 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -84,6 +84,8 @@ public class Support {
         typeMap.put(BlobImpl.class,           new Integer(java.sql.Types.LONGVARBINARY));
         typeMap.put(ClobImpl.class,           new Integer(java.sql.Types.LONGVARCHAR));
         typeMap.put(String.class,             new Integer(java.sql.Types.VARCHAR));
+        typeMap.put(Blob.class,               new Integer(java.sql.Types.LONGVARBINARY));
+        typeMap.put(Clob.class,               new Integer(java.sql.Types.LONGVARCHAR));
     }
 
     /**
@@ -265,7 +267,6 @@ public class Support {
 
                     break;
 
-                case java.sql.Types.LONGVARCHAR:
                 case java.sql.Types.VARCHAR:
                 case java.sql.Types.CHAR:
                     if (x == null) {
@@ -342,7 +343,6 @@ public class Support {
 
                     break;
 
-                case java.sql.Types.LONGVARBINARY:
                 case java.sql.Types.VARBINARY:
                 case java.sql.Types.BINARY:
                     if (x == null) {
@@ -451,6 +451,7 @@ public class Support {
                                     x.getClass().getName(),
                                     getJdbcTypeName(jdbcType)), "22005");
 
+                case java.sql.Types.LONGVARBINARY:
                 case java.sql.Types.BLOB:
                     if (x == null) {
                         return null;
@@ -484,6 +485,7 @@ public class Support {
 
                     break;
 
+                case java.sql.Types.LONGVARCHAR:
                 case java.sql.Types.CLOB:
                     if (x == null) {
                         return null;
@@ -631,17 +633,17 @@ public class Support {
 
             case java.sql.Types.CHAR:
             case java.sql.Types.VARCHAR:
-            case java.sql.Types.LONGVARCHAR:
                 return "java.lang.String";
 
             case java.sql.Types.BINARY:
             case java.sql.Types.VARBINARY:
-            case java.sql.Types.LONGVARBINARY:
-                return "byte[]";
+                return "[B";
 
+            case java.sql.Types.LONGVARBINARY:
             case java.sql.Types.BLOB:
                 return "java.sql.Blob";
 
+            case java.sql.Types.LONGVARCHAR:
             case java.sql.Types.CLOB:
                 return "java.sql.Clob";
 

@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.15 2004-09-16 09:12:15 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.16 2004-09-23 14:26:59 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -252,29 +252,40 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @param scale The decimal scale -1 if not set.
      */
     public void setObjectBase(int parameterIndex, Object x, int targetSqlType, int scale)
-         throws SQLException {
+            throws SQLException {
+        int length = 0;
 
-         if (targetSqlType == java.sql.Types.CLOB) {
-             targetSqlType = java.sql.Types.LONGVARCHAR;
-         } else if (targetSqlType == java.sql.Types.BLOB) {
-             targetSqlType = java.sql.Types.LONGVARBINARY;
-         }
+        if (targetSqlType == java.sql.Types.CLOB) {
+            targetSqlType = java.sql.Types.LONGVARCHAR;
+        } else if (targetSqlType == java.sql.Types.BLOB) {
+            targetSqlType = java.sql.Types.LONGVARBINARY;
+        }
 
-         if (x != null) {
-             x = Support.convert(this, x, targetSqlType, connection.getCharSet());
+        if (x != null) {
+            x = Support.convert(this, x, targetSqlType, connection.getCharSet());
 
-             if (scale >= 0) {
-                 if (x instanceof BigDecimal) {
-                     x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
-                 } else if (x instanceof Number) {
-                     f.setMaximumFractionDigits(scale);
-                     x = Support.convert(this, f.format(x), targetSqlType, connection.getCharSet());
-                 }
-             }
-         }
+            if (scale >= 0) {
+                if (x instanceof BigDecimal) {
+                    x = ((BigDecimal) x).setScale(scale, BigDecimal.ROUND_HALF_UP);
+                } else if (x instanceof Number) {
+                    f.setMaximumFractionDigits(scale);
+                    x = Support.convert(this, f.format(x), targetSqlType, connection.getCharSet());
+                }
+            }
 
-         setParameter(parameterIndex, x, targetSqlType, scale, 0);
-     }
+            if (x instanceof Blob) {
+                Blob blob = (Blob) x;
+                length = (int) blob.length();
+                x = blob.getBinaryStream();
+            } else if (x instanceof Clob) {
+                Clob clob = (Clob) x;
+                length = (int) clob.length();
+                x = clob.getCharacterStream();
+            }
+        }
+
+        setParameter(parameterIndex, x, targetSqlType, scale, length);
+    }
 
     /**
      * Update the ParamInfo object for the specified parameter.

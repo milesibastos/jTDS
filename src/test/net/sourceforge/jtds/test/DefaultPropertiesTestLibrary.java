@@ -40,17 +40,17 @@ import java.util.Properties;
  *     arguments.  (The {@link #suite()} method in this class should
  *     <em>not</em> be overridden.)</li>
  * </ol>
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.10 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.11 2004-09-23 14:27:01 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /** Test JDBC URL for SQL Server. */
-    private static final String URL_SQLSERVER = 
+    private static final String URL_SQLSERVER =
             "jdbc:jtds:" + DefaultProperties.SERVER_TYPE_SQLSERVER + "://servername";
     /** Test JDBC URL for Sybase. */
-    private static final String URL_SYBASE = 
+    private static final String URL_SYBASE =
             "jdbc:jtds:" + DefaultProperties.SERVER_TYPE_SYBASE + "://servername";
 
     /** Object used to run all of the tests. */
@@ -64,9 +64,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     /**
      * Provides a null test suite so that JUnit will not try to instantiate
      * this class directly.
-     * 
+     *
      * @return The test suite (always <code>null</code>).
-     */ 
+     */
     public static final Test suite() {
         return null;
     }
@@ -87,7 +87,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      * <p/>
      * Different values are set depending on whether SQL Server or
      * Sybase is used.
-     */ 
+     */
     public void test_serverType() {
         String fieldName = "serverType";
         String messageKey = "prop.servertype";
@@ -104,7 +104,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     public void test_tds() {
         String fieldName = "tdsVersion";
         String messageKey = "prop.tds";
-        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, DefaultProperties.TDS_VERSION_70);
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, DefaultProperties.TDS_VERSION_80);
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, DefaultProperties.TDS_VERSION_50);
         }
@@ -116,7 +116,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      * <p/>
      * Different values are set depending on whether SQL Server or
      * Sybase is used.
-     */ 
+     */
     public void test_portNumber() {
         String fieldName = "portNumber";
         String messageKey = "prop.portnumber";
@@ -131,7 +131,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>databaseName</code> property.
-     */ 
+     */
     public void test_databaseName() {
         String fieldName = "databaseName";
         String messageKey = "prop.databasename";
@@ -145,7 +145,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>appName</code> property.
-     */ 
+     */
     public void test_appName() {
         String fieldName = "appName";
         String messageKey = "prop.appname";
@@ -159,7 +159,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>lastUpdateCount</code> property.
-     */ 
+     */
     public void test_lastUpdateCount() {
         String fieldName = "lastUpdateCount";
         String messageKey = "prop.lastupdatecount";
@@ -173,7 +173,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>lobBuffer</code> property.
-     */ 
+     */
     public void test_lobBuffer() {
         String fieldName = "lobBuffer";
         String messageKey = "prop.lobbuffer";
@@ -187,7 +187,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>loginTimeout</code> property.
-     */ 
+     */
     public void test_loginTimeout() {
         String fieldName = "loginTimeout";
         String messageKey = "prop.logintimeout";
@@ -201,7 +201,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>macAddress</code> property.
-     */ 
+     */
 
     public void test_macAddress() {
         String fieldName = "macAddress";
@@ -216,7 +216,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>namedPipe</code> property.
-     */ 
+     */
     public void test_namedPipe() {
         String fieldName = "namedPipe";
         String messageKey = "prop.namedpipe";
@@ -230,7 +230,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>packetSize</code> property.
-     */ 
+     */
     public void test_packetSize() {
 
         String fieldName = "packetSize";
@@ -256,7 +256,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>prepareSql</code> property.
-     */ 
+     */
     public void test_prepareSql() {
         String fieldName = "prepareSql";
         String messageKey = "prop.preparesql";
@@ -270,7 +270,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>progName</code> property.
-     */ 
+     */
     public void test_progName() {
         String fieldName = "progName";
         String messageKey = "prop.progname";
@@ -284,7 +284,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Test the <code>sendStringParametersAsUnicode</code> property.
-     */ 
+     */
     public void test_sendStringParametersAsUnicode() {
         String fieldName = "sendStringParametersAsUnicode";
         String messageKey = "prop.useunicode";
@@ -299,13 +299,13 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     /**
      * Assert that the <code>expected</code> property value is set using
      * a given <code>url</code> and <code>tdsVersion</code> property.
-     * 
+     *
      * @param url The JDBC URL.
      * @param tdsVersion The TDS version.
      * @param key The message key.
      * @param fieldName The field name used in the class.
      * @param expected The expected value of the property.
-     */ 
+     */
     private void assertDefaultPropertyByTdsVersion(
             String url, String tdsVersion, String key, String fieldName, String expected) {
 
@@ -318,12 +318,12 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     /**
      * Assert that the <code>expected</code> property value is set using
      * a given <code>url</code>.
-     * 
+     *
      * @param url The JDBC URL.
      * @param key The message key.
      * @param fieldName The field name used in the class.
      * @param expected The expected value of the property.
-     */ 
+     */
     private void assertDefaultPropertyByServerType(String url, String key, String fieldName, String expected) {
         getTester().assertDefaultProperty("Default property incorrect", url, new Properties(), fieldName, key, expected);
     }
@@ -331,7 +331,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Getter for {@link #tester}.
-     * 
+     *
      * @return Value of {@link #tester}.
      */
     protected DefaultPropertiesTester getTester() {
@@ -341,7 +341,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Setter for {@link #tester}.
-     * 
+     *
      * @param tester The value to set {@link #tester} to.
      */
     public void setTester(DefaultPropertiesTester tester) {
@@ -351,7 +351,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Getter for {@link #onlySqlServerTests}.
-     * 
+     *
      * @return Value of {@link #onlySqlServerTests}.
      */
     public boolean isOnlySqlServerTests() {
@@ -361,7 +361,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Setter for {@link #onlySqlServerTests}.
-     * 
+     *
      * @param onlySqlServerTests The value to set {@link #onlySqlServerTests} to.
      */
     protected void setOnlySqlServerTests(boolean onlySqlServerTests) {
@@ -371,7 +371,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Getter for {@link #onlyTds70Tests}.
-     * 
+     *
      * @return Value of {@link #onlyTds70Tests}.
      */
     public boolean isOnlyTds70Tests() {
@@ -381,7 +381,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Setter for {@link #onlyTds70Tests}.
-     * 
+     *
      * @param onlyTds70Tests The value to set {@link #onlyTds70Tests} to.
      */
     protected void setOnlyTds70Tests(boolean onlyTds70Tests) {
@@ -391,7 +391,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
     /**
      * Changes the first character of a string to uppercase.
-     * 
+     *
      * @param s The string to be processed.
      * @return The value of <code>s</code> if it is <code>null</code> or zero length,
      *         else the string with the first character changed to uppercase.

@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.18 2004-09-08 01:27:26 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.19 2004-09-23 14:26:59 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -130,30 +130,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         super(statement, resultSetType, concurrency, null, false);
 
         cursorCreate(sql, procName, procedureParams);
-    }
-
-    /**
-     * Set the specified column's data value.
-     *
-     * @param colIndex The index of the column in the row.
-     * @param value The new column value.
-     */
-    protected void setColValue(int colIndex, Object value, int length)
-    throws SQLException {
-        if (colIndex < 1 || colIndex > columns.length) {
-            throw new IllegalArgumentException(
-                    "columnIndex " + colIndex + " invalid");
-        }
-
-        if (onInsertRow && insertRow == null || !onInsertRow && currentRow == null) {
-            throw new SQLException(Messages.get("error.resultset.norow"), "24000");
-        }
-
-        if (onInsertRow) {
-            currentRow[colIndex - 1].setValue(value);
-        } else {
-            insertRow[colIndex - 1].setValue(value);
-        }
     }
 
     /**
@@ -310,7 +286,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 //                                      procName);
 //                }
             }
-            procName = null;
+//            procName = null;
         }
         //
         // If using sp_cursoropen need to set a flag on scrollOpt.
@@ -384,8 +360,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         // Setup SQL statement parameter
         //
-        ParamInfo pSQL = null;
-        pSQL           = new ParamInfo();
+        ParamInfo pSQL = new ParamInfo();
         pSQL.isSet     = true;
         pSQL.jdbcType  = Types.LONGVARCHAR;
         pSQL.value     = sql;
@@ -419,7 +394,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             columns = null; // Will be populated if preparing a select
 
             // Use sp_cursorprepare approach
-            tds.executeSQL(null, "sp_cursorprepare", params, false, 0, 0);
+            tds.executeSQL(null, "sp_cursorprepare", params, false, statement.getQueryTimeout(), -1);
             tds.clearResponseQueue();
 
             // columns will now hold meta data for select statements
@@ -784,7 +759,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         retVal = null;
 
-        tds.executeSQL(null, "sp_cursor", param, false, statement.getQueryTimeout(), 0);
+        tds.executeSQL(null, "sp_cursor", param, false, statement.getQueryTimeout(), -1);
         tds.clearResponseQueue();
         statement.getMessages().checkErrors();
         retVal = tds.getReturnStatus();
@@ -809,7 +784,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         param[0].value = cursorHandle;
         param[0].isOutput = false;
 
-        tds.executeSQL(null, "sp_cursorclose", param, false, 0, 0);
+        tds.executeSQL(null, "sp_cursorclose", param, false, statement.getQueryTimeout(), -1);
         tds.clearResponseQueue();
         statement.getMessages().checkErrors();
         retVal = tds.getReturnStatus();
@@ -818,7 +793,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (prepStmtHandle != null) {
             param[0].value = prepStmtHandle;
-            tds.executeSQL(null, "sp_cursorunprepare", param, false, 0, 0);
+            tds.executeSQL(null, "sp_cursorunprepare", param, false, statement.getQueryTimeout(), -1);
             tds.clearResponseQueue();
             statement.getMessages().checkErrors();
         }

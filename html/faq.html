@@ -208,7 +208,7 @@
           and the string is submitted using the default character encoding (or
           the other way around) SQLServer will perform an index scan instead of
           an index seek.</dd>
-        <dt><code>lastUpdateCount</code> (default - <code>false</code>)</dt>
+        <dt><code>lastUpdateCount</code> (default - <code>true</code>)</dt>
         <dd>If <code>true</code> only the last update count will be returned by
           <code>executeUpdate()</code>. This is useful in case you are updating
           or inserting into tables that have triggers (such as replicated tables);

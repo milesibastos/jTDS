@@ -2,6 +2,13 @@
 Changes from jTDS 0.4
 =======================
 
+10/17/2002 - Alin Sinpalean
+
+ o Oooops! There were a lot of problems with my implementation from yesterday.
+   It took me quite a lot of time to figure out where all those problems came
+   from, but I finally managed to get to a state in which it seems to work. I
+   even created a good test for it.
+
 10/16/2002 - Alin Sinpalean
 
  o I think I fixed the 'cursor not found' issue with cursor result sets. Still

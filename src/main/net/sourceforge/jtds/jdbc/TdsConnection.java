@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -119,11 +119,12 @@ public class TdsConnection implements Connection
      * <code>Tds</code>. If <code>false</code> it means no <code>CursorResultSet</code> were created on this connection.
      */
     private boolean haveMainTds = false;
+    final Object mainTdsMonitor = new Object();
 
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -752,11 +753,20 @@ public class TdsConnection implements Connection
                 }
             }
 
-            if( ((TdsInstance)tdsPool.elementAt(i)).inUse )
+            TdsInstance inst = (TdsInstance)tdsPool.elementAt(i);
+
+            // This also means that i==0 and haveMainTds==true
+            if( mainTds )
+                synchronized( inst.tds )
+                {
+                    // SAfe Do nothing, just wait for it to be released (if it's in use).
+                }
+
+            if( inst.inUse )
                 throw new TdsException("Internal Error. Tds "+i+" is already allocated.");
 
-            ((TdsInstance)tdsPool.elementAt(i)).inUse = true;
-            result = ((TdsInstance)(tdsPool.elementAt(i))).tds;
+            inst.inUse = true;
+            result = inst.tds;
 
             result.changeSettings(autoCommit, transactionIsolationLevel);
         }
@@ -786,9 +796,8 @@ public class TdsConnection implements Connection
 
         for( i=tdsPool.size()-1; i>=min && ((TdsInstance)tdsPool.elementAt(i)).inUse; i-- );
 
-        return i;
+        return i==0 && haveMainTds ? -1 : i;
     }
-
 
     /**
      * Return a <code>Tds</code> instance back to the <code>Tds</code> pool for reuse.

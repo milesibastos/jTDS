@@ -47,7 +47,8 @@ public class UpdateTest
         rs.first();
         dumpRow( rs );
 
-        stmt.execute( "DROP TABLE #temp" );
+        // SAfe Can no longer do this. It's going to be executed on a different Tds, which is wrong. :o(
+//        stmt.execute( "DROP TABLE #temp" );
 
         stmt.close();
     }

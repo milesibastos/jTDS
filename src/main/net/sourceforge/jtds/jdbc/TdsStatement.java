@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.2 2002-10-16 17:37:59 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.3 2002-10-17 14:59:59 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -550,14 +550,19 @@ public class TdsStatement implements java.sql.Statement
 
     synchronized Tds getTds(boolean mainTds) throws SQLException
     {
-        if( actTds != null )
-            return actTds;
-        else
+        // SAfe If the main Tds is requested, then simply return it
+        if( mainTds )
+            return connection.allocateTds(mainTds);
+
+        // SAfe Else, find one and assign it to this Statement
+        if( actTds == null )
         {
-            actTds=connection.allocateTds(false);
+            actTds=connection.allocateTds(mainTds);
             actTds.setStatement(this);
             return actTds;
         }
+        else
+            return actTds;
     }
 
     /**

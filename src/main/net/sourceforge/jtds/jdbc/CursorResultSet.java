@@ -48,6 +48,7 @@ public class CursorResultSet extends AbstractResultSet
 
     private String sql;
     private TdsStatement stmt;
+    private TdsConnection conn;
 
     private int direction = FETCH_FORWARD;
     private int fetchSize = 1;
@@ -82,6 +83,7 @@ public class CursorResultSet extends AbstractResultSet
              throws SQLException
     {
         this.stmt = stmt;
+        this.conn = (TdsConnection)stmt.getConnection();
         this.sql = sql;
         warningChain = new SQLWarningChain();
 
@@ -167,17 +169,20 @@ public class CursorResultSet extends AbstractResultSet
 
     public void close() throws SQLException
     {
-        synchronized( stmt )
+        if( open )
         {
-            if( open )
+            synchronized( conn.mainTdsMonitor )
             {
-                stmt.internalExecute("CLOSE " + cursorName);
-                stmt.internalExecute("DEALLOCATE " + cursorName);
+                Tds tds = conn.allocateTds(true);
+                stmt.internalExecute("CLOSE " + cursorName, tds, warningChain);
+                stmt.internalExecute("DEALLOCATE " + cursorName, tds, warningChain);
                 open = false;
+                try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
             }
         }
 
         stmt = null;
+        conn = null;
     }
 
     public SQLWarning getWarnings() throws SQLException
@@ -205,9 +210,10 @@ public class CursorResultSet extends AbstractResultSet
     {
         TdsResultSet rs = null;
 
-        synchronized( stmt )
+        synchronized( conn.mainTdsMonitor )
         {
-            if( !stmt.internalExecute(sql, stmt.getTds(true), warningChain) )
+            Tds tds = conn.allocateTds(true);
+            if( !stmt.internalExecute(sql, tds, warningChain) )
                 throw new SQLException("No ResultSet was produced.");
 
             rs = (TdsResultSet)stmt.getResultSet();
@@ -220,6 +226,7 @@ public class CursorResultSet extends AbstractResultSet
             current = rs.next() ? rs.currentRow() : null;
             warningChain.addWarning(rs.getWarnings());
             rs.close();
+            try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
         }
 
         // Hide rowstat column.
@@ -372,10 +379,12 @@ public class CursorResultSet extends AbstractResultSet
         //      results. Dirty fix, doesn't take into account that there might
         //      be regular TdsResultSets executing on the Statement at the same
         //      time.
-        synchronized( stmt )
+        synchronized( conn.mainTdsMonitor )
         {
-            stmt.internalExecute(query.toString());
-            stmt.internalExecute("OPEN " + cursorName);
+            Tds tds = conn.allocateTds(true);
+            stmt.internalExecute(query.toString(), tds, warningChain);
+            stmt.internalExecute("OPEN " + cursorName, tds, warningChain);
+            try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
         }
         open = true;
     }

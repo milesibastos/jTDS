@@ -95,11 +95,7 @@ public class LOBTest extends TestBase {
 
         // Test Blob.getBinaryStream()
         InputStream is2 = blob.getBinaryStream();
-        byte[] isTmpData2 = new byte[data.length];
-
-        assertTrue(is2.read(isTmpData2) == data.length);
-        assertTrue(is2.read() == -1);
-        assertTrue(Arrays.equals(data, isTmpData2));
+        compareInputStreams(new ByteArrayInputStream(data), is2);
 
         assertTrue(!rs.next());
         stmt2.close();
@@ -1064,29 +1060,17 @@ public class LOBTest extends TestBase {
         assertTrue(data.equals(rs.getString(1)));
 
         // Test ResultSet.getAsciiStream()
-        InputStream is = rs.getAsciiStream(1);
-        byte[] isTmpData = new byte[data.length()];
-
-        assertTrue(is.read(isTmpData) == data.length());
-        assertTrue(is.read() == -1);
-        assertTrue(data.equals(new String(isTmpData, "ASCII")));
+        InputStream is = rs.getAsciiStream(1);        
+        compareInputStreams(new ByteArrayInputStream(data.getBytes("ASCII")), is);
 
         // Test ResultSet.getUnicodeStream(()
         InputStream is2 = rs.getUnicodeStream(1);
-        byte[] isTmpData2 = new byte[data.length() * 2];
-
-        assertTrue(is2.read(isTmpData2) == data.length() * 2);
-        assertTrue(is2.read() == -1);
-        assertTrue(data.equals(new String(isTmpData2, "UTF-16BE")));
+        compareInputStreams(new ByteArrayInputStream(data.getBytes("UTF-16BE")), is2);
 
         // Test ResultSet.getCharacterStream()
         Reader rdr = rs.getCharacterStream(1);
-        char[] rdrTmpData = new char[data.length()];
-
-        assertTrue(rdr.read(rdrTmpData) == data.length());
-        assertTrue(rdr.read() == -1);
-        assertTrue(data.equals(new String(rdrTmpData)));
-
+        compareReaders(new StringReader(data), rdr);
+        
         // Test ResultSet.getClob()
         Clob clob = rs.getClob(1);
 
@@ -1100,19 +1084,11 @@ public class LOBTest extends TestBase {
 
         // Test Clob.getAsciiStream()
         InputStream is3 = clob.getAsciiStream();
-        byte[] isTmpData3 = new byte[data.length()];
-
-        assertTrue(is3.read(isTmpData3) == data.length());
-        assertTrue(is3.read() == -1);
-        assertTrue(data.equals(new String(isTmpData3, "ASCII")));
+        compareInputStreams(new ByteArrayInputStream(data.getBytes("ASCII")), is3);
 
         // Test Clob.getCharacterStream()
         Reader rdr2 = rs.getCharacterStream(1);
-        char[] rdrTmpData2 = new char[data.length()];
-
-        assertTrue(rdr2.read(rdrTmpData2) == data.length());
-        assertTrue(rdr2.read() == -1);
-        assertTrue(data.equals(new String(rdrTmpData2)));
+        compareReaders(new StringReader(data), rdr2);
 
         assertTrue(!rs.next());
         stmt2.close();

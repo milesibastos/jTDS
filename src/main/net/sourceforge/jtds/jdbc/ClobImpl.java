@@ -17,21 +17,16 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.io.*;
 import java.sql.Clob;
 import java.sql.SQLException;
 
+import net.sourceforge.jtds.util.Logger;
+import net.sourceforge.jtds.util.ReaderInputStream;
+import net.sourceforge.jtds.util.WriterOutputStream;
+
 /**
- * An in-memory representation of character data.
+ * An in-memory, disk or database representation of character data.
  * <p>
  * Implementation note:
  * <ol>
@@ -42,78 +37,100 @@ import java.sql.SQLException;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.9 2004-06-27 17:00:50 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.10 2004-07-01 21:14:30 bheineman Exp $
  */
 public class ClobImpl implements Clob {
+	private static final int MAXIMUM_SIZE = 32768;
+	
     private String _clob;
-    private Reader stream;
-    private int length;
+    private File _clobFile;
+    private JtdsReader _jtdsReader;
 
     /**
      * Constructs a new Clob instance.
      */
-    ClobImpl(String clob)  {
+    ClobImpl() throws SQLException {
+        _clob = "";
+    }
+    
+    /**
+     * Constructs a new Clob instance.
+     *
+     * @param clob The clob object to encapsulate
+     */
+    ClobImpl(String clob) throws SQLException {
         if (clob == null) {
-            throw new IllegalArgumentException("clob String cannot be null.");
+            throw new IllegalArgumentException("clob cannot be null.");
         }
 
-        _clob = clob;
+        _clob = (String) clob;
     }
 
     /**
-     * Constructs a new Clob instance from a stream.
+     * Constructs a new Clob instance.
      *
-     * @param stream The input stream to initialize the Clob.
+     * @param clob The clob object to encapsulate
      */
-    ClobImpl(Reader stream) {
-        this.stream = stream;
-        this.length = ((JtdsReader) stream).available();
-    }
+    ClobImpl(JtdsReader clob) throws SQLException {
+        if (clob == null) {
+            throw new IllegalArgumentException("clob cannot be null.");
+        }
 
+        _jtdsReader = clob;
+    }
+    
     /**
      * Returns a new ascii stream for the CLOB data.
      */
     public synchronized InputStream getAsciiStream() throws SQLException {
-        try {
-            loadClob();
-            return new ByteArrayInputStream(_clob.getBytes("ASCII"));
-        } catch (UnsupportedEncodingException e) {
-            // This should never happen...
-            throw new SQLException(
-                Support.getMessage("error.generic.encoding", e.getMessage()), "HY000");
-        }
+        return new ReaderInputStream(getCharacterStream(), "ASCII");
     }
 
     /**
      * Returns a new reader for the CLOB data.
      */
     public synchronized Reader getCharacterStream() throws SQLException {
-        if (stream != null) {
-            return stream;
+        try {
+            if (_clob != null) {
+                return new StringReader(_clob);
+            } else if (_clobFile != null) {
+                return new BufferedReader(new FileReader(_clobFile));
+            }
+            
+            _jtdsReader.reset();
+            
+            return _jtdsReader;
+        } catch (IOException e) {
+            throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                                   "HY000");
         }
-
-        return new StringReader(_clob);
     }
-
+    
     public synchronized String getSubString(long pos, int length) throws SQLException {
         if (pos < 1) {
             throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
-        } else if (pos > Integer.MAX_VALUE) {
-            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
-        }
-
-        int off = (int) pos - 1;
-
-        loadClob();
-
-        if (off + length > _clob.length()) {
+        } else if (length < 0) {
+            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
+        } else if (pos - 1 + length > length()) {
             throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
+        Reader reader = getCharacterStream();
+
+        skip(reader, pos - 1);
+        
         try {
-            return _clob.substring((int) off, off + length);
-        } catch (Exception e) {
-            throw new SQLException(e.getMessage());
+            char[] buffer = new char[length];
+            
+            if (reader.read(buffer) != length) {
+                throw new SQLException(Support.getMessage("error.blobclob.readlen"), "HY000");
+            }
+            
+            return new String(buffer);
+        } catch (IOException ioe) {
+            throw new SQLException(
+                 Support.getMessage("error.generic.ioread", "String", ioe.getMessage()),
+                                    "HY000");
         }
     }
 
@@ -121,116 +138,315 @@ public class ClobImpl implements Clob {
      * Returns the length of the value.
      */
     public synchronized long length() throws SQLException {
-        if (stream != null) {
-            return length;
+    	if (_clob != null) {
+            return _clob.length();
+    	} else if (_clobFile != null) {
+    		return _clobFile.length();
         }
 
-        return _clob.length();
+        return _jtdsReader.getLength();
     }
 
+    public long position(String searchStr, long start) throws SQLException {
+        return position(new ClobImpl(searchStr), start);
+    }
+    
     public synchronized long position(Clob searchStr, long start) throws SQLException {
         if (searchStr == null) {
             throw new SQLException(Support.getMessage("error.clob.searchnull"), "HY024");
-        } else if (start > Integer.MAX_VALUE) {
-            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
         }
 
-        loadClob();
+        try {
+            Reader reader = getCharacterStream();
+            long length = length() - searchStr.length();
+            boolean reset = true;
+            
+            for (long i = start; i < length; i++) {
+                boolean found = true;
+                int value;
+                
+                if (reset) {
+                    reader = getCharacterStream();
+                    skip(reader, i);
+                    reset = false;
+                }
+            
+                value = reader.read();
+                
+                Reader searchReader = searchStr.getCharacterStream();
+                int searchValue;
+                
+                while ((searchValue = searchReader.read()) != -1) {
+                    if (value != searchValue) {
+                        found = false;
+                        break;
+                    }
+                    
+                    reset = true;
+                }
 
-        long length = searchStr.length();
-
-        if (length > Integer.MAX_VALUE) {
-            throw new SQLException(Support.getMessage("error.clob.searchtoolong"), "HY090");
+                if (found) {
+                    return i;
+                }
+            }
+        } catch (IOException e) {
+            throw new SQLException(
+                Support.getMessage("error.generic.ioread", "String", e.getMessage()),
+                                   "HY000");
         }
 
-        return _clob.indexOf(searchStr.getSubString(0, (int) length),
-                             (int) --start);
-    }
-
-    public synchronized long position(String searchStr, long start) throws SQLException {
-        if (searchStr == null) {
-            throw new SQLException(Support.getMessage("error.clob.searchnull"), "HY024");
-        } else if (start < 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
-        } else if (start > Integer.MAX_VALUE) {
-            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY024");
-        }
-
-        return _clob.indexOf(searchStr, (int) --start);
+        return -1;
     }
 
     public synchronized OutputStream setAsciiStream(final long pos) throws SQLException {
-        if (pos < 1) {
-            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
-        } else if (pos > _clob.length()) {
-            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY024");
-        } else if (pos >= Integer.MAX_VALUE) {
-            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY024");
-        }
-
-        final byte[] clob;
-
-        try {
-            clob = _clob.getBytes("ASCII");
-        } catch (UnsupportedEncodingException e) {
-            // This should never happen...
-            throw new SQLException(
-                Support.getMessage("error.generic.encoding", e.getMessage()), "HY000");
-        }
-
-        stream = null;
-
-        return new ByteArrayOutputStream() {
-            {
-                write(clob, 0, (int) pos - 1);
-            }
-
-            public void flush() throws IOException {
-                synchronized (ClobImpl.this) {
-                    String clob = new String(toByteArray(), "ASCII");
-
-                    if (clob.length() < _clob.length()) {
-                        _clob = clob + _clob.substring(clob.length());
-                    } else {
-                        _clob = clob;
-                    }
-                }
-            }
-
-            public void close() throws IOException {
-                flush();
-            }
-        };
+        return new WriterOutputStream(setCharacterStream(pos), "ASCII");
     }
 
     public synchronized Writer setCharacterStream(final long pos) throws SQLException {
+        final long length = length();
+        
         if (pos < 1) {
             throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
-        } else if (pos > _clob.length()) {
+        } else if (pos > length && pos != 1) {
             throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY024");
-        } else if (pos >= Integer.MAX_VALUE) {
-            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY024");
         }
 
-        stream = null;
+        return new Writer() {
+            Writer writer;
+            long curPos = pos - 1;
+            boolean securityFailure = false;
 
-        return new StringWriter() {
-            {write(_clob, 0, (int) pos - 1);}
+            {
+                try {
+                    if (length > MAXIMUM_SIZE) {
+                        if (_clobFile == null) {
+                            writeToDisk(getCharacterStream());
+                        }
+                    } else if (_jtdsReader != null) {
+                        StringWriter sw  = new StringWriter((int) length);
 
-            public void flush() {
-                synchronized (ClobImpl.this) {
-                    String clob = this.toString();
+                        char[] buffer = new char[1024];
+                        int result = -1;
 
-                    if (clob.length() < _clob.length()) {
-                        _clob = clob + _clob.substring(clob.length());
-                    } else {
-                        _clob = clob;
+                        while ((_jtdsReader.read(buffer)) != -1) {
+                            sw.write(buffer, 0, result);
+                        }
+
+                        _clob = sw.toString();
+                        _jtdsReader = null;
                     }
+
+                    updateWriter();
+                } catch (IOException e) {
+                    throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                                           "HY000");
                 }
             }
 
+            public void write(int c) throws IOException {
+                synchronized (ClobImpl.this) {
+                    checkSize(1);
+                    writer.write(c);
+                    curPos++;
+                }
+            }
+
+            public void write(char[] cbuf, int off, int len) throws IOException {
+                synchronized (ClobImpl.this) {
+                    checkSize(len);
+                    writer.write(cbuf, off, len);
+                    curPos += len;
+                }
+            }
+
+            /**
+             * Checks the size of the in-memory buffer; if a write will
+             * cause the size to exceed <code>MAXIMUM_SIZE</code> than
+             * the data will be removed from memory and written to disk.
+             *
+             * @param length the length of data to be written
+             */
+            private void checkSize(long length) throws IOException {
+                // Return if the data has already exceeded the maximum size
+                if (curPos > MAXIMUM_SIZE) {
+                    return;
+                }
+
+                // Return if a file is already being used to store the data
+                if (_clobFile != null) {
+                    return;
+                }
+
+                // Return if there was a security failure attempting to
+                // create a buffer file
+                if (securityFailure) {
+                    return;
+                }
+
+                // Return if the length will not exceed the maximum in-memory
+                // value
+                if (curPos + length <= MAXIMUM_SIZE) {
+                    return;
+                }
+
+                if (_clob != null) {
+                    writeToDisk(new StringReader(_clob));
+                    updateWriter();
+                }
+            }
+
+            void writeToDisk(Reader reader) throws IOException {
+                Writer wtr = null;
+
+                try {
+                    _clobFile = File.createTempFile("jtds", ".tmp");
+                    _clobFile.deleteOnExit();
+
+                    wtr = new BufferedWriter(new FileWriter(_clobFile));
+                } catch (SecurityException e) {
+                    // Unable to write to disk
+                    securityFailure = true;
+
+                    wtr = new StringWriter();
+
+                    if (Logger.isActive()) {
+                        Logger.println("Clob: Unable to buffer data to disk: " + e.getMessage());
+                    }
+                }
+
+                try {
+                    char[] buffer = new char[1024];
+                    int result = -1;
+
+                    while ((result = reader.read(buffer)) != -1) {
+                        wtr.write(buffer, 0, result);
+                    }
+                } finally {
+                    wtr.flush();
+
+                    if (wtr instanceof StringWriter) {
+                        _clobFile = null;
+                        _clob = ((StringWriter) wtr).toString();
+                    } else {
+                        _clob = null;
+                    }
+
+                    wtr.close();
+                }
+            }
+
+            /**
+             * Updates the <code>outputStream</code> member by creating the
+             * approperiate type of output stream based upon the current
+             * storage mechanism.
+             *
+             * @throws IOException if any failure occure while creating the
+             *         output stream
+             */
+            void updateWriter() throws IOException {
+                if (_clob != null) {
+                    final long startPos = curPos;
+
+                    writer = new Writer() {
+                        int curPos = (int) startPos;
+                        boolean closed = false;
+                        char[] singleChar = new char[1];
+
+                        public void write(int c) throws IOException {
+                            singleChar[0] = (char) c;
+                            write(singleChar, 0, 1);
+                        }
+
+                        public void write(char[] cbuf, int off, int len) throws IOException {
+                            if (closed) {
+                                throw new IOException("stream closed");
+                            } else if (cbuf == null) {
+                                throw new NullPointerException();
+                            } else if (off < 0
+                                       || len < 0
+                                       || off > cbuf.length
+                                       || off + len > cbuf.length) {
+                                throw new ArrayIndexOutOfBoundsException();
+                            } else if (len == 0) {
+                                return;
+                            }
+                            
+                            // FIXME - Optimize writes; reduce memory allocation
+                            // by creating fewer objects.
+                            if (curPos + 1 > _clob.length()) {
+                                _clob += new String(cbuf, off, len);
+                            } else {
+                                String tmpClob = _clob;
+                                
+                                _clob = tmpClob.substring(0, curPos) + new String(cbuf, off, len);
+                                
+                                if (_clob.length() < tmpClob.length()) {
+                                    _clob += tmpClob.substring(curPos + len);
+                                }
+                            }
+                            
+                            curPos += len;
+                        }
+                        
+                        public void flush() throws IOException {
+                        }
+                        
+                        public void close() throws IOException {
+                            closed = true;
+                        }
+                    };
+                } else {
+                    writer = new Writer() {
+                        RandomAccessFile raf = new RandomAccessFile(_clobFile, "rw");
+                        char[] singleChar = new char[1];
+
+                        {
+                            raf.seek(curPos);
+                        }
+
+                        public void write(int c) throws IOException {
+                            singleChar[0] = (char) c;
+                            write(singleChar, 0, 1);
+                        }
+
+                        public void write(char cbuf[], int off, int len) throws IOException {
+                            if (raf == null) {
+                                throw new IOException("stream closed");
+                            }
+                            
+                            if (cbuf == null) {
+                                throw new NullPointerException();
+                            } else if (off < 0
+                                       || len < 0
+                                       || off > cbuf.length
+                                       || off + len > cbuf.length) {
+                                throw new ArrayIndexOutOfBoundsException();
+                            } else if (len == 0) {
+                                return;
+                            }
+                            
+                            byte[] data = new String(cbuf, off, len).getBytes();
+                            
+                            raf.write(data, 0, data.length);
+                        }
+
+                        public void flush() throws IOException {
+                        }
+                        
+                        public void close() throws IOException {
+                            raf.close();
+                            raf = null;
+                        }
+                    };
+                }
+            }
+
+            public void flush() throws IOException {
+                writer.flush();
+            }
+
             public void close() throws IOException {
-                flush();
+                writer.close();
             }
         };
     }
@@ -239,8 +455,6 @@ public class ClobImpl implements Clob {
         if (str == null) {
             throw new SQLException(Support.getMessage("error.clob.strnull"), "HY090");
         }
-
-        loadClob();
 
         return setString(pos, str, 0, str.length());
     }
@@ -269,42 +483,60 @@ public class ClobImpl implements Clob {
     public synchronized void truncate(long len) throws SQLException {
         if (len < 0) {
             throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
-        } else if (len > _clob.length()) {
+        } else if (len > length()) {
             throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
-        loadClob();
-
-        _clob = _clob.substring(0, (int) len);
-    }
-
-    private void loadClob() throws SQLException {
-        if (stream == null || length < 0) {
+        if (len == length()) {
             return;
-        }
+        } else if (len <= MAXIMUM_SIZE) {
+        	_clob = getSubString(1, (int) len);
+        	_clobFile = null;
+        	_jtdsReader = null;
+        } else {
+	        try {
+	        	Reader reader = getCharacterStream();
+                File tmpFile = _clobFile;
 
-        try {
-            char[] buf = new char[length];
-            if (stream.read(buf) != length)
-                throw new SQLException(Support.getMessage("error.clob.readlen"), "HY000");
-            _clob = new String(buf);
-        } catch (IOException ioe) {
-           throw new SQLException(
-                Support.getMessage("error.generic.ioread", "String", ioe.getMessage()),
-                                        "HY000");
+                _clob = "";
+                _clobFile = null;
+                _jtdsReader = null;
+                
+	        	Writer writer = setCharacterStream(1);
+                char[] buffer = new char[1024];
+                int result = -1;
+                
+                while ((_jtdsReader.read(buffer, 0, (int) Math.min(buffer.length, len))) != -1) {
+                    len -= result;
+                    writer.write(buffer, 0, result);
+                }
+	        	
+	        	writer.close();
+                
+                // If the data came from a file; delete the original file to 
+                // free disk space
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+	        } catch (IOException e) {
+	            throw new SQLException(Support.getMessage("error.generic.iowrite",
+	            		                                  "String",
+														  e.getMessage()),
+	                                   "HY000");
+	        }
         }
     }
 
-    /**
-     * Returns the string representation of this object.
-     */
-    public synchronized String toString() {
+    private void skip(Reader reader, long skip) throws SQLException {
         try {
-            loadClob();
-        } catch (SQLException e) {
-            _clob = "";
-        }
+            long skipped = reader.skip(skip);
 
-        return _clob;
+            if (skipped != skip) {
+                throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
+            }
+        } catch (IOException e) {
+            throw new SQLException(Support.getMessage("error.generic.ioerror", e.getMessage()),
+                                   "HY000");
+        }
     }
 }

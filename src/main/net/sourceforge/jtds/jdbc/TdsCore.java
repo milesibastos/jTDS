@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -904,6 +904,7 @@ public class TdsCore {
 
     /**
      * Read text or image data from the server using readtext.
+     * 
      * @param tabName The parent table for this column.
      * @param colName The name of the text or image column.
      * @param textPtr The text pointer structure.
@@ -913,22 +914,23 @@ public class TdsCore {
      * @throws SQLException
      */
     Object readText(String tabName, String colName, TextPtr textPtr, int offset, int length)
-        throws SQLException
-    {
-        if (colName == null || colName.length() == 0 ||
-            tabName == null || tabName.length() == 0)
-        {
+        throws SQLException {
+        if (colName == null || colName.length() == 0
+            || tabName == null || tabName.length() == 0) {
             throw new SQLException(Support.getMessage("error.tdscore.badtext"), "HY000");
         }
+        
         if (textPtr == null) {
             throw new SQLException(
-                Support.getMessage("error.tdscore.notextptr", tabName+"."+colName),
+                Support.getMessage("error.tdscore.notextptr", tabName + "." + colName),
                                      "HY000");
         }
+        
         Object results = null;
         StringBuffer sql = new StringBuffer(256);
+        
         sql.append("set textsize ");
-        sql.append((length+1) * 2);
+        sql.append((length + 1) * 2);
         sql.append("\r\nreadtext ");
         sql.append(tabName);
         sql.append('.');
@@ -940,18 +942,23 @@ public class TdsCore {
         sql.append(' ');
         sql.append(length);
         sql.append("\r\nset textsize 1");
+        
         if (Logger.isActive()) {
             Logger.println(sql.toString());
         }
+        
         executeSQL(sql.toString(), null, null, false, 0, 0);
         readTextMode = true;
+        
         if (getMoreResults()) {
             if (getNextRow(false)) {
                 results = rowData[0].getTextPtr().value;
             }
         }
+        
         clearResponseQueue();
         messages.checkErrors();
+        
         return results;
     }
 

@@ -27,7 +27,7 @@ import java.sql.SQLException;
  * READTEXT command for text and ntext columns.
  *
  * @author Mike Hutchinson.
- * @version $Id: JtdsReader.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: JtdsReader.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
  */
 public class JtdsReader extends Reader {
     private TdsCore tds;
@@ -69,7 +69,26 @@ public class JtdsReader extends Reader {
     int available() {
         return length - offset;
     }
+    
+    int getLength() {
+        return length;
+    }
 
+    /**
+     * Resets the stream so that the data may be read from the begining.
+     */
+    public void reset() throws IOException {
+        offset = 0;
+        pos = 0;
+        buffer = null;
+        
+        try {
+            fillBuffer();
+        } catch (SQLException e) {
+            throw new IOException("SQL Error: "+ e.getMessage());
+        }
+    }
+    
     /**
      * Invoke READTEXT to obtain the next block of data from the server.
      *
@@ -118,8 +137,8 @@ public class JtdsReader extends Reader {
 
             try {
                 fillBuffer();
-            } catch (SQLException sqle) {
-                throw new IOException("SQL Error: "+ sqle.getMessage());
+            } catch (SQLException e) {
+                throw new IOException("SQL Error: " + e.getMessage());
             }
 
             if (buffer.length == 0) {

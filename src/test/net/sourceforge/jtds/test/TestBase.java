@@ -173,4 +173,62 @@ public class TestBase extends TestCase {
             stmt.execute(sql);
         }
     }
+    
+    public void compareInputStreams(InputStream is1, InputStream is2) throws IOException {
+        if (is1 == null && is2 == null) {
+            return;
+        } else if (is1 == null && is2 != null) {
+            assertTrue("is1 == null && is2 != null", false);
+        } else if (is1 != null && is2 == null) {
+            assertTrue("is1 != null && is2 == null", false);
+        }
+        
+        long count = 0;
+        int value1; 
+        int value2; 
+        
+        while ((value1 = is1.read()) != -1) {
+            value2 = is2.read();
+            
+            if (value2 == -1) {
+                assertTrue("stream 2 EOF at: " + count, false);
+            }
+            
+            assertTrue("stream 1 value [" + value1
+                    + "] differs from stream 2 value ["
+                    + value2 + "] at: " + count,
+                    (value1 == value2));
+            
+            count++;
+        }
+    }
+
+    public void compareReaders(Reader r1, Reader r2) throws IOException {
+        if (r1 == null && r2 == null) {
+            return;
+        } else if (r1 == null && r2 != null) {
+            assertTrue("r1 == null && r2 != null", false);
+        } else if (r1 != null && r2 == null) {
+            assertTrue("r1 != null && r2 == null", false);
+        }
+        
+        long count = 0;
+        int value1; 
+        int value2; 
+        
+        while ((value1 = r1.read()) != -1) {
+            value2 = r2.read();
+            
+            if (value2 == -1) {
+                assertTrue("reader 2 EOF at: " + count, false);
+            }
+            
+            assertTrue("reader 1 value [" + value1
+                    + "] differs from reader 2 value ["
+                    + value2 + "] at: " + count,
+                    (value1 == value2));
+            
+            count++;
+        }
+    }
 }

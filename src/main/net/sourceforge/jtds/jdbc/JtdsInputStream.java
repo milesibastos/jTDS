@@ -23,10 +23,10 @@ import java.sql.SQLException;
 
 /**
  * This class implements an InputStream populated with data returned by the
- * READTEXT command for image,text and ntext columns.
+ * READTEXT command for image, text and ntext columns.
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsInputStream.java,v 1.2 2004-06-29 20:53:26 bheineman Exp $
+ * @version $Id: JtdsInputStream.java,v 1.3 2004-07-01 21:14:30 bheineman Exp $
  */
 public class JtdsInputStream extends InputStream {
     private TdsCore tds;
@@ -65,6 +65,34 @@ public class JtdsInputStream extends InputStream {
         fillBuffer();
     }
 
+    public int available() throws IOException {
+        return length - offset;
+    }
+
+    public int getLength() {
+        return length;
+    }
+
+    /**
+     * Resets the stream so that the data may be read from the specified
+     * offset.
+     *
+     * @param offset the offset to reset the stream to
+     * @throws IOException if <code>offset</code> is less <code>0</code>;
+     *                     if <code>offset</code> is greater than <code>getLength()</code>;
+     */
+    public void reset() throws IOException {
+        offset = 0;
+        pos = 0;
+        buffer = null;
+
+        try {
+            fillBuffer();
+        } catch (SQLException e) {
+            throw new IOException("SQL Error: " + e.getMessage());
+        }
+    }
+
     /**
      * Invoke READTEXT to obtain the next block of data from the server.
      *
@@ -75,7 +103,7 @@ public class JtdsInputStream extends InputStream {
         pos = 0;
 
         if (offset + bc > length) {
-            bc = length-offset;
+            bc = length - offset;
 
             if (bc == 0) {
                 buffer = new byte[0];
@@ -121,8 +149,8 @@ public class JtdsInputStream extends InputStream {
 
             try {
                 fillBuffer();
-            } catch (SQLException sqle) {
-                throw new IOException("SQL Error: "+ sqle.getMessage());
+            } catch (SQLException e) {
+                throw new IOException("SQL Error: " + e.getMessage());
             }
 
             if (buffer.length == 0) {
@@ -142,9 +170,5 @@ public class JtdsInputStream extends InputStream {
             tds = null;
             buffer = new byte[0];
         }
-    }
-
-    public int available() throws IOException {
-        return length - offset;
     }
 }

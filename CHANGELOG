@@ -1,6 +1,15 @@
 Changes from jTDS 0.8
 =========================
 
+07/01/2004 - Brian Heineman
+ o Improved Blob and Clob support.  Writes done through a Blob or Clob are now
+   buffered in memory if the data size is less than 32KB.  If the data size is
+   greater than 32KB, the Blob/Clob will attempt to cache the data to disk.
+   A failed attempt at disk caching due to a SecurityException will be logged
+   and the Blob/Clob data will remain in memory.  Also, the READTEXT mechanism
+   will only convert to an in-memory or disk based Blob/Clob if a write attempt
+   is made.
+
 06/29/2004 - Brian Heineman
  o Corrected bug with cached statements and savepoints.  If a statement was
    cached after a savepoint was set, that statement would not be removed

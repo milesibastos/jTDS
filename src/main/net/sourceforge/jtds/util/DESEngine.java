@@ -2,10 +2,9 @@
  * Class:   : DESEngine
  * Author   : mbrinkley
  * Creation : Nov 11, 2003 2:59:23 PM
- * $Header: /home/momo/Desktop/jtds/jtds-cvsbackup/jtds/src/main/net/sourceforge/jtds/util/DESEngine.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
+ * $Header: /home/momo/Desktop/jtds/jtds-cvsbackup/jtds/src/main/net/sourceforge/jtds/util/DESEngine.java,v 1.3 2004-09-16 20:40:51 matt_brinkley Exp $
  *
- * Version: $Id: DESEngine.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
- * Copyright 2003, Network Associates Inc. All Rights Reserved.
+ * Version: $Id: DESEngine.java,v 1.3 2004-09-16 20:40:51 matt_brinkley Exp $
  ******************************************************************************/
 
 package net.sourceforge.jtds.util;
@@ -21,7 +20,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
  * a class that provides a basic DES engine.
  * Modified by Matt Brinkley (mdb) ... mainly just removed depends on external classes.
  *
- * @version $Id: DESEngine.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
+ * @version $Id: DESEngine.java,v 1.3 2004-09-16 20:40:51 matt_brinkley Exp $
  */
 public class DESEngine
 //    implements BlockCipher  //mdb

@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.35 2004-10-02 00:10:15 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.36 2004-10-03 11:08:22 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -386,7 +386,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         javaCharset = tmp.substring(2);
 
         try {
-            "This is a test".getBytes(charset);
+            "This is a test".getBytes(javaCharset);
         } catch (UnsupportedEncodingException e) {
             Logger.println("Can't load charset " + charset + "/" + javaCharset
                     + ". Falling back to iso_1/Cp1252.");

@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.1
 =======================
 
+02/22/2005 - David Kilzer
+ o Added .cvsignore to top-level directory to ignore build and dist directories.
+
 02/19/2005 - Alin Sinpalean
  o Applied patch [1122494] SQL Server Authentication & Named pipes, submitted
    by Kartik Shah. On Windows, local named pipes are always used, now, even for

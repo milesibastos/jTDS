@@ -16,11 +16,11 @@ import java.util.GregorianCalendar;
  * @author   chris
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: AbstractResultSet.java,v 1.4 2003-12-16 19:08:48 alin_sinpalean Exp $
+ * @version  $Id: AbstractResultSet.java,v 1.5 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 public abstract class AbstractResultSet implements ResultSet
 {
-    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.4 2003-12-16 19:08:48 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: AbstractResultSet.java,v 1.5 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     public final static int DEFAULT_FETCH_SIZE = 100;
 
@@ -310,6 +310,10 @@ public abstract class AbstractResultSet implements ResultSet
                 buf.append((char)(v<10 ? '0'+v : 'A'+v-10));
             }
             return buf.toString();
+        }
+        else if( tmp instanceof Boolean )
+        {
+            return ((Boolean)tmp).booleanValue() ? "1" : "0";
         }
         else
             return tmp.toString();

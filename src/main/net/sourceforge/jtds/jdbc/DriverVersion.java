@@ -35,15 +35,15 @@ package net.sourceforge.jtds.jdbc;
 /**
  * version number of this driver.
  *
- * @version  $Id: DriverVersion.java,v 1.2 2002-11-11 15:40:17 alin_sinpalean Exp $
+ * @version  $Id: DriverVersion.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $
  * @author Craig Spannring
  */
 public class DriverVersion
 {
-   public static final String cvsVersion = "$Id: DriverVersion.java,v 1.2 2002-11-11 15:40:17 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: DriverVersion.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
    private static final int MAJORVERSION = 0;
-   private static final int MINORVERSION = 5;
+   private static final int MINORVERSION = 6;
 
    /**
     * What's this JDBC driver's major version number?

@@ -53,13 +53,13 @@ import java.util.Map;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.6 2003-12-16 19:08:48 alin_sinpalean Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
 public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.6 2003-12-16 19:08:48 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     ParameterListItem[] parameterList = null;
@@ -143,15 +143,30 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // First make sure the caller has filled in all the parameters.
         ParameterUtils.verifyThatParametersAreSet( parameterList );
 
+        // MJH
+        // Create a unique signature for this the procedure by including parameters
+        //
+        ParameterUtils.createParameterMapping(rawQueryString,
+                                             parameterList,
+                                             tds);
+        StringBuffer signature = new StringBuffer();
+        signature.append(rawQueryString);
+        for (int i = 0; i < parameterList.length; i++)
+        {
+            signature.append(parameterList[i].formalType);
+        }
+
         // Find a stored procedure that is compatible with this set of parameters if one exists.
-        procedure = findCompatibleStoredProcedure( tds, rawQueryString );
-        // now look in tds
+        // MJH Lookup now includes parameter list
+        procedure = findCompatibleStoredProcedure( tds, signature.toString());
 
         // if we don't have a suitable match then create a new temporary stored procedure
         if( procedure == null )
         {
             // Create the stored procedure
-            procedure = new Procedure( rawQueryString, tds.getUniqueProcedureName(), parameterList, tds );
+            // MJH Pass in the caculated signature to be used as the cache key
+            procedure = new Procedure(rawQueryString, signature.toString(),
+                tds.getUniqueProcedureName(), parameterList, tds );
 
             // SAfe Submit it to the SQL Server before adding it to the cache or procedures of transaction list.
             //      Otherwise, if submitProcedure fails (e.g. because of a syntax error) it will be in our procedure
@@ -159,7 +174,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             submitProcedure( tds, procedure );
 
             // store it in the procedureCache
-            tds.addStoredProcedure(rawQueryString, procedure);
+            tds.addStoredProcedure(procedure);
         }
 
         result = internalExecuteCall(procedure.getProcedureName(), procedure.getParameterList(), parameterList, tds,
@@ -194,7 +209,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         if( !execute(tds) )
         {
-            skipToEnd();
+            tds.skipToEnd();
             releaseTds();
             throw new SQLException( "Was expecting a result set" );
         }
@@ -218,7 +233,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
         Tds tds = getTds(false);
         if ( execute( tds ) ) {
-            skipToEnd();
+            tds.skipToEnd();
             releaseTds();
             throw new SQLException( "executeUpdate can't return a result set" );
         }

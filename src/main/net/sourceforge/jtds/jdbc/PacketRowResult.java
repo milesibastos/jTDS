@@ -39,10 +39,10 @@ import java.sql.*;
 import java.util.Vector;
 
 /**
- *  encapsulate the information from one row of a result set.
+ * Encapsulate the information from one row of a result set.
  *
- *@author     Craig Spannring
- *@created    17 March 2001
+ * @author     Craig Spannring
+ * @created    17 March 2001
  */
 public class PacketRowResult extends PacketResult {
 
@@ -53,7 +53,7 @@ public class PacketRowResult extends PacketResult {
     /**
      *  /** @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.3 2002-10-22 09:50:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PacketRowResult.java,v 1.4 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
 
     public PacketRowResult( Context context )
@@ -70,14 +70,14 @@ public class PacketRowResult extends PacketResult {
     }
 
     /**
-     *  Sets the component at the specified index of this vector to be the
-     *  specified object. The previous component at that position is discarded.
+     * Sets the component at the specified index of this vector to be the
+     * specified object. The previous component at that position is discarded.
      *
-     *  <UL>Note- <\UL>Unlike the vector class this class starts the index with
-     *    1, not 0.
+     * <UL>Note- <\UL>Unlike the vector class this class starts the index with
+     * 1, not 0.
      *
-     *@param  obj               The object to store
-     *@param  index             Index to store the element at. First element is
+     * @param  obj               The object to store
+     * @param  index             Index to store the element at. First element is
      *      at index 1
      */
     public void setElementAt( int index, Object obj )
@@ -105,16 +105,16 @@ public class PacketRowResult extends PacketResult {
 
 
     /**
-     *  get an element at the specified index <p>
+     * Get an element at the specified index.<p>
      *
      *
-     *  <UL>Note- <\UL>Unlike the vector class this starts the index with 1, not
-     *    0.
+     * <UL>Note- <\UL>Unlike the vector class this starts the index with 1, not
+     * 0.
      *
-     *@param  index             Index to get the element from. First element is
-     *      at index 1
-     *@return                   The ElementAt value
-     *@exception  TdsException  @todo Description of Exception
+     * @param  index             Index to get the element from. First element is
+     *                           at index 1
+     * @return                   The ElementAt value
+     * @exception  TdsException  @todo Description of Exception
      */
     public Object getElementAt( int index )
         throws TdsException

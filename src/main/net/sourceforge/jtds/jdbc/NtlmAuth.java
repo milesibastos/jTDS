@@ -80,9 +80,6 @@ public class NtlmAuth
     /**
      * Turns a 7-byte DES key into an 8-byte one by adding parity bits. All
      * implementations of DES seem to want an 8-byte key.
-     * @param buf
-     * @param off
-     * @return
      */
     private static final byte[] makeDESkey( byte[] buf, int off )
     {

@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -566,7 +566,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      * Reads and returns <code>len</code> bytes. If <code>exclusiveBuffer</code>
      * is <code>true</code>, a new buffer of that size will be allocated.
-     * Otherwise, {@link resBuffer} will be used. Note that in this second case
+     * Otherwise, {@link #resBuffer} will be used. Note that in this second case
      * the returned buffer will very likely have a larger size than the
      * number of bytes requested.
      */

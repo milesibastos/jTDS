@@ -29,7 +29,13 @@
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
 //
-
+// MJH - 2003
+// Add signature variable to use as key for procedure cache.
+// Remove local storage of rawQueryString and TDS
+// simplify constructor
+// Use StringBuffer to make string handling more efficient
+// Delete faulty compatibleParameters method as not used anywhere
+// Tidy up code and remove redundant method calls
 
 package net.sourceforge.jtds.jdbc;
 
@@ -39,72 +45,40 @@ import java.util.StringTokenizer;
 
 public class Procedure
 {
-   public static final String cvsVersion = "$Id: Procedure.java,v 1.3 2003-12-11 07:33:28 alin_sinpalean Exp $";
+   	public static final String cvsVersion = "$Id: Procedure.java,v 1.4 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
 
-   ParameterListItem  parameterList[]    = null;
-   String             sqlProcedureName   = null;
-   String             rawQueryString     = null;
-   String             procedureString    = "";
+   	private ParameterListItem  parameterList[]    = null;
+   	private String             sqlProcedureName   = null;
+   	private String             procedureString    = "";
+   	private String             signature          = null;
+   	private boolean    		   hasLobs            = false;
 
-   private Tds        tds                = null;
-   private boolean    hasLobs            = false;
-
-   private void init(String         rawSql_,
-                String              sqlProcedureName_,
-                ParameterListItem[] parameterList_,
-                Tds                 tds_)
+   	public Procedure(String         	 rawQueryString,
+   					 String 			 signature,
+                	 String              sqlProcedureName,
+                	 ParameterListItem[] parameterListIn,
+                	 Tds                 tds)
       throws SQLException
-   {
-      int   i;
+	{
+   	  	this.signature        = signature;
+      	this.sqlProcedureName = sqlProcedureName;
 
+      	// Create the procedure text
+		StringBuffer procedureString = new StringBuffer(128);
 
-      rawQueryString   = rawSql_;
-      sqlProcedureName = sqlProcedureName_;
-      tds              = tds_;
+        procedureString.append("create proc ");
+        procedureString.append(sqlProcedureName);
 
-      // MJH
-      // Do not clone the parameter information here as we do not want to store
-      // the actual parameter values in the procedure object as this
-      // object may be cached for sometime in the TDS, in which case any long
-      // String or byte objects will not be garbage collected after the intial use
-      // of the procedure.
-      // Use the parameterList_ argument of the init() method instead.
+        // Create actual to formal parameter mapping
+        ParameterUtils.createParameterMapping(rawQueryString, parameterListIn, tds);
 
-//      // need a clone to keep the maxlength information for char data
-//      parameterList    = new ParameterListItem[parameterList_.length];
-//      for (i=0; i<parameterList.length; i++)
-//      {
-//         parameterList[i] = (ParameterListItem)parameterList_[i].clone();
-//      }
-
-      // make sure all the parameters are set
-      ParameterUtils.verifyThatParametersAreSet(parameterList_); // MJH
-
-      // make sure we have the same number of placeholders as
-      // item in the parameter list.
-      if (parameterList_.length !=   // MJH
-          ParameterUtils.countParameters(rawQueryString))
-      {
-         throw new SQLException("Number of parameters in sql statement "
-                                + "does not match the number of parameters "
-                                + " in parameter list");
-      }
-
-      // Create the procedure text
-      {
-         procedureString = "create proc " + sqlProcedureName;
-
-         // Create actual to formal parameter mapping
-         ParameterUtils.createParameterMapping(rawQueryString, parameterList_,
-                                               tds);
-
-         // MJH - OK now clone parameter details minus data values.
-         // copy back the formal types and check for LOBs
-         parameterList    = new ParameterListItem[parameterList_.length];
-         for (i=0; i<parameterList.length; i++)
-         {
-            parameterList[i] = (ParameterListItem)parameterList_[i].clone();
+        // MJH - OK now clone parameter details minus data values.
+        // copy back the formal types and check for LOBs
+        parameterList    = new ParameterListItem[parameterListIn.length];
+        for (int i = 0; i < parameterList.length; i++)
+        {
+        	parameterList[i] = (ParameterListItem)parameterListIn[i].clone();
             parameterList[i].value = null; // MJH allow value to be garbage collected
             if( parameterList[i].formalType.equalsIgnoreCase("image") ||
                 parameterList[i].formalType.equalsIgnoreCase("text")  ||
@@ -112,188 +86,135 @@ public class Procedure
             {
                hasLobs = true;
             }
-         }
+        }
+        // add the formal parameter list to the sql string
+        procedureString.append(createFormalParameterList(parameterList));
 
-         // add the formal parameter list to the sql string
-         procedureString = procedureString
-            + createFormalParameterList(parameterList);
+        procedureString.append(" as ");
 
-         procedureString = procedureString + " as ";
+        // Go through the raw sql and substitute a parameter name
+        // for each '?' placeholder in the raw sql
 
-         // Go through the raw sql and substitute a parameter name
-         // for each '?' placeholder in the raw sql
+        // SAfe Seems like '\' (backslash) doesn't actually work as
+        //      an escape character, so we'll just ignore it
+        StringTokenizer   st = new StringTokenizer(rawQueryString,
+                                                    "'?", true);
+        final int         normal   = 1;
+        final int         inString = 2;
+        final int         inEscape = 3;
+        int               state = normal;
+        String            current;
+        int               nextParameterIndex = 0;
 
-         StringTokenizer   st = new StringTokenizer(rawQueryString,
-                                                    "'?\\", true);
-         final int         normal   = 1;
-         final int         inString = 2;
-         final int         inEscape = 3;
-         int               state = normal;
-         String            current;
-         int               nextParameterIndex = 0;
-
-         while (st.hasMoreTokens())
-         {
+        while (st.hasMoreTokens())
+        {
             current = st.nextToken();
             switch (state)
             {
-               case normal:
-               {
-                  if (current.equals("?"))
-                  {
-                     procedureString = procedureString + "@"
-                        + parameterList[nextParameterIndex].formalName;
-                     nextParameterIndex++;
-                  }
-                  else if (current.equals("'"))
-                  {
-                     procedureString = procedureString + current;
-                     state = inString;
-                  }
-                  else
-                  {
-                     procedureString = procedureString + current;
-                  }
-                  break;
-               }
-               case inString:
-               {
-                  if (current.equals("'"))
-                  {
-                     state = normal;
-                  }
-                  else if (current.equals("\\"))
-                  {
-                     state = inEscape;
-                  }
-                  else
-                  {
-                     // nop
-                  }
-                  procedureString = procedureString + current;
-                  break;
-               }
-               case inEscape:
-               {
-                  state = inString;
-                  procedureString = procedureString + current;
-                  break;
-               }
-               default:
-               {
-                  throw new SQLException("Internal error.  Bad State " + state);
-               }
+                case normal:
+                {
+                    if (current.equals("?"))
+                    {
+                        procedureString.append('@');
+                        procedureString.append(
+                            parameterList[nextParameterIndex].formalName);
+                        nextParameterIndex++;
+                    }
+                    else if (current.equals("'"))
+                    {
+                        procedureString.append(current);
+                        state = inString;
+                    }
+                    else
+                    {
+                        procedureString.append(current);
+                    }
+                    break;
+                }
+                case inString:
+                {
+                    if (current.equals("'"))
+                        state = normal;
+                    // SAfe Seems like '\' (backslash) doesn't actually work as
+                    //      an escape character, so we'll just ignore it
+                    // else if (current.equals("\\"))
+                    //     state = inEscape;
+
+                    procedureString.append(current);
+                    break;
+                }
+                case inEscape:
+                {
+                    state = inString;
+                    procedureString.append(current);
+                    break;
+                }
+                default:
+                {
+                    throw new SQLException("Internal error.  Bad State " + state);
+                }
             }
-         }
-      }
-   }
+        }
 
-   public Procedure(
-      String              rawSql_,
-      String              sqlProcedureName_,
-      ParameterListItem[] parameterList_,
-      Tds                 tds_)
-      throws SQLException
-   {
-      init(rawSql_,
-           sqlProcedureName_,
-           parameterList_,
-           tds_);
-   }
+        this.procedureString = procedureString.toString();
+   	}
 
-   public String getPreparedSqlString()
-   {
-      return procedureString;
-   }
+   	public String getPreparedSqlString()
+   	{
+      	return this.procedureString;
+   	}
 
-   public String getProcedureName()
-   {
-      return sqlProcedureName;
-   }
+   	public String getProcedureName()
+   	{
+      	return this.sqlProcedureName;
+   	}
 
-   public ParameterListItem getParameter(int index)
-   {
-      return parameterList[index];
-   }
+   	public ParameterListItem getParameter(int index)
+   	{
+      	return this.parameterList[index];
+   	}
 
-   private String createFormalParameterList(
-      ParameterListItem[]  parameterList)
-   {
-      int    i;
-      String result;
+   	private String createFormalParameterList(ParameterListItem[]  parameterList)
+   	{
+      	int i;
+      	StringBuffer result = new StringBuffer(128);
 
-
-      if (parameterList.length == 0)
-      {
-         result = "";
-      }
-      else
-      {
-         result = "(";
-         for(i=0; i<parameterList.length; i++)
-         {
-            if (i>0)
-            {
-               result = result + ", ";
+      	if( parameterList.length > 0 )
+      	{
+         	result.append('(');
+        	for( i=0; i<parameterList.length; i++ )
+         	{
+                if( i > 0 )
+                    result.append(", ");
+                result.append('@');
+                result.append(parameterList[i].formalName);
+                result.append(' ');
+                result.append(parameterList[i].formalType);
+                if (parameterList[i].isOutput)
+                    result.append(" output");
             }
-            result =
-               result + "@" + parameterList[i].formalName + " "
-               + parameterList[i].formalType;
-            if (parameterList[i].isOutput)
-            {
-               result = result + " output";
-            }
-         }
-         result = result + ")";
-      }
-      return result;
-   }
+            result.append(')');
+        }
 
-   /**
-    * This method checks to see if the actual parameters are compatible
-    * with the formal parameters for this procedure.
-    *
-    */
-   public boolean compatibleParameters(
-      ParameterListItem actualParams[])
-      throws SQLException
-   {
-      int     i;
-      boolean isOkay = true;
+        return result.toString();
+    }
 
-      isOkay = parameterList.length == actualParams.length;
+    public ParameterListItem[] getParameterList()
+    {
+        return this.parameterList;
+    }
 
-      for(i=0; isOkay && i<actualParams.length; i++)
-      {
-          if ((parameterList[i].formalType.startsWith("char") ||
-               parameterList[i].formalType.startsWith("varchar") ||
-               parameterList[i].formalType.startsWith("text") ||
-               parameterList[i].formalType.startsWith("nchar") ||
-               parameterList[i].formalType.startsWith("nvarchar") ||
-               parameterList[i].formalType.startsWith("ntext"))
-              && (actualParams[i].type == java.sql.Types.CHAR ||
-                  actualParams[i].type == java.sql.Types.VARCHAR ||
-                  actualParams[i].type == java.sql.Types.LONGVARCHAR))
-          {
-             isOkay = parameterList[i].maxLength >= actualParams[i].maxLength;
-          }
-          else
-          {
-               isOkay =
-                   parameterList[i].formalType.equalsIgnoreCase(actualParams[i].formalType);
-          }
-      }
-      return isOkay;
-   }
+    public String getSignature()
+    {
+        return this.signature;
+    }
 
-
-   public ParameterListItem[] getParameterList()
-   {
-      return parameterList;
-   }
-
-   /**
-    * Does the formal parameter list include LOB parameters?
-    */
-   public boolean hasLobParameters() {return hasLobs;}
+    /**
+     * Check if the formal parameter list includes LOB parameters.
+     * MJH This method is not actually used at present.
+     */
+    public boolean hasLobParameters()
+    {
+        return this.hasLobs;
+    }
 }

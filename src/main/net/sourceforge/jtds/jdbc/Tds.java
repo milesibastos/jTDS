@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.15 2003-12-16 19:08:48 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.16 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions
 {
@@ -151,7 +151,7 @@ public class Tds implements TdsDefinitions
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.15 2003-12-16 19:08:48 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.16 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     /**
      * The last transaction isolation level set for this <code>Tds</code>.
@@ -344,7 +344,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     * Determine if the next subpacket is a ret stat
+     * Determine if the next subpacket is a ret stat.
      * <p>
      * This does not eat any input.
      *
@@ -398,7 +398,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     * Determine if the next subpacket is a DONEINPROC marker
+     * Determine if the next subpacket is a DONEINPROC marker.
      * <p>
      * This does not eat any input.
      *
@@ -416,7 +416,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     * Determine if the next subpacket is a message packet
+     * Determine if the next subpacket is a message packet.
      * <p>
      * This does not eat any input.
      *
@@ -433,7 +433,7 @@ public class Tds implements TdsDefinitions
 
 
      /**
-      * Determine if the next subpacket is an output parameter from a stored proc
+      * Determine if the next subpacket is an output parameter from a stored proc.
       * <p>
       * This does not eat any input.
       *
@@ -450,7 +450,7 @@ public class Tds implements TdsDefinitions
      }
 
     /**
-     * Determine if the next subpacket is a text update packet
+     * Determine if the next subpacket is a text update packet.
      * <p>
      * This does not eat any input.
      *
@@ -469,7 +469,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     * Determine if the next subpacket is an error packet
+     * Determine if the next subpacket is an error packet.
      * <p>
      * This does not eat any input.
      *
@@ -486,7 +486,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     * Determine if the next subpacket is an procid subpacket
+     * Determine if the next subpacket is an procid subpacket.
      * <p>
      * This does not eat any input.
      *
@@ -503,8 +503,8 @@ public class Tds implements TdsDefinitions
     }
 
     /**
-     * Determine if the next subpacket is an environment change subpacket <p>
-     *
+     * Determine if the next subpacket is an environment change subpacket.
+     * <p>
      * This does not eat any input.
      *
      * @return     true if the next piece of data to read is an environment
@@ -626,7 +626,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     *  Execute a stored procedure on the SQLServer <p>
+     *  Execute a stored procedure on the SQLServer.<p>
      *
      * @param  procedureName
      * @param  formalParameterList
@@ -1061,6 +1061,8 @@ public class Tds implements TdsDefinitions
     public synchronized void discardResultSet(PacketRowResult row, TdsStatement stmt)
              throws SQLException, java.io.IOException, TdsException
     {
+        if( !moreResults )
+            return;
 
         while ( isResultRow()) {
             comm.skip(1);
@@ -1107,7 +1109,7 @@ public class Tds implements TdsDefinitions
 
         // SAfe Need to process messages, output parameters and return values
         //      here, or even better, in the processXXX methods.
-        while( moreResults() )
+        while( moreResults )
         {
             byte next = peek();
 
@@ -1360,7 +1362,7 @@ public class Tds implements TdsDefinitions
    }
 
     /**
-     *  Process a subpacket reply <p>
+     *  Process a subpacket reply.<p>
      *
      *  <b>Note-</b> All subpackets must be processed through here. This is the
      *  only routine has the proper locking to support the cancel method in the
@@ -1387,7 +1389,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     *  Process a subpacket reply <p>
+     *  Process a subpacket reply.<p>
      *
      *  <b>Note-</b> All subpackets must be processed through here. Only this
      *  routine has the proper locking to support the cancel method in the
@@ -2086,7 +2088,7 @@ public class Tds implements TdsDefinitions
     // getImageValue()
 
     /**
-     *  get one result row from the TDS stream <p>
+     *  get one result row from the TDS stream.<p>
      *
      *  This will read a full row from the TDS stream and store it in a
      *  PacketRowResult object.
@@ -2246,7 +2248,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     *  Log onto the SQLServer <p>
+     *  Log onto the SQLServer.<p>
      *
      *  This method is not synchronized and does not need to be so long as it
      *  can only be called from the constructor. <p>
@@ -2789,7 +2791,7 @@ public class Tds implements TdsDefinitions
 
 
     /**
-     *  Process an env change message (TDS_ENV_CHG_TOKEN) <p>
+     *  Process an env change message (TDS_ENV_CHG_TOKEN).<p>
      *
      *  <b>Warning!</b> This is not synchronized because it assumes it will only
      *  be called by processSubPacket() which is synchronized.
@@ -4332,8 +4334,11 @@ public class Tds implements TdsDefinitions
     /**
      * All procedures of the current transaction were submitted.
      */
-    void commit() throws SQLException
+    synchronized void commit() throws SQLException
     {
+        // SAfe Consume all outstanding packets first
+        skipToEnd();
+
         // MJH Move commit code from TdsStatement to Tds as this
         // object represents the connection which the server uses
         // to control the session.
@@ -4349,8 +4354,11 @@ public class Tds implements TdsDefinitions
     /**
      * All procedures of the current transaction were rolled back.
      */
-    void rollback() throws SQLException
+    synchronized void rollback() throws SQLException
     {
+        // SAfe Consume all outstanding packets first
+        skipToEnd();
+
         // MJH Move the rollback code from TdsStatement to Tds as this
         // object represents the connection which the server uses
         // to control the session.
@@ -4375,7 +4383,9 @@ public class Tds implements TdsDefinitions
             while( it.hasNext() )
             {
                 Procedure p = (Procedure)it.next();
-                procedureCache.remove(p.rawQueryString);
+                // MJH Use signature (includes parameters)
+                // rather than rawSqlQueryString
+                procedureCache.remove(p.getSignature());
             }
             proceduresOfTra.clear();
         }
@@ -4388,22 +4398,28 @@ public class Tds implements TdsDefinitions
     //      mind who wrote it :o( ). It will have to wait until the Tds will
     //      manage its own Context; that way it will know exactly how to deal
     //      with packages. Anyway, it seems a little bit useless. Or not?
-    void skipToEnd_do_not_call()
-      throws java.sql.SQLException, java.io.IOException,
-        net.sourceforge.jtds.jdbc.TdsUnknownPacketSubType,
-        net.sourceforge.jtds.jdbc.TdsException
+    // SAfe No longer true! The method should work just fine, now that we have
+    //      a Tds-managed Context. :o)
+    synchronized void skipToEnd() throws java.sql.SQLException
     {
-        boolean done;
         PacketResult tmp;
 
-        if( moreResults )
-            do
+        try
+        {
+            while( moreResults )
             {
                 tmp = processSubPacket();
-                done = (tmp instanceof PacketEndTokenResult)
-                    && !((PacketEndTokenResult)tmp).moreResults();
+                moreResults = !(tmp instanceof PacketEndTokenResult)
+                    || ((PacketEndTokenResult)tmp).moreResults();
             }
-            while( !done );
+        }
+        catch( Exception ex )
+        {
+            if( ex instanceof SQLException )
+                throw (SQLException)ex;
+            throw new SQLException(
+                "Error occured while consuming output: " + ex);
+        }
     }
 
     private String sqlStatementToInitialize() throws SQLException
@@ -4411,6 +4427,10 @@ public class Tds implements TdsDefinitions
         StringBuffer statement = new StringBuffer(100);
         if( serverType == Tds.SYBASE )
             statement.append("set quoted_identifier on set textsize 50000 ");
+        // Patch 861821: Seems like there is some kind of initial limitation to
+        // the size of the written data to 4000 characters (???)
+        else if( tdsVer == TDS70 )
+            statement.append("set textsize 2147483647 ");
 
         // SAfe We also have to add these until we find out how to put them in
         //      the login packet (if that is possible at all)
@@ -4499,10 +4519,12 @@ public class Tds implements TdsDefinitions
     private String sqlStatementForSettings(
         boolean autoCommit, int transactionIsolationLevel) throws SQLException
     {
-        if( autoCommit==this.autoCommit && transactionIsolationLevel==this.transactionIsolationLevel )
-            return null;
-
-        StringBuffer res = new StringBuffer();
+        StringBuffer res = new StringBuffer(64);
+        // SAfe The javadoc for setAutoCommit states that "if the method is
+        //      called during a transaction, the transaction is committed"
+        // @todo SAfe Only execute this when setAutoCommit is called, not for
+        //       setTransactionIsolationLevel
+        res.append("IF @@TRANCOUNT>0 COMMIT TRAN ");
 
         if( autoCommit != this.autoCommit )
         {
@@ -4532,6 +4554,7 @@ public class Tds implements TdsDefinitions
         if( query != null )
             try
             {
+                skipToEnd();
                 changeSettings(query);
             }
             catch( SQLException ex )
@@ -4686,21 +4709,23 @@ public class Tds implements TdsDefinitions
         return currentContext;
     }
 
-    public Procedure findCompatibleStoredProcedure(String rawQueryString)
+    public Procedure findCompatibleStoredProcedure(String signature)
     {
         synchronized( procedureCache )
         {
-            return (Procedure)procedureCache.get(rawQueryString);
+            return (Procedure)procedureCache.get(signature);
         }
     }
 
-    public void addStoredProcedure(String rawQueryString, Procedure procedure)
+    public void addStoredProcedure(Procedure procedure)
         throws SQLException
     {
         synchronized( procedureCache )
         {
             // store the procedure in the procedureCache
-            procedureCache.put( rawQueryString, procedure );
+            // MJH Use the signature (includes parameters)
+            // rather than rawQueryString
+            procedureCache.put( procedure.getSignature(), procedure );
 
             // MJH Only record the proc name in proceduresOfTra if in manual commit mode
             if( !connection.getAutoCommit() )

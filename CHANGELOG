@@ -2,6 +2,36 @@
 Changes from jTDS 0.5.2
 =======================
 
+12/21/2003 - Alin Sinpalean
+ o Updated version to 0.6-rc1.
+ o Even more code cleanup: moved result set context handling from TdsResultSet
+   to Tds, which allowed the removal of the statements list (allStatements) in
+   TdsConnection; also replaced all calls to Statement.skipToEnd with calls to
+   Tds.skipToEnd, which is much more effective; database changes, transaction
+   isolation level changes, auto commit mode changes, commits and rollbacks are
+   now run directly on the Tds instance (and on all Tds instances) and
+   TdsResultSet and TdsStatement now always check Tds.moreResults() before any
+   processing to make sure the state was not changed from the outside (i.e.
+   the output was not consumed by TdsConnection executing something).
+ o Included a patch by Mike Hutchinson that completely fixes all issues
+   regarding prepared Statements and fixed parameter types (i.e. executing a
+   PreparedStatement initially with a shorter parameter submits a temporary
+   stored procedure with a short type - e.g. VARCHAR - and a subsequent
+   execution is limited by this type, cutting the parameter's length to its
+   maximum value. The fix only matches temporary procedures by both the SQL
+   string and the parameter types that can best accomodate the actual values.
+ o Included a few small patches, regarding ResultSet.getString on BIT columns
+   (it returned "true"/"false", now it returns "1"/"0"), some misunderstanding
+   in Procedure, which treated backslash as an escape character and a possible
+   issue with TEXT values being cut down to 4k (although not proved, and hard
+   to believe).
+ o Bugs fixed: 837235 (Working with SQuirreL SQL Client - 90% sure), 748856
+   (jTDS Security error in sandbox), 741637 (Deadlock), 734505
+   (ArrayIndexOutOfBounds in TdsResultSet.internalFetchRows), 692142 (jTDS
+   autocommits data sometimes - 90% sure), 684567 (Problem with image fields in
+   PreparedStatements), 803570 (java.sql.SQLException: Network error- Field too
+   long).
+
 12/16/2003 - Alin Sinpalean
  o A lot of code cleanup.
 

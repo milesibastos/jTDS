@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.6 2003-12-16 19:08:49 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.6 2003-12-16 19:08:49 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.7 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -294,8 +294,13 @@ public class TdsStatement implements java.sql.Statement
      */
     protected synchronized void skipToEnd() throws java.sql.SQLException
     {
+        closeResults(false);
+
         if( actTds != null )
         {
+            actTds.skipToEnd();
+//            releaseTds();
+
             // SAfe This is the only place we should send a CANCEL packet
             //      ourselves. We can't do that in Tds.discardResultSet because
             //      we could cancel other results when what we want is to only
@@ -325,7 +330,7 @@ public class TdsStatement implements java.sql.Statement
             //      this will happen; I think that even if the data amount is
             //      huge, the server sends it as soon as possible so the cancel
             //      could come too late; or not?)
-            while( getMoreResults(actTds, warningChain, false) || updateCount!=-1 );
+//            while( getMoreResults(actTds, warningChain, false) || updateCount!=-1 );
         }
     }
 
@@ -349,15 +354,15 @@ public class TdsStatement implements java.sql.Statement
         // SAfe Mark Statement as closed internally, too
         isClosed = true;
 
-        // MJH MarkAsClosed is always called to prevent memory leak.
-        connection.markAsClosed(this);
-
         if( actTds != null )
             // Tds not yet released.
             try
             {
                 // SAfe: Must do this to ensure no garbage is left behind
-                skipToEnd();
+                closeResults(false);
+
+                if( !connection.isClosed() )
+                    actTds.skipToEnd();
 
                 // MJH Do not Rollback any pending transactions!
                 connection.freeTds(actTds);
@@ -367,6 +372,20 @@ public class TdsStatement implements java.sql.Statement
             {
                 throw new SQLException(e.toString());
             }
+    }
+
+    /**
+     * Make sure we release the <code>Tds</code> when we're no longer in use.
+     * This is safe to do even in the case of <code>DatabaseMetaData</code> or
+     * other cases where the reference to the <code>Statement</code> is lost
+     * and only a reference to a <code>ResultSet</code> is kept, because the
+     * <code>TdsResultSet</code> has an internal reference to the
+     * <code>Statement</code> so <code>finalize()</code> won't get called yet.
+     * @throws SQLException
+     */
+    public void finalize() throws SQLException
+    {
+        close();
     }
 
     /**
@@ -628,93 +647,93 @@ public class TdsStatement implements java.sql.Statement
         // Reset all internal variables (do it before checking for more results)
         closeResults(false);
 
-        if( !tds.moreResults() )
+        // SAfe Synchronize on the Tds to make sure noone else can call
+        //      Tds.skipToEnd while we're processing the results
+        synchronized( tds )
         {
-            if( allowTdsRelease )
-                releaseTds();
-            return false;
-        }
-
-        try
-        {
-            // Keep eating garbage and warnings until we reach the next result
-            while( true )
+            if( !tds.moreResults() )
             {
-                if( tds.isResultSet() )
+                if( allowTdsRelease )
+                    releaseTds();
+                return false;
+            }
+
+            try
+            {
+                // @todo SAfe Rewrite all the code below to no longer peek at the
+                //       packet type, as it always processes it afterwards, anyway
+
+                // Keep eating garbage and warnings until we reach the next result
+                while( true )
                 {
-                    results = new TdsResultSet(tds, this, wChain, fetchSize);
-                    break;
-                }
-                // SAfe: Only TDS_DONE should return row counts for Statements
-                // TDS_DONEINPROC should return row counts for PreparedStatements
-                else if( tds.peek()==Tds.TDS_DONE ||
-                    (this instanceof PreparedStatement &&
-                    !(this instanceof CallableStatement) &&
-                    tds.peek()==Tds.TDS_DONEINPROC) )
-                {
-                    PacketEndTokenResult end =
-                        (PacketEndTokenResult)tds.processSubPacket();
-                    updateCount = end.getRowCount();
-
-                    // SAfe Eat up all packets until the next result or the end
-                    tds.goToNextResult(wChain, this);
-
-                    if( allowTdsRelease )
-                        releaseTds();
-                    break;
-                }
-                // SAfe: TDS_DONEPROC and TDS_DONEINPROC should *NOT* return
-                //       rowcounts otherwise
-                else if( tds.isEndOfResults() )
-                {
-                    tds.processSubPacket();
-
-                    // SAfe Eat up all packets until the next result or the end
-                    tds.goToNextResult(wChain, this);
-
-                    if( !tds.moreResults() )
+                    if( tds.isResultSet() )
                     {
+                        results = new TdsResultSet(tds, this, wChain, fetchSize);
+                        break;
+                    }
+                    // SAfe: Only TDS_DONE should return row counts for Statements
+                    // TDS_DONEINPROC should return row counts for PreparedStatements
+                    else if( tds.peek()==Tds.TDS_DONE ||
+                        (this instanceof PreparedStatement &&
+                        !(this instanceof CallableStatement) &&
+                        tds.peek()==Tds.TDS_DONEINPROC) )
+                    {
+                        PacketEndTokenResult end =
+                            (PacketEndTokenResult)tds.processSubPacket();
+                        updateCount = end.getRowCount();
+
+                        // SAfe Eat up all packets until the next result or the end
+                        tds.goToNextResult(wChain, this);
+
                         if( allowTdsRelease )
                             releaseTds();
-                        break; // No more results but no update count either
+                        break;
                     }
-                }
-                else if( tds.isMessagePacket() || tds.isErrorPacket() )
-                    wChain.addOrReturn((PacketMsgResult)tds.processSubPacket());
-                else if (tds.isRetStat())
-                    handleRetStat((PacketRetStatResult)tds.processSubPacket());
-                else if( tds.isParamResult() )
-                    handleParamResult((PacketOutputParamResult)tds.processSubPacket());
-                else if( tds.isEnvChange() )
-                    // Process the environment change.
-                    tds.processSubPacket();
-                else if( tds.isProcId() )
-                    tds.processSubPacket();
+                    // SAfe: TDS_DONEPROC and TDS_DONEINPROC should *NOT* return
+                    //       rowcounts otherwise
+                    else if( tds.isEndOfResults() )
+                    {
+                        tds.processSubPacket();
+
+                        // SAfe Eat up all packets until the next result or the end
+                        tds.goToNextResult(wChain, this);
+
+                        if( !tds.moreResults() )
+                        {
+                            if( allowTdsRelease )
+                                releaseTds();
+                            break; // No more results but no update count either
+                        }
+                    }
+                    else if( tds.isMessagePacket() || tds.isErrorPacket() )
+                        wChain.addOrReturn((PacketMsgResult)tds.processSubPacket());
+                    else if (tds.isRetStat())
+                        handleRetStat((PacketRetStatResult)tds.processSubPacket());
+                    else if( tds.isParamResult() )
+                        handleParamResult((PacketOutputParamResult)tds.processSubPacket());
+                    else if( tds.isEnvChange() )
+                        // Process the environment change.
+                        tds.processSubPacket();
+                    else if( tds.isProcId() )
+                        tds.processSubPacket();
+                    else
+                        throw new SQLException("Protocol confusion. Got a 0x"
+                            + Integer.toHexString((tds.peek() & 0xff)) + " packet.");
+                } // end while
+
+                wChain.checkForExceptions();
+
+                return results != null;
+            }
+
+            catch( Exception ex )
+            {
+                releaseTds();
+                if( ex instanceof SQLException )
+                    throw (SQLException)ex;
                 else
-                    throw new SQLException("Protocol confusion. Got a 0x"
-                        + Integer.toHexString((tds.peek() & 0xff)) + " packet.");
-            } // end while
-
-            wChain.checkForExceptions();
-
-            return results != null;
-        }
-
-        catch( Exception ex )
-        {
-            // SAfe we should not eat up all input. Even if an error was
-            //      returned, this doesn't mean there isn't valid data after it.
-//            try
-//            {
-//                tds.skipToEnd();
-//            }
-//            catch( Exception exc )
-//            {}
-            releaseTds();
-            if( ex instanceof SQLException )
-                throw (SQLException)ex;
-            else
-                throw new SQLException("Network error: " + ex.getMessage());
+                    throw new SQLException("Network error: " + ex.getMessage());
+            }
         }
     }
 
@@ -893,25 +912,9 @@ public class TdsStatement implements java.sql.Statement
         return connection;
     }
 
-    /**
-     * Changes the auto commit and transaction isolation level of
-     * <code>actTds</code>.
-     * <p>
-     * <b>Note:</b> Needs synchronization because it operates on
-     * <code>actTds</code>.
-     */
-    protected synchronized void changeSettings(boolean autoCommit,
-        int transactionIsolationLevel) throws SQLException
-    {
-        if( actTds != null )
-        {
-            actTds.changeSettings(autoCommit, transactionIsolationLevel);
-        }
-    }
-
     private void checkClosed() throws SQLException
     {
-        if( isClosed )
+        if( isClosed || connection.isClosed() )
             throw new SQLException("Statement already closed.");
     }
 

@@ -64,12 +64,12 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.5 2003-12-11 07:33:28 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
     implements java.sql.CallableStatement
 {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.5 2003-12-11 07:33:28 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -79,8 +79,8 @@ public class CallableStatement_base extends PreparedStatement_base
      */
     private Integer retVal = null;
     /**
-     * Set if the procedure call should return a value (i.e. the SQL string is
-     * of the form &quot;{?=call ...}&quot;.
+     * Set if the procedure call should return a value (i.e the SQL string is
+     * of the form &quot;{&#63=call &#133}&quot;.
      */
     private boolean haveRetVal = false;
 
@@ -183,8 +183,8 @@ public class CallableStatement_base extends PreparedStatement_base
     }
 
     /**
-     * Remove the &quot;?=&quot; from the SQL string (e.g. <code>{?=call
-     * sp_x(?)}</code> becomes <code>{call sp_x(?)}</code>.
+     * Remove the &quot;&#63=&quot; from the SQL string (e.g <code>{&#63=call
+     * sp_x(&#63)}</code> becomes <code>{call sp_x(&#63)}</code>.
      *
      * @param sql the SQL string
      * @return    the string with the &quot;?=&quot; removed, or the same

@@ -39,14 +39,14 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  * @created  17 March 2001
- * @version  $Id: DatabaseMetaData.java,v 1.8 2003-11-28 06:45:04 alin_sinpalean Exp $
+ * @version  $Id: DatabaseMetaData.java,v 1.9 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.8 2003-11-28 06:45:04 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.9 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     // internal data needed by this implemention.
     Tds tds;
@@ -420,7 +420,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      *  Get a description of the foreign key columns in the foreign key table
      *  that reference the primary key columns of the primary key table
-     *  (describe how one table imports another's key.) This should normally
+     *  (describe how one table imports another's key). This should normally
      *  return a single foreign key/primary key pair (most tables only import a
      *  foreign key from a table once.) They are ordered by FKTABLE_CAT,
      *  FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ. <P>
@@ -534,10 +534,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's the name of this database product?
+     * Returns the name of this database product.
      *
-     *@return                   database product name
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   database product name
+     * @exception  SQLException  if a database-access error occurs.
      */
     public String getDatabaseProductName() throws SQLException
     {
@@ -545,10 +545,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's the version of this database product?
+     * Returns the version of this database product.
      *
-     *@return                   database version
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   database version
+     * @exception  SQLException  if a database-access error occurs.
      */
     public String getDatabaseProductVersion() throws SQLException
     {
@@ -558,12 +558,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     //----------------------------------------------------------------------
 
     /**
-     *  What's the database's default transaction isolation level? The values
-     *  are defined in java.sql.Connection.
+     * Returns the database's default transaction isolation level. The values
+     * are defined in java.sql.Connection.
      *
-     *@return                   the default isolation level
-     *@exception  SQLException  if a database-access error occurs.
-     *@see                      Connection
+     * @return                   the default isolation level
+     * @exception  SQLException  if a database-access error occurs.
+     * @see                      Connection
      */
     public int getDefaultTransactionIsolation() throws SQLException
     {
@@ -572,9 +572,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's this JDBC driver's major version number?
+     * Returns this JDBC driver's major version number.
      *
-     *@return    JDBC driver major version
+     * @return    JDBC driver major version
      */
     public int getDriverMajorVersion()
     {
@@ -582,9 +582,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's this JDBC driver's minor version number?
+     * Returns this JDBC driver's minor version number.
      *
-     *@return    JDBC driver minor version number
+     * @return    JDBC driver minor version number
      */
     public int getDriverMinorVersion()
     {
@@ -592,10 +592,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's the name of this JDBC driver?
+     * Returns the name of this JDBC driver.
      *
-     *@return                   JDBC driver name
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   JDBC driver name
+     * @exception  SQLException  if a database-access error occurs.
      */
     public String getDriverName() throws SQLException
     {
@@ -603,10 +603,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's the version of this JDBC driver?
+     * Returns the version of this JDBC driver.
      *
-     *@return                   JDBC driver version
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   JDBC driver version
+     * @exception  SQLException  if a database-access error occurs.
      */
     public String getDriverVersion() throws SQLException
     {
@@ -614,78 +614,78 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Get a description of the foreign key columns that reference a table's
-     *  primary key columns (the foreign keys exported by a table). They are
-     *  ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ. <P>
+     * Get a description of the foreign key columns that reference a table's
+     * primary key columns (the foreign keys exported by a table). They are
+     * ordered by FKTABLE_CAT, FKTABLE_SCHEM, FKTABLE_NAME, and KEY_SEQ.
+     * <p>
+     * Each foreign key column description has the following columns:
+     * <OL>
+     *   <LI> <B>PKTABLE_CAT</B> String =>primary key table catalog (may be
+     *   null)
+     *   <LI> <B>PKTABLE_SCHEM</B> String =>primary key table schema (may be
+     *   null)
+     *   <LI> <B>PKTABLE_NAME</B> String =>primary key table name
+     *   <LI> <B>PKCOLUMN_NAME</B> String =>primary key column name
+     *   <LI> <B>FKTABLE_CAT</B> String =>foreign key table catalog (may be
+     *   null) being exported (may be null)
+     *   <LI> <B>FKTABLE_SCHEM</B> String =>foreign key table schema (may be
+     *   null) being exported (may be null)
+     *   <LI> <B>FKTABLE_NAME</B> String =>foreign key table name being
+     *   exported
+     *   <LI> <B>FKCOLUMN_NAME</B> String =>foreign key column name being
+     *   exported
+     *   <LI> <B>KEY_SEQ</B> short =>sequence number within foreign key
+     *   <LI> <B>UPDATE_RULE</B> short =>What happens to foreign key when
+     *   primary is updated:
+     *   <UL>
+     *     <LI> importedNoAction - do not allow update of primary key if it has
+     *     been imported
+     *     <LI> importedKeyCascade - change imported key to agree with primary
+     *     key update
+     *     <LI> importedKeySetNull - change imported key to NULL if its primary
+     *     key has been updated
+     *     <LI> importedKeySetDefault - change imported key to default values
+     *     if its primary key has been updated
+     *     <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
+     *     compatibility)
+     *   </UL>
      *
-     *  Each foreign key column description has the following columns:
-     *  <OL>
-     *    <LI> <B>PKTABLE_CAT</B> String =>primary key table catalog (may be
-     *    null)
-     *    <LI> <B>PKTABLE_SCHEM</B> String =>primary key table schema (may be
-     *    null)
-     *    <LI> <B>PKTABLE_NAME</B> String =>primary key table name
-     *    <LI> <B>PKCOLUMN_NAME</B> String =>primary key column name
-     *    <LI> <B>FKTABLE_CAT</B> String =>foreign key table catalog (may be
-     *    null) being exported (may be null)
-     *    <LI> <B>FKTABLE_SCHEM</B> String =>foreign key table schema (may be
-     *    null) being exported (may be null)
-     *    <LI> <B>FKTABLE_NAME</B> String =>foreign key table name being
-     *    exported
-     *    <LI> <B>FKCOLUMN_NAME</B> String =>foreign key column name being
-     *    exported
-     *    <LI> <B>KEY_SEQ</B> short =>sequence number within foreign key
-     *    <LI> <B>UPDATE_RULE</B> short =>What happens to foreign key when
-     *    primary is updated:
-     *    <UL>
-     *      <LI> importedNoAction - do not allow update of primary key if it has
-     *      been imported
-     *      <LI> importedKeyCascade - change imported key to agree with primary
-     *      key update
-     *      <LI> importedKeySetNull - change imported key to NULL if its primary
-     *      key has been updated
-     *      <LI> importedKeySetDefault - change imported key to default values
-     *      if its primary key has been updated
-     *      <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
-     *      compatibility)
-     *    </UL>
+     *   <LI> <B>DELETE_RULE</B> short =>What happens to the foreign key when
+     *   primary is deleted.
+     *   <UL>
+     *     <LI> importedKeyNoAction - do not allow delete of primary key if it
+     *     has been imported
+     *     <LI> importedKeyCascade - delete rows that import a deleted key
+     *     <LI> importedKeySetNull - change imported key to NULL if its primary
+     *     key has been deleted
+     *     <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
+     *     compatibility)
+     *     <LI> importedKeySetDefault - change imported key to default if its
+     *     primary key has been deleted
+     *   </UL>
      *
-     *    <LI> <B>DELETE_RULE</B> short =>What happens to the foreign key when
-     *    primary is deleted.
-     *    <UL>
-     *      <LI> importedKeyNoAction - do not allow delete of primary key if it
-     *      has been imported
-     *      <LI> importedKeyCascade - delete rows that import a deleted key
-     *      <LI> importedKeySetNull - change imported key to NULL if its primary
-     *      key has been deleted
-     *      <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
-     *      compatibility)
-     *      <LI> importedKeySetDefault - change imported key to default if its
-     *      primary key has been deleted
-     *    </UL>
+     *   <LI> <B>FK_NAME</B> String =>foreign key name (may be null)
+     *   <LI> <B>PK_NAME</B> String =>primary key name (may be null)
+     *   <LI> <B>DEFERRABILITY</B> short =>can the evaluation of foreign key
+     *   constraints be deferred until commit
+     *   <UL>
+     *     <LI> importedKeyInitiallyDeferred - see SQL92 for definition
+     *     <LI> importedKeyInitiallyImmediate - see SQL92 for definition
+     *     <LI> importedKeyNotDeferrable - see SQL92 for definition
+     *   </UL>
      *
-     *    <LI> <B>FK_NAME</B> String =>foreign key name (may be null)
-     *    <LI> <B>PK_NAME</B> String =>primary key name (may be null)
-     *    <LI> <B>DEFERRABILITY</B> short =>can the evaluation of foreign key
-     *    constraints be deferred until commit
-     *    <UL>
-     *      <LI> importedKeyInitiallyDeferred - see SQL92 for definition
-     *      <LI> importedKeyInitiallyImmediate - see SQL92 for definition
-     *      <LI> importedKeyNotDeferrable - see SQL92 for definition
-     *    </UL>
-     *
-     *  </OL>
+     * </OL>
      *
      *
-     *@param  catalog           a catalog name; "" retrieves those without a
+     * @param  catalog           a catalog name; "" retrieves those without a
      *      catalog; null means drop catalog name from the selection criteria
-     *@param  schema            a schema name pattern; "" retrieves those
+     * @param  schema            a schema name pattern; "" retrieves those
      *      without a schema
-     *@param  table             a table name
-     *@return                   ResultSet - each row is a foreign key column
+     * @param  table             a table name
+     * @return                   ResultSet - each row is a foreign key column
      *      description
-     *@exception  SQLException  if a database-access error occurs.
-     *@see                      #getImportedKeys
+     * @exception  SQLException  if a database-access error occurs.
+     * @see                      #getImportedKeys
      */
     public java.sql.ResultSet getExportedKeys(
         String catalog,
@@ -710,9 +710,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  What's the string used to quote SQL identifiers? This returns a space "
-     *  " if identifier quoting isn't supported. A JDBC-Compliant driver always
-     *  uses a double quote character.
+     * Returns the string used to quote SQL identifiers. This returns a space "
+     * " if identifier quoting isn't supported. A JDBC-Compliant driver always
+     * uses a double quote character.
      *
      *@return                   the quoting string
      *@exception  SQLException  if a database-access error occurs.
@@ -723,79 +723,78 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Get a description of the primary key columns that are referenced by a
-     *  table's foreign key columns (the primary keys imported by a table). They
-     *  are ordered by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, and KEY_SEQ.
-     *  <P>
+     * Get a description of the primary key columns that are referenced by a
+     * table's foreign key columns (the primary keys imported by a table). They
+     * are ordered by PKTABLE_CAT, PKTABLE_SCHEM, PKTABLE_NAME, and KEY_SEQ.
+     * <p>
+     * Each primary key column description has the following columns:
+     * <OL>
+     *   <LI> <B>PKTABLE_CAT</B> String =>primary key table catalog being
+     *   imported (may be null)
+     *   <LI> <B>PKTABLE_SCHEM</B> String =>primary key table schema being
+     *   imported (may be null)
+     *   <LI> <B>PKTABLE_NAME</B> String =>primary key table name being
+     *   imported
+     *   <LI> <B>PKCOLUMN_NAME</B> String =>primary key column name being
+     *   imported
+     *   <LI> <B>FKTABLE_CAT</B> String =>foreign key table catalog (may be
+     *   null)
+     *   <LI> <B>FKTABLE_SCHEM</B> String =>foreign key table schema (may be
+     *   null)
+     *   <LI> <B>FKTABLE_NAME</B> String =>foreign key table name
+     *   <LI> <B>FKCOLUMN_NAME</B> String =>foreign key column name
+     *   <LI> <B>KEY_SEQ</B> short =>sequence number within foreign key
+     *   <LI> <B>UPDATE_RULE</B> short =>What happens to foreign key when
+     *   primary is updated:
+     *   <UL>
+     *     <LI> importedNoAction - do not allow update of primary key if it has
+     *     been imported
+     *     <LI> importedKeyCascade - change imported key to agree with primary
+     *     key update
+     *     <LI> importedKeySetNull - change imported key to NULL if its primary
+     *     key has been updated
+     *     <LI> importedKeySetDefault - change imported key to default values
+     *     if its primary key has been updated
+     *     <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
+     *     compatibility)
+     *   </UL>
      *
-     *  Each primary key column description has the following columns:
-     *  <OL>
-     *    <LI> <B>PKTABLE_CAT</B> String =>primary key table catalog being
-     *    imported (may be null)
-     *    <LI> <B>PKTABLE_SCHEM</B> String =>primary key table schema being
-     *    imported (may be null)
-     *    <LI> <B>PKTABLE_NAME</B> String =>primary key table name being
-     *    imported
-     *    <LI> <B>PKCOLUMN_NAME</B> String =>primary key column name being
-     *    imported
-     *    <LI> <B>FKTABLE_CAT</B> String =>foreign key table catalog (may be
-     *    null)
-     *    <LI> <B>FKTABLE_SCHEM</B> String =>foreign key table schema (may be
-     *    null)
-     *    <LI> <B>FKTABLE_NAME</B> String =>foreign key table name
-     *    <LI> <B>FKCOLUMN_NAME</B> String =>foreign key column name
-     *    <LI> <B>KEY_SEQ</B> short =>sequence number within foreign key
-     *    <LI> <B>UPDATE_RULE</B> short =>What happens to foreign key when
-     *    primary is updated:
-     *    <UL>
-     *      <LI> importedNoAction - do not allow update of primary key if it has
-     *      been imported
-     *      <LI> importedKeyCascade - change imported key to agree with primary
-     *      key update
-     *      <LI> importedKeySetNull - change imported key to NULL if its primary
-     *      key has been updated
-     *      <LI> importedKeySetDefault - change imported key to default values
-     *      if its primary key has been updated
-     *      <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
-     *      compatibility)
-     *    </UL>
+     *   <LI> <B>DELETE_RULE</B> short =>What happens to the foreign key when
+     *   primary is deleted.
+     *   <UL>
+     *     <LI> importedKeyNoAction - do not allow delete of primary key if it
+     *     has been imported
+     *     <LI> importedKeyCascade - delete rows that import a deleted key
+     *     <LI> importedKeySetNull - change imported key to NULL if its primary
+     *     key has been deleted
+     *     <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
+     *     compatibility)
+     *     <LI> importedKeySetDefault - change imported key to default if its
+     *     primary key has been deleted
+     *   </UL>
      *
-     *    <LI> <B>DELETE_RULE</B> short =>What happens to the foreign key when
-     *    primary is deleted.
-     *    <UL>
-     *      <LI> importedKeyNoAction - do not allow delete of primary key if it
-     *      has been imported
-     *      <LI> importedKeyCascade - delete rows that import a deleted key
-     *      <LI> importedKeySetNull - change imported key to NULL if its primary
-     *      key has been deleted
-     *      <LI> importedKeyRestrict - same as importedKeyNoAction (for ODBC 2.x
-     *      compatibility)
-     *      <LI> importedKeySetDefault - change imported key to default if its
-     *      primary key has been deleted
-     *    </UL>
+     *   <LI> <B>FK_NAME</B> String =>foreign key name (may be null)
+     *   <LI> <B>PK_NAME</B> String =>primary key name (may be null)
+     *   <LI> <B>DEFERRABILITY</B> short =>can the evaluation of foreign key
+     *   constraints be deferred until commit
+     *   <UL>
+     *     <LI> importedKeyInitiallyDeferred - see SQL92 for definition
+     *     <LI> importedKeyInitiallyImmediate - see SQL92 for definition
+     *     <LI> importedKeyNotDeferrable - see SQL92 for definition
+     *   </UL>
      *
-     *    <LI> <B>FK_NAME</B> String =>foreign key name (may be null)
-     *    <LI> <B>PK_NAME</B> String =>primary key name (may be null)
-     *    <LI> <B>DEFERRABILITY</B> short =>can the evaluation of foreign key
-     *    constraints be deferred until commit
-     *    <UL>
-     *      <LI> importedKeyInitiallyDeferred - see SQL92 for definition
-     *      <LI> importedKeyInitiallyImmediate - see SQL92 for definition
-     *      <LI> importedKeyNotDeferrable - see SQL92 for definition
-     *    </UL>
-     *
-     *  </OL>
+     * </OL>
      *
      *
-     *@param  catalog           a catalog name; "" retrieves those without a
+     * @param  catalog           a catalog name; "" retrieves those without a
      *      catalog; null means drop catalog name from the selection criteria
-     *@param  schema            a schema name pattern; "" retrieves those
+     * @param  schema            a schema name pattern; "" retrieves those
      *      without a schema
-     *@param  table             a table name
-     *@return                   ResultSet - each row is a primary key column
+     * @param  table             a table name
+     * @return                   ResultSet - each row is a primary key column
      *      description
-     *@exception  SQLException  if a database-access error occurs.
-     *@see                      #getExportedKeys
+     * @exception  SQLException  if a database-access error occurs.
+     * @see                      #getExportedKeys
      */
     public java.sql.ResultSet getImportedKeys(
         String catalog,
@@ -1932,11 +1931,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does a catalog appear at the start of a qualified table name? (Otherwise
-     *  it appears at the end)
+     * Retrieves whether a catalog appears at the start of a fully qualified
+     * table name.  If not, the catalog appears at the end.
      *
-     *@return                   true if it appears at the start
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if it appears at the start
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean isCatalogAtStart() throws SQLException
     {
@@ -1944,10 +1943,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the database in read-only mode?
+     * Is the database in read-only mode?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean isReadOnly() throws SQLException
     {
@@ -1967,11 +1966,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are concatenations between NULL and non-NULL values NULL? A
-     *  JDBC-Compliant driver always returns true.
+     * Retrieves whether this database supports concatenations between
+     * <code>NULL</code> and non-<code>NULL</code> values being
+     * <code>NULL</code>.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean nullPlusNonNullIsNull() throws SQLException
     {
@@ -1985,10 +1985,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are NULL values sorted at the end regardless of sort order?
+     * Are NULL values sorted at the end regardless of sort order?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean nullsAreSortedAtEnd() throws SQLException
     {
@@ -1997,10 +1997,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are NULL values sorted at the start regardless of sort order?
+     * Are NULL values sorted at the start regardless of sort order?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean nullsAreSortedAtStart() throws SQLException
     {
@@ -2009,10 +2009,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are NULL values sorted high?
+     * Are NULL values sorted high?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean nullsAreSortedHigh() throws SQLException
     {
@@ -2021,10 +2021,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are NULL values sorted low?
+     * Are NULL values sorted low?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean nullsAreSortedLow() throws SQLException
     {
@@ -2033,11 +2033,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case unquoted SQL identifiers as case
-     *  insensitive and store them in lower case?
+     * Does the database treat mixed case unquoted SQL identifiers as case
+     * insensitive and store them in lower case?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean storesLowerCaseIdentifiers() throws SQLException
     {
@@ -2046,11 +2046,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case quoted SQL identifiers as case
-     *  insensitive and store them in lower case?
+     * Does the database treat mixed case quoted SQL identifiers as case
+     * insensitive and store them in lower case?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean storesLowerCaseQuotedIdentifiers() throws SQLException
     {
@@ -2059,11 +2059,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case unquoted SQL identifiers as case
-     *  insensitive and store them in mixed case?
+     * Does the database treat mixed case unquoted SQL identifiers as case
+     * insensitive and store them in mixed case?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean storesMixedCaseIdentifiers() throws SQLException
     {
@@ -2072,11 +2072,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case quoted SQL identifiers as case
-     *  insensitive and store them in mixed case?
+     * Does the database treat mixed case quoted SQL identifiers as case
+     * insensitive and store them in mixed case?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean storesMixedCaseQuotedIdentifiers() throws SQLException
     {
@@ -2085,11 +2085,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case unquoted SQL identifiers as case
-     *  insensitive and store them in upper case?
+     * Does the database treat mixed case unquoted SQL identifiers as case
+     * insensitive and store them in upper case?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean storesUpperCaseIdentifiers() throws SQLException
     {
@@ -2098,11 +2098,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case quoted SQL identifiers as case
-     *  insensitive and store them in upper case?
+     * Does the database treat mixed case quoted SQL identifiers as case
+     * insensitive and store them in upper case?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean storesUpperCaseQuotedIdentifiers() throws SQLException
     {
@@ -2114,10 +2114,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     // Functions describing which features are supported.
 
     /**
-     *  Is "ALTER TABLE" with add column supported?
+     * Is "ALTER TABLE" with add column supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsAlterTableWithAddColumn() throws SQLException
     {
@@ -2125,10 +2125,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is "ALTER TABLE" with drop column supported?
+     * Is "ALTER TABLE" with drop column supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsAlterTableWithDropColumn() throws SQLException
     {
@@ -2136,11 +2136,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the ANSI92 entry level SQL grammar supported? All JDBC-Compliant
-     *  drivers must return true.
+     * Retrieves whether this database supports the ANSI92 entry level SQL
+     * grammar.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsANSI92EntryLevelSQL() throws SQLException
     {
@@ -2149,10 +2149,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the ANSI92 full SQL grammar supported?
+     * Is the ANSI92 full SQL grammar supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsANSI92FullSQL() throws SQLException
     {
@@ -2161,10 +2161,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the ANSI92 intermediate SQL grammar supported?
+     * Is the ANSI92 intermediate SQL grammar supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsANSI92IntermediateSQL() throws SQLException
     {
@@ -2173,10 +2173,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a catalog name be used in a data manipulation statement?
+     * Can a catalog name be used in a data manipulation statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCatalogsInDataManipulation() throws SQLException
     {
@@ -2185,10 +2185,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a catalog name be used in an index definition statement?
+     * Can a catalog name be used in an index definition statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCatalogsInIndexDefinitions() throws SQLException
     {
@@ -2197,10 +2197,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a catalog name be used in a privilege definition statement?
+     * Can a catalog name be used in a privilege definition statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCatalogsInPrivilegeDefinitions() throws SQLException
     {
@@ -2209,10 +2209,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a catalog name be used in a procedure call statement?
+     * Can a catalog name be used in a procedure call statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCatalogsInProcedureCalls() throws SQLException
     {
@@ -2221,10 +2221,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a catalog name be used in a table definition statement?
+     * Can a catalog name be used in a table definition statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCatalogsInTableDefinitions() throws SQLException
     {
@@ -2233,14 +2233,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is column aliasing supported? <P>
+     * Retrieves whether this database supports column aliasing.
+     * <p>
+     * If so, the SQL AS clause can be used to provide names for computed
+     * columns or to provide alias names for columns as required. A
+     * JDBC-Compliant driver always returns true.
      *
-     *  If so, the SQL AS clause can be used to provide names for computed
-     *  columns or to provide alias names for columns as required. A
-     *  JDBC-Compliant driver always returns true.
-     *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsColumnAliasing() throws SQLException
     {
@@ -2249,10 +2249,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the CONVERT function between SQL types supported?
+     * Is the CONVERT function between SQL types supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsConvert() throws SQLException
     {
@@ -2260,12 +2260,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is CONVERT between the given SQL types supported?
+     * Is CONVERT between the given SQL types supported?
      *
-     *@param  fromType          the type to convert from
-     *@param  toType            the type to convert to
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @param  fromType          the type to convert from
+     * @param  toType            the type to convert to
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsConvert(int fromType, int toType)
         throws SQLException
@@ -2320,10 +2320,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the ODBC Core SQL grammar supported?
+     * Is the ODBC Core SQL grammar supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCoreSQLGrammar() throws SQLException
     {
@@ -2332,11 +2332,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are correlated subqueries supported? A JDBC-Compliant driver always
-     *  returns true.
+     * Retrieves whether this database supports correlated subqueries.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsCorrelatedSubqueries() throws SQLException
     {
@@ -2345,11 +2344,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are both data definition and data manipulation statements within a
-     *  transaction supported?
+     * Are both data definition and data manipulation statements within a
+     * transaction supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsDataDefinitionAndDataManipulationTransactions()
              throws SQLException
@@ -2359,10 +2358,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are only data manipulation statements within a transaction supported?
+     * Are only data manipulation statements within a transaction supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsDataManipulationTransactionsOnly()
              throws SQLException
@@ -2372,11 +2371,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  If table correlation names are supported, are they restricted to be
-     *  different from the names of the tables?
+     * If table correlation names are supported, are they restricted to be
+     * different from the names of the tables?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsDifferentTableCorrelationNames() throws SQLException
     {
@@ -2385,10 +2384,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are expressions in "ORDER BY" lists supported?
+     * Are expressions in "ORDER BY" lists supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsExpressionsInOrderBy() throws SQLException
     {
@@ -2397,10 +2396,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the ODBC Extended SQL grammar supported?
+     * Is the ODBC Extended SQL grammar supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsExtendedSQLGrammar() throws SQLException
     {
@@ -2409,10 +2408,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are full nested outer joins supported?
+     * Are full nested outer joins supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsFullOuterJoins() throws SQLException
     {
@@ -2423,10 +2422,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is some form of "GROUP BY" clause supported?
+     * Is some form of "GROUP BY" clause supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsGroupBy() throws SQLException
     {
@@ -2434,11 +2433,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a "GROUP BY" clause add columns not in the SELECT provided it
-     *  specifies all the columns in the SELECT?
+     * Can a "GROUP BY" clause add columns not in the SELECT provided it
+     * specifies all the columns in the SELECT?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsGroupByBeyondSelect() throws SQLException
     {
@@ -2449,10 +2448,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a "GROUP BY" clause use columns not in the SELECT?
+     * Can a "GROUP BY" clause use columns not in the SELECT?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsGroupByUnrelated() throws SQLException
     {
@@ -2461,10 +2460,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the SQL Integrity Enhancement Facility supported?
+     * Is the SQL Integrity Enhancement Facility supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsIntegrityEnhancementFacility() throws SQLException
     {
@@ -2473,11 +2472,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the escape character in "LIKE" clauses supported? A JDBC-Compliant
-     *  driver always returns true.
+     * Retrieves whether this database supports specifying a <code>LIKE</code>
+     * escape clause.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsLikeEscapeClause() throws SQLException
     {
@@ -2488,11 +2487,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is there limited support for outer joins? (This will be true if
-     *  supportFullOuterJoins is true.)
+     * Retrieves whether this database provides limited support for outer
+     * joins.  (This will be <code>true</code> if the method
+     * <code>supportsFullOuterJoins</code> returns <code>true</code>).
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsLimitedOuterJoins() throws SQLException
     {
@@ -2500,11 +2500,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is the ODBC Minimum SQL grammar supported? All JDBC-Compliant drivers
-     *  must return true.
+     * Retrieves whether this database supports the ODBC Minimum SQL grammar.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsMinimumSQLGrammar() throws SQLException
     {
@@ -2513,12 +2512,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case unquoted SQL identifiers as case
-     *  sensitive and as a result store them in mixed case? A JDBC-Compliant
-     *  driver will always return false.
+     * Retrieves whether this database treats mixed case unquoted SQL identifiers as
+     * case sensitive and as a result stores them in mixed case.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsMixedCaseIdentifiers() throws SQLException
     {
@@ -2527,12 +2525,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database treat mixed case quoted SQL identifiers as case
-     *  sensitive and as a result store them in mixed case? A JDBC-Compliant
-     *  driver will always return true.
+     * Retrieves whether this database treats mixed case quoted SQL identifiers as
+     * case sensitive and as a result stores them in mixed case.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException
     {
@@ -2541,10 +2538,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are multiple ResultSets from a single execute supported?
+     * Are multiple ResultSets from a single execute supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsMultipleResultSets() throws SQLException
     {
@@ -2552,11 +2549,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can we have multiple transactions open at once (on different
-     *  connections)?
+     * Can we have multiple transactions open at once (on different
+     * connections)?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsMultipleTransactions() throws SQLException
     {
@@ -2564,11 +2561,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can columns be defined as non-nullable? A JDBC-Compliant driver always
-     *  returns true.
+     * Retrieves whether columns in this database may be defined as non-nullable.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsNonNullableColumns() throws SQLException
     {
@@ -2576,11 +2572,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can cursors remain open across commits?
+     * Can cursors remain open across commits?
      *
-     *@return                   true if cursors always remain open; false if
+     * @return                   true if cursors always remain open; false if
      *      they might not remain open
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsOpenCursorsAcrossCommit() throws SQLException
     {
@@ -2591,9 +2587,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Can cursors remain open across rollbacks?
      *
-     *@return                   true if cursors always remain open; false if
+     * @return                   true if cursors always remain open; false if
      *      they might not remain open
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsOpenCursorsAcrossRollback() throws SQLException
     {
@@ -2604,9 +2600,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Can statements remain open across commits?
      *
-     *@return                   true if statements always remain open; false if
+     * @return                   true if statements always remain open; false if
      *      they might not remain open
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsOpenStatementsAcrossCommit() throws SQLException
     {
@@ -2616,9 +2612,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Can statements remain open across rollbacks?
      *
-     *@return                   true if statements always remain open; false if
+     * @return                   true if statements always remain open; false if
      *      they might not remain open
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsOpenStatementsAcrossRollback() throws SQLException
     {
@@ -2626,10 +2622,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can an "ORDER BY" clause use columns not in the SELECT?
+     * Can an "ORDER BY" clause use columns not in the SELECT?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsOrderByUnrelated() throws SQLException
     {
@@ -2640,8 +2636,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Is some form of outer join supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsOuterJoins() throws SQLException
     {
@@ -2651,8 +2647,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * Is positioned DELETE supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsPositionedDelete() throws SQLException
     {
@@ -2661,10 +2657,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is positioned UPDATE supported?
+     * Is positioned UPDATE supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsPositionedUpdate() throws SQLException
     {
@@ -2673,10 +2669,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a schema name be used in a data manipulation statement?
+     * Can a schema name be used in a data manipulation statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSchemasInDataManipulation() throws SQLException
     {
@@ -2685,10 +2681,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a schema name be used in an index definition statement?
+     * Can a schema name be used in an index definition statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSchemasInIndexDefinitions() throws SQLException
     {
@@ -2697,10 +2693,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a schema name be used in a privilege definition statement?
+     * Can a schema name be used in a privilege definition statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSchemasInPrivilegeDefinitions() throws SQLException
     {
@@ -2709,10 +2705,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a schema name be used in a procedure call statement?
+     * Can a schema name be used in a procedure call statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSchemasInProcedureCalls() throws SQLException
     {
@@ -2721,10 +2717,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Can a schema name be used in a table definition statement?
+     * Can a schema name be used in a table definition statement?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSchemasInTableDefinitions() throws SQLException
     {
@@ -2733,10 +2729,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is SELECT for UPDATE supported?
+     * Is SELECT for UPDATE supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSelectForUpdate() throws SQLException
     {
@@ -2745,11 +2741,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are stored procedure calls using the stored procedure escape syntax
-     *  supported?
+     * Are stored procedure calls using the stored procedure escape syntax
+     * supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsStoredProcedures() throws SQLException
     {
@@ -2757,11 +2753,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are subqueries in comparison expressions supported? A JDBC-Compliant
-     *  driver always returns true.
+     * Retrieves whether this database supports subqueries in comparison
+     * expressions.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSubqueriesInComparisons() throws SQLException
     {
@@ -2769,11 +2765,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are subqueries in 'exists' expressions supported? A JDBC-Compliant
-     *  driver always returns true.
+     * Retrieves whether this database supports subqueries in
+     * <code>EXISTS</code> expressions.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSubqueriesInExists() throws SQLException
     {
@@ -2781,11 +2777,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are subqueries in 'in' statements supported? A JDBC-Compliant driver
-     *  always returns true.
+     * Retrieves whether this database supports subqueries in
+     * <code>IN</code> statements.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSubqueriesInIns() throws SQLException
     {
@@ -2793,11 +2789,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are subqueries in quantified expressions supported? A JDBC-Compliant
-     *  driver always returns true.
+     * Retrieves whether this database supports subqueries in quantified
+     * expressions.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsSubqueriesInQuantifieds() throws SQLException
     {
@@ -2806,11 +2802,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are table correlation names supported? A JDBC-Compliant driver always
-     *  returns true.
+     * Retrieves whether this database supports table correlation names.
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsTableCorrelationNames() throws SQLException
     {
@@ -2818,12 +2813,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database support the given transaction isolation level?
+     * Does the database support the given transaction isolation level?
      *
-     *@param  level             the values are defined in java.sql.Connection
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
-     *@see                      Connection
+     * @param  level             the values are defined in java.sql.Connection
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
+     * @see                      Connection
      */
     public boolean supportsTransactionIsolationLevel( int level )
              throws SQLException
@@ -2832,11 +2827,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Are transactions supported? If not, commit is a noop and the isolation
-     *  level is TRANSACTION_NONE.
+     * Retrieves whether this database supports transactions. If not, invoking the
+     * method <code>commit</code> is a noop, and the isolation level is
+     * <code>TRANSACTION_NONE</code>.
      *
-     *@return                   true if transactions are supported
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if transactions are supported
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsTransactions() throws SQLException
     {
@@ -2844,10 +2840,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is SQL UNION supported?
+     * Is SQL UNION supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsUnion() throws SQLException
     {
@@ -2855,10 +2851,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Is SQL UNION ALL supported?
+     * Is SQL UNION ALL supported?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean supportsUnionAll() throws SQLException
     {
@@ -2866,11 +2862,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database use a file for each table?
+     * Does the database use a file for each table?
      *
-     *@return                   true if the database uses a local file for each
+     * @return                   true if the database uses a local file for each
      *      table
-     *@exception  SQLException  if a database-access error occurs.
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean usesLocalFilePerTable() throws SQLException
     {
@@ -2878,10 +2874,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  Does the database store tables in a local file?
+     * Does the database store tables in a local file?
      *
-     *@return                   true if so
-     *@exception  SQLException  if a database-access error occurs.
+     * @return                   true if so
+     * @exception  SQLException  if a database-access error occurs.
      */
     public boolean usesLocalFiles() throws SQLException
     {
@@ -2891,13 +2887,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     //--------------------------JDBC 2.0-----------------------------
 
     /**
-     *  JDBC 2.0 Does the database support the given result set type?
+     * JDBC 2.0 Does the database support the given result set type?
      *
-     *@param  type              defined in <code>java.sql.ResultSet</code>
-     *@return                   <code>true</code> if so; <code>false</code>
+     * @param  type              defined in <code>java.sql.ResultSet</code>
+     * @return                   <code>true</code> if so; <code>false</code>
      *      otherwise
-     *@exception  SQLException  if a database access error occurs
-     *@see                      Connection
+     * @exception  SQLException  if a database access error occurs
+     * @see                      Connection
      */
     public boolean supportsResultSetType( int type ) throws SQLException
     {
@@ -2906,15 +2902,15 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Does the database support the concurrency type in combination
-     *  with the given result set type?
+     * JDBC 2.0 Does the database support the concurrency type in combination
+     * with the given result set type?
      *
-     *@param  type              defined in <code>java.sql.ResultSet</code>
-     *@param  concurrency       type defined in <code>java.sql.ResultSet</code>
-     *@return                   <code>true</code> if so; <code>false</code>
+     * @param  type              defined in <code>java.sql.ResultSet</code>
+     * @param  concurrency       type defined in <code>java.sql.ResultSet</code>
+     * @return                   <code>true</code> if so; <code>false</code>
      *      otherwise
-     *@exception  SQLException  if a database access error occurs
-     *@see                      Connection
+     * @exception  SQLException  if a database access error occurs
+     * @see                      Connection
      */
     public boolean supportsResultSetConcurrency( int type, int concurrency )
              throws SQLException
@@ -2924,12 +2920,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether a result set's own updates are visible.
+     * JDBC 2.0 Indicates whether a result set's own updates are visible.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   <code>true</code> if updates are visible for the
+     * @param  type              @todo Description of Parameter
+     * @return                   <code>true</code> if updates are visible for the
      *      result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean ownUpdatesAreVisible( int type ) throws SQLException
     {
@@ -2938,12 +2934,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether a result set's own deletes are visible.
+     * JDBC 2.0 Indicates whether a result set's own deletes are visible.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   <code>true</code> if deletes are visible for the
+     * @param  type              @todo Description of Parameter
+     * @return                   <code>true</code> if deletes are visible for the
      *      result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean ownDeletesAreVisible( int type ) throws SQLException
     {
@@ -2952,12 +2948,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether a result set's own inserts are visible.
+     * JDBC 2.0 Indicates whether a result set's own inserts are visible.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   <code>true</code> if inserts are visible for the
+     * @param  type              @todo Description of Parameter
+     * @return                   <code>true</code> if inserts are visible for the
      *      result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean ownInsertsAreVisible( int type ) throws SQLException
     {
@@ -2966,12 +2962,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether updates made by others are visible.
+     * JDBC 2.0 Indicates whether updates made by others are visible.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   <code>true</code> if updates made by others are
+     * @param  type              @todo Description of Parameter
+     * @return                   <code>true</code> if updates made by others are
      *      visible for the result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean othersUpdatesAreVisible( int type ) throws SQLException
     {
@@ -2980,12 +2976,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether deletes made by others are visible.
+     * JDBC 2.0 Indicates whether deletes made by others are visible.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   <code>true</code> if deletes made by others are
+     * @param  type              @todo Description of Parameter
+     * @return                   <code>true</code> if deletes made by others are
      *      visible for the result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean othersDeletesAreVisible( int type ) throws SQLException
     {
@@ -2994,14 +2990,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether inserts made by others are visible.
+     * JDBC 2.0 Indicates whether inserts made by others are visible.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   true if updates are visible for the result set
+     * @param  type              @todo Description of Parameter
+     * @return                   true if updates are visible for the result set
      *      type
-     *@return                   <code>true</code> if inserts made by others are
+     * @return                   <code>true</code> if inserts made by others are
      *      visible for the result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean othersInsertsAreVisible( int type ) throws SQLException
     {
@@ -3010,13 +3006,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether or not a visible row update can be detected
-     *  by calling the method <code>ResultSet.rowUpdated</code> .
+     * JDBC 2.0 Indicates whether or not a visible row update can be detected
+     * by calling the method <code>ResultSet.rowUpdated</code> .
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   <code>true</code> if changes are detected by the
+     * @param  type              @todo Description of Parameter
+     * @return                   <code>true</code> if changes are detected by the
      *      result set type; <code>false</code> otherwise
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean updatesAreDetected( int type ) throws SQLException
     {
@@ -3024,14 +3020,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether or not a visible row delete can be detected
-     *  by calling ResultSet.rowDeleted(). If deletesAreDetected() returns
-     *  false, then deleted rows are removed from the result set.
+     * JDBC 2.0 Indicates whether or not a visible row delete can be detected
+     * by calling ResultSet.rowDeleted(). If deletesAreDetected() returns
+     * false, then deleted rows are removed from the result set.
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   true if changes are detected by the resultset
+     * @param  type              @todo Description of Parameter
+     * @return                   true if changes are detected by the resultset
      *      type
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean deletesAreDetected( int type ) throws SQLException
     {
@@ -3039,13 +3035,13 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether or not a visible row insert can be detected
-     *  by calling ResultSet.rowInserted().
+     * JDBC 2.0 Indicates whether or not a visible row insert can be detected
+     * by calling ResultSet.rowInserted().
      *
-     *@param  type              @todo Description of Parameter
-     *@return                   true if changes are detected by the resultset
+     * @param  type              @todo Description of Parameter
+     * @return                   true if changes are detected by the resultset
      *      type
-     *@exception  SQLException  if a database access error occurs
+     * @exception  SQLException  if a database access error occurs
      */
     public boolean insertsAreDetected( int type ) throws SQLException
     {
@@ -3053,11 +3049,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     }
 
     /**
-     *  JDBC 2.0 Indicates whether the driver supports batch updates.
+     * JDBC 2.0 Indicates whether the driver supports batch updates.
      *
-     *@return                   true if the driver supports batch updates; false
+     * @return                   true if the driver supports batch updates; false
      *      otherwise
-     *@exception  SQLException  @todo Description of Exception
+     * @exception  SQLException  @todo Description of Exception
      */
     public boolean supportsBatchUpdates() throws SQLException
     {

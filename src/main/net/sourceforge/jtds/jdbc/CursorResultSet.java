@@ -175,20 +175,21 @@ public class CursorResultSet extends AbstractResultSet
                 Tds tds = conn.allocateTds(true);
                 try
                 {
-                    stmt.internalExecute("CLOSE " + cursorName, tds, warningChain);
-                    stmt.internalExecute("DEALLOCATE " + cursorName, tds, warningChain);
-                    open = false;
+                    warningChain.clearWarnings();
+                    tds.submitProcedure("CLOSE " + cursorName, warningChain);
+                    tds.submitProcedure("DEALLOCATE " + cursorName, warningChain);
                 }
                 finally
                 {
-                    stmt.skipToEnd();
+                    open = false;
                     try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
+                    stmt = null;
+                    conn = null;
                 }
             }
         }
 
-        stmt = null;
-        conn = null;
+        warningChain.checkForExceptions();
     }
 
     public SQLWarning getWarnings() throws SQLException
@@ -255,7 +256,7 @@ public class CursorResultSet extends AbstractResultSet
             }
             finally
             {
-                stmt.skipToEnd();
+                tds.skipToEnd();
                 try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
             }
         }
@@ -448,15 +449,16 @@ public class CursorResultSet extends AbstractResultSet
             Tds tds = conn.allocateTds(true);
             try
             {
-                stmt.internalExecute(query.toString(), tds, warningChain);
-                stmt.internalExecute("OPEN " + cursorName, tds, warningChain);
+                warningChain.clearWarnings();
+                tds.submitProcedure(query.toString(), warningChain);
+                tds.submitProcedure("OPEN " + cursorName, warningChain);
             }
             finally
             {
-                stmt.skipToEnd();
                 try{ conn.freeTds(tds); } catch( TdsException ex ){ throw new SQLException(ex.getMessage()); }
             }
         }
+        warningChain.checkForExceptions();
         open = true;
     }
 

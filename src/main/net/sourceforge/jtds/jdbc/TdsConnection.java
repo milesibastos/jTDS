@@ -56,7 +56,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -87,7 +87,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -104,7 +104,6 @@ public class TdsConnection implements Connection
     private Properties initialProps = null;
 
     private final Vector tdsPool = new Vector();
-    private final Vector allStatements = new Vector();
     private DatabaseMetaData databaseMetaData = null;
 
     private boolean autoCommit = true;
@@ -124,7 +123,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.5 2003-12-16 19:08:49 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.6 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -205,15 +204,18 @@ public class TdsConnection implements Connection
 
     /**
      * Change the auto-commit and transaction isolation level values for all
-     * the <code>Statement</code>s belonging to this <code>Connection</code>.
+     * the <code>Tds</code> instances of this <code>Connection</code>. It's
+     * important to do this on all <code>Tds</code>s, because the javadoc for
+     * <code>setAutoCommit</code> specifies that <i>&quot;if [the] method is
+     * called during a transaction, the transaction is committed&quot;</i>.
      * <p>
      * Note: This is not synchronized because it's only supposed to be called
      *       by synchronized methods.
      */
     private void changeSettings() throws SQLException
     {
-        for( int i=0; i<allStatements.size(); i++ )
-            ((TdsStatement)allStatements.elementAt(i))
+        for( int i=0; i<tdsPool.size(); i++ )
+            ((TdsInstance)tdsPool.elementAt(i)).tds
                 .changeSettings(autoCommit, transactionIsolationLevel);
     }
 
@@ -248,23 +250,11 @@ public class TdsConnection implements Connection
             Tds tds = ((TdsInstance)tdsPool.get(i)).tds;
 
             // SAfe We have to synchronize this so that the Statement doesn't
-            //      begin sending data while we're changing the database. Not
-            //      really safe though, since the Tds could be deallocated just
-            //      before entering the monitor. Or not? Not too clear to me...
+            //      begin sending data while we're changing the database.
             synchronized( tds )
             {
-                TdsStatement s = tds.getStatement();
-
-                // SAfe A bit paranoic thinking here, but better to be sure it
-                //      works. :o) Will synchronize again on the Tds if the
-                //      Statement is null (otherwise it crashes with NPE).
-                Object o = s==null ? (Object)tds : s;
-                synchronized( o )
-                {
-                    if( s != null )
-                        s.skipToEnd();
-                    tds.changeDB(catalog, warningChain);
-                }
+                tds.skipToEnd();
+                tds.changeDB(catalog, warningChain);
             }
         }
 
@@ -426,11 +416,6 @@ public class TdsConnection implements Connection
         return new java.util.HashMap();
     }
 
-    public synchronized void markAsClosed(java.sql.Statement stmt)
-    {
-        allStatements.removeElement(stmt);
-    }
-
     /**
      * SQL statements without parameters are normally executed using Statement
      * objects. If the same SQL statement is executed many times, it is more
@@ -444,9 +429,7 @@ public class TdsConnection implements Connection
     public synchronized java.sql.Statement createStatement() throws SQLException
     {
         checkClosed();
-        Statement result = new TdsStatement(this);
-        allStatements.addElement(result);
-        return result;
+        return new TdsStatement(this);
     }
 
     /**
@@ -567,23 +550,6 @@ public class TdsConnection implements Connection
         int i;
         SQLException exception = null;
 
-        // SAfe First close all Statements, to ensure nothing is left behind
-        //      This is needed to ensure rollback below doesn't crash.
-        // SAfe Need to do it backwards because when closing, Statements remove
-        //      themselves from the list.
-        for( i=allStatements.size()-1; i>=0; i-- )
-            try
-            {
-                ((Statement)allStatements.elementAt(i)).close();
-            }
-            catch( SQLException ex )
-            {
-                // SAfe Add the old exceptions to the chain
-                ex.setNextException(exception);
-                exception = ex;
-            }
-        allStatements.clear();
-
         // MJH Need to rollback if in manual commit mode
         for( i=0; i<tdsPool.size(); i++ )
         {
@@ -595,6 +561,9 @@ public class TdsConnection implements Connection
                 Tds tds = ((TdsInstance)tdsPool.elementAt(i)).tds;
                 synchronized( tds )
                 {
+                    // Consume all remaining packets
+                    tds.skipToEnd();
+
                     if( !autoCommit )
                         tds.rollback(); // MJH
                     tds.close();
@@ -647,9 +616,7 @@ public class TdsConnection implements Connection
         throws SQLException
     {
         checkClosed();
-        Statement result = new TdsStatement(this, type, concurrency);
-        allStatements.addElement(result);
-        return result;
+        return new TdsStatement(this, type, concurrency);
     }
 
     /**
@@ -673,10 +640,8 @@ public class TdsConnection implements Connection
         throws SQLException
     {
         checkClosed();
-        java.sql.PreparedStatement result = new PreparedStatement_base(
+        return new PreparedStatement_base(
             this, sql, resultSetType, resultSetConcurrency);
-        allStatements.addElement(result);
-        return result;
     }
 
     /**
@@ -699,10 +664,8 @@ public class TdsConnection implements Connection
         int resultSetConcurrency) throws SQLException
     {
         checkClosed();
-        java.sql.CallableStatement result = new CallableStatement_base(
+        return new CallableStatement_base(
             this, sql, resultSetType, resultSetConcurrency);
-        allStatements.addElement(result);
-        return result;
     }
 
     private void NotImplemented() throws java.sql.SQLException
@@ -770,7 +733,9 @@ public class TdsConnection implements Connection
             inst.inUse = true;
             result = inst.tds;
 
-            result.changeSettings(autoCommit, transactionIsolationLevel);
+            // SAfe This is no longer needed, as settings are changed for all
+            //      Tds instances every time, now
+            // result.changeSettings(autoCommit, transactionIsolationLevel);
         }
         catch( net.sourceforge.jtds.jdbc.TdsException e )
         {
@@ -818,7 +783,7 @@ public class TdsConnection implements Connection
         i = tdsPool.size();
         do
             inst = (TdsInstance)tdsPool.elementAt(--i);
-        while( i>=0 && tds!=inst.tds );
+        while( i>0 && tds!=inst.tds );
 
         if( i >= 0 && inst.inUse )
         {
@@ -848,39 +813,11 @@ public class TdsConnection implements Connection
     private void commitOrRollback(boolean commit) throws SQLException
     {
         int i;
-        SQLException exception = null;
 
-        // SAfe Completely wrong! If in manual commit mode, the transaction is
-        //      not commited when going into auto commit. It has to be commited
-        //      manually (even after the commit mode switch), otherwise it will
-        //      be rolled back when the connection is closed.
-//        if( autoCommit )
-//            throw new SQLException("This method should only be " +
-//                    " used when auto commit has been disabled.");
-
-        // XXX race condition here.  It is possible that a statement could
-        // close while running this for loop.
-        // SAfe Release all Tds instances first.
-        for( i=0; i<allStatements.size(); i++ )
-        {
-            TdsStatement stmt = (TdsStatement) allStatements.elementAt(i);
-            try
-            {
-                // SAfe Need to consume all outstanding input...
-                stmt.skipToEnd();
-                // SAfe ...then release the Tds
-                stmt.releaseTds();
-            }
-            catch( SQLException ex )
-            {
-                ex.setNextException(exception);
-                exception = ex;
-            }
-        }
+        // @todo SAfe Check when does clearWarnings actually have to be called
+        warningChain.clearWarnings();
 
         // MJH  Commit or Rollback Tds connections directly rather than mess with TdsStatement
-        // SAfe We'll have to consume all outstanding data before we do this or we risk to crash. We also need
-        //      some synchronization here.
         for( i=0; i<tdsPool.size(); i++ )
         {
             try
@@ -890,17 +827,13 @@ public class TdsConnection implements Connection
                 else
                     ((TdsInstance)tdsPool.elementAt(i)).tds.rollback();
             }
-            // XXX need to put all of these into the warning chain.
-            //
-            // Don't think so, the warnings would belong to Statement anyway -- SB
             catch( java.sql.SQLException e )
             {
-                exception = e;
+                warningChain.addException(e);
             }
         }
 
-        if( exception != null )
-            throw exception;
+        warningChain.checkForExceptions();
     }
 
     public java.sql.Statement createStatement(int param, int param1, int param2) throws java.sql.SQLException

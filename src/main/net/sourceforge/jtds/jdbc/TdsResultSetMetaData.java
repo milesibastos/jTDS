@@ -41,11 +41,11 @@ import java.sql.*;
  * and properties of the columns in a ResultSet.
  *
  * @author Craig Spannring
- * @version $Id: TdsResultSetMetaData.java,v 1.2 2003-11-28 06:45:04 alin_sinpalean Exp $
+ * @version $Id: TdsResultSetMetaData.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $
  */
 public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
 {
-   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.2 2003-11-28 06:45:04 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsResultSetMetaData.java,v 1.3 2003-12-22 00:33:06 alin_sinpalean Exp $";
 
    /**
     * Does not allow NULL values.
@@ -172,7 +172,7 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    }
 
    /**
-    * Get the native data type name (i.e. without 'identity').
+    * Get the native data type name (i.e without 'identity').
     */
    private String getCleanTypeName(int column) throws SQLException
    {
@@ -455,13 +455,11 @@ public class TdsResultSetMetaData implements java.sql.ResultSetMetaData
    }
 
    /**
-    * JDBC 2.0
-    *
-    * <p>Returns the fully-qualified name of the Java class whose instances
-    * are manufactured if the method <code>ResultSet.getObject</code>
-    * is called to retrieve a value
-    * from the column.  <code>ResultSet.getObject</code> may return a subclass of the
-    * class returned by this method.
+    * <b>JDBC 2.0</b> Returns the fully-qualified name of the Java class whose
+    * instances are manufactured if the method <code>ResultSet.getObject</code>
+    * is called to retrieve a value from the column.
+    * <code>ResultSet.getObject</code> may return a subclass of the class
+    * returned by this method.
     *
     * @return the fully-qualified name of the class in the Java programming
     *         language that would be used by the method

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.86 2005-03-18 14:52:33 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.87 2005-04-04 20:36:58 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -342,6 +342,8 @@ public class TdsCore {
     //
     /** Name of the client host (it can take quite a while to find it out if DNS is configured incorrectly). */
     private static String hostName = null;
+    /** A reference to ntlm.SSPIJNIClient. */
+    private static SSPIJNIClient sspiJNIClient;
 
     //
     // Instance variables
@@ -384,8 +386,6 @@ public class TdsCore {
     private boolean isClosed;
     /** Indicates reading results from READTEXT command. */
     private boolean readTextMode;
-    /** A reference to ntlm.SSPIJNIClient. */
-    private SSPIJNIClient sspiJNIClient;
     /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
     private boolean ntlmAuthSSO;
     /** Indicates that a fatal error has occured and the connection will close. */
@@ -406,6 +406,7 @@ public class TdsCore {
      *
      * @param connection The connection which owns this object.
      * @param messages The SQLDiagnostic messages chain.
+     * @todo cache a TdsCore instance inside the Connection using WeakReference
      */
     TdsCore(ConnectionJDBC2 connection, SQLDiagnostic messages) {
         this.connection = connection;
@@ -413,9 +414,8 @@ public class TdsCore {
         this.messages = messages;
         serverType = connection.getServerType();
         tdsVersion = socket.getTdsVersion();
-        out = socket.getRequestStream();
-        in = socket.getResponseStream(out);
-        out.setBufferSize(connection.getNetPacketSize());
+        out = socket.getRequestStream(connection.getNetPacketSize());
+        in = socket.getResponseStream(out, connection.getNetPacketSize());
         out.setMaxPrecision(connection.getMaxPrecision());
     }
 

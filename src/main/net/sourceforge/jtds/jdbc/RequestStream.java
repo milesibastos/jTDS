@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.13 2005-01-06 15:45:06 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.14 2005-04-04 20:36:55 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -52,19 +52,22 @@ public class RequestStream {
     /** True if stream is closed. */
     private boolean isClosed = false;
     /** The current output buffer size*/
-    private int bufferSize = TdsCore.MIN_PKT_SIZE;
+    private int bufferSize;
     /** The maximum decimal precision. */
     private int maxPrecision;
 
     /**
      * Construct a RequestStream object.
      *
-     * @param socket The shared socket object to write to.
-     * @param streamId The unique id for this stream (from ResponseStream).
+     * @param socket     the shared socket object to write to
+     * @param streamId   the unique id for this stream
+     * @param bufferSize the initial buffer size to use (the current network
+     *                   packet size)
      */
-    RequestStream(SharedSocket socket, int streamId) {
+    RequestStream(SharedSocket socket, int streamId, int bufferSize) {
         this.streamId = streamId;
         this.socket = socket;
+        this.bufferSize = bufferSize;
         this.buffer = new byte[bufferSize];
         this.bufferPtr = TdsCore.PKT_HDR_LEN;
     }

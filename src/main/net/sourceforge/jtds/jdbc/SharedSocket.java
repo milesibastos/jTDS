@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.29 2005-03-14 12:51:10 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.30 2005-04-04 20:36:57 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -356,9 +356,11 @@ class SharedSocket {
     /**
      * Obtain an instance of a server request stream for this socket.
      *
+     * @param bufferSize the initial buffer size to be used by the
+     *                   <code>RequestStream</code>
      * @return the server request stream as a <code>RequestStream</code>
      */
-    RequestStream getRequestStream() {
+    RequestStream getRequestStream(int bufferSize) {
         synchronized (socketTable) {
             int id;
             for (id = 0; id < socketTable.size(); id++) {
@@ -375,7 +377,7 @@ class SharedSocket {
                 socketTable.set(id, vsock);
             }
 
-            return new RequestStream(this, id);
+            return new RequestStream(this, id, bufferSize);
         }
     }
 
@@ -386,10 +388,12 @@ class SharedSocket {
      *
      * @param requestStream an existing server request stream object obtained
      *                      from this <code>SharedSocket</code>
+     * @param bufferSize    the initial buffer size to be used by the
+     *                      <code>RequestStream</code>
      * @return the server response stream as a <code>ResponseStream</code>
      */
-    ResponseStream getResponseStream(RequestStream requestStream) {
-        return new ResponseStream(this, requestStream.getStreamId());
+    ResponseStream getResponseStream(RequestStream requestStream, int bufferSize) {
+        return new ResponseStream(this, requestStream.getStreamId(), bufferSize);
     }
 
     /**

@@ -38,6 +38,7 @@
     <copy todir="${build}/src">
       <fileset dir="${src}/test" includes="**/*.java">
         <exclude name="**/GenKeyTest.java"/>
+        <exclude name="**/JDBC3Test.java"/>
         <exclude name="**/LargeLOBTest.java"/>
         <exclude name="**/LOBTest.java"/>
         <exclude name="**/SavepointTest.java"/>

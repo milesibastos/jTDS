@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.15 2005-02-23 20:40:09 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.16 2005-04-04 20:36:56 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -58,12 +58,12 @@ public class ResponseStream {
      * @param socket The shared socket object to write to.
      * @param streamId The unique id for this stream (from ResponseStream).
      */
-    ResponseStream(SharedSocket socket, int streamId){
+    ResponseStream(SharedSocket socket, int streamId, int bufferSize){
         this.streamId = streamId;
         this.socket = socket;
-        this.bufferLen = TdsCore.MIN_PKT_SIZE;
-        this.buffer = new byte[bufferLen];
-        this.bufferPtr = bufferLen;
+        this.buffer = new byte[bufferSize];
+        this.bufferLen = bufferSize;
+        this.bufferPtr = bufferSize;
     }
 
     /**

@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+04/04/2005 - Alin Sinpalean
+ o Optimized buffer allocation in RequestStream/ResponseStream.
+ o Moved the Statement.getMoreResults(Statement.KEEP_CURRENT_RESULT) test to a
+   different, JDBC 3.0 only unit test.
+
 03/29/2005 - Alin Sinpalean
  o Applied a temporary (and highly useless) fix for bug [1172405] BLOB/CLOB
    position methods fail. position() methods work now, at least in theory.

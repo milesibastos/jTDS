@@ -48,11 +48,11 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author     Craig Spannring
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $
  */
 class TimeoutHandler extends Thread
 {
-    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $";
 
     Tds tds;
     SQLWarningChain wChain;
@@ -97,7 +97,7 @@ class TimeoutHandler extends Thread
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -163,7 +163,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.8 2003-02-15 14:19:20 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.9 2003-08-30 16:06:52 matt_brinkley Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -207,6 +207,19 @@ public class Tds implements TdsDefinitions {
         String verString = props_.getProperty(PROP_TDS, "7.0");
         procedureCache = new HashMap(); // new Vector();   // XXX as
         proceduresOfTra = new ArrayList();
+
+
+        //mdb: get the instance port, if it is specified...
+        String instanceName = props_.getProperty(PROP_INSTANCE, "");
+        if( instanceName.length() > 0 )
+        {
+            MSSqlServerInfo info = new MSSqlServerInfo();
+            info.getInfo(serverName);
+            port = info.getPortForInstance(instanceName);
+            if( port == -1 )
+                throw new SQLException( "Server " + serverName + " has no instance named " + instanceName);
+        }
+
 
         // XXX This driver doesn't properly support TDS 5.0, AFAIK.
         // Added 2000-06-07.

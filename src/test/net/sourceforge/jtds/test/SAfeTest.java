@@ -1377,6 +1377,60 @@ public class SAfeTest extends DatabaseTestCase {
     }
 
     /**
+     * Test running SELECT queries on one <code>Statement</code> at the same
+     * time as <code>cancel()</code> is called on a concurrent
+     * <code>Statement</code>.
+     */
+    public void testSocketConcurrency4() throws Exception {
+        // Just enough rows to break the server response in two network packets
+        final int rowCount = 256;
+
+        //Set up the test table
+        final Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #testSocketConcurrency4 "
+                + "(id int primary key, value varchar(30))");
+        for (int i = 0; i < rowCount; i++) {
+            stmt.executeUpdate("insert into #testSocketConcurrency4 "
+                    + "values (" + i + ", 'Row number " + i + "')");
+        }
+
+        final Vector errors = new Vector();
+
+        // Start a thread that does some work
+        Thread t = new Thread() {
+            public void run() {
+                try {
+                    for (int j = 0; j < 10; j++) {
+                        ResultSet rs = stmt.executeQuery(
+                                "select * from #testSocketConcurrency4");
+                        int cnt = 0;
+                        while (rs.next()) {
+                            ++cnt;
+                        }
+                        assertEquals(rowCount, cnt);
+                        rs.close();
+                        assertEquals(1, stmt.executeUpdate(
+                                "update #testSocketConcurrency4 "
+                                + "set value='Updated' where id=" + j));
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    errors.add(ex);
+                }
+            }
+        };
+        t.start();
+
+        // At the same time run some cancel() tests (on the same connection!)
+        testCancel0003();
+
+        // Now wait for the worker thread to finish
+        t.join();
+
+        assertEquals(0, errors.size());
+    }
+
+    /**
      * Test that <code>null</code> output parameters are handled correctly.
      * <p/>
      * It seems that if a non-nullable type is sent as input value and the

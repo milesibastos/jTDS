@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/04/2005 - Alin Sinpalean
+ o Added an extra concurrency test, which runs two Statements in parallel: one
+   doing SELECTs and UPDATEs and the other doing cancel()s. Seems to work fine.
+
 03/03/2005 - Alin Sinpalean
  o Added a batchSize parameter to control how many statements should be sent at
    once in a batch execution. Batches are now broken up into pieces on

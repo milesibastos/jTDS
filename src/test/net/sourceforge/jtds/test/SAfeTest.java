@@ -106,9 +106,9 @@ public class SAfeTest extends DatabaseTestCase {
 
         Statement stmt = con.createStatement();
         assertTrue(!stmt.execute(
-            "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
-            "insert into ##SAfe0002 values (1, 'Line 1') "+
-            "insert into ##SAfe0002 values (2, 'Line 2')"));
+            "create table #SAfe0002 (id int primary key, val varchar(20) null) "+
+            "insert into #SAfe0002 values (1, 'Line 1') "+
+            "insert into #SAfe0002 values (2, 'Line 2')"));
         assertEquals(0, stmt.getUpdateCount());
         assertTrue(!stmt.getMoreResults());
         assertEquals(1, stmt.getUpdateCount());
@@ -119,13 +119,13 @@ public class SAfeTest extends DatabaseTestCase {
 
         con.setAutoCommit(false);
         // This is where we lock the first line in the table
-        stmt.executeUpdate("update ##SAfe0002 set val='Updated Line' where id=1");
+        stmt.executeUpdate("update #SAfe0002 set val='Updated Line' where id=1");
 
         Statement stmt2 = con2.createStatement();
         stmt2.setQueryTimeout(1);
 
         try {
-            stmt2.executeQuery("select * from ##SAfe0002");
+            stmt2.executeQuery("select * from #SAfe0002");
             fail();
         } catch( SQLException ex ) {
             // SAfe We won't do an ex.getMessage().equals(...) test here
@@ -138,7 +138,7 @@ public class SAfeTest extends DatabaseTestCase {
         con.commit();
         con.setAutoCommit(true);
 
-        stmt.execute("drop table ##SAfe0002");
+        stmt.execute("drop table #SAfe0002");
         stmt.close();
 
         // Just run a tiny query to make sure the stream is still in working
@@ -479,11 +479,11 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testDeleteRow0009() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE ##SAfe0009(value VARCHAR(255) PRIMARY KEY)");
+        stmt.execute("CREATE TABLE #SAfe0009(value VARCHAR(255) PRIMARY KEY)");
         stmt.close();
 
         PreparedStatement insStmt = con.prepareStatement(
-                "INSERT INTO ##SAfe0009(value) values (?)");
+                "INSERT INTO #SAfe0009(value) values (?)");
         insStmt.setString(1, "Row 1");
         assertEquals(1, insStmt.executeUpdate());
         insStmt.setString(1, "Row 2");
@@ -492,7 +492,7 @@ public class SAfeTest extends DatabaseTestCase {
 
         stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
                                    ResultSet.CONCUR_UPDATABLE);
-        ResultSet rs = stmt.executeQuery("SELECT * FROM ##SAfe0009 ORDER BY 1");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0009 ORDER BY 1");
         assertEquals(null, stmt.getWarnings());
         assertEquals(null, rs.getWarnings());
         assertTrue(rs.last());
@@ -501,7 +501,7 @@ public class SAfeTest extends DatabaseTestCase {
         assertTrue(rs.rowDeleted());
         rs.close();
 
-        rs = stmt.executeQuery("SELECT * FROM ##SAfe0009");
+        rs = stmt.executeQuery("SELECT * FROM #SAfe0009");
         assertTrue(rs.next());
         assertEquals("Row 1", rs.getString(1));
         assertTrue(!rs.next());
@@ -558,11 +558,11 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testUpdateRow0011() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE ##SAfe0011(value VARCHAR(255) PRIMARY KEY)");
+        stmt.execute("CREATE TABLE #SAfe0011(value VARCHAR(255) PRIMARY KEY)");
         stmt.close();
 
         PreparedStatement insStmt = con.prepareStatement(
-                "INSERT INTO ##SAfe0011(value) values (?)");
+                "INSERT INTO #SAfe0011(value) values (?)");
         insStmt.setString(1, "Row 1");
         assertEquals(1, insStmt.executeUpdate());
         insStmt.setString(1, "Row 2");
@@ -571,7 +571,7 @@ public class SAfeTest extends DatabaseTestCase {
 
         stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY,
                                    ResultSet.CONCUR_UPDATABLE);
-        ResultSet rs = stmt.executeQuery("SELECT * FROM ##SAfe0011 ORDER BY 1");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0011 ORDER BY 1");
         assertEquals(null, stmt.getWarnings());
         assertEquals(null, rs.getWarnings());
         assertTrue(rs.next());
@@ -588,11 +588,11 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testInsertRow0012() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE ##SAfe0012(value VARCHAR(255) PRIMARY KEY)");
+        stmt.execute("CREATE TABLE #SAfe0012(value VARCHAR(255) PRIMARY KEY)");
         stmt.close();
 
         PreparedStatement insStmt = con.prepareStatement(
-                "INSERT INTO ##SAfe0012(value) values (?)");
+                "INSERT INTO #SAfe0012(value) values (?)");
         insStmt.setString(1, "Row 1");
         assertEquals(1, insStmt.executeUpdate());
         insStmt.setString(1, "Row 2");
@@ -601,7 +601,7 @@ public class SAfeTest extends DatabaseTestCase {
 
         stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
                                    ResultSet.CONCUR_UPDATABLE);
-        ResultSet rs = stmt.executeQuery("SELECT * FROM ##SAfe0012 ORDER BY 1");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0012 ORDER BY 1");
         assertEquals(null, stmt.getWarnings());
         assertEquals(null, rs.getWarnings());
 
@@ -657,13 +657,13 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testPreparedAndCallableCursors0014() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.executeUpdate("CREATE TABLE ##SAfe0014(id INT PRIMARY KEY)");
-        stmt.executeUpdate("INSERT INTO ##SAfe0014 VALUES (1)");
+        stmt.executeUpdate("CREATE TABLE #SAfe0014(id INT PRIMARY KEY)");
+        stmt.executeUpdate("INSERT INTO #SAfe0014 VALUES (1)");
         stmt.executeUpdate("CREATE PROCEDURE #sp_SAfe0014(@P1 INT, @P2 INT) AS "
-                           + "SELECT id, @P2 FROM ##SAfe0014 WHERE id=@P1");
+                           + "SELECT id, @P2 FROM #SAfe0014 WHERE id=@P1");
         stmt.close();
 
-        PreparedStatement ps = con.prepareStatement("SELECT id FROM ##SAfe0014",
+        PreparedStatement ps = con.prepareStatement("SELECT id FROM #SAfe0014",
                                                     ResultSet.TYPE_SCROLL_SENSITIVE,
                                                     ResultSet.CONCUR_UPDATABLE);
         ResultSet resultSet = ps.executeQuery();
@@ -677,7 +677,7 @@ public class SAfeTest extends DatabaseTestCase {
         // Correct meta data
         ResultSetMetaData rsmd = resultSet.getMetaData();
         assertEquals("id", rsmd.getColumnName(1));
-        assertEquals("##SAfe0014", rsmd.getTableName(1));
+        assertEquals("#SAfe0014", rsmd.getTableName(1));
         // Insert row
         resultSet.moveToInsertRow();
         resultSet.updateInt(1, 2);
@@ -689,7 +689,7 @@ public class SAfeTest extends DatabaseTestCase {
         resultSet.close();
         ps.close();
 
-        ps = con.prepareStatement("SELECT id, ? FROM ##SAfe0014 WHERE id = ?",
+        ps = con.prepareStatement("SELECT id, ? FROM #SAfe0014 WHERE id = ?",
                                   ResultSet.TYPE_SCROLL_SENSITIVE,
                                   ResultSet.CONCUR_UPDATABLE);
         ps.setInt(1, 5);
@@ -706,7 +706,7 @@ public class SAfeTest extends DatabaseTestCase {
         // Correct meta data
         rsmd = resultSet.getMetaData();
         assertEquals("id", rsmd.getColumnName(1));
-        assertEquals("##SAfe0014", rsmd.getTableName(1));
+        assertEquals("#SAfe0014", rsmd.getTableName(1));
         resultSet.close();
         ps.close();
 
@@ -727,7 +727,7 @@ public class SAfeTest extends DatabaseTestCase {
         // Correct meta data
         rsmd = resultSet.getMetaData();
         assertEquals("id", rsmd.getColumnName(1));
-        assertEquals("##SAfe0014", rsmd.getTableName(1));
+        assertEquals("#SAfe0014", rsmd.getTableName(1));
         resultSet.close();
         cs.close();
     }
@@ -837,11 +837,11 @@ public class SAfeTest extends DatabaseTestCase {
     public void testCursorLargeCharInsert0017() throws Exception {
         Statement stmt = con.createStatement(
                 ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
-        stmt.execute("CREATE TABLE ##SAfe0017(value VARCHAR(10) PRIMARY KEY)");
+        stmt.execute("CREATE TABLE #SAfe0017(value VARCHAR(10) PRIMARY KEY)");
 
         // Create the updateable ResultSet
         ResultSet rs = stmt.executeQuery(
-                "SELECT value FROM ##SAfe0017");
+                "SELECT value FROM #SAfe0017");
 
         // Try inserting a character string less than 10 characters long
         rs.moveToInsertRow();
@@ -883,12 +883,12 @@ public class SAfeTest extends DatabaseTestCase {
 
         // maxval now = 99999999999999999999999999999999999999
         if (maxPrecision > 28) {
-            stmt.execute("create table ##testBigDecimal1 (id int primary key, data01 decimal(38,0), data02 decimal(38,12) null, data03 money)");
+            stmt.execute("create table #testBigDecimal1 (id int primary key, data01 decimal(38,0), data02 decimal(38,12) null, data03 money)");
         } else {
-            stmt.execute("create table ##testBigDecimal1 (id int primary key, data01 decimal(28,0), data02 decimal(28,12) null, data03 money)");
+            stmt.execute("create table #testBigDecimal1 (id int primary key, data01 decimal(28,0), data02 decimal(28,12) null, data03 money)");
         }
 
-        PreparedStatement pstmt = con.prepareStatement("insert into ##testBigDecimal1 (id, data01, data02, data03) values (?,?,?,?)");
+        PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal1 (id, data01, data02, data03) values (?,?,?,?)");
         pstmt.setInt(1, 1);
 
         try {
@@ -904,7 +904,7 @@ public class SAfeTest extends DatabaseTestCase {
         pstmt.setBigDecimal(4, new BigDecimal("12345.56789"));
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-        rs = stmt.executeQuery("SELECT * FROM ##testBigDecimal1");
+        rs = stmt.executeQuery("SELECT * FROM #testBigDecimal1");
         assertTrue(rs.next());
         assertEquals(maxval, rs.getBigDecimal(2));
         assertEquals(new BigDecimal("0.333333333333"), rs.getBigDecimal(3)); // Rounded to scale 10
@@ -912,7 +912,7 @@ public class SAfeTest extends DatabaseTestCase {
         rs.close();
         maxval = maxval.negate();
         Statement stmt2 = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
-        rs = stmt2.executeQuery("SELECT * FROM ##testBigDecimal1");
+        rs = stmt2.executeQuery("SELECT * FROM #testBigDecimal1");
         SQLWarning warn = stmt.getWarnings();
 
         while (warn != null) {
@@ -927,7 +927,7 @@ public class SAfeTest extends DatabaseTestCase {
         rs.updateRow();
         rs.close();
         stmt2.close();
-        rs = stmt.executeQuery("SELECT * FROM ##testBigDecimal1");
+        rs = stmt.executeQuery("SELECT * FROM #testBigDecimal1");
         assertTrue(rs.next());
         assertEquals(maxval, rs.getBigDecimal(2));
         assertEquals(null, rs.getBigDecimal(3));

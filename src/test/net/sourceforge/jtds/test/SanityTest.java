@@ -36,7 +36,7 @@ public class SanityTest extends TestBase {
 
         assertEquals("Expected an update count", false,
                      stmt.execute( "DECLARE cursor1 SCROLL CURSOR FOR"
-                                   + "\nSELECT * FROM ##test"));
+                                   + "\nSELECT * FROM #test"));
 
         showWarnings(stmt.getWarnings());
 
@@ -63,7 +63,7 @@ public class SanityTest extends TestBase {
         makeTestTables(stmt);
         makeObjects(stmt, 5);
 
-        ResultSet rs = stmt.executeQuery("Select * from ##test order by 1");
+        ResultSet rs = stmt.executeQuery("Select * from #test order by 1");
 
         // Move to last row (5)
         rs.last();
@@ -156,7 +156,7 @@ public class SanityTest extends TestBase {
         makeTestTables(stmt);
         makeObjects(stmt, 5);
 
-        ResultSet rs = stmt.executeQuery("Select * from ##test");
+        ResultSet rs = stmt.executeQuery("Select * from #test");
 
         while (rs.next());
 

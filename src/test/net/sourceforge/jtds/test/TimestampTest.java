@@ -1371,23 +1371,23 @@ public class TimestampTest extends DatabaseTestCase {
     public void testNestedStatements0026() throws Exception {
         Connection cx = getConnection();
 
-        dropTable("##t0026a");
-        dropTable("##t0026b");
+        dropTable("#t0026a");
+        dropTable("#t0026b");
 
         Statement  stmt    = cx.createStatement();
-        stmt.executeUpdate("create table ##t0026a "
+        stmt.executeUpdate("create table #t0026a "
             + "  (i   integer not null, "
             + "   str char(254) not null) ");
 
-        stmt.executeUpdate("create table ##t0026b             "
+        stmt.executeUpdate("create table #t0026b             "
         + "  (i   integer not null,      "
         + "   t   datetime not null)     ");
         stmt.close();
 
         PreparedStatement pStmtA = cx.prepareStatement(
-            "insert into ##t0026a values (?, ?)");
+            "insert into #t0026a values (?, ?)");
         PreparedStatement pStmtB = cx.prepareStatement(
-            "insert into ##t0026b values (?, getdate())");
+            "insert into #t0026b values (?, getdate())");
 
         final int rowsToAdd = 1000;
         int count = 0;
@@ -1415,14 +1415,14 @@ public class TimestampTest extends DatabaseTestCase {
         Statement stmtB = cx.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
         count = 0;
-        ResultSet rsA = stmtA.executeQuery("select * from ##t0026a");
+        ResultSet rsA = stmtA.executeQuery("select * from #t0026a");
         assertNotNull(rsA);
 
         while (rsA.next()) {
             count++;
 
             ResultSet rsB = stmtB.executeQuery(
-                "select * from ##t0026b where i=" + rsA.getInt("i"));
+                "select * from #t0026b where i=" + rsA.getInt("i"));
 
             assertNotNull(rsB);
             assertTrue("Expected a result set", rsB.next());
@@ -1905,7 +1905,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 990);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr1 (data datetime)");
         stmt.close();
@@ -1951,7 +1951,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 990);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr2 (data datetime)");
         stmt.close();
@@ -1997,7 +1997,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 993);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr3 (data datetime)");
         stmt.close();
@@ -2043,7 +2043,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 993);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr4 (data datetime)");
         stmt.close();
@@ -2089,7 +2089,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 993);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr5 (data datetime)");
         stmt.close();
@@ -2135,7 +2135,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 997);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr6 (data datetime)");
         stmt.close();
@@ -2181,7 +2181,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 997);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr7 (data datetime)");
         stmt.close();
@@ -2227,7 +2227,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 997);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr8 (data datetime)");
         stmt.close();
@@ -2273,7 +2273,7 @@ public class TimestampTest extends DatabaseTestCase {
         receiveValue.set(Calendar.MINUTE, 59);
         receiveValue.set(Calendar.SECOND, 59);
         receiveValue.set(Calendar.MILLISECOND, 997);
-        
+
         Statement stmt = con.createStatement();
         stmt.execute("create table #dtr9 (data datetime)");
         stmt.close();

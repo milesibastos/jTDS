@@ -124,7 +124,7 @@ public abstract class TestBase extends TestCase {
 
     protected void makeTestTables(Statement stmt) throws SQLException {
         stmt = con.createStatement();
-        String sql = "CREATE TABLE ##test ("
+        String sql = "CREATE TABLE #test ("
                      + " f_int INT,"
                      + " f_varchar VARCHAR(255))";
 
@@ -134,10 +134,10 @@ public abstract class TestBase extends TestCase {
 
     public void makeObjects(Statement stmt, int count) throws SQLException {
         stmt = con.createStatement();
-        stmt.execute("TRUNCATE TABLE ##test");
+        stmt.execute("TRUNCATE TABLE #test");
 
         for (int i = 0; i < count; i++) {
-            String sql = "INSERT INTO ##test(f_int, f_varchar)"
+            String sql = "INSERT INTO #test(f_int, f_varchar)"
                          + " VALUES (" + i + ", 'Row " + i + "')";
             stmt.execute(sql);
         }

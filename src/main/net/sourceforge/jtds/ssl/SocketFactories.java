@@ -41,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  * Used for acquiring a socket factory when SSL is enabled.
  *
  * @author Rob Worsnop
- * @version $Id: SocketFactories.java,v 1.2 2005-01-06 15:45:12 alin_sinpalean Exp $
+ * @version $Id: SocketFactories.java,v 1.3 2005-01-14 05:47:59 alin_sinpalean Exp $
  */
 public class SocketFactories {
     /**
@@ -85,6 +85,9 @@ public class SocketFactories {
         buf[25] = (byte) 0xFF;
         buf[26] = 0x09;
         System.arraycopy(instance.getBytes(), 0, buf, 33, instance.length());
+        // Require encryption for all packets (if 0, only login will be
+        // encrypted)
+        buf[32 + instance.length()] = 0x01;
         buf[34 + instance.length()] = (byte) 0xC4;
         buf[35 + instance.length()] = 0x0F;
         buf[38 + instance.length()] = 0x01;

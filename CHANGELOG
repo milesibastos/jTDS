@@ -1,6 +1,10 @@
 Changes from jTDS 0.9.1
 =======================
 
+01/14/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1101251] SSL Connection Problem.
+ o Added README.SSL to the build.
+
 01/13/2005 - Alin Sinpalean
  o Added readme for SSL.
  o Added logging to MSSqlServerInfo if an exception occurs.

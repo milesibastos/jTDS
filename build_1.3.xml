@@ -105,7 +105,7 @@
     </copy>
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
+      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
     <delete dir="${dist}/tmp"/>
@@ -113,7 +113,7 @@
     <!-- Binary package -->
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
+      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
       <fileset dir="${build}" includes="*.jar"/>
     </copy>
     <mkdir dir="${dist}/tmp/XA"/>

@@ -26,12 +26,13 @@ import net.sourceforge.jtds.util.BytesView;
  * Class for creating handshake bodies from raw bytes.
  *
  * @author Rob Worsnop
- * @version $Id: TlsHandshakeBodyFactory.java,v 1.1 2005-01-04 17:13:04 alin_sinpalean Exp $
+ * @version $Id: TlsHandshakeBodyFactory.java,v 1.2 2005-01-14 05:47:59 alin_sinpalean Exp $
  */
 class TlsHandshakeBodyFactory {
     /**
-     * Creates a handshake body from raw bytes. A <code>null</code> body will be returned if the data cannot be
-     * recognized as a handshake body. This will most likely be because the body is encrypted (as is the case with a
+     * Creates a handshake body from raw bytes. A <code>null</code> body will
+     * be returned if the data cannot be recognized as a handshake body. This
+     * will most likely be because the body is encrypted (as is the case with a
      * Finish message).
      *
      * @param data the data holding the body
@@ -41,12 +42,10 @@ class TlsHandshakeBodyFactory {
         DataInputStream dis = new DataInputStream(data.getInputStream());
         byte handshakeType = dis.readByte();
 
-
-        int ch1 = dis.readByte();
-        int ch2 = dis.readByte();
-        int ch3 = dis.readByte();
+        int ch1 = dis.readByte() & 0xFF;
+        int ch2 = dis.readByte() & 0xFF;
+        int ch3 = dis.readByte() & 0xFF;
         int length = ((ch1 << 16) + (ch2 << 8) + (ch3 << 0));
-
 
         // Apparent length does not match actual length. This is
         // not a readable handshake body.

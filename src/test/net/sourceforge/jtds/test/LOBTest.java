@@ -615,6 +615,240 @@ public class LOBTest extends TestBase {
         rs3.close();
     }
 
+    public void testBlobSetNull1() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull1 (data IMAGE NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull1 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBinaryStream()
+        pstmt.setBinaryStream(1, null, 0);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobSetNull2() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull2 (data IMAGE NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull2 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBlob()
+        pstmt.setBlob(1, null);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull2");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobSetNull3() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull3 (data IMAGE NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull3 (data) VALUES (?)");
+
+        // Test PreparedStatement.setBytes()
+        pstmt.setBytes(1, null);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull3");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobSetNull4() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull4 (data IMAGE NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull4 (data) VALUES (?)");
+
+        // Test PreparedStatement.setObject(int,Object)
+        pstmt.setObject(1, null);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull4");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobSetNull5() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull5 (data IMAGE NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull5 (data) VALUES (?)");
+
+        // Test PreparedStatement.setObject(int,Object,int)
+        pstmt.setObject(1, null, Types.BLOB);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull5");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testBlobSetNull6() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #blobsetnull6 (data IMAGE NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull6 (data) VALUES (?)");
+
+        // Test PreparedStatement.setNull()
+        pstmt.setNull(1, Types.BLOB);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #blobsetnull6");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getBinaryStream()
+        assertTrue(rs.getBinaryStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBlob()
+        assertTrue(rs.getBlob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getBytes()
+        assertTrue(rs.getBytes(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
     /*************************************************************************
      *************************************************************************
      **                          CLOB TESTS                                 **
@@ -1292,6 +1526,382 @@ public class LOBTest extends TestBase {
         assertTrue(!rs3.next());
         stmt4.close();
         rs3.close();
+    }
+
+    public void testClobSetNull1() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull1 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull1 (data) VALUES (?)");
+
+        // Test PreparedStatement.setAsciiStream()
+        pstmt.setAsciiStream(1, null, 0);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull1");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull2() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull2 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull2 (data) VALUES (?)");
+
+        // Test PreparedStatement.setCharacterStream()
+        pstmt.setCharacterStream(1, null, 0);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull2");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull3() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull3 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull3 (data) VALUES (?)");
+
+        // Test PreparedStatement.setClob()
+        pstmt.setClob(1, null);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull3");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull4() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull4 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull4 (data) VALUES (?)");
+
+        // Test PreparedStatement.setObject(int,Object)
+        pstmt.setObject(1, null);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull4");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull5() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull5 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull5 (data) VALUES (?)");
+
+        // Test PreparedStatement.setObject(int,Object,int)
+        pstmt.setObject(1, null, Types.CLOB);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull5");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull6() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull6 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull6 (data) VALUES (?)");
+
+        // Test PreparedStatement.setString()
+        pstmt.setString(1, null);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull6");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull7() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull7 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull7 (data) VALUES (?)");
+
+        // Test PreparedStatement.setUnicodeStream()
+        pstmt.setUnicodeStream(1, null, 0);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull7");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
+    }
+
+    public void testClobSetNull8() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #clobsetnull8 (data TEXT NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull8 (data) VALUES (?)");
+
+        // Test PreparedStatement.setNull()
+        pstmt.setNull(1, Types.CLOB);
+        assertTrue(pstmt.executeUpdate() == 1);
+
+        pstmt.close();
+
+        Statement stmt2 = con.createStatement();
+        ResultSet rs = stmt2.executeQuery("SELECT data FROM #clobsetnull8");
+
+        assertTrue(rs.next());
+
+        // Test ResultSet.getAsciiStream()
+        assertTrue(rs.getAsciiStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getCharacterStream()
+        assertTrue(rs.getCharacterStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getClob()
+        assertTrue(rs.getClob(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getObject()
+        assertTrue(rs.getObject(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getString()
+        assertTrue(rs.getString(1) == null);
+        assertTrue(rs.wasNull());
+
+        // Test ResultSet.getUnicodeStream()
+        assertTrue(rs.getUnicodeStream(1) == null);
+        assertTrue(rs.wasNull());
+
+        assertTrue(!rs.next());
+        stmt2.close();
+        rs.close();
     }
 
     private byte[] getBlobTestData() {

@@ -101,6 +101,15 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     private int type;
     private int concurrency;
 
+    /**
+     * Set when <code>moveToInsertRow()</code> was called.
+     */
+    private boolean onInsertRow = false;
+    /**
+     * The "insert row".
+     */
+    private PacketRowResult insertRow;
+
     public Context getContext() {
         return context;
     }
@@ -323,122 +332,163 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
     }
 
     public void cancelRowUpdates() throws SQLException {
-        throw new java.lang.UnsupportedOperationException(
-                "Method cancelRowUpdates() not yet implemented.");
+        if (onInsertRow) {
+            throw new SQLException("The cursor is on the insert row.");
+        }
+
+        refreshRow();
     }
 
     public void moveToInsertRow() throws SQLException {
-        throw new java.lang.UnsupportedOperationException(
-                "Method moveToInsertRow() not yet implemented.");
+        onInsertRow = true;
     }
 
     public void moveToCurrentRow() throws SQLException {
-        throw new java.lang.UnsupportedOperationException(
-                "Method moveToCurrentRow() not yet implemented.");
+        onInsertRow = false;
     }
 
     public PacketRowResult currentRow() throws SQLException {
-        if( current == null )
+        if (onInsertRow) {
+            if (insertRow == null) {
+                insertRow = new PacketRowResult(context);
+            }
+            return insertRow;
+        }
+
+        if (current == null) {
             throw new SQLException("No current row in the ResultSet");
+        }
 
         return current;
     }
 
-    public void insertRow() {
-        throw new java.lang.UnsupportedOperationException(
-                "Method moveToInsertRow() not yet implemented.");
+    public void insertRow() throws SQLException {
+        if (!onInsertRow) {
+            throw new SQLException("The cursor is not on the insert row.");
+        }
+
+        // This might just happen if the ResultSet has no writeable column.
+        // Very unlikely and very stupid, but who knows?
+        if (insertRow == null) {
+            insertRow = new PacketRowResult(context);
+        }
+
+        cursor(CURSOR_OP_INSERT, insertRow);
+        insertRow = new PacketRowResult(context);
     }
 
     public void updateRow() throws SQLException {
-        throw new SQLException("ResultSet is not updateable");
+        if (current == null) {
+            throw new SQLException("No current row in the ResultSet");
+        }
+
+        if (onInsertRow) {
+            throw new SQLException("The cursor is on the insert row.");
+        }
+
+        cursor(CURSOR_OP_UPDATE, current);
+        refreshRow();
     }
 
     public void deleteRow() throws SQLException {
+        if (current == null) {
+            throw new SQLException("No current row in the ResultSet");
+        }
+
+        if (onInsertRow) {
+            throw new SQLException("The cursor is on the insert row.");
+        }
+
         cursor(CURSOR_OP_DELETE, null);
         cursorFetch(FETCH_REPEAT, 1);
     }
 
     public void refreshRow() throws SQLException {
+        if (onInsertRow) {
+            throw new SQLException("The cursor is on the insert row.");
+        }
+
         cursorFetch(FETCH_REPEAT, 1);
     }
 
     private void cursorCreate() throws SQLException {
+        warningChain.clearWarnings();
+        parameterList = new ParameterListItem[5];
+        int scrollOpt, ccOpt;
+
+        switch (type) {
+        case TYPE_SCROLL_INSENSITIVE:
+            scrollOpt = CURSOR_TYPE_STATIC;
+            break;
+
+        case TYPE_SCROLL_SENSITIVE:
+            scrollOpt = CURSOR_TYPE_KEYSET;
+            break;
+
+        case TYPE_FORWARD_ONLY:
+        default:
+            scrollOpt = CURSOR_TYPE_FORWARD;
+            break;
+        }
+
+        switch (concurrency) {
+        case CONCUR_READ_ONLY:
+        default:
+            ccOpt = CURSOR_CONCUR_READ_ONLY;
+            break;
+
+        case CONCUR_UPDATABLE:
+            ccOpt = CURSOR_CONCUR_SCROLL_LOCKS;
+            break;
+        }
+
+        ParameterListItem param[] = parameterList;
+
+        // Setup cursor handle param
+        param[0] = new ParameterListItem();
+        param[0].isSet = true;
+        param[0].type = Types.INTEGER;
+        param[0].isOutput = true;
+
+        // Setup statement param
+        param[1] = new ParameterListItem();
+        param[1].isSet = true;
+        param[1].type = Types.LONGVARCHAR;
+        param[1].maxLength = Integer.MAX_VALUE;
+        param[1].formalType = "ntext";
+        param[1].value = sql;
+
+        // Setup scroll options
+        param[2] = new ParameterListItem();
+        param[2].isSet = true;
+        param[2].type = Types.INTEGER;
+        param[2].value = new Integer(scrollOpt);
+        param[2].isOutput = true;
+
+        // Setup concurrency options
+        param[3] = new ParameterListItem();
+        param[3].isSet = true;
+        param[3].type = Types.INTEGER;
+        param[3].value = new Integer(ccOpt);
+        param[3].isOutput = true;
+
+        // Setup numRows parameter
+        param[4] = new ParameterListItem();
+        param[4].isSet = true;
+        param[4].type = Types.INTEGER;
+        param[4].isOutput = true;
+
+        lastOutParam = -1;
+        retVal = null;
+
         // SAfe We have to synchronize this, in order to avoid mixing up our
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
+            stmt.outParamHandler = this;
+
             Tds tds = conn.allocateTds(true);
             try {
-                warningChain.clearWarnings();
-                parameterList = new ParameterListItem[5];
-                int scrollOpt, ccOpt;
-
-                switch (type) {
-                case TYPE_SCROLL_INSENSITIVE:
-                    scrollOpt = CURSOR_TYPE_STATIC;
-                    break;
-
-                case TYPE_SCROLL_SENSITIVE:
-                    scrollOpt = CURSOR_TYPE_KEYSET;
-                    break;
-
-                case TYPE_FORWARD_ONLY:
-                default:
-                    scrollOpt = CURSOR_TYPE_FORWARD;
-                    break;
-                }
-
-                switch (concurrency) {
-                case CONCUR_READ_ONLY:
-                default:
-                    ccOpt = CURSOR_CONCUR_READ_ONLY;
-                    break;
-
-                case CONCUR_UPDATABLE:
-                    ccOpt = CURSOR_CONCUR_SCROLL_LOCKS;
-                    break;
-                }
-
-                ParameterListItem param[] = parameterList;
-
-                // Setup cursor handle param
-                param[0] = new ParameterListItem();
-                param[0].isSet = true;
-                param[0].type = Types.INTEGER;
-                param[0].isOutput = true;
-
-                // Setup statement param
-                param[1] = new ParameterListItem();
-                param[1].isSet = true;
-                param[1].type = Types.LONGVARCHAR;
-                param[1].maxLength = Integer.MAX_VALUE;
-                param[1].formalType = "ntext";
-                param[1].value = sql;
-
-                // Setup scroll options
-                param[2] = new ParameterListItem();
-                param[2].isSet = true;
-                param[2].type = Types.INTEGER;
-                param[2].value = new Integer(scrollOpt);
-                param[2].isOutput = true;
-
-                // Setup concurrency options
-                param[3] = new ParameterListItem();
-                param[3].isSet = true;
-                param[3].type = Types.INTEGER;
-                param[3].value = new Integer(ccOpt);
-                param[3].isOutput = true;
-
-                // Setup numRows parameter
-                param[4] = new ParameterListItem();
-                param[4].isSet = true;
-                param[4].type = Types.INTEGER;
-                param[4].isOutput = true;
-
-                stmt.outParamHandler = this;
-                lastOutParam = -1;
-                retVal = null;
-
                 tds.executeProcedure("sp_cursoropen", param, param, stmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
@@ -461,63 +511,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
                     warningChain.addException(new SQLException(
                             "No more results expected."));
                 }
-
-                cursorHandle = (Integer) param[0].value;
-                rowsInResult = ((Number) param[4].value).intValue();
-
-                int actualScroll = ((Number) param[2].value).intValue();
-                int actualCc = ((Number) param[3].value).intValue();
-
-                if ((actualScroll != scrollOpt) || (actualCc != ccOpt)) {
-                    if (actualScroll != scrollOpt) {
-                        switch (actualScroll) {
-                        case CURSOR_TYPE_FORWARD:
-                            type = TYPE_FORWARD_ONLY;
-                            break;
-
-                        case CURSOR_TYPE_STATIC:
-                            type = TYPE_SCROLL_INSENSITIVE;
-                            break;
-
-                        case CURSOR_TYPE_DYNAMIC:
-                        case CURSOR_TYPE_KEYSET:
-                            type = TYPE_SCROLL_SENSITIVE;
-                            break;
-
-                        default:
-                            warningChain.addException(new SQLException(
-                                    "Don't know how to handle cursor type "
-                                    + actualScroll));
-                        }
-                    }
-
-                    if (actualCc != ccOpt) {
-                        switch (actualCc) {
-                        case CURSOR_CONCUR_READ_ONLY:
-                            type = CONCUR_READ_ONLY;
-                            break;
-
-                        case CURSOR_CONCUR_SCROLL_LOCKS:
-                        case CURSOR_CONCUR_OPTIMISTIC:
-                            type = CONCUR_UPDATABLE;
-                            break;
-
-                        default:
-                            warningChain.addException(new SQLException(
-                                    "Don't know how to handle concurrency type "
-                                    + actualScroll));
-                        }
-                    }
-
-                    // @todo This warning should somehow go to the Statement
-                    warningChain.addWarning(new SQLWarning(
-                            "ResultSet type/concurrency downgraded."));
-                }
-
-                if ((retVal == null) || (retVal.intValue() != 0)) {
-                    warningChain.addException(
-                            new SQLException("Cursor open failed."));
-                }
             } finally {
                 try {
                     conn.freeTds(tds);
@@ -532,58 +525,116 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
             }
         }
 
+        cursorHandle = (Integer) param[0].value;
+        rowsInResult = ((Number) param[4].value).intValue();
+
+        int actualScroll = ((Number) param[2].value).intValue();
+        int actualCc = ((Number) param[3].value).intValue();
+
+        if ((actualScroll != scrollOpt) || (actualCc != ccOpt)) {
+            if (actualScroll != scrollOpt) {
+                switch (actualScroll) {
+                case CURSOR_TYPE_FORWARD:
+                    type = TYPE_FORWARD_ONLY;
+                    break;
+
+                case CURSOR_TYPE_STATIC:
+                    type = TYPE_SCROLL_INSENSITIVE;
+                    break;
+
+                case CURSOR_TYPE_DYNAMIC:
+                case CURSOR_TYPE_KEYSET:
+                    type = TYPE_SCROLL_SENSITIVE;
+                    break;
+
+                default:
+                    warningChain.addException(new SQLException(
+                            "Don't know how to handle cursor type "
+                            + actualScroll));
+                }
+            }
+
+            if (actualCc != ccOpt) {
+                switch (actualCc) {
+                case CURSOR_CONCUR_READ_ONLY:
+                    concurrency = CONCUR_READ_ONLY;
+                    break;
+
+                case CURSOR_CONCUR_SCROLL_LOCKS:
+                case CURSOR_CONCUR_OPTIMISTIC:
+                    concurrency = CONCUR_UPDATABLE;
+                    break;
+
+                default:
+                    warningChain.addException(new SQLException(
+                            "Don't know how to handle concurrency type "
+                            + actualScroll));
+                }
+            }
+
+            // @todo This warning should somehow go to the Statement
+            warningChain.addWarning(new SQLWarning(
+                    "ResultSet type/concurrency downgraded."));
+        }
+
+        if ((retVal == null) || (retVal.intValue() != 0)) {
+            warningChain.addException(
+                    new SQLException("Cursor open failed."));
+        }
+
         warningChain.checkForExceptions();
         open = true;
     }
 
     private boolean cursorFetch(int fetchType, int rowNum)
             throws SQLException {
+        warningChain.clearWarnings();
+
+        ParameterListItem param[] = new ParameterListItem[4];
+        System.arraycopy(parameterList, 0, param, 0, 4);
+
+        boolean isInfo = (fetchType == FETCH_INFO);
+
+        if (fetchType != FETCH_ABSOLUTE && fetchType != FETCH_RELATIVE)
+            rowNum = 1;
+
+        // Setup cursor handle param
+        param[0].clear();
+        param[0].isSet = true;
+        param[0].type = Types.INTEGER;
+        param[0].value = cursorHandle;
+
+        // Setup fetchtype param
+        param[1].clear();
+        param[1].isSet = true;
+        param[1].type = Types.INTEGER;
+        param[1].value = new Integer(fetchType);
+
+        // Setup rownum
+        param[2].clear();
+        param[2].isSet = true;
+        param[2].type = Types.INTEGER;
+        param[2].value = isInfo ? null : new Integer(rowNum);
+        param[2].isOutput = isInfo;
+
+        // Setup numRows parameter
+        param[3].clear();
+        param[3].isSet = true;
+        param[3].type = Types.INTEGER;
+        param[3].value = isInfo ? null : new Integer(1);
+        param[3].isOutput = isInfo;
+
+        lastOutParam = -1;
+        retVal = null;
+
         // SAfe We have to synchronize this, in order to avoid mixing up our
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
+            stmt.outParamHandler = this;
+
             Tds tds = conn.allocateTds(true);
             try {
-                warningChain.clearWarnings();
-
-                ParameterListItem param[] = new ParameterListItem[4];
-                System.arraycopy(parameterList, 0, param, 0, 4);
-
-                boolean isInfo = (fetchType == FETCH_INFO);
-
-                if (fetchType != FETCH_ABSOLUTE && fetchType != FETCH_RELATIVE)
-                    rowNum = 1;
-
-                // Setup cursor handle param
-                param[0].clear();
-                param[0].isSet = true;
-                param[0].type = Types.INTEGER;
-                param[0].value = cursorHandle;
-
-                // Setup fetchtype param
-                param[1].clear();
-                param[1].isSet = true;
-                param[1].type = Types.INTEGER;
-                param[1].value = new Integer(fetchType);
-
-                // Setup rownum
-                param[2].clear();
-                param[2].isSet = true;
-                param[2].type = Types.INTEGER;
-                param[2].value = isInfo ? null : new Integer(rowNum);
-                param[2].isOutput = isInfo;
-
-                // Setup numRows parameter
-                param[3].clear();
-                param[3].isSet = true;
-                param[3].type = Types.INTEGER;
-                param[3].value = isInfo ? null : new Integer(1);
-                param[3].isOutput = isInfo;
-
-                stmt.outParamHandler = this;
-                lastOutParam = -1;
-                retVal = null;
-
                 tds.executeProcedure("sp_cursorfetch", param, param, stmt,
                                      warningChain, stmt.getQueryTimeout(), true);
 
@@ -618,28 +669,29 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         return current != null;
     }
 
-    private boolean cursorClose() throws SQLException {
+    private void cursorClose() throws SQLException {
+        warningChain.clearWarnings();
+
+        ParameterListItem param[] = new ParameterListItem[1];
+        param[0] = parameterList[0];
+
+        // Setup cursor handle param
+        param[0].clear();
+        param[0].isSet = true;
+        param[0].type = Types.INTEGER;
+        param[0].value = cursorHandle;
+
+        lastOutParam = -1;
+        retVal = null;
+
         // SAfe We have to synchronize this, in order to avoid mixing up our
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
+            stmt.outParamHandler = this;
+
             Tds tds = conn.allocateTds(true);
             try {
-                warningChain.clearWarnings();
-
-                ParameterListItem param[] = new ParameterListItem[1];
-                param[0] = parameterList[0];
-
-                // Setup cursor handle param
-                param[0].clear();
-                param[0].isSet = true;
-                param[0].type = Types.INTEGER;
-                param[0].value = cursorHandle;
-
-                stmt.outParamHandler = this;
-                lastOutParam = -1;
-                retVal = null;
-
                 tds.executeProcedure("sp_cursorclose", param, param, stmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
@@ -669,69 +721,117 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         }
 
         warningChain.checkForExceptions();
-        return current != null;
     }
 
-    private boolean cursor(int opType, PacketRowResult row) throws SQLException {
+    private void cursor(int opType, PacketRowResult row) throws SQLException {
+        warningChain.clearWarnings();
+        ParameterListItem param[];
+
+        if (opType == CURSOR_OP_DELETE) {
+            if (row != null) {
+                throw new SQLException(
+                        "Non-null row provided to delete operation.");
+            }
+            // 3 parameters for delete
+            param = new ParameterListItem[3];
+            System.arraycopy(parameterList, 0, param, 0, 3);
+        } else {
+            if (row == null) {
+                throw new SQLException(
+                        "Null row provided to insert/update operation.");
+            }
+            // 4 parameters plus one for each column for insert/update
+            param = new ParameterListItem[4
+                    + row.context.getColumnInfo().fakeColumnCount()];
+            System.arraycopy(parameterList, 0, param, 0, 4);
+        }
+
+        // Setup cursor handle param
+        param[0].clear();
+        param[0].isSet = true;
+        param[0].type = Types.INTEGER;
+        param[0].value = cursorHandle;
+
+        // Setup optype param
+        param[1].clear();
+        param[1].isSet = true;
+        param[1].type = Types.INTEGER;
+        param[1].value = new Integer(opType);
+
+        // Setup rownum
+        param[2].clear();
+        param[2].isSet = true;
+        param[2].type = Types.INTEGER;
+        param[2].value = new Integer(1);
+
+        // If row is not null, we're dealing with an insert/update
+        if (row != null) {
+            // Setup table
+            param[3].clear();
+            param[3].isSet = true;
+            param[3].type = Types.VARCHAR;
+            param[3].value = "";
+            param[3].formalType = "nvarchar(4000)";
+            param[3].maxLength = 4000;
+
+            Columns cols = row.context.getColumnInfo();
+            int colCnt = cols.fakeColumnCount();
+            // Current column; we should only update/insert columns
+            // that are not read-only (such as identity columns)
+            int crtCol = 4;
+            for (int i=1; i <= colCnt; i++) {
+                // Only send non-read-only columns
+                if (!cols.isReadOnly(i).booleanValue()) {
+                    param[crtCol] = new ParameterListItem();
+                    param[crtCol].isSet = true;
+                    param[crtCol].type = cols.getJdbcType(i);
+                    param[crtCol].value = row.getObject(i);
+                    param[crtCol].formalName = '@' + cols.getName(i);
+                    param[crtCol].maxLength = cols.getBufferSize(i);
+                    param[crtCol].scale = cols.getScale(i);
+                    // This is only for Tds.executeProcedureInternal to
+                    // know that it's a Unicode column
+                    switch (cols.getNativeType(i)) {
+                    case TdsDefinitions.SYBBIGNVARCHAR:
+                    case TdsDefinitions.SYBNVARCHAR:
+                    case TdsDefinitions.SYBNCHAR:
+                        param[crtCol].formalType = "nvarchar(4000)";
+                        break;
+
+                    case TdsDefinitions.SYBNTEXT:
+                        param[crtCol].formalType = "ntext";
+                        break;
+                    }
+                    crtCol++;
+                } else {
+                    if (row.getObject(i) != null)
+                        throw new SQLException(
+                                "Column " + i + "/" + cols.getName(i)
+                                + " is read-only.");
+                }
+            }
+
+            // If the count is different (i.e. there were read-only
+            // columns) reallocate the parameters into a shorter array
+            if (crtCol != colCnt+4) {
+                ParameterListItem[] newParam =
+                        new ParameterListItem[crtCol];
+                System.arraycopy(param, 0, newParam, 0, crtCol);
+                param = newParam;
+            }
+        }
+
+        lastOutParam = -1;
+        retVal = null;
+
         // SAfe We have to synchronize this, in order to avoid mixing up our
         //      actions with another CursorResultSet's and eating up its
         //      results.
         synchronized (conn.mainTdsMonitor) {
+            stmt.outParamHandler = this;
+
             Tds tds = conn.allocateTds(true);
             try {
-                warningChain.clearWarnings();
-                ParameterListItem param[];
-
-                if (opType == CURSOR_OP_DELETE) {
-                    if (row != null) {
-                        throw new SQLException(
-                                "Non-null row provided to delete operation.");
-                    }
-                    // 3 parameters for delete
-                    param = new ParameterListItem[3];
-                    System.arraycopy(parameterList, 0, param, 0, 3);
-                } else {
-                    if (row == null) {
-                        throw new SQLException(
-                                "Null row provided to insert/update operation.");
-                    }
-                    // 4 parameters plus one for each column for insert/update
-                    param = new ParameterListItem[4
-                            + row.context.getColumnInfo().fakeColumnCount()];
-                    System.arraycopy(parameterList, 0, param, 0, 4);
-                }
-
-                // Setup cursor handle param
-                param[0].clear();
-                param[0].isSet = true;
-                param[0].type = Types.INTEGER;
-                param[0].value = cursorHandle;
-
-                // Setup optype param
-                param[1].clear();
-                param[1].isSet = true;
-                param[1].type = Types.INTEGER;
-                param[1].value = new Integer(opType);
-
-                // Setup rownum
-                param[2].clear();
-                param[2].isSet = true;
-                param[2].type = Types.INTEGER;
-                param[2].value = new Integer(1);
-
-                // If row is not null, we're dealing with an insert/update
-                if (row != null) {
-                    // Setup table
-                    param[3].clear();
-                    param[3].isSet = true;
-                    param[3].type = Types.VARCHAR;
-                    param[3].value = null;
-                }
-
-                stmt.outParamHandler = this;
-                lastOutParam = -1;
-                retVal = null;
-
                 tds.executeProcedure("sp_cursor", param, param, stmt,
                                      warningChain, stmt.getQueryTimeout(), false);
 
@@ -761,7 +861,6 @@ public class CursorResultSet extends AbstractResultSet implements OutputParamHan
         }
 
         warningChain.checkForExceptions();
-        return current != null;
     }
 
     /**

@@ -36,7 +36,7 @@ import java.sql.*;
 import java.util.HashMap;
 
 abstract public class EscapeProcessor {
-    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.8 2004-01-29 18:41:57 bheineman Exp $";
+    public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.9 2004-01-30 20:43:17 bheineman Exp $";
 
     private static final String ESCAPE_PREFIX_DATE = "d ";
     private static final String ESCAPE_PREFIX_TIME = "t ";
@@ -221,11 +221,9 @@ abstract public class EscapeProcessor {
     /**
      * Returns the JDBC function CONCAT as a database concatenation string.
      * <p>
-     * Per the specification, concatenation uses double quotes instead of single quotes
-     * for string literals:
-     * {fn CONCAT("Hot", "Java")}
-     * {fn CONCAT(column1, "Java")}
-     * {fn CONCAT("Hot", column2)}
+     * {fn CONCAT('Hot', 'Java')}
+     * {fn CONCAT(column1, 'Java')}
+     * {fn CONCAT('Hot', column2)}
      * {fn CONCAT(column1, column2)}
      * <p>
      * See: http://java.sun.com/j2se/1.3/docs/guide/jdbc/spec/jdbc-spec.frame11.html
@@ -238,30 +236,17 @@ abstract public class EscapeProcessor {
         for (int i = 0; i < chars.length; i++) {
             char ch = chars[i];
 
-            if (inString) {
-                if (ch == '\'') {
-                    // Single quotes must be escaped with another single quote
-                    result.append("''");
-                } else if (ch == '"' && chars[i] + 1 != '"') {
-                    // What happens when ch = '"' && chars[i] + 1 == '"'
-                    // Is this a case where a double quote is escaping a double quote?
-                    result.append("'");
-                    inString = false;
-                } else {
-                    result.append(ch);
-                }
+            if (!inString && ch == ',') {
+                // {fn CONCAT('Hot', 'Java')}
+                // The comma       ^  separating the parameters was found, simply
+                // replace it with a '+'.
+                result.append('+');
             } else {
-                if (ch == ',') {
-                    // {fn CONCAT("Hot", "Java")}
-                    // The comma       ^  separating the parameters was found, simply
-                    // replace it with a '+'.
-                    result.append('+');
-                } else if (ch == '"') {
-                    result.append("'");
-                    inString = true;
-                } else {
-                    result.append(ch);
+                if (ch == '\'') {
+                    inString = !inString;
                 }
+
+                result.append(ch);
             }
         }
     }

@@ -21,7 +21,8 @@ package net.sourceforge.jtds.ssl;
  * SSL settings
  *
  * @author Rob Worsnop
- * @version $Id: Ssl.java,v 1.1 2005-01-04 17:13:04 alin_sinpalean Exp $
+ * @author Mike Hutchinson
+ * @version $Id: Ssl.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
  */
 public interface Ssl {
     /**
@@ -41,5 +42,21 @@ public interface Ssl {
      * client-trusted authority.
      */
     public static final String SSL_AUTHENTICATE = "authenticate";
+    /** Size of TLS record header. */
+    public static final int  TLS_HEADER_SIZE = 5;
+    /** TLS Change Cipher Spec record type. */
+    public static final byte TYPE_CHANGECIPHERSPEC = 20;
+    /** TLS Alert record type. */
+    public static final byte TYPE_ALERT = 21;
+    /** TLS Handshake record. */
+    public static final byte TYPE_HANDSHAKE = 22;
+    /** TLS Application data record. */
+    public static final byte TYPE_APPLICATIONDATA = 23;
+    /** TLS Hand shake Header Size. */
+    public final static int HS_HEADER_SIZE = 4;
+    /** TLS Hand shake client key exchange sub type. */
+    public final static int TYPE_CLIENTKEYEXCHANGE = 16;
+    /** TLS Hand shake client hello sub type. */
+    public final static int TYPE_CLIENTHELLO = 1;
 
 }

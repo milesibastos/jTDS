@@ -17,15 +17,13 @@
 //
 package net.sourceforge.jtds.ssl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import net.sourceforge.jtds.util.BytesView;
+import net.sourceforge.jtds.jdbc.TdsCore;
 
 /**
  * An output stream that mediates between JSSE and the DB server.
@@ -40,13 +38,15 @@ import net.sourceforge.jtds.util.BytesView;
  *     TDS packet is part of the encrypted application data.
  *
  * @author Rob Worsnop
- * @version $Id: TdsTlsOutputStream.java,v 1.1 2005-01-04 17:13:04 alin_sinpalean Exp $
+ * @author Mike Hutchinson
+ * @version $Id: TdsTlsOutputStream.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
  */
 class TdsTlsOutputStream extends FilterOutputStream {
     /**
      * Used for holding back CKE, CCS and FIN records.
      */
     private List bufferedRecords = new ArrayList();
+    private int  totalSize;
 
     /**
      * Constructs a TdsTlsOutputStream based on an underlying output stream.
@@ -59,99 +59,135 @@ class TdsTlsOutputStream extends FilterOutputStream {
 
     /**
      * Holds back a record for batched transmission.
+     *
+     * @param record the TLS record to buffer
+     * @param len    the length of the TLS record to buffer
      */
-    private void deferRecord(TlsRecord record) {
-        record.detachData();
-        bufferedRecords.add(record);
+    private void deferRecord(byte record[], int len) {
+        byte tmp[] = new byte[len];
+        System.arraycopy(record, 0, tmp, 0, len);
+        bufferedRecords.add(tmp);
+        totalSize += len;
     }
 
     /**
      * Transmits the buffered batch of records.
      */
     private void flushBufferedRecords() throws IOException {
-        Iterator iter = bufferedRecords.iterator();
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        while (iter.hasNext()) {
-            TlsRecord record = (TlsRecord) iter.next();
-            record.write(bos);
+        byte tmp[] = new byte[totalSize];
+        int off = 0;
+        for (int i = 0; i < bufferedRecords.size(); i++) {
+            byte x[] = (byte[])bufferedRecords.get(i);
+            System.arraycopy(x, 0, tmp, off, x.length);
+            off += x.length;
         }
-        putPacket(bos.toByteArray());
+        putTdsPacket(tmp, off);
         bufferedRecords.clear();
+        totalSize = 0;
     }
 
-    /**
-     * Transmits a record within a TDS packet.
-     */
-    private void putPacket(Record record) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream(record
-                .getLength());
-        record.write(bos);
-        putPacket(bos.toByteArray());
-    }
-
-    /**
-     * Transmits bytes within a TDS packet.
-     */
-    private void putPacket(byte[] data) throws IOException {
-        Util.putPacket(out, data);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.io.OutputStream#write(byte[], int, int)
-     */
     public void write(byte[] b, int off, int len) throws IOException {
-        // JSSE always writes some kind of SSL/TLS record.
-        Record r = RecordFactory.create(new BytesView(b, off, len));
-        if (r instanceof Sslv2ClientHelloRecord) {
-            // Client Hello records go in their own TDS packets.
-            putPacket(r);
+
+        if (len < Ssl.TLS_HEADER_SIZE || off > 0) {
+            // Too short for a TLS packet just write it
+            out.write(b, off, len);
             return;
         }
-
-        // We are using TLS, so the Client Hello message is the only
-        // non-TLS record possible. From now on, assume TLS.
-        TlsRecord record = (TlsRecord) r;
-        if (record.getContentType() == TlsRecord.TYPE_APPLICATIONDATA) {
-            // TDS header in the encrypted application data. Don't add
-            // another one.
-            record.write(out);
+        //
+        // Extract relevant TLS header fields
+        //
+        int contentType = b[0] & 0xFF;
+        int length  = ((b[3] & 0xFF) << 8) | (b[4] & 0xFF);
+        //
+        // Check to see if probably a SSL client hello
+        //
+        if (contentType < Ssl.TYPE_CHANGECIPHERSPEC ||
+            contentType > Ssl.TYPE_APPLICATIONDATA ||
+            length != len - Ssl.TLS_HEADER_SIZE) {
+            // Assume SSLV2 Client Hello
+            putTdsPacket(b, len);
             return;
         }
+        //
+        // Process TLS records
+        //
+        switch (contentType) {
 
-        if (record.getContentType() == TlsRecord.TYPE_CHANGECIPHERSPEC) {
-            // CCS records are batched.
-            deferRecord(record);
-            return;
-        }
+            case Ssl.TYPE_APPLICATIONDATA:
+                // Application data, just copy to output
+                out.write(b, off, len);
+                break;
 
-        if (record.getContentType() == TlsRecord.TYPE_HANDSHAKE) {
-            TlsHandshakeRecord hsrec = (TlsHandshakeRecord) record;
-            TlsHandshakeBody hsbody = hsrec.getHandshakeBody();
-            if (hsbody == null) {
-                // must be Finish record; we could not
-                // decipher encrypted body
-                deferRecord(record);
-                // Finish is the signal to send the batch.
-                flushBufferedRecords();
-                return;
-            } else if (hsbody.getHandshakeType() == TlsHandshakeBody.TYPE_CLIENTKEYEXCHANGE) {
-                // CKE records are deferred
-                deferRecord(record);
-                return;
-            } else if (hsbody.getHandshakeType() == TlsHandshakeBody.TYPE_CLIENTHELLO) {
-                // Client Hello records go in their own TDS packets.
-                putPacket(record);
-                return;
-            } else {
-                // probably a Finished record whose encrypted data
-                // coincidentally mimicked that of a plaintext record.
-                deferRecord(record);
-                flushBufferedRecords();
-                return;
-            }
+            case Ssl.TYPE_CHANGECIPHERSPEC:
+                // Cipher spec change has to be buffered
+                deferRecord(b, len);
+                break;
+
+            case Ssl.TYPE_ALERT:
+                // Alert record ignore!
+                break;
+
+            case Ssl.TYPE_HANDSHAKE:
+                // TLS Handshake records
+                if (len >= (Ssl.TLS_HEADER_SIZE + Ssl.HS_HEADER_SIZE)) {
+                    // Long enough for a handshake subheader
+                    int hsType = b[5];
+                    int hsLen  = (b[6] & 0xFF) << 16 |
+                                 (b[7] & 0xFF) << 8  |
+                                 (b[8] & 0xFF);
+
+                    if (hsLen == len - (Ssl.TLS_HEADER_SIZE + Ssl.HS_HEADER_SIZE) &&
+                        // Client hello has to go in its own TDS packet
+                        hsType == Ssl.TYPE_CLIENTHELLO) {
+                        putTdsPacket(b, len);
+                        break;
+                    }
+                    // All others have to be deferred and sent as a block
+                    deferRecord(b, len);
+                    //
+                    // Now see if we have a finish record which will flush the
+                    // buffered records.
+                    //
+                    if (hsLen != len - (Ssl.TLS_HEADER_SIZE + Ssl.HS_HEADER_SIZE) ||
+                        hsType != Ssl.TYPE_CLIENTKEYEXCHANGE) {
+                        // This is probably a finish record
+                        int size = 0;
+                        for (int i = 0; i < bufferedRecords.size(); i++) {
+                            size += ((byte[])bufferedRecords.get(i)).length;
+                        }
+                        byte tmp[] = new byte[size];
+                        size = 0;
+                        for (int i = 0; i < bufferedRecords.size(); i++) {
+                            byte x[] = (byte[])bufferedRecords.get(i);
+                            System.arraycopy(x, 0, tmp, size, x.length);
+                            size += x.length;
+                        }
+                        putTdsPacket(tmp, tmp.length);
+                        bufferedRecords.clear();
+                    }
+                    break;
+                }
+            default:
+                // Short or unknown record output it anyway
+                out.write(b, off, len);
+                break;
         }
+    }
+
+    /**
+     * Write a TDS packet containing the TLS record(s).
+     *
+     * @param b   the TLS record
+     * @param len the length of the TLS record
+     */
+    void putTdsPacket(byte[] b, int len) throws IOException {
+        byte tdsHdr[] = new byte[TdsCore.PKT_HDR_LEN];
+        tdsHdr[0] = 0x12;
+        tdsHdr[1] = 0x01;
+        tdsHdr[2] = (byte)((len + TdsCore.PKT_HDR_LEN) >> 8);
+        tdsHdr[3] = (byte)(len + TdsCore.PKT_HDR_LEN);
+        out.write(tdsHdr, 0, tdsHdr.length);
+        out.write(b, 0, len);
     }
 
     /*

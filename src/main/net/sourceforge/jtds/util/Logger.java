@@ -33,7 +33,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.8 2004-10-10 20:37:15 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.9 2005-02-02 00:43:14 alin_sinpalean Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
@@ -126,6 +126,9 @@ public class Logger {
                 break;
             case 17:
                 line.append("NTLM Authentication packet ");
+                break;
+            case 18:
+                line.append("MS Prelogin packet ");
                 break;
             default:
                 line.append("Invalid packet ");

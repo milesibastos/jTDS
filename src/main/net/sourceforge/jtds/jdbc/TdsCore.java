@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import net.sourceforge.jtds.ssl.*;
 import net.sourceforge.jtds.util.*;
 
 /**
@@ -50,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.66 2005-02-01 23:27:57 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.67 2005-02-02 00:42:48 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -162,25 +163,35 @@ public class TdsCore {
     /** Maximum network packet size. */
     public static final int MAX_PKT_SIZE = 32768;
     /** The size of the packet header. */
-    static final int PKT_HDR_LEN = 8;
+    public static final int PKT_HDR_LEN = 8;
     /** TDS 4.2 or 7.0 Query packet. */
-    static final byte QUERY_PKT = 1;
+    public static final byte QUERY_PKT = 1;
     /** TDS 4.2 or 5.0 Login packet. */
-    static final byte LOGIN_PKT = 2;
+    public static final byte LOGIN_PKT = 2;
     /** TDS Remote Procedure Call. */
-    static final byte RPC_PKT = 3;
+    public static final byte RPC_PKT = 3;
     /** TDS Reply packet. */
-    static final byte REPLY_PKT = 4;
+    public static final byte REPLY_PKT = 4;
     /** TDS Cancel packet. */
-    static final byte CANCEL_PKT = 6;
+    public static final byte CANCEL_PKT = 6;
     /** TDS MSDTC packet. */
-    static final byte MSDTC_PKT = 14;
+    public static final byte MSDTC_PKT = 14;
     /** TDS 5.0 Query packet. */
-    static final byte SYBQUERY_PKT = 15;
+    public static final byte SYBQUERY_PKT = 15;
     /** TDS 7.0 Login packet. */
-    static final byte MSLOGIN_PKT = 16;
+    public static final byte MSLOGIN_PKT = 16;
     /** TDS 7.0 NTLM Authentication packet. */
-    static final byte NTLMAUTH_PKT = 17;
+    public static final byte NTLMAUTH_PKT = 17;
+    /** SQL 2000 prelogin negotiation packet. */
+    public static final byte PRELOGIN_PKT = 18;
+    /** SSL Mode - Login packet must be encrypted. */
+    public static final int SSL_ENCRYPT_LOGIN = 0;
+    /** SSL Mode - Client requested force encryption. */
+    public static final int SSL_CLIENT_FORCE_ENCRYPT = 1;
+    /** SSL Mode - No server certificate installed. */
+    public static final int SSL_NO_ENCRYPT = 2;
+    /** SSL Mode - Server requested force encryption. */
+    public static final int SSL_SERVER_FORCE_ENCRYPT = 3;
 
     //
     // Sub packet types
@@ -382,6 +393,8 @@ public class TdsCore {
     private Semaphore connectionLock;
     /** Indicates processing a batch. */
     private boolean inBatch;
+    /** Indicates type of SSL connection. */
+    private int sslMode = SSL_NO_ENCRYPT;
 
     /**
      * Construct a TdsCore object.
@@ -462,6 +475,43 @@ public class TdsCore {
     }
 
     /**
+     * Negotiate SSL settings with SQL 2000+ server.
+     * <p/>
+     * Server returns the following values for SSL mode:
+     * <ol>
+     * <ll>0 = Certificate installed encrypt login packet only.
+     * <li>1 = Certificate installed client requests force encryption.
+     * <li>2 = No certificate no encryption possible.
+     * <li>3 = Server requests force encryption.
+     * </ol>
+     * @param instance The server instance name.
+     * @param ssl The SSL URL property value.
+     * @throws IOException
+     */
+    void negotiateSSL(String instance, String ssl)
+            throws IOException, SQLException {
+        if (!ssl.equalsIgnoreCase(Ssl.SSL_OFF)) {
+            if (ssl.equalsIgnoreCase(Ssl.SSL_REQUIRE) ||
+                    ssl.equalsIgnoreCase(Ssl.SSL_AUTHENTICATE)) {
+                sendPreLoginPacket(instance, true);
+                sslMode = readPreLoginPacket();
+                if (sslMode != SSL_CLIENT_FORCE_ENCRYPT &&
+                    sslMode != SSL_SERVER_FORCE_ENCRYPT) {
+                    throw new SQLException(
+                            Messages.get("error.ssl.encryptionoff"),
+                            "08S01");
+                }
+            } else {
+                sendPreLoginPacket(instance, false);
+                sslMode = readPreLoginPacket();
+            }
+            if (sslMode != SSL_NO_ENCRYPT) {
+                socket.enableEncryption(ssl);
+            }
+        }
+    }
+
+    /**
      * Login to the SQL Server.
      *
      * @param serverName The server host name.
@@ -503,7 +553,9 @@ public class TdsCore {
                                 charset, appName, progName,
                                 language, packetSize);
             }
-
+            if (sslMode == SSL_ENCRYPT_LOGIN) {
+                socket.disableEncryption();
+            }
             nextToken();
 
             while (!endOfResponse) {
@@ -1422,6 +1474,102 @@ public class TdsCore {
         byte[] tmp = Support.encodeString(connection.getCharset(), txt);
         out.write(tmp, 0, len);
         out.write((byte) (tmp.length < len ? tmp.length : len));
+    }
+
+    /**
+     * Send the SQL Server 2000 pre login packet.
+     * <p>Packet contains; netlib version, ssl mode, instance
+     * and process ID.
+     * @param instance
+     * @param forceEncryption
+     * @throws IOException
+     */
+    private void sendPreLoginPacket(String instance, boolean forceEncryption)
+            throws IOException {
+        out.setPacketType(PRELOGIN_PKT);
+        // Write Netlib pointer
+        out.write((short)0);
+        out.write((short)21);
+        out.write((byte)6);
+        // Write Encrypt flag pointer
+        out.write((short)1);
+        out.write((short)27);
+        out.write((byte)1);
+        // Write Instance name pointer
+        out.write((short)2);
+        out.write((short)28);
+        out.write((byte)(instance.length()+1));
+        // Write process ID pointer
+        out.write((short)3);
+        out.write((short)(28+instance.length()+1));
+        out.write((byte)4);
+        // Write terminator
+        out.write((byte)0xFF);
+        // Write fake net lib ID 8.341.0
+        out.write(new byte[]{0x08, 0x00, 0x01, 0x55, 0x00, 0x00});
+        // Write force encryption flag
+        out.write((byte)(forceEncryption? 1: 0));
+        // Write instance name
+        out.writeAscii(instance);
+        out.write((byte)0);
+        // Write dummy process ID
+        out.write(new byte[]{0x01, 0x02, 0x00, 0x00});
+        //
+        out.flush();
+    }
+
+    /**
+     * Process the pre login acknowledgement from the server.
+     * <p>Packet contains; server version no, SSL mode, instance name
+     * and process id.
+     * <p>Server returns the following values for SSL mode:
+     * <ol>
+     * <ll>0 = Certificate installed encrypt login packet only.
+     * <li>1 = Certificate installed client requests force encryption.
+     * <li>2 = No certificate no encryption possible.
+     * <li>3 = Server requests force encryption.
+     * </ol>
+     * @return The server side SSL mode.
+     * @throws IOException
+     */
+    private int readPreLoginPacket() throws IOException {
+        byte list[][] = new byte[8][];
+        byte data[][] = new byte[8][];
+        int recordCount = 0;
+
+        byte record[] = new byte[5];
+        // Read entry pointers
+        record[0] = (byte)in.read();
+        while ((record[0] & 0xFF) != 0xFF) {
+            if (recordCount == list.length) {
+                throw new IOException("Pre Login packet has more than 8 entries");
+            }
+            // Read record
+            in.read(record, 1, 4);
+            list[recordCount++] = record;
+            record = new byte[5];
+            record[0] = (byte)in.read();
+        }
+        // Read entry data
+        for (int i = 0; i < recordCount; i++) {
+            byte value[] = new byte[(byte)list[i][4]];
+            in.read(value);
+            data[i] = value;
+        }
+        if (Logger.isActive()) {
+            // Diagnostic dump
+            Logger.println("PreLogin server response");
+            for (int i = 0; i < recordCount; i++) {
+                Logger.println("Record " + i+ " = " +
+                        Support.toHex(data[i]));
+            }
+        }
+        if (recordCount > 1) {
+            return data[1][0]; // This is the server side SSL mode
+        } else {
+            // Response too short to include SSL mode!
+            return SSL_NO_ENCRYPT;
+        }
     }
 
     /**

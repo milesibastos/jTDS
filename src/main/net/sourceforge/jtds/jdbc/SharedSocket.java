@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import net.sourceforge.jtds.ssl.SocketFactories;
-import net.sourceforge.jtds.ssl.Ssl;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -63,7 +62,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.22 2005-01-04 17:12:53 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.23 2005-02-02 00:42:45 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -122,6 +121,10 @@ class SharedSocket {
      * The shared network socket.
      */
     private Socket socket;
+    /**
+     * The shared SSL network socket;
+     */
+    private Socket sslSocket;
     /**
      * Output stream for network socket.
      */
@@ -211,14 +214,41 @@ class SharedSocket {
      * @throws IOException if socket open fails
      */
     SharedSocket(String host, int port, int tdsVersion, int serverType,
-    		boolean tcpNoDelay, String ssl, String instance)
+    		boolean tcpNoDelay)
             throws IOException, UnknownHostException {
         setTdsVersion(tdsVersion);
         setServerType(serverType);
-        this.socket = createSocket(host, port, ssl, instance);
+        this.socket = new Socket(host, port);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(tcpNoDelay);
+    }
+
+    /**
+     * Enable TLS encryption by creating a TLS socket over the
+     * existing TCP/IP network socket.
+     * @param ssl The SSL URL property value.
+     * @throws IOException
+     */
+    void enableEncryption(String ssl) throws IOException
+    {
+        Logger.println("Enabling TLS encryption");
+        sslSocket = SocketFactories.getSocketFactory(ssl, socket).createSocket();
+        setOut(new DataOutputStream(sslSocket.getOutputStream()));
+        setIn(new DataInputStream(sslSocket.getInputStream()));
+    }
+
+    /**
+     * Disable TLS encryption and switch back to raw TCP/IP socket.
+     * @throws IOException
+     */
+    void disableEncryption() throws IOException
+    {
+        Logger.println("Disabling TLS encryption");
+        sslSocket.close();
+        sslSocket = null;
+        setOut(new DataOutputStream(socket.getOutputStream()));
+        setIn(new DataInputStream(socket.getInputStream()));
     }
 
     /**
@@ -437,10 +467,16 @@ class SharedSocket {
                     }
                 }
             }
-
-            // Close physical socket
-            if (socket != null) {
-                socket.close();
+            try {
+                if (sslSocket != null) {
+                    sslSocket.close();
+                    sslSocket = null;
+                }
+            } finally {
+                // Close physical socket
+                if (socket != null) {
+                    socket.close();
+                }
             }
         }
     }
@@ -457,6 +493,7 @@ class SharedSocket {
             } catch (IOException ioe) {
                 // Ignore
             } finally {
+                sslSocket = null;
                 socket = null;
             }
         }
@@ -875,23 +912,5 @@ class SharedSocket {
      */
     protected void setOut(DataOutputStream out) {
         this.out = out;
-    }
-
-    /**
-     * Returns the socket factory appropriate for the security settings.
-     *
-     * @param ssl      the security setting
-     * @param instance the DB instance name; needed if SSL is on
-     * @return a <code>SocketFactory</code> instance
-     */
-    private static Socket createSocket(String host, int port, String ssl,
-                                       String instance)
-            throws UnknownHostException, IOException {
-        if (ssl.equals(Ssl.SSL_OFF)){
-            return new Socket(host, port);
-        } else {
-            return SocketFactories.getSocketFactory(ssl, instance)
-                    .createSocket(host, port);
-        }
     }
 }

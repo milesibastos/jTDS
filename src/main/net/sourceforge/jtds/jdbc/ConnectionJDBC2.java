@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.64 2005-02-01 23:27:56 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.65 2005-02-02 00:42:37 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -281,7 +281,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             } else {
                 // Use plain TCP/IP socket
                 socket = new SharedSocket(serverName, portNumber, tdsVersion,
-                        serverType, tcpNoDelay, ssl, instanceName);
+                        serverType, tcpNoDelay);
             }
 
             // Don't call loadCharset if serverCharset not specified; discover
@@ -307,6 +307,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                 socket.forceClose();
                             }
                         });
+            }
+
+            //
+            // Negotiate SSL connection if required
+            //
+            if (tdsVersion >= Driver.TDS80 && !namedPipe) {
+                baseTds.negotiateSSL(instanceName, ssl);
             }
 
             //

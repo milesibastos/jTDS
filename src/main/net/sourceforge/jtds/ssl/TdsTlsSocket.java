@@ -27,7 +27,8 @@ import java.net.SocketException;
  * A socket that mediates between JSSE and the DB server.
  *
  * @author Rob Worsnop
- * @version $Id: TdsTlsSocket.java,v 1.1 2005-01-04 17:13:04 alin_sinpalean Exp $
+ * @author Mike Hutchinson
+ * @version $Id: TdsTlsSocket.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
  */
 class TdsTlsSocket extends Socket {
     private Socket delegate;
@@ -45,14 +46,13 @@ class TdsTlsSocket extends Socket {
         ostm = new TdsTlsOutputStream(delegate.getOutputStream());
     }
 
-
     /*
      * (non-Javadoc)
      *
      * @see java.net.Socket#close()
      */
     public synchronized void close() throws IOException {
-        delegate.close();
+        // Do nothing. Underlying socket closed elsewhere
     }
 
     /*
@@ -99,6 +99,4 @@ class TdsTlsSocket extends Socket {
     public void setTcpNoDelay(boolean on) throws SocketException {
         delegate.setTcpNoDelay(on);
     }
-
-
 }

@@ -17,7 +17,6 @@
 //
 package net.sourceforge.jtds.ssl;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -34,71 +33,25 @@ import com.sun.net.ssl.SSLContext;
 import com.sun.net.ssl.TrustManager;
 import com.sun.net.ssl.X509TrustManager;
 
-import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.util.Logger;
 
 /**
  * Used for acquiring a socket factory when SSL is enabled.
  *
  * @author Rob Worsnop
- * @version $Id: SocketFactories.java,v 1.4 2005-01-24 14:10:04 alin_sinpalean Exp $
+ * @author Mike Hutchinson
+ * @version $Id: SocketFactories.java,v 1.5 2005-02-02 00:43:10 alin_sinpalean Exp $
  */
 public class SocketFactories {
     /**
      * Returns a socket factory, the behavior of which will depend on the SSL
      * setting and whether or not the DB server supports SSL.
      *
-     * @param ssl      the SSL setting
-     * @param instance the DB instance name
+     * @param ssl    the SSL setting
+     * @param socket plain TCP/IP socket to wrap
      */
-    public static SocketFactory getSocketFactory(String ssl, String instance) {
-        return new TdsTlsSocketFactory(ssl, instance);
-    }
-
-    /**
-     * Requests a secure connection with the DB server.
-     *
-     * @param socket   the socket on which to make the request
-     * @param instance the DB instance to which to connect
-     * @return <code>true</code> if SSL is enabled, otherwise <code>false</code>
-     */
-    private static boolean requestEncryption(Socket socket, String instance)
-            throws IOException {
-        byte buf[] = new byte[instance.length() + 39];
-        buf[2] = 0x1A;
-        buf[4] = 0x06;
-        buf[5] = 0x01;
-        buf[7] = 0x20;
-        buf[9] = 0x01;
-        buf[10] = 0x02;
-        buf[12] = 0x21;
-        // this is an offset and depends on length of instance name.
-        buf[14] = (byte) (instance.length() + 1);
-        buf[15] = 0x03;
-        // this is an offset and depends on length of instance name.
-        buf[17] = (byte) (instance.length() + 34);
-        buf[19] = 0x04;
-        buf[20] = 0x04;
-        // this is an offset and depends on length of instance name.
-        buf[22] = (byte) (instance.length() + 38);
-        buf[24] = 0x01;
-        buf[25] = (byte) 0xFF;
-        buf[26] = 0x09;
-        System.arraycopy(instance.getBytes(), 0, buf, 33, instance.length());
-        // Require encryption for all packets (if 0, only login will be
-        // encrypted)
-        buf[32 + instance.length()] = 0x01;
-        buf[34 + instance.length()] = (byte) 0xC4;
-        buf[35 + instance.length()] = 0x0F;
-        buf[38 + instance.length()] = 0x01;
-        Util.putPacket(socket.getOutputStream(), buf);
-
-        int read = new TdsTlsInputStream(socket.getInputStream()).read(buf);
-        if (read < 29) {
-            throw new EOFException("Server returned " + read
-                    + " bytes; expected " + 29);
-        }
-        return buf[(buf[2] & 0xff) + 6] != 0x02;
+    public static SocketFactory getSocketFactory(String ssl, Socket socket) {
+        return new TdsTlsSocketFactory(ssl, socket);
     }
 
     /**
@@ -107,18 +60,32 @@ public class SocketFactories {
     private static class TdsTlsSocketFactory extends SocketFactory {
 
         private String ssl;
-        private String instance;
+        private Socket socket;
         private static SSLSocketFactory factorySingleton;
 
         /**
          * Constructs a TdsTlsSocketFactory.
          *
          * @param ssl      the SSL setting
-         * @param instance the DB instance name
+         * @param socket   the TCP/IP socket to wrap
          */
-        public TdsTlsSocketFactory(String ssl, String instance) {
+        public TdsTlsSocketFactory(String ssl, Socket socket) {
             this.ssl = ssl;
-            this.instance = instance;
+            this.socket = socket;
+        }
+
+        /**
+         * Create the SSL socket.
+         * <p/>
+         * NB. This method will actually create a connected socket
+         * over the TCP/IP network socket supplied via the constructor of
+         * this class.
+         */
+        public Socket createSocket() throws IOException
+        {
+            return (SSLSocket) getFactory().createSocket(new TdsTlsSocket(socket),
+                    socket.getInetAddress().getHostName(), socket.getPort(),
+                    true);
         }
 
         /*
@@ -128,7 +95,7 @@ public class SocketFactories {
          */
         public Socket createSocket(String host, int port) throws IOException,
                 UnknownHostException {
-            return createSocket(new Socket(host, port));
+            return null;
         }
 
         /*
@@ -138,7 +105,7 @@ public class SocketFactories {
          */
         public Socket createSocket(InetAddress host, int port)
                 throws IOException {
-            return createSocket(host.getHostName(), port);
+            return null;
         }
 
         /*
@@ -150,7 +117,7 @@ public class SocketFactories {
         public Socket createSocket(String host, int port,
                                    InetAddress localHost, int localPort) throws IOException,
                 UnknownHostException {
-            return createSocket(new Socket(host, port, localHost, localPort));
+            return null;
         }
 
         /*
@@ -161,37 +128,7 @@ public class SocketFactories {
          */
         public Socket createSocket(InetAddress host, int port,
                                    InetAddress localHost, int localPort) throws IOException {
-            return createSocket(host.getHostName(), port, localHost, localPort);
-        }
-
-        /**
-         * Creates a socket based on an existing socket and the SSL setting.
-         *
-         * @param socket the existing socket
-         * @return a new socket, which may or may not be an SSL socket
-         */
-        private Socket createSocket(Socket socket) throws IOException {
-            boolean sslOK = requestEncryption(socket, instance);
-            if (!sslOK) {
-                if (ssl.equals(Ssl.SSL_REQUEST)) {
-                    // if SSL requested but not available, simply use the plain
-                    // socket.
-                    return socket;
-                } else {
-                    // else throw an exception.
-                    throw new IOException(Messages
-                            .get("error.ssl.encryptionoff"));
-                }
-            }
-            // Now we definitely want to create an SSLSocket.
-            // The chain will end up looking like this:
-            //
-            // SSLSocket-->TdsTlsSocket-->plainsocket
-            SSLSocket tlsSocket = (SSLSocket) getFactory().createSocket(new TdsTlsSocket(socket),
-                    socket.getInetAddress().getHostName(), socket.getPort(),
-                    true);
-            tlsSocket.startHandshake();
-            return tlsSocket;
+            return null;
         }
 
         /**

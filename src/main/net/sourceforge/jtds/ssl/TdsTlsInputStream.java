@@ -18,27 +18,35 @@
 package net.sourceforge.jtds.ssl;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import net.sourceforge.jtds.util.KnownLengthInputStream;
+import net.sourceforge.jtds.jdbc.TdsCore;
 
 /**
  * An input stream that filters out TDS headers so they are not returned to
  * JSSE (which will not recognize them).
  *
  * @author Rob Worsnop
- * @version $Id: TdsTlsInputStream.java,v 1.1 2005-01-04 17:13:04 alin_sinpalean Exp $
+ * @author Mike Hutchinson
+ * @version $Id: TdsTlsInputStream.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
  */
 class TdsTlsInputStream extends FilterInputStream {
 
     int bytesOutstanding = 0;
 
-    byte[] readBuffer = new byte[17 * 1024];
+    /**
+     * Temporary buffer used to de-encapsulate inital TLS packets.
+     * Initial size should be enough for login phase after which no
+     * buffering is required.
+     */
+    byte[] readBuffer = new byte[6144];
 
     InputStream bufferStream = null;
+
+    /** False if TLS packets are encapsulated in TDS packets. */
+    boolean pureSSL = false;
 
     /**
      * Constructs a TdsTlsInputStream and bases it on an underlying stream.
@@ -56,9 +64,17 @@ class TdsTlsInputStream extends FilterInputStream {
      */
     public int read(byte[] b, int off, int len) throws IOException {
 
+        //
+        // If we have read past the TDS encapsulated TLS records
+        // Just read directly from the input stream.
+        //
+        if (pureSSL && bufferStream == null) {
+            return in.read(b, off, len);
+        }
+
         // If this is the start of a new TLS record or
         // TDS packet we need to read in entire record/packet.
-        if (bufferStream == null) {
+        if (!pureSSL && bufferStream == null) {
             primeBuffer();
         }
 
@@ -70,6 +86,7 @@ class TdsTlsInputStream extends FilterInputStream {
             // The next read will prime it again.
             bufferStream = null;
         }
+
         return ret;
     }
 
@@ -79,57 +96,21 @@ class TdsTlsInputStream extends FilterInputStream {
      */
     private void primeBuffer() throws IOException {
         // first read the type (first byte for TDS and TLS).
-        in.read(readBuffer, 0, 1);
+        in.read(readBuffer, 0, Ssl.TLS_HEADER_SIZE); // TLS packet hdr size = 5 TDS = 8
         int len;
-        if (readBuffer[0] == TdsPacket.TYPE_RESPONSE) {
-            len = readTDSPacket(readBuffer, 1);
+        if (readBuffer[0] == TdsCore.REPLY_PKT) {
+            len = ((readBuffer[2] & 0xFF) << 8) | (readBuffer[3] & 0xFF);
+            // Read rest of header to skip
+            in.read(readBuffer, Ssl.TLS_HEADER_SIZE, TdsCore.PKT_HDR_LEN - Ssl.TLS_HEADER_SIZE );
+            len -= TdsCore.PKT_HDR_LEN;
+            in.read(readBuffer, 0, len); // Now get inner packet
         } else {
-            len = readTLSRecord(readBuffer, 1);
+            len = ((readBuffer[3] & 0xFF) << 8) | (readBuffer[4] & 0xFF);
+            in.read(readBuffer, Ssl.TLS_HEADER_SIZE, len - Ssl.TLS_HEADER_SIZE);
+            pureSSL = true;
         }
 
         bufferStream = new ByteArrayInputStream(readBuffer, 0, len);
         bytesOutstanding = len;
     }
-
-    /**
-     * Reads all but the first byte of a TLS Record into a buffer.
-     *
-     * @param buf the buffer into which to read the TLS record
-     * @param off the offset within the buffer at which to start
-     * @return the size of the TLS Record
-     */
-    private int readTLSRecord(byte[] buf, int off) throws IOException {
-        in.read(buf, off, TlsRecord.HEADER_SIZE - 1);
-        short length = getShort(buf, 3);
-        new KnownLengthInputStream(in).read(buf, off + (TlsRecord.HEADER_SIZE - 1), length);
-        return length + TlsRecord.HEADER_SIZE;
-    }
-
-    /**
-     * Reads all but the first byte of a TDS packet into a buffer.
-     *
-     * @param buf the buffer into which to read the TDS packet
-     * @param off the offset within the buffer at which to start
-     * @return the size of the TLS Record contained within the TDS packet
-     */
-    private int readTDSPacket(byte[] buf, int off) throws IOException {
-        in.read(buf, off, TdsPacket.HEADER_SIZE - 1);
-        short length = getShort(buf, 2);
-        new KnownLengthInputStream(in).read(buf, 0, length - TdsPacket.HEADER_SIZE);
-        return length - TdsPacket.HEADER_SIZE;
-    }
-
-    /**
-     * Extracts a <code>short</code> from a byte buffer.
-     *
-     * @param b   the byte buffer containing a <code>short</code>
-     * @param off the location within <code>buf</code> of the <code>short</code>
-     * @return the <code>short</code>
-     */
-    private short getShort(byte[] b, int off) throws IOException {
-        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(b,
-                off, 2));
-        return dis.readShort();
-    }
 }
-

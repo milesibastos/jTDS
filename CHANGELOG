@@ -2,6 +2,9 @@ Changes from jTDS 1.0
 =======================
 
 02/02/2005 - Alin Sinpalean
+ o Applied patch [1110911] Encryption request causes conn reset, submitted by
+   Mike Hutchinson. SSL negotiation has been implemented to handle the encrypt
+   only login case.
  o Applied a modified version of patch [1107090] Revised query timeout logic,
    submitted by Mike. Timeouts should now have millisecond precision, using a
    single timer thread per VM.

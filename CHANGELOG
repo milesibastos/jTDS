@@ -5,6 +5,7 @@ Changes from jTDS 0.8-rc1
  o Corrected bug [934273] setNull does not set IMAGE type to null; added tests
    to ensure functionality continues to work in the future.
  o Improved LOBTest performance.
+ o Minor optimizations for sending character data.
 
 04/14/2004 - Alin Sinpalean
  o Applied and improved patch #930076 - Passing parameters to stored procedure

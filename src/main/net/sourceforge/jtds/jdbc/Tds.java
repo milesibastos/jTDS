@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.53 2004-04-16 18:35:03 bheineman Exp $
+ * @version    $Id: Tds.java,v 1.54 2004-04-16 20:38:17 bheineman Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.53 2004-04-16 18:35:03 bheineman Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.54 2004-04-16 20:38:17 bheineman Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -406,13 +406,18 @@ public class Tds implements TdsDefinitions {
 
                 switch (nativeType) {
                 case SYBCHAR: {
+                    if (actualParameterList[i].value == null) {
+                        sendSybChar(null, 255);
+                        break;
+                    }
+
                     final int max = actualParameterList[i].maxLength;
                     boolean isText, isUnicode;
 
                     // MJH - 14/03/04 OK to use actual parameter list as this is now
                     // always created in PreparedStatement_base prior to the call.
-                    if (actualParameterList[i].formalType != null &&
-                            actualParameterList[i].formalType.charAt(0) == 'n') {
+                    if (actualParameterList[i].formalType != null
+                        && actualParameterList[i].formalType.charAt(0) == 'n') {
                         // This is a Unicode column, safe to assume TDS 7.0
                         isText = max > 4000;
                         isUnicode = true;
@@ -426,15 +431,18 @@ public class Tds implements TdsDefinitions {
                         try {
                             val = (String) actualParameterList[i].value;
                         } catch (ClassCastException e) {
-                            if (actualParameterList[i].value instanceof Boolean)
+                            if (actualParameterList[i].value instanceof Boolean) {
                                 val = ((Boolean) actualParameterList[i].value).booleanValue() ? "1" : "0";
-                            else
+                            } else {
                                 val = actualParameterList[i].value.toString();
+                            }
                         }
-                        if (tdsVer < TDS70 && val != null && val.length() == 0) {
+
+                        if (tdsVer < TDS70 && val.length() == 0) {
                             val = " ";
                         }
-                        final int len = val != null ? val.length() : 0;
+
+                        final int len = val.length();
 
                         // Test that the data isn't actually larger than the
                         // maximum size. Otherwise SQL Server will consider this
@@ -450,12 +458,8 @@ public class Tds implements TdsDefinitions {
                         if (isUnicode) {
                             comm.appendByte((byte) (SYBNVARCHAR | 0x80));
                             comm.appendTdsShort((short) (max * 2));
-                            if (val == null) {
-                                comm.appendTdsShort((short) 0xFFFF);
-                            } else {
-                                comm.appendTdsShort((short) (len * 2));
-                                comm.appendChars(val);
-                            }
+                            comm.appendTdsShort((short) (len * 2));
+                            comm.appendChars(val);
                         } else {
                             // VARCHAR
                             sendSybChar(val, actualParameterList[i].maxLength);
@@ -2796,11 +2800,9 @@ public class Tds implements TdsDefinitions {
 
     private void sendSybText(final java.io.Reader value, int length,
                              boolean isUnicode)
-            throws java.io.IOException {
+            throws java.io.IOException, SQLException {
         if (value == null) {
-            comm.appendByte(SYBVARCHAR);
-            comm.appendByte((byte) 255);
-            comm.appendByte((byte) 0);
+            sendSybChar(null, 255);
         } else {
             EncodingHelper encodingHelper = conn.getEncoder();
 
@@ -2818,14 +2820,13 @@ public class Tds implements TdsDefinitions {
                 isUnicode = true;
             }
 
-            int sentLength = isUnicode ? 2 * length : length;
             comm.appendByte(isUnicode ? SYBNTEXT : SYBTEXT);
 
             // send the length of this piece of data
             comm.appendTdsInt(Integer.MAX_VALUE);
 
             // send the length of this piece of data again
-            comm.appendTdsInt(sentLength);
+            comm.appendTdsInt(isUnicode ? 2 * length : length);
 
             char[] buffer = new char[1024];
 
@@ -2844,8 +2845,7 @@ public class Tds implements TdsDefinitions {
                 if (isUnicode) {
                     comm.appendChars(buffer, result);
                 } else {
-                    String tmp = new String(buffer, 0, result);
-                    comm.appendBytes(encodingHelper.getBytes(tmp));
+                    comm.appendBytes(encodingHelper.getBytes(new String(buffer, 0, result)));
                 }
             }
         }
@@ -2853,40 +2853,40 @@ public class Tds implements TdsDefinitions {
 
     private void sendSybChar(final String value, final int maxLength)
             throws java.io.IOException, SQLException {
-        final byte[] converted;
         if (value == null) {
             comm.appendByte(SYBVARCHAR);
             comm.appendByte((byte) 255);
             comm.appendByte((byte) 0);
-            return;
-        } else
-            converted = conn.getEncoder().getBytes(value);
-
-        // set the type of the column
-        // set the maximum length of the field
-        // set the actual lenght of the field.
-        if (tdsVer >= TDS70) {
-            comm.appendByte((byte) (SYBVARCHAR | 0x80));
-            comm.appendTdsShort((short) (maxLength));
-            comm.appendTdsShort((short) (converted.length));
         } else {
-            if (maxLength > 255 || converted.length > 255) {
-                throw new SQLException(
-                        "String or binary data would be truncated.",
-                        "22001", 8152);
-            }
+            final byte[] converted = conn.getEncoder().getBytes(value);
 
-            comm.appendByte(SYBVARCHAR);
-            comm.appendByte((byte) (maxLength));
-            if (converted.length != 0) {
-                comm.appendByte((byte) (converted.length));
+            // set the type of the column
+            // set the maximum length of the field
+            // set the actual lenght of the field.
+            if (tdsVer >= TDS70) {
+                comm.appendByte((byte) (SYBVARCHAR | 0x80));
+                comm.appendTdsShort((short) maxLength);
+                comm.appendTdsShort((short) converted.length);
             } else {
-                comm.appendByte((byte) 1);
-                comm.appendByte((byte) 32);
-            }
-        }
+                if (maxLength > 255 || converted.length > 255) {
+                    throw new SQLException(
+                            "String or binary data would be truncated.",
+                            "22001", 8152);
+                }
 
-        comm.appendBytes(converted);
+                comm.appendByte(SYBVARCHAR);
+                comm.appendByte((byte) maxLength);
+
+                if (converted.length != 0) {
+                    comm.appendByte((byte) converted.length);
+                } else {
+                    comm.appendByte((byte) 1);
+                    comm.appendByte((byte) 32);
+                }
+            }
+
+            comm.appendBytes(converted);
+        }
     }
 
 

@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.63 2005-01-06 16:39:29 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.64 2005-01-10 12:17:26 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -838,6 +838,18 @@ public class TdsCore {
     }
 
     /**
+     * Notifies the <code>TdsCore</code> that a batch is starting. This is so
+     * that it knows to use <code>sp_executesql</code> for parameterized
+     * queries (because there's no way to prepare a statement in the middle of
+     * a batch).
+     * <p>
+     * Sets the {@link #inBatch} flag.
+     */
+    void startBatch() {
+        inBatch = true;
+    }
+
+    /**
      * Send an SQL statement with optional parameters to the server.
      *
      * @param sql        SQL statement to execute
@@ -876,10 +888,7 @@ public class TdsCore {
             checkOpen();
             clearResponseQueue();
             messages.exceptions = null;
-            if (sendNow) {
-                // Need to know we are sending a batch
-                inBatch = true;
-            }
+
             //
             // Set the connection row count if required.
             // Once set this will not be changed within a

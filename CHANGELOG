@@ -2,6 +2,8 @@ Changes from jTDS 0.9.1
 =======================
 
 01/10/2005 - Alin Sinpalean
+ o Corrected a problem in TdsCore where the inBatch flag was set incorrectly
+   causing sp_executesql to be used for all parameterized queries.
  o Added a specific error message for the case when an output parameter value
    is accessed without registerOutParameter() being called first.
 

@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.25 2005-01-04 12:43:56 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.26 2005-01-10 12:17:26 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -606,6 +606,7 @@ public class JtdsStatement implements java.sql.Statement {
         int size = batchValues.size();
 
         try {
+            tds.startBatch();
             for (int i = 0; i < size;) {
                 Object value = batchValues.get(i);
                 ++i;

@@ -2,6 +2,15 @@
 Changes from jTDS 0.4
 =======================
 
+11/11/2002 - Alin Sinpalean
+
+ o Fixed bug #636110: the warning chain of a result set was instantiated only
+   at the end of the TdsResultSet constructor, but a warnig could have been
+   added during the call to startResultSet() (also in the constructor) so a
+   NullPointerException was thrown if a warning was encountered during loading
+   a warning chain (e.g. if the result set contained no rows but it was
+   returning a warning).
+
 11/07/2002 - Alin Sinpalean
 
  o Temporarily fixed bug #632852:

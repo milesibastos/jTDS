@@ -79,7 +79,7 @@ import java.sql.*;
  *@author     Alin Sinpalean
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: TdsResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $
+ *@version    $Id: TdsResultSet.java,v 1.3 2002-11-11 15:22:42 alin_sinpalean Exp $
  *@see        Statement#executeQuery
  *@see        Statement#getResultSet
  *@see        ResultSetMetaData @
@@ -103,20 +103,20 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.2 2002-10-22 11:22:51 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsResultSet.java,v 1.3 2002-11-11 15:22:42 alin_sinpalean Exp $";
 
     public TdsResultSet(Tds tds_, TdsStatement stmt_, SQLWarningChain stmtChain, int fetchSize) throws SQLException
     {
         tds = tds_;
         stmt = stmt_;
-        startResultSet(tds, stmtChain);
+        warningChain = new SQLWarningChain();
+        hitEndOfData = false;
+        rowCache = new PacketRowResult[this.fetchSize];
 
         if( fetchSize > 0 )
             this.fetchSize = fetchSize;
 
-        hitEndOfData = false;
-        warningChain = new SQLWarningChain();
-        rowCache = new PacketRowResult[this.fetchSize];
+        startResultSet(tds, stmtChain);
     }
 
     private void startResultSet(Tds tds, SQLWarningChain stmtWarningChain) throws SQLException
@@ -135,7 +135,7 @@ public class TdsResultSet extends AbstractResultSet implements ResultSet
                 else if( tmp instanceof PacketColumnInfoResult )
                     info = ((PacketColumnInfoResult)tmp).getColumnInfo();
                 else if( tmp instanceof PacketMsgResult )
-                    warningChain.addOrReturn((PacketMsgResult)tmp);
+                    stmtWarningChain.addOrReturn((PacketMsgResult)tmp);
                 else if( tmp instanceof PacketColumnOrderResult )
                 {
                     // XXX ORDER BY columns

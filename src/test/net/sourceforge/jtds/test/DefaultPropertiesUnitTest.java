@@ -30,7 +30,7 @@ import java.util.HashMap;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.4 2004-08-07 00:07:35 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.5 2004-08-07 03:20:40 ddkilzer Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
@@ -189,6 +189,49 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
         assertEquals("Server type for Sybase did not map correctly",
                      new Integer(Driver.SYBASE),
                      DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SYBASE));
+    }
+
+
+    public void test_getTdsVersion_StringToInteger_Null() {
+        final String message = "Did not return null for unknown TDS version: ";
+        final String[] testValues = new String[]{ null, "", "4.0", "5.2", "0.0", "8:0" };
+        for (int i = 0; i < testValues.length; i++) {
+            assertNull(
+                    message + String.valueOf(testValues[i]),
+                    DefaultProperties.getTdsVersion(testValues[i]));
+        }
+    }
+
+
+    public void test_getTdsVersion_StringToInteger_TDS42() {
+        assertEquals(
+                "Tds version for TDS 4.2 did not map correctly",
+                new Integer(Driver.TDS42),
+                DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_42));
+    }
+
+
+    public void test_getTdsVersion_StringToInteger_TDS50() {
+        assertEquals(
+                "Tds version for TDS 5.0 did not map correctly",
+                new Integer(Driver.TDS50),
+                DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_50));
+    }
+
+
+    public void test_getTdsVersion_StringToInteger_TDS70() {
+        assertEquals(
+                "Tds version for TDS 7.0 did not map correctly",
+                new Integer(Driver.TDS70),
+                DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_70));
+    }
+
+
+    public void test_getTdsVersion_StringToInteger_TDS80() {
+        assertEquals(
+                "Tds version for TDS 8.0 did not map correctly",
+                new Integer(Driver.TDS80),
+                DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_80));
     }
 
 }

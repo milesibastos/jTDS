@@ -17,6 +17,14 @@ Changes from jTDS 0.8.1
    default setup of SQL Server and/or TDS 7.0.
  o Updated DriverPropertyInfo choices for prepareSql property.
  o Cleaned up DefaultPropertiesTestLibrary so it is easier to extend.
+ o Created ConnectionJDBC2UnitTest.
+ o Created DefaultProperties.getTdsVersion() method to convert Tds version
+   string to an integer.  Created unit tests in DefaultPropertiesUnitTest.
+ o Created UnitTestBase.invokeGetInstanceField() method for
+   ConnectionJDBC2UnitTest.
+ o On ConnectionJDBC2 class: renamed private field serverPort to portNumber,
+   added private default constructor for testing, and implemented use of
+   DefaultProperties.getTdsVersion().
 
 08/06/2004 - Brian Heineman
  o Update the usage of the prepareSql parameter.  This parameter is now used to

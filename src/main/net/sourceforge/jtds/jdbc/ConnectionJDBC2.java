@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.21 2004-08-07 01:22:12 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.22 2004-08-07 03:20:38 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -115,7 +115,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** The server host name. */
     private String serverName;
     /** The server port number. */
-    private int serverPort;
+    private int portNumber;
     /** The make of SQL Server (sybase/microsoft). */
     private int serverType;
     /** The SQL Server instance. */
@@ -204,6 +204,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int loginTimeout = 0;
 
     /**
+     * Default constructor.
+     * <p/>
+     * Used for testing.
+     */ 
+    private ConnectionJDBC2() {
+    }
+
+    /**
      * Create a new database connection.
      *
      * @param url The connection URL starting jdbc:jtds:.
@@ -226,9 +234,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (instanceName.length() > 0 && !namedPipe) {
             final MSSqlServerInfo msInfo = new MSSqlServerInfo(serverName);
 
-            serverPort = msInfo.getPortForInstance(instanceName);
+            portNumber = msInfo.getPortForInstance(instanceName);
 
-            if (serverPort == -1) {
+            if (portNumber == -1) {
                 throw new SQLException(
                                       Messages.get("error.msinfo.badinst", serverName, instanceName),
                                       "08003");
@@ -244,7 +252,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             if (namedPipe == true) {
                 socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType, packetSize, instanceName, domainName, user, password);
             } else {
-                socket = new SharedSocket(serverName, serverPort, tdsVersion, serverType);
+                socket = new SharedSocket(serverName, portNumber, tdsVersion, serverType);
             }
 
             loadCharset(serverCharset);
@@ -659,7 +667,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         serverName = info.getProperty(Messages.get("prop.servername"));
 
         try {
-            serverPort  = Integer.parseInt(
+            portNumber  = Integer.parseInt(
                                           info.getProperty(Messages.get("prop.portnumber"),
                                                            String.valueOf(DefaultProperties.PORT_NUMBER_SQLSERVER)));
         } catch (NumberFormatException e) {
@@ -701,19 +709,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 Messages.get("prop.tds"),
                 (serverType == Driver.SQLSERVER ? DefaultProperties.TDS_VERSION_70 : DefaultProperties.TDS_VERSION_50));
 
-        if (tmp.equals(DefaultProperties.TDS_VERSION_42)) {
-            tdsVersion = Driver.TDS42;
-        } else if (tmp.equals(DefaultProperties.TDS_VERSION_50)) {
-            tdsVersion = Driver.TDS50;
-        } else if (tmp.equals(DefaultProperties.TDS_VERSION_70)) {
-            tdsVersion = Driver.TDS70;
-        } else if (tmp.equals(DefaultProperties.TDS_VERSION_80)) {
-            tdsVersion = Driver.TDS80;
-        } else {
+        Integer parsedTdsVersion = DefaultProperties.getTdsVersion(tmp);
+        if (parsedTdsVersion == null) {
             throw new SQLException(
                                   Messages.get("error.connection.badprop",
-                                                     Messages.get("prop.tds")), "08001");
+                                               Messages.get("prop.tds")), "08001");
         }
+        tdsVersion = parsedTdsVersion.intValue();
 
         try {
             packetSize  = Integer.parseInt(

@@ -22,13 +22,15 @@ import junit.framework.TestCase;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.io.IOException;
 
 
 /**
  * Base class for unit tests which do not connect to a database.
  * 
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.5 2004-08-06 03:18:15 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.6 2004-08-07 03:20:40 ddkilzer Exp $
  */ 
 public abstract class UnitTestBase extends TestCase {
 
@@ -72,6 +74,34 @@ public abstract class UnitTestBase extends TestCase {
             throw new RuntimeException(e.getMessage());
         }
         catch (InvocationTargetException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+
+    /**
+     * Get the value of an instance field on an object using reflection.
+     * 
+     * @param instance The instance of the object.
+     * @param fieldName The name of the field.
+     * @return The object returned by getting the field.
+     */ 
+    public static Object invokeGetInstanceField(final Object instance, final String fieldName) {
+        try {
+            Field field;
+            try {
+                field = instance.getClass().getField(fieldName);
+            }
+            catch (NoSuchFieldException e) {
+                field = instance.getClass().getDeclaredField(fieldName);
+            }
+            field.setAccessible(true);
+            return field.get(instance);
+        }
+        catch (NoSuchFieldException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        catch (IllegalAccessException e) {
             throw new RuntimeException(e.getMessage());
         }
     }

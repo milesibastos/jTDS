@@ -46,7 +46,7 @@ import java.util.HashMap;
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.6 2004-08-07 00:07:30 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.7 2004-08-07 03:20:38 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -223,6 +223,29 @@ public final class DefaultProperties {
         }
         else if (DefaultProperties.SERVER_TYPE_SYBASE.equals(serverType)) {
             return new Integer(Driver.SYBASE);
+        }
+        return null;
+    }
+
+
+    /**
+     * Converts a string TDS version to its integer representation.
+     * 
+     * @param tdsVersion The TDS version as a string.
+     * @return The TDS version as an integer if known, or <code>null</code> if unknown.
+     */
+    public static Integer getTdsVersion(String tdsVersion) {
+        if (DefaultProperties.TDS_VERSION_42.equals(tdsVersion)) {
+            return new Integer(Driver.TDS42);
+        }
+        else if (DefaultProperties.TDS_VERSION_50.equals(tdsVersion)) {
+            return new Integer(Driver.TDS50);
+        }
+        else if (DefaultProperties.TDS_VERSION_70.equals(tdsVersion)) {
+            return new Integer(Driver.TDS70);
+        }
+        else if (DefaultProperties.TDS_VERSION_80.equals(tdsVersion)) {
+            return new Integer(Driver.TDS80);
         }
         return null;
     }

@@ -7,6 +7,8 @@ Changes from jTDS 0.8.1
    support.
  o Corrected bug in Blob and Clob truncate() methods that caused a
    NullPointerException to be thrown for disk based LOBs.
+ o Corrected bug in TestBase where InputStreams and Readers were not being
+   closed.
 
 07/21/2004 - Brian Heineman
  o Added test for bug [994988] Network error when null is returned via int

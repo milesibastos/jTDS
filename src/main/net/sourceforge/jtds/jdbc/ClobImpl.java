@@ -49,7 +49,7 @@ import java.sql.SQLException;
  * An in-memory representation of character data.
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.5 2004-02-06 19:25:32 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.6 2004-03-04 16:08:23 bheineman Exp $";
 
     private String _clob;
 
@@ -85,11 +85,17 @@ public class ClobImpl implements Clob {
     }
 
     public synchronized String getSubString(long pos, int length) throws SQLException {
-        if (pos > Integer.MAX_VALUE) {
+        if (pos < 1) {
+            throw new SQLException("pos must be >= 1.");
+        } else if (pos > Integer.MAX_VALUE) {
             throw new SQLException("pos must be <= " + Integer.MAX_VALUE);
         }
 
-        return _clob.substring((int) pos, length);
+        try {
+            return _clob.substring((int) --pos, length);
+        } catch (Exception e) {
+            throw new SQLException(e.getMessage());
+        }
     }
 
     /**
@@ -113,24 +119,24 @@ public class ClobImpl implements Clob {
         }
 
         return _clob.indexOf(searchStr.getSubString(0, (int) length),
-                             (int) start);
+                             (int) --start);
     }
 
     public synchronized long position(String searchStr, long start) throws SQLException {
         if (searchStr == null) {
             throw new SQLException("searchStr cannot be null.");
-        } else if (start < 0) {
-            throw new SQLException("start must be >= 0.");
+        } else if (start < 1) {
+            throw new SQLException("start must be >= 1.");
         } else if (start > Integer.MAX_VALUE) {
             throw new SQLException("start must be <= " + Integer.MAX_VALUE);
         }
 
-        return _clob.indexOf(searchStr, (int) start);
+        return _clob.indexOf(searchStr, (int) --start);
     }
 
     public synchronized OutputStream setAsciiStream(final long pos) throws SQLException {
-        if (pos < 0) {
-            throw new SQLException("pos must be >= 0.");
+        if (pos < 1) {
+            throw new SQLException("pos must be >= 1.");
         } else if (pos > _clob.length()) {
             throw new SQLException("pos specified is past length of value.");
         } else if (pos >= Integer.MAX_VALUE) {
@@ -148,7 +154,7 @@ public class ClobImpl implements Clob {
 
         return new ByteArrayOutputStream() {
             {
-                write(clob, 0, (int) pos);
+                write(clob, 0, (int) pos - 1);
             }
 
             public void flush() throws IOException {
@@ -170,8 +176,8 @@ public class ClobImpl implements Clob {
     }
 
     public synchronized Writer setCharacterStream(final long pos) throws SQLException {
-        if (pos < 0) {
-            throw new SQLException("pos must be >= 0.");
+        if (pos < 1) {
+            throw new SQLException("pos must be >= 1.");
         } else if (pos > _clob.length()) {
             throw new SQLException("pos specified is past length of value.");
         } else if (pos >= Integer.MAX_VALUE) {
@@ -179,7 +185,7 @@ public class ClobImpl implements Clob {
         }
 
         return new StringWriter() {
-            {write(_clob, 0, (int) pos);}
+            {write(_clob, 0, (int) pos - 1);}
 
             public void flush() {
                 synchronized (ClobImpl.this) {

@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * An in-memory representation of binary data.
  */
 public class BlobImpl implements Blob {
-    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.4 2004-02-06 19:25:32 bheineman Exp $";
+    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.5 2004-03-04 16:08:23 bheineman Exp $";
 
     private byte[] _blob;
 
@@ -67,8 +67,8 @@ public class BlobImpl implements Blob {
     }
 
     public synchronized byte[] getBytes(long pos, int length) throws SQLException {
-        if (pos < 0) {
-            throw new SQLException("pos must be >= 0.");
+        if (pos < 1) {
+            throw new SQLException("pos must be >= 1.");
         } else if (pos >= _blob.length - 1) {
             throw new SQLException("pos must be < length of blob.");
         } else if (pos > Integer.MAX_VALUE) {
@@ -81,7 +81,7 @@ public class BlobImpl implements Blob {
 
         byte[] value = new byte[length];
 
-        System.arraycopy(_blob, (int) pos, value, 0, length);
+        System.arraycopy(_blob, (int) --pos, value, 0, length);
 
         return value;
     }
@@ -113,13 +113,13 @@ public class BlobImpl implements Blob {
 
         if (pattern == null) {
             throw new SQLException("pattern cannot be null.");
-        } else if (start < 0) {
-            throw new SQLException("start must be >= 0.");
+        } else if (start < 1) {
+            throw new SQLException("start must be >= 1.");
         } else if (start >= Integer.MAX_VALUE) {
             throw new SQLException("start must be < " + Integer.MAX_VALUE);
         }
 
-        for (int i = (int) start; i < length; i++) {
+        for (int i = (int) --start; i < length; i++) {
             boolean found = true;
 
             for (int x = 0; x < pattern.length; x++) {
@@ -138,8 +138,8 @@ public class BlobImpl implements Blob {
     }
 
     public synchronized OutputStream setBinaryStream(final long pos) throws SQLException {
-        if (pos < 0) {
-            throw new SQLException("pos must be >= 0.");
+        if (pos < 1) {
+            throw new SQLException("pos must be >= 1.");
         } else if (pos > _blob.length) {
             throw new SQLException("pos specified is past length of value.");
         } else if (pos >= Integer.MAX_VALUE) {
@@ -147,7 +147,7 @@ public class BlobImpl implements Blob {
         }
 
         return new ByteArrayOutputStream() {
-                    {write(_blob, 0, (int) pos);}
+                    {write(_blob, 0, (int) pos - 1);}
 
                     public void flush() throws IOException {
                         synchronized (BlobImpl.this) {
@@ -218,5 +218,4 @@ public class BlobImpl implements Blob {
         return _blob.toString();
     }
 }
-
 

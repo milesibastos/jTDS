@@ -38,7 +38,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.20 2004-12-09 15:26:51 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.21 2004-12-19 10:03:06 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1386,10 +1386,19 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         s.setInt(5, 3); // ODBC version 3
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
+        ResultSetMetaData rsmd = rs.getMetaData();
         CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
         rsTmp.moveToInsertRow();
         while (rs.next()) {
-            for (int i = 1; i <= colNames.length; i++) {
+            int offset = 0;
+            for (int i = 1; i + offset <= colNames.length; i++) {
+                if (i == 5 && !rsmd.getColumnName(i).equalsIgnoreCase("column_type")) {
+                    // With Sybase 11.92 despite what the documentation says, the
+                    // column_type column is missing!
+                    // Set the output value to 0 and shift the rest along by one.
+                    rsTmp.updateInt(i, DatabaseMetaData.procedureColumnUnknown);
+                    offset = 1;
+                }
                 if (i == 3) {
                     String name = rs.getString(i);
                     if (name != null && name.length() > 0) {
@@ -1398,12 +1407,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                             name = name.substring(0, pos);
                         }
                     }
-                    rsTmp.updateString(i, name);
-                } else if (i == 6) {
+                    rsTmp.updateString(i + offset, name);
+                } else if (rsmd.getColumnName(i).equalsIgnoreCase("data_type")) {
                     int type = normalizeDataType(rs.getInt(i));
-                    rsTmp.updateInt(i, type);
+                    rsTmp.updateInt(i + offset, type);
                 } else {
-                    rsTmp.updateObject(i, rs.getObject(i));
+                    rsTmp.updateObject(i + offset, rs.getObject(i));
                 }
             }
             rsTmp.insertRow();

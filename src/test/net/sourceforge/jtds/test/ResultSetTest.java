@@ -589,6 +589,30 @@ public class ResultSetTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test if COL_INFO packets are processed correctly for
+     * <code>ResultSet</code>s with over 255 columns.
+     */
+    public void testMoreThan255Columns() throws Exception
+    {
+        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_UPDATABLE);
+
+        // create the table
+        int cols = 260;
+        StringBuffer create = new StringBuffer("create table #manycolumns (");
+        for (int i=0; i<cols; ++i) {
+            create.append("col" + i + " char(10), ") ;
+        }
+        create.append(")");
+        stmt.executeUpdate(create.toString());
+
+        String query = "select * from #manycolumns";
+        ResultSet rs = stmt.executeQuery(query);
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

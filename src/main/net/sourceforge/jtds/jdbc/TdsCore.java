@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.45 2004-10-15 07:18:58 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.46 2004-11-01 09:16:19 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2180,6 +2180,7 @@ public class TdsCore {
     {
         final int pktLen = in.readShort();
         int bytesRead = 0;
+        int columnIndex = 0;
 
         // In some cases (e.g. if the user calls 'CREATE CURSOR', the
         // TDS_TABNAME packet seems to be missing. Weird.
@@ -2187,12 +2188,16 @@ public class TdsCore {
             in.skip(pktLen);
         } else {
             while (bytesRead < pktLen) {
-                int columnIndex = in.read();
-                if (columnIndex < 1 || columnIndex > columns.length) {
-                    throw new ProtocolException("Column index " + columnIndex +
+                // Seems like all columns are always returned in the COL_INFO
+                // packet and there might be more than 255 columns, so we'll
+                // just increment a counter instead.
+                // Ignore the column index.
+                in.read();
+                if (columnIndex >= columns.length) {
+                    throw new ProtocolException("Column index " + (columnIndex + 1) +
                                                      " invalid in TDS_COLINFO packet");
                 }
-                ColInfo col = columns[columnIndex-1];
+                ColInfo col = columns[columnIndex++];
                 int tableIndex = in.read();
                 if (tableIndex > tables.length) {
                     throw new ProtocolException("Table index " + tableIndex +

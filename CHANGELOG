@@ -1,6 +1,9 @@
 Changes from jTDS 0.9
 =========================
 
+11/01/2004 - Alin Sinpalean
+ o Corrected bug [1057237] Protocol Exception processing TDS_COLINFO packets.
+
 10/27/2004 - Alin Sinpalean
  o Ran the FindBugs tool (http://findbugs.sourceforge.net) on the jTDS code
    base with no major results. Most signalled problems were either in the test

@@ -43,7 +43,7 @@ import java.util.Properties;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.30 2004-08-06 03:18:10 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.31 2004-08-06 23:10:16 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     private static String driverPrefix = "jdbc:jtds:";
@@ -118,9 +118,9 @@ public class Driver implements java.sql.Driver {
     public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties props)
             throws SQLException {
 
-        final Properties info = parseURL(url, (props == null ? new Properties() : props));
+        final Properties parsedProps = parseURL(url, (props == null ? new Properties() : props));
 
-        if (info == null) {
+        if (parsedProps == null) {
             throw new SQLException(
                         Messages.get("error.driver.badurl", url), "08001");
         }
@@ -129,68 +129,91 @@ public class Driver implements java.sql.Driver {
         final Map descriptionMap = new HashMap();
         Messages.loadDriverProperties(propertyMap, descriptionMap);
 
-        final Map driverPropertyInfoMap = new HashMap();
-        for (Iterator iterator = propertyMap.keySet().iterator(); iterator.hasNext(); ) {
+        final Map choicesMap = createChoicesMap();
+        final Map requiredTrueMap = createRequiredTrueMap();
+
+        final DriverPropertyInfo[] dpi = new DriverPropertyInfo[propertyMap.size()];
+        final Iterator iterator = propertyMap.keySet().iterator();
+        for (int i = 0; iterator.hasNext(); i++) {
+
             final String key = (String) iterator.next();
             final String name = (String) propertyMap.get(key);
-            final DriverPropertyInfo driverPropertyInfo = new DriverPropertyInfo(name, info.getProperty(name));
-            driverPropertyInfo.description = (String) descriptionMap.get(key);
-            driverPropertyInfoMap.put(name, driverPropertyInfo);
+
+            final DriverPropertyInfo info = new DriverPropertyInfo(name, parsedProps.getProperty(name));
+            info.description = (String) descriptionMap.get(key);
+
+            if (requiredTrueMap.containsKey(name)) {
+                info.required = true;
+            }
+            else {
+                info.required = false;
+            }
+
+            if (choicesMap.containsKey(name)) {
+                info.choices = (String[]) choicesMap.get(name);
+            }
+
+            dpi[i] = info;
         }
 
-        assignDriverPropertyInfoRequired(driverPropertyInfoMap, "prop.servername", true);
-        assignDriverPropertyInfoRequired(driverPropertyInfoMap, "prop.servertype", true);
+        return dpi;
+    }
+
+    /**
+     * Creates a map of driver properties whose <code>choices</code>
+     * field should be set when calling
+     * {@link #getPropertyInfo(String, Properties)}.
+     * <p/>
+     * The values in the map are the <code>String[]</code> objects
+     * that should be set to the <code>choices</code> field.
+     * 
+     * @return The map of {@link DriverPropertyInfo} objects whose
+     *         <code>choices</code> should be set.
+     */
+    private Map createChoicesMap() {
+
+        final HashMap choicesMap = new HashMap();
 
         final String[] serverTypeChoices = new String[]{
-                            String.valueOf(SQLSERVER),
-                            String.valueOf(SYBASE),
-                        };
-        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.servertype", serverTypeChoices);
+            String.valueOf(SQLSERVER),
+            String.valueOf(SYBASE),
+        };
+        choicesMap.put(Messages.get("prop.servertype"), serverTypeChoices);
 
-        final String[] tdsChoices = new String[] {
-                            DefaultProperties.TDS_VERSION_42,
-                            DefaultProperties.TDS_VERSION_50,
-                            DefaultProperties.TDS_VERSION_70,
-                            DefaultProperties.TDS_VERSION_80,
-                        };
-        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.tds", tdsChoices);
+        final String[] tdsChoices = new String[]{
+            DefaultProperties.TDS_VERSION_42,
+            DefaultProperties.TDS_VERSION_50,
+            DefaultProperties.TDS_VERSION_70,
+            DefaultProperties.TDS_VERSION_80,
+        };
+        choicesMap.put(Messages.get("prop.tds"), tdsChoices);
 
-        final String[] booleanChoices = new String[] {"true", "false"};
-        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.lastupdatecount", booleanChoices);
-        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.namedpipe", booleanChoices);
-        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.preparesql", booleanChoices);
-        assignDriverPropertyInfoChoice(driverPropertyInfoMap, "prop.useunicode", booleanChoices);
+        final String[] booleanChoices = new String[]{"true", "false"};
+        choicesMap.put(Messages.get("prop.lastupdatecount"), booleanChoices);
+        choicesMap.put(Messages.get("prop.namedpipe"), booleanChoices);
+        choicesMap.put(Messages.get("prop.preparesql"), booleanChoices);
+        choicesMap.put(Messages.get("prop.useunicode"), booleanChoices);
 
-        return (DriverPropertyInfo[]) driverPropertyInfoMap.values().toArray(
-                new DriverPropertyInfo[driverPropertyInfoMap.size()]);
+        return choicesMap;
     }
 
     /**
-     * Assigns the <code>choices</code> value to a {@link DriverPropertyInfo}
-     * object stored in a <code>Map</code>.
+     * Creates a map of driver properties that should be marked as
+     * required when calling {@link #getPropertyInfo(String, Properties)}.
+     * <p/>
+     * Note that only the key of the map is used to determine whether
+     * the <code>required</code> field should be set to <code>true</code>.
+     * If the key does not exist in the map, then the <code>required</code>
+     * field is set to <code>false</code>.
      * 
-     * @param infoMap The map of {@link DriverPropertyInfo} objects.
-     * @param messageKey The message key used to retrieve the object.
-     * @param choices The value to set on the <code>choices</code> field of the object.
-     */ 
-    private void assignDriverPropertyInfoChoice(
-            final Map infoMap, final String messageKey, final String[] choices) {
-
-        ((DriverPropertyInfo) infoMap.get(Messages.get(messageKey))).choices = choices;
-    }
-
-    /**
-     * Assigns the <code>required</code> value to a {@link DriverPropertyInfo}
-     * object stored in a <code>Map</code>.
-     * 
-     * @param infoMap The map of {@link DriverPropertyInfo} objects.
-     * @param messageKey The message key used to retrieve the object.
-     * @param required The value to set on the <code>required</code> field of the object.
-     */ 
-    private void assignDriverPropertyInfoRequired(
-            final Map infoMap, final String messageKey, final boolean required) {
-
-        ((DriverPropertyInfo) infoMap.get(Messages.get(messageKey))).required = required;
+     * @return The map of {@link DriverPropertyInfo} objects where
+     *         <code>required</code> should be set to <code>true</code>.
+     */
+    private Map createRequiredTrueMap() {
+        final HashMap requiredTrueMap = new HashMap();
+        requiredTrueMap.put(Messages.get("prop.servername"), null);
+        requiredTrueMap.put(Messages.get("prop.servertype"), null);
+        return requiredTrueMap;
     }
 
     /**

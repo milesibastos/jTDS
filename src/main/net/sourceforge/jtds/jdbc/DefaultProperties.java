@@ -33,12 +33,20 @@ import java.util.HashMap;
  * <ol>
  * <li>Add <code>prop.<em>foo</em></code> and <code>prop.desc.<em>foo</em></code>
  *     properties to <code>Messages.properties</code>.</li>
- * <li>Add a <code>static final</code> default field to this class.</li>
+ * <li>Add a <code>static final</code> default field to {@link DefaultProperties}.</li>
  * <li>Update {@link #addDefaultProperties(java.util.Properties)} to set the default.</li>
+ * <li>Update {@link Driver#createChoicesMap()} and 
+ *     <code>DriverUnitTest.test_getPropertyInfo_Choices()</code> if the property
+ *     has a specific set of inputs, e.g., "true" and "false", or "1" and "2".</li>
+ * <li>Update {@link Driver#createRequiredTrueMap()} and
+ *     <code>DriverUnitTest.test_getPropertyInfo_Required()</code> if the property
+ *     is required.</li>
+ * <li>Add a new test to <code>DefaultPropertiesTestLibrary</code> for the new
+ *     property.</li>
  * </ol>
  * 
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.4 2004-08-06 18:46:12 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.5 2004-08-06 23:10:15 ddkilzer Exp $
  */
 public final class DefaultProperties {
 

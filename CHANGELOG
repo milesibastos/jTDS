@@ -11,6 +11,7 @@ Changes from jTDS 0.2
  o Implemented methods in DatabaseMetaData: getColumnPrivileges,
    getTablePrivileges, getTypeInfo, getBestRowIdentifier, getVersionColumns.
    Also some minor changes to methods returning constant values.
+ o Bugfix (#595022): Hidden the rowstat column returned by CursorResultSets.
 
 08/16/2002 - Alin Sinpalean
 

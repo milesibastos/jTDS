@@ -233,6 +233,10 @@ public class CursorResultSet extends AbstractResultSet {
         if( context == null )
             context = rs.getContext();
 
+        // Hide rowstat column.
+        context.getColumnInfo().setFakeColumnCount(
+            context.getColumnInfo().realColumnCount() - 1);
+
         current = rs.fetchNextRow();
         warnings = rs.getWarnings();
         rs.close();

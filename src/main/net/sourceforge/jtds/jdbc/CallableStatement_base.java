@@ -64,12 +64,12 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.2 2002-10-16 17:37:58 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.3 2002-10-24 12:27:55 alin_sinpalean Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
     implements java.sql.CallableStatement
 {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.2 2002-10-16 17:37:58 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.3 2002-10-24 12:27:55 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -98,7 +98,7 @@ public class CallableStatement_base extends PreparedStatement_base
         pos = i;
         // Find the end of the procedure name
         while( i<sql.length() && (Character.isLetterOrDigit(sql.charAt(i)) || sql.charAt(i)=='#' ||
-            sql.charAt(i)=='_') )
+            sql.charAt(i)=='_' || sql.charAt(i)=='.') )
             i++;
 
         procedureName = sql.substring(pos, i);

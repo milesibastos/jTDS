@@ -2,6 +2,15 @@
 Changes from jTDS 0.4
 =======================
 
+10/23/2002 - Alin Sinpalean
+
+ o Tiny change in CallableStatement_base constructor where the procedure name
+   was parsed: periods were not considered to be part of a procedure name, so
+   if a procedure name also containing catalog and/or schema was provided, only
+   the first part of the name (up until the first period) was considered to be
+   the procedure name. This meant that the schema or catalog was used as
+   procedure name.
+
 10/22/2002 - Alin Sinpalean
 
  o Implemented correctly the DatabaseMetaData methods getNumericFunctions,

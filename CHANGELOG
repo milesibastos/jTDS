@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.2
 =======================
 
+03/01/2005 - Alin Sinpalean
+ o Following Mike's suggestion, reduced the chunk of code synchronized with
+   cancelMonitor to only TdsCore.cancelPending assignments, to ensure these are
+   atomic. That should be enough, now that SharedSocket is also synced.
+
 02/28/2005 - Alin Sinpalean
  o Applied Mike's patch [1124854] SSO fixes - prevents error from crashing JVM.
  o Modified ClobImpl to use UCS-2 encoding for storing/retrieving character

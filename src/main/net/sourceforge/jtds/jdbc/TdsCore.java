@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.81 2005-02-28 23:22:39 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.82 2005-03-02 01:11:36 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -3290,29 +3290,31 @@ public class TdsCore {
             endOfResults = true;
         }
 
-        synchronized (cancelMonitor) {
-            //
-            // Check for cancel ack
-            //
-            if ((currentToken.status & DONE_CANCEL) != 0) {
+        //
+        // Check for cancel ack
+        //
+        if ((currentToken.status & DONE_CANCEL) != 0) {
+            // Synchronize setting of the cancelPending flag to ensure it
+            // doesn't happen during the sending of a cancel request
+            synchronized (cancelMonitor) {
                 cancelPending = false;
-                // Indicates cancel packet
-                messages.addException(
-                         new SQLException("Request cancelled", "S1008", 0));
             }
+            // Indicates cancel packet
+            messages.addException(
+                     new SQLException("Request cancelled", "S1008", 0));
+        }
 
-            if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
-                //
-                // There are no more results or pending cancel packets
-                // to process.
-                //
-                endOfResponse = !cancelPending;
+        if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
+            //
+            // There are no more results or pending cancel packets
+            // to process.
+            //
+            endOfResponse = !cancelPending;
 
-                if (fatalError) {
-                    // A fatal error has occured, the server has closed the
-                    // connection
-                    connection.setClosed();
-                }
+            if (fatalError) {
+                // A fatal error has occured, the server has closed the
+                // connection
+                connection.setClosed();
             }
         }
 

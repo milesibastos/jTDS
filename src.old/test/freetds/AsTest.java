@@ -17,14 +17,14 @@ import java.lang.reflect.*;
 /**
  *
  * @author  builder
- * @version 
+ * @version
  */
 public class AsTest extends DatabaseTestCase {
 
   public AsTest(String name) {
     super(name);
   }
-  
+
   public static void main(String args[]) {
     try {
       Logger.setActive(true);
@@ -42,32 +42,32 @@ public class AsTest extends DatabaseTestCase {
     else
       junit.textui.TestRunner.run(AsTest.class);
   }
-  
+
   public void testProc1() throws Exception
   {
 
     boolean passed = false;
     Statement stmt = con.createStatement();
-    stmt.executeUpdate("  if (exists (select * from sysobjects where name = 'spTestExec')) drop procedure spTestExec");
-    stmt.executeUpdate("  if (exists (select * from sysobjects where name = 'spTestExec2')) drop procedure spTestExec2");
+    stmt.executeUpdate("  if (exists (select * from sysobjects where name = '#spTestExec')) drop procedure spTestExec");
+    stmt.executeUpdate("  if (exists (select * from sysobjects where name = '#spTestExec2')) drop procedure spTestExec2");
 
-    stmt.executeUpdate(" create procedure spTestExec2 as " +
+    stmt.executeUpdate(" create procedure #spTestExec2 as " +
                     "select 'Did it work?' as Result");
-    stmt.executeUpdate("create procedure spTestExec as " +
-                "set nocount off " + 
-		"create table #tmp ( Result varchar(50) ) " + 
-		"insert #tmp execute spTestExec2 " +
+    stmt.executeUpdate("create procedure #spTestExec as " +
+                "set nocount off " +
+		"create table #tmp ( Result varchar(50) ) " +
+		"insert #tmp execute #spTestExec2 " +
 		"select * from #tmp");
-    CallableStatement cstmt = con.prepareCall("spTestExec");
+    CallableStatement cstmt = con.prepareCall("#spTestExec");
     assertTrue(!cstmt.execute());
-    assertTrue(cstmt.getUpdateCount() == 0);  // set 
+    assertTrue(cstmt.getUpdateCount() == 0);  // set
     assertTrue(!cstmt.getMoreResults());
     assertTrue(cstmt.getUpdateCount() == 0);  // create
     assertTrue(!cstmt.getMoreResults());
     assertTrue(cstmt.getUpdateCount() == 0);  // execute
     assertTrue(!cstmt.getMoreResults());
     assertTrue(cstmt.getUpdateCount() == 1);  // insert
-    assertTrue(cstmt.getMoreResults());        
+    assertTrue(cstmt.getMoreResults());
     ResultSet rs = cstmt.getResultSet();
     while (rs.next()) {
       passed = true;
@@ -77,16 +77,16 @@ public class AsTest extends DatabaseTestCase {
     // stmt.executeQuery("execute spTestExec");
 
   }
-  
+
   public void testProc2() throws Exception
   {
     boolean passed = false;
     Statement stmt = con.createStatement();
-    String sqlwithcount1 = 
-      "if (exists(select * from sysobjects where name = 'multi1withcount' and xtype = 'P'))" +
+    String sqlwithcount1 =
+      "if (exists(select * from sysobjects where name = '#multi1withcount' and xtype = 'P'))" +
       "  drop procedure multi1withcount ";
     String sqlwithcount2 =
-      "create procedure multi1withcount as " +
+      "create procedure #multi1withcount as " +
       "  set nocount off " +
       "  select 'a' " +
       "  select 'b' " +
@@ -96,11 +96,11 @@ public class AsTest extends DatabaseTestCase {
       "  insert into #multi1withcountt VALUES ('a') " +
       "  select 'a' " +
       "  select 'b' ";
-    String sqlnocount1 = 
-      "if (exists(select * from sysobjects where name = 'multi1nocount' and xtype = 'P'))" +
-      "  drop procedure multi1nocount ";
-    String sqlnocount2 = 
-      "create procedure multi1nocount as " +
+    String sqlnocount1 =
+      "if (exists(select * from sysobjects where name = '#multi1nocount' and xtype = 'P'))" +
+      "  drop procedure #multi1nocount ";
+    String sqlnocount2 =
+      "create procedure #multi1nocount as " +
       "  set nocount on " +
       "  select 'a' " +
       "  select 'b' " +
@@ -114,10 +114,10 @@ public class AsTest extends DatabaseTestCase {
     stmt.executeUpdate(sqlnocount1);
     stmt.executeUpdate(sqlwithcount2);
     stmt.executeUpdate(sqlnocount2);
-    CallableStatement cstmt = con.prepareCall("multi1nocount");
+    CallableStatement cstmt = con.prepareCall("#multi1nocount");
     assertTrue(cstmt.execute());
     ResultSet rs = cstmt.getResultSet();
-    Statement s2 = cstmt;    
+    Statement s2 = cstmt;
     assertTrue(rs.next());
     assertTrue(rs.getString(1).equals("a"));
     assertTrue(!rs.next());
@@ -135,9 +135,9 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(rs.next());
     assertTrue(!rs.next());
     assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == -1);
-    cstmt = con.prepareCall("multi1withcount");
+    cstmt = con.prepareCall("#multi1withcount");
     assertTrue(!cstmt.execute());   // because of set nocount off
-    s2 = cstmt;    
+    s2 = cstmt;
     assertTrue(s2.getMoreResults());
     rs = cstmt.getResultSet();
     assertTrue(rs.next());
@@ -160,7 +160,7 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(rs.next());
     assertTrue(!rs.next());
     assertTrue(!s2.getMoreResults() && s2.getUpdateCount() == -1);
-    
+
   }
 
   public void testBatch1() throws Exception
@@ -178,7 +178,7 @@ public class AsTest extends DatabaseTestCase {
       "  select 'a' " +
       "  select 'b' " +
       "  drop table #multi2withcountt";
-    String sqlnocount1 = 
+    String sqlnocount1 =
       "  set nocount on " +
       "  select 'a' " +
       "  select 'b' " +
@@ -187,10 +187,10 @@ public class AsTest extends DatabaseTestCase {
       "  insert into #multi2nocountt VALUES ('a') " +
       "  insert into #multi2nocountt VALUES ('a') " +
       "  select 'a' " +
-      "  select 'b' " + 
+      "  select 'b' " +
       "  drop table #multi2nocountt";
     assertTrue(!stmt.execute(sqlwithcount1));    // set
-    assertTrue(stmt.getMoreResults());    
+    assertTrue(stmt.getMoreResults());
     ResultSet rs = stmt.getResultSet();
     assertTrue(rs.next());
     assertTrue(rs.getString(1).equals("a"));
@@ -214,8 +214,8 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(!rs.next());
     assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == 0);   // drop
     assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
-    
-    // next Statement 
+
+    // next Statement
     /* nocount seems not to work in batches
     assertTrue(stmt.execute(sqlnocount1));    // set
     rs = stmt.getResultSet();
@@ -237,6 +237,6 @@ public class AsTest extends DatabaseTestCase {
     assertTrue(!rs.next());
     assertTrue(!stmt.getMoreResults() && stmt.getUpdateCount() == -1);
      */
-  }    
+  }
 
 }

@@ -8,10 +8,7 @@ import java.sql.*;
  * @created    9 August 2001
  * @version    1.0
  */
-
 public class SanityTest extends TestBase {
-
-
     public SanityTest(String name) {
         super(name);
     }
@@ -19,8 +16,7 @@ public class SanityTest extends TestBase {
     /**
      * A simple test to make sure everything seems to be OK
      */
-    public void testSanity()
-            throws Exception {
+    public void testSanity() throws Exception {
         Statement stmt = con.createStatement();
         makeTestTables(stmt);
         makeObjects(stmt, 5);
@@ -30,8 +26,7 @@ public class SanityTest extends TestBase {
     /**
      * Basic test of cursor mechanisms.
      */
-    public void testCursorStatements()
-            throws Exception {
+    public void testCursorStatements() throws Exception {
         Statement stmt = con.createStatement();
         makeTestTables(stmt);
         makeObjects(stmt, 5);
@@ -60,8 +55,7 @@ public class SanityTest extends TestBase {
         stmt.close();
     }
 
-    public void testCursorRSCreate()
-            throws Exception {
+    public void testCursorRSCreate() throws Exception {
         Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                              ResultSet.CONCUR_READ_ONLY);
 
@@ -150,8 +144,7 @@ public class SanityTest extends TestBase {
         stmt.close();
     }
 
-    public void testCursorRSScroll()
-            throws Exception {
+    public void testCursorRSScroll() throws Exception {
         Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                              ResultSet.CONCUR_READ_ONLY);
 

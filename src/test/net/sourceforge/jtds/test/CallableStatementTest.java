@@ -1,7 +1,10 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
-
+//
+// MJH - Changes for new jTDS version
+// Added registerOutParameter to testCallableStatementParsing2
+//
 /**
  * @version 1.0
  */
@@ -196,6 +199,24 @@ public class CallableStatementTest extends TestBase {
         }
     }
 
+    /**
+     * Test for bug [978175] 0.8: Stored Procedure call doesn't work anymore
+     */
+    public void testCallableStatementExec9() throws Exception {
+        CallableStatement stmt = con.prepareCall("{call sp_who}");
+
+        assertTrue(stmt.execute());
+
+        ResultSet rs = stmt.getResultSet();
+
+        assertTrue(rs != null);
+
+        dump(rs);
+
+        stmt.close();
+        rs.close();
+    }
+
     public void testCallableStatementParsing1() throws Exception {
         String data = "New {order} plus {1} more";
         Statement stmt = con.createStatement();
@@ -225,7 +246,7 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
-     * Test fro bug [938632] String index out of bounds error in 0.8rc1
+     * Test for bug [938632] String index out of bounds error in 0.8rc1
      */
     public void testCallableStatementParsing2() throws Exception {
         try {
@@ -235,7 +256,7 @@ public class CallableStatementTest extends TestBase {
             stmt.close();
 
             CallableStatement cstmt = con.prepareCall("{?=call load_smtp_in_1gr_ls804192}");
-
+            cstmt.registerOutParameter(1, java.sql.Types.INTEGER); // MJH 01/05/04
             cstmt.execute();
             cstmt.close();
         } finally {

@@ -5,7 +5,6 @@ import java.sql.*;
 /**
  * @version 1.0
  */
-
 public class ResultSetTest extends TestBase {
     public ResultSetTest(String name) {
         super(name);

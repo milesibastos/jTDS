@@ -19,7 +19,7 @@
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="0.8-rc1"/>
+    <property name="version" value="0.9-alpha1"/>
   </target>
 
   <target name="clean" depends="init">
@@ -43,6 +43,9 @@
         <exclude name="**/SavepointTest.java"/>
         <exclude name="**/CallableStatementJDBC3Test.java"/>
       </fileset>
+    </copy>
+    <copy todir="${build}/classes">
+      <fileset dir="${src}/main" includes="**/*.properties"/>
     </copy>
   </target>
 

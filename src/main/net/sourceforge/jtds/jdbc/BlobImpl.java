@@ -1,35 +1,20 @@
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
 //
-// Copyright 1998 CDS Networks, Inc., Medford Oregon
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// All rights reserved.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-//      This product includes software developed by CDS Networks, Inc.
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
-//    products derived from this software without specific prior
-//    written permission.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
-//
-
 package net.sourceforge.jtds.jdbc;
 
 import java.io.ByteArrayInputStream;
@@ -42,67 +27,110 @@ import java.sql.SQLException;
 
 /**
  * An in-memory representation of binary data.
+ * <p>
+ * Implementation note:
+ * <ol>
+ * <li> Mostly Brian's original code but modified to include the
+ *      ability to convert a stream into a byte[] when required.
+ * <li> SQLException messages loaded from properties file.
+ * </ol>
+ *
+ * @author Brian Heineman
+ * @author Mike Hutchinson
+ * @version $Id: BlobImpl.java,v 1.9 2004-06-27 17:00:50 bheineman Exp $
  */
 public class BlobImpl implements Blob {
-    public static final String cvsVersion = "$Id: BlobImpl.java,v 1.8 2004-05-02 22:45:20 bheineman Exp $";
-
     private byte[] _blob;
+    private InputStream stream;
+    private int length;
 
     /**
      * Constructs a new Blob instance.
+     *
+     * @param blob The byte[] object to encapsulate
      */
-    BlobImpl(byte[] blob) throws SQLException {
+    BlobImpl(byte[] blob) {
         if (blob == null) {
-            throw new SQLException("blob cannot be null.");
+            throw new IllegalArgumentException("blob cannot be null.");
         }
 
         _blob = blob;
     }
 
     /**
+     * Constructs a new Blob instance from a stream.
+     *
+     * @param stream The input stream to initialise the Blob.
+     */
+    BlobImpl(InputStream stream) {
+        _blob = new byte[0];
+        this.stream = stream;
+
+        try {
+            this.length = stream.available();
+        } catch (IOException e) {
+            // Will never occur
+        }
+    }
+
+    /**
      * Returns a stream for the BLOB data.
      */
     public synchronized InputStream getBinaryStream() throws SQLException {
+        if (stream != null) {
+            return stream;
+        }
+
         return new ByteArrayInputStream(_blob);
     }
 
     public synchronized byte[] getBytes(long pos, int length) throws SQLException {
+        loadBlob();
+
         if (pos < 1) {
-            throw new SQLException("pos must be >= 1.");
-        } else if (pos >= _blob.length - 1) {
-            throw new SQLException("pos must be < length of blob.");
+            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
+        } else if (_blob.length > 0 && pos > _blob.length) {
+            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
         } else if (pos > Integer.MAX_VALUE) {
-            throw new SQLException("pos must be <= " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
         } else if (length < 0) {
-            throw new SQLException("length must be >= 0.");
-        } else if (--pos + length > _blob.length) {
-            throw new SQLException("more bytes requested than exist in blob.");
+            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
+        } else if (pos + length > _blob.length+1) {
+            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
-        byte[] value = new byte[length];
+        pos--;
 
-        System.arraycopy(_blob, (int) pos, value, 0, length);
+        if (pos == 0 && length == _blob.length) {
+            return _blob;
+        } else {
+            byte[] value = new byte[length];
 
-        return value;
+            System.arraycopy(_blob, (int) pos, value, 0, length);
+            return value;
+        }
     }
 
     /**
      * Returns the length of the value.
      */
     public synchronized long length() throws SQLException {
+        if (stream != null) {
+            return length;
+        }
+
         return _blob.length;
     }
 
     public synchronized long position(Blob pattern, long start) throws SQLException {
         if (pattern == null) {
-            throw new SQLException("pattern cannot be null.");
+            throw new SQLException(Support.getMessage("error.blob.badpattern"), "HY024");
         }
 
         long length = pattern.length();
 
         if (length > Integer.MAX_VALUE) {
-            throw new SQLException("pattern.length() must be <= "
-                                               + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blob.pattoolong"), "HY090");
         }
 
         return position(pattern.getBytes(0, (int) length), start);
@@ -112,12 +140,14 @@ public class BlobImpl implements Blob {
         int length = _blob.length - pattern.length;
 
         if (pattern == null) {
-            throw new SQLException("pattern cannot be null.");
+            throw new SQLException(Support.getMessage("error.blob.badpattern"), "HY024");
         } else if (start < 1) {
-            throw new SQLException("start must be >= 1.");
+            throw new SQLException(Support.getMessage("error.blobclob.badstart"), "HY090");
         } else if (start >= Integer.MAX_VALUE) {
-            throw new SQLException("start must be < " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
         }
+
+        loadBlob();
 
         for (int i = (int) --start; i < length; i++) {
             boolean found = true;
@@ -139,38 +169,38 @@ public class BlobImpl implements Blob {
 
     public synchronized OutputStream setBinaryStream(final long pos) throws SQLException {
         if (pos < 1) {
-            throw new SQLException("pos must be >= 1.");
+            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
         } else if (pos > _blob.length) {
-            throw new SQLException("pos specified is past length of value.");
+            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY090");
         } else if (pos >= Integer.MAX_VALUE) {
-            throw new SQLException("pos must be < " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
         }
 
         return new ByteArrayOutputStream() {
-                    {write(_blob, 0, (int) pos - 1);}
+            {write(_blob, 0, (int) pos - 1);}
 
-                    public void flush() throws IOException {
-                        synchronized (BlobImpl.this) {
-                            byte[] blob = toByteArray();
+            public void flush() throws IOException {
+                synchronized (BlobImpl.this) {
+                    byte[] blob = toByteArray();
 
-                            if (blob.length < _blob.length) {
-                                // Possible synchronization problem...
-                                System.arraycopy(blob, 0, _blob, 0, blob.length);
-                            } else {
-                                _blob = blob;
-                            }
-                        }
+                    if (blob.length < _blob.length) {
+                        // Possible synchronization problem...
+                        System.arraycopy(blob, 0, _blob, 0, blob.length);
+                    } else {
+                        _blob = blob;
                     }
+                }
+            }
 
-                    public void close() throws IOException {
-                        flush();
-                    }
-                };
+            public void close() throws IOException {
+                flush();
+            }
+        };
     }
 
     public synchronized int setBytes(long pos, byte[] bytes) throws SQLException {
         if (bytes == null) {
-            throw new SQLException("bytes cannot be null.");
+            throw new SQLException(Support.getMessage("error.blob.bytesnull"), "HY024");
         }
 
         return setBytes(pos, bytes, 0, bytes.length);
@@ -184,7 +214,9 @@ public class BlobImpl implements Blob {
             outputStream.write(bytes, offset, len);
             outputStream.close();
         } catch (IOException e) {
-            throw TdsUtil.getSQLException("Unable to write value", null, e);
+            throw new SQLException(
+                                  Support.getMessage("error.generic.iowrite", "bytes", e.getMessage()),
+                                  "HY000");
         }
 
         return len;
@@ -192,16 +224,17 @@ public class BlobImpl implements Blob {
 
     /**
      * Truncates the value to the length specified.
-     * 
+     *
      * @param len the length to truncate the value to
      */
     public synchronized void truncate(long len) throws SQLException {
         if (len < 0) {
-            throw new SQLException("len must be >= 0.");
+            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
         } else if (len > _blob.length) {
-            throw new SQLException("length specified is more than length of "
-                                               + "value.");
+            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
+
+        loadBlob();
 
         int length = (int) len;
         byte[] blob = new byte[length];
@@ -215,7 +248,37 @@ public class BlobImpl implements Blob {
      * Returns the string representation of this object.
      */
     public synchronized String toString() {
+        try {
+            loadBlob();
+        } catch (SQLException e) {
+            _blob = new byte[0];
+        }
+
         return _blob.toString();
+    }
+
+    /**
+     * Initialize the in memory object from the InputStream.
+     *
+     * @throws SQLException
+     */
+    private void loadBlob() throws SQLException {
+        if (stream == null ||length < 0) {
+            return;
+        }
+
+        _blob = new byte[length];
+
+        try {
+            stream.read(_blob);
+            stream = null;
+        } catch (IOException ioe) {
+            throw new SQLException(
+                                  Support.getMessage("error.generic.ioread",
+                                                     "InputStream",
+                                                     ioe.getMessage()),
+                                  "HY000");
+        }
     }
 }
 

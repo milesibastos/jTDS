@@ -1,19 +1,40 @@
+//jTDS JDBC Driver for Microsoft SQL Server
+//Copyright (C) 2004 The jTDS Project
+//
+//This library is free software; you can redistribute it and/or
+//modify it under the terms of the GNU Lesser General Public
+//License as published by the Free Software Foundation; either
+//version 2.1 of the License, or (at your option) any later version.
+//
+//This library is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//Lesser General Public License for more details.
+//
+//You should have received a copy of the GNU Lesser General Public
+//License along with this library; if not, write to the Free Software
+//Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+
 package net.sourceforge.jtds.jdbcx;
 
 import java.sql.*;
 import java.util.Map;
 
-import net.sourceforge.jtds.jdbc.TdsConnection;
+import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
+import net.sourceforge.jtds.jdbc.Support;
 
 /**
  * This class would be better implemented as a java.lang.reflect.Proxy.  However, this
  * feature was not added until 1.3 and reflection performance was not improved until 1.4.
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
+ *
+ * @version $Id: ConnectionProxy.java,v 1.4 2004-06-27 17:00:55 bheineman Exp $
  */
 public class ConnectionProxy implements Connection {
     private net.sourceforge.jtds.jdbcx.PooledConnection _pooledConnection;
-    private TdsConnection _connection;
+    private ConnectionJDBC2 _connection;
     private boolean _closed = false;
 
     /**
@@ -22,11 +43,11 @@ public class ConnectionProxy implements Connection {
     public ConnectionProxy(net.sourceforge.jtds.jdbcx.PooledConnection pooledConnection,
                            Connection connection) {
         _pooledConnection = pooledConnection;
-        _connection = (TdsConnection) connection;
+        _connection = (ConnectionJDBC2) connection;
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -42,7 +63,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -57,7 +78,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -73,7 +94,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -91,7 +112,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -109,7 +130,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -127,7 +148,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -145,7 +166,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -163,7 +184,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -181,7 +202,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -199,7 +220,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -217,7 +238,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -235,7 +256,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -253,7 +274,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -273,7 +294,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -291,7 +312,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -309,7 +330,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -327,7 +348,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -345,7 +366,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -363,7 +384,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -381,7 +402,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -399,7 +420,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -417,7 +438,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -435,7 +456,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -453,7 +474,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -471,7 +492,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -487,7 +508,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -503,7 +524,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -519,7 +540,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -535,7 +556,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -551,7 +572,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -567,7 +588,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -583,7 +604,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -601,7 +622,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -619,7 +640,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -635,7 +656,7 @@ public class ConnectionProxy implements Connection {
     }
 
     /**
-     * Delgates calls to the connection; SQLExceptions thrown from the connection 
+     * Delgates calls to the connection; SQLExceptions thrown from the connection
      * will cause an event to be fired on the connection pool listeners.
      *
      * @throws SQLException if an error occurs
@@ -655,8 +676,7 @@ public class ConnectionProxy implements Connection {
      */
     private void validateConnection() throws SQLException {
         if (_closed) {
-            throw new SQLException("Connection has been returned to pool and this "
-                                   + "reference is no longer valid.");
+            throw new SQLException(Support.getMessage("error.conproxy.noconn"), "HY010");
         }
     }
 

@@ -1,35 +1,20 @@
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
 //
-// Copyright 1998 CDS Networks, Inc., Medford Oregon
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// All rights reserved.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-//      This product includes software developed by CDS Networks, Inc.
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
-//    products derived from this software without specific prior
-//    written permission.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
-//
-
 package net.sourceforge.jtds.jdbc;
 
 import java.io.ByteArrayInputStream;
@@ -47,21 +32,42 @@ import java.sql.SQLException;
 
 /**
  * An in-memory representation of character data.
+ * <p>
+ * Implementation note:
+ * <ol>
+ * <li> Mostly Brian's original code but modified to include the
+ *      ability to convert a stream into a String when required.
+ * <li> SQLException messages loaded from properties file.
+ * </ol>
+ *
+ * @author Brian Heineman
+ * @author Mike Hutchinson
+ * @version $Id: ClobImpl.java,v 1.9 2004-06-27 17:00:50 bheineman Exp $
  */
 public class ClobImpl implements Clob {
-    public static final String cvsVersion = "$Id: ClobImpl.java,v 1.8 2004-05-02 22:45:20 bheineman Exp $";
-
     private String _clob;
+    private Reader stream;
+    private int length;
 
     /**
      * Constructs a new Clob instance.
      */
-    ClobImpl(String clob) throws SQLException {
+    ClobImpl(String clob)  {
         if (clob == null) {
-            throw new SQLException("clob cannot be null.");
+            throw new IllegalArgumentException("clob String cannot be null.");
         }
 
         _clob = clob;
+    }
+
+    /**
+     * Constructs a new Clob instance from a stream.
+     *
+     * @param stream The input stream to initialize the Clob.
+     */
+    ClobImpl(Reader stream) {
+        this.stream = stream;
+        this.length = ((JtdsReader) stream).available();
     }
 
     /**
@@ -69,10 +75,12 @@ public class ClobImpl implements Clob {
      */
     public synchronized InputStream getAsciiStream() throws SQLException {
         try {
+            loadClob();
             return new ByteArrayInputStream(_clob.getBytes("ASCII"));
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw TdsUtil.getSQLException("Unexpected encoding exception", null, e);
+            throw new SQLException(
+                Support.getMessage("error.generic.encoding", e.getMessage()), "HY000");
         }
     }
 
@@ -80,20 +88,32 @@ public class ClobImpl implements Clob {
      * Returns a new reader for the CLOB data.
      */
     public synchronized Reader getCharacterStream() throws SQLException {
+        if (stream != null) {
+            return stream;
+        }
+
         return new StringReader(_clob);
     }
 
     public synchronized String getSubString(long pos, int length) throws SQLException {
         if (pos < 1) {
-            throw new SQLException("pos must be >= 1.");
+            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY090");
         } else if (pos > Integer.MAX_VALUE) {
-            throw new SQLException("pos must be <= " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
+        }
+
+        int off = (int) pos - 1;
+
+        loadClob();
+
+        if (off + length > _clob.length()) {
+            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
         try {
-            return _clob.substring((int) --pos, length);
+            return _clob.substring((int) off, off + length);
         } catch (Exception e) {
-            throw TdsUtil.getSQLException(null, null, e);
+            throw new SQLException(e.getMessage());
         }
     }
 
@@ -101,20 +121,26 @@ public class ClobImpl implements Clob {
      * Returns the length of the value.
      */
     public synchronized long length() throws SQLException {
+        if (stream != null) {
+            return length;
+        }
+
         return _clob.length();
     }
 
     public synchronized long position(Clob searchStr, long start) throws SQLException {
         if (searchStr == null) {
-            throw new SQLException("searchStr cannot be null.");
+            throw new SQLException(Support.getMessage("error.clob.searchnull"), "HY024");
         } else if (start > Integer.MAX_VALUE) {
-            throw new SQLException("start must be <= " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY090");
         }
+
+        loadClob();
 
         long length = searchStr.length();
 
         if (length > Integer.MAX_VALUE) {
-            throw new SQLException("searchStr.length() must be <= " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.clob.searchtoolong"), "HY090");
         }
 
         return _clob.indexOf(searchStr.getSubString(0, (int) length),
@@ -123,11 +149,11 @@ public class ClobImpl implements Clob {
 
     public synchronized long position(String searchStr, long start) throws SQLException {
         if (searchStr == null) {
-            throw new SQLException("searchStr cannot be null.");
+            throw new SQLException(Support.getMessage("error.clob.searchnull"), "HY024");
         } else if (start < 1) {
-            throw new SQLException("start must be >= 1.");
+            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
         } else if (start > Integer.MAX_VALUE) {
-            throw new SQLException("start must be <= " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY024");
         }
 
         return _clob.indexOf(searchStr, (int) --start);
@@ -135,11 +161,11 @@ public class ClobImpl implements Clob {
 
     public synchronized OutputStream setAsciiStream(final long pos) throws SQLException {
         if (pos < 1) {
-            throw new SQLException("pos must be >= 1.");
+            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
         } else if (pos > _clob.length()) {
-            throw new SQLException("pos specified is past length of value.");
+            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY024");
         } else if (pos >= Integer.MAX_VALUE) {
-            throw new SQLException("pos must be < " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY024");
         }
 
         final byte[] clob;
@@ -148,8 +174,11 @@ public class ClobImpl implements Clob {
             clob = _clob.getBytes("ASCII");
         } catch (UnsupportedEncodingException e) {
             // This should never happen...
-            throw TdsUtil.getSQLException("Unexpected encoding exception", null, e);
+            throw new SQLException(
+                Support.getMessage("error.generic.encoding", e.getMessage()), "HY000");
         }
+
+        stream = null;
 
         return new ByteArrayOutputStream() {
             {
@@ -176,12 +205,14 @@ public class ClobImpl implements Clob {
 
     public synchronized Writer setCharacterStream(final long pos) throws SQLException {
         if (pos < 1) {
-            throw new SQLException("pos must be >= 1.");
+            throw new SQLException(Support.getMessage("error.blobclob.badpos"), "HY024");
         } else if (pos > _clob.length()) {
-            throw new SQLException("pos specified is past length of value.");
+            throw new SQLException(Support.getMessage("error.blobclob.badposlen"), "HY024");
         } else if (pos >= Integer.MAX_VALUE) {
-            throw new SQLException("pos must be < " + Integer.MAX_VALUE);
+            throw new SQLException(Support.getMessage("error.blobclob.postoolong"), "HY024");
         }
+
+        stream = null;
 
         return new StringWriter() {
             {write(_clob, 0, (int) pos - 1);}
@@ -206,8 +237,10 @@ public class ClobImpl implements Clob {
 
     public synchronized int setString(long pos, String str) throws SQLException {
         if (str == null) {
-            throw new SQLException("str cannot be null.");
+            throw new SQLException(Support.getMessage("error.clob.strnull"), "HY090");
         }
+
+        loadClob();
 
         return setString(pos, str, 0, str.length());
     }
@@ -220,7 +253,9 @@ public class ClobImpl implements Clob {
             writer.write(str, offset, len);
             writer.close();
         } catch (IOException e) {
-            throw TdsUtil.getSQLException("Unable to write value", null, e);
+            throw new SQLException(
+                Support.getMessage("error.generic.iowrite", "String", e.getMessage()),
+                            "HY000");
         }
 
         return len;
@@ -228,23 +263,48 @@ public class ClobImpl implements Clob {
 
     /**
      * Truncates the value to the length specified.
-     * 
+     *
      * @param len the length to truncate the value to
      */
     public synchronized void truncate(long len) throws SQLException {
         if (len < 0) {
-            throw new SQLException("len must be >= 0.");
+            throw new SQLException(Support.getMessage("error.blobclob.badlen"), "HY090");
         } else if (len > _clob.length()) {
-            throw new SQLException("length specified is more than length of value.");
+            throw new SQLException(Support.getMessage("error.blobclob.lentoolong"), "HY090");
         }
 
+        loadClob();
+
         _clob = _clob.substring(0, (int) len);
+    }
+
+    private void loadClob() throws SQLException {
+        if (stream == null || length < 0) {
+            return;
+        }
+
+        try {
+            char[] buf = new char[length];
+            if (stream.read(buf) != length)
+                throw new SQLException(Support.getMessage("error.clob.readlen"), "HY000");
+            _clob = new String(buf);
+        } catch (IOException ioe) {
+           throw new SQLException(
+                Support.getMessage("error.generic.ioread", "String", ioe.getMessage()),
+                                        "HY000");
+        }
     }
 
     /**
      * Returns the string representation of this object.
      */
     public synchronized String toString() {
+        try {
+            loadClob();
+        } catch (SQLException e) {
+            _clob = "";
+        }
+
         return _clob;
     }
 }

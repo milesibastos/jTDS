@@ -6,7 +6,6 @@ import java.sql.*;
 /**
  * @version 1.0
  */
-
 public class PreparedStatementTest extends TestBase {
 
     public PreparedStatementTest(String name) {
@@ -24,7 +23,6 @@ public class PreparedStatementTest extends TestBase {
         dump(rs);
 
         rs.close();
-
     }
 
     public void testScrollablePreparedStatement() throws Exception {
@@ -34,29 +32,33 @@ public class PreparedStatementTest extends TestBase {
         stmt.close();
 
         PreparedStatement pstmt = con.prepareStatement(
-            "SELECT * FROM #test",
-            ResultSet.TYPE_SCROLL_SENSITIVE,
-            ResultSet.CONCUR_READ_ONLY);
+                                                      "SELECT * FROM #test",
+                                                      ResultSet.TYPE_SCROLL_SENSITIVE,
+                                                      ResultSet.CONCUR_READ_ONLY);
 
         ResultSet rs = pstmt.executeQuery();
 
         assertTrue(rs.isBeforeFirst());
-        while (rs.next()) {}
+
+        while (rs.next()) {
+        }
+
         assertTrue(rs.isAfterLast());
 
         //This currently fails because the PreparedStatement
         //Doesn't know it needs to create a cursored ResultSet.
         //Needs some refactoring!!
         // SAfe Not any longer. ;o)
-        while (rs.previous()) {}
+        while (rs.previous()) {
+        }
+
         assertTrue(rs.isBeforeFirst());
 
         rs.close();
-
     }
 
     public void testPreparedStatementAddBatch1()
-        throws Exception {
+    throws Exception {
         int count = 50;
 
         Statement stmt = con.createStatement();
@@ -187,7 +189,7 @@ public class PreparedStatementTest extends TestBase {
         pstmt.setObject(1, data);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-    
+
         stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso1");
@@ -213,7 +215,7 @@ public class PreparedStatementTest extends TestBase {
         pstmt.setObject(1, data, Types.NUMERIC);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-    
+
         stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso2");
@@ -239,7 +241,7 @@ public class PreparedStatementTest extends TestBase {
         pstmt.setObject(1, data, Types.DECIMAL);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-    
+
         stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso3");
@@ -265,7 +267,7 @@ public class PreparedStatementTest extends TestBase {
         pstmt.setObject(1, data, Types.NUMERIC, 4);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-    
+
         stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso4");
@@ -291,7 +293,7 @@ public class PreparedStatementTest extends TestBase {
         pstmt.setObject(1, data, Types.DECIMAL, 4);
         assertTrue(pstmt.executeUpdate() == 1);
         pstmt.close();
-    
+
         stmt = con.createStatement();
 
         ResultSet rs = stmt.executeQuery("SELECT data FROM #psso5");

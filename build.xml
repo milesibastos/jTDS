@@ -19,7 +19,7 @@
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="0.8"/>
+    <property name="version" value="0.9-alpha1"/>
   </target>
 
   <target name="clean" depends="init">
@@ -37,6 +37,9 @@
     </copy>
     <copy todir="${build}/src">
       <fileset dir="${src}/test" includes="**/*.java"/>
+    </copy>
+    <copy todir="${build}/classes">
+      <fileset dir="${src}/main" includes="**/*.properties"/>
     </copy>
   </target>
 

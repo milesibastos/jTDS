@@ -2,7 +2,7 @@
 <head>
 <title>jTDS Project Home</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, driver, type 4, pure Java, SQL Server, JDBC 2.0, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SourceForge">
+<meta http-equiv="Keywords" content="jTDS, open source, free JDBC driver, free driver, free, JDBC, JDBC 2.0, JDBC 3.0, driver, type 4, pure Java, SQL Server, Sybase, SQL Server 6.5, SQL Server 7.0, SQL Server 2000, SourceForge">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 
@@ -51,17 +51,17 @@
 
 
       <p class="title">Overview</p>
-      <p>jTDS is an open source 100% pure Java (type 4) JDBC 2.1 driver for the
-        Microsoft SQL Server series (6.5, 7.x and 2000) and Sybase 10. jTDS is
-        based on the work of the <a href="http://www.freetds.org">FreeTDS</a>
+      <p>jTDS is an open source 100% pure Java (type 4) JDBC 3.0 driver for
+        Microsoft SQL Server (6.5, 7 and 2000) and Sybase (10, 11, 12).
+        jTDS is based on the work of the <a href="http://www.freetds.org">FreeTDS</a>
         project and is currently the fastest complete JDBC driver for SQL Server
         and Sybase. Starting with release 0.7.1 jTDS is 100% JDBC 2.1
         compatible, supporting forward-only and scrollable/updateable
         <code>ResultSet</code>s, multiple concurrent (completely independent)
         <code>Statement</code>s per <code>Connection</code> and implementing all
         of the <code>DatabaseMetaData</code> and <code>ResultSetMetaData</code>
-        methods. A number of JDBC 3.0 features (such as retrieval of generated
-        keys) are also implemented.</p>
+        methods. As of version 0.9 most of the JDBC 3.0 features are also
+        implemented.</p>
       <p>Quite a few of the commercial JDBC drivers out there are based on jTDS
         (or FreeTDS), even if they no longer acknowledge this. jTDS has been
         tested with virtually all of the available JDBC-based database
@@ -90,7 +90,7 @@
       <p>You'll say there are other free choices... There's the JDBC-ODBC
         bridge and Microsoft's own JDBC driver... Well yes, but both of them
         crash on you every now and then, just to keep you on your toes, and lack
-        functionality. Indeed jTDS more stable than any of the two.
+        functionality. Indeed jTDS is more stable than both of the two.
         Just do a <a href="http://www.google.com">Google</a> search for jTDS and
         you'll find posts from a lot of people moving to jTDS because of
         stability issues.</p>

@@ -24,6 +24,8 @@ package net.sourceforge.jtds.util;
 /**
  * base implementation of MD4 family style digest as outlined in
  * "Handbook of Applied Cryptography", pages 344 - 347.
+ *
+ * @version $Id: GeneralDigest.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
  */
 public abstract class GeneralDigest
 //    implements Digest - mdb: we don't care about this interface

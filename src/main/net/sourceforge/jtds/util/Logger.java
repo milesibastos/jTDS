@@ -1,149 +1,217 @@
+// jTDS JDBC Driver for Microsoft SQL Server
+// Copyright (C) 2004 The jTDS Project
 //
-// Copyright 1998 CDS Networks, Inc., Medford Oregon
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-// All rights reserved.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in the
-//    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this software
-//    must display the following acknowledgement:
-//      This product includes software developed by CDS Networks, Inc.
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
-//    products derived from this software without specific prior
-//    written permission.
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-// SUCH DAMAGE.
-//
-
 
 package net.sourceforge.jtds.util;
-
-import java.io.*;
-
+import java.sql.*;
+import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
- * This class will log messages into a file.
+ * Class providing static methods to log diagnostics.
+ * <p>
+ * There are three ways to enable logging:
+ * <ol>
+ * <li>Pass a valid PrintWriter to DriverManager.setLogWriter().
+ * <li>Pass a valid PrintWriter to DataSource.setLogWriter().
+ * <li>For backwards compatibility call Logger.setActive();
+ * </ol>
  *
- * @version $Id: Logger.java,v 1.4 2004-04-16 21:16:02 bheineman Exp $
- * @author Craig Spannring
+ * @author Mike Hutchinson
+ * @version $Id: Logger.java,v 1.5 2004-06-27 17:00:55 bheineman Exp $
  */
 public class Logger {
-    public static final String cvsVersion = "$Id: Logger.java,v 1.4 2004-04-16 21:16:02 bheineman Exp $";
-
-    private static String filename = "log.out";
-    private static boolean active = false;
-    private static PrintStream out = null;
+    /** PrintWriter stream set by DataSource. */
+    private static PrintWriter log = null;
 
     /**
-     * Initialize the logger facility.
-     * <p>
-     * If the log facility hasn't been initialized yet this routine will
-     * open the log file.
-     * <p>
-     * The routine must be called before any logging takes place.
-     * All of the functions in this class that log messages should
-     * call this routine.  It doesn't hurt anything if this is called
-     * multiple times.
-     */
-    private static void init() {
-        // check to see if the file is already open
-        if (out == null)
-            try {
-                if (filename != null) {
-                    out = new PrintStream(new FileOutputStream(filename), true);
-                }
-            } catch (FileNotFoundException e) {
-                // Ignore
-            } finally {
-                if (out == null) {
-                    out = System.out;
-                }
-            }
-    }
-
-    /**
-     * Turn the logging on or off.
-     * <p>
-     * The first time logging is turned on it will create the log file.
+     * Set the logging PrintWriter stream.
      *
-     * @param value   when value is true it will turn the logging on,
-     *                if it is false it will turn the logging off.
+     * @param out The PrintWriter stream.
      */
-    synchronized public static void setActive(boolean value) {
-        if (value) {
-            init();
-        } else if (out != null) {
-            out.close();
-        }
-
-        active = value;
+    public static void setLogWriter(PrintWriter out) {
+        log = out;
     }
 
     /**
-     * Is logging turned on?
+     * Get the logging PrintWriter Stream.
+     *
+     * @return The logging stream as a <code>PrintWriter</code>.
+     */
+    public static PrintWriter getLogWriter() {
+        return log;
+    }
+
+    /**
+     * Retrieve the active status of the logger.
+     *
+     * @return <code>boolean</code> true if logging enabled.
      */
     public static boolean isActive() {
-        return active;
+        return(log != null || DriverManager.getLogWriter() != null);
     }
 
     /**
-     * set the name of the log file.
-     * <p>
-     * This method allows you to set the name of the log file.
-     * <B>Note-</B> Once the log file is open you can not change the
-     * name.
+     * Print a diagnostic message to the output stream provided by
+     * the DataSource or the DriverManager.
      *
-     * @param value  name of the log file.
+     * @param message The diagnostic message to print.
      */
-    public synchronized static void setFilename(String value) {
-        if (filename != value) {
-            filename = value;
+    public static void println(String message) {
+        if (log != null) {
+            log.println(message);
+        } else {
+            DriverManager.println(message);
+        }
+    }
+    private static final char hex[] =
+    {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
-            if (out != null) {
-                out.close();
+    /**
+     * Print a dump of the current input or output network packet.
+     *
+     * @param streamId The owner of this packet.
+     * @param in True if this is an input packet.
+     * @param pkt The packet data.
+     */
+    public static void logPacket(int streamId, boolean in, byte[] pkt) {
+        int len = ((pkt[2] & 0xFF) << 8)| (pkt[3] & 0xFF);
+
+        StringBuffer line = new StringBuffer(80);
+
+        line.append("----- Stream #");
+        line.append(streamId);
+        line.append(in ? " read" : " send");
+        line.append((pkt[1] != 0) ? " last " : " ");
+
+        switch (pkt[0]) {
+            case 1:
+                line.append("Request packet ");
+                break;
+            case 2:
+                line.append("Login packet ");
+                break;
+            case 3:
+                line.append("RPC packet ");
+                break;
+            case 4:
+                line.append("Reply packet ");
+                break;
+            case 6:
+                line.append("Cancel packet ");
+                break;
+            case 15:
+                line.append("TDS5 Request packet ");
+                break;
+            case 16:
+                line.append("MS Login packet ");
+                break;
+            case 17:
+                line.append("NTLM Authentication packet ");
+                break;
+            default:
+                line.append("Invalid packet ");
+                break;
+        }
+
+        println(line.toString());
+        println("");
+        line.setLength(0);
+
+        for (int i = 0; i < len; i += 16) {
+            if (i < 1000) {
+                line.append(' ');
             }
+
+            if (i < 100) {
+                line.append(' ');
+            }
+
+            if (i < 10) {
+                line.append(' ');
+            }
+
+            line.append(i);
+            line.append(':').append(' ');
+
+            int j = 0;
+
+            for (; j < 16 && i + j < len; j++) {
+                int val = pkt[i+j] & 0xFF;
+
+                line.append(hex[val >> 4]);
+                line.append(hex[val & 0x0F]);
+                line.append(' ');
+            }
+
+            for (; j < 16 ; j++) {
+                line.append("   ");
+            }
+
+            line.append('|');
+
+            for (j = 0; j < 16 && i + j < len; j++) {
+                int val = pkt[i + j] & 0xFF;
+
+                if (val > 31 && val < 127) {
+                    line.append((char) val);
+                } else {
+                    line.append(' ');
+                }
+            }
+
+            line.append('|');
+            println(line.toString());
+            line.setLength(0);
+        }
+
+        println("");
+    }
+
+    /**
+     * Print an IO or Protocol Exception stack trace to the log.
+     *
+     * @param e The exception to log.
+     */
+    public static void logException(Exception e) {
+        if (log != null) {
+            e.printStackTrace(log);
+        } else {
+            e.printStackTrace(DriverManager.getLogWriter());
         }
     }
 
+    //
+    // Backward compatbility method
+    //
     /**
-     * return the name of the log file.
+     * Turn the logging on or off.
+     *
+     * @deprecated Use the JDBC standard mechanisms to enable logging.
+     * @param value  True to turn on logging.
      */
-    public static String getFilename() {
-        return filename;
-    }
-
-    /**
-     * Print a string into the log file if and only if logging is active
-     */
-    synchronized public static void print(String msg) {
-        if (active) {
-            init();
-            out.print(msg);
-        }
-    }
-
-    /**
-     * Print a string into the log file if and only if logging is active
-     */
-    synchronized public static void println(String msg) {
-        if (active) {
-            init();
-            out.println(msg);
+    public static void setActive(boolean value) {
+        if (value && log == null) {
+            try {
+                log = new PrintWriter(new FileOutputStream("log.out"), true);
+            } catch (IOException e) {
+                log = null; // Sorry no logging!
+            }
         }
     }
 }

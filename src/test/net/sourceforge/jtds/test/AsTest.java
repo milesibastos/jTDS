@@ -36,7 +36,6 @@ public class AsTest extends DatabaseTestCase {
     }
 
     public void testProc1() throws Exception {
-
         boolean passed = false;
         Statement stmt = con.createStatement();
         stmt.executeUpdate("  if (exists (select * from sysobjects where name = '#spTestExec')) drop procedure spTestExec");
@@ -81,33 +80,33 @@ public class AsTest extends DatabaseTestCase {
     public void testProc2() throws Exception {
         Statement stmt = con.createStatement();
         String sqlwithcount1 =
-                "if (exists(select * from sysobjects where name = '#multi1withcount' and xtype = 'P'))" +
-                "  drop procedure #multi1withcount ";
+        "if (exists(select * from sysobjects where name = '#multi1withcount' and xtype = 'P'))" +
+        "  drop procedure #multi1withcount ";
         String sqlwithcount2 =
-                "create procedure #multi1withcount as " +
-                "  set nocount off " +
-                "  select 'a' " +
-                "  select 'b' " +
-                "  create table #multi1withcountt (A VARCHAR(20)) " +
-                "  insert into #multi1withcountt VALUES ('a') " +
-                "  insert into #multi1withcountt VALUES ('a') " +
-                "  insert into #multi1withcountt VALUES ('a') " +
-                "  select 'a' " +
-                "  select 'b' ";
+        "create procedure #multi1withcount as " +
+        "  set nocount off " +
+        "  select 'a' " +
+        "  select 'b' " +
+        "  create table #multi1withcountt (A VARCHAR(20)) " +
+        "  insert into #multi1withcountt VALUES ('a') " +
+        "  insert into #multi1withcountt VALUES ('a') " +
+        "  insert into #multi1withcountt VALUES ('a') " +
+        "  select 'a' " +
+        "  select 'b' ";
         String sqlnocount1 =
-                "if (exists(select * from sysobjects where name = '#multi1nocount' and xtype = 'P'))" +
-                "  drop procedure #multi1nocount ";
+        "if (exists(select * from sysobjects where name = '#multi1nocount' and xtype = 'P'))" +
+        "  drop procedure #multi1nocount ";
         String sqlnocount2 =
-                "create procedure #multi1nocount as " +
-                "  set nocount on " +
-                "  select 'a' " +
-                "  select 'b' " +
-                "  create table #multi1nocountt (A VARCHAR(20)) " +
-                "  insert into #multi1nocountt VALUES ('a') " +
-                "  insert into #multi1nocountt VALUES ('a') " +
-                "  insert into #multi1nocountt VALUES ('a') " +
-                "  select 'a' " +
-                "  select 'b' ";
+        "create procedure #multi1nocount as " +
+        "  set nocount on " +
+        "  select 'a' " +
+        "  select 'b' " +
+        "  create table #multi1nocountt (A VARCHAR(20)) " +
+        "  insert into #multi1nocountt VALUES ('a') " +
+        "  insert into #multi1nocountt VALUES ('a') " +
+        "  insert into #multi1nocountt VALUES ('a') " +
+        "  select 'a' " +
+        "  select 'b' ";
         stmt.executeUpdate(sqlwithcount1);
         stmt.executeUpdate(sqlnocount1);
         stmt.executeUpdate(sqlwithcount2);
@@ -171,27 +170,27 @@ public class AsTest extends DatabaseTestCase {
     public void testBatch1() throws Exception {
         Statement stmt = con.createStatement();
         String sqlwithcount1 =
-                "  set nocount off " +
-                "  select 'a' " +
-                "  select 'b' " +
-                "  create table #multi2withcountt (A VARCHAR(20)) " +
-                "  insert into #multi2withcountt VALUES ('a') " +
-                "  insert into #multi2withcountt VALUES ('a') " +
-                "  insert into #multi2withcountt VALUES ('a') " +
-                "  select 'a' " +
-                "  select 'b' " +
-                "  drop table #multi2withcountt";
+        "  set nocount off " +
+        "  select 'a' " +
+        "  select 'b' " +
+        "  create table #multi2withcountt (A VARCHAR(20)) " +
+        "  insert into #multi2withcountt VALUES ('a') " +
+        "  insert into #multi2withcountt VALUES ('a') " +
+        "  insert into #multi2withcountt VALUES ('a') " +
+        "  select 'a' " +
+        "  select 'b' " +
+        "  drop table #multi2withcountt";
         String sqlnocount1 =
-                "  set nocount on " +
-                "  select 'a' " +
-                "  select 'b' " +
-                "  create table #multi2nocountt (A VARCHAR(20)) " +
-                "  insert into #multi2nocountt VALUES ('a') " +
-                "  insert into #multi2nocountt VALUES ('a') " +
-                "  insert into #multi2nocountt VALUES ('a') " +
-                "  select 'a' " +
-                "  select 'b' " +
-                "  drop table #multi2nocountt";
+        "  set nocount on " +
+        "  select 'a' " +
+        "  select 'b' " +
+        "  create table #multi2nocountt (A VARCHAR(20)) " +
+        "  insert into #multi2nocountt VALUES ('a') " +
+        "  insert into #multi2nocountt VALUES ('a') " +
+        "  insert into #multi2nocountt VALUES ('a') " +
+        "  select 'a' " +
+        "  select 'b' " +
+        "  drop table #multi2nocountt";
         assertTrue(stmt.execute(sqlwithcount1));    // set
         ResultSet rs = stmt.getResultSet();
         assertTrue(rs.next());
@@ -255,75 +254,75 @@ public class AsTest extends DatabaseTestCase {
 
     public void testBugAttTest2() throws Exception {
         String tabdef =
-                "CREATE TABLE #ICEributeTest_AttributeTest2( " +
-                "  ICEobjectId NUMERIC(19) " +
-                "     /*CONSTRAINT ICEributeTest_AttributeTest2_PKICEobjectId PRIMARY KEY */ " +
-                "    ,  " +
-                "  ICEtestShort INTEGER  " +
-                "     NULL,  " +
-                "  ICEtestFloat NUMERIC(28,10) " +
-                "     NULL, " +
-                "  ICEtestDecimal NUMERIC(28,10) " +
-                "     NULL, " +
-                "  ICEtestCharacter INTEGER " +
-                "     NULL, " +
-                "  ICEtestInteger INTEGER " +
-                "     NULL, " +
-                "  ICEtestString VARCHAR(20) " +
-                "     NULL, " +
-                "  ICEtestBoolean BIT " +
-                "     NULL, " +
-                "  ICEtestByte INTEGER " +
-                "     NULL, " +
-                "  ICEtestDouble NUMERIC(28,10) " +
-                "     NULL, " +
-                "  ICEtestLong NUMERIC(19) " +
-                "     NULL, " +
-                "  ICEtestCombined1 VARBINARY(8000) " +
-                "     NULL, " +
-                "  ICEtestDate DATETIME " +
-                "     NULL, " +
-                "  testCombined_testFloat NUMERIC(28,10) " +
-                "     NULL, " +
-                "  testCombined_testShort INTEGER " +
-                "     NULL, " +
-                "  testCombined_testDecimal NUMERIC(28,10) " +
-                "     NULL, " +
-                "  testCombined_testCharacter INTEGER " +
-                "     NULL, " +
-                "  testCombined_testInteger INTEGER " +
-                "     NULL, " +
-                "  testCombined_testString VARCHAR(50) " +
-                "     NULL, " +
-                "  testCombined_testBoolean BIT " +
-                "     NULL, " +
-                "  testCombined_testByte INTEGER " +
-                "     NULL, " +
-                "  testCombined_testDouble NUMERIC(28,10) " +
-                "     NULL, " +
-                "  testCombined_testLong NUMERIC(19) " +
-                "     NULL, " +
-                "  testCombined_testDate DATETIME " +
-                "     NULL, " +
-                "  ICEtestContainedArrays VARBINARY(8000) " +
-                "     NULL, " +
-                "  BSF_FILTER_ATTRIBUTE_NAME INTEGER " +
-                "     NOT NULL, " +
-                "  updateCount INTEGER " +
-                "    NOT NULL " +
-                "  ) ";
+        "CREATE TABLE #ICEributeTest_AttributeTest2( " +
+        "  ICEobjectId NUMERIC(19) " +
+        "     /*CONSTRAINT ICEributeTest_AttributeTest2_PKICEobjectId PRIMARY KEY */ " +
+        "    ,  " +
+        "  ICEtestShort INTEGER  " +
+        "     NULL,  " +
+        "  ICEtestFloat NUMERIC(28,10) " +
+        "     NULL, " +
+        "  ICEtestDecimal NUMERIC(28,10) " +
+        "     NULL, " +
+        "  ICEtestCharacter INTEGER " +
+        "     NULL, " +
+        "  ICEtestInteger INTEGER " +
+        "     NULL, " +
+        "  ICEtestString VARCHAR(20) " +
+        "     NULL, " +
+        "  ICEtestBoolean BIT " +
+        "     NULL, " +
+        "  ICEtestByte INTEGER " +
+        "     NULL, " +
+        "  ICEtestDouble NUMERIC(28,10) " +
+        "     NULL, " +
+        "  ICEtestLong NUMERIC(19) " +
+        "     NULL, " +
+        "  ICEtestCombined1 VARBINARY(8000) " +
+        "     NULL, " +
+        "  ICEtestDate DATETIME " +
+        "     NULL, " +
+        "  testCombined_testFloat NUMERIC(28,10) " +
+        "     NULL, " +
+        "  testCombined_testShort INTEGER " +
+        "     NULL, " +
+        "  testCombined_testDecimal NUMERIC(28,10) " +
+        "     NULL, " +
+        "  testCombined_testCharacter INTEGER " +
+        "     NULL, " +
+        "  testCombined_testInteger INTEGER " +
+        "     NULL, " +
+        "  testCombined_testString VARCHAR(50) " +
+        "     NULL, " +
+        "  testCombined_testBoolean BIT " +
+        "     NULL, " +
+        "  testCombined_testByte INTEGER " +
+        "     NULL, " +
+        "  testCombined_testDouble NUMERIC(28,10) " +
+        "     NULL, " +
+        "  testCombined_testLong NUMERIC(19) " +
+        "     NULL, " +
+        "  testCombined_testDate DATETIME " +
+        "     NULL, " +
+        "  ICEtestContainedArrays VARBINARY(8000) " +
+        "     NULL, " +
+        "  BSF_FILTER_ATTRIBUTE_NAME INTEGER " +
+        "     NOT NULL, " +
+        "  updateCount INTEGER " +
+        "    NOT NULL " +
+        "  ) ";
         Statement stmt = con.createStatement();
         dropTable("#ICEributeTest_AttributeTest2");
         stmt.executeUpdate(tabdef);
         PreparedStatement istmt = con.prepareStatement(
-                "INSERT INTO #ICEributeTest_AttributeTest2 ("
-                + "ICEobjectId,BSF_FILTER_ATTRIBUTE_NAME,ICEtestShort,ICEtestFloat,ICEtestDecimal,"
-                + "ICEtestCharacter,ICEtestInteger,ICEtestString,ICEtestBoolean,ICEtestByte,"
-                + "ICEtestDouble,ICEtestLong,ICEtestCombined1,ICEtestDate,testCombined_testFloat,"
-                + "testCombined_testShort,testCombined_testDecimal,testCombined_testCharacter,testCombined_testInteger,testCombined_testString,"
-                + "testCombined_testBoolean,testCombined_testByte,testCombined_testDouble,testCombined_testLong"
-                + ",testCombined_testDate,ICEtestContainedArrays,updateCount ) "
-                + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                                      "INSERT INTO #ICEributeTest_AttributeTest2 ("
+                                                      + "ICEobjectId,BSF_FILTER_ATTRIBUTE_NAME,ICEtestShort,ICEtestFloat,ICEtestDecimal,"
+                                                      + "ICEtestCharacter,ICEtestInteger,ICEtestString,ICEtestBoolean,ICEtestByte,"
+                                                      + "ICEtestDouble,ICEtestLong,ICEtestCombined1,ICEtestDate,testCombined_testFloat,"
+                                                      + "testCombined_testShort,testCombined_testDecimal,testCombined_testCharacter,testCombined_testInteger,testCombined_testString,"
+                                                      + "testCombined_testBoolean,testCombined_testByte,testCombined_testDouble,testCombined_testLong"
+                                                      + ",testCombined_testDate,ICEtestContainedArrays,updateCount ) "
+                                                      + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
         istmt.setLong(1, (long) 650002);
         istmt.setInt(2, -1461101755);
         istmt.setNull(3, java.sql.Types.INTEGER);

@@ -61,14 +61,6 @@ For more information about jTDS check out the project's homepage
 (http://jtds.sourceforge.net/).
 
 
-Feature Matrix
-==============
-
-Works with both JDK 1.3 and 1.4 (although it's a JDBC 2.1 driver it implements
-stubs for JDBC 3.0, some of which are actually implemented, e.g. generated keys
-retrieval, the others throw exceptions).
-
-
 Quick Start
 ===========
 
@@ -115,7 +107,7 @@ important properties (the ones I use) are 'user', 'password','charset',
 The last one specifies the TDS version to be used: by default TDS 7.0 is used
 (the TDS 4.2 implementation has some limitations, e.g. VARCHARs are limited to
 255 chars). So, if you want to use SQL Server 6.5 you will have to specify
-'TDS'='4.2' (in the URL or the provided Properties).
+'TDS=4.2' (in the URL or the provided Properties).
 
 Please see the FAQ page for a more detailed explanation of all the properties
 that can be specified in the URL.

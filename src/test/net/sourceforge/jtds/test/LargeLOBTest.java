@@ -1,13 +1,11 @@
 package net.sourceforge.jtds.test;
 
-import java.io.*;
 import java.sql.*;
 import java.util.*;
 
 /**
  * @version 1.0
  */
-
 public class LargeLOBTest extends TestBase {
     private static final int LOB_LENGTH = 100000000;
 
@@ -56,8 +54,8 @@ public class LargeLOBTest extends TestBase {
         byte[] data = new byte[LOB_LENGTH];
 
         for (int i = 0; i < LOB_LENGTH; i++) {
-           data[i] = (byte) (Math.random() * 255);
-       }
+            data[i] = (byte) (Math.random() * 255);
+        }
 
         return data;
     }

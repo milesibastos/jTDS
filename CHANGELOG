@@ -1,3 +1,14 @@
+Changes from jTDS 0.8
+=========================
+
+06/23/2004 - Brian Heineman
+ o Applied patch [950028] Jtds enhancement - TDS 5.0 (thanks to code provided
+   by Mike Hutchinson this patch corrects a number of bugs and adds initial
+   support for TDS 8.0 as well)
+ o Corrected bug with Savepoint id assignment.
+ o Improved performance of data conversions by reducing memory allocations.
+ o Corrected bug [974036] Bug in 0.8rc1 DatabaseMetaData method getTableTypes()
+
 ===============================================================================
 06/22/2004 - jTDS 0.8 released
 ===============================================================================

@@ -27,123 +27,11 @@ package net.sourceforge.jtds.util;
  * <p>
  * <b>NOTE</b>: This algorithm is only included for backwards compatability
  * with legacy applications, it's not secure, don't use it for anything new!
+ *
+ * @version $Id: MD4Digest.java,v 1.2 2004-06-27 17:00:55 bheineman Exp $
  */
-public class MD4Digest
-    extends GeneralDigest
-{
-    private static final int    DIGEST_LENGTH = 16;
-
-    private int     H1, H2, H3, H4;         // IV's
-
-    private int[]   X = new int[16];
-    private int     xOff;
-
-	/**
-	 * Standard constructor
-	 */
-    public MD4Digest()
-    {
-        reset();
-    }
-
-	/**
-	 * Copy constructor.  This will copy the state of the provided
-	 * message digest.
-	 */
-	public MD4Digest(MD4Digest t)
-	{
-		super(t);
-
-		H1 = t.H1;
-		H2 = t.H2;
-		H3 = t.H3;
-		H4 = t.H4;
-
-		System.arraycopy(t.X, 0, X, 0, t.X.length);
-		xOff = t.xOff;
-	}
-
-    public String getAlgorithmName()
-    {
-        return "MD4";
-    }
-
-    public int getDigestSize()
-    {
-        return DIGEST_LENGTH;
-    }
-
-    protected void processWord(
-        byte[]  in,
-        int     inOff)
-    {
-        X[xOff++] = (in[inOff] & 0xff) | ((in[inOff + 1] & 0xff) << 8)
-            | ((in[inOff + 2] & 0xff) << 16) | ((in[inOff + 3] & 0xff) << 24);
-
-        if (xOff == 16)
-        {
-            processBlock();
-        }
-    }
-
-    protected void processLength(
-        long    bitLength)
-    {
-        if (xOff > 14)
-        {
-            processBlock();
-        }
-
-        X[14] = (int)(bitLength & 0xffffffff);
-        X[15] = (int)(bitLength >>> 32);
-    }
-
-    private void unpackWord(
-        int     word,
-        byte[]  out,
-        int     outOff)
-    {
-        out[outOff]     = (byte)word;
-        out[outOff + 1] = (byte)(word >>> 8);
-        out[outOff + 2] = (byte)(word >>> 16);
-        out[outOff + 3] = (byte)(word >>> 24);
-    }
-
-    public int doFinal(
-        byte[]  out,
-        int     outOff)
-    {
-        finish();
-
-        unpackWord(H1, out, outOff);
-        unpackWord(H2, out, outOff + 4);
-        unpackWord(H3, out, outOff + 8);
-        unpackWord(H4, out, outOff + 12);
-
-        reset();
-
-        return DIGEST_LENGTH;
-    }
-
-    /**
-     * reset the chaining variables to the IV values.
-     */
-    public void reset()
-    {
-        super.reset();
-
-        H1 = 0x67452301;
-        H2 = 0xefcdab89;
-        H3 = 0x98badcfe;
-        H4 = 0x10325476;
-
-        xOff = 0;
-
-        for (int i = 0; i != X.length; i++)
-        {
-            X[i] = 0;
-        }
-    }
+public class MD4Digest extends GeneralDigest {
+    private static final int DIGEST_LENGTH = 16;
 
     //
     // round 1 left rotates
@@ -169,45 +57,121 @@ public class MD4Digest
     private static final int S33 = 11;
     private static final int S34 = 15;
 
+    private int H1, H2, H3, H4;         // IV's
+
+    private int[] X = new int[16];
+    private int xOff;
+
+    /**
+     * Standard constructor
+     */
+    public MD4Digest() {
+        reset();
+    }
+
+    /**
+     * Copy constructor.  This will copy the state of the provided
+     * message digest.
+     */
+    public MD4Digest(MD4Digest t) {
+        super(t);
+
+        H1 = t.H1;
+        H2 = t.H2;
+        H3 = t.H3;
+        H4 = t.H4;
+
+        System.arraycopy(t.X, 0, X, 0, t.X.length);
+        xOff = t.xOff;
+    }
+
+    public String getAlgorithmName() {
+        return "MD4";
+    }
+
+    public int getDigestSize() {
+        return DIGEST_LENGTH;
+    }
+
+    protected void processWord(byte[] in, int inOff) {
+        X[xOff++] = (in[inOff] & 0xff) | ((in[inOff + 1] & 0xff) << 8)
+                    | ((in[inOff + 2] & 0xff) << 16) | ((in[inOff + 3] & 0xff) << 24);
+
+        if (xOff == 16) {
+            processBlock();
+        }
+    }
+
+    protected void processLength(long bitLength) {
+        if (xOff > 14) {
+            processBlock();
+        }
+
+        X[14] = (int)(bitLength & 0xffffffff);
+        X[15] = (int)(bitLength >>> 32);
+    }
+
+    private void unpackWord(int word, byte[] out, int outOff) {
+        out[outOff]     = (byte)word;
+        out[outOff + 1] = (byte)(word >>> 8);
+        out[outOff + 2] = (byte)(word >>> 16);
+        out[outOff + 3] = (byte)(word >>> 24);
+    }
+
+    public int doFinal(byte[] out, int outOff) {
+        finish();
+
+        unpackWord(H1, out, outOff);
+        unpackWord(H2, out, outOff + 4);
+        unpackWord(H3, out, outOff + 8);
+        unpackWord(H4, out, outOff + 12);
+
+        reset();
+
+        return DIGEST_LENGTH;
+    }
+
+    /**
+     * reset the chaining variables to the IV values.
+     */
+    public void reset() {
+        super.reset();
+
+        H1 = 0x67452301;
+        H2 = 0xefcdab89;
+        H3 = 0x98badcfe;
+        H4 = 0x10325476;
+
+        xOff = 0;
+
+        for (int i = 0; i != X.length; i++) {
+            X[i] = 0;
+        }
+    }
+
     /*
      * rotate int x left n bits.
      */
-    private int rotateLeft(
-        int x,
-        int n)
-    {
-        return (x << n) | (x >>> (32 - n));
+    private int rotateLeft(int x, int n) {
+        return(x << n) | (x >>> (32 - n));
     }
 
     /*
      * F, G, H and I are the basic MD4 functions.
      */
-    private int F(
-        int u,
-        int v,
-        int w)
-    {
-        return (u & v) | (~u & w);
+    private int F(int u, int v, int w) {
+        return(u & v) | (~u & w);
     }
 
-    private int G(
-        int u,
-        int v,
-        int w)
-    {
-        return (u & v) | (u & w) | (v & w);
+    private int G(int u, int v, int w) {
+        return(u & v) | (u & w) | (v & w);
     }
 
-    private int H(
-        int u,
-        int v,
-        int w)
-    {
+    private int H(int u, int v, int w) {
         return u ^ v ^ w;
     }
 
-    protected void processBlock()
-    {
+    protected void processBlock() {
         int a = H1;
         int b = H2;
         int c = H3;
@@ -282,8 +246,8 @@ public class MD4Digest
         // reset the offset and clean out the word buffer.
         //
         xOff = 0;
-        for (int i = 0; i != X.length; i++)
-        {
+
+        for (int i = 0; i != X.length; i++) {
             X[i] = 0;
         }
     }

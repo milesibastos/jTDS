@@ -38,7 +38,7 @@ import java.sql.*;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.15 2004-10-27 14:57:43 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.16 2004-11-03 14:53:22 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1443,9 +1443,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             String name = rs.getString(3);
             if (name != null) {
                 // Remove grouping integer
-                int pos = name.lastIndexOf(';');
-                if (pos >= 0) {
-                    name = name.substring(0, pos);
+                if (name.endsWith(";1")) {
+                    name = name.substring(0, name.length() - 2);
                 }
             }
             rsTmp.updateString(3, name);

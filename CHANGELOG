@@ -1,6 +1,10 @@
 Changes from jTDS 0.9
 =========================
 
+11/03/2004 - Alin Sinpalean
+ o Updated JtdsDatabaseMetaData.getProcedures() to only cut off the ";" at the
+   end of the procedure name for the first procedure (i.e. if it's ";1").
+
 11/01/2004 - Alin Sinpalean
  o Corrected bug [1057237] Protocol Exception processing TDS_COLINFO packets.
 

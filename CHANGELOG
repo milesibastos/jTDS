@@ -5,6 +5,7 @@ Changes from jTDS 0.6
  o Improved parsing of callable statements to be case-insensitive, allow
    whitespace between '?=' and support calls of stored procedures when no
    "exec" is specified.
+ o Updated DatabaseMetaData.supportsGetGeneratedKeys() to return true.
 
 02/07/2004 - Brian Heineman
  o Moved TdsStatement.releaseTds() calls into try {} finally {} statements
@@ -84,10 +85,10 @@ Changes from jTDS 0.6
 01/27/2004 - Brian Heineman
  o Added CONCAT to list of return values from
    DatabaseMetaData.getStringFunctions().
- o Implmented DatabaseMetaData.getJDBCMajorVersion().
- o Implmented DatabaseMetaData.getJDBCMinorVersion().
- o Implmented DatabaseMetaData.locatorsUpdateCopy().
- o Implmented DatabaseMetaData.supportsGetGeneratedKeys().
+ o Implemented DatabaseMetaData.getJDBCMajorVersion().
+ o Implemented DatabaseMetaData.getJDBCMinorVersion().
+ o Implemented DatabaseMetaData.locatorsUpdateCopy().
+ o Implemented DatabaseMetaData.supportsGetGeneratedKeys().
  o Corrected bug where {escape '''} was causing parameters to be calulcated
    incorrectly (this specifc escape value is now invalid and an exception is thrown).
  o Improved parsing of {? = call} in EscapeProcessor to support whitespace around the

@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.25 2004-11-17 10:12:02 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.26 2004-11-17 12:18:31 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -925,6 +925,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         cursor(CURSOR_OP_DELETE, null);
         // No need to re-fetch the row, just mark it as deleted
 //        cursorFetch(FETCH_REPEAT, 1);
+        // Mark the row as deleted instead
         currentRow[currentRow.length - 1].setValue(new Integer(SQL_ROW_DELETED));
     }
 
@@ -995,7 +996,10 @@ public class MSCursorResultSet extends JtdsResultSet {
         if (resultSetType == TYPE_SCROLL_SENSITIVE) {
             rowsInResult++;
         }
-        refreshRow();
+        // Don't reload the row, it's not necessary
+//        refreshRow();
+        // Mark the row as deleted instead
+        currentRow[currentRow.length - 1].setValue(new Integer(SQL_ROW_DELETED));
     }
 
     public boolean first() throws SQLException {

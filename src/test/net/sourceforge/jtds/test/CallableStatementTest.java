@@ -385,6 +385,30 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
+     * Test for bug [974284] retval on callable statement isn't handled correctly
+     */
+    public void testCallableRegisterOutParameter3() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create procedure #rop3 @a varchar(1), @b varchar(1) as\r\n "
+                     + "begin\r\n"
+                     + "return 1\r\n"
+                     + "end");
+        stmt.close();
+        
+        CallableStatement cstmt = con.prepareCall("{? = call #rop3(?, ?)}");
+
+        cstmt.registerOutParameter(1, Types.INTEGER);        
+        cstmt.setString(2, "a");        
+        cstmt.setString(3, "b");        
+        cstmt.execute();
+        
+        assertTrue(cstmt.getInt(1) == 1);
+        assertTrue(cstmt.getString(1) == "1");
+        
+        cstmt.close();
+    }
+    
+    /**
      * Test for bug [991640] java.sql.Date error and RAISERROR problem
      */
     public void testCallableError1() throws Exception {

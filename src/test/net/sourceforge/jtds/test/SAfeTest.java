@@ -16,8 +16,6 @@ import net.sourceforge.jtds.jdbc.Messages;
 
 import java.text.SimpleDateFormat;
 import java.util.Vector;
-import java.io.PrintStream;
-import java.io.FileOutputStream;
 
 /**
  * @author  Alin Sinpalean
@@ -234,7 +232,6 @@ public class SAfeTest extends DatabaseTestCase {
     public void testCancel0003() throws Exception {
         final Statement stmt = con.createStatement();
 
-        DriverManager.setLogStream(new PrintStream(new FileOutputStream("log.out")));
         for (int i = 0; i < 100; i++) {
             Thread t = new Thread(new Runnable() {
                 public void run() {

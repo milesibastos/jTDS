@@ -11,6 +11,9 @@ Changes from jTDS 0.8.1
    method.  Allowed calculateBufferSize() method to be made non-static,
    and will allow for easier unit testing in the future.
  o Cleaned up javadoc: fixed spelling and removed unused @throws.
+ o Fixed CallableStatementTest.testCallableRegisterOutParameter1() which was
+   using the '==' operator on String objects.  Changed to use assertEquals()
+   instead.  Cleaned up two other uses of '==' inside assert*() methods.
 
 07/27/2004 - Brian Heineman
  o Corrected bug [998765] Exception with Sybase and metaData.getTables(); Added

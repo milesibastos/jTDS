@@ -322,7 +322,7 @@ public class CallableStatementTest extends TestBase {
             assertTrue(rs.next());
 
             // Test ResultSet.getString()
-            assertTrue(rs.getString(1) == null);
+            assertNull(rs.getString(1));
             assertTrue(rs.wasNull());
 
             assertTrue(!rs.next());
@@ -353,8 +353,8 @@ public class CallableStatementTest extends TestBase {
         cstmt.setString(3, "b");        
         cstmt.execute();
         
-        assertTrue(cstmt.getInt(1) == 1);
-        assertTrue(cstmt.getString(1) == "1");
+        assertEquals(1, cstmt.getInt(1));
+        assertEquals("1", cstmt.getString(1));
         
         cstmt.close();
     }

@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.9 2004-08-03 17:51:06 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.10 2004-08-16 15:38:21 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -198,6 +198,11 @@ class SharedSocket {
      */
     private boolean wideChars;
     /**
+     * Count of packets received.
+     */
+    private int packetCount = 0;
+
+    /**
      * TDS done token.
      */
     private static final byte TDS_DONE_TOKEN = (byte) 253;
@@ -207,7 +212,7 @@ class SharedSocket {
 
     /**
      * Construct a TdsSocket object specifying host name and port.
-     * 
+     *
      * @param host The SQL Server host name.
      * @param port The connection port eg 1433.
      * @param tdsVersion The TDS protocol version
@@ -226,7 +231,7 @@ class SharedSocket {
     /**
      * Set the character set name to be used to translate byte arrays to
      * or from Strings.
-     * 
+     *
      * @param charsetName The character set name.
      */
     void setCharset(String charsetName) {
@@ -236,7 +241,7 @@ class SharedSocket {
     /**
      * Retrieve the character set name used to translate byte arrays to
      * or from Strings.
-     * 
+     *
      * @return The character set name as a <code>String</code>.
      */
     String getCharset() {
@@ -245,7 +250,7 @@ class SharedSocket {
 
     /**
      * Set the character set width.
-     * 
+     *
      * @param value True if multi byte character set.
      */
     void setWideChars(boolean value) {
@@ -254,7 +259,7 @@ class SharedSocket {
 
     /**
      * Retrieve the character width.
-     * 
+     *
      * @return <code>boolean</code> true if this is a multi byte character set.
      */
     boolean isWideChars() {
@@ -263,7 +268,7 @@ class SharedSocket {
 
     /**
      * Obtain an instance of a server request stream for this socket.
-     * 
+     *
      * @return The server request stream as a <code>RequestStream</code>.
      */
     RequestStream getRequestStream() {
@@ -274,15 +279,15 @@ class SharedSocket {
                     break;
                 }
             }
-            
+
             VirtualSocket vsock = new VirtualSocket(id);
-            
+
             if (id >= socketTable.size()) {
                 socketTable.add(vsock);
             } else {
                 socketTable.set(id, vsock);
             }
-            
+
             return new RequestStream(this, id);
         }
     }
@@ -291,7 +296,7 @@ class SharedSocket {
      * Obtain an instance of a server response stream for this socket.
      * NB. getRequestStream() must be used first to obtain the RequestStream
      * needed as a parameter for this method.
-     * 
+     *
      * @param requestStream An existing server request stream object.
      * @return The server response stream as a <code>ResponseStream</code>.
      */
@@ -302,7 +307,7 @@ class SharedSocket {
     /**
      * Retrieve the TDS version that is active on the connection
      * supported by this socket.
-     * 
+     *
      * @return The TDS version as an <code>int</code>.
      */
     int getTdsVersion() {
@@ -312,7 +317,7 @@ class SharedSocket {
     /**
      * Set the TDS version field.
      * @param tdsVersion The TDS version as an <code>int</code>.
-     */ 
+     */
     protected void setTdsVersion(int tdsVersion) {
         this.tdsVersion = tdsVersion;
     }
@@ -332,16 +337,16 @@ class SharedSocket {
 
     /**
      * Set the SQL Server type field.
-     * 
+     *
      * @param serverType The SQL Server type as an <code>int</code>.
-     */ 
+     */
     protected void setServerType(int serverType) {
         this.serverType = serverType;
     }
 
     /**
      * Set the global buffer memory limit for all instances of this driver.
-     * 
+     *
      * @param memoryBudget The global memory budget.
      */
     static void setMemoryBudget(int memoryBudget) {
@@ -350,7 +355,7 @@ class SharedSocket {
 
     /**
      * Get the global buffer memory limit for all instancs of this driver.
-     * 
+     *
      * @return The memory limit as an <code>int</code>.
      */
     static int getMemoryBudget() {
@@ -360,7 +365,7 @@ class SharedSocket {
     /**
      * Set the minimum number of packets to cache in memory before
      * writing to disk.
-     * 
+     *
      * @param minMemPkts The minimum number of packets to cache.
      */
     static void setMinMemPkts(int minMemPkts) {
@@ -369,7 +374,7 @@ class SharedSocket {
 
     /**
      * Get the minimum number of memory cached packets.
-     * 
+     *
      * @return Minimum memory packets as an <code>int</code>.
      */
     static int getMinMemPkts() {
@@ -378,31 +383,31 @@ class SharedSocket {
 
     /**
      * Set the Socket time out in msec.
-     * 
+     *
      * @param streamId The ResponseStream associated with this timeout.
      * @param timeOut The time  out value in milliseconds.
      */
     void setSoTimeout(int streamId, int timeOut) {
         VirtualSocket vsock = lookup(streamId);
-        
+
         vsock.timeOut = timeOut;
     }
 
     /**
      * Get the Socket time out value.
-     * 
+     *
      * @param streamId The ResponseStream associated with this timeout.
      * @return The <code>int</code> value of the timeout.
      */
     int getSoTimeout(int streamId) {
         VirtualSocket vsock = lookup(streamId);
-        
+
         return vsock.timeOut;
     }
 
     /**
      * Get the connected status of this socket.
-     * 
+     *
      * @return True if the underlying socket is connected.
      */
     boolean isConnected() {
@@ -411,7 +416,7 @@ class SharedSocket {
 
     /**
      * Send a TDS cancel packet to the server.
-     * 
+     *
      * @param streamId The RequestStream id.
      */
     void cancel(int streamId) {
@@ -433,19 +438,19 @@ class SharedSocket {
 
     /**
      * Close the socket (noop if in shared mode)
-     * 
+     *
      * @throws IOException
      */
     void close() throws IOException {
         if (Logger.isActive()) {
             Logger.println("TdsSocket: Max buffer memory used = " + peakMemUsage + "KB");
         }
-        
+
         synchronized (socketTable) {
             // See if any temporary files need deleting
             for (int i = 0; i < socketTable.size(); i++) {
                 VirtualSocket vsock = (VirtualSocket) socketTable.get(i);
-                
+
                 if (vsock != null && vsock.diskQueue != null) {
                     try {
                         vsock.diskQueue.close();
@@ -455,7 +460,7 @@ class SharedSocket {
                     }
                 }
             }
-            
+
             // Close physical socket
             if (socket != null) {
                 socket.close();
@@ -481,13 +486,13 @@ class SharedSocket {
 
     /**
      * Deallocate the streamID linked to this socket.
-     * 
+     *
      * @param streamId The ResponseStream id.
      */
     void closeStream(int streamId) {
         synchronized (socketTable) {
             VirtualSocket vsock = lookup(streamId);
-            
+
             if (vsock.diskQueue != null) {
                 try {
                     vsock.diskQueue.close();
@@ -496,7 +501,7 @@ class SharedSocket {
                     // Ignore errors
                 }
             }
-            
+
             socketTable.set(streamId, null);
         }
     }
@@ -504,7 +509,7 @@ class SharedSocket {
     /**
      * Send an network packet. If output for another virtual socket is
      * in progress this packet will be sent later.
-     * 
+     *
      * @param streamId The originating RequestStream object.
      * @param buffer  The data to send.
      * @throws IOException
@@ -522,7 +527,7 @@ class SharedSocket {
                 if (Logger.isActive()) {
                     Logger.println("TdsSocket: Unread data in input packet queue");
                 }
-                
+
                 dequeueInput(vsock);
             }
 
@@ -533,7 +538,7 @@ class SharedSocket {
                 if (Logger.isActive()) {
                     Logger.println("TdsSocket: Unread data on network");
                 }
-                
+
                 // Tell the driver to discard the rest of the server packets
                 vsock.flushInput = true;
             }
@@ -557,7 +562,7 @@ class SharedSocket {
                 // First, send out any output that might have been queued
                 //
                 byte[] tmpBuf = dequeueOutput(vsock);
-                
+
                 while (tmpBuf != null) {
                     getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
                     tmpBuf = dequeueOutput(vsock);
@@ -565,7 +570,7 @@ class SharedSocket {
 
                 // Now we can safely send this packet too
                 getOut().write(buffer, 0, getPktLen(buffer, 2));
-                
+
                 if (buffer[1] != 0) {
                     // This means the TDS Packet is complete
                     currentSender = -1;
@@ -576,7 +581,7 @@ class SharedSocket {
                     currentSender = streamId;
                 }
             }
-            
+
             return buffer;
         }
     }
@@ -584,7 +589,7 @@ class SharedSocket {
     /**
      * Get a network packet. This may be read from the network
      * directly or from previously cached buffers.
-     * 
+     *
      * @param streamId The originating ResponseStream object.
      * @param buffer The data buffer to receive the object (may be replaced)
      * @return The data in a <code>byte[]</code> buffer.
@@ -600,7 +605,7 @@ class SharedSocket {
             if (vsock.inputPkts > 0) {
                 return dequeueInput(vsock);
             }
-            
+
             //
             // See if we need to:
             //  1. Send a request
@@ -609,16 +614,16 @@ class SharedSocket {
             //
             if (responseOwner == -1 || responseOwner != streamId || vsock.flushInput) {
                 byte[] tmpBuf;
-                
+
                 if (responseOwner != -1) {
                     // Complex case there is another socket's data in the network pipe
                     // or we had our own incomplete request to discard first
                     // Read and store other socket's data or flush our own
                     VirtualSocket other = (VirtualSocket)socketTable.get(responseOwner);
-                    
+
                     do {
                         tmpBuf = readPacket(null, other, 0);
-                        
+
                         if (!other.flushInput) {
                         	// We need to save this input
                             enqueueInput(other, tmpBuf);
@@ -626,22 +631,22 @@ class SharedSocket {
                     } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
                     other.flushInput = false;
                 }
-                
+
                 // OK All input either read and stored or read and discarded
                 // now send our cached request packet.
                 tmpBuf = dequeueOutput(vsock);
-                
+
                 if (tmpBuf == null) {
                     // Oops something has gone wrong. Trying to read but no
                     // complete request packet to send first.
                     throw new IOException("No client request to send");
                 }
-                
+
                 while (tmpBuf != null) {
                     getOut().write(tmpBuf, 0, getPktLen(tmpBuf, 2));
                     tmpBuf = dequeueOutput(vsock);
                 }
-                
+
                 responseOwner = streamId;
             }
 
@@ -657,11 +662,11 @@ class SharedSocket {
      */
     private byte[] dequeueInput(VirtualSocket vsock) throws IOException {
         byte[] buf = dequeuePacket(vsock);
-        
+
         if (buf != null) {
             vsock.inputPkts--;
         }
-        
+
         return buf;
     }
 
@@ -680,13 +685,13 @@ class SharedSocket {
     private byte[] dequeueOutput(VirtualSocket vsock)
             throws IOException {
         byte[] buf = dequeuePacket(vsock);
-        
+
         if (buf == null) {
             vsock.complete = false;
         } else {
             vsock.outputPkts--;
         }
-        
+
         return buf;
     }
 
@@ -718,10 +723,10 @@ class SharedSocket {
             try {
                 vsock.queueFile = File.createTempFile("jtds", ".tmp");
                 vsock.diskQueue = new RandomAccessFile(vsock.queueFile, "rw");
-                
+
                 // Write current cache contents to disk and free memory
                 byte[] tmpBuf;
-                
+
                 while (vsock.pktQueue.size() > 0) {
                     tmpBuf = (byte[]) vsock.pktQueue.removeFirst();
                     vsock.diskQueue.write(tmpBuf, 0, getPktLen(tmpBuf, 2));
@@ -743,12 +748,12 @@ class SharedSocket {
             // Will cache in memory
             vsock.pktQueue.addLast(buffer);
             globalMemUsage += buffer.length;
-            
+
             if (globalMemUsage > peakMemUsage) {
                 peakMemUsage = globalMemUsage;
             }
         }
-        
+
         return;
     }
 
@@ -758,23 +763,23 @@ class SharedSocket {
     private byte[] dequeuePacket(VirtualSocket vsock)
             throws IOException {
         byte[] buffer = null;
-        
+
         if (vsock.pktsOnDisk > 0) {
             // Data is cached on disk
             if (vsock.diskQueue.getFilePointer() == vsock.diskQueue.length()) {
                 // First read so rewind() file
                 vsock.diskQueue.seek(0L);
             }
-            
+
             vsock.diskQueue.read(hdrBuf, 0, 8);
-            
+
             int len = getPktLen(hdrBuf, 2);
-            
+
             buffer = new byte[len];
             System.arraycopy(hdrBuf, 0, buffer, 0, 8);
             vsock.diskQueue.read(buffer, 8, len - 8);
             vsock.pktsOnDisk--;
-            
+
             if (vsock.pktsOnDisk < 1) {
                 // File now empty so close and delete it
                 try {
@@ -789,7 +794,7 @@ class SharedSocket {
             buffer = (byte[]) vsock.pktQueue.removeFirst();
             globalMemUsage -= buffer.length;
         }
-        
+
         return buffer;
     }
 
@@ -799,15 +804,15 @@ class SharedSocket {
     private byte[] readPacket(byte buffer[], VirtualSocket vsock, int timeOut)
             throws IOException {
         boolean queryTimedOut = false;
-        
+
         do {
             // read the header with timeout specified
             if (timeOut > 0) {
                 setTimeout(timeOut);
             }
-            
+
             int len = 0;
-            
+
             while (len == 0) {
                 try {
                     len = getIn().read(hdrBuf, 0, 1);
@@ -818,16 +823,16 @@ class SharedSocket {
                     if (timeOut > 0) {
                         setTimeout(0);
                     }
-                    
+
                     timeOut = 0;
                 }
             }
-            
+
             if (len == -1) {
             	// this appears to happen when the remote host closes the connection...
                 throw new IOException("DB server closed connection.");
             }
-            
+
             //
             // Read rest of header
             try {
@@ -835,9 +840,9 @@ class SharedSocket {
             } catch (EOFException e) {
                 throw new IOException("DB server closed connection.");
             }
-            
+
             byte packetType = hdrBuf[0];
-            
+
             if (packetType != TdsCore.LOGIN_PKT
                     && packetType != TdsCore.QUERY_PKT
                     && packetType != TdsCore.REPLY_PKT) {
@@ -855,12 +860,12 @@ class SharedSocket {
             if (buffer == null || len > buffer.length) {
                 // Create or expand the buffer as required
                 buffer = new byte[len];
-                
+
                 if (len > maxBufSize) {
                     maxBufSize = len;
                 }
             }
-            
+
             // Preserve the packet header in the buffer
             System.arraycopy(hdrBuf, 0, buffer, 0, 8);
 
@@ -868,6 +873,16 @@ class SharedSocket {
                 getIn().readFully(buffer, 8, len - 8);
             } catch (EOFException e) {
                 throw new IOException("DB server closed connection.");
+            }
+
+            //
+            // SQL Server 2000 < SP2 does not set the last packet
+            // flag in the NT challenge packet.
+            // If this is the first packet and the length is correct
+            // force the last packet flag on.
+            //
+            if (++packetCount == 1 && len == 59) {
+                buffer[1] = 1;
             }
         } while ((queryTimedOut && buffer[1] == 0)
         		 || (!queryTimedOut && isUnwantedCancelAck(buffer)));
@@ -877,7 +892,7 @@ class SharedSocket {
         //
         if (buffer[1] != 0) {
             responseOwner = -1;
-            
+
             if (queryTimedOut) {
                 // We had timed out so return an exception to notify the caller
                 // All input will have been read
@@ -895,20 +910,20 @@ class SharedSocket {
         if (buffer[1] == 0) {
             return false; // Not complete TDS packet
         }
-        
+
         if (getPktLen(buffer, 2) != 17) {
             return false; // To short to contain cancel or has other stuff
         }
-        
+
         if (buffer[8] != TDS_DONE_TOKEN
             || (buffer[9] & 0x20) == 0) {
             return false; // Not a cancel packet
         }
-        
+
         if (Logger.isActive()) {
             Logger.println("TdsSocket: Cancel packet discarded");
         }
-        
+
         return true;
     }
 
@@ -926,7 +941,7 @@ class SharedSocket {
         cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
         cancel[7] = 0;
         getOut().write(cancel, 0, 8);
-        
+
         if (Logger.isActive()) {
             Logger.logPacket(streamId, false, cancel);
         }
@@ -937,14 +952,14 @@ class SharedSocket {
             throw new IllegalArgumentException("Invalid parameter stream ID "
             		+ streamId);
         }
-        
+
         VirtualSocket vsock = (VirtualSocket)socketTable.get(streamId);
-        
+
         if (vsock.owner != streamId) {
             throw new IllegalStateException("Internal error: bad stream ID "
             		+ streamId);
         }
-        
+
         return vsock;
     }
 
@@ -966,7 +981,7 @@ class SharedSocket {
 
     /**
      * Set the socket timeout.
-     * 
+     *
      * @param timeout the timeout value in milliseconds
      */
     protected void setTimeout(int timeout) throws SocketException {
@@ -975,36 +990,36 @@ class SharedSocket {
 
     /**
      * Getter for {@link SharedSocket#in} field.
-     * 
+     *
      * @return {@link InputStream} used for communication.
-     */ 
+     */
     protected DataInputStream getIn() {
         return in;
     }
 
     /**
      * Setter for {@link SharedSocket#in} field.
-     * 
+     *
      * @param in The {@link InputStream} to be used for communication.
-     */ 
+     */
     protected void setIn(DataInputStream in) {
         this.in = in;
     }
 
     /**
      * Getter for {@link SharedSocket#out} field.
-     * 
+     *
      * @return {@link OutputStream} used for communication.
-     */ 
+     */
     protected DataOutputStream getOut() {
         return out;
     }
 
     /**
      * Setter for {@link SharedSocket#out} field.
-     * 
+     *
      * @param out The {@link OutputStream} to be used for communication.
-     */ 
+     */
     protected void setOut(DataOutputStream out) {
         this.out = out;
     }

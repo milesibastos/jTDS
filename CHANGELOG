@@ -1,6 +1,10 @@
 Changes from jTDS 0.9-rc1
 =========================
 
+08/16/2004 - Brian Heineman
+ o Corrected bug [966274] Trusted Connections no longer work; (thanks to Mike
+   Hutchinson for the patch and all the users who helped to find the problem).
+
 08/14/2004 - Brian Heineman
  o Corrected bug [1006449] 0.9rc1: Driver version broken; (thanks to Mike
    Hutchinson for the patch).

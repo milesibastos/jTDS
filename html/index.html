@@ -53,67 +53,78 @@
       <p class="title">Overview</p>
       <p>jTDS is an open source 100% pure Java (type 4) JDBC 3.0 driver for
         Microsoft SQL Server (6.5, 7, 2000 and 2005) and Sybase (10, 11, 12).
-        jTDS is based on the work of the <a href="http://www.freetds.org">FreeTDS</a>
-        project and is currently the fastest complete JDBC driver for SQL Server
-        and Sybase. Starting with release 0.9 jTDS is 100% JDBC 3.0
-        compatible, supporting forward-only and scrollable/updateable
-        <code>ResultSet</code>s, multiple concurrent (completely independent)
-        <code>Statement</code>s per <code>Connection</code> and implementing all
+        jTDS is based on <a href="http://www.freetds.org">FreeTDS</a> and is
+        currently the fastest production-ready JDBC driver for SQL Server
+        and Sybase. jTDS is 100% JDBC 3.0 compatible, supporting forward-only
+        and scrollable/updateable <code>ResultSet</code>s, concurrent
+        (completely independent) <code>Statement</code>s and implementing all
         the <code>DatabaseMetaData</code> and <code>ResultSetMetaData</code>
         methods. Check out the <a href="features.html">feature matrix</a> for
         more details.</p>
       <p>Quite a few of the commercial JDBC drivers out there are based on jTDS
         (or FreeTDS), even if they no longer acknowledge this. jTDS has been
-        tested with virtually all of the available JDBC-based database
-        management tools and is the driver of choice for most of these
-        (it is distributed with <a href="http://www.aquafold.com">Aqua Data
-        Studio</a> and <a href="http://www.datadino.com">DataDino</a> as the
-        driver for SQL Server). jTDS is also becoming a common choice for
-        enterprise-level applications: starting with release 0.9 jTDS passes
-        both the <a href="http://www.hibernate.org">Hibernate</a> and the <a
+        tested with virtually all JDBC-based database management tools and is
+        the driver of choice for most of these (recommended for
+        <a href="http://www.minq.se/products/dbvis/drivers.html#sqlserver">DbVisualizer</a>
+        and <a href="http://squirrel-sql.sourceforge.net">SQuirreL SQL</a>,
+        distributed with <a href="http://www.aquafold.com">Aqua Data Studio</a>
+        and <a href="http://www.datadino.com">DataDino</a>). jTDS is also
+        becoming a common choice for enterprise-level applications: it passes
+        both the <a
         href="http://java.sun.com/products/jdbc/download.html#testsuite131">
-        J2EE 1.3 certification</a> test suites, making it the driver of choice
-        for SQL Server.</p>
+        J2EE 1.3 certification</a> and <a href="http://www.hibernate.org">Hibernate</a>
+        test suites, and is recommended for <a
+        href="http://www.jboss.org/wiki/Wiki.jsp?page=SQLServer">JBoss</a>, <a
+        href="http://www.hibernate.org/80.html">Hibernate</a>, <a
+        href="http://www.atlassian.com/software/jira/docs/latest/standalone-dbconfig.html#sqlserver2000">Atlassian
+        JIRA</a> and <a
+        href="http://confluence.atlassian.com/display/DOC/Requirements">Confluence</a>
+        and <a href="http://www.compiere.org/">Compiere</a>.</p>
       <p class="title">Getting Started</p>
       <p>Being a type 4 driver, jTDS does not need any special installation.
         Just drop the jar file into your application's classpath and you're
         done. All you need to know is the name of the <code>Driver</code> and
         <code>DataSource</code> implementations and the URL format and you're
         all set. You can get these and a lot more information from the
-        <a href="faq.html">Frequently Asked Questions</a> page.</p>
+        <a href="faq.html">Frequently Asked Questions</a> page. For
+        features needing native libraries such as XA support or Single-Sign-On
+        consult the specific README files.</p>
       <p class="title">Why use jTDS?</p>
-      <p>Good question. First of all because it's open source. jTDS is released
-        under the <a href="http://www.opensource.org/licenses/lgpl-license.php"
+      <p>jTDS is free software. jTDS is released under the terms of the <a
+        href="http://www.opensource.org/licenses/lgpl-license.php"
         alt="GNU Lesser General Public License">GNU LGPL</a>, giving you not
-        only the posibility to tweak it to your own liking but also the right
-        to get any improvement anyone ever brings to jTDS.</p>
+        only the posibility to debug and tweak it to your own liking but also
+        to use it in and distribute it with your free or commercial
+        applications.</p>
       <p>The other &quot;free&quot; choices, the JDBC-ODBC bridge and
         Microsoft's own JDBC driver are not actually free. If you encounter an
         issue with any of them you won't be able to fix it yourself and
-        response and fix times from both Microsoft and Sun are anything but
-        short. Also, both of them lack functionality and have serious stability
-        problems: the bridge crashes the JVM if the ODBC driver has any problem
-        and the MS driver is just bug ridden. Just do a
-        <a href="http://www.google.com">Google</a> search for jTDS and you'll
-        find posts from a lot of people choosing to move to jTDS because of
-        stability issues. Also, the Microsoft driver implemnents only JDBC 2.0,
-        while the bridge is just a JDBC 1.0 implementation.</p>
-      <p>Oh, and did we mention that jTDS is faster? Well it's not just faster,
-        it's the fastest. Of all the SQL Server drivers. Including commercial
-        ones. Well, this seems to have caught your attention. We don't have any
-        benchmark of our own, we use those of the competition. Here are the
-        results of i-net software's <a href="benchTest.html">BenchTest 2.1 for
-        MS SQL Server</a>.</p>
-      <p>Anyway, just give it a try. Get the latest one from
+        response times from both Microsoft and Sun are anything but short.
+        Also, both of them lack functionality (the Microsoft driver implements
+        JDBC 2.0, while the bridge is just a JDBC 1.0 implementation) and have
+        serious stability problems: the bridge crashes the JVM if the ODBC
+        driver has any problem and Microsoft just has no intention of really
+        supporting Java/JDBC.</p>
+      <p>jTDS is also the most performant JDBC driver for both SQL Server and
+        Sybase. We have an older <a href="benchTest.html">benchmark result</a>
+        but we strongly encourage you to download any benchmark published by
+        commercial JDBC driver vendors and see for yourself. Here are a couple
+        of benchmarks you could use: <a
+        href="http://www.jnetdirect.com/downloads.php?op=performsuite">JNetDirect's
+        JDBC Performance Benchmark</a> and <a
+        href="http://www.inetsoftware.de/English/Produkte/JDBC2/BenchTest2_1.zip">i-net
+        Software's BenchTest 2.1 for MS SQL Server</a>.</p>
+      <p>Anyway, just give it a spin. Get the latest one from
         <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">here</a>
         and see whether you like it or not.</p>
       <p class="title">Support</p>
-      <p>Following a number of requests on our forums we have decided to offer
-        commercial technical support for interested parties. We are currently
-        looking into creating an organization specifically for this, but in the
-        meantime you can get official technical support from individual
-        developers of jTDS. Contact any of us and we'll be happy to provide you
-        with our terms and conditions as well as our fees.</p>
+      <p>Following a number of requests we have decided to offer commercial
+        technical support for interested parties. For the moment you can get
+        official technical support from individual developers of jTDS; contact
+        any of us and we'll be happy to provide you with our tech support terms
+        and conditions. Of course, we will keep offering support on our
+        SourceForge forums just as we did until now; we are only trying to
+        encourage adoption of jTDS, not make a fortune out of it.</p>
 
 
 <!--

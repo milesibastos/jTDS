@@ -70,7 +70,7 @@
         <li><a href="#noSuitableDriver">Why do I get a <code>java.sql.SQLException:
           &quot;No suitable driver&quot;</code> when trying to get a connection?</a></li>
         <li><a href="#instanceName">Where does one place an instance name in the
-          connect string? Connecting with <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code>
+          connect string? Connecting with <code>"jdbc:jtds:sqlserver://host\instance:port/database"</code>
           gives an SQLException with the message "Logon failed".</a></li>
         <li><a href="#instanceGetInfo">Why do I get a <code>java.sql.SQLException:
           &quot;Unable to get information from SQL Server&quot;</code> when
@@ -310,9 +310,9 @@
       <p>Actually we do have benchmark results from two different benchmarks,
         both developed by large commercial SQL Server JDBC driver vendors to
         demonstrate the performance of their own drivers. In our oppinion this
-        is even better than having a benchmark of our own, which could be
-        designed in such a way as to give jTDS the edge. These benchmarks are
-        free so you can download and run them yourself if you like.</p>
+        is better than having a benchmark of our own, which could be designed
+        in such a way as to give jTDS the edge. These benchmarks are free to
+        download so we encourage you to do it and run them yourself.</p>
       <p>We have benchmarked jTDS against the two most used commercial drivers
         and of course the Microsoft driver and the JDBC-ODBC bridge, using these
         benchmarks:
@@ -322,7 +322,7 @@
         JDBC Performance Benchmark</a>. Here are the results of the i-net test:
         <a href="benchTest.html">BenchTest 2.1 for MS SQL Server</a>. The JNetDirect
         license precludes publication of performance test results. However, you
-        can run any of the benchmarks yourself without much configuration.</p>
+        can run any of the benchmarks yourself, the effort is minimal.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="features"></a>Which JDBC features are and
         which features are not supported by jTDS?</p>
@@ -334,7 +334,11 @@
         implementation (which also implements <code>ConnectionPoolDataSource</code>
         and <code>XADataSource</code>). Features such as generated keys
         retrieval, named stored procedure parameters, and save points are also
-        implemented. Check out the jTDS <a href="features.html">feature
+        implemented.</p>
+      <p>The only major features missing from jTDS are connection pooling and
+        row sets; the reason for leaving these out is that there are free
+        implementations available, probably much better than anything we could
+        come up with. Check out the jTDS <a href="features.html">feature
         matrix</a> for more details.</p>
       <p><a href="#">^ top ^</a></p>
 
@@ -352,9 +356,9 @@
         <code>jtds.jar</code> to your web application's class path (e.g. by
         editing the application's web.xml file or by copying the jar into the
         application's/server's <code>/lib</code> directory).</p>
-      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-0.9.1.jar</code>
+      <p><b>Note:</b> The name of the jTDS jar file may be <code>jtds-1.0.jar</code>
         or something similar. If that's the case, replace <code>jtds.jar</code>
-        in the above example with <code>jtds-0.9.1.jar</code> or whatever your specific
+        in the above example with <code>jtds-1.0.jar</code> or whatever your specific
         file name is.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="noSuitableDriver"></a>Why do I get a <code>java.sql.SQLException:
@@ -373,7 +377,7 @@
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="instanceName"></a>Where does one place an instance
         name in the connect string? Connecting with
-        <code>"jdbc:jtds:sqlserver://host/instance:port/database"</code> gives an
+        <code>"jdbc:jtds:sqlserver://host\instance:port/database"</code> gives an
         SQLException with the message "Logon failed".
       <p>You will have to use the <code>instance</code> property (either append it to the
         URL or place it into the <code>Properties</code> you supply to <code>getConnection</code>)
@@ -399,9 +403,15 @@
         and password?</p>
       <p>jTDS is a type 4 (pure Java) JDBC driver. This means (among other things)
         that it cannot access platform-specific features, such as determining the
-        currently logged user and his credentials. So the answer is simple: you still
-        have to provide the username and password because otherwise jTDS cannot log
-        into SQL Server.</p>
+        currently logged user and his credentials. jTDS is distributed with a
+        native library (DLL) for Single-Sign-On support, but that only works on
+        Windows (please consult README.SSO in the distribution package for
+        information on how to install it).</p>
+      <p>Without the native SSO library installed you still have to provide the
+        username and password because otherwise jTDS cannot determine user
+        credentials. There is a good side to this: users on non-Windows
+        platforms are able to log in using Windows credentials by providing
+        them in the URL, along with the domain name.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="expectingResultSet"></a>
         <code>executeQuery()</code> throws <code>java.sql.SQLException: "The
@@ -468,16 +478,16 @@
       <p class="question"><a name="sqlStates"></a>Not all
         <code>SQLException</code>s thrown by jTDS seem to have associated
         meaningful SQL state values.</p>
-      <p>Indeed, from this point of view, at the moment the driver is a bit
-        inconsistent, some SQLExceptions are reported with a correct state code
+      <p>Indeed, some SQLExceptions are reported with a correct state code
         and some not. As the server itself does not return an SQL state code,
         the SQLMessage class associates native error numbers with SQL state
         codes (actually there's a very comprehensive map there); SQL Server
         originated errors and warnings that are not found in this map are given
         a default code of 'S1000', respectively '01000'. This is what happens
         with SQL Server-returned errors and warnings and is consistent with how
-        other drivers handle exceptions. However, if you find some case in
-        which other JDBC or ODBC drivers return specific SQL states or jTDS
+        other drivers handle exceptions. We have done our best to map as many
+        errors and warnings, however if you find some case in which other JDBC
+        or ODBC drivers return specific SQL states and jTDS doesn't or jTDS
         returned SQL states that are obviously wrong, please let us know. We
         will make the necessary changes.</p>
       <p>See the
@@ -623,16 +633,17 @@
       <p class="title">Technical support</p>
       <p class="question"><a name="techSupport"></a>Is there any commercial
         technical support available for jTDS?</p>
-      <p>We are currently looking into creating an organization that will offer
-        technical support for jTDS. In the meantime you can get official
-        technical support from individual developers of jTDS. Contact any of
-        the developers and we'll be happy to provide you with our tech support
-        terms and conditions as well as our fees.</p>
+      <p>For the moment you can get official technical support from individual
+        developers of jTDS; contact any of us and we'll be happy to provide you
+        with our tech support terms and conditions. Of course, we will keep
+        offering support on our SourceForge forums just as we did until now; we
+        are only trying to encourage adoption of jTDS, not make a fortune out
+        of it.</p>
       <p>As for where the technical support money will go, part of them will be
         retained by the developer and part of them will go back into jTDS.
         Currently the aim is to raise US $2000, to pay for JDBC certification.
         We're 100% sure jTDS will pass the certification test suite, we just
-        need the money for it.</p>
+        need the money for it. To this end, we also accept donations.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Other</p>

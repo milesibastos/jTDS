@@ -50,7 +50,7 @@ import net.sourceforge.jtds.jdbcx.JtdsXid;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.24 2004-10-10 20:37:14 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.25 2004-10-13 13:10:46 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -595,7 +595,7 @@ public class Support {
                     } else if (x instanceof Clob) {
                         Clob clob = (Clob) x;
 
-                        x = clob.getSubString(0, (int) clob.length());
+                        x = clob.getSubString(1, (int) clob.length());
                         // FIXME - Use reader to populate Blob
                     }
 
@@ -627,7 +627,7 @@ public class Support {
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
 
-                        x = blob.getBytes(0, (int) blob.length());
+                        x = blob.getBytes(1, (int) blob.length());
                         // FIXME - Use input stream to populate Clob
                     } else if (x instanceof BigDecimal) {
                         x = bigDecimalToString((BigDecimal) x);

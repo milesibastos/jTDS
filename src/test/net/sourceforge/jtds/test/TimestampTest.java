@@ -3,6 +3,7 @@ package net.sourceforge.jtds.test;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
+import java.util.TimeZone;
 
 import net.sourceforge.jtds.util.Logger;
 
@@ -126,10 +127,10 @@ public class TimestampTest extends DatabaseTestCase {
         Timestamp   t0 = Timestamp.valueOf("1964-02-14 10:00:00.0");
         pStmt.setTimestamp(1, t0);
         pStmt.setTimestamp(2, t0);
-        int count = pStmt.executeUpdate();
+        assertEquals(1, pStmt.executeUpdate());
 
         pStmt.setNull(2, java.sql.Types.TIMESTAMP);
-        count = pStmt.executeUpdate();
+        assertEquals(1, pStmt.executeUpdate());
         pStmt.close();
 
         pStmt = cx.prepareStatement("select mytime, mytime2, mytime3 from #t0004");
@@ -520,8 +521,7 @@ public class TimestampTest extends DatabaseTestCase {
         count = 0;
 
         while (rs.next()) {
-            int n = rs.getInt("i");
-
+            rs.getInt("i");
             count++;
         }
 
@@ -533,8 +533,7 @@ public class TimestampTest extends DatabaseTestCase {
         count = 0;
 
         while (rs.next()) {
-            int n = rs.getInt("i");
-
+            rs.getInt("i");
             count++;
         }
 
@@ -545,8 +544,7 @@ public class TimestampTest extends DatabaseTestCase {
         count = 0;
 
         while (rs.next() && count < 5) {
-            int n = rs.getInt("i");
-
+            rs.getInt("i");
             count++;
         }
         assertTrue(count == 5);
@@ -556,8 +554,7 @@ public class TimestampTest extends DatabaseTestCase {
         count = 0;
 
         while (rs.next()) {
-            int n = rs.getInt("i");
-
+            rs.getInt("i");
             count++;
         }
 
@@ -655,7 +652,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         // see what happens if neither is set
         try {
-            ResultSet rs = pStmt.executeQuery();
+            pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -670,7 +667,7 @@ public class TimestampTest extends DatabaseTestCase {
             pStmt.setString(2, "row7");
             pStmt.clearParameters();
 
-            ResultSet rs = pStmt.executeQuery();
+            pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -682,7 +679,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         try {
             pStmt.setInt(1, 7);
-            ResultSet rs = pStmt.executeQuery();
+            pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -693,7 +690,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         try {
             pStmt.setString(2, "row7");
-            ResultSet rs = pStmt.executeQuery();
+            pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
             assertTrue("07000".equals(e.getSQLState())
@@ -859,33 +856,6 @@ public class TimestampTest extends DatabaseTestCase {
         }  // for (int
     }
 
-    public void testDatatypes0017() throws Exception {
-        Connection cx = getConnection();
-        Statement stmt = cx.createStatement();
-
-        dropTable("#t0017");
-
-        /*
-        remove ( ), convert , to _
-
-        myXXXX, mynullXXXX
-
-        // Insert a row without nulls via a Statement
-
-
-        // Insert a row with nulls via a Statement
-
-
-        // Insert a row without nulls via a PreparedStatement
-
-
-        // Insert a row with nulls via a PreparedStatement
-
-
-        // Now verify that the database has the same data as we put in.
-    */
-    }
-
     public void testStatements0020() throws Exception {
         Connection cx = getConnection();
 
@@ -948,7 +918,6 @@ public class TimestampTest extends DatabaseTestCase {
         assertNotNull(rs1);
 
         while (rs1.next()) {
-            int  i1 = rs1.getInt("i1");
             stmtB.setInt(1, rs1.getInt("i1"));
             ResultSet rs2 = stmtB.executeQuery();
             assertNotNull(rs2);
@@ -1072,8 +1041,8 @@ public class TimestampTest extends DatabaseTestCase {
         insert.setBytes(1, smallarray);
         insert.setBytes(2, array1);
         insert.setBytes(3, array1);
-        insert.setString(4, "abcd" /* bigtext1 */);
-        insert.setString(5, "defg" /* bigtext1 */);
+        insert.setString(4, bigtext1);
+        insert.setString(5, bigtext1);
 
         int count = insert.executeUpdate();
         assertEquals(count, 1);
@@ -1086,9 +1055,13 @@ public class TimestampTest extends DatabaseTestCase {
 
         byte[] a1 = rs.getBytes("myimage");
         byte[] a2 = rs.getBytes("mynullimage");
+        String s1 = rs.getString("mytext");
+        String s2 = rs.getString("mynulltext");
 
-        assertEquals(compareBytes(a1, array1), 0);
-        assertEquals(compareBytes(a2, array1), 0);
+        assertEquals(0, compareBytes(a1, array1));
+        assertEquals(0, compareBytes(a2, array1));
+        assertEquals(bigtext1, s1);
+        assertEquals(bigtext1, s2);
         cx.close();
     }
 
@@ -2340,5 +2313,43 @@ public class TimestampTest extends DatabaseTestCase {
 
         pstmt.close();
         rs.close();
+    }
+
+    /**
+     * Test for bug [1036059] getTimestamp with Calendar applies tzone offset
+     * wrong way.
+     */
+    public void testTimestampTimeZone() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("CREATE TABLE #tst_tstamp ("
+                + "ref INT NOT NULL, "
+                + "tstamp DATETIME NOT NULL, "
+                + "CONSTRAINT PK_dummy PRIMARY KEY (ref))");
+        stmt.close();
+
+        Calendar calNY = Calendar.getInstance
+                (TimeZone.getTimeZone("America/New_York"));
+
+        Timestamp tsStart = new Timestamp(System.currentTimeMillis());
+        System.out.println("Current time = " + tsStart);
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO #tst_tstamp (ref, tstamp) VALUES (?, ?)");
+        pstmt.setInt(1, 0);
+        pstmt.setTimestamp(2, tsStart, calNY);
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        pstmt = con.prepareStatement(
+                "SELECT * FROM #tst_tstamp WHERE ref = ?");
+        pstmt.setInt(1, 0);
+        ResultSet rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        Timestamp ts = rs.getTimestamp("tstamp", calNY);
+
+        // The difference should be less than 3 milliseconds (i.e. 1 or 2)
+        assertTrue(Math.abs(tsStart.getTime()-ts.getTime()) < 3);
+        rs.close();
+        pstmt.close();
     }
 }

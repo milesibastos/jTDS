@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.17 2004-09-23 16:13:02 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.18 2004-09-28 13:12:42 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -1222,8 +1222,8 @@ public class JtdsResultSet implements ResultSet {
             TimeZone timeZone = TimeZone.getDefault();
             long newTime = date.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
+            newTime -= cal.getTimeZone().getRawOffset();
+            newTime += timeZone.getRawOffset();
             date = new java.sql.Date(newTime);
         }
 
@@ -1254,8 +1254,8 @@ public class JtdsResultSet implements ResultSet {
             TimeZone timeZone = TimeZone.getDefault();
             long newTime = time.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
+            newTime -= cal.getTimeZone().getRawOffset();
+            newTime += timeZone.getRawOffset();
             time = new java.sql.Time(newTime);
         }
 
@@ -1280,8 +1280,8 @@ public class JtdsResultSet implements ResultSet {
                 TimeZone timeZone = TimeZone.getDefault();
                 long newTime = timestamp.getTime();
 
-                newTime -= timeZone.getRawOffset();
-                newTime += cal.getTimeZone().getRawOffset();
+                newTime -= cal.getTimeZone().getRawOffset();
+                newTime += timeZone.getRawOffset();
                 timestamp = new Timestamp(newTime);
             }
 

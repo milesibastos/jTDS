@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.7 2004-09-28 09:11:46 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.8 2004-09-28 13:12:42 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /**
@@ -460,8 +460,8 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             TimeZone timeZone = TimeZone.getDefault();
             long newTime = date.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
+            newTime -= cal.getTimeZone().getRawOffset();
+            newTime += timeZone.getRawOffset();
             date = new java.sql.Date(newTime);
         }
 
@@ -487,8 +487,8 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             TimeZone timeZone = TimeZone.getDefault();
             long newTime = time.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
+            newTime -= cal.getTimeZone().getRawOffset();
+            newTime += timeZone.getRawOffset();
             time = new java.sql.Time(newTime);
         }
 
@@ -511,8 +511,8 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             TimeZone timeZone = TimeZone.getDefault();
             long newTime = timestamp.getTime();
 
-            newTime -= timeZone.getRawOffset();
-            newTime += cal.getTimeZone().getRawOffset();
+            newTime -= cal.getTimeZone().getRawOffset();
+            newTime += timeZone.getRawOffset();
             timestamp = new Timestamp(newTime);
         }
 

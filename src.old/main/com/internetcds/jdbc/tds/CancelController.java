@@ -1,39 +1,39 @@
-//                                                                            
-// Copyright 1998 CDS Networks, Inc., Medford Oregon                          
-//                                                                            
-// All rights reserved.                                                       
-//                                                                            
-// Redistribution and use in source and binary forms, with or without         
+//
+// Copyright 1998 CDS Networks, Inc., Medford Oregon
+//
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright          
-//    notice, this list of conditions and the following disclaimer.           
-// 2. Redistributions in binary form must reproduce the above copyright       
-//    notice, this list of conditions and the following disclaimer in the     
-//    documentation and/or other materials provided with the distribution.    
-// 3. All advertising materials mentioning features or use of this software   
-//    must display the following acknowledgement:                             
-//      This product includes software developed by CDS Networks, Inc.        
-// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote   
-//    products derived from this software without specific prior              
-//    written permission.                                                     
-//                                                                            
-// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND              
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE      
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE            
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS    
-// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)      
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY  
-// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF     
-// SUCH DAMAGE.                                                               
-//                                                                            
+// 1. Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+// 3. All advertising materials mentioning features or use of this software
+//    must display the following acknowledgement:
+//      This product includes software developed by CDS Networks, Inc.
+// 4. The name of CDS Networks, Inc.  may not be used to endorse or promote
+//    products derived from this software without specific prior
+//    written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY CDS NETWORKS, INC. ``AS IS'' AND
+// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL CDS NETWORKS, INC. BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+// OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+// SUCH DAMAGE.
+//
 
 package com.internetcds.jdbc.tds;
 
-/**   
- *   This class provides support for canceling queries. 
+/**
+ *   This class provides support for canceling queries.
  *  <p>
  *   Basically all threads can be divided into two groups, workers and
  *   cancelers.  The canceler can cancel at anytime, even when there is no
@@ -75,7 +75,7 @@ package com.internetcds.jdbc.tds;
  *     b) if there is no read in progress it will unlock and return.
  *     c) otherwise it will send the CANCEL packet,
  *     d) increment the cancelsRequested
- *     e) unlock object and wait until notified that the 
+ *     e) unlock object and wait until notified that the
  *        cancel was ack'd
  *  <p>
  *   Whenever the worker thread wants to read a response from the DB it
@@ -89,19 +89,18 @@ package com.internetcds.jdbc.tds;
  *        cancelsProcessed <b>
  *     g) notify any threads that are waiting for cancel acknowledgment<b>
  *     h) unlock the control object.<b>
- * 
- * @version  $Id: CancelController.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $
+ *
+ * @version  $Id: CancelController.java,v 1.3 2002-09-18 16:27:03 alin_sinpalean Exp $
  @ @author Craig Spannring
  */
-public class CancelController 
+public class CancelController
 {
-   public static final String cvsVersion = "$Id: CancelController.java,v 1.2 2001-08-31 12:47:20 curthagenlocher Exp $";
+   public static final String cvsVersion = "$Id: CancelController.java,v 1.3 2002-09-18 16:27:03 alin_sinpalean Exp $";
 
+   private boolean awaitingData     = false;
+   private int     cancelsRequested = 0;
+   private int     cancelsProcessed = 0;
 
-   boolean    awaitingData     = false;
-   int        cancelsRequested = 0;
-   int        cancelsProcessed = 0;
-   
    public synchronized void setQueryInProgressFlag()
    {
       awaitingData = true;
@@ -112,13 +111,12 @@ public class CancelController
       awaitingData = false;
    }
 
-   public synchronized void finishQuery(
-      boolean wasCanceled,
+   public synchronized void finishQuery(boolean wasCanceled,
       boolean moreResults)
    {
-      // XXX Do we want to clear the query in progress flag if 
+      // XXX Do we want to clear the query in progress flag if
       // there are still more results for multi result set query?
-      // Whatever mechanism is used to handle outstanding query 
+      // Whatever mechanism is used to handle outstanding query
       // requires knowing if there is any thread out there that could
       // still process the query acknowledgment.  Prematurely clearing
       // could cause data to be thrown out before the thread expecting
@@ -128,60 +126,70 @@ public class CancelController
       // Is it good enough to just look at the MORERESULTS bit in the
       // TDS_END* packet and not clear the flag if we have more
       // results?
-      if (! moreResults)
-      {
+      if( !moreResults )
          clearQueryInProgressFlag();
-      }
 
-      if (wasCanceled)
-      {
+      if( wasCanceled )
          handleCancelAck();
-      }
 
       // XXX Should we see if there are any more cancels pending and
       // try to read the cancel acknowledgments?
    }
 
-
    public synchronized void doCancel(TdsComm comm)
-      throws java.io.IOException
+      throws java.io.IOException, TdsException
    {
-      if (awaitingData)
+      if( awaitingData )
       {
-         comm.startPacket(TdsComm.CANCEL);
-         comm.sendPacket();
-         cancelsRequested++;
-
-
-         while(cancelsRequested > cancelsProcessed)
+         // SAfe Only send a CANCEL packet if no other unanswered CANCEL exists
+         //      (there's no point in sending more than one CANCEL at a time).
+         if( cancelsRequested == cancelsProcessed )
          {
-            try
-            {
-               wait();
-               // XXX If there are cancels pending but nobody is is
-               // awaiting data on this connection, should we go out
-               // and try to get the CANCELACK packet?
-            }
-            catch(java.lang.InterruptedException e)
-            {
-               // nop
-            }
+            comm.startPacket(TdsComm.CANCEL);
+            comm.sendPacket();
+            cancelsRequested++;
          }
+
+         // SAfe We won't do any waiting. If the Statement is not closed and
+         //      the used doesn't process all data (to get to the TDS_DONE
+         //      packet with the cancel flag set, the caller will never get out
+         //      of here alive.
+//         while(cancelsRequested > cancelsProcessed)
+//         {
+//            // SAfe Should we do the waiting? I don't think the caller should
+//            //      wait until the TDS_DONE is processed (especially since, for
+//            //      the moment, it's not processed automatically; the user has
+//            //      to either get all the results or close the Statement.
+//            try
+//            {
+//               wait();
+//               // XXX If there are cancels pending but nobody is is
+//               // awaiting data on this connection, should we go out
+//               // and try to get the CANCELACK packet?
+//            }
+//            catch(java.lang.InterruptedException e)
+//            {
+//               // nop
+//            }
+//         }
       }
       else
       {
-         // if we aren't waiting for anything from 
+         // if we aren't waiting for anything from
          // the server then we have nothing to cancel
 
          // nop
       }
    }
 
-
-
    private synchronized void handleCancelAck()
    {
       cancelsProcessed++;
-      notify(); 
+//      notifyAll();
+   }
+
+   public synchronized int outstandingCancels()
+   {
+      return cancelsRequested - cancelsProcessed;
    }
 }

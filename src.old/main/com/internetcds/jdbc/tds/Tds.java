@@ -57,42 +57,50 @@ import java.util.Iterator;
  *
  *@author     Craig Spannring
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $
  */
 class TimeoutHandler extends Thread {
 
-    java.sql.Statement stmt;
+    TdsStatement stmt;
     int timeout;
     boolean dataReceived;
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $";
 
-
-    public TimeoutHandler(
-            java.sql.Statement stmt_,
-            int timeout_)
+    public TimeoutHandler(TdsStatement stmt_, int timeout_)
     {
         stmt = stmt_;
         timeout = timeout_;
     }
 
-
     public void run()
     {
         try {
             sleep( timeout * 1000 );
+            // SAfe The java.sql.Statement.cancel() javadoc says an SQLException
+            //      must be thrown if the execution timed out, so that's what
+            //      we're going to do.
+            stmt.warningChain.addException(
+                new SQLException("Query has timed out."));
             stmt.cancel();
+            System.out.println("Cancel done.");
         }
-        catch (SQLException e) {
+        // Ignore interrupts (this is how we know all was ok)
+        catch( java.lang.InterruptedException e ) {
             // nop
         }
-        catch (java.lang.InterruptedException e) {
-            // nop
+        // SAfe Add any SQLException to the statement's warning chain
+        catch( SQLException e ) {
+            stmt.warningChain.addException(e);
+        }
+        // SAfe Also add an exception if anything else happens
+        catch( Exception ex )
+        {
+            stmt.warningChain.addException(new SQLException(ex.toString()));
         }
     }
-
 }
 
 
@@ -103,7 +111,7 @@ class TimeoutHandler extends Thread {
  *@author     Igor Petrovski
  *@author     The FreeTDS project
  *@created    March 17, 2001
- *@version    $Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $
+ *@version    $Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -168,7 +176,7 @@ public class Tds implements TdsDefinitions {
     /**
      *  Description of the Field
      */
-    public final static String cvsVersion = "$Id: Tds.java,v 1.32 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.33 2002-09-18 16:27:07 alin_sinpalean Exp $";
 
     //
     // If the following variable is false we will consider calling
@@ -678,10 +686,21 @@ public class Tds implements TdsDefinitions {
             String procedureName,
             ParameterListItem[] formalParameterList,
             ParameterListItem[] actualParameterList,
-            java.sql.Statement stmt,
+            TdsStatement stmt,
             int timeout)
-             throws java.sql.SQLException, com.internetcds.jdbc.tds.TdsException
+             throws java.sql.SQLException, com.internetcds.jdbc.tds.TdsException, java.io.IOException
     {
+        // SAfe We need to check if all cancel requests were processed and wait
+        //      for any outstanding cancel. It could happen that we sent the
+        //      CANCEL after the server sent us all the data, so the answer is
+        //      going to come in a packet of its own.
+        if( cancelController.outstandingCancels() > 0 )
+        {
+            processSubPacket();
+            if( cancelController.outstandingCancels() > 0 )
+                throw new SQLException("Something went completely wrong. A cancel request was lost.");
+        }
+
         // A stored procedure has a packet type of 0x03 in the header packet.
         // for non-image date the packets consists of
         // offset         length        desc.
@@ -1013,10 +1032,21 @@ public class Tds implements TdsDefinitions {
      */
     public synchronized void executeQuery(
             String sql,
-            java.sql.Statement stmt,
+            TdsStatement stmt,
             int timeout)
              throws java.io.IOException, java.sql.SQLException, TdsException
     {
+        // SAfe We need to check if all cancel requests were processed and wait
+        //      for any outstanding cancel. It could happen that we sent the
+        //      CANCEL after the server sent us all the data, so the answer is
+        //      going to come in a packet of its own.
+        if( cancelController.outstandingCancels() > 0 )
+        {
+            processSubPacket();
+            if( cancelController.outstandingCancels() > 0 )
+                throw new SQLException("Something went completely wrong. A cancel request was lost.");
+        }
+
         checkMaxRows(stmt);
 
         // If the query has length 0, the server doesn't answer, so we'll hang
@@ -1828,6 +1858,8 @@ public class Tds implements TdsDefinitions {
      *
      *@param  time  Description of Parameter
      *@return       The DstOffset value
+     * @todo SAfe Try to find a better way to do this, because it doubles the
+     *       total time it takes to process datetime values!!!
      */
     private long getDstOffset(long time)
     {
@@ -2447,7 +2479,7 @@ public class Tds implements TdsDefinitions {
      *
      * Added 2000-06-05.
      */
-    private void send70Login() throws java.io.IOException
+    private void send70Login() throws java.io.IOException, TdsException
     {
 
         byte[] magic1 = {(byte) 0006, (byte) 0203, (byte) 0362, (byte) 0370,
@@ -3908,7 +3940,7 @@ public class Tds implements TdsDefinitions {
 
 
     private void waitForDataOrTimeout(
-            java.sql.Statement stmt,
+            TdsStatement stmt,
             int timeout)
              throws java.io.IOException, com.internetcds.jdbc.tds.TdsException
     {

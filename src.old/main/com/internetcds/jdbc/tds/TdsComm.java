@@ -45,7 +45,7 @@ import java.sql.Timestamp;
  *@author     Craig Spannring
  *@author     Igor Petrovski
  *@created    14 September 2001
- *@version    $Id: TdsComm.java,v 1.8 2002-09-16 11:13:43 alin_sinpalean Exp $
+ *@version    $Id: TdsComm.java,v 1.9 2002-09-18 16:27:08 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -99,7 +99,7 @@ public class TdsComm implements TdsDefinitions {
     /**
      *  @todo Description of the Field
      */
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.8 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.9 2002-09-18 16:27:08 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -144,8 +144,9 @@ public class TdsComm implements TdsDefinitions {
 
     // For debuging purposes it would be nice to uniquely identify each Tds
     // stream.  id will be a unique value for each instance of this class.
-    static int id = 0;
+    private static int nextId = 0;
 
+    private int id;
 
     public TdsComm( Socket sock, int tdsVer_ )
              throws java.io.IOException
@@ -160,7 +161,7 @@ public class TdsComm implements TdsDefinitions {
         // Added 2000-06-07
         tdsVer = tdsVer_;
 
-        id++;
+        id = ++nextId;
     }
 
 
@@ -196,25 +197,17 @@ public class TdsComm implements TdsDefinitions {
      */
 
     /**
-     *  start a TDS packet. <br>
-     *  This method should be called to start a logical TDS packet.
+     * Start a TDS packet. <br>
+     * This method should be called to start a logical TDS packet.
      *
-     *@param  type  Type of the packet. Can be QUERY, LOGON, PROC, REPLY, or
-     *      CANCEL.
+     * @param  type  Type of the packet. Can be QUERY, LOGON, PROC, REPLY, or
+     *               CANCEL.
      */
-    public synchronized void startPacket( int type )
+    public synchronized void startPacket( int type ) throws TdsException
     {
+        if( type!=CANCEL && inBufferIndex!=inBufferLen )
+            throw new TdsException("Unprocessed data in input buffer.");
 
-        inBufferIndex = inBufferLen;
-        // drop all leftovers !!
-        /*
-         *  try {
-         *  clearInputStream();
-         *  }
-         *  catch (IOException e) {
-         *  e.printStackTrace();
-         *  }
-         */
         // Only one thread at a time can be building an outboudn packet.
         // This is primarily a concern with building cancel packets.
         //  XXX: as why should more than one thread work with the same tds-stream ??? would be fatal anyway
@@ -729,15 +722,18 @@ public class TdsComm implements TdsDefinitions {
 
 
     /**
-     *  Read a physical packet. <p>
+     * Read a physical packet.<p>
+     * <B>Warning</B> This method will block until it gets all of the input.
+     * <p>
+     * <b>Note:</b> This method should not be synchronized (at least not on
+     * <code>this</code> object) because it would prevent us from sending
+     * CANCEL packets, which are sent asynchronously.
      *
-     *  <B>Warning</B> This method will block until it gets all of the input.
-     *
-     *@exception  TdsException         @todo Description of Exception
-     *@exception  java.io.IOException  @todo Description of Exception
+     * @exception  TdsException         @todo Description of Exception
+     * @exception  java.io.IOException  @todo Description of Exception
      */
-    private synchronized void getPhysicalPacket()
-             throws TdsException, java.io.IOException
+    private void getPhysicalPacket()
+        throws TdsException, java.io.IOException
     {
 
         // read the header

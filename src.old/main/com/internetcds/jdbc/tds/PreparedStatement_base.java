@@ -65,7 +65,7 @@ import java.util.Map;
 public class PreparedStatement_base
          extends TdsStatement
          implements PreparedStatementHelper, java.sql.PreparedStatement {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.18 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.19 2002-09-18 16:27:06 alin_sinpalean Exp $";
 
     String rawQueryString = null;
     // Vector               procedureCache     = null;  put it in tds
@@ -165,7 +165,9 @@ public class PreparedStatement_base
         Procedure procedure = null;
         boolean result = false;
 
-        closeResults(false);
+        // SAfe No need for this either. We'll have to consume all input, nut
+        //      just the last ResultSet (if one exists).
+//        closeResults(false);
         // SAfe No need for this. getMoreResults sets it to -1 at start, anyway
 //        updateCount = -2;
 
@@ -225,8 +227,11 @@ public class PreparedStatement_base
             ParameterListItem[] actualParameterList )
              throws SQLException
     {
+        // SAfe This is where all outstanding results must be skipped, to make
+        //      sure they don't interfere with the the current ones.
+        skipToEnd();
+
         boolean result;
-        boolean wasCanceled = false;
 
         try {
             SQLException exception = null;
@@ -242,15 +247,14 @@ public class PreparedStatement_base
             result = getMoreResults(tds, true);
         }
         catch ( TdsException e ) {
-            e.printStackTrace();
-            throw new SQLException( e.getMessage() );
+            throw new SQLException( e.toString() );
+        }
+        catch ( java.io.IOException e ) {
+            throw new SQLException( e.toString() );
         }
         finally {
             tds.comm.packetType = 0;
         }
-
-        if( wasCanceled )
-            throw new SQLException( "Query was canceled or timed out." );
 
         return result;
     }
@@ -285,12 +289,16 @@ public class PreparedStatement_base
      */
     public java.sql.ResultSet executeQuery() throws SQLException
     {
-        closeResults(false);
+//        closeResults(false);
 
         Tds tds = getTds( rawQueryString );
 
         if( !execute(tds) )
+        {
+            skipToEnd();
+            releaseTds();
             throw new SQLException( "Was expecting a result set" );
+        }
 
         return results;
     }
@@ -307,7 +315,7 @@ public class PreparedStatement_base
      */
     public int executeUpdate() throws SQLException
     {
-        closeResults(false);
+//        closeResults(false);
 
         Tds tds = getTds( "UPDATE " );
         if ( execute( tds ) ) {
@@ -867,56 +875,6 @@ public class PreparedStatement_base
         throw new SQLException( "Not implemented" );
     }
 
-
-
-    public static void main( String args[] )
-             throws java.lang.ClassNotFoundException,
-            java.lang.IllegalAccessException,
-            java.lang.InstantiationException,
-            SQLException
-    {
-
-        java.sql.PreparedStatement stmt;
-        String query = null;
-        String url = url = ""
-                 + "jdbc:freetds:"
-                 + "//"
-                 + "kap"
-                 + "/"
-                 + "pubs";
-
-        Class.forName( "com.internetcds.jdbc.tds.Driver" ).newInstance();
-        java.sql.Connection connection;
-        connection = DriverManager.getConnection( url,
-                "testuser",
-                "password" );
-
-        stmt = connection.prepareStatement(
-                ""
-                 + "select price, title_id, title, price*ytd_sales gross from titles"
-                 + " where title like ?" );
-        stmt.setString( 1, "The%" );
-        java.sql.ResultSet rs = stmt.executeQuery();
-
-        while ( rs.next() ) {
-            float price = rs.getFloat( "price" );
-            if ( rs.wasNull() ) {
-                System.out.println( "price:  null" );
-            }
-            else {
-                System.out.println( "price:  " + price );
-            }
-
-            String title_id = rs.getString( "title_id" );
-            String title = rs.getString( "title" );
-            float gross = rs.getFloat( "gross" );
-
-            System.out.println( "id:     " + title_id );
-            System.out.println( "name:   " + title );
-            System.out.println( "gross:  " + gross );
-            System.out.println( "" );
-        }
-    }
 
     //--------------------------JDBC 2.0-----------------------------
 

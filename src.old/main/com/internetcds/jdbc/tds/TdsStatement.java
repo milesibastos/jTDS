@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.24 2002-09-16 11:13:44 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.25 2002-09-18 16:27:09 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.24 2002-09-16 11:13:44 alin_sinpalean Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.25 2002-09-18 16:27:09 alin_sinpalean Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -192,6 +192,10 @@ public class TdsStatement implements java.sql.Statement
             throw new SQLException("TDS error: " + e.getMessage());
         }
 
+        // SAfe We must do this to ensure we throw SQLExceptions on timed out
+        //      statements
+        warningChain.checkForExceptions();
+
         return getMoreResults(tds, true);
     }
 
@@ -252,7 +256,38 @@ public class TdsStatement implements java.sql.Statement
     protected synchronized void skipToEnd() throws java.sql.SQLException
     {
         if( actTds != null )
-             while( getMoreResults(actTds, false) || updateCount!=-1 );
+        {
+            // SAfe This is the only place we should send a CANCEL packet
+            //      ourselves. We can't do that in Tds.discardResultSet because
+            //      we could cancel other results when what we want is to only
+            //      close the ResultSet in order to get the other results.
+
+            // SAfe On a second thought, we'd better not cancel the execution.
+            //      Someone could run a big update script and not process all
+            //      the results, thinking that as long as there were no
+            //      exceptions, all went right, but we would cancel the script.
+            //      Anyway, this was a good test for the cancel mechanism. :o)
+//            try
+//            {
+//                if( actTds.moreResults() )
+//                    actTds.cancel();
+//            }
+//            catch( java.io.IOException ex )
+//            {
+//                throw new SQLException(ex.toString());
+//            }
+//            catch( TdsException ex )
+//            {
+//                throw new SQLException(ex.toString());
+//            }
+
+            // SAfe And now, keep consuming data and hope the server cancels
+            //      this as soon as possible (I'm not so sure, however, that
+            //      this will happen; I think that even if the data amount is
+            //      huge, the server sends it as soon as possible so the cancel
+            //      could come too late; or not?)
+            while( getMoreResults(actTds, false) || updateCount!=-1 );
+        }
     }
 
     /**
@@ -396,13 +431,14 @@ public class TdsStatement implements java.sql.Statement
     *
     * @exception SQLException
     */
-    public synchronized void cancel() throws SQLException
+    public void cancel() throws SQLException
     {
         checkClosed();
 
         try
         {
-            actTds.cancel();
+            if( actTds != null )
+                actTds.cancel();
         }
         catch(com.internetcds.jdbc.tds.TdsException e)
         {

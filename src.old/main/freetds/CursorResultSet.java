@@ -72,8 +72,7 @@ public class CursorResultSet extends AbstractResultSet {
      * Load a context so that we can return a metaData before
      * the first call of next().
      */
-    private void loadContext()
-    throws SQLException
+    private void loadContext() throws SQLException
     {
         if ( current == null ) {
             internalFetch( "FETCH NEXT FROM " + cursorName );
@@ -188,12 +187,13 @@ public class CursorResultSet extends AbstractResultSet {
     public void close()
              throws SQLException
     {
-
-        if (open) {
-            stmt.execute("CLOSE " + cursorName);
-            stmt.execute("DEALLOCATE " + cursorName);
-            open = false;
-        }
+        if (open)
+            synchronized( stmt )
+            {
+                stmt.execute("CLOSE " + cursorName);
+                stmt.execute("DEALLOCATE " + cursorName);
+                open = false;
+            }
 
         stmt = null;
     }
@@ -223,23 +223,29 @@ public class CursorResultSet extends AbstractResultSet {
     private boolean internalFetch( String sql )
         throws SQLException
     {
-        if( !stmt.internalExecute(sql) )
-            throw new SQLException("No ResultSet was produced.");
+        TdsResultSet rs = null;
 
-        TdsResultSet rs = (TdsResultSet)stmt.getResultSet();
+        synchronized( stmt )
+        {
+            if( !stmt.internalExecute(sql) )
+                throw new SQLException("No ResultSet was produced.");
 
-        // Moved here from loadContext -- if the query didn't return any
-        //                                results, loadContext crashed
-        if( context == null )
-            context = rs.getContext();
+            rs = (TdsResultSet)stmt.getResultSet();
+
+            // Moved here from loadContext -- if the query didn't return any
+            //                                results, loadContext crashed
+            if( context == null )
+                context = rs.getContext();
+
+            current = rs.fetchNextRow();
+            warnings = rs.getWarnings();
+            rs.close();
+        }
 
         // Hide rowstat column.
         context.getColumnInfo().setFakeColumnCount(
             context.getColumnInfo().realColumnCount() - 1);
 
-        current = rs.fetchNextRow();
-        warnings = rs.getWarnings();
-        rs.close();
         return current != null;
     }
 
@@ -327,8 +333,7 @@ public class CursorResultSet extends AbstractResultSet {
         return getRowStat() == SQL_ROW_UPDATED;
     }
 
-    private int getRowStat()
-    throws SQLException
+    private int getRowStat() throws SQLException
     {
         return (int)current.getLong(
             getContext().getColumnInfo().realColumnCount());
@@ -397,8 +402,17 @@ public class CursorResultSet extends AbstractResultSet {
         }
 
         query.append("FOR ").append(sql);
-        stmt.execute(query.toString());
-        stmt.execute("OPEN " + cursorName);
+
+        // SAfe We have to synchronize this, in order to avoid mixing up our
+        //      actions with another CursorResultSet's and eating up its
+        //      results. Dirty fix, doesn't take into account that there might
+        //      be regular TdsResultSets executing on the Statement at the same
+        //      time.
+        synchronized( stmt )
+        {
+            stmt.execute(query.toString());
+            stmt.execute("OPEN " + cursorName);
+        }
         open = true;
     }
 

@@ -58,7 +58,7 @@ import java.sql.*;
  *@author     Craig Spannring
  *@author     The FreeTDS project
  *@created    17 March 2001
- *@version    $Id: DatabaseMetaData.java,v 1.17 2002-09-13 00:17:10 alin_sinpalean Exp $
+ *@version    $Id: DatabaseMetaData.java,v 1.18 2002-09-18 16:27:04 alin_sinpalean Exp $
  */
 public class DatabaseMetaData implements java.sql.DatabaseMetaData
 {
@@ -86,7 +86,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     /**
      * CVS version of the file.
      */
-    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.17 2002-09-13 00:17:10 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: DatabaseMetaData.java,v 1.18 2002-09-18 16:27:04 alin_sinpalean Exp $";
 
 
     public DatabaseMetaData(
@@ -3288,25 +3288,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
         return false;
     }
 
-
-    /*
-    private void debugPrintln( String s )
-    {
-        if ( verbose ) {
-            System.out.println( s );
-        }
-    }
-
-
-    private void debugPrint( String s )
-    {
-        if ( verbose ) {
-            System.out.print( s );
-        }
-    }
-     */
-
-
     protected void NotImplemented() throws SQLException
     {
         SQLException ex = new SQLException( "Not implemented" );
@@ -3325,153 +3306,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
                 Boolean.FALSE : Boolean.TRUE;
             s.close();
         }
-    }
-
-    public static void main( String args[] )
-             throws java.lang.ClassNotFoundException,
-            java.sql.SQLException,
-            java.lang.IllegalAccessException,
-            java.lang.InstantiationException
-    {
-        String url = "jdbc:freetds://kap/jdbctest";
-        String user = "testuser";
-        String password = "password";
-
-        Class.forName( "com.internetcds.jdbc.tds.Driver" ).newInstance();
-        java.sql.Connection cx = DriverManager.getConnection( url, user, password );
-        java.sql.DatabaseMetaData m = cx.getMetaData();
-        java.sql.ResultSet rs;
-
-        System.out.println( "Connected to " + url + " as " + user );
-
-        System.out.println( "url is " + m.getURL() );
-        System.out.println( "username is " + m.getUserName() );
-
-        System.out.println( m.getDriverName() );
-
-        System.out.println( "Getting columns" );
-//      rs = m.getColumns(null, "%", "%", "%");
-rs = m.getColumns("webstats", "%", "%", "%");
-        System.out.println( "Got columns" );
-        while ( rs.next() ) {
-            System.out.println(
-                    "TABLE_CAT:         " + rs.getString( "TABLE_CAT" ) + "\n" +
-                    "TABLE_SCHEM:       " + rs.getString( "TABLE_SCHEM" ) + "\n" +
-                    "TABLE_NAME:        " + rs.getString( "TABLE_NAME" ) + "\n" +
-                    "COLUMN_NAME:       " + rs.getString( "COLUMN_NAME" ) + "\n" +
-                    "DATA_TYPE:         " + rs.getString( "DATA_TYPE" ) + "\n" +
-                    "TYPE_NAME:         " + rs.getString( "TYPE_NAME" ) + "\n" +
-                    "COLUMN_SIZE:       " + rs.getString( "COLUMN_SIZE" ) + "\n" +
-                    "BUFFER_LENGTH:     " + rs.getString( "BUFFER_LENGTH" ) + "\n" +
-                    "DECIMAL_DIGITS:    " + rs.getString( "DECIMAL_DIGITS" ) + "\n" +
-                    "NUM_PREC_RADIX:    " + rs.getString( "NUM_PREC_RADIX" ) + "\n" +
-                    "NULLABLE:          " + rs.getString( "NULLABLE" ) + "\n" +
-                    "REMARKS:           " + rs.getString( "REMARKS" ) + "\n" +
-                    "COLUMN_DEF:        " + rs.getString( "COLUMN_DEF" ) + "\n" +
-                    "SQL_DATA_TYPE:     " + rs.getString( "SQL_DATA_TYPE" ) + "\n" +
-                    "SQL_DATETIME_SUB:  " + rs.getString( "SQL_DATETIME_SUB" ) + "\n" +
-                    "CHAR_OCTET_LENGTH: " + rs.getString( "CHAR_OCTET_LENGTH" ) + "\n" +
-                    "ORDINAL_POSITION:  " + rs.getString( "ORDINAL_POSITION" ) + "\n" +
-                    "IS_NULLABLE:       " + rs.getString( "IS_NULLABLE" ) + "\n" +
-                    "\n" );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Catalog term- " + m.getCatalogTerm() );
-        System.out.println( "Catalog separator- " + m.getCatalogSeparator() );
-        System.out.println( "Catalog is "
-                 + ( m.isCatalogAtStart() ? "" : "not " )
-                 + "at start" );
-        System.out.println( "Catalogs-" );
-        rs = m.getCatalogs();
-        while ( rs.next() ) {
-            System.out.println( "  " + rs.getString( 1 ) );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Schema term- " + m.getSchemaTerm() );
-        rs = m.getSchemas();
-        while ( rs.next() ) {
-            System.out.println( "  " + rs.getString( 1 ) );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Table types-" );
-        rs = m.getTableTypes();
-        while ( rs.next() ) {
-            System.out.println( "  " + rs.getString( 1 ) );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Tables- " );
-        rs = m.getTables( null, "%", "%", null );
-        while ( rs.next() ) {
-            System.out.println( "  " +
-                    rs.getString( 1 ) +
-                    "." +
-                    rs.getString( 2 ) +
-                    "." +
-                    rs.getString( 3 ) +
-                    "." +
-                    rs.getString( 4 ) +
-                    "." +
-                    rs.getString( 5 ) +
-                    "" );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Tables for pubs- " );
-        String tables[] = {"SYSTEM TABLE", "VIEW"};
-        rs = m.getTables( "pubs", "%", "%", tables );
-        while ( rs.next() ) {
-            System.out.println( "  " +
-                    rs.getString( 1 ) +
-                    "." +
-                    rs.getString( 2 ) +
-                    "." +
-                    rs.getString( 3 ) +
-                    "." +
-                    rs.getString( 4 ) +
-                    "." +
-                    rs.getString( 5 ) +
-                    "" );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Columns- " );
-        rs = m.getColumns( null, "%", "%", "%" );
-        while ( rs.next() ) {
-            System.out.println(
-                    "TABLE_CAT:         " + rs.getString( "TABLE_CAT" ) + "\n" +
-                    "TABLE_SCHEM:       " + rs.getString( "TABLE_SCHEM" ) + "\n" +
-                    "TABLE_NAME:        " + rs.getString( "TABLE_NAME" ) + "\n" +
-                    "COLUMN_NAME:       " + rs.getString( "COLUMN_NAME" ) + "\n" +
-                    "DATA_TYPE:         " + rs.getString( "DATA_TYPE" ) + "\n" +
-                    "TYPE_NAME:         " + rs.getString( "TYPE_NAME" ) + "\n" +
-                    "COLUMN_SIZE:       " + rs.getString( "COLUMN_SIZE" ) + "\n" +
-                    "BUFFER_LENGTH:     " + rs.getString( "BUFFER_LENGTH" ) + "\n" +
-                    "DECIMAL_DIGITS:    " + rs.getString( "DECIMAL_DIGITS" ) + "\n" +
-                    "NUM_PREC_RADIX:    " + rs.getString( "NUM_PREC_RADIX" ) + "\n" +
-                    "NULLABLE:          " + rs.getString( "NULLABLE" ) + "\n" +
-                    "REMARKS:           " + rs.getString( "REMARKS" ) + "\n" +
-                    "COLUMN_DEF:        " + rs.getString( "COLUMN_DEF" ) + "\n" +
-                    "SQL_DATA_TYPE:     " + rs.getString( "SQL_DATA_TYPE" ) + "\n" +
-                    "SQL_DATETIME_SUB:  " + rs.getString( "SQL_DATETIME_SUB" ) + "\n" +
-                    "CHAR_OCTET_LENGTH: " + rs.getString( "CHAR_OCTET_LENGTH" ) + "\n" +
-                    "ORDINAL_POSITION:  " + rs.getString( "ORDINAL_POSITION" ) + "\n" +
-                    "IS_NULLABLE:       " + rs.getString( "IS_NULLABLE" ) + "\n" +
-                    "\n" );
-        }
-        System.out.println( "\n" );
-        rs.close();
-
-        System.out.println( "Done" );
     }
 
     public java.sql.ResultSet getAttributes(String str, String str1, String str2, String str3) throws java.sql.SQLException

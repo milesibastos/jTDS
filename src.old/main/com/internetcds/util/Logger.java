@@ -39,12 +39,12 @@ import java.io.*;
 /**
  * This class will log messages into a file.
  *
- * @version $Id: Logger.java,v 1.4 2002-09-16 11:13:44 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.5 2002-09-18 16:27:11 alin_sinpalean Exp $
  * @author Craig Spannring
  */
 public class Logger
 {
-   public static final String cvsVersion = "$Id: Logger.java,v 1.4 2002-09-16 11:13:44 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: Logger.java,v 1.5 2002-09-18 16:27:11 alin_sinpalean Exp $";
 
    private static String       filename = "log.out";
    private static boolean      active   = false;
@@ -61,7 +61,7 @@ public class Logger
     * call this routine.  It doesn't hurt anything if this is called
     * multiple times.
     */
-   synchronized private static void init()
+   private static void init()
    {
       // check to see if the file is already open
       if( out == null )
@@ -91,7 +91,12 @@ public class Logger
     */
    synchronized public static void setActive(boolean value)
    {
-      init();
+      if( value )
+         init();
+      else
+         if( out != null )
+            out.close();
+
       active = value;
    }
 
@@ -114,7 +119,12 @@ public class Logger
     */
    public synchronized static void setFilename(String value)
    {
-      filename = value;
+      if( filename != value )
+      {
+         filename = value;
+         if( out != null )
+            out.close();
+      }
    }
 
    /**

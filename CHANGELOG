@@ -1,6 +1,44 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/18/2002 - Alin Sinpalean
+
+ o Lots of changes and improvements here! All of them were done until yesterday
+   but unfortunately I could not commit them last night so I'm going to do it
+   now. I'll also try to do a list of changes, as exact as possible. Here goes.
+ o Removed the main methods from all non-test classes that had one. They were
+   doing some testing, unfortunately I don't have the database structure on
+   which they worked and there are a lot of other tests, so I decided to just
+   wipe them out. And, another thing: they were unnecessarily adding to the
+   size of the .jar file.
+ o Made the cancel mechanism work. I have no idea if it ever worked (or if it
+   did, if it ever worked right) but it sure doesn't seem so. This means
+   changes to CancelController (only one cancel request can be outstanding at a
+   time, no more waiting for the cancel ack), TdsComm (no longer eating up
+   input by simply ignoring it), Tds (processing of any outstanding cancel when
+   executing a query or procedure, throwing an exception when a query times
+   out), Prepared_Statement (this was the only point where data was left for
+   Tds to ignore instead of being processed, so I fixed that by calling
+   skipToEnd before each procedure call), TdsStatement (check for exceptions
+   after each execution to see if it wasn't cancelled, cancel() is no longer
+   synchronized -- this actually prevented it from working).
+ o TdsComm had a static counter for instances for debugging purposes, but each
+   instance used that counter as id instead of having its own member to record
+   the value of the counter at the time of its creation. Fixed.
+ o Changes to Logger in order to close output streams when no longer using
+   them. (Maybe this is not as smart as I thought it would be, I'm not sure
+   what happens if we close System.out.)
+ o Synchronized calls to execute methods from CursorResultSet as this was a
+   pretty subtle source of errors: when a CursorResultSet was finalized it ate
+   all outstanding results on the Statement, which meant trouble for any other
+   concurrent ResultSets. By synchronizing these calls, CursorResultSets will
+   not interfere with each others results, but they will still interfere with
+   any TdsResultSets (however this is not such a big problem, since the
+   probability of having both scrollable and non-scrollable on the same
+   Statement is quite low).
+ o Added a test in SAfeTest for the cancel mechanism and it seems to work just
+   fine. :o)
+
 09/16/2002 - Alin Sinpalean
 
  o Even bigger clean-up of most of the base classes: TdsStatement,

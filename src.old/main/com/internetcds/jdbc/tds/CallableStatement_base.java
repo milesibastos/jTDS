@@ -74,7 +74,7 @@ import java.util.Calendar;
 public class CallableStatement_base
          extends com.internetcds.jdbc.tds.PreparedStatement_base
          implements java.sql.CallableStatement {
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.12 2002-09-16 11:13:43 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.13 2002-09-18 16:27:01 alin_sinpalean Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -663,53 +663,6 @@ public class CallableStatement_base
              throws SQLException
     {
         NotImplemented();
-    }
-
-
-
-    public static void main( String args[] )
-             throws java.lang.ClassNotFoundException,
-            java.lang.IllegalAccessException,
-            java.lang.InstantiationException
-    {
-        try {
-            String url = url = ""
-                     + "jdbc:freetds:"
-                     + "//"
-                     + "kap"
-                     + "/"
-                     + "pubs";
-
-            Class.forName( "com.internetcds.jdbc.tds.Driver" ).newInstance();
-            java.sql.Connection connection;
-            connection = DriverManager.getConnection( url,
-                    "testuser",
-                    "password" );
-
-            java.sql.CallableStatement call = connection.prepareCall(
-                    "sp_tables ?" );
-            call.setString( 1, "%" );
-            java.sql.ResultSet rs = call.executeQuery();
-
-            while ( rs.next() ) {
-                String qualifier = rs.getString( "TABLE_QUALIFIER" );
-                String owner = rs.getString( "TABLE_OWNER" );
-                String name = rs.getString( "TABLE_NAME" );
-                String type = rs.getString( "TABLE_TYPE" );
-                String remarks = rs.getString( "REMARKS" );
-
-                System.out.println( "qualifier: " + qualifier );
-                System.out.println( "owner:     " + owner );
-                System.out.println( "name:      " + name );
-                System.out.println( "type:      " + type );
-                System.out.println( "remarks:   " + remarks );
-                System.out.println( "" );
-            }
-        }
-        catch ( SQLException e ) {
-            e.printStackTrace();
-            System.out.println( e.getMessage() );
-        }
     }
 
 

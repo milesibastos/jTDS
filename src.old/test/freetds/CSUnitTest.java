@@ -19,10 +19,10 @@ import java.lang.reflect.*;
  * @version
  */
 public class CSUnitTest extends DatabaseTestCase {
-  
+
   public CSUnitTest(String name) {
     super(name);
-    if (output == null) 
+    if (output == null)
       try {
         output = new PrintStream(new FileOutputStream("nul"));
       }
@@ -30,9 +30,9 @@ public class CSUnitTest extends DatabaseTestCase {
         throw new RuntimeException("could not create device nul");
       }
   }
-  
+
   static PrintStream output = null;
-  
+
   public static void main(String args[]) {
     try {
       Logger.setActive(true);
@@ -52,17 +52,17 @@ public class CSUnitTest extends DatabaseTestCase {
       junit.textui.TestRunner.run(CSUnitTest.class);
     }
   }
-  
-  
+
+
   public void testMaxRows0003() throws Exception {
-    dropTable("t0003");
+    dropTable("#t0003");
     Statement stmt = con.createStatement();
-    
-    int count = stmt.executeUpdate("create table t0003              "
+
+    int count = stmt.executeUpdate("create table #t0003              "
     + "  (i  integer not null)       ");
     PreparedStatement  pStmt = con.prepareStatement(
-    "insert into t0003 values (?)");
-    
+    "insert into #t0003 values (?)");
+
     final int rowsToAdd = 100;
     count = 0;
     for(int i=1; i<=rowsToAdd; i++) {
@@ -71,10 +71,10 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     assertTrue("count: " + count + " rowsToAdd: " + rowsToAdd,count == rowsToAdd);
     pStmt = con.prepareStatement(
-    "select i from t0003 order by i");
+    "select i from #t0003 order by i");
     int   rowLimit = 32;
     pStmt.setMaxRows(rowLimit);
-    
+
     assertTrue(pStmt.getMaxRows() == rowLimit);
     ResultSet  rs = pStmt.executeQuery();
     count = 0;
@@ -84,14 +84,14 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     assertTrue(count == rowLimit);
   }
-  
-  
-  
+
+
+
   public void testGetAsciiStream0018() throws Exception {
     int         count    = 0;
     Statement   stmt     = con.createStatement();
     ResultSet   rs;
-    
+
     String bigtext1 =
     "abcdefghijklmnop" +
     "abcdefghijklmnop" +
@@ -190,9 +190,9 @@ public class CSUnitTest extends DatabaseTestCase {
     "fedcba9876543210" +
     "fedcba9876543210" +
     "";
-    dropTable("t0018");
+    dropTable("#t0018");
     String sql =
-    "create table t0018 (                                  " +
+    "create table #t0018 (                                  " +
     " mybinary                   binary(5) not null,       " +
     " myvarbinary                varbinary(4) not null,    " +
     " mychar                     char(10) not null,        " +
@@ -205,11 +205,11 @@ public class CSUnitTest extends DatabaseTestCase {
     " mynullvarchar              varchar(40) null,         " +
     " mynulltext                 text null,                " +
     " mynullimage                image null)               ";
-    
+
     count = stmt.executeUpdate(sql);
     // Insert a row without nulls via a Statement
     sql =
-    "insert into t0018(       " +
+    "insert into #t0018(       " +
     " mybinary,               " +
     " myvarbinary,            " +
     " mychar,                 " +
@@ -237,11 +237,11 @@ public class CSUnitTest extends DatabaseTestCase {
     " null,                   " +  // mynulltext
     " null                    " +  // mynullimage
     ")";
-    
-    
+
+
     count = stmt.executeUpdate(sql);
-    
-    sql = "select * from t0018";
+
+    sql = "select * from #t0018";
     rs = stmt.executeQuery(sql);
     if (!rs.next()) {
       assertTrue("should get Result",false);
@@ -262,8 +262,8 @@ public class CSUnitTest extends DatabaseTestCase {
       output.println("mynullimage is " + rs.getObject("mynullimage"));
     }
   }
-  
-  
+
+
   public void testMoneyHandling0019() throws Exception {
     java.sql.Statement  stmt   = null;
     BigDecimal          tmp1   = null;
@@ -283,98 +283,98 @@ public class CSUnitTest extends DatabaseTestCase {
       new BigDecimal("0.00"),
       new BigDecimal("-1.00")
     };
-    
+
     if (smallmoney.length != money.length) {
       throw new SQLException("Must have same number of elements in " +
       "money and smallmoney");
     }
-    
+
     stmt = con.createStatement();
-    
-    dropTable("t0019");
-    
-    
-    stmt.executeUpdate("create table t0019 (                     " +
+
+    dropTable("#t0019");
+
+
+    stmt.executeUpdate("create table #t0019 (                     " +
     "  i               integer primary key,   " +
     "  mymoney         money not null,        " +
     "  mysmallmoney    smallmoney not null)   " +
     "");
-    
+
     for(i=0; i<money.length; i++) {
-      stmt.executeUpdate("insert into t0019 values (" +
+      stmt.executeUpdate("insert into #t0019 values (" +
       i + ", " + money[i] + ",   " +
       smallmoney[i] + ")         ");
     }
-    
-    
+
+
     // long l = System.currentTimeMillis();
     // while (l + 500 > System.currentTimeMillis()) ;
-    ResultSet rs = stmt.executeQuery("select * from t0019 order by i");
-    
+    ResultSet rs = stmt.executeQuery("select * from #t0019 order by i");
+
     for(i=0; rs.next(); i++) {
       BigDecimal  m;
       BigDecimal  sm;
-      
+
       m = (BigDecimal)rs.getObject("mymoney");
       sm = (BigDecimal)rs.getObject("mysmallmoney");
-      
+
       money[i].setScale(2, BigDecimal.ROUND_DOWN);
       smallmoney[i].setScale(2, BigDecimal.ROUND_DOWN);
-      
+
       assertTrue(m.equals(money[i].setScale(2, BigDecimal.ROUND_DOWN)));
       assertTrue(sm.equals(smallmoney[i].setScale(2, BigDecimal.ROUND_DOWN)));
-      
+
       output.println(m + ", " + sm);
     }
   }
-  
+
   /*
   public void testBooleanAndCompute0026() throws Exception {
     Statement   stmt = con.createStatement();
-    dropTable("t0026");
-    int count = stmt.executeUpdate("create table t0026             " +
+    dropTable("#t0026");
+    int count = stmt.executeUpdate("create table #t0026             " +
     "  (i      integer,             " +
     "   b      bit,                 " +
     "   s      char(5),             " +
     "   f      float)               ");
     output.println("Creating table affected " + count + " rows");
-    
-    stmt.executeUpdate("insert into t0026 values(0, 0, 'false', 0.0)");
-    stmt.executeUpdate("insert into t0026 values(0, 0, 'N', 10)");
-    stmt.executeUpdate("insert into t0026 values(1, 1, 'true', 7.0)");
-    stmt.executeUpdate("insert into t0026 values(2, 1, 'Y', -5.0)");
-    
+
+    stmt.executeUpdate("insert into #t0026 values(0, 0, 'false', 0.0)");
+    stmt.executeUpdate("insert into #t0026 values(0, 0, 'N', 10)");
+    stmt.executeUpdate("insert into #t0026 values(1, 1, 'true', 7.0)");
+    stmt.executeUpdate("insert into #t0026 values(2, 1, 'Y', -5.0)");
+
     ResultSet  rs = stmt.executeQuery(
-    "select * from t0026 order by i compute sum(f) by i");
-    
+    "select * from #t0026 order by i compute sum(f) by i");
+
     assertTrue(rs.next());
-    
+
     assertTrue(!(rs.getBoolean("i")
     || rs.getBoolean("b")
     || rs.getBoolean("s")
     || rs.getBoolean("f")));
-    
+
     assertTrue(rs.next());
-    
+
     assertTrue(!(rs.getBoolean("i")
     || rs.getBoolean("b")
     || rs.getBoolean("s")
     || rs.getBoolean("f")));
     assertTrue(rs.next());
-    
+
     assertTrue(rs.getBoolean("i")
     && rs.getBoolean("b")
     && rs.getBoolean("s")
     && rs.getBoolean("f"));
     assertTrue(rs.next());
-    
+
     assertTrue(rs.getBoolean("i")
     && rs.getBoolean("b")
     && rs.getBoolean("s")
     && rs.getBoolean("f"));
-    
+
     ResultSet  rs = stmt.executeQuery(
-       "select * from t0026 order by i compute sum(f) by i");
+       "select * from #t0026 order by i compute sum(f) by i");
 
 
 
@@ -423,14 +423,14 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testDataTypes0027() throws Exception {
     output.println("Test all the SQLServer datatypes in Statement\n"
     + "and PreparedStatement using the preferred getXXX()\n"
-    + "instead of getObject like t0017.java does.");
+    + "instead of getObject like #t0017.java does.");
     output.println("!!!Note- This test is not fully implemented yet!!!");
     Statement   stmt = con.createStatement();
     ResultSet   rs;
     stmt.execute("set dateformat ymd");
-    dropTable("t0027");
+    dropTable("#t0027");
     String sql =
-    "create table t0027 (                                  " +
+    "create table #t0027 (                                  " +
     " mybinary                   binary(5) not null,       " +
     " myvarbinary                varbinary(4) not null,    " +
     " mychar                     char(10) not null,        " +
@@ -469,13 +469,13 @@ public class CSUnitTest extends DatabaseTestCase {
     " mynullsmallmoney           smallmoney null,          " +
     " mynulltext                 text null,                " +
     " mynullimage                image null)               ";
-    
+
     int count = stmt.executeUpdate(sql);
-    
-    
+
+
     // Insert a row without nulls via a Statement
     sql =
-    "insert into t0027               " +
+    "insert into #t0027               " +
     "  (mybinary,                    " +
     "   myvarbinary,                 " +
     "   mychar,                      " +
@@ -554,10 +554,10 @@ public class CSUnitTest extends DatabaseTestCase {
     "     '1234',                    " + //   mynulltext
     "     0x1200340056)              " + //   mynullimage)
     "";
-    
+
     count = stmt.executeUpdate(sql);
-    
-    sql = "select * from t0027";
+
+    sql = "select * from #t0027";
     rs = stmt.executeQuery(sql);
     assertTrue(rs.next());
     output.println("mybinary is " + rs.getObject("mybinary"));
@@ -602,25 +602,25 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testCallStoredProcedures0028() throws Exception {
     Statement   stmt = con.createStatement();
     ResultSet   rs       = null;
-    
+
     boolean isResultSet;
     int updateCount;
-    
+
     int resultSetCount=0;
     int rowCount=0;
     int numberOfUpdates=0;
-    
-    
+
+
     isResultSet = stmt.execute("EXEC sp_who");
     output.println("execute(EXEC sp_who) returned: " + isResultSet);
-    
+
     updateCount=stmt.getUpdateCount();
-    
+
     while (isResultSet || (updateCount!=-1)) {
       if (isResultSet) {
         resultSetCount++;
         rs = stmt.getResultSet();
-        
+
         ResultSetMetaData rsMeta =  rs.getMetaData();
         int columnCount = rsMeta.getColumnCount();
         output.println("columnCount: " +
@@ -629,7 +629,7 @@ public class CSUnitTest extends DatabaseTestCase {
           output.println(Integer.toString(n) + ": " +
           rsMeta.getColumnName(n));
         }
-        
+
         while(rs.next()) {
           rowCount++;
           for(int n=1; n<= columnCount; n++) {
@@ -637,7 +637,7 @@ public class CSUnitTest extends DatabaseTestCase {
             rs.getString(n));
           }
         }
-        
+
       }
       else {
         numberOfUpdates += updateCount;
@@ -647,12 +647,12 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet=stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     }
-    
+
     output.println("resultSetCount: " + resultSetCount);
     output.println("Total rowCount: " + rowCount);
     output.println("Number of updates: " + numberOfUpdates);
-    
-    
+
+
     assertTrue((rowCount>=1) && (numberOfUpdates==0) && (resultSetCount==1));
   }
   public void testxx0029() throws Exception {
@@ -661,19 +661,19 @@ public class CSUnitTest extends DatabaseTestCase {
     int         j;
     int         count    = 0;
     ResultSet   rs       = null;
-    
+
     boolean isResultSet;
     int updateCount;
-    
+
     int resultSetCount=0;
     int rowCount=0;
     int numberOfUpdates=0;
-    
-    
+
+
     output.println("before execute DROP PROCEDURE");
-    
+
     try {
-      isResultSet =stmt.execute("DROP PROCEDURE t0029_p1");
+      isResultSet =stmt.execute("DROP PROCEDURE #t0029_p1");
       updateCount = stmt.getUpdateCount();
       do {
         output.println("DROP PROCEDURE isResultSet: " + isResultSet);
@@ -684,9 +684,9 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     catch(SQLException e) {
     }
-    
+
     try {
-      isResultSet =stmt.execute("DROP PROCEDURE t0029_p2");
+      isResultSet =stmt.execute("DROP PROCEDURE #t0029_p2");
       updateCount = stmt.getUpdateCount();
       do {
         output.println("DROP PROCEDURE isResultSet: " + isResultSet);
@@ -697,13 +697,13 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     catch(SQLException e) {
     }
-    
-    
-    dropTable("t0029_t1");
-    
+
+
+    dropTable("#t0029_t1");
+
     isResultSet =
     stmt.execute(
-    " create table t0029_t1                       " +
+    " create table #t0029_t1                       " +
     "  (t1 datetime not null,                     " +
     "   t2 datetime null,                         " +
     "   t3 smalldatetime not null,                " +
@@ -716,33 +716,33 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet = stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     } while (((updateCount!=-1) && !isResultSet) || isResultSet);
-    
-    
+
+
     isResultSet =
     stmt.execute(
-    "CREATE PROCEDURE t0029_p1                    " +
+    "CREATE PROCEDURE #t0029_p1                    " +
     "AS                                           " +
     "                                             " +
     "                                             " +
-    " insert into t0029_t1 values                " +
+    " insert into #t0029_t1 values                " +
     " ('1999-01-07', '1998-09-09 15:35:05',       " +
     " getdate(), '1998-09-09 15:35:00', null)     " +
     "                                             " +
-    " update t0029_t1 set t1='1999-01-01'         " +
+    " update #t0029_t1 set t1='1999-01-01'         " +
     "                                             " +
-    " insert into t0029_t1 values                 " +
+    " insert into #t0029_t1 values                 " +
     " ('1999-01-08', '1998-09-09 15:35:05',       " +
     " getdate(), '1998-09-09 15:35:00','456')     " +
     "                                             " +
-    " update t0029_t1 set t2='1999-01-02'         " +
+    " update #t0029_t1 set t2='1999-01-02'         " +
     "                                             " +
     " declare @ptr varbinary(16)                  " +
-    " select @ptr=textptr(t5) from t0029_t1       " +
+    " select @ptr=textptr(t5) from #t0029_t1       " +
     "   where t1='1999-01-08'                     " +
-    " writetext t0029_t1.t5 @ptr with log '123'   " +
+    " writetext #t0029_t1.t5 @ptr with log '123'   " +
     "                                             " +
     "                                             ");
-    
+
     updateCount = stmt.getUpdateCount();
     do {
       output.println("CREATE PROCEDURE isResultSet: " + isResultSet);
@@ -750,19 +750,19 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet = stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     } while (((updateCount!=-1) && !isResultSet) || isResultSet);
-    
-    
+
+
     isResultSet =
     stmt.execute(
-    "CREATE PROCEDURE t0029_p2                    " +
+    "CREATE PROCEDURE #t0029_p2                    " +
     "AS           " +
-    " set nocount on " + 
-    " EXEC t0029_p1                               " +
-    " SELECT * FROM t0029_t1                      " +
+    " set nocount on " +
+    " EXEC #t0029_p1                               " +
+    " SELECT * FROM #t0029_t1                      " +
     "                                             " +
     "                                             " +
     "                                             ");
-    
+
     updateCount = stmt.getUpdateCount();
     do {
       output.println("CREATE PROCEDURE isResultSet: " + isResultSet);
@@ -770,19 +770,19 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet = stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     } while (((updateCount!=-1) && !isResultSet) || isResultSet);
-    
-    
-    isResultSet = stmt.execute( "EXEC  t0029_p2  ");
-    
-    output.println("execute(EXEC t0029_p2) returned: " + isResultSet);
-    
+
+
+    isResultSet = stmt.execute( "EXEC  #t0029_p2  ");
+
+    output.println("execute(EXEC #t0029_p2) returned: " + isResultSet);
+
     updateCount=stmt.getUpdateCount();
-    
+
     while (isResultSet || (updateCount!=-1)) {
       if (isResultSet) {
         resultSetCount++;
         rs = stmt.getResultSet();
-        
+
         ResultSetMetaData rsMeta =  rs.getMetaData();
         int columnCount = rsMeta.getColumnCount();
         output.println("columnCount: " +
@@ -791,7 +791,7 @@ public class CSUnitTest extends DatabaseTestCase {
           output.println(Integer.toString(n) + ": " +
           rsMeta.getColumnName(n));
         }
-        
+
         while(rs.next()) {
           rowCount++;
           for(int n=1; n<= columnCount; n++) {
@@ -799,7 +799,7 @@ public class CSUnitTest extends DatabaseTestCase {
             rs.getString(n));
           }
         }
-        
+
       }
       else {
         numberOfUpdates += updateCount;
@@ -809,35 +809,35 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet=stmt.getMoreResults();
       updateCount = stmt.getUpdateCount();
     }
-    
+
     output.println("resultSetCount: " + resultSetCount);
     output.println("Total rowCount: " + rowCount);
     output.println("Number of updates: " + numberOfUpdates);
-    
-    
+
+
     assertTrue((resultSetCount==1) &&
     (rowCount==2) &&
     (numberOfUpdates==0));
   }
-  
+
   public void testDataTypesByResultSetMetaData0030() throws Exception {
     boolean passed = true;
     Statement   stmt = con.createStatement();
     int         count    = 0;
     ResultSet   rs;
-    
-    
+
+
     String sql = ("select " +
     " convert(tinyint, 2),  " +
     " convert(smallint, 5)  ");
-    
+
     rs = stmt.executeQuery(sql);
     if (!rs.next()) {
       passed = false;
     }
     else {
       ResultSetMetaData meta = rs.getMetaData();
-      
+
       if (meta.getColumnType(1)!=java.sql.Types.TINYINT) {
         output.println("tinyint column was read as "
         + meta.getColumnType(1));
@@ -862,78 +862,78 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testTextColumns0031() throws Exception {
     Statement   stmt = con.createStatement();
     boolean   passed = true;
-    
-    
-    output.println("Starting test t0031-  test text columns");
-    
-    
+
+
+    output.println("Starting test #t0031-  test text columns");
+
+
     int         count    = 0;
-    dropTable("t0031");
-    
-    count = stmt.executeUpdate("create table t0031                " +
+    dropTable("#t0031");
+
+    count = stmt.executeUpdate("create table #t0031                " +
     "  (t_nullable      text null,     " +
     "   t_notnull       text not null, " +
     "   i               int not null)  ");
     output.println("Creating table affected " + count + " rows");
-    
-    stmt.executeUpdate("insert into t0031 values(null, '',   1)");
-    stmt.executeUpdate("insert into t0031 values(null, 'b1', 2)");
-    stmt.executeUpdate("insert into t0031 values('',   '',   3)");
-    stmt.executeUpdate("insert into t0031 values('',   'b2', 4)");
-    stmt.executeUpdate("insert into t0031 values('a1', '',   5)");
-    stmt.executeUpdate("insert into t0031 values('a2', 'b3', 6)");
-    
-    
-    ResultSet  rs = stmt.executeQuery("select * from t0031 " +
+
+    stmt.executeUpdate("insert into #t0031 values(null, '',   1)");
+    stmt.executeUpdate("insert into #t0031 values(null, 'b1', 2)");
+    stmt.executeUpdate("insert into #t0031 values('',   '',   3)");
+    stmt.executeUpdate("insert into #t0031 values('',   'b2', 4)");
+    stmt.executeUpdate("insert into #t0031 values('a1', '',   5)");
+    stmt.executeUpdate("insert into #t0031 values('a2', 'b3', 6)");
+
+
+    ResultSet  rs = stmt.executeQuery("select * from #t0031 " +
     " order by i ");
-    
-    
-    
+
+
+
     if (!rs.next()) {
       throw new SQLException("Failed");
     }
     passed = passed && (rs.getString(1) == null);
     passed = passed && (rs.getString(2).equals(""));
     passed = passed && (rs.getInt(3) == 1);
-    
+
     if (!rs.next()) {
       throw new SQLException("Failed");
     }
     passed = passed && (rs.getString(1) == null);
     passed = passed && (rs.getString(2).equals("b1"));
     passed = passed && (rs.getInt(3) == 2);
-    
+
     if (!rs.next()) {
       throw new SQLException("Failed");
     }
     passed = passed && (rs.getString(1).equals(""));
     passed = passed && (rs.getString(2).equals(""));
     passed = passed && (rs.getInt(3) == 3);
-    
+
     if (!rs.next()) {
       throw new SQLException("Failed");
     }
     passed = passed && (rs.getString(1).equals(""));
     passed = passed && (rs.getString(2).equals("b2"));
     passed = passed && (rs.getInt(3) == 4);
-    
+
     if (!rs.next()) {
       throw new SQLException("Failed");
     }
     passed = passed && (rs.getString(1).equals("a1"));
     passed = passed && (rs.getString(2).equals(""));
     passed = passed && (rs.getInt(3) == 5);
-    
+
     if (!rs.next()) {
       throw new SQLException("Failed");
     }
     passed = passed && (rs.getString(1).equals("a2"));
     passed = passed && (rs.getString(2).equals("b3"));
     passed = passed && (rs.getInt(3) == 6);
-    
+
     assertTrue(passed);
   }
-  
+
   public void testSpHelpSysUsers0032() throws Exception {
     Statement   stmt = con.createStatement();
     boolean   passed = true;
@@ -941,18 +941,18 @@ public class CSUnitTest extends DatabaseTestCase {
     boolean   done = false;
     int       i;
     int       updateCount = 0;
-    
-    
-    output.println("Starting test t0032-  test sp_help sysusers");
-    
-    
+
+
+    output.println("Starting test #t0032-  test sp_help sysusers");
+
+
     int         count    = 0;
-    
-    
+
+
     isResultSet = stmt.execute("sp_help sysusers");
-    
+
     output.println("Executed the statement.  rc is " + isResultSet);
-    
+
     do {
       if (isResultSet) {
         output.println("About to call getResultSet");
@@ -976,13 +976,13 @@ public class CSUnitTest extends DatabaseTestCase {
       isResultSet = stmt.getMoreResults();
       done = !isResultSet && updateCount==-1;
     } while (!done);
-    
+
     assertTrue(passed);
   }
   static String longString(char ch) {
     int                 i;
     String              str255 = "";
-    
+
     for(i=0; i<255; i++) {
       str255 = str255 + ch;
     }
@@ -991,8 +991,8 @@ public class CSUnitTest extends DatabaseTestCase {
   public void testExceptionByUpdate0033() throws Exception {
     boolean passed;
     Statement   stmt = con.createStatement();
-    output.println("Starting test t0033-  make sure Statement.executeUpdate() throws excpetion");
-    
+    output.println("Starting test #t0033-  make sure Statement.executeUpdate() throws excpetion");
+
     try {
       passed = false;
       stmt.executeUpdate("I am sure this is an error");
@@ -1002,39 +1002,39 @@ public class CSUnitTest extends DatabaseTestCase {
       passed = true;
     }
     assertTrue(passed);
-    
+
   }
-  
+
   public void testInsertConflict0049() throws Exception {
     Statement   stmt = con.createStatement();
-    
-    
+
+
     int         i;
     int         count    = 0;
-    dropTable("t0049b");    // important: first drop this because of foreign key
-    dropTable("t0049a");  
-    
+    dropTable("#t0049b");    // important: first drop this because of foreign key
+    dropTable("#t0049a");
+
     String query =
-    "create table t0049a(                    " +
+    "create table #t0049a(                    " +
     "  a integer identity(1,1) primary key,  " +
     "  b char    not null)";
-    
+
     count = stmt.executeUpdate(query);
     output.println("Creating table affected " + count + " rows");
-    
-    
+
+
     query =
-    "create table t0049b(                    " +
+    "create table #t0049b(                    " +
     "  a integer not null,                   " +
     "  c char    not null,                   " +
-    "  foreign key (a) references t0049a(a)) ";
+    "  foreign key (a) references #t0049a(a)) ";
     count = stmt.executeUpdate(query);
     output.println("Creating table affected " + count + " rows");
-    
-    
-    query = "insert into t0049b (a, c) values (?, ?)";
+
+
+    query = "insert into #t0049b (a, c) values (?, ?)";
     java.sql.PreparedStatement pstmt = con.prepareStatement(query);
-    
+
     try {
       pstmt.setInt(1, 1);
       pstmt.setString(2, "a");
@@ -1045,24 +1045,24 @@ public class CSUnitTest extends DatabaseTestCase {
         throw e;
       }
     }
-    
-    query = "insert into t0049a (b) values ('a')";
+
+    query = "insert into #t0049a (b) values ('a')";
     count = stmt.executeUpdate(query);
     output.println("insert affected " + count + " rows");
-    
+
     pstmt.setInt(1, 1);
     pstmt.setString(2, "a");
     count = pstmt.executeUpdate();
-    
-    
+
+
   }
-  
+
   public void testxx0050() throws Exception {
     Statement   stmt = con.createStatement();
     boolean passed = true;
     int         i;
     int         count    = 0;
-    
+
     try {
       stmt.executeUpdate("drop procedure p0050");
     }
@@ -1071,36 +1071,36 @@ public class CSUnitTest extends DatabaseTestCase {
         throw e;
       }
     }
-    dropTable("t0050b");
-    dropTable("t0050a");
-    
+    dropTable("#t0050b");
+    dropTable("#t0050a");
+
     String query =
-    "create table t0050a(                    " +
+    "create table #t0050a(                    " +
     "  a integer identity(1,1) primary key,  " +
     "  b char    not null)";
-    
+
     count = stmt.executeUpdate(query);
     output.println("Creating table affected " + count + " rows");
-    
-    
+
+
     query =
-    "create table t0050b(                    " +
+    "create table #t0050b(                    " +
     "  a integer not null,                   " +
     "  c char    not null,                   " +
-    "  foreign key (a) references t0050a(a)) ";
+    "  foreign key (a) references #t0050a(a)) ";
     count = stmt.executeUpdate(query);
     output.println("Creating table affected " + count + " rows");
-    
+
     query =
-    "create procedure p0050 (@a integer, @c char) as " +
-    "   insert into t0050b (a, c) values (@a, @c)    ";
+    "create procedure #p0050 (@a integer, @c char) as " +
+    "   insert into #t0050b (a, c) values (@a, @c)    ";
     count = stmt.executeUpdate(query);
     output.println("Creating procedure affected " + count + " rows");
-    
-    
-    query = "exec p0050 ?, ?";
+
+
+    query = "exec #p0050 ?, ?";
     java.sql.PreparedStatement pstmt = con.prepareStatement(query);
-    
+
     try {
       pstmt.setInt(1, 1);
       pstmt.setString(2, "a");
@@ -1111,28 +1111,28 @@ public class CSUnitTest extends DatabaseTestCase {
         throw e;
       }
     }
-    
-    query = "insert into t0050a (b) values ('a')";
+
+    query = "insert into #t0050a (b) values ('a')";
     count = stmt.executeUpdate(query);
     output.println("insert affected " + count + " rows");
-    
+
     pstmt.setInt(1, 1);
     pstmt.setString(2, "a");
     count = pstmt.executeUpdate();
     assertTrue(passed);
   }
-  
+
   public void testxx0051() throws Exception {
     boolean passed = true;
     int         i;
     int         count    = 0;
     Statement   stmt     = con.createStatement();
-    
+
     try {
       String           types[] = {"TABLE"};
       DatabaseMetaData dbMetaData = con.getMetaData( );
       ResultSet        rs         = dbMetaData.getTables( null, "%", "t%", types);
-      
+
       while(rs.next()) {
         output.println("Table " + rs.getString(3));
         output.println("  catalog " + rs.getString(1));
@@ -1154,7 +1154,7 @@ public class CSUnitTest extends DatabaseTestCase {
     int         i;
     int         count    = 0;
     Statement   stmt     = con.createStatement();
-    
+
     try {
       String           expectedNames[] = {
         "TABLE_CAT",
@@ -1167,7 +1167,7 @@ public class CSUnitTest extends DatabaseTestCase {
       DatabaseMetaData dbMetaData = con.getMetaData();
       ResultSet        rs         = dbMetaData.getTables( null, "%", "t%", types);
       ResultSetMetaData rsMetaData = rs.getMetaData();
-      
+
       if (rsMetaData.getColumnCount() != 5) {
         if (passed) {
           passed = false;
@@ -1175,7 +1175,7 @@ public class CSUnitTest extends DatabaseTestCase {
           + rsMetaData.getColumnCount());
         }
       }
-      
+
       for(i=0; passed && i<expectedNames.length; i++) {
         if (! rsMetaData.getColumnName(i+1).equals(expectedNames[i])) {
           passed = false;
@@ -1193,10 +1193,10 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     assertTrue(passed);
   }
-  
+
   public void testxx0052() throws Exception {
     boolean passed = true;
-    
+
     // ugly, I know
     byte[] image = {
       (byte)0x47, (byte)0x49, (byte)0x46, (byte)0x38,
@@ -1211,23 +1211,23 @@ public class CSUnitTest extends DatabaseTestCase {
       (byte)0x0F, (byte)0x63, (byte)0x2B, (byte)0x00,
       (byte)0x3B,
     };
-    
+
     int         i;
     int         count    = 0;
     Statement   stmt     = con.createStatement();
-    
-    dropTable("t0052");
-    
+
+    dropTable("#t0052");
+
     try {
       String sql =
-      "create table t0052 (                                  " +
+      "create table #t0052 (                                  " +
       " myvarchar                varchar(2000) not null,     " +
       " myvarbinary              varbinary(2000) not null)   ";
-      
+
       stmt.executeUpdate(sql);
-      
+
       sql =
-      "insert into t0052               " +
+      "insert into #t0052               " +
       "  (myvarchar,                   " +
       "   myvarbinary)                 " +
       " values                         " +
@@ -1235,8 +1235,8 @@ public class CSUnitTest extends DatabaseTestCase {
       "   0x4749463839610A000A0080FF00D73D1B0000002C000000000A000A00000208848FA9CBED0F632B003B" +
       "  )";
       stmt.executeUpdate(sql);
-      
-      sql = "select * from t0052";
+
+      sql = "select * from #t0052";
       ResultSet rs = stmt.executeQuery(sql);
       if (!rs.next()) {
         passed = false;
@@ -1264,7 +1264,7 @@ public class CSUnitTest extends DatabaseTestCase {
           + expect.length());
         }
         in.close();
-        
+
         in = rs.getAsciiStream(2);
         toRead = new byte[41];
         count = in.read(toRead);
@@ -1282,7 +1282,7 @@ public class CSUnitTest extends DatabaseTestCase {
           +count+" instead of 41");
         }
         in.close();
-        
+
         output.println("Testing getUnicodeStream()");
         in = rs.getUnicodeStream("myvarchar");
         Reader reader = new InputStreamReader(in, "UTF8");
@@ -1304,17 +1304,17 @@ public class CSUnitTest extends DatabaseTestCase {
           + expect.length());
         }
         reader.close();
-        
+
                 /* Cannot think of a meaningfull test */
         in = rs.getUnicodeStream(2);
         in.close();
-        
+
         output.println("Testing getBinaryStream()");
-        
+
                 /* Cannot think of a meaningfull test */
         in = rs.getBinaryStream("myvarchar");
         in.close();
-        
+
         in = rs.getBinaryStream(2);
         count = 0;
         toRead = new byte[image.length];
@@ -1331,7 +1331,7 @@ public class CSUnitTest extends DatabaseTestCase {
           }
           count += actuallyRead;
         } while (count < image.length);
-        
+
         for (i=0; i<count; i++) {
           if (toRead[i] != image[i]) {
             passed = false;
@@ -1341,7 +1341,7 @@ public class CSUnitTest extends DatabaseTestCase {
           }
         }
         in.close();
-        
+
         output.println("Testing getCharacterStream()");
         try {
           Method getCharacterStreamString =
@@ -1350,7 +1350,7 @@ public class CSUnitTest extends DatabaseTestCase {
           Method getCharacterStreamInt =
           ResultSet.class.getMethod("getCharacterStream",
           new Class[] {Integer.TYPE});
-          
+
           reader =
           (Reader)getCharacterStreamString.invoke(rs,
           new Object[] {"myvarchar"});
@@ -1372,7 +1372,7 @@ public class CSUnitTest extends DatabaseTestCase {
             + expect.length());
           }
           reader.close();
-          
+
                     /* Cannot think of a meaningfull test */
           reader =
           (Reader)getCharacterStreamInt.invoke(rs,
@@ -1386,7 +1386,7 @@ public class CSUnitTest extends DatabaseTestCase {
         }
       }
       rs.close();
-      
+
     }
     catch(java.sql.SQLException e) {
       passed = false;
@@ -1397,24 +1397,24 @@ public class CSUnitTest extends DatabaseTestCase {
   }
   public void testxx0053() throws Exception {
     boolean passed = true;
-    
+
     int         count    = 0;
     Statement   stmt     = con.createStatement();
-    
-    dropTable("t0053");
+
+    dropTable("#t0053");
     try  {
       String sql =
-      "create table t0053 (                                  " +
+      "create table #t0053 (                                  " +
       " myvarchar                varchar(2000)  not null,    " +
       " mynchar                  nchar(2000)    not null,    " +
       " mynvarchar               nvarchar(2000) not null,    " +
       " myntext                  ntext          not null     " +
       " )   ";
-      
+
       stmt.executeUpdate(sql);
-      
+
       sql =
-      "insert into t0053               " +
+      "insert into #t0053               " +
       "  (myvarchar,                   " +
       "   mynchar,                     " +
       "   mynvarchar,                  " +
@@ -1426,8 +1426,8 @@ public class CSUnitTest extends DatabaseTestCase {
       "   \'äöüÄÖÜ\'                   " +
       "  )";
       stmt.executeUpdate(sql);
-      
-      sql = "select * from t0053";
+
+      sql = "select * from #t0053";
       ResultSet rs = stmt.executeQuery(sql);
       if (!rs.next()) {
         passed = false;
@@ -1441,7 +1441,7 @@ public class CSUnitTest extends DatabaseTestCase {
           System.err.println("failed");
           passed = false;
         }
-        
+
         System.err.print("Testing nchar: ");
         test = rs.getString(2);
         if (test.length() == 2000 && "äöüÄÖÜ".equals(test.trim())) {
@@ -1452,7 +1452,7 @@ public class CSUnitTest extends DatabaseTestCase {
           System.err.println("\' instead of \'äöüÄÖÜ\'");
           passed = false;
         }
-        
+
         System.err.print("Testing nvarchar: ");
         test = rs.getString(3);
         if (test.length() == 6 && "äöüÄÖÜ".equals(test)) {
@@ -1463,7 +1463,7 @@ public class CSUnitTest extends DatabaseTestCase {
           System.err.println("\' instead of \'äöüÄÖÜ\'");
           passed = false;
         }
-        
+
         System.err.print("Testing ntext: ");
         test = rs.getString(4);
         if (test.length() == 6 && "äöüÄÖÜ".equals(test)) {
@@ -1483,7 +1483,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     assertTrue(passed);
   }
-  public void testxx005x() throws Exception 
+  public void testxx005x() throws Exception
   {
     boolean    passed = true;
 
@@ -1502,7 +1502,7 @@ public class CSUnitTest extends DatabaseTestCase {
     else
     {
        long l = rs.getLong(1);
-       if (l != 0) 
+       if (l != 0)
        {
            passed = false;
        }
@@ -1516,7 +1516,7 @@ public class CSUnitTest extends DatabaseTestCase {
     else
     {
        long l = rs.getLong(1);
-       if (l != 1) 
+       if (l != 1)
        {
            passed = false;
        }
@@ -1530,14 +1530,14 @@ public class CSUnitTest extends DatabaseTestCase {
     else
     {
        long l = rs.getLong(1);
-       if (l != -1) 
+       if (l != -1)
        {
            passed = false;
        }
     }
     assertTrue(passed);
   }
-  
+
   public void testxx0057() throws Exception {
     boolean    passed = true;
 
@@ -1548,27 +1548,27 @@ public class CSUnitTest extends DatabaseTestCase {
     int         count    = 0;
     Statement   stmt     = con.createStatement();
 
-    dropTable("t0057");
+    dropTable("#t0057");
 
-    count = stmt.executeUpdate("create table t0057          "
+    count = stmt.executeUpdate("create table #t0057          "
                                + " (a varchar(10) not null, "
                                + "  b char(10)    not null) ");
     output.println("Creating table affected " + count + " rows");
 
-    PreparedStatement  pStmt = con.prepareStatement( 
-       "insert into t0057 values (?, ?)");      
+    PreparedStatement  pStmt = con.prepareStatement(
+       "insert into #t0057 values (?, ?)");
     pStmt.setString(1, "");
     pStmt.setString(2, "");
     count = pStmt.executeUpdate();
     output.println("Added " + count + " rows");
-    if (count != 1) 
+    if (count != 1)
     {
        output.println("Failed to add rows");
        passed = false;
     }
     else
     {
-       pStmt = con.prepareStatement("select a, b from t0057");
+       pStmt = con.prepareStatement("select a, b from #t0057");
 
        ResultSet  rs = pStmt.executeQuery();
        if (!rs.next())
@@ -1585,9 +1585,9 @@ public class CSUnitTest extends DatabaseTestCase {
        }
     }
     assertTrue(passed);
-      
+
   }
-  public void testxx0059() throws Exception 
+  public void testxx0059() throws Exception
   {
     boolean passed = true;
 
@@ -1618,6 +1618,6 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     assertTrue(passed);
   }
-  
-  
+
+
 }

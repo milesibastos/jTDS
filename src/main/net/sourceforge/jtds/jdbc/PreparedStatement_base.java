@@ -33,6 +33,7 @@
 
 package net.sourceforge.jtds.jdbc;
 
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
@@ -56,13 +57,13 @@ import java.util.TimeZone;
  * @author     Craig Spannring
  * @author     The FreeTDS project
  * @author     Alin Sinpalean
- * @version    $Id: PreparedStatement_base.java,v 1.35 2004-05-02 22:45:21 bheineman Exp $
+ * @version    $Id: PreparedStatement_base.java,v 1.36 2004-05-03 23:34:27 bheineman Exp $
  * @see        Connection#prepareStatement
  * @see        ResultSet
  */
-public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, java.sql.PreparedStatement
+public class PreparedStatement_base extends TdsStatement implements PreparedStatementHelper, PreparedStatement
 {
-    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.35 2004-05-02 22:45:21 bheineman Exp $";
+    public final static String cvsVersion = "$Id: PreparedStatement_base.java,v 1.36 2004-05-03 23:34:27 bheineman Exp $";
 
     static Map typemap = null;
 
@@ -201,7 +202,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @return  a ResultSet that contains the data produced by the query; never null
      * @exception  SQLException  if a database-access error occurs.
      */
-    public java.sql.ResultSet executeQuery() throws SQLException {
+    public ResultSet executeQuery() throws SQLException {
         warningChain.clearWarnings();
         SQLWarning warn = null;
 
@@ -361,7 +362,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setBigDecimal( int parameterIndex, BigDecimal x ) throws SQLException
     {
-        setParam( parameterIndex, x, java.sql.Types.DECIMAL, -1 );
+        setParam( parameterIndex, x, Types.DECIMAL, -1 );
     }
 
     /**
@@ -383,9 +384,9 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
                                 int length)
              throws SQLException {
         if (x == null || length == 0) {
-            setParam(parameterIndex, null, java.sql.Types.BLOB, -1);
+            setParam(parameterIndex, null, Types.BLOB, -1);
         } else {
-            setParam(parameterIndex, x, java.sql.Types.BLOB, length);
+            setParam(parameterIndex, x, Types.BLOB, length);
         }
     }
 
@@ -399,7 +400,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setBoolean( int parameterIndex, boolean x ) throws SQLException
     {
-        setParam( parameterIndex, new Boolean( x ), java.sql.Types.BIT, -1 );
+        setParam( parameterIndex, new Boolean( x ), Types.BIT, -1 );
     }
 
     /**
@@ -412,7 +413,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setByte( int index, byte x ) throws SQLException
     {
-        setParam( index, new Integer( x ), java.sql.Types.TINYINT, -1 );
+        setParam( index, new Integer( x ), Types.TINYINT, -1 );
     }
 
     /**
@@ -430,23 +431,23 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         // be a varbinary if the length of 'x' is <=255, image if length>255.
         if (x == null || x.length <= 255 || (x.length <= 8000
             && connection.getTdsVer() == Tds.TDS70)) {
-            setParam(parameterIndex, x, java.sql.Types.VARBINARY, -1);
+            setParam(parameterIndex, x, Types.VARBINARY, -1);
         } else {
-            setParam(parameterIndex, x, java.sql.Types.LONGVARBINARY, -1);
+            setParam(parameterIndex, x, Types.LONGVARBINARY, -1);
         }
     }
 
     /**
-     * Set a parameter to a java.sql.Date value. The driver converts this to a
+     * Set a parameter to a Date value. The driver converts this to a
      * SQL DATE value when it sends it to the database.
      *
      * @param  parameterIndex    the first parameter is 1, the second is 2, ...
      * @param  value             the parameter value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setDate( int parameterIndex, java.sql.Date value ) throws SQLException
+    public void setDate( int parameterIndex, Date value ) throws SQLException
     {
-        setParam( parameterIndex, value, java.sql.Types.DATE, -1 );
+        setParam( parameterIndex, value, Types.DATE, -1 );
     }
 
     /**
@@ -459,7 +460,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setDouble( int parameterIndex, double value ) throws SQLException
     {
-        setParam( parameterIndex, new Double( value ), java.sql.Types.DOUBLE, -1 );
+        setParam( parameterIndex, new Double( value ), Types.DOUBLE, -1 );
     }
 
     /**
@@ -472,7 +473,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setFloat( int parameterIndex, float value ) throws SQLException
     {
-        setParam( parameterIndex, new Float( value ), java.sql.Types.REAL, -1 );
+        setParam( parameterIndex, new Float( value ), Types.REAL, -1 );
     }
 
     /**
@@ -485,7 +486,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setInt( int index, int value ) throws SQLException
     {
-        setParam( index, new Integer( value ), java.sql.Types.INTEGER, -1 );
+        setParam( index, new Integer( value ), Types.INTEGER, -1 );
     }
 
     /**
@@ -498,7 +499,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setLong( int parameterIndex, long value ) throws SQLException
     {
-        setParam(parameterIndex, new Long( value ), java.sql.Types.BIGINT, -1);
+        setParam(parameterIndex, new Long( value ), Types.BIGINT, -1);
     }
 
     /**
@@ -507,7 +508,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * <B>Note:</B> You must specify the parameter's SQL type.
      *
      * @param  index    the first parameter is 1, the second is 2, ...
-     * @param  type     SQL type code defined by java.sql.Types
+     * @param  type     SQL type code defined by Types
      * @exception  SQLException  if a database-access error occurs.
      */
     public void setNull( int index, int type ) throws SQLException
@@ -532,7 +533,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setObject(int parameterIndex, Object x) throws SQLException {
         if( x == null )
-            setNull( parameterIndex, java.sql.Types.VARCHAR );
+            setNull( parameterIndex, Types.VARCHAR );
         else
             if( x instanceof java.lang.String )
                 setString( parameterIndex, (String)x );
@@ -561,20 +562,20 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
             if( x instanceof java.lang.Float )
                 setFloat( parameterIndex, ((Number)x).floatValue() );
         else
-            if (x instanceof java.sql.Blob)
-                setBlob(parameterIndex, (java.sql.Blob) x);
+            if (x instanceof Blob)
+                setBlob(parameterIndex, (Blob) x);
         else
-            if (x instanceof java.sql.Clob)
-                setClob(parameterIndex, (java.sql.Clob) x);
+            if (x instanceof Clob)
+                setClob(parameterIndex, (Clob) x);
         else
-            if( x instanceof java.sql.Date )
-                setDate( parameterIndex, (java.sql.Date)x );
+            if( x instanceof Date )
+                setDate( parameterIndex, (Date)x );
         else
-            if( x instanceof java.sql.Time )
-                setTime( parameterIndex, (java.sql.Time)x );
+            if( x instanceof Time )
+                setTime( parameterIndex, (Time)x );
         else
-            if( x instanceof java.sql.Timestamp )
-                setTimestamp( parameterIndex, (java.sql.Timestamp)x );
+            if( x instanceof Timestamp )
+                setTimestamp( parameterIndex, (Timestamp)x );
         else
         {
             Class c = x.getClass();
@@ -637,18 +638,18 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
 
         Map map = new java.util.HashMap( 15 );
-        map.put( BigDecimal.class, new Integer( java.sql.Types.NUMERIC ) );
-        map.put( Boolean.class, new Integer( java.sql.Types.BIT ) );
-        map.put( Byte.class, new Integer( java.sql.Types.TINYINT ) );
-        map.put( byte[].class, new Integer( java.sql.Types.VARBINARY ) );
-        map.put( java.sql.Date.class, new Integer( java.sql.Types.DATE ) );
-        map.put( Double.class, new Integer( java.sql.Types.DOUBLE ) );
-        map.put( float.class, new Integer( java.sql.Types.REAL ) );
-        map.put( Integer.class, new Integer( java.sql.Types.INTEGER ) );
-        map.put( Long.class, new Integer( java.sql.Types.BIGINT ) );
-        map.put( Short.class, new Integer( java.sql.Types.SMALLINT ) );
-        map.put( String.class, new Integer( java.sql.Types.VARCHAR ) );
-        map.put( java.sql.Timestamp.class, new Integer( java.sql.Types.TIMESTAMP ) );
+        map.put( BigDecimal.class, new Integer( Types.NUMERIC ) );
+        map.put( Boolean.class, new Integer( Types.BIT ) );
+        map.put( Byte.class, new Integer( Types.TINYINT ) );
+        map.put( byte[].class, new Integer( Types.VARBINARY ) );
+        map.put( Date.class, new Integer( Types.DATE ) );
+        map.put( Double.class, new Integer( Types.DOUBLE ) );
+        map.put( float.class, new Integer( Types.REAL ) );
+        map.put( Integer.class, new Integer( Types.INTEGER ) );
+        map.put( Long.class, new Integer( Types.BIGINT ) );
+        map.put( Short.class, new Integer( Types.SMALLINT ) );
+        map.put( String.class, new Integer( Types.VARCHAR ) );
+        map.put( Timestamp.class, new Integer( Types.TIMESTAMP ) );
 
         typemap = map;
         return typemap;
@@ -680,15 +681,15 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *
      * Note that this method may be used to pass datatabase- specific abstract
      * data types. This is done by using a Driver- specific Java type and using
-     * a targetSqlType of java.sql.types.OTHER.
+     * a targetSqlType of types.OTHER.
      *
      * @param  parameterIndex    The first parameter is 1, the second is 2, ...
      * @param  x                 The object containing the input parameter value
-     * @param  targetSqlType     The SQL type (as defined in java.sql.Types) to
+     * @param  targetSqlType     The SQL type (as defined in Types) to
      *      be sent to the database. The scale argument may further qualify this
      *      type.
-     * @param  scale             For java.sql.Types.DECIMAL or
-     *      java.sql.Types.NUMERIC types this is the number of digits after the
+     * @param  scale             For Types.DECIMAL or
+     *      Types.NUMERIC types this is the number of digits after the
      *      decimal. For all other types this value will be ignored,
      * @exception  SQLException  if a database-access error occurs.
      */
@@ -701,28 +702,28 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         }
         else {
             switch ( targetSqlType ) {
-                case java.sql.Types.CHAR:
-                case java.sql.Types.VARCHAR:
+                case Types.CHAR:
+                case Types.VARCHAR:
                     setString(parameterIndex, (String) x);
                     break;
-                case java.sql.Types.REAL:
+                case Types.REAL:
                     setFloat(parameterIndex, ((Number) x).floatValue());
                     break;
-                case java.sql.Types.DOUBLE:
+                case Types.DOUBLE:
                     setDouble( parameterIndex, ((Number) x).doubleValue() );
                     break;
-                case java.sql.Types.INTEGER:
+                case Types.INTEGER:
                     setInt( parameterIndex, ((Number) x).intValue() );
                     break;
-                case java.sql.Types.BIGINT:
+                case Types.BIGINT:
                     setLong( parameterIndex, ((Number) x).longValue() );
                     break;
-                case java.sql.Types.BLOB:
+                case Types.BLOB:
                     Blob blob = (Blob) x;
 
                     setBinaryStream(parameterIndex, blob.getBinaryStream(), (int) blob.length());
                     break;
-                case java.sql.Types.CLOB:
+                case Types.CLOB:
                     Clob clob = (Clob) x;
 
                     setCharacterStream(parameterIndex, clob.getCharacterStream(), (int) clob.length());
@@ -743,7 +744,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setShort( int index, short value ) throws SQLException
     {
-        setParam( index, new Integer( value ), java.sql.Types.SMALLINT, -1 );
+        setParam( index, new Integer( value ), Types.SMALLINT, -1 );
     }
 
     /**
@@ -758,35 +759,35 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      */
     public void setString( int index, String str ) throws SQLException
     {
-        setParam(index, str, java.sql.Types.VARCHAR, -1);
+        setParam(index, str, Types.VARCHAR, -1);
     }
 
     /**
-     * Set a parameter to a java.sql.Time value. The driver converts this to a
+     * Set a parameter to a Time value. The driver converts this to a
      * SQL TIME value when it sends it to the database.
      *
      * @param  parameterIndex    the first parameter is 1, the second is 2, ...
      * @param  value             the parameter value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setTime( int parameterIndex, java.sql.Time value )
+    public void setTime( int parameterIndex, Time value )
         throws SQLException
     {
-        setParam( parameterIndex, value, java.sql.Types.TIME, -1 );
+        setParam( parameterIndex, value, Types.TIME, -1 );
     }
 
     /**
-     * Set a parameter to a java.sql.Timestamp value. The driver converts this
+     * Set a parameter to a Timestamp value. The driver converts this
      * to a SQL TIMESTAMP value when it sends it to the database.
      *
      * @param  index    the first parameter is 1, the second is 2, ...
      * @param  value    the parameter value
      * @exception  SQLException  if a database-access error occurs.
      */
-    public void setTimestamp( int index, java.sql.Timestamp value )
+    public void setTimestamp( int index, Timestamp value )
              throws SQLException
     {
-        setParam( index, value, java.sql.Types.TIMESTAMP, -1 );
+        setParam( index, value, Types.TIMESTAMP, -1 );
     }
 
     /**
@@ -887,9 +888,9 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     public void setCharacterStream(int parameterIndex, java.io.Reader reader, int length)
         throws SQLException {
         if (reader == null || length == 0) {
-            setParam(parameterIndex, null, java.sql.Types.CLOB, -1);
+            setParam(parameterIndex, null, Types.CLOB, -1);
         } else {
-            setParam(parameterIndex, reader, java.sql.Types.CLOB, length);
+            setParam(parameterIndex, reader, Types.CLOB, length);
         }
     }
 
@@ -900,7 +901,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  x                 an object representing data of an SQL REF Type
      * @exception  SQLException  if a database access error occurs
      */
-    public void setRef( int i, java.sql.Ref x ) throws SQLException
+    public void setRef( int i, Ref x ) throws SQLException
     {
         NotImplemented();
     }
@@ -912,7 +913,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  blob              an object representing a BLOB
      * @exception  SQLException  if a database access error occurs
      */
-    public void setBlob(int parameterIndex, java.sql.Blob blob)
+    public void setBlob(int parameterIndex, Blob blob)
     throws SQLException {
         if (blob == null) {
             setBinaryStream(parameterIndex, null, 0);
@@ -935,7 +936,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  clob              an object representing a CLOB
      * @exception  SQLException  if a database access error occurs
      */
-    public void setClob(int parameterIndex, java.sql.Clob clob)
+    public void setClob(int parameterIndex, Clob clob)
         throws SQLException {
         if (clob == null) {
             setCharacterStream(parameterIndex, null, 0);
@@ -958,7 +959,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @param  x                 an object representing an SQL array
      * @exception  SQLException  if a database access error occurs
      */
-    public void setArray( int i, java.sql.Array x ) throws SQLException
+    public void setArray( int i, Array x ) throws SQLException
     {
         NotImplemented();
     }
@@ -988,7 +989,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
     }
 
     /**
-     * JDBC 2.0 Sets the designated parameter to a java.sql.Date value, using
+     * JDBC 2.0 Sets the designated parameter to a Date value, using
      * the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
      * object to construct an SQL DATE, which the driver then sends to the
      * database. With a a <code>Calendar</code> object, the driver can
@@ -1002,7 +1003,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *      use to construct the date
      * @exception  SQLException  if a database access error occurs
      */
-    public void setDate(int parameterIndex, java.sql.Date date, Calendar calendar)
+    public void setDate(int parameterIndex, Date date, Calendar calendar)
              throws SQLException {
         if (date != null && calendar != null) {
             TimeZone timeZone = TimeZone.getDefault();
@@ -1010,14 +1011,14 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
             newTime -= timeZone.getRawOffset();
             newTime += calendar.getTimeZone().getRawOffset();
-            date = new java.sql.Date(newTime);
+            date = new Date(newTime);
         }
 
         setDate(parameterIndex, date);
     }
 
     /**
-     * JDBC 2.0 Sets the designated parameter to a java.sql.Time value, using
+     * JDBC 2.0 Sets the designated parameter to a Time value, using
      * the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
      * object to construct an SQL TIME, which the driver then sends to the
      * database. With a a <code>Calendar</code> object, the driver can
@@ -1031,7 +1032,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      *      use to construct the time
      * @exception  SQLException  if a database access error occurs
      */
-    public void setTime(int parameterIndex, java.sql.Time time, Calendar calendar)
+    public void setTime(int parameterIndex, Time time, Calendar calendar)
              throws SQLException {
         if (time != null && calendar != null) {
             TimeZone timeZone = TimeZone.getDefault();
@@ -1039,14 +1040,14 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
             newTime -= timeZone.getRawOffset();
             newTime += calendar.getTimeZone().getRawOffset();
-            time = new java.sql.Time(newTime);
+            time = new Time(newTime);
         }
 
         setTime(parameterIndex, time);
     }
 
     /**
-     * JDBC 2.0 Sets the designated parameter to a java.sql.Timestamp value,
+     * JDBC 2.0 Sets the designated parameter to a Timestamp value,
      * using the given <code>Calendar</code> object. The driver uses the <code>Calendar</code>
      * object to construct an SQL TIMESTAMP, which the driver then sends to the
      * database. With a a <code>Calendar</code> object, the driver can
@@ -1061,7 +1062,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * @exception  SQLException  if a database access error occurs
      */
     public void setTimestamp(int parameterIndex,
-                             java.sql.Timestamp timestamp,
+                             Timestamp timestamp,
                              Calendar calendar)
              throws SQLException {
         if (timestamp != null && calendar != null) {
@@ -1070,7 +1071,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
 
             newTime -= timeZone.getRawOffset();
             newTime += calendar.getTimeZone().getRawOffset();
-            timestamp = new java.sql.Timestamp(newTime);
+            timestamp = new Timestamp(newTime);
         }
 
         setTimestamp(parameterIndex, timestamp);
@@ -1093,7 +1094,7 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
      * user-named or REF type, the given typeName is ignored.
      *
      * @param  paramIndex        the first parameter is 1, the second is 2, ...
-     * @param  sqlType           a value from java.sql.Types
+     * @param  sqlType           a value from Types
      * @param  typeName          the fully-qualified name of an SQL user-named
      *      type, ignored if the parameter is not a user-named type or REF
      * @exception  SQLException  if a database access error occurs
@@ -1104,9 +1105,18 @@ public class PreparedStatement_base extends TdsStatement implements PreparedStat
         NotImplemented();
     }
 
-    public java.sql.ParameterMetaData getParameterMetaData() throws SQLException
-    {
-        NotImplemented();
+    public ParameterMetaData getParameterMetaData() throws SQLException {
+        try {
+            Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
+            Class[] parameterTypes = new Class[] {ParameterListItem[].class};
+            Object[] arguments = new Object[] {parameterList};
+            Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
+
+            return (ParameterMetaData) pmdConstructor.newInstance(arguments);
+        } catch (Exception e) {
+            NotImplemented();
+        }
+
         return null;
     }
 

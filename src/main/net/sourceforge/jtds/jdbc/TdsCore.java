@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.48 2004-11-18 13:54:04 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.49 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1001,7 +1001,7 @@ public class TdsCore {
             out.setPacketType(SYBQUERY_PKT);
             out.write((byte)TDS5_DYNAMIC_TOKEN);
 
-            byte buf[] = Support.encodeString(connection.getCharSet(), sql);
+            byte buf[] = Support.encodeString(connection.getCharset(), sql);
 
             out.write((short) (buf.length + 41));
             out.write((byte) 1);
@@ -1205,7 +1205,7 @@ public class TdsCore {
      */
     private void putLoginString(String txt, int len)
         throws IOException {
-        byte[] tmp = Support.encodeString(connection.getCharSet(), txt);
+        byte[] tmp = Support.encodeString(connection.getCharset(), txt);
         out.write(tmp, 0, len);
         out.write((byte) (tmp.length < len ? tmp.length : len));
     }
@@ -1257,7 +1257,7 @@ public class TdsCore {
 
         out.write((byte)0); // remote passwords
         out.write((byte)password.length());
-        byte[] tmp = Support.encodeString(connection.getCharSet(), password);
+        byte[] tmp = Support.encodeString(connection.getCharset(), password);
         out.write(tmp, 0, 253);
         out.write((byte) (tmp.length + 2));
 
@@ -1342,7 +1342,7 @@ public class TdsCore {
         putLoginString(serverName, 30); // server name
         out.write((byte)0); // remote passwords
         out.write((byte)password.length());
-        byte[] tmp = Support.encodeString(connection.getCharSet(), password);
+        byte[] tmp = Support.encodeString(connection.getCharset(), password);
         out.write(tmp, 0, 253);
         out.write((byte) (tmp.length + 2));
 
@@ -1920,7 +1920,7 @@ public class TdsCore {
             returnParam.setOutValue(Support.convert(this.connection,
                     returnStatus,
                     returnParam.jdbcType,
-                    connection.getCharSet()));
+                    connection.getCharset()));
         }
     }
 
@@ -1939,7 +1939,8 @@ public class TdsCore {
      * @throws IOException
      * @throws ProtocolException
      */
-    private void tds7ResultToken() throws IOException, ProtocolException {
+    private void tds7ResultToken()
+            throws IOException, ProtocolException, SQLException {
         endOfResults = false;
 
         int colCnt = in.readShort();
@@ -1969,6 +1970,11 @@ public class TdsCore {
             col.isIdentity = (flags & 0x10) != 0;
             col.isWriteable = (flags & 0x0C) != 0;
             TdsData.readType(in, col);
+            // Set the charsetInfo field of col
+            if (tdsVersion > Driver.TDS80) {
+                TdsData.setColumnCharset(col, connection.getCollation(),
+                        connection.getCharsetInfo());
+            }
 
             int clen = in.read();
 
@@ -1998,6 +2004,7 @@ public class TdsCore {
             int nameLen = in.read();
             String name = in.readString(nameLen);
 
+            // FIXME This will not work for multi-byte charsets
             bytesRead = bytesRead + 1 + nameLen;
             col.realName  = name;
             col.name = name;
@@ -2090,13 +2097,13 @@ public class TdsCore {
                 switch (in.read()) {
                     case 3: nameLen = in.readShort();
                             bytesRead += nameLen * 2 + 2;
-                            table.catalog = in.readString(nameLen);
+                            table.catalog = in.readUnicodeString(nameLen);
                     case 2: nameLen = in.readShort();
                             bytesRead += nameLen * 2 + 2;
-                            table.schema = in.readString(nameLen);
+                            table.schema = in.readUnicodeString(nameLen);
                     case 1: nameLen = in.readShort();
                             bytesRead += nameLen * 2 + 2;
-                            table.name = in.readString(nameLen);
+                            table.name = in.readUnicodeString(nameLen);
                     case 0: break;
                     default:
                         throw new ProtocolException("Invalid table TAB_NAME_TOKEN");
@@ -2105,7 +2112,7 @@ public class TdsCore {
                 if (tdsVersion >= Driver.TDS70) {
                     nameLen = in.readShort();
                     bytesRead += nameLen * 2 + 2;
-                    tabName  = in.readString(nameLen);
+                    tabName  = in.readUnicodeString(nameLen);
                 } else {
                     // TDS 4.2 or TDS 5.0
                     nameLen = in.read();
@@ -2114,6 +2121,7 @@ public class TdsCore {
                         break; // Sybase/SQL 6.5 use a zero length name to terminate list
                     }
                     tabName = in.readString(nameLen);
+                    // FIXME This will not work for multi-byte charsets
                     bytesRead += nameLen;
                 }
                 table = new TableMetaData();
@@ -2194,6 +2202,7 @@ public class TdsCore {
                     final int nameLen = in.read();
                     bytesRead += 1;
                     final String colName = in.readString(nameLen);
+                    // FIXME This won't work with multi-byte charsets
                     bytesRead += (tdsVersion >= Driver.TDS70)? nameLen * 2: nameLen;
                     col.realName = colName;
                 }
@@ -2240,6 +2249,7 @@ public class TdsCore {
 
         int line = in.readShort();
         sizeSoFar += 2;
+        // FIXME This won't work with multi-byte charsets
         // Skip any EED information to read rest of packet
         if (pktLen - sizeSoFar > 0)
             in.skip(pktLen - sizeSoFar);
@@ -2274,6 +2284,11 @@ public class TdsCore {
 
         ColInfo col = new ColInfo();
         TdsData.readType(in, col);
+        // Set the charsetInfo field of col
+        if (tdsVersion > Driver.TDS80) {
+            TdsData.setColumnCharset(col, connection.getCollation(),
+                    connection.getCharsetInfo());
+        }
         Object value = TdsData.readData(connection, in, col, false);
 
         if (parameters != null) {
@@ -2285,7 +2300,7 @@ public class TdsCore {
                     parameters[nextParam].setOutValue(
                         Support.convert(connection, value,
                                 parameters[nextParam].jdbcType,
-                                connection.getCharSet()));
+                                connection.getCharset()));
                     parameters[nextParam].collation = col.collation;
                 } else {
                     parameters[nextParam].setOutValue(null);
@@ -2298,7 +2313,7 @@ public class TdsCore {
                             parameters[nextParam].setOutValue(
                                 Support.convert(connection, value,
                                         parameters[nextParam].jdbcType,
-                                        connection.getCharSet()));
+                                        connection.getCharset()));
                             parameters[nextParam].collation = col.collation;
                         } else {
                             parameters[nextParam].setOutValue(null);
@@ -2420,7 +2435,7 @@ public class TdsCore {
                             parameters[nextParam].setOutValue(
                                 Support.convert(connection, value,
                                         parameters[nextParam].jdbcType,
-                                        connection.getCharSet()));
+                                        connection.getCharset()));
                         } else {
                             parameters[nextParam].setOutValue(null);
                         }
@@ -2628,6 +2643,7 @@ public class TdsCore {
 
         int line = in.readShort();
         sizeSoFar += 2;
+        // FIXME This won't work with multi-byte charsets
         // Skip any EED information to read rest of packet
         if (pktLen - sizeSoFar > 0)
             in.skip(pktLen - sizeSoFar);
@@ -2660,6 +2676,7 @@ public class TdsCore {
             currentToken.dynamicId = in.readString(len);
             pktLen -= len+1;
         }
+        // FIXME This won't work with multi-byte charsets
         in.skip(pktLen);
     }
 
@@ -2859,7 +2876,7 @@ public class TdsCore {
         if (procName != null) {
             // RPC call
             out.setPacketType(RPC_PKT);
-            byte[] buf = Support.encodeString(connection.getCharSet(), procName);
+            byte[] buf = Support.encodeString(connection.getCharset(), procName);
 
             out.write((byte) buf.length);
             out.write(buf);
@@ -2868,7 +2885,7 @@ public class TdsCore {
             if (parameters != null) {
                 for (int i = nextParam + 1; i < parameters.length; i++) {
                     if (parameters[i].name != null) {
-                       buf = Support.encodeString(connection.getCharSet(),
+                       buf = Support.encodeString(connection.getCharset(),
                                parameters[i].name);
                        out.write((byte) buf.length);
                        out.write(buf);
@@ -2878,7 +2895,7 @@ public class TdsCore {
 
                     out.write((byte) (parameters[i].isOutput ? 1 : 0));
                     TdsData.writeParam(out,
-                                       connection.getCharSet(),
+                                       connection.getCharset(),
                                        connection.isWideChar(),
                                        null,
                                        parameters[i]);
@@ -2950,9 +2967,9 @@ public class TdsCore {
                 sql = Support.substituteParamMarkers(sql, parameters);
             }
 
-            if (socket.isWideChars()) {
+            if (connection.isWideChar()) {
                 // Need to preconvert string to get correct length
-                byte[] buf = Support.encodeString(connection.getCharSet(), sql);
+                byte[] buf = Support.encodeString(connection.getCharset(), sql);
 
                 out.write((int) buf.length + 1);
                 out.write((byte)(haveParams ? 1 : 0));
@@ -2972,7 +2989,7 @@ public class TdsCore {
             out.write(procName.substring(1));
             out.write((short) 0);
         } else {
-            byte buf[] = Support.encodeString(connection.getCharSet(), procName);
+            byte buf[] = Support.encodeString(connection.getCharset(), procName);
 
             // RPC call
             out.write((byte) TDS_DBRPC_TOKEN);
@@ -2993,7 +3010,7 @@ public class TdsCore {
             int len = 2;
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
-                len += TdsData.getTds5ParamSize(connection.getCharSet(),
+                len += TdsData.getTds5ParamSize(connection.getCharset(),
                                                 connection.isWideChar(),
                                                 parameters[i],
                                                 useParamNames);
@@ -3004,7 +3021,7 @@ public class TdsCore {
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5ParamFmt(out,
-                                          connection.getCharSet(),
+                                          connection.getCharset(),
                                           connection.isWideChar(),
                                           parameters[i],
                                           useParamNames);
@@ -3015,7 +3032,7 @@ public class TdsCore {
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5Param(out,
-                                       connection.getCharSet(),
+                                       connection.getCharset(),
                                        connection.isWideChar(),
                                        parameters[i]);
             }
@@ -3190,7 +3207,7 @@ public class TdsCore {
                     out.write((byte) (parameters[i].isOutput ? 1 : 0));
 
                     TdsData.writeParam(out,
-                                       connection.getCharSet(),
+                                       connection.getCharset(),
                                        connection.isWideChar(),
                                        connection.getCollation(),
                                        parameters[i]);

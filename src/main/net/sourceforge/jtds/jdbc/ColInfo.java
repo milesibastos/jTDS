@@ -27,7 +27,7 @@ package net.sourceforge.jtds.jdbc;
  *      As the class is package private this seems reasonable.
  *
  * @author Mike Hutchinson
- * @version $Id: ColInfo.java,v 1.3 2004-08-24 21:47:38 bheineman Exp $
+ * @version $Id: ColInfo.java,v 1.4 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class ColInfo {
     /** Internal TDS data type */
@@ -60,6 +60,8 @@ public class ColInfo {
     int userType;
     /** MS SQL2000 collation */
     byte[] collation;
+    /** Character set descriptor (if different from default) */
+    CharsetInfo charsetInfo;
     /** Column display size */
     int displaySize;
     /** Column buffer (max) size */

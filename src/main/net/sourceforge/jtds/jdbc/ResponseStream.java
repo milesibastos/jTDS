@@ -32,7 +32,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.9 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.10 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -73,15 +73,6 @@ public class ResponseStream {
      */
     int getStreamId() {
         return this.streamId;
-    }
-
-    /**
-     * Retrieve the character set used by this response stream.
-     *
-     * @return the character set name as a <code>String</code>.
-     */
-    String getCharset() {
-        return socket.getCharset();
     }
 
     /**
@@ -182,62 +173,87 @@ public class ResponseStream {
 
     /**
      * Retrieve a String object from the server response stream.
-     * If the TDS protocol is 4.2 or 5.0, create the string from
-     * a translated byte array.
+     * If the TDS protocol is 4.2 or 5.0 decode the string using the default
+     * server charset, otherwise use UCS2-LE (Unicode).
      *
-     * @param len The length of the string to read in characters.
-     * @return The result as a <code>String</code>.
-     * @throws IOException
+     * @param len the length of the string to read <b>in bytes</b> in the case
+     *            of TDS 4.2/5.0 and <b>in characters</b> for TDS 7.0+
+     *            (UCS2-LE encoded strings)
+     * @return the result as a <code>String</code>
+     * @throws IOException if an I/O error occurs
      */
     String readString(int len) throws IOException {
         if (socket.getTdsVersion() >= Driver.TDS70) {
-            char[] chars = (len > charBuffer.length) ? new char[len] : charBuffer;
-
-            for (int i = 0; i < len; i++) {
-                if (bufferPtr >= bufferLen) {
-                    getPacket();
-                }
-
-                int b1 = buffer[bufferPtr++] & 0xFF;
-
-                if (bufferPtr >= bufferLen) {
-                    getPacket();
-                }
-
-                int b2 = buffer[bufferPtr++] << 8;
-
-                chars[i] = (char) (b2 | b1);
-            }
-
-            return new String(chars, 0, len);
+            return readUnicodeString(len);
         }
 
-        return readAsciiString(len);
+        return readNonUnicodeString(len);
+    }
+
+    /**
+     * Retrieve a UCS2-LE (Unicode) encoded String object from the server
+     * response stream.
+     *
+     * @param len the length of the string to read <b>in characters</b>
+     * @return the result as a <code>String</code>
+     * @throws IOException if an I/O error occurs
+     */
+    String readUnicodeString(int len) throws IOException {
+        char[] chars = (len > charBuffer.length) ? new char[len] : charBuffer;
+
+        for (int i = 0; i < len; i++) {
+            if (bufferPtr >= bufferLen) {
+                getPacket();
+            }
+
+            int b1 = buffer[bufferPtr++] & 0xFF;
+
+            if (bufferPtr >= bufferLen) {
+                getPacket();
+            }
+
+            int b2 = buffer[bufferPtr++] << 8;
+
+            chars[i] = (char) (b2 | b1);
+        }
+
+        return new String(chars, 0, len);
     }
 
     /**
      * Retrieve a String object from the server response stream,
      * creating the string from a translated byte array.
      *
-     * @param len The length of the string to read in characters.
-     * @return The result as a <code>String</code>.
-     * @throws IOException
+     * @param len the length of the string to read <b>in bytes</b>
+     * @return the result as a <code>String</code>
+     * @throws IOException if an I/O error occurs
      */
-    String readAsciiString(int len) throws IOException {
-        String charsetName = socket.getCharset();
+    String readNonUnicodeString(int len) throws IOException {
+        CharsetInfo info = socket.getCharsetInfo();
+
+        return readString(len, info);
+    }
+
+    /**
+     * Retrieve a String object from the server response stream,
+     * creating the string from a translated byte array.
+     *
+     * @param len  the length of the string to read <b>in bytes</b>
+     * @param info descriptor of the charset to use
+     * @return the result as a <code>String</code>
+     * @throws IOException if an I/O error occurs
+     */
+    String readString(int len, CharsetInfo info) throws IOException {
+        String charsetName = info.getCharset();
         byte[] bytes = (len > byteBuffer.length) ? new byte[len] : byteBuffer;
 
         read(bytes, 0, len);
 
-        if (charsetName != null) {
-            try {
-                return new String(bytes, 0, len, charsetName);
-            } catch (UnsupportedEncodingException e) {
-                return new String(bytes, 0, len);
-            }
+        try {
+            return new String(bytes, 0, len, charsetName);
+        } catch (UnsupportedEncodingException e) {
+            return new String(bytes, 0, len);
         }
-
-        return new String(bytes, 0, len);
     }
 
     /**

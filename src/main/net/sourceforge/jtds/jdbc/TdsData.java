@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.32 2004-11-18 13:12:43 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.33 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -237,10 +237,9 @@ public class TdsData {
     /**
      * TDS 8 supplies collation information for character data types.
      *
-     * @param in The Server response stream.
-     * @param ci The column descriptor.
-     * @return The number of bytes read from the stream as a <code>int</code>.
-     * @throws IOException
+     * @param in the server response stream
+     * @param ci the column descriptor
+     * @return the number of bytes read from the stream as an <code>int</code>
      */
     static int getCollation(ResponseStream in, ColInfo ci) throws IOException {
         if (TdsData.isCollation(ci)) {
@@ -252,6 +251,28 @@ public class TdsData {
         }
 
         return 0;
+    }
+
+    static void setColumnCharset(ColInfo ci,
+                               byte[] defaultCollation,
+                               CharsetInfo defaultCharsetInfo)
+            throws SQLException {
+        byte[] collation = ci.collation;
+
+        if (collation != null) {
+            // TDS version will be 8.0 or higher in this case
+            int i;
+            for (i = 0; i < 5; ++i) {
+                if (collation[i] != defaultCollation[i]) {
+                    break;
+                }
+            }
+            if (i == 5) {
+                ci.charsetInfo = defaultCharsetInfo;
+            } else {
+                ci.charsetInfo = CharsetInfo.getCharset(collation);
+            }
+        }
     }
 
     /**
@@ -275,7 +296,7 @@ public class TdsData {
      * @throws ProtocolException
      */
     static int readType(ResponseStream in, ColInfo ci)
-    throws IOException, ProtocolException {
+            throws IOException, ProtocolException {
         boolean isTds8 = in.getTdsVersion() >= Driver.TDS80;
         boolean isTds5 = in.getTdsVersion() == Driver.TDS50;
         int bytesRead = 1;
@@ -307,6 +328,7 @@ public class TdsData {
             int lenName = in.readShort();
 
             ci.tableName = in.readString(lenName);
+            // FIXME This will not work for multi-byte charsets
             bytesRead += 6 + ((in.getTdsVersion() >= Driver.TDS70) ? lenName * 2 : lenName);
         } else if (ci.bufferSize == -2) {
             // longvarchar longvarbinary
@@ -494,7 +516,7 @@ public class TdsData {
      * @throws ProtocolException
      */
     static Object readData(Object callerReference, ResponseStream in, ColInfo ci, boolean readTextMode)
-    throws IOException, ProtocolException {
+            throws IOException, ProtocolException {
         int len;
 
         switch (ci.tdsType) {
@@ -558,7 +580,7 @@ public class TdsData {
 
                 if (len > 0) {
                     // FIXME Use collation for reading
-                    String value = in.readAsciiString(len);
+                    String value = in.readNonUnicodeString(len);
 
                     if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
                         // In TDS 4/5 zero length strings are stored as a single space
@@ -575,7 +597,7 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    return in.readString(len / 2);
+                    return in.readUnicodeString(len / 2);
                 }
 
                 break;
@@ -586,7 +608,7 @@ public class TdsData {
                     // This is a Sybase wide table String
                     len = in.readInt();
                     if (len > 0) {
-                        String tmp = in.readAsciiString(len);
+                        String tmp = in.readNonUnicodeString(len);
                         if (tmp.equals(" ") && !ci.sqlType.equals("char")) {
                             tmp = "";
                         }
@@ -596,7 +618,7 @@ public class TdsData {
                     // This is a TDS 7+ long string
                     len = in.readShort();
                     if (len != -1) {
-                        return in.readAsciiString(len);
+                        return in.readNonUnicodeString(len);
                     }
                 }
 
@@ -607,7 +629,7 @@ public class TdsData {
                 len = in.readShort();
 
                 if (len != -1) {
-                    return in.readString(len / 2);
+                    return in.readUnicodeString(len / 2);
                 }
 
                 break;
@@ -902,7 +924,7 @@ public class TdsData {
                         // property sendParametersAsUnicode=false.
                         // TODO: Find a better way of testing for convertable charset.
                         try {
-                            String charset = connection.getCharSet();
+                            String charset = connection.getCharset();
                             String tmp     = pi.getString(charset);
                             if (!canEncode(tmp, charset)) {
                                 // Conversion fails need to send as unicode.
@@ -1418,7 +1440,7 @@ public class TdsData {
      * @throws IOException
      */
     static void putCollation(RequestStream out, ParamInfo pi)
-    throws IOException {
+            throws IOException {
         //
         // For TDS 8 write a collation string
         // I am assuming this can be all zero for now if none is known
@@ -1426,6 +1448,7 @@ public class TdsData {
         //
         if (types[pi.tdsType].isCollation) {
             if (pi.collation != null) {
+                // FIXME Also encode the value according to the collation
                 out.write(pi.collation);
             } else {
                 byte collation[] = {0x00, 0x00, 0x00, 0x00, 0x00};
@@ -2198,14 +2221,14 @@ public class TdsData {
                 // FIXME Use collation for reading the value
                 in.skip(7); // Skip collation and buffer size
 
-                return in.readAsciiString(len);
+                return in.readNonUnicodeString(len);
 
             case XSYBNCHAR:
             case XSYBNVARCHAR:
                 // TODO Why do we need collation for Unicode strings?
                 in.skip(7); // Skip collation and buffer size
 
-                return in.readString(len / 2);
+                return in.readUnicodeString(len / 2);
 
             case XSYBVARBINARY:
             case XSYBBINARY:

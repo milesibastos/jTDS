@@ -1,6 +1,17 @@
 Changes from jTDS 0.9
 =========================
 
+11/24/2004 - Alin Sinpalean
+ o Extracted getConnection(callerReference) out of BlobImpl and ClobImpl and
+   moved it to Support.
+ o Created the CharsetInfo class to hold both information about a character set
+   (non-static fields) and provide support for loading and retrieving character
+   sets (static fields and methods; the logic was moved from Support).
+ o Added comments to highlight possible problem areas with multi-byte character
+   sets.
+ o Started adding support for SQL Server 2000 per column collations.
+ o Other minor cleanups.
+
 11/23/2004 - Alin Sinpalean
  o Corrected bug [1071397] Error in prepared statement (parameters in outer
    join escapes are not recognized).

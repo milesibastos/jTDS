@@ -56,7 +56,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.21 2004-11-15 15:44:37 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.22 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -650,7 +650,7 @@ public class JtdsResultSet implements ResultSet {
     public byte[] getBytes(int columnIndex) throws SQLException {
         ColData data = getColumn(columnIndex);
         String charSet = (statement != null) ?
-                ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
+                ((ConnectionJDBC2) statement.getConnection()).getCharset() : null;
         return (byte[]) Support.convert(this, data.getValue(), java.sql.Types.BINARY, charSet);
     }
 
@@ -821,7 +821,7 @@ public class JtdsResultSet implements ResultSet {
 
         if (x != null) {
             ColInfo ci = columns[columnIndex - 1];
-            String charSet = ((ConnectionJDBC2) statement.getConnection()).getCharSet();
+            String charSet = ((ConnectionJDBC2) statement.getConnection()).getCharset();
 
             x = Support.convert(this, x, ci.jdbcType, charSet);
 
@@ -877,7 +877,7 @@ public class JtdsResultSet implements ResultSet {
         }
 
         String charSet = (statement != null) ?
-                ((ConnectionJDBC2) statement.getConnection()).getCharSet() : null;
+                ((ConnectionJDBC2) statement.getConnection()).getCharset() : null;
 
         return (String) Support.convert(this, tmp, java.sql.Types.VARCHAR, charSet);
     }

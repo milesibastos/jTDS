@@ -27,7 +27,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.22 2004-11-15 10:22:23 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.23 2004-11-24 06:42:00 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
 	private static final byte[] EMPTY_BLOB = new byte[0];
@@ -61,7 +61,7 @@ public class BlobImpl implements Blob {
             throw new IllegalArgumentException("blob cannot be null.");
         }
 
-        _connection = getConnection(callerReference);
+        _connection = Support.getConnection(callerReference);
         _blob = blob;
     }
 
@@ -78,7 +78,7 @@ public class BlobImpl implements Blob {
             throw new IllegalArgumentException("in cannot be null.");
         }
 
-        _connection = getConnection(callerReference);
+        _connection = Support.getConnection(callerReference);
 
         TextPtr tp = new TextPtr();
 
@@ -357,38 +357,6 @@ public class BlobImpl implements Blob {
             throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
-    }
-
-    /**
-     * Returns a connection for a given caller reference.
-     *
-     * @param callerReference an object reference to the caller of this method;
-     *        must be a <code>Connection</code>, <code>Statement</code> or
-     *        <code>ResultSet</code>
-     * @return a connection
-     */
-    private ConnectionJDBC2 getConnection(Object callerReference) {
-        if (callerReference == null) {
-            throw new IllegalArgumentException("callerReference cannot be null.");
-        }
-
-        Connection connection;
-
-        try {
-            if (callerReference instanceof Connection) {
-                connection = (Connection) callerReference;
-            } else if (callerReference instanceof Statement) {
-                connection = ((Statement) callerReference).getConnection();
-            } else if (callerReference instanceof ResultSet) {
-                connection = ((ResultSet) callerReference).getStatement().getConnection();
-            } else {
-                throw new IllegalArgumentException("callerReference is invalid.");
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException(e.getMessage());
-        }
-
-        return (ConnectionJDBC2) connection;
     }
 
     protected void finalize() {

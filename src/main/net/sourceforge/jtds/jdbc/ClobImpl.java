@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.24 2004-11-15 10:22:24 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.25 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -71,7 +71,7 @@ public class ClobImpl implements Clob {
         }
 
         _clob = clob;
-        _connection = getConnection(callerReference);
+        _connection = Support.getConnection(callerReference);
     }
 
     /**
@@ -87,7 +87,7 @@ public class ClobImpl implements Clob {
             throw new IllegalArgumentException("in cannot be null.");
         }
 
-        _connection = getConnection(callerReference);
+        _connection = Support.getConnection(callerReference);
 
         TextPtr tp = new TextPtr();
 
@@ -119,9 +119,9 @@ public class ClobImpl implements Clob {
             try {
                 if (tp.len < _connection.getLobBuffer()) {
                 	if (ntext) {
-                		_clob = in.readString(tp.len / 2);
+                		_clob = in.readUnicodeString(tp.len / 2);
                 	} else {
-                		_clob = in.readAsciiString(tp.len);
+                		_clob = in.readNonUnicodeString(tp.len);
                 	}
                 } else {
                 	_clob = EMPTY_CLOB;
@@ -134,9 +134,10 @@ public class ClobImpl implements Clob {
     	        		String data;
 
 		    	        if (ntext) {
-	    	        		data = in.readString(results / 2);
+	    	        		data = in.readUnicodeString(results / 2);
 		    	        } else {
-			                data = in.readAsciiString(results);
+                            // FIXME This won't work for multi-byte charsets
+			                data = in.readNonUnicodeString(results);
 		    	        }
 
 		    	        length -= results;
@@ -175,7 +176,7 @@ public class ClobImpl implements Clob {
                                       ci,
                                       data,
                                       ((ConnectionJDBC2) statement.getConnection()).
-                                            getCharSet()));
+                                            getCharset()));
             }
         }
 */
@@ -420,38 +421,6 @@ public class ClobImpl implements Clob {
             throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                                    "HY000");
         }
-    }
-
-    /**
-     * Returns a connection for a given caller reference.
-     *
-     * @param callerReference an object reference to the caller of this method;
-     *        must be a <code>Connection</code>, <code>Statement</code> or
-     *        <code>ResultSet</code>
-     * @return a connection
-     */
-    private ConnectionJDBC2 getConnection(Object callerReference) {
-        if (callerReference == null) {
-            throw new IllegalArgumentException("callerReference cannot be null.");
-        }
-
-        Connection connection;
-
-        try {
-            if (callerReference instanceof Connection) {
-                connection = (Connection) callerReference;
-            } else if (callerReference instanceof Statement) {
-                connection = ((Statement) callerReference).getConnection();
-            } else if (callerReference instanceof ResultSet) {
-                connection = ((ResultSet) callerReference).getStatement().getConnection();
-            } else {
-                throw new IllegalArgumentException("callerReference is invalid.");
-            }
-        } catch (SQLException e) {
-            throw new IllegalStateException(e.getMessage());
-        }
-
-        return (ConnectionJDBC2) connection;
     }
 
     protected void finalize() {

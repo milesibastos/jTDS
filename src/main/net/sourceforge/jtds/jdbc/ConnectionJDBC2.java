@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.48 2004-11-18 13:54:03 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.49 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -204,10 +204,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int spSequenceNo = 1;
     /** Procedures in this transaction. */
     private ArrayList procInTran = new ArrayList();
-    /** Indicates current charset is wide. */
-    private boolean wideChars = false;
-    /** java charset for encoding. */
-    private String javaCharset;
+    /** Java charset for encoding. */
+    private CharsetInfo charsetInfo;
     /** Method for preparing SQL used in Prepared Statements. */
     private int prepareSql;
     /** The amount of LOB data to buffer in memory. */
@@ -383,82 +381,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         baseTds.submitSQL(sql);
         setAutoCommit(true);
         setTransactionIsolation(transactionIsolation);
-    }
-
-    /**
-     * Discovers the server charset for server versions that do not send
-     * <code>ENVCHANGE</code> packets on login ack, by executing a DB
-     * vendor/version specific query.
-     * <p>
-     * Will throw an <code>SQLException</code> if used on SQL Server 7.0 or
-     * 2000; the idea is that the charset should already be determined from
-     * <code>ENVCHANGE</code> packets for these DB servers.
-     * <p>
-     * Should only be called from the constructor.
-     *
-     * @return the default server charset
-     * @throws SQLException if an error condition occurs
-     */
-    private String determineServerCharset() throws SQLException {
-        String queryStr = null;
-
-        switch (serverType) {
-            case Driver.SQLSERVER:
-                if (databaseProductVersion.indexOf("6.5") >= 0) {
-                    queryStr = SQL_SERVER_65_CHARSET_QUERY;
-                } else {
-                    // This will never happen. Versions 7.0 and 2000 of SQL
-                    // Server always send ENVCHANGE packets, even over TDS 4.2.
-                    throw new SQLException(
-                            "Please use TDS protocol version 7.0 or higher");
-                }
-                break;
-            case Driver.SYBASE:
-                // There's no need to check for versions here
-                queryStr = SYBASE_SERVER_CHARSET_QUERY;
-                break;
-        }
-
-        Statement stmt = this.createStatement();
-        ResultSet rs = stmt.executeQuery(queryStr);
-        rs.next();
-        String charset = rs.getString(1);
-        rs.close();
-        stmt.close();
-
-        return charset;
-    }
-
-    /**
-     * Load the Java charset to match the server character set.
-     *
-     * @param charset the server character set
-     */
-    private void loadCharset(String charset) throws SQLException {
-        // Do not default to any charset; if the charset is not found we want
-        // to know about it
-        String tmp = Support.getCharset(charset);
-
-        if (tmp == null) {
-            throw new SQLException(
-                    Messages.get("error.charset.nomapping", charset), "2C000");
-        }
-
-        try {
-            wideChars = !tmp.substring(0, 1).equals("1");
-            javaCharset = tmp.substring(2);
-
-            "This is a test".getBytes(javaCharset);
-        } catch (UnsupportedEncodingException ex) {
-            throw new SQLException(
-                    Messages.get("error.charset.invalid", charset, javaCharset),
-                    "2C000");
-        }
-
-        socket.setCharset(javaCharset);
-        socket.setWideChars(wideChars);
-
-        serverCharset = charset;
     }
 
     /**
@@ -849,19 +771,28 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /**
      * Retrieve the Java charset to use for encoding.
      *
-     * @return The Charset name as a <code>String</code>.
+     * @return the Charset name as a <code>String</code>
      */
-    protected String getCharSet() {
-        return this.javaCharset;
+    protected String getCharset() {
+        return charsetInfo.getCharset();
     }
 
     /**
      * Retrieve the multibyte status of the current character set.
      *
-     * @return <code>boolean</code> true if a multi byte character set.
+     * @return <code>boolean</code> true if a multi byte character set
      */
     protected boolean isWideChar() {
-        return this.wideChars;
+        return charsetInfo.isWideChars();
+    }
+
+    /**
+     * Retrieve the <code>CharsetInfo</code> instance used by this connection.
+     *
+     * @return the default <code>CharsetInfo</code> for this connection
+     */
+    protected CharsetInfo getCharsetInfo() {
+        return charsetInfo;
     }
 
     /**
@@ -908,9 +839,127 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             loadCharset(charset);
 
             if (Logger.isActive()) {
-                Logger.println("Set charset to " + serverCharset + '/' + javaCharset);
+                Logger.println("Set charset to " + serverCharset + '/' + charsetInfo);
             }
         }
+    }
+
+    /**
+     * Load the Java charset to match the server character set.
+     *
+     * @param charset the server character set
+     */
+    private void loadCharset(String charset) throws SQLException {
+        // Do not default to any charset; if the charset is not found we want
+        // to know about it
+        CharsetInfo tmp = CharsetInfo.getCharset(charset);
+
+        if (tmp == null) {
+            throw new SQLException(
+                    Messages.get("error.charset.nomapping", charset), "2C000");
+        }
+
+        try {
+            "This is a test".getBytes(tmp.getCharset());
+
+            charsetInfo = tmp;
+        } catch (UnsupportedEncodingException ex) {
+            throw new SQLException(
+                    Messages.get("error.charset.invalid", charset,
+                            charsetInfo.getCharset()),
+                    "2C000");
+        }
+
+        socket.setCharsetInfo(charsetInfo);
+        serverCharset = charset;
+    }
+
+    /**
+     * Discovers the server charset for server versions that do not send
+     * <code>ENVCHANGE</code> packets on login ack, by executing a DB
+     * vendor/version specific query.
+     * <p>
+     * Will throw an <code>SQLException</code> if used on SQL Server 7.0 or
+     * 2000; the idea is that the charset should already be determined from
+     * <code>ENVCHANGE</code> packets for these DB servers.
+     * <p>
+     * Should only be called from the constructor.
+     *
+     * @return the default server charset
+     * @throws SQLException if an error condition occurs
+     */
+    private String determineServerCharset() throws SQLException {
+        String queryStr = null;
+
+        switch (serverType) {
+            case Driver.SQLSERVER:
+                if (databaseProductVersion.indexOf("6.5") >= 0) {
+                    queryStr = SQL_SERVER_65_CHARSET_QUERY;
+                } else {
+                    // This will never happen. Versions 7.0 and 2000 of SQL
+                    // Server always send ENVCHANGE packets, even over TDS 4.2.
+                    throw new SQLException(
+                            "Please use TDS protocol version 7.0 or higher");
+                }
+                break;
+            case Driver.SYBASE:
+                // There's no need to check for versions here
+                queryStr = SYBASE_SERVER_CHARSET_QUERY;
+                break;
+        }
+
+        Statement stmt = this.createStatement();
+        ResultSet rs = stmt.executeQuery(queryStr);
+        rs.next();
+        String charset = rs.getString(1);
+        rs.close();
+        stmt.close();
+
+        return charset;
+    }
+
+    /**
+     * Set the default collation for this connection.
+     * <p>
+     * Set by a SQL Server 2000 environment change packet. The collation
+     * consists of the following fields:
+     * <ul>
+     * <li>bits 0-19  - The locale eg 0x0409 for US English which maps to code
+     *                  page 1252 (Latin1_General).
+     * <li>bits 20-31 - Reserved.
+     * <li>bits 32-39 - Sort order (csid from syscharsets)
+     * </ul>
+     * If the sort order is non-zero it determines the character set, otherwise
+     * the character set is determined by the locale id.
+     *
+     * @param collation The new collation.
+     */
+    void setCollation(byte[] collation) throws SQLException {
+        CharsetInfo tmp = CharsetInfo.getCharset(collation);
+
+        try {
+            "This is a test".getBytes(tmp.getCharset());
+
+            charsetInfo = tmp;
+        } catch (UnsupportedEncodingException ex) {
+            throw new SQLException(
+                    Messages.get("error.charset.invalid",
+                            Support.toHex(collation),
+                            charsetInfo.getCharset()),
+                    "2C000");
+        }
+
+        socket.setCharsetInfo(charsetInfo);
+        this.collation = collation;
+    }
+
+    /**
+     * Retrieve the SQL Server 2000 default collation.
+     *
+     * @return The collation as a <code>byte[5]</code>.
+     */
+    byte[] getCollation() {
+        return this.collation;
     }
 
     /**
@@ -921,7 +970,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @throws SQLException
      */
     protected void setDatabase(final String newDb, final String oldDb)
-    throws SQLException {
+            throws SQLException {
         if (currentDatabase != null && !oldDb.equalsIgnoreCase(currentDatabase)) {
             throw new SQLException(Messages.get("error.connection.dbmismatch",
                                                       oldDb, databaseName),
@@ -976,68 +1025,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             databaseProductVersion =
             databaseMajorVersion + "." + databaseMinorVersion;
         }
-    }
-
-    /**
-     * Set the default collation for this connection.
-     * <p>
-     * Set by a SQL Server 2000 environment change packet. The collation
-     * consists of the following fields:
-     * <ul>
-     * <li>bits 0-19  - The locale eg 0x0409 for US English which maps to code
-     *                  page 1252 (Latin1_General).
-     * <li>bits 20-31 - Reserved.
-     * <li>bits 32-39 - Sort order (csid from syscharsets)
-     * </ul>
-     * If the sort order is non-zero it determines the character set, otherwise
-     * the character set is determined by the locale id.
-     *
-     * @param collation The new collation.
-     */
-    void setCollation(byte[] collation) throws SQLException {
-        String tmp;
-
-        if (collation[4] != 0) {
-            // The charset is determined by the sort order
-            tmp = Support.getCharsetForSortOrder((int) collation[4] & 0xFF);
-        } else {
-            // The charset is determined by the LCID
-            tmp = Support.getCharsetForLCID(
-                    ((int) collation[2] & 0x0F) << 16
-                    | ((int) collation[1] & 0xFF) << 8
-                    | ((int) collation[0] & 0xFF));
-        }
-
-        if (tmp == null) {
-            throw new SQLException(
-                    Messages.get("error.charset.nocollation", Support.toHex(collation)),
-                    "2C000");
-        }
-
-        try {
-            wideChars = !tmp.substring(0, 1).equals("1");
-            javaCharset = tmp.substring(2);
-
-            "This is a test".getBytes(javaCharset);
-        } catch (UnsupportedEncodingException ex) {
-            throw new SQLException(
-                    Messages.get("error.charset.invalid", Support.toHex(collation), javaCharset),
-                    "2C000");
-        }
-
-        socket.setCharset(javaCharset);
-        socket.setWideChars(wideChars);
-
-        this.collation = collation;
-    }
-
-    /**
-     * Retrieve the SQL Server 2000 default collation.
-     *
-     * @return The collation as a <code>byte[5]</code>.
-     */
-    byte[] getCollation() {
-        return this.collation;
     }
 
     /**

@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.17 2004-11-08 20:14:06 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.18 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -190,13 +190,9 @@ class SharedSocket {
      */
     private int serverType;
     /**
-     * The character set to use for converting strings to/from bytes
+     * The character set to use for converting strings to/from bytes.
      */
-    private String charsetName;
-    /**
-     * True if this is a multi byte charset.
-     */
-    private boolean wideChars;
+    private CharsetInfo charsetInfo;
     /**
      * Count of packets received.
      */
@@ -232,41 +228,31 @@ class SharedSocket {
     }
 
     /**
-     * Set the character set name to be used to translate byte arrays to
+     * Set the character set descriptor to be used to translate byte arrays to
      * or from Strings.
      *
-     * @param charsetName The character set name.
+     * @param charsetInfo the character set descriptor
      */
-    void setCharset(String charsetName) {
-        this.charsetName = charsetName;
+    void setCharsetInfo(CharsetInfo charsetInfo) {
+        this.charsetInfo = charsetInfo;
+    }
+
+    /**
+     * Retrieve the character set descriptor used to translate byte arrays to
+     * or from Strings.
+     */
+    CharsetInfo getCharsetInfo() {
+        return charsetInfo;
     }
 
     /**
      * Retrieve the character set name used to translate byte arrays to
      * or from Strings.
      *
-     * @return The character set name as a <code>String</code>.
+     * @return the character set name as a <code>String</code>
      */
     String getCharset() {
-        return this.charsetName;
-    }
-
-    /**
-     * Set the character set width.
-     *
-     * @param value True if multi byte character set.
-     */
-    void setWideChars(boolean value) {
-        this.wideChars = value;
-    }
-
-    /**
-     * Retrieve the character width.
-     *
-     * @return <code>boolean</code> true if this is a multi byte character set.
-     */
-    boolean isWideChars() {
-        return this.wideChars;
+        return charsetInfo.getCharset();
     }
 
     /**

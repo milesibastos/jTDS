@@ -17,15 +17,11 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
 import net.sourceforge.jtds.util.Logger;
@@ -45,7 +41,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.31 2004-11-18 13:54:03 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.32 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -100,112 +96,6 @@ public class Support {
      * Static utility Calendar object.
      */
     private static final GregorianCalendar cal = new GregorianCalendar();
-
-    /**
-     * Name of the <code>Charsets.properties</code> resource.
-     */
-    private static final String CHARSETS_RESOURCE_NAME = "net/sourceforge/jtds/jdbc/Charsets.properties";
-
-    /**
-     * Charset mapping list.
-     */
-    private static final Properties charsets = new Properties();
-
-    /**
-     * Charset mapping list.
-     */
-    private static final HashMap lcidToCharsetMap = new HashMap();
-
-    /**
-     * Charset mapping list.
-     */
-    private static final HashMap sortToCharsetMap = new HashMap();
-
-    static {
-        // Load character set mappings
-        try {
-            InputStream stream = null;
-            // getContextClassLoader needed to ensure driver
-            // works with Tomcat class loading rules.
-            ClassLoader classLoader =
-                    Thread.currentThread().getContextClassLoader();
-
-            if (classLoader != null) {
-                stream = classLoader.getResourceAsStream(
-                        CHARSETS_RESOURCE_NAME);
-            }
-
-            if (stream == null) {
-                classLoader = Support.class.getClassLoader();
-                stream = classLoader.getResourceAsStream(
-                        CHARSETS_RESOURCE_NAME);
-            }
-
-            if (stream != null) {
-                Properties tmp = new Properties();
-                tmp.load(stream);
-
-                for (Enumeration e = tmp.propertyNames(); e.hasMoreElements();) {
-                    String key = (String) e.nextElement();
-                    String value = tmp.getProperty(key);
-
-                    if (key.startsWith("LCID_")) {
-                        Integer lcid = new Integer(key.substring(5));
-                        lcidToCharsetMap.put(lcid, value);
-                    } else if (key.startsWith("SORT_")) {
-                        Integer sort = new Integer(key.substring(5));
-                        sortToCharsetMap.put(sort, value);
-                    } else {
-                        charsets.setProperty(key, value);
-                    }
-                }
-            } else {
-                Logger.println("Can't load Charsets.properties");
-            }
-        } catch (IOException e) {
-            Logger.logException(e);
-            // Can't load properties file for some reason
-        }
-    }
-
-    /**
-     * Retrieves the Java character set name asociated with the specified
-     * server charset, preceded by a numeric value indicating whether it's a
-     * multibyte character set (&gt;1) or not (1) and a vertical bar (|), e.g
-     * "1|Cp1252" or "2|MS936".
-     *
-     * @param serverCharset the server-specific character set name
-     * @return the equivalent Java character set name, formatted as explained
-     */
-    public static String getCharset(String serverCharset) {
-        return charsets.getProperty(serverCharset.toUpperCase());
-    }
-
-    /**
-     * Retrieves the Java character set name asociated with the specified
-     * LCID, preceded by a numeric value indicating whether it's a multibyte
-     * character set (&gt;1) or not (1) and a vertical bar (|), e.g "1|Cp1252"
-     * or "2|MS936".
-     *
-     * @param lcid the server LCID
-     * @return the equivalent Java character set name, formatted as explained
-     */
-    public static String getCharsetForLCID(int lcid) {
-        return (String) lcidToCharsetMap.get(new Integer(lcid));
-    }
-
-    /**
-     * Retrieves the Java character set name asociated with the specified
-     * sort order, preceded by a numeric value indicating whether it's a
-     * multibyte character set (&gt;1) or not (1) and a vertical bar (|), e.g
-     * "1|Cp1252" or "2|MS936".
-     *
-     * @param sortOrder the server sort order
-     * @return the equivalent Java character set name, formatted as explained
-     */
-    public static String getCharsetForSortOrder(int sortOrder) {
-        return (String) sortToCharsetMap.get(new Integer(sortOrder));
-    }
 
     /**
      * Convert a byte[] object to a hex string.
@@ -997,9 +887,7 @@ public class Support {
             if (pos > 0) {
                 buf.append(sql.substring(start, list[i].markerPos));
                 start = pos + 1;
-                buf.append(" @P");
-                buf.append(i);
-                buf.append(' ');
+                buf.append(" @P").append(i).append(' ');
             }
         }
 
@@ -1123,6 +1011,39 @@ public class Support {
         }
 
         return sqle;
+    }
+
+    /**
+     * Returns the connection for a given <code>ResultSet</code>,
+     * <code>Statement</code> or <code>Connection</code> object.
+     *
+     * @param callerReference an object reference to the caller of this method;
+     *        must be a <code>Connection</code>, <code>Statement</code> or
+     *        <code>ResultSet</code>
+     * @return a connection
+     */
+    public static ConnectionJDBC2 getConnection(Object callerReference) {
+        if (callerReference == null) {
+            throw new IllegalArgumentException("callerReference cannot be null.");
+        }
+
+        Connection connection;
+
+        try {
+            if (callerReference instanceof Connection) {
+                connection = (Connection) callerReference;
+            } else if (callerReference instanceof Statement) {
+                connection = ((Statement) callerReference).getConnection();
+            } else if (callerReference instanceof ResultSet) {
+                connection = ((ResultSet) callerReference).getStatement().getConnection();
+            } else {
+                throw new IllegalArgumentException("callerReference is invalid.");
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException(e.getMessage());
+        }
+
+        return (ConnectionJDBC2) connection;
     }
 
     // ------------- Private methods  ---------

@@ -47,7 +47,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.10 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.11 2004-11-24 06:42:01 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -158,7 +158,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public byte[] getBytes(int parameterIndex) throws SQLException {
-        return ((byte[]) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.VARBINARY, connection.getCharSet()));
+        return ((byte[]) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.VARBINARY, connection.getCharset()));
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
@@ -205,7 +205,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public String getString(int parameterIndex) throws SQLException {
-        return (String) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.VARCHAR, connection.getCharSet());
+        return (String) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.VARCHAR, connection.getCharset());
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName)
@@ -306,7 +306,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public URL getURL(int parameterIndex) throws SQLException {
         String url = (String) Support.convert(this,
                 getOutputValue(parameterIndex), java.sql.Types.VARCHAR,
-                connection.getCharSet());
+                connection.getCharset());
 
         try {
             return new java.net.URL(url);

@@ -9,7 +9,7 @@
     <property name="dist"  value="dist" />
     <property name="test"  value="test" />
 
-    <property name="version" value="0.1" />
+    <property name="version" value="0.1.1" />
     <property name="year" value="2001" />
 
   </target>

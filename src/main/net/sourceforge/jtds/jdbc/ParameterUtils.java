@@ -38,7 +38,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 public class ParameterUtils {
-    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.16 2004-05-02 22:45:20 bheineman Exp $";
+    public static final String cvsVersion = "$Id: ParameterUtils.java,v 1.17 2004-05-02 23:13:41 bheineman Exp $";
 
     /**
      * Used to normalize date and time values.
@@ -319,7 +319,6 @@ public class ParameterUtils {
                     throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
                                                   + " to Byte", null, e);
                 }
-
             case Types.SMALLINT:
                 if (value instanceof Short) {
                     return value;
@@ -397,6 +396,42 @@ public class ParameterUtils {
                     throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
                                                   + " to Double", null, e);
                 }
+            case Types.DECIMAL:
+            case Types.NUMERIC:
+                if (value instanceof BigDecimal) {
+                    return value;
+                } else if (value instanceof java.lang.Double) {
+                    return new BigDecimal(((Double) value).doubleValue());
+                } else if (value instanceof java.lang.Float) {
+                    return new BigDecimal(((Float) value).doubleValue());
+                } else if (value instanceof Number) {
+                    // This handles Byte, Short, Integer, and Long
+                    return BigDecimal.valueOf(((Number) value).longValue());
+                } else if (value instanceof Boolean) {
+                    return ((Boolean) value).booleanValue() ? new BigDecimal(1) : new BigDecimal(0);
+                }
+
+                try {
+                    return new BigDecimal(value.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
+                                                  + " to BigDecimal", null, e);
+                }
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+                if (value instanceof byte[]) {
+                    return (byte[]) value;
+                }
+
+                // This was previously only possible with String instances...
+                return encodingHelper.getBytes(value.toString());
+            case Types.BLOB:
+                if (value instanceof Blob) {
+                    return value;
+                }
+
+                return new BlobImpl((byte[]) getObject(Types.BINARY, value, encodingHelper));
             case Types.DATE:
                 synchronized (staticCalendar) {
                     if (value instanceof Date) {
@@ -441,44 +476,6 @@ public class ParameterUtils {
 
                 throw new SQLException("Cannot convert " + value.getClass().getName()
                                        + " to Timestamp.");
-            case Types.BINARY:
-            case Types.VARBINARY:
-            case Types.LONGVARBINARY:
-                if (value instanceof byte[]) {
-                    return (byte[]) value;
-                }
-
-                // This was previously only possible with String instances...
-                return encodingHelper.getBytes(value.toString());
-            case Types.DECIMAL:
-            case Types.NUMERIC:
-                if (value instanceof BigDecimal) {
-                    return value;
-                } else if (value instanceof java.lang.Double) {
-                    return new BigDecimal(((Double) value).doubleValue());
-                } else if (value instanceof java.lang.Float) {
-                    return new BigDecimal(((Float) value).doubleValue());
-                } else if (value instanceof Number) {
-                    // This handles Byte, Short, Integer, and Long
-                    return BigDecimal.valueOf(((Number) value).longValue());
-                } else if (value instanceof Boolean) {
-                    return ((Boolean) value).booleanValue() ? new BigDecimal(1) : new BigDecimal(0);
-                }
-
-                try {
-                    return new BigDecimal(value.toString().trim());
-                } catch (NumberFormatException e) {
-                    throw TdsUtil.getSQLException("Cannot convert " + value.getClass().getName()
-                                                  + " to BigDecimal", null, e);
-                }
-            case Types.BLOB:
-                if (value instanceof Blob) {
-                    return value;
-                }
-
-                return new BlobImpl((byte[]) getObject(Types.BINARY, value, encodingHelper));
-            case Types.OTHER:
-                throw new SQLException("Not implemented");
             case Types.BIT:
 //          case Types.BOOLEAN (16): - Added in 1.4!  Add support for this constant!
                 if (value instanceof Boolean) {
@@ -511,6 +508,8 @@ public class ParameterUtils {
                     // Why not just have an else statment that returns true instead of checking for specific values?
                     // (true being defined as !false); the logic has been updated to reflect this...
                 return Boolean.TRUE;
+            case Types.OTHER:
+                throw new SQLException("Not implemented");
             default:
                 throw new SQLException("Unsupported datatype " + sqlType);
 //                throw new SQLException("Unknown datatype "

@@ -64,12 +64,11 @@ import java.util.Calendar;
  *
  * @see  Connection#prepareCall
  * @see  ResultSet
- * @version  $Id: CallableStatement_base.java,v 1.8 2004-02-05 19:00:30 alin_sinpalean Exp $
+ * @version  $Id: CallableStatement_base.java,v 1.9 2004-02-08 19:14:55 bheineman Exp $
  */
 public class CallableStatement_base extends PreparedStatement_base
-    implements java.sql.CallableStatement
-{
-    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.8 2004-02-05 19:00:30 alin_sinpalean Exp $";
+implements java.sql.CallableStatement {
+    public final static String cvsVersion = "$Id: CallableStatement_base.java,v 1.9 2004-02-08 19:14:55 bheineman Exp $";
 
     private String procedureName = null;
     private boolean lastWasNull = false;
@@ -78,80 +77,117 @@ public class CallableStatement_base extends PreparedStatement_base
      * Return value of the procedure call.
      */
     private Integer retVal = null;
+
     /**
      * Set if the procedure call should return a value (i.e the SQL string is
      * of the form &quot;{&#63=call &#133}&quot;.
      */
     private boolean haveRetVal = false;
 
-    public CallableStatement_base(TdsConnection conn_, String sql) throws SQLException
-    {
+    public CallableStatement_base(TdsConnection conn_, String sql) throws SQLException {
         this(conn_, sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
     }
 
     public CallableStatement_base(TdsConnection conn_, String sql, int type, int concurrency)
-        throws SQLException
-    {
-        // SAfe We have to call removeRetVal twice because the call to super
-        //      must be the first statement. :(
-        super(conn_, removeRetVal(sql), type, concurrency);
-        String resSql = removeRetVal(sql);
-        // If the result is different, then the "?=" was removed so we have a
-        // return value.
-        if( !resSql.equals(sql) )
-            haveRetVal = true;
-        sql = resSql;
-        procedureName = "";
+    throws SQLException {
+        super(conn_, type, concurrency);
 
+        // Remove any extra whitespace for comparisons.
+        rawQueryString = conn_.nativeSQL(sql.trim());
+
+        int numberOfParameters = ParameterUtils.countParameters(rawQueryString);
         int i = 0;
-        int pos = sql.indexOf("{call ");
-        if( pos >= 0 )
-            i = pos + 6;
-        else
-        {
-            pos = sql.indexOf("exec ");
-            if( pos >= 0 )
-                i = pos + 5;
+        int length = rawQueryString.length();
+
+        // Skip non-whitespace characters.
+        for (; i < length && !Character.isWhitespace(rawQueryString.charAt(i)); i++);
+
+        String call = rawQueryString.substring(0, i);
+
+        if (!call.equalsIgnoreCase("exec") && !call.equalsIgnoreCase("execute")) {
+            rawQueryString = "exec " + rawQueryString;
+            length = rawQueryString.length();
+            i = 4;
         }
 
-        // Find the start of the procedure name
-        while( i<sql.length() && !Character.isLetterOrDigit(sql.charAt(i)) && sql.charAt(i)!='#' )
-            i++;
+        // Find start of stored procedure name or return variable.
+        for (; i < length; i++) {
+            char ch = rawQueryString.charAt(i);
 
-        pos = i;
+            if (Character.isLetterOrDigit(ch) || ch == '#' || ch == '?') {
+                break;
+            }
+        }
+
+        int pos = i;
+
+        if (rawQueryString.charAt(i) == '?') {
+            int retPos = i;
+
+            // Skip non-whitespace characters.
+            for (; i < length && rawQueryString.charAt(i) != '='; i++);
+
+            if (rawQueryString.charAt(i) == '=') {
+                rawQueryString = rawQueryString.substring(0, retPos) + rawQueryString.substring(i + 1);
+                numberOfParameters--;
+                haveRetVal = true;
+            } else {
+                throw new SQLException("Invalid return value syntax; expected to find '=': "
+                                       + sql);
+            }
+        }
+
         // Find the end of the procedure name
-        while( i<sql.length() && (Character.isLetterOrDigit(sql.charAt(i)) || sql.charAt(i)=='#' ||
-            sql.charAt(i)=='_' || sql.charAt(i)=='.') )
-            i++;
+        for (; i < length; i++) {
+            char ch = rawQueryString.charAt(i);
 
-        procedureName = sql.substring(pos, i);
+            if (!Character.isLetterOrDigit(ch) && ch != '#' && ch != '_' && ch != '.') {
+                break;
+            }
+        }
 
-        if( procedureName.length() == 0 )
-            throw new SQLException( "Did not find name in sql string" );
+        // Skip non-whitespace characters.
+        for (; i < length && !Character.isWhitespace(rawQueryString.charAt(i)); i++);
+
+        procedureName = rawQueryString.substring(pos, i);
+
+        if (procedureName.length() == 0) {
+            throw new SQLException("Unable to locate procedure name in: " + sql);
+        }
+
+        parameterList = new ParameterListItem[numberOfParameters];
+
+        for (int x = 0; x < numberOfParameters; x++) {
+            parameterList[x] = new ParameterListItem();
+        }
     }
 
-    private Object getParam(int index) throws SQLException
-    {
+    private Object getParam(int index) throws SQLException {
         // If the originally provided SQL string started with ?= then the
         // actual positions are shifted to the left and 1 is the return value
-        if( haveRetVal )
-        {
-            if( index == 1 )
+        if (haveRetVal) {
+            if (index == 1) {
                 return retVal;
+            }
+
             index--;
         }
 
-        if( index < 1 )
+        if (index < 1) {
             throw new SQLException("Invalid parameter index "
-                     + index + ". JDBC indexes start at 1.");
-        if( index > parameterList.length )
+                                   + index + ". JDBC indexes start at 1.");
+        }
+
+        if (index > parameterList.length) {
             throw new SQLException("Invalid parameter index "
-                     + index + ". This statement only has "
-                     + parameterList.length + " parameters.");
+                                   + index + ". This statement only has "
+                                   + parameterList.length + " parameters.");
+        }
 
         // JDBC indexes start at 1, java array indexes start at 0 :-(
         index--;
-        lastWasNull = ( parameterList[index] == null );
+        lastWasNull = (parameterList[index] == null);
+
         return parameterList[index].value;
     }
 
@@ -160,24 +196,18 @@ public class CallableStatement_base extends PreparedStatement_base
      * account an eventual output parameter (if there is one, the parameters
      * are actually shifted one position).
      */
-    protected void setParam(
-            int index,
-            Object value,
-            int type,
-            int scale )
-            throws SQLException
-    {
-        super.setParam(haveRetVal ? index-1 : index, value, type, scale);
+    protected void setParam(int index, Object value, int type, int scale)
+    throws SQLException {
+        super.setParam(haveRetVal ? index - 1 : index, value, type, scale);
     }
 
-    protected void addOutputParam(Object value) throws SQLException
-    {
-        for( lastOutParam++; lastOutParam<parameterList.length; lastOutParam++ )
-            if( parameterList[lastOutParam].isOutput )
-            {
+    protected void addOutputParam(Object value) throws SQLException {
+        for (lastOutParam++; lastOutParam<parameterList.length; lastOutParam++) {
+            if (parameterList[lastOutParam].isOutput) {
                 parameterList[lastOutParam].value = value;
                 return;
             }
+        }
 
         throw new SQLException("More output params than expected.");
     }
@@ -190,149 +220,137 @@ public class CallableStatement_base extends PreparedStatement_base
      * @return    the string with the &quot;?=&quot; removed, or the same
      *            string if the sequence is not found
      */
-    private static String removeRetVal(String sql)
-    {
+    private static String removeRetVal(String sql) {
         int pos = sql.indexOf("?=");
-        if( pos != -1 )
+
+        if (pos != -1) {
             sql = sql.substring(0, pos) + sql.substring(pos+2);
+        }
+
         return sql;
     }
 
     // called by TdsStatement.moreResults
-    protected boolean handleRetStat(PacketRetStatResult packet)
-    {
-        if( !super.handleRetStat(packet) )
+    protected boolean handleRetStat(PacketRetStatResult packet) {
+        if (!super.handleRetStat(packet)) {
             retVal = new Integer(packet.getRetStat());
+        }
+
         return true;
     }
 
-    protected boolean handleParamResult(PacketOutputParamResult packet) throws SQLException
-    {
-        if( !super.handleParamResult(packet) )
+    protected boolean handleParamResult(PacketOutputParamResult packet) throws SQLException {
+        if (!super.handleParamResult(packet)) {
             addOutputParam(packet.value);
+        }
+
         return true;
     }
 
-    public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException
-    {
+    public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public boolean getBoolean(int parameterIndex) throws SQLException
-    {
+    public boolean getBoolean(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
+
+        if (value == null) {
             return false;
-
-        try
-        {
-            return ((Boolean)value).booleanValue();
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Boolean) value).booleanValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public byte getByte(int parameterIndex) throws SQLException
-    {
+    public byte getByte(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
+
+        if (value == null) {
             return 0;
-
-        try
-        {
-            return ((Number)value).byteValue();
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Number) value).byteValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public byte[] getBytes(int parameterIndex) throws SQLException
-    {
+    public byte[] getBytes(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
-            return null;
 
-        try
-        {
-            return (byte[])value;
+        if (value == null) {
+            return null;
         }
-        catch( Exception e )
-        {
+
+        try {
+            return (byte[]) value;
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public java.sql.Date getDate(int parameterIndex) throws SQLException
-    {
+    public java.sql.Date getDate(int parameterIndex) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public double getDouble(int parameterIndex) throws SQLException
-    {
+    public double getDouble(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
-            return 0;
 
-        try
-        {
-            return ((Number)value).doubleValue();
+        if (value == null) {
+            return 0;
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Number) value).doubleValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public float getFloat(int parameterIndex) throws SQLException
-    {
+    public float getFloat(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
-            return 0;
 
-        try
-        {
-            return ((Number)value).floatValue();
+        if (value == null) {
+            return 0;
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Number) value).floatValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public int getInt(int parameterIndex) throws SQLException
-    {
+    public int getInt(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
-            return 0;
 
-        try
-        {
-            return ((Number)value).intValue();
+        if (value == null) {
+            return 0;
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Number) value).intValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public long getLong(int parameterIndex) throws SQLException
-    {
+    public long getLong(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
-            return 0;
 
-        try
-        {
-            return ((Number)value).longValue();
+        if (value == null) {
+            return 0;
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Number) value).longValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
@@ -340,59 +358,50 @@ public class CallableStatement_base extends PreparedStatement_base
     //----------------------------------------------------------------------
     // Advanced features:
 
-    public Object getObject(int parameterIndex) throws SQLException
-    {
+    public Object getObject(int parameterIndex) throws SQLException {
         return getParam(parameterIndex);
     }
 
-    public short getShort(int parameterIndex) throws SQLException
-    {
+    public short getShort(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        if( value == null )
+
+        if (value == null) {
             return 0;
-
-        try
-        {
-            return ((Number)value).shortValue();
         }
-        catch( Exception e )
-        {
+
+        try {
+            return ((Number) value).shortValue();
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public String getString(int parameterIndex) throws SQLException
-    {
+    public String getString(int parameterIndex) throws SQLException {
         Object value = getParam(parameterIndex);
-        try
-        {
-            return (String)value;
-        }
-        catch( Exception e )
-        {
+
+        try {
+            return (String) value;
+        } catch (Exception e) {
             throw new SQLException("Unable to convert parameter");
         }
     }
 
-    public java.sql.Time getTime(int parameterIndex) throws SQLException
-    {
+    public java.sql.Time getTime(int parameterIndex) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Timestamp getTimestamp(int parameterIndex) throws SQLException
-    {
+    public java.sql.Timestamp getTimestamp(int parameterIndex) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException
-    {
+    public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
         registerOutParameter(parameterIndex, sqlType, -1);
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType, int scale)
-            throws SQLException {
+    throws SQLException {
         // SAfe If there is a return value, decrement the parameter index or
         //      simply ignore the call if it's for the return value
         if (haveRetVal) {
@@ -400,30 +409,30 @@ public class CallableStatement_base extends PreparedStatement_base
                 // If it's the return value, it can only be an integral value
                 // of some kind
                 if (sqlType != Types.INTEGER && sqlType != Types.NUMERIC
-                        && sqlType != Types.DECIMAL && sqlType != Types.BIGINT) {
+                    && sqlType != Types.DECIMAL && sqlType != Types.BIGINT) {
                     throw new SQLException("Procedure return value is integer.");
                 }
+
                 return;
             }
+
             parameterIndex -= 1;
         }
 
-        Object value = parameterList[parameterIndex-1].value;
+        Object value = parameterList[parameterIndex - 1].value;
         // Call directly the method from PreparedStatement_base, otherwise the
         // index will be decremented one more time.
         super.setParam(parameterIndex, null, sqlType, scale);
-        parameterList[parameterIndex-1].isOutput = true;
+        parameterList[parameterIndex - 1].isOutput = true;
         // Restore the original value; setParam has set it to null.
-        parameterList[parameterIndex-1].value = value;
+        parameterList[parameterIndex - 1].value = value;
     }
 
-    public boolean wasNull() throws SQLException
-    {
+    public boolean wasNull() throws SQLException {
         return lastWasNull;
     }
 
-    public boolean execute() throws SQLException
-    {
+    public boolean execute() throws SQLException {
         closeResults(false);
         lastOutParam = -1;
 
@@ -443,347 +452,285 @@ public class CallableStatement_base extends PreparedStatement_base
 
     //--------------------------JDBC 2.0-----------------------------
 
-    public BigDecimal getBigDecimal(int parameterIndex) throws SQLException
-    {
+    public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Date getDate(int parameterIndex, Calendar cal) throws SQLException
-    {
+    public java.sql.Date getDate(int parameterIndex, Calendar cal) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Time getTime(int parameterIndex, Calendar cal) throws SQLException
-    {
+    public java.sql.Time getTime(int parameterIndex, Calendar cal) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException
-    {
+    public java.sql.Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException {
         NotImplemented();
         return null;
     }
 
     public void registerOutParameter(int paramIndex, int sqlType, String typeName)
-        throws SQLException
-    {
+    throws SQLException {
         NotImplemented();
     }
 
-    public Blob getBlob(int i) throws SQLException
-    {
+    public Blob getBlob(int i) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Clob getClob(int i) throws SQLException
-    {
+    public Clob getClob(int i) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Object getObject(int i, java.util.Map map) throws SQLException
-    {
+    public Object getObject(int i, java.util.Map map) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Ref getRef(int i) throws SQLException
-    {
+    public Ref getRef(int i) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Array getArray(int i) throws SQLException
-    {
+    public Array getArray(int i) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public void registerOutParameter(String str, int param, String str2) throws java.sql.SQLException
-    {
+    public void registerOutParameter(String str, int param, String str2) throws SQLException {
         NotImplemented();
     }
 
-    public void registerOutParameter(String str, int param, int param2) throws java.sql.SQLException
-    {
+    public void registerOutParameter(String str, int param, int param2) throws SQLException {
         NotImplemented();
     }
 
-    public void registerOutParameter(String str, int param) throws java.sql.SQLException
-    {
+    public void registerOutParameter(String str, int param) throws SQLException {
         NotImplemented();
     }
 
-    public java.sql.Array getArray(String str) throws java.sql.SQLException
-    {
+    public java.sql.Array getArray(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.math.BigDecimal getBigDecimal(String str) throws java.sql.SQLException
-    {
+    public java.math.BigDecimal getBigDecimal(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Blob getBlob(String str) throws java.sql.SQLException
-    {
+    public java.sql.Blob getBlob(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public boolean getBoolean(String str) throws java.sql.SQLException
-    {
+    public boolean getBoolean(String str) throws SQLException {
         NotImplemented();
         return false;
     }
 
-    public byte getByte(String str) throws java.sql.SQLException
-    {
+    public byte getByte(String str) throws SQLException {
         NotImplemented();
         return 0;
     }
 
-    public byte[] getBytes(String str) throws java.sql.SQLException
-    {
+    public byte[] getBytes(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Clob getClob(String str) throws java.sql.SQLException
-    {
+    public java.sql.Clob getClob(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Date getDate(String str) throws java.sql.SQLException
-    {
+    public java.sql.Date getDate(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Date getDate(String str, java.util.Calendar calendar) throws java.sql.SQLException
-    {
+    public java.sql.Date getDate(String str, java.util.Calendar calendar) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public double getDouble(String str) throws java.sql.SQLException
-    {
+    public double getDouble(String str) throws SQLException {
         NotImplemented();
         return 0;
     }
 
-    public float getFloat(String str) throws java.sql.SQLException
-    {
+    public float getFloat(String str) throws SQLException {
         NotImplemented();
         return 0;
     }
 
-    public int getInt(String str) throws java.sql.SQLException
-    {
+    public int getInt(String str) throws SQLException {
         NotImplemented();
         return 0;
     }
 
-    public long getLong(String str) throws java.sql.SQLException
-    {
+    public long getLong(String str) throws SQLException {
         NotImplemented();
         return 0;
     }
 
-    public Object getObject(String str) throws java.sql.SQLException
-    {
+    public Object getObject(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public Object getObject(String str, java.util.Map map) throws java.sql.SQLException
-    {
+    public Object getObject(String str, java.util.Map map) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Ref getRef(String str) throws java.sql.SQLException
-    {
+    public java.sql.Ref getRef(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public short getShort(String str) throws java.sql.SQLException
-    {
+    public short getShort(String str) throws SQLException {
         NotImplemented();
         return 0;
     }
 
-    public String getString(String str) throws java.sql.SQLException
-    {
+    public String getString(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Time getTime(String str) throws java.sql.SQLException
-    {
+    public java.sql.Time getTime(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Time getTime(String str, java.util.Calendar calendar) throws java.sql.SQLException
-    {
+    public java.sql.Time getTime(String str, java.util.Calendar calendar) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Timestamp getTimestamp(String str) throws java.sql.SQLException
-    {
+    public java.sql.Timestamp getTimestamp(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.sql.Timestamp getTimestamp(String str, java.util.Calendar calendar) throws java.sql.SQLException
-    {
+    public java.sql.Timestamp getTimestamp(String str, java.util.Calendar calendar) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.net.URL getURL(int param) throws java.sql.SQLException
-    {
+    public java.net.URL getURL(int param) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public java.net.URL getURL(String str) throws java.sql.SQLException
-    {
+    public java.net.URL getURL(String str) throws SQLException {
         NotImplemented();
         return null;
     }
 
-    public void setAsciiStream(String str, java.io.InputStream inputStream, int param) throws java.sql.SQLException
-    {
+    public void setAsciiStream(String str, java.io.InputStream inputStream, int param) throws SQLException {
         NotImplemented();
     }
 
-    public void setBigDecimal(String str, java.math.BigDecimal bigDecimal) throws java.sql.SQLException
-    {
+    public void setBigDecimal(String str, java.math.BigDecimal bigDecimal) throws SQLException {
         NotImplemented();
     }
 
-    public void setBinaryStream(String str, java.io.InputStream inputStream, int param) throws java.sql.SQLException
-    {
+    public void setBinaryStream(String str, java.io.InputStream inputStream, int param) throws SQLException {
         NotImplemented();
     }
 
-    public void setBoolean(String str, boolean param) throws java.sql.SQLException
-    {
+    public void setBoolean(String str, boolean param) throws SQLException {
         NotImplemented();
     }
 
-    public void setByte(String str, byte param) throws java.sql.SQLException
-    {
+    public void setByte(String str, byte param) throws SQLException {
         NotImplemented();
     }
 
-    public void setBytes(String str, byte[] values) throws java.sql.SQLException
-    {
+    public void setBytes(String str, byte[] values) throws SQLException {
         NotImplemented();
     }
 
-    public void setCharacterStream(String str, java.io.Reader reader, int param) throws java.sql.SQLException
-    {
+    public void setCharacterStream(String str, java.io.Reader reader, int param) throws SQLException {
         NotImplemented();
     }
 
-    public void setDate(String str, java.sql.Date date) throws java.sql.SQLException
-    {
+    public void setDate(String str, java.sql.Date date) throws SQLException {
         NotImplemented();
     }
 
-    public void setDate(String str, java.sql.Date date, java.util.Calendar calendar) throws java.sql.SQLException
-    {
+    public void setDate(String str, java.sql.Date date, java.util.Calendar calendar) throws SQLException {
         NotImplemented();
     }
 
-    public void setDouble(String str, double param) throws java.sql.SQLException
-    {
+    public void setDouble(String str, double param) throws SQLException {
         NotImplemented();
     }
 
-    public void setFloat(String str, float param) throws java.sql.SQLException
-    {
+    public void setFloat(String str, float param) throws SQLException {
         NotImplemented();
     }
 
-    public void setInt(String str, int param) throws java.sql.SQLException
-    {
+    public void setInt(String str, int param) throws SQLException {
         NotImplemented();
     }
 
-    public void setLong(String str, long param) throws java.sql.SQLException
-    {
+    public void setLong(String str, long param) throws SQLException {
         NotImplemented();
     }
 
-    public void setNull(String str, int param) throws java.sql.SQLException
-    {
+    public void setNull(String str, int param) throws SQLException {
         NotImplemented();
     }
 
-    public void setNull(String str, int param, String str2) throws java.sql.SQLException
-    {
+    public void setNull(String str, int param, String str2) throws SQLException {
         NotImplemented();
     }
 
-    public void setObject(String str, Object obj) throws java.sql.SQLException
-    {
+    public void setObject(String str, Object obj) throws SQLException {
         NotImplemented();
     }
 
-    public void setObject(String str, Object obj, int param) throws java.sql.SQLException
-    {
+    public void setObject(String str, Object obj, int param) throws SQLException {
         NotImplemented();
     }
 
-    public void setObject(String str, Object obj, int param, int param3) throws java.sql.SQLException
-    {
+    public void setObject(String str, Object obj, int param, int param3) throws SQLException {
         NotImplemented();
     }
 
-    public void setShort(String str, short param) throws java.sql.SQLException
-    {
+    public void setShort(String str, short param) throws SQLException {
         NotImplemented();
     }
 
-    public void setString(String str, String str1) throws java.sql.SQLException
-    {
+    public void setString(String str, String str1) throws SQLException {
         NotImplemented();
     }
 
-    public void setTime(String str, java.sql.Time time) throws java.sql.SQLException
-    {
+    public void setTime(String str, java.sql.Time time) throws SQLException {
         NotImplemented();
     }
 
-    public void setTime(String str, java.sql.Time time, java.util.Calendar calendar) throws java.sql.SQLException
-    {
+    public void setTime(String str, java.sql.Time time, java.util.Calendar calendar) throws SQLException {
         NotImplemented();
     }
 
-    public void setTimestamp(String str, java.sql.Timestamp timestamp) throws java.sql.SQLException
-    {
+    public void setTimestamp(String str, java.sql.Timestamp timestamp) throws SQLException {
         NotImplemented();
     }
 
-    public void setTimestamp(String str, java.sql.Timestamp timestamp, java.util.Calendar calendar) throws java.sql.SQLException
-    {
+    public void setTimestamp(String str, java.sql.Timestamp timestamp, java.util.Calendar calendar) throws SQLException {
         NotImplemented();
     }
 
-    public void setURL(String str, java.net.URL url) throws java.sql.SQLException
-    {
+    public void setURL(String str, java.net.URL url) throws SQLException {
         NotImplemented();
     }
 }

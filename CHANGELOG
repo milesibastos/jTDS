@@ -1,6 +1,11 @@
 Changes from jTDS 0.6
 =========================
 
+02/08/2004 - Brian Heineman
+ o Improved parsing of callable statements to be case-insensitive, allow
+   whitespace between '?=' and support calls of stored procedures when no
+   "exec" is specified.
+
 02/07/2004 - Brian Heineman
  o Moved TdsStatement.releaseTds() calls into try {} finally {} statements
    to ensure connections are released back into internal pool even if an

@@ -1309,6 +1309,27 @@ public class LOBTest extends TestBase {
         rs.close();
     }
 
+    /**
+     * Test for bug [1062395] Empty (but not null) blobs should return byte[0].
+     */
+    public void testBlobEmpty() throws Exception {
+        Statement stmt = con.createStatement();
+
+        assertEquals(0,
+                stmt.executeUpdate("CREATE TABLE #blobEmpty (data IMAGE)"));
+        assertEquals(1,
+                stmt.executeUpdate("INSERT INTO #blobEmpty (data) values ('')"));
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #blobEmpty");
+        assertTrue(rs.next());
+        Blob blob = rs.getBlob(1);
+        assertEquals(0, blob.length());
+        assertEquals(0, blob.getBytes(1, 0).length);
+
+        rs.close();
+        stmt.close();
+    }
+
     /*************************************************************************
      *************************************************************************
      **                          CLOB TESTS                                 **
@@ -2806,6 +2827,27 @@ public class LOBTest extends TestBase {
         assertFalse(rs.next());
         stmt2.close();
         rs.close();
+    }
+
+    /**
+     * Test for bug [1062395] Empty (but not null) blobs should return byte[0].
+     */
+    public void testClobEmpty() throws Exception {
+        Statement stmt = con.createStatement();
+
+        assertEquals(0,
+                stmt.executeUpdate("CREATE TABLE #clobEmpty (data TEXT)"));
+        assertEquals(1,
+                stmt.executeUpdate("INSERT INTO #clobEmpty (data) values ('')"));
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #clobEmpty");
+        assertTrue(rs.next());
+        Clob clob = rs.getClob(1);
+        assertEquals(0, clob.length());
+        assertEquals("", clob.getSubString(1, 0));
+
+        rs.close();
+        stmt.close();
     }
 
     private byte[] getBlobTestData() {

@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.11 2002-07-16 13:05:30 alin_sinpalean Exp $
+ * @version $Id: TdsStatement.java,v 1.12 2002-07-17 10:30:22 alin_sinpalean Exp $
  */
 package com.internetcds.jdbc.tds;
 
@@ -53,7 +53,7 @@ import java.sql.*;
 
 public class TdsStatement implements java.sql.Statement
 {
-   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.11 2002-07-16 13:05:30 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: TdsStatement.java,v 1.12 2002-07-17 10:30:22 alin_sinpalean Exp $";
 
 
    protected TdsConnection connection; // The connection who created us
@@ -109,8 +109,7 @@ public class TdsStatement implements java.sql.Statement
 
    protected void eofResults() throws SQLException
    {
-      if( !actTds.moreResults() )
-         releaseTds();
+      releaseTds();
    }
 
    protected void releaseTds() throws SQLException
@@ -120,9 +119,15 @@ public class TdsStatement implements java.sql.Statement
       if( actTds==null || !connection.getAutoCommit() )
          return;
 
+      // Don't free the Tds if there are any results left.
+      /** @todo Check if this is correct in case an IOException occurs */
+      if( actTds.moreResults() )
+         return;
+
       try
       {
          connection.freeTds(actTds);
+         unopenedResult = false;
          actTds = null;
       }
       catch (TdsException e)
@@ -306,6 +311,10 @@ public class TdsStatement implements java.sql.Statement
     */
    public void close() throws SQLException
    {
+      // Already closed.
+      if( actTds == null )
+         return;
+
       closeResults();
 
       // now we need to relinquish the connection
@@ -751,7 +760,7 @@ public class TdsStatement implements java.sql.Statement
               PacketEndTokenResult end =
                  (PacketEndTokenResult)tds.processSubPacket();
               updateCount = end.getRowCount();
-              if( !tds.moreResults() && allowTdsRelease )
+              if( allowTdsRelease )
                  releaseTds();
               break;
             }

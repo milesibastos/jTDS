@@ -1,3 +1,18 @@
+Introduction
+============
+
+jTDS is Free Software. jTDS is released under the terms of the GNU Lesser
+General Public License. A copy of the LGPL is provided in the LICENSE file. The
+LGPL is sufficiently flexible to allow the use of jTDS in both open source and
+commercial projects.
+
+This document has been superseded by the HTML documentation that can be found
+in the html directory. However, since it still contains pertinent information
+it has been left in place. If you are a first time user please read this
+document and the HTML FAQ before proceeding. It's also recommended that you
+also read at least part of the HTML documentation.
+
+
 Thanks
 ======
 
@@ -109,8 +124,7 @@ that can be specified in the URL.
 To Do
 =====
 
-1. Switch to using a single physical connection (per Connection object). This
-   will fix a number of locking issues.
+1. Non-cached Blob/Clob implementation.
 2. Fix outstanding minor bugs.
 3. JDBC 3.0 compliance.
 
@@ -124,6 +138,13 @@ SourceForge project info: http://sourceforge.net/projects/jtds/
 
 License
 =======
+
+jTDS is released under the terms of the LGPL. A copy of the LGPL is provided
+in the LICENSE file.
+
+Parts of jTDS are copyright CDS Networks and/or Craig Spannring the developer
+of the original FreeTDS JDBC driver from which jTDS is derived. The copyright
+notice follows:
 
  Copyright 1998, 1999 CDS Networks, Inc., Medford Oregon
 

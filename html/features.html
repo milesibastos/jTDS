@@ -34,16 +34,16 @@ table.inner td.fastest { color: #00ff00; }
     <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
     <td class="content">
       <p class="links">
-        | <a href="index.html">Home</a>
-        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        <a href="index.html">Home</a>
         | <a href="faq.html">FAQ</a>
-        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="doc.html">Documentation</a>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+        | <a href="http://sourceforge.net/projects/jtds">Project Info</a>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
         | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
         | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
-        | <a href="links.html">Links</a>
-        | <a href="license.html">License</a>
       </p>
 
 
@@ -55,7 +55,7 @@ table.inner td.fastest { color: #00ff00; }
 
 
 <p class="title">jTDS feature matrix</p>
-<p>Below is the list of features of jTDS release 0.7.1.</p>
+<p>Below is the list of features of jTDS release 0.8-rc1.</p>
 <table class="inner" cellspacing="0">
   <tr>
     <td colspan="2"><p class="title">Compliance</p></td>
@@ -98,7 +98,7 @@ table.inner td.fastest { color: #00ff00; }
   </tr>
   <tr>
     <td>Batch Updates</td>
-    <td>Yes; not yet optimized, but fully functional</td>
+    <td>Yes; not completely optimized, but fully functional and still faster than most drivers</td>
   </tr>
   <tr>
     <td>Statement Pooling</td>
@@ -114,11 +114,13 @@ table.inner td.fastest { color: #00ff00; }
   </tr>
   <tr>
     <td>Full BLOB and CLOB Support</td>
-    <td>Yes</td>
+    <td>Yes; <code>OutOfMemoryError</code>s can occur with large LOBs;
+      <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=919477&group_id=33291&atid=407762">scheduled
+      for fixing</a></td>
   </tr>
   <tr>
     <td>Unlimited Statements per Connection</td>
-    <td>Yes; lockups can occur because multiple connections are used; scheduled for fixing</td>
+    <td>Yes</td>
   </tr>
   <tr>
     <td>Generated keys retrieval</td>
@@ -146,7 +148,8 @@ table.inner td.fastest { color: #00ff00; }
   </tr>
   <tr>
     <td>Optimized Native Protocol Performance</td>
-    <td>Yes; fastest JDBC driver for SQL Server</td>
+    <td>Yes; fastest JDBC driver for SQL Server (benchmarks results:
+      <a href="benchTest.html">[1]</a>, <a href="perfTest.html">[2]</a>)</td>
   </tr>
   <tr>
     <td>Windows Authentication</td>

@@ -42,16 +42,16 @@
     <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
     <td class="content">
       <p class="links">
-        | <a href="index.html">Home</a>
-        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        <a href="index.html">Home</a>
         | <a href="faq.html">FAQ</a>
-        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="doc.html">Documentation</a>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+        | <a href="http://sourceforge.net/projects/jtds">Project Info</a>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
         | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
         | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
-        | <a href="links.html">Links</a>
-        | <a href="license.html">License</a>
       </p>
 
 
@@ -145,7 +145,7 @@ the stored procedure has output parameters).</p>
   <td class="offset repeat">XX</td>
   <td class="length">X</td>
   <td class="value">XX XX XX...</td>
-  <td class="description">Column table name -- fully qualified if database or user different than 
+  <td class="description">Column table name -- fully qualified if database or user different than
    current (TEXT, NTEXT and IMAGE data only)
   </td>
  </tr>
@@ -218,7 +218,7 @@ the stored procedure has output parameters).</p>
   <td class="offset repeat">XX</td>
   <td class="length">1</td>
   <td class="value">XX</td>
-  <td class="description">Type of aggregation (0x30=STDEV, 0x31=STDEVP, 0x32=VAR, 0x33=VARP, 
+  <td class="description">Type of aggregation (0x30=STDEV, 0x31=STDEVP, 0x32=VAR, 0x33=VARP,
    0x4B=COUNT, 0x4D=SUM, 0x4F=AVG, 0x51=MIN, 0x52=MAX)
   </td>
  </tr>
@@ -552,7 +552,7 @@ VARCHAR).</p>
   <td class="offset">XX</td>
   <td class="length">X</td>
   <td class="value">XX ...</td>
-  <td class="description">Actual size (only variable size types): 2 bytes for large types (type & 
+  <td class="description">Actual size (only variable size types): 2 bytes for large types (type &
    0x80 != 0), 1 byte for all other types (TEXT, NTEXT and IMAGE cannot be parameters)
   </td>
  </tr>
@@ -782,7 +782,7 @@ VARCHAR).</p>
 </div>
 
 <p class="title">0xFD (253) TDS_DONE<br>0xFE (254) TDS_DONEPROC<br>0xFF (255) TDS_DONEINPROC</p>
-<p>End of query execution outside stored procedure (TDS_DONE), end of stored procedure 
+<p>End of query execution outside stored procedure (TDS_DONE), end of stored procedure
 (TDS_DONEPROC) or end of query inside a stored procedure (TDS_DONEINPROC).</p>
 <table class="packet">
  <tr>

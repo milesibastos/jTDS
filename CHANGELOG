@@ -1,6 +1,15 @@
 Changes from jTDS 0.7.1
 ========================
 
+03/29/2004 - Alin Sinpalean
+ o jTDS is now licensed under the LGPL. This means that noone will be able to
+   sell jTDS or any derivatives and that any modifications to it must be made
+   public. This decision has been discussed and approved in the jTDS developer
+   forum.
+ o Updated the documentation and README to reflect the license change.
+ o Changed the "Project Home" link to "Project Info" to avoid confusion and
+   reordered the links, placing the local ones first.
+
 03/28/2004 - Alin Sinpalean
  o Compiled (a lot of) new documentation.
  o Modified property names in TdsDefinitions and TdsDataSource to match the
@@ -29,8 +38,8 @@ Changes from jTDS 0.7.1
    it.
 
 03/26/2004 - Brian Heineman
- o Added ResultSet.getObject() support for IMAGE, TEXT and NTEXT fields to return
-   Blob and Clob objects.  Added tests for new functionality.
+ o Added ResultSet.getObject() support for IMAGE, TEXT and NTEXT fields to
+   return Blob and Clob objects. Added tests for new functionality.
  o Added Blob and Clob support to ResultSetMetaData.getColumnClassName().
  o Corrected bug [887508] getObject returns Integer-Object on Types.Smallint;
    added test to ensure functionality continues to work in the future.

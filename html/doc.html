@@ -30,75 +30,92 @@
     <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
     <td class="content">
       <p class="links">
-        | <a href="index.html">Home</a>
-        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        <a href="index.html">Home</a>
         | <a href="faq.html">FAQ</a>
-        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <span class="selected">Documentation</span>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+        | <a href="http://sourceforge.net/projects/jtds">Project Info</a>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
         | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
         | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
-        | <a href="links.html">Links</a>
-        | <a href="license.html">License</a>
       </p>
+
+
+<!--
+==================================
+  Content starts here
+==================================
+-->
+
+
       <p class="title">jTDS Documentation</p>
-      <p>As you might expect jTDS is not 100% documented, but there is a lot of 
-        information lying around and we are currently working on organizing all 
-        this information into something that's easy to use. For now, there's the 
-        FAQ, the javadoc-generated HTML, the (reverse engineered) TDS 7.0 protocol 
-        specification, various benchmark results and a feature matrix. If you 
-        are interested in helping us or have any kind of related documentation, 
+      <p>As you might expect jTDS is not 100% documented, but there is a lot of
+        information lying around and we are currently working on organizing all
+        this information into something that's easy to use. For now, there's the
+        FAQ, the javadoc-generated HTML, the (reverse engineered) TDS 7.0 protocol
+        specification, various benchmark results and a feature matrix. If you
+        are interested in helping us or have any kind of related documentation,
         please let us know.</p>
       <p>Here are the links. For jTDS users:</p>
       <ul>
-        <li>The <a href="faq.html">Frequently Asked Questions</a> page. This is 
-          where you'll find the answers to the most common questions but also 
-          detailed information on using jTDS. Check it out first if you never 
+        <li>The <a href="faq.html">Frequently Asked Questions</a> page. This is
+          where you'll find the answers to the most common questions but also
+          detailed information on using jTDS. Check it out first if you never
           used jTDS before.</li>
-        <li>The jTDS <a href="features.html">feature matrix</a>. The fastest way 
+        <li>The jTDS <a href="features.html">feature matrix</a>. The fastest way
           to check whether jTDS has everything you need or not.</li>
-        <li>Benchmark results. We have benchmarked jTDS against some well-known 
-          commercial drivers and of course the Microsoft driver and the JDBC-ODBC 
-          bridge, using two different benchmarks, provided by two leading commercial 
-          driver vendors: <a href="http://www.inetsoftware.de/English/Produkte/OPTA/Benchmark.htm">i-net 
-          software</a> and <a href="http://www.jnetdirect.com/downloads.php?op=performsuite">JNetDirect</a>. 
-          And here are the results: <a href="benchTest.html">BenchTest 2.1 for 
-          MS SQL Server</a> and <a href="perfTest.html">NetDirect JDBC Performance 
+        <li>Benchmark results. We have benchmarked jTDS against some well-known
+          commercial drivers and of course the Microsoft driver and the JDBC-ODBC
+          bridge, using two different benchmarks, provided by two leading commercial
+          driver vendors: <a href="http://www.inetsoftware.de/English/Produkte/OPTA/Benchmark.htm">i-net
+          software</a> and <a href="http://www.jnetdirect.com/downloads.php?op=performsuite">JNetDirect</a>.
+          And here are the results: <a href="benchTest.html">BenchTest 2.1 for
+          MS SQL Server</a> and <a href="perfTest.html">NetDirect JDBC Performance
           Benchmark</a>. And, by the way, jTDS is the fastest.</li>
       </ul>
-      <p>For developers and people interested in finding out more about jTDS and/or 
+      <p>For developers and people interested in finding out more about jTDS and/or
         SQL Server:</p>
       <ul>
-        <li><a href="doc">jTDS API documentation</a> (javadoc-generated). Please 
-          note that this might be somewhat out of date, it's pretty hard remembering 
-          to update it. If you want to make sure you get the last version, go 
-          to the download page and get the jTDS source package. It contains the 
+        <li><a href="doc">jTDS API documentation</a> (javadoc-generated). Please
+          note that this might be somewhat out of date, it's pretty hard remembering
+          to update it. If you want to make sure you get the last version, go
+          to the download page and get the jTDS source package. It contains the
           last javadoc-generated documentation.</li>
-        <li>Some <a href="TDS.html">TDS 7.0 documentation</a>. Incomplete (since 
-          it's obtained by reverse-engineering the data stream between SQL Server 
-          and jTDS or various other clients) but it contains enough new information 
-          to make it interesting and useful. Be sure to also check out the <a href="http://www.freetds.org/tds.html">documentation</a> 
-          provided by the FreeTDS project, as it pretty much complements the stuff 
+        <li>Some <a href="TDS.html">TDS 7.0 documentation</a>. Incomplete (since
+          it's obtained by reverse-engineering the data stream between SQL Server
+          and jTDS or various other clients) but it contains enough new information
+          to make it interesting and useful. Be sure to also check out the <a href="http://www.freetds.org/tds.html">documentation</a>
+          provided by the FreeTDS project, as it pretty much complements the stuff
           we have.</li>
-        <li>Documentation on <a href="apiCursors.html" target="_blank">SQL Server 
-          API server cursors</a> (i.e. the undocumented stored procedures used 
-          in the background by all the Microsoft client implementations to handle 
-          cursors). This is some pretty new stuff, assembled from scratch by the 
+        <li>Documentation on <a href="apiCursors.html" target="_blank">SQL Server
+          API server cursors</a> (i.e. the undocumented stored procedures used
+          in the background by all the Microsoft client implementations to handle
+          cursors). This is some pretty new stuff, assembled from scratch by the
           jTDS Project, but it's quite complete.</li>
-        <li>Interested in joining the project? <a href="newMembers.html">Here</a>'s 
-          a short document describing how you can become a project member. You 
-          don't have to do anything you don't want to, just have fun writing code, 
-          tests, documentation, helping out people or reverse engineer M$'s well 
+        <li>Interested in joining the project? <a href="newMembers.html">Here</a>'s
+          a short document describing how you can become a project member. You
+          don't have to do anything you don't want to, just have fun writing code,
+          tests, documentation, helping out people or reverse engineer M$'s well
           kept secrets.</li>
       </ul>
-      <p>If you haven't found what you were looking for, make sure to check out 
-        the <a href="http://sourceforge.net/forum/?group_id=33291">jTDS forums</a> 
-        or the project trackers (<a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">bugs</a>, 
-        <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407764">patches</a>, 
-        <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407763">support 
-        requests</a> and <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407765">requests 
-        for enhancements</a>). Of course, you can also post your question in the 
+      <p>If you haven't found what you were looking for, make sure to check out
+        the <a href="http://sourceforge.net/forum/?group_id=33291">jTDS forums</a>
+        or the project trackers (<a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">bugs</a>,
+        <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407764">patches</a>,
+        <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407763">support
+        requests</a> and <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407765">requests
+        for enhancements</a>). Of course, you can also post your question in the
         appropriate forum and someone will get back to you as soon as possible.</p>
+
+
+<!--
+==================================
+  Content ends here
+==================================
+-->
+
     </td>
     <td width="9" background="images/mainr.gif"><img src="images/spacer.gif"></td>
   </tr>

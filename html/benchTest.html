@@ -35,16 +35,16 @@ table.inner td.fastest { color: #00ff00; }
     <td width="9" background="images/mainl.gif"><img src="images/spacer.gif"></td>
     <td class="content">
       <p class="links">
-        | <a href="index.html">Home</a>
-        | <a href="http://sourceforge.net/projects/jtds">Project Home</a>
+        <a href="index.html">Home</a>
         | <a href="faq.html">FAQ</a>
-        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="doc.html">Documentation</a>
+        | <a href="links.html">Links</a>
+        | <a href="license.html">License</a>
+        | <a href="http://sourceforge.net/projects/jtds">Project Info</a>
+        | <a href="http://sourceforge.net/project/showfiles.php?group_id=33291">Download</a>
         | <a href="http://sourceforge.net/news/?group_id=33291">News</a>
         | <a href="http://sourceforge.net/tracker/?group_id=33291&atid=407762">Bugs</a>
         | <a href="http://sourceforge.net/forum/?group_id=33291">Forums</a>
-        | <a href="links.html">Links</a>
-        | <a href="license.html">License</a>
       </p>
 
 
@@ -56,26 +56,26 @@ table.inner td.fastest { color: #00ff00; }
 
 
 <p class="title">i-net Software BenchTest 2.1 for MS SQL Server Results</p>
-<p>These are the results of running i-net Software's <a href="http://www.inetsoftware.de/English/Produkte/JDBC2/BenchTest2_1.zip">BenchTest 
-  2.1 for MS SQL Server</a>. The tests were run against an SQL Server 2000 over 
-  a 100Mbit network connection. The client machine was an AMD Duron 900MHz with 
+<p>These are the results of running i-net Software's <a href="http://www.inetsoftware.de/English/Produkte/JDBC2/BenchTest2_1.zip">BenchTest
+  2.1 for MS SQL Server</a>. The tests were run against an SQL Server 2000 over
+  a 100Mbit network connection. The client machine was an AMD Duron 900MHz with
   512MB RAM (no idea about the server).</p>
-<p>5 drivers were tested: <a href="http://www.inetsoftware.de/English/Produkte/MERLIA/default.htm">i-net 
-  Merlia 6.0</a>, Microsoft SQL Server Driver for JDBC SP2, NetDirect JSQLConnect 
-  3.3023, jTDS 0.7 and the JDBC-ODBC bridge bundled with J2RE 1.4.2-b28. All tests 
+<p>5 drivers were tested: <a href="http://www.inetsoftware.de/English/Produkte/MERLIA/default.htm">i-net
+  Merlia 6.0</a>, Microsoft SQL Server Driver for JDBC SP2, NetDirect JSQLConnect
+  3.3023, jTDS 0.7 and the JDBC-ODBC bridge bundled with J2RE 1.4.2-b28. All tests
   were run twice and the final result is the average of the two test runs.</p>
-<p>Unfortunately, the license of NetDirect JSQLConnect does not allow any benchmarking 
-  results to be made public, but it has failed the CursorUpdate test andits results 
-  would not have affected the final standings too much. If you want some more 
-  exact results for JSQLConnect, download it and the i-net Software BenchTest 
+<p>Unfortunately, the license of NetDirect JSQLConnect does not allow any benchmarking
+  results to be made public, but it has failed the CursorUpdate test andits results
+  would not have affected the final standings too much. If you want some more
+  exact results for JSQLConnect, download it and the i-net Software BenchTest
   and do the testing yourself. It's very easy.</p>
 <table class="inner" cellspacing="0">
-  <tr> 
-    <td colspan="6"> 
+  <tr>
+    <td colspan="6">
       <p class="title">Tests run with rowcount = 1000</p>
     </td>
   </tr>
-  <tr> 
+  <tr>
     <td>&nbsp;</td>
     <td>i-net Merlia</td>
     <td>MS</td>
@@ -83,7 +83,7 @@ table.inner td.fastest { color: #00ff00; }
     <td>jTDS</td>
     <td>ODBC<a href="#_note_ODBC"><sup>2</sup></a></td>
   </tr>
-  <tr> 
+  <tr>
     <td>UnpreparedInsert</td>
     <td class="number">10927</td>
     <td class="number">10510</td>
@@ -91,7 +91,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">10154</td>
     <td class="number">11114</td>
   </tr>
-  <tr> 
+  <tr>
     <td>DeleteAll</td>
     <td class="number fastest">215</td>
     <td class="number">986</td>
@@ -99,7 +99,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">591</td>
     <td class="number">1082</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorInsertEmpty</td>
     <td class="number fastest">11215</td>
     <td class="number">11687</td>
@@ -107,7 +107,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">11475</td>
     <td class="number">11225</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorDelete</td>
     <td class="number">10845</td>
     <td class="number">10745</td>
@@ -115,7 +115,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">10395</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorInsert</td>
     <td class="number">17951</td>
     <td class="number">13419</td>
@@ -123,7 +123,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">12273</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorFetchPaged</td>
     <td class="number fastest">1242</td>
     <td class="number">8492</td>
@@ -131,7 +131,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">2354</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorUpdate</td>
     <td class="number">16523</td>
     <td class="number">21680</td>
@@ -139,7 +139,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">13518</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedUpdate</td>
     <td class="number">13925</td>
     <td class="number">12659</td>
@@ -147,7 +147,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">12097</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedUpdateWProc</td>
     <td class="number">14099</td>
     <td class="number">13148</td>
@@ -155,7 +155,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">10024</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>BatchPreparedUpdate</td>
     <td class="number">4015</td>
     <td class="number">4107</td>
@@ -163,7 +163,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">3425</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>ResultSetReadAllRows</td>
     <td class="number">901</td>
     <td class="number">951</td>
@@ -171,7 +171,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">401</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedBlobUpdate</td>
     <td class="number fastest">140</td>
     <td class="number">281</td>
@@ -179,7 +179,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">211</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedBlobUpdateWProc</td>
     <td class="number fastest">110</td>
     <td class="failed">Failed</td>
@@ -187,12 +187,12 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">180</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
-    <td colspan="6"> 
+  <tr>
+    <td colspan="6">
       <p class="title">Tests run with rowcount = 100</p>
     </td>
   </tr>
-  <tr> 
+  <tr>
     <td>&nbsp;</td>
     <td>i-net Merlia</td>
     <td>MS</td>
@@ -200,7 +200,7 @@ table.inner td.fastest { color: #00ff00; }
     <td>jTDS</td>
     <td>ODBC<a href="#_note_ODBC"><sup>2</sup></a></td>
   </tr>
-  <tr> 
+  <tr>
     <td>UnpreparedInsert</td>
     <td class="number">916</td>
     <td class="number">931</td>
@@ -208,7 +208,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">952</td>
     <td class="number fastest">901</td>
   </tr>
-  <tr> 
+  <tr>
     <td>DeleteAll</td>
     <td class="number">30</td>
     <td class="number fastest">20</td>
@@ -216,7 +216,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">30</td>
     <td class="number fastest">20</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorInsertEmpty</td>
     <td class="number">972</td>
     <td class="number">1041</td>
@@ -224,7 +224,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">901</td>
     <td class="number">957</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorDelete</td>
     <td class="number">931</td>
     <td class="number">1152</td>
@@ -232,7 +232,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">901</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorInsert</td>
     <td class="number">1953</td>
     <td class="number">1237</td>
@@ -240,7 +240,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">1157</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorFetchPaged</td>
     <td class="number fastest">370</td>
     <td class="number">1402</td>
@@ -248,7 +248,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">510</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>CursorUpdate</td>
     <td class="number">1778</td>
     <td class="number">2533</td>
@@ -256,7 +256,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">1362</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedUpdate</td>
     <td class="number">1382</td>
     <td class="number">1177</td>
@@ -264,7 +264,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">962</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedUpdateWProc</td>
     <td class="number">1132</td>
     <td class="number">1131</td>
@@ -272,7 +272,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number fastest">871</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>BatchPreparedUpdate</td>
     <td class="number fastest">295</td>
     <td class="number">441</td>
@@ -280,7 +280,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">320</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>ResultSetReadAllRows</td>
     <td class="number fastest">70</td>
     <td class="number">151</td>
@@ -288,7 +288,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">75</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedBlobUpdate</td>
     <td class="number">40</td>
     <td class="number fastest">20</td>
@@ -296,7 +296,7 @@ table.inner td.fastest { color: #00ff00; }
     <td class="number">35</td>
     <td class="failed">Failed</td>
   </tr>
-  <tr> 
+  <tr>
     <td>PreparedBlobUpdateWProc</td>
     <td class="number fastest">15</td>
     <td class="failed">Failed</td>
@@ -306,42 +306,42 @@ table.inner td.fastest { color: #00ff00; }
   </tr>
 </table>
 <p class="title">The tests explained</p>
-      <p>All tests use a table with an INT primary key and nullable columns of 
-        each SQL Server base type (about 20 in all). The rowcount is a parameter 
-        that determines the size of each test (number of rows inserted/updated/retrieved 
+      <p>All tests use a table with an INT primary key and nullable columns of
+        each SQL Server base type (about 20 in all). The rowcount is a parameter
+        that determines the size of each test (number of rows inserted/updated/retrieved
         or Blob size).</p>
 <ul>
-  <li>UnpreparedInsert - Insert rowcount rows with default values with a classic 
+  <li>UnpreparedInsert - Insert rowcount rows with default values with a classic
     INSERT using a plain statement.</li>
-  <li>DeleteAll - Delete all rows with a single statement ('DELETE FROM Table'). 
-    Not very relevant, it only tests the server, that's why the results vary so 
+  <li>DeleteAll - Delete all rows with a single statement ('DELETE FROM Table').
+    Not very relevant, it only tests the server, that's why the results vary so
     wildly from the 1000 rows test to the 100 rows test.</li>
-  <li>CursorInsertEmpty - Insert rowcount rows using insertRow() and without setting 
+  <li>CursorInsertEmpty - Insert rowcount rows using insertRow() and without setting
     the value of any column.</li>
   <li>CursorDelete - Delete rowcount rows using deleteRow().</li>
-  <li>CursorInsert - Insert rowcount rows with setting all columns (one column 
+  <li>CursorInsert - Insert rowcount rows with setting all columns (one column
     for each type supported by SQL Server, except TEXT/IMAGE).</li>
-  <li>CursorFetchPaged - Create a scrollable ResultSet, set the fetch size to 
-    rowcount/100 and scroll through it. (jTDS doesn't &quot;know&quot; how to 
-    fetch more than one row of a cursor-based ResultSet at once yet, so it's somewhat 
+  <li>CursorFetchPaged - Create a scrollable ResultSet, set the fetch size to
+    rowcount/100 and scroll through it. (jTDS doesn't &quot;know&quot; how to
+    fetch more than one row of a cursor-based ResultSet at once yet, so it's somewhat
     slower than the i-net driver, but still a lot faster than the others.)</li>
   <li>CursorUpdate - Update rowcount rows using updateRow().</li>
   <li>PreparedUpdate - Update rowcount rows using a classic UPDATE with a PreparedStatement.</li>
-  <li>PreparedUpdateWProc - Update rowcount rows using a stored procedure with 
+  <li>PreparedUpdateWProc - Update rowcount rows using a stored procedure with
     a PreparedStatement.</li>
-  <li>BatchPreparedUpdate - Update rowcount rows using a classic UPDATE with a 
+  <li>BatchPreparedUpdate - Update rowcount rows using a classic UPDATE with a
     PreparedStatement and executeBatch() in batches of 10 updates.</li>
-  <li>ResultSetReadAllRows - Scroll through a scrollable ResultSet and call the 
+  <li>ResultSetReadAllRows - Scroll through a scrollable ResultSet and call the
     getXXX() methods for each column.</li>
-  <li>PreparedBlobUpdate - Update a Blob of rowcount KB using a classic UPDATE 
+  <li>PreparedBlobUpdate - Update a Blob of rowcount KB using a classic UPDATE
     with a PreparedStatement.</li>
-  <li>PreparedBlobUpdateWProc - Update a Blob of rowcount KB using a stored procedure 
+  <li>PreparedBlobUpdateWProc - Update a Blob of rowcount KB using a stored procedure
     with a PreparedStatement.</li>
 </ul>
-<p><a name="_note_Cursor"></a><sup>1</sup> 
-  MS Cursor stands for the Microsoft driver with SelectMethod set to 'Cursor' 
+<p><a name="_note_Cursor"></a><sup>1</sup>
+  MS Cursor stands for the Microsoft driver with SelectMethod set to 'Cursor'
   (the other uses the default 'Direct' method).<br>
-  <a name="_note_ODBC"></a><sup>2</sup> The JDBC-ODBC bridge failed on the CursorDelete 
+  <a name="_note_ODBC"></a><sup>2</sup> The JDBC-ODBC bridge failed on the CursorDelete
   test and closed the connection causing the rest of the tests to also fail.</p>
 
 

@@ -35,7 +35,11 @@
       <fileset dir="${src}/main" includes="**/*.java"/>
     </copy>
     <copy todir="${build}/src">
-      <fileset dir="${src}/test" includes="**/*.java" excludes="**/GenKeyTest.java"/>
+      <fileset dir="${src}/test" includes="**/*.java">
+        <exclude name="**/GenKeyTest.java"/>
+        <exclude name="**/LOBTest.java"/>
+        <exclude name="**/SavepointTest.java"/>
+      </fileset>
     </copy>
   </target>
 

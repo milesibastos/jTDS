@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.7 2004-07-14 15:13:38 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.8 2004-07-14 18:37:49 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -1471,12 +1471,13 @@ public class TdsData {
                 break;
 
             case SYBBITN:
+                out.write((byte) SYBBITN);
+                out.write((byte) 1);
+                
                 if (pi.value == null) {
-                    out.write((byte) SYBBITN);
-                    out.write((byte) 1);
                     out.write((byte) 0);
                 } else {
-                    out.write((byte) SYBBIT);
+                    out.write((byte) 1);
                     out.write((byte) (((Boolean) pi.value).booleanValue() ? 1 : 0));
                 }
 

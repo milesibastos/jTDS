@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.6 2004-07-08 00:21:00 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.7 2004-07-14 18:37:49 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -75,10 +75,10 @@ public class TdsCore {
         private ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
         private ColData[] dynamParamData;
-        
+
         /**
          * Retrieve the update count status.
-         * 
+         *
          * @return <code>boolean</code> true if the update count is valid.
          */
         boolean isUpdateCount() {
@@ -87,7 +87,7 @@ public class TdsCore {
 
         /**
          * Retrieve the DONE token status.
-         * 
+         *
          * @return <code>boolean</code> true if the current token is a DONE packet.
          */
         boolean isEndToken() {
@@ -98,7 +98,7 @@ public class TdsCore {
 
         /**
          * Retrieve the NTLM challenge status.
-         * 
+         *
          * @return <code>boolean</code> true if the current token is an NTLM challenge.
          */
         boolean isAuthToken() {
@@ -107,7 +107,7 @@ public class TdsCore {
 
         /**
          * Retrieve the results pending status.
-         * 
+         *
          * @return <code>boolean</code> true if more results in input.
          */
         boolean resultsPending() {
@@ -116,7 +116,7 @@ public class TdsCore {
 
         /**
          * Retrieve the result set status.
-         * 
+         *
          * @return <code>boolean</code> true if the current token is a result set.
          */
         boolean isResultSet() {
@@ -128,7 +128,7 @@ public class TdsCore {
 
         /**
          * Retrieve the row data status.
-         * 
+         *
          * @return <code>boolean</code> true if the current token is a result row.
          */
         public boolean isRowdata() {
@@ -136,7 +136,7 @@ public class TdsCore {
         }
 
     }
-    
+
     //
     // Package private constants
     //
@@ -270,7 +270,7 @@ public class TdsCore {
     //
     /** Used to optimize the {@link #getParameters()} call */
     private static final ParamInfo[] EMPTY_PARAMETER_INFO = new ParamInfo[0];
-    
+
     //
     // Error status bytes
     //
@@ -282,7 +282,7 @@ public class TdsCore {
     private static final byte DONE_ROW_COUNT        = (byte) 0x10;
     /** Done: Cancel acknowledgement. */
     private static final byte DONE_CANCEL           = (byte) 0x20;
-    
+
     //
     // Instance variables
     //
@@ -327,7 +327,7 @@ public class TdsCore {
 
     /**
      * Construct a TdsCore object.
-     * 
+     *
      * @param connection The connection which owns this object.
      * @param messages The SQLDiagnostic messages chain.
      */
@@ -359,7 +359,7 @@ public class TdsCore {
 
     /**
      * Retrieve the TDS protocol version.
-     * 
+     *
      * @return The protocol version as an <code>int</code>.
      */
     int getTdsVersion() {
@@ -368,7 +368,7 @@ public class TdsCore {
 
     /**
      * Retrieve the current result set column descriptors.
-     * 
+     *
      * @return The column descriptors as a <code>ColInfo[]</code>.
      */
     ColInfo[] getColumns() {
@@ -377,17 +377,17 @@ public class TdsCore {
 
     /**
      * Retrieve the parameter meta data from a Sybase prepare.
-     * 
+     *
      * @return The parameter descriptors as a <code>ParamInfo[]</code>.
      */
     ParamInfo[] getParameters() {
         if (currentToken.dynamParamInfo != null) {
             ParamInfo[] params = new ParamInfo[currentToken.dynamParamInfo.length];
-            
+
             for (int i = 0; i < params.length; i++) {
                 ColInfo ci = currentToken.dynamParamInfo[i];
                 ParamInfo pi = new ParamInfo();
-                
+
                 pi.tdsType = ci.tdsType;
                 pi.scale = ci.scale;
                 pi.precision = ci.precision;
@@ -397,16 +397,16 @@ public class TdsCore {
                 pi.sqlType = ci.sqlType;
                 params[i] = pi;
             }
-            
+
             return params;
         }
-        
+
         return EMPTY_PARAMETER_INFO;
     }
 
     /**
      * Retrieve the current result set data items.
-     * 
+     *
      * @return The row data as a <code>ColData[]</code>.
      */
     ColData[] getRowData() {
@@ -455,17 +455,17 @@ public class TdsCore {
                                 charset, appName, libName,
                                 language, packetSize);
             }
-            
+
             nextToken();
-            
+
             while (!endOfResponse) {
                 if (currentToken.isAuthToken()) {
                     sendNtlmChallengeResponse(currentToken.nonce, user, password, domain);
                 }
-                
+
                 nextToken();
             }
-            
+
             messages.checkErrors();
         } catch (IOException ioe) {
             throw Support.linkException(
@@ -478,21 +478,21 @@ public class TdsCore {
 
     /**
      * Get the next result set or update countf rom the TDS stream.
-     * 
+     *
      * @return <code>boolean</code> if the next item is a result set.
      * @throws SQLException
      */
     boolean getMoreResults() throws SQLException {
         nextToken();
         messages.checkErrors();
-        
+
         while (!endOfResponse
                && !currentToken.isUpdateCount()
                && !currentToken.isResultSet()) {
             nextToken();
             messages.checkErrors();
         }
-        
+
         //
         // Cursor opens are followed by TDS_TAB_INFO and TDS_COL_INFO
         // Process these now so that the column descriptors are updated.
@@ -500,7 +500,7 @@ public class TdsCore {
         if (currentToken.isResultSet()) {
             try {
                 byte x = (byte) in.peek();
-                
+
                 while (x == TDS_TABNAME_TOKEN || x == TDS_COLINFO_TOKEN) {
                     nextToken();
                     x = (byte)in.peek();
@@ -508,7 +508,7 @@ public class TdsCore {
             } catch (IOException e) {
                 isClosed = true;
                 connection.setClosed();
-                
+
                 throw Support.linkException(
                     new SQLException(
                            Support.getMessage(
@@ -516,15 +516,15 @@ public class TdsCore {
                                     "08S01"), e);
             }
         }
-        
+
         messages.checkErrors();
-        
+
         return currentToken.isResultSet();
     }
 
     /**
      * Retrieve the status of the next result item.
-     * 
+     *
      * @return <code>boolean</code> true if the next item is a result set.
      */
     boolean isResultSet() {
@@ -533,7 +533,7 @@ public class TdsCore {
 
     /**
      * Retrieve the status of the next result item.
-     * 
+     *
      * @return <code>boolean</code> true if the next item is an update count.
      */
     boolean isUpdateCount() {
@@ -542,20 +542,20 @@ public class TdsCore {
 
     /**
      * Retrieve the update count from the current TDS token.
-     * 
+     *
      * @return The update count as an <code>int</code>.
      */
     int getUpdateCount() {
         if (currentToken.isEndToken()) {
             return currentToken.updateCount;
         }
-        
+
         return -1;
     }
 
     /**
      * Retrieve the status of the response stream.
-     * 
+     *
      * @return <code>boolean</code> true if the response has been entirely consumed.
      */
     boolean isEndOfResponse() {
@@ -564,7 +564,7 @@ public class TdsCore {
 
     /**
      * Empty the server response queue.
-     * 
+     *
      * @throws SQLException
      */
     void clearResponseQueue() throws SQLException {
@@ -575,7 +575,7 @@ public class TdsCore {
 
     /**
      * Retrieve the next data row from the result set.
-     * 
+     *
      * @param readAhead <code>true</code> to force driver to skip to end of
      *        response when the last row has been read. This ensures all SP
      *        output parameters are processed. Only usable in executeQuery().
@@ -585,37 +585,37 @@ public class TdsCore {
         if (endOfResponse || endOfResults) {
             return false;
         }
-        
+
         nextToken();
-        
+
         // Will either be first or next data row or end.
         while (!currentToken.isRowdata() && !currentToken.isEndToken()) {
             nextToken(); // Could be messages
         }
-        
+
         boolean isResultSet = currentToken.isRowdata();
 
         if (readAhead && !endOfResponse) {
             // This will ensure that called procedure return parameters
             // and status are read in executeQuery()
             byte x;
-            
+
             try {
                 x = (byte) in.peek();
-                
+
                 while (x != TDS_ROW_TOKEN) {
                     nextToken();
-                    
+
                     if (endOfResponse) {
                         break;
                     }
-                    
+
                     x = (byte) in.peek();
                 }
             } catch (IOException e) {
                 isClosed = true;
                 connection.setClosed();
-                
+
                 throw Support.linkException(
                     new SQLException(
                            Support.getMessage(
@@ -623,9 +623,9 @@ public class TdsCore {
                                         "08S01"), e);
             }
         }
-        
+
         messages.checkErrors();
-        
+
         return isResultSet;
     }
 
@@ -634,18 +634,18 @@ public class TdsCore {
      * <p>
      * This does a quick read ahead and is needed to support the isLast()
      * method in the ResultSet.
-     * 
+     *
      * @return <code>boolean</code> - <code>true</code> if there is more data
      *          in the result set.
      */
     boolean isDataInResultSet() throws SQLException {
         byte x;
-        
+
         checkOpen();
-        
+
         try {
             x = (endOfResponse) ? TDS_DONE_TOKEN : (byte) in.peek();
-            
+
             while (x != TDS_ROW_TOKEN
                    && x != TDS_DONE_TOKEN
                    && x != TDS_DONEINPROC_TOKEN
@@ -653,7 +653,7 @@ public class TdsCore {
                 nextToken();
                 x = (byte) in.peek();
             }
-            
+
             messages.checkErrors();
         } catch (IOException e) {
             isClosed = true;
@@ -664,13 +664,13 @@ public class TdsCore {
                                 "error.generic.ioerror", e.getMessage()),
                                     "08S01"), e);
         }
-        
+
         return x == TDS_ROW_TOKEN;
     }
 
     /**
      * Retrieve the return status for the current stored procedure.
-     * 
+     *
      * @return The return status as an <code>Integer</code>.
      */
     Integer getReturnStatus() {
@@ -703,7 +703,7 @@ public class TdsCore {
 
     /**
      * Close the TDSCore connection object and associated streams.
-     * 
+     *
      * @throws IOException
      * @throws SQLException
      */
@@ -736,13 +736,13 @@ public class TdsCore {
 
     /**
      * Submit a simple SQL statement to the server and process all output.
-     * 
+     *
      * @param sql The statement to execute.
      * @throws SQLException
      */
     void submitSQL(String sql) throws SQLException {
         checkOpen();
-        
+
         if (sql.length() == 0) {
             throw new IllegalArgumentException("submitSQL() called with empty SQL String");
         }
@@ -754,7 +754,7 @@ public class TdsCore {
 
     /**
      * Send an SQL statement with optional parameters to the server.
-     * 
+     *
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -777,7 +777,7 @@ public class TdsCore {
         messages.clearWarnings();
         this.returnStatus = null;
         this.parameters = parameters;
-        
+
         if (parameters != null && parameters.length > 0 && parameters[0].isRetVal) {
             returnParam = parameters[0];
             returnParam.isSet = false;
@@ -786,7 +786,7 @@ public class TdsCore {
             returnParam = null;
             nextParam = -1;
         }
-        
+
         if (parameters != null) {
             for (int i = 0; i < parameters.length; i++){
                 if (!parameters[i].isSet && !parameters[i].isOutput){
@@ -794,11 +794,11 @@ public class TdsCore {
                                                               Integer.toString(i+1)),
                                            "07000");
                 }
-                
+
                 TdsData.getNativeType(connection, parameters[i]);
             }
         }
-        
+
         try {
             switch (tdsVersion) {
                 case TDS42:
@@ -814,14 +814,14 @@ public class TdsCore {
                 default:
                     throw new IllegalStateException("Unknown TDS version " + tdsVersion);
             }
-            
+
             endOfResponse = false;
             endOfResults  = true;
             wait(timeOut);
         } catch (IOException ioe) {
             isClosed = true;
             connection.setClosed();
-            
+
             throw Support.linkException(
                 new SQLException(
                        Support.getMessage(
@@ -832,7 +832,7 @@ public class TdsCore {
 
     /**
      * Create a temporary stored procedure on a Microsoft server.
-     * 
+     *
      * @param sql The SQL statement to prepare.
      * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
@@ -845,22 +845,22 @@ public class TdsCore {
         spSql.append("create proc ");
         spSql.append(procName);
         spSql.append(' ');
-        
+
         for (int i = 0; i < params.length; i++) {
             spSql.append("@P");
             spSql.append(i);
             spSql.append(' ');
             spSql.append(params[i].sqlType);
-            
+
             if (i + 1 < params.length) {
                 spSql.append(',');
             }
         }
-        
+
         // continue building proc
         spSql.append(" as ");
         spSql.append(Support.substituteParamMarkers(sql, params));
-        
+
         try {
             submitSQL(spSql.toString());
         } catch (SQLException e) {
@@ -868,18 +868,18 @@ public class TdsCore {
                 // Serious error rethrow
                 throw e;
             }
-            
+
             // This exception probably caused by failure to prepare
             // Return false;
             return false;
         }
-        
+
         return true;
     }
 
     /**
      * Create a light weight stored procedure on a Sybase server.
-     * 
+     *
      * @param sql The SQL statement to prepare.
      * @param procName The dynamic ID for the procedure.
      * @param params The actual parameter list
@@ -892,12 +892,12 @@ public class TdsCore {
             throw new IllegalArgumentException(
                     "sql parameter must be at least 1 character long.");
         }
-        
+
         if (procName == null || procName.length() != 11) {
             throw new IllegalArgumentException(
                     "procName parameter must be 11 characters long.");
         }
-        
+
         // Check no text/image parameters
         for (int i = 0; i < params.length; i++) {
             if (params[i].sqlType.equals("text")
@@ -905,13 +905,13 @@ public class TdsCore {
                 return false; // Sadly no way
             }
         }
-        
+
         try {
             out.setPacketType(SYBQUERY_PKT);
             out.write((byte)TDS5_DYNAMIC_TOKEN);
-            
+
             byte buf[] = Support.encodeString(connection.getCharSet(), sql);
-            
+
             out.write((short) (buf.length + 41));
             out.write((byte) 1);
             out.write((byte) 0);
@@ -939,18 +939,18 @@ public class TdsCore {
                 // Serious error rethrow
                 throw e;
             }
-            
+
             // This exception probably caused by failure to prepare
             // Return false;
             return false;
         }
-        
+
         return true;
     }
 
     /**
      * Read text or image data from the server using readtext.
-     * 
+     *
      * @param tabName The parent table for this column.
      * @param colName The name of the text or image column.
      * @param textPtr The text pointer structure.
@@ -965,16 +965,16 @@ public class TdsCore {
             || tabName == null || tabName.length() == 0) {
             throw new SQLException(Support.getMessage("error.tdscore.badtext"), "HY000");
         }
-        
+
         if (textPtr == null) {
             throw new SQLException(
                 Support.getMessage("error.tdscore.notextptr", tabName + "." + colName),
                                      "HY000");
         }
-        
+
         Object results = null;
         StringBuffer sql = new StringBuffer(256);
-        
+
         sql.append("set textsize ");
         sql.append((length + 1) * 2);
         sql.append("\r\nreadtext ");
@@ -988,14 +988,14 @@ public class TdsCore {
         sql.append(' ');
         sql.append(length);
         sql.append("\r\nset textsize 1");
-        
+
         if (Logger.isActive()) {
             Logger.println(sql.toString());
         }
-        
+
         executeSQL(sql.toString(), null, null, false, 0, 0);
         readTextMode = true;
-        
+
         if (getMoreResults()) {
             if (getNextRow(false)) {
             	// FIXME - this will not be valid since a Blob/Clob is returned
@@ -1003,17 +1003,17 @@ public class TdsCore {
                 results = rowData[0].getValue();
             }
         }
-        
+
         clearResponseQueue();
         messages.checkErrors();
-        
-System.out.println("results.getClass().getName()" + results.getClass().getName());        
+
+System.out.println("results.getClass().getName()" + results.getClass().getName());
         return results;
     }
 
     /**
      * Retrieve the length of a text or image column.
-     * 
+     *
      * @param tabName The parent table for this column.
      * @param colName The name of the text or image column.
      * @return The length of the column as a <code>int</code>.
@@ -1024,31 +1024,31 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             || tabName == null || tabName.length() == 0) {
             throw new SQLException(Support.getMessage("error.tdscore.badtext"), "HY000");
         }
-        
+
         Object results = null;
         StringBuffer sql = new StringBuffer(128);
-        
+
         sql.append("select datalength(");
         sql.append(colName);
         sql.append(") from ");
         sql.append(tabName);
         executeSQL(sql.toString(), null, null, false, 0, 0);
-        
+
         if (getMoreResults()) {
             if (getNextRow(false)) {
                 results = rowData[0].getValue();
             }
         }
-        
+
         clearResponseQueue();
         messages.checkErrors();
-        
+
         if (!(results instanceof Number)) {
             throw new SQLException(
                 Support.getMessage("error.tdscore.badlen", tabName + "." + colName),
                 "HY000");
         }
-        
+
         return ((Number) results).intValue();
     }
 
@@ -1677,7 +1677,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Process procedure ID token (function unknown).
-     * 
+     *
      * @throws IOException
      */
     private void tdsProcIdToken() throws IOException {
@@ -1698,11 +1698,11 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         for (int i = 0; i < colCnt; i++) {
             ColInfo col = new ColInfo();
-            
+
             col.userType = in.readShort();
-            
+
             int flags = in.readShort();
-            
+
             col.nullable = ((flags & 0x01) != 0) ?
                                 ResultSetMetaData.columnNullable :
                                 ResultSetMetaData.columnNoNulls;
@@ -1710,15 +1710,15 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             col.isIdentity = (flags & 0x10) != 0;
             col.isWriteable = (flags & 0x0C) != 0;
             TdsData.readType(in, col);
-            
+
             int clen = in.read();
-            
+
             col.name = in.readString(clen);
             col.label = col.name;
 
             this.columns[i] = col;
         }
-        
+
         endOfResults = false;
     }
 
@@ -1736,12 +1736,12 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
         int bytesRead = 0;
         int i = 0;
-        
+
         while (bytesRead < pktLen) {
             ColInfo col = new ColInfo();
             int nameLen = in.read();
             String name = in.readString(nameLen);
-            
+
             bytesRead = bytesRead + 1 + nameLen;
             i++;
             col.name  = name;
@@ -1749,7 +1749,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
             colList.add(col);
         }
-        
+
         int colCnt  = colList.size();
         this.columns = (ColInfo[]) colList.toArray(new ColInfo[colCnt]);
         this.rowData = new ColData[colCnt];
@@ -2076,7 +2076,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      */
     private void tdsControlToken() throws IOException {
         int pktLen = in.readShort();
-        
+
         in.skip(pktLen);
     }
 
@@ -2090,7 +2090,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         for (int i = 0; i < columns.length; i++) {
             rowData[i] =  new ColData(TdsData.readData(in, columns[i], readTextMode), tdsVersion);
         }
-        
+
         readTextMode = false;
     }
 
@@ -2098,7 +2098,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
      * Process TDS 5.0 Params Token.
      * This seems to be data returned in parameter format after a TDS Dynamic
      * packet or as extended error information.
-     * 
+     *
      * @throws IOException
      */
     private void tds5ParamsToken() throws IOException, ProtocolException {
@@ -2106,7 +2106,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             throw new ProtocolException(
               "TDS 5 Param results token (0xD7) not preceded by param format (0xEC).");
         }
-        
+
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
                 new ColData(TdsData.readData(in, currentToken.dynamParamInfo[i], false), tdsVersion);
@@ -2493,36 +2493,40 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                               String procName,
                               ParamInfo[] parameters,
                               boolean noMetaData)
-        throws IOException, SQLException
-    {
+        throws IOException, SQLException {
         if (procName != null && procName.length() > 0) {
             // RPC call
             out.setPacketType(RPC_PKT);
             byte[] buf = Support.encodeString(connection.getCharSet(), procName);
-            out.write((byte)buf.length);
+
+            out.write((byte) buf.length);
             out.write(buf);
-            out.write((short)(noMetaData? 512: 0));
-            for (int i = nextParam+1; i < parameters.length; i++) {
+            out.write((short) (noMetaData ? 512 : 0));
+
+            for (int i = nextParam + 1; i < parameters.length; i++) {
                 if (parameters[i].name != null) {
                    buf = Support.encodeString(connection.getCharSet(),
-                                                        parameters[i].name);
-                   out.write((byte)buf.length);
+                           parameters[i].name);
+                   out.write((byte) buf.length);
                    out.write(buf);
                 } else {
-                   out.write((byte)0);
+                   out.write((byte) 0);
                 }
-                out.write((byte)(parameters[i].isOutput? 1: 0));
+
+                out.write((byte) (parameters[i].isOutput ? 1 : 0));
                 TdsData.writeParam(out,
                                    connection.getCharSet(),
                                    connection.isWideChar(),
                                    null,
                                    parameters[i]);
             }
+
             out.flush();
-        } else
-        if (sql.length() > 0) {
-            if (parameters != null && parameters.length > 0)
+        } else if (sql.length() > 0) {
+            if (parameters != null && parameters.length > 0) {
                 sql = Support.substituteParameters(sql, parameters);
+            }
+
             out.setPacketType(QUERY_PKT);
             out.write(sql);
             out.flush();
@@ -2531,7 +2535,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Execute SQL using TDS 5.0 protocol.
-     * 
+     *
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -2556,16 +2560,16 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                         throw new SQLException(
                                         Support.getMessage("error.chartoolong"), "HY000");
                     }
-                    
+
                     throw new SQLException(
                                      Support.getMessage("error.bintoolong"), "HY000");
                 }
-                
+
                 // prepared statement substitute parameters into SQL
                 sql = Support.substituteParameters(sql, parameters);
                 haveParams = false;
                 procName = null;
-                
+
                 break;
             }
         }
@@ -2575,15 +2579,15 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         if (procName == null || procName.length() == 0) {
             // Use TDS_LANGUAGE TOKEN with optional parameters
             out.write((byte)TDS_LANG_TOKEN);
-            
+
             if (haveParams) {
                 sql = Support.substituteParamMarkers(sql, parameters);
             }
-            
+
             if (socket.isWideChars()) {
                 // Need to preconvert string to get correct length
                 byte[] buf = Support.encodeString(connection.getCharSet(), sql);
-                
+
                 out.write((int) buf.length + 1);
                 out.write((byte)(haveParams ? 1 : 0));
                 out.write(buf);
@@ -2603,7 +2607,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             out.write((short) 0);
         } else {
             byte buf[] = Support.encodeString(socket.getCharset(), procName);
-            
+
             // RPC call
             out.write((byte) TDS_DBRPC_TOKEN);
             out.write((short) (buf.length + 3));
@@ -2612,24 +2616,26 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             out.write((short) (haveParams ? 2 : 0));
             useParamNames = true;
         }
-        
+
         //
         // Output any parameters
         //
         if (haveParams) {
             // First write parameter descriptors
             out.write((byte) TDS5_PARAMFMT_TOKEN);
-            
+
             int len = 2;
-            
+
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 len += TdsData.getTds5ParamSize(connection.getCharSet(),
                                                 connection.isWideChar(),
                                                 parameters[i],
                                                 useParamNames);
             }
+
             out.write((short) len);
             out.write((short) ((nextParam < 0) ? parameters.length : parameters.length - 1));
+
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5ParamFmt(out,
                                           connection.getCharSet(),
@@ -2637,10 +2643,10 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                                           parameters[i],
                                           useParamNames);
             }
-            
+
             // Now write the actual data
             out.write((byte) TDS5_PARAMS_TOKEN);
-            
+
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5Param(out,
                                        connection.getCharSet(),
@@ -2648,7 +2654,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                                        parameters[i]);
             }
         }
-        
+
         out.flush();
     }
 
@@ -2676,7 +2682,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
 
     /**
      * Execute SQL using TDS 7.0 protocol.
-     * 
+     *
      * @param sql The SQL statement to execute.
      * @param procName Stored procedure to execute or null.
      * @param parameters Parameters for call or null.
@@ -2690,42 +2696,42 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         throws IOException, SQLException {
         if (procName == null && parameters != null && parameters.length > 0) {
             ParamInfo params[] = new ParamInfo[parameters.length + 2];
-            
+
             // Use sp_executesql approach
             procName = "sp_executesql";
-            
+
             System.arraycopy(parameters, 0, params, 2, parameters.length);
-            
+
             params[0] = new ParamInfo();
             params[0].jdbcType = java.sql.Types.VARCHAR;
             params[0].bufferSize = 4000;
             params[0].isSet = true;
             params[0].isUnicode = true;
             params[0].value = Support.substituteParamMarkers(sql, parameters);
-            
-            TdsData.getNativeType(connection, params[0]);            
+
+            TdsData.getNativeType(connection, params[0]);
             StringBuffer paramDef = new StringBuffer(80);
-            
+
             for (int i = 0; i < parameters.length; i++) {
                 paramDef.append("@P");
                 paramDef.append(i);
                 paramDef.append(' ');
                 paramDef.append(parameters[i].sqlType);
-                
+
                 if (i + 1 < parameters.length) {
                     paramDef.append(',');
                 }
             }
-            
+
             params[1] = new ParamInfo();
             params[1].jdbcType = java.sql.Types.VARCHAR;
             params[1].bufferSize = 4000;
             params[1].isSet = true;
             params[1].isUnicode = true;
             params[1].value = paramDef.toString();
-            
+
             TdsData.getNativeType(connection, params[1]);
-            
+
             parameters = params;
         }
 
@@ -2733,7 +2739,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
             // RPC call
             out.setPacketType(RPC_PKT);
             Integer shortcut;
-            
+
             if (tdsVersion == TdsCore.TDS80
             	&& (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
                 // Use the shortcut form of procedure name for TDS8
@@ -2755,13 +2761,14 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
                 }
 
                 out.write((byte) (parameters[i].isOutput ? 1 : 0));
-                
+
                 TdsData.writeParam(out,
                                    connection.getCharSet(),
                                    connection.isWideChar(),
                                    connection.getCollation(),
                                    parameters[i]);
             }
+
             out.flush();
         } else if (sql.length() > 0) {
             // Simple query
@@ -2871,7 +2878,7 @@ System.out.println("results.getClass().getName()" + results.getClass().getName()
         if (name.length() == 0) {
             return "UNKNOWN";
         }
-        
+
         try {
             Integer.parseInt(name);
             // All numbers probably an IP address

@@ -38,7 +38,7 @@ import java.sql.*;
 
 abstract public class EscapeProcessor
 {
-   public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.4 2002-08-28 07:44:24 alin_sinpalean Exp $";
+   public static final String cvsVersion = "$Id: EscapeProcessor.java,v 1.5 2002-09-10 13:12:04 alin_sinpalean Exp $";
 
    String   input;
 
@@ -312,18 +312,30 @@ abstract public class EscapeProcessor
       if (str.startsWith("fn "))
       {
          str = str.substring(3);
-
          result = expandCommonFunction(str);
-         if (result == null)
-         {
+
+         if( result == null )
             result = expandDBSpecificFunction(str);
-         }
+
+         if( result == null )
+            result = str;
       }
       else if (str.startsWith("call ")
                || (str.startsWith("?=")
                    && str.substring(2).trim().startsWith("call ")))
       {
-         throw new SQLException("Not implemented yet");
+         boolean returnsVal = str.startsWith("?=");
+         str = str.substring(str.indexOf("call")+4).trim();
+         int pPos = str.indexOf('(');
+         if( pPos >= 0 )
+         {
+            if( str.charAt(str.length()-1) != ')' )
+               throw new SQLException("Malformed procedure call: "+str);
+            result = "exec "+(returnsVal ? "?=" : "")+str.substring(0, pPos)+
+                " "+str.substring(pPos+1, str.length()-1);
+         }
+         else
+            result = "exec "+(returnsVal ? "?=" : "")+str;
       }
       else if (str.startsWith("d "))
       {
@@ -339,7 +351,7 @@ abstract public class EscapeProcessor
       }
       else if (str.startsWith("oj "))
       {
-         throw new SQLException("Not implemented yet");
+         result = str.substring(3, str.length()-1).trim();
       }
       else
       {
@@ -355,19 +367,20 @@ abstract public class EscapeProcessor
     * Expand functions that are common to both SQLServer and Sybase
     *
     */
-   public String expandCommonFunction(String str)
+   public String expandCommonFunction(String str) throws SQLException
    {
       String result = null;
+      int pPos = str.indexOf('(');
 
+      if( pPos < 0 )
+         throw new SQLException("Malformed function escape: "+str);
+      String fName = str.substring(0, pPos).trim();
 
-      if (str.equalsIgnoreCase("user()"))
-      {
-         result = " user_name() ";
-      }
-      else if (str.equalsIgnoreCase("now()"))
-      {
-         result = " getdate() ";
-      }
+      if( fName.equalsIgnoreCase("user") )
+         result = "user_name" + str.substring(pPos);
+      else if( fName.equalsIgnoreCase("now"))
+         result = "getdate" + str.substring(pPos);
+
       return result;
    } // expandCommonFunction()
 

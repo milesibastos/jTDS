@@ -197,7 +197,7 @@ public class TimestampTest extends DatabaseTestCase
         testEscape("select * from tmp where a='{fn user}'",
             "select * from tmp where a='{fn user}'");
         testEscape("select * from tmp where a={fn user()}",
-            "select * from tmp where a= user_name() ");
+            "select * from tmp where a=user_name()");
     }
 
     public void testPreparedStatement0007() throws Exception
@@ -806,7 +806,7 @@ public class TimestampTest extends DatabaseTestCase
 
                   for( int pass=0; (pass<2 && !bImage) || pass<1; pass++ )
                   {
-                    CallableStatement cstmt = con.prepareCall("{call #freetds_outputTest[(?)]}");
+                    CallableStatement cstmt = con.prepareCall("{call #freetds_outputTest(?)}");
 
                     int jtype = getType(datatypes[i][2]);
                     if (pass == 1)
@@ -1410,10 +1410,6 @@ public class TimestampTest extends DatabaseTestCase
         assertTrue("Expected no result set", !rs.next());
     }
 
-        /**
-         * TODO: Figure out what this is trying to test
-         */
-/*
     public void testConnection0038() throws Exception
     {
         Connection conn = getConnection();
@@ -1436,24 +1432,19 @@ public class TimestampTest extends DatabaseTestCase
         ps.close();
         conn.commit();
         // conn.rollback();
-        conn.close();
 
-        conn = getConnection();
         Statement statement = conn.createStatement();
 
         ResultSet resultSet = statement.executeQuery(
             "select descField from #t0038 where keyField='value'");
-        while (resultSet.next())
-        {
-            String db_descField = resultSet.getString("descField");
-        }
+        assertTrue(resultSet.next());
         statement.close();
         conn.close();
     }
-*/
+
     public void testConnection0039() throws Exception
     {
-        for (int i = 0; i < 2000; i++)
+        for( int i = 0; i < 100; i++ )
         {
             Connection conn = getConnection();
             Statement statement = conn.createStatement();

@@ -1,6 +1,16 @@
 Changes from jTDS 0.3.1
 =======================
 
+09/10/2002 - Alin Sinpalean
+
+ o EscapeProcessor now accepts all JDBC escape sequences (including stored
+   procedure calls). CallableStatement_base, however, needs some more work in
+   order to "understand" the "{?=call ...}" sequence (a hell lot of work). :o(
+ o Reduced "a bit" (from 2000 to 100) the number of connections created by
+   TimestampTest.testConnection0039 because there was really no justification
+   for that and it took 20 seconds. Really need to write some more tests and
+   reorganize the existing ones...
+
 09/09/2002 - Alin Sinpalean
 
  o Removed relinquish() from ConnectionHelper interface. I don't even know what

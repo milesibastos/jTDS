@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.16 2004-09-23 14:26:59 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.17 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -222,12 +222,17 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * Check the supplied index and return the selected parameter.
      *
      * @param parameterIndex the parameter index 1 to n.
+     * @param checkIfSet     if <code>true</code> an exception is thrown if the
+     *                       parameter is not set
      * @return the parameter as a <code>ParamInfo</code> object.
      * @throws SQLException if the statement is closed;
-     *                      if <code>parameterIndex</code> is less than <code>0</code>;
-     *                      if <code>parameterIndex</code> is greater than the number of parameters
+     *                      if <code>parameterIndex</code> is less than 0;
+     *                      if <code>parameterIndex</code> is greater than the
+     *                      number of parameters;
+     *                      if <code>checkIfSet</code> was <code>true</code>
+     *                      and the parameter was not set
      */
-    protected ParamInfo getParameter(int parameterIndex) throws SQLException {
+    protected ParamInfo getParameter(int parameterIndex, boolean checkIfSet) throws SQLException {
         checkOpen();
 
         if (parameterIndex < 1 || parameterIndex > parameters.length) {
@@ -237,6 +242,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         ParamInfo pi = parameters[parameterIndex - 1];
+
+        if (checkIfSet && !pi.isSet) {
+            throw new SQLException(
+                    Messages.get("error.callable.outparamnotset"), "HY010");
+        }
 
         paramWasNull = pi.value == null;
 
@@ -298,7 +308,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     protected void setParameter(int parameterIndex, Object x, int targetSqlType, int scale, int length)
         throws SQLException {
-        ParamInfo pi = getParameter(parameterIndex);
+        ParamInfo pi = getParameter(parameterIndex, false);
 
         if (Support.getJdbcTypeName(targetSqlType).equals("ERROR")) {
             throw new SQLException(Messages.get("error.generic.badtype",
@@ -371,7 +381,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         executeSQL(sql, spName, sqlWord, parameters, returnKeys, true);
 
-        return updateCount;
+        return getUpdateCount(0);
     }
 
 
@@ -405,7 +415,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public boolean execute() throws SQLException {
         checkOpen();
-        updateCount = 0;
+        resultQueue.clear();
         genKeyResultSet = null;
         String spName = procName;
 
@@ -613,10 +623,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public ResultSet executeQuery() throws SQLException {
         checkOpen();
-        updateCount = -1;
+        resultQueue.clear();
+        genKeyResultSet = null;
         String spName = procName;
 
-        if (spName == null){
+        if (spName == null) {
             spName = connection.prepareSQL(this, sql, parameters, false);
         }
 

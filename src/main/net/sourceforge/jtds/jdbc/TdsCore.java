@@ -50,7 +50,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.40 2004-09-23 14:26:59 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.41 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -283,7 +283,7 @@ public class TdsCore {
     /** Done: There is a valid row count. */
     private static final byte DONE_ROW_COUNT        = (byte) 0x10;
     /** Done: Cancel acknowledgement. */
-    private static final byte DONE_CANCEL           = (byte) 0x20;
+    static final byte DONE_CANCEL                   = (byte) 0x20;
 
     //
     // Prepared SQL types
@@ -855,13 +855,18 @@ public class TdsCore {
     /**
      * Prepares the SQL for use with Microsoft server.
      *
-     * @param sql The SQL statement to prepare.
-     * @param params The actual parameter list
+     * @param sql                  the SQL statement to prepare.
+     * @param params               the actual parameter list
+     * @param resultSetType        value of the resultSetType parameter when
+     *                             the Statement was created
+     * @param resultSetConcurrency value of the resultSetConcurrency parameter
+     *                             whenthe Statement was created
      * @return name of the procedure or prepared statement handle.
-     * @throws SQLException
+     * @exception SQLException
      */
-    String microsoftPrepare(String sql, ParamInfo[] params)
-        throws SQLException {
+    String microsoftPrepare(String sql, ParamInfo[] params,
+                            int resultSetType, int resultSetConcurrency)
+            throws SQLException {
         int prepareSql = connection.getPrepareSql();
 
         if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
@@ -890,8 +895,8 @@ public class TdsCore {
             try {
                 submitSQL(spSql.toString());
             } catch (SQLException e) {
-                if (e.getSQLState() != null && e.getSQLState().equals("08S01")) {
-                    // Serious error rethrow
+                if ("08S01".equals(e.getSQLState())) {
+                    // Serious error, rethrow
                     throw e;
                 }
 
@@ -902,7 +907,11 @@ public class TdsCore {
 
             return procName;
         } else if (prepareSql == PREPARE) {
-            ParamInfo prepParam[] = new ParamInfo[4];
+            boolean needCursor = resultSetType != ResultSet.TYPE_FORWARD_ONLY
+                    || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY;
+            int scrollOpt, ccOpt;
+
+            ParamInfo prepParam[] = new ParamInfo[needCursor ? 6 : 4];
 
             // Setup prepare handle param
             prepParam[0] = new ParamInfo();
@@ -926,15 +935,46 @@ public class TdsCore {
             prepParam[2].length = ((String)prepParam[2].value).length();
             prepParam[2].isUnicode = true;
 
-            // Setup flag param
+            // Setup options param
             prepParam[3] = new ParamInfo();
             prepParam[3].isSet = true;
             prepParam[3].jdbcType = Types.INTEGER;
             prepParam[3].value = new Integer(1);
 
+            if (needCursor) {
+                // Select the correct type of Server side cursor to
+                // match the scroll and concurrency options.
+                scrollOpt = MSCursorResultSet.getCursorScrollOpt(resultSetType, true);
+                ccOpt = MSCursorResultSet.getCursorConcurrencyOpt(resultSetConcurrency);
+
+                // Setup scroll options parameter
+                prepParam[4]          = new ParamInfo();
+                prepParam[4].isSet    = true;
+                prepParam[4].jdbcType = Types.INTEGER;
+                prepParam[4].value    = new Integer(scrollOpt);
+                prepParam[4].isOutput = true;
+
+                // Setup concurrency options parameter
+                prepParam[5]          = new ParamInfo();
+                prepParam[5].isSet    = true;
+                prepParam[5].jdbcType = Types.INTEGER;
+                prepParam[5].value    = new Integer(ccOpt);
+                prepParam[5].isOutput = true;
+
+                // TODO Implement support for preparing cursors (including SP support)
+                // Don't forget to include scrollability and concurrency into
+                // the prepared statement key and to remove the
+                // sp_cursorunprepare call from MSCursorResultSet (in the
+                // current implementation this would unprepare the statement
+                // when the first result set is closed, but leave the statement
+                // in the cache, causing problems on reuse).
+                return null;
+            }
+
             columns = null; // Will be populated if preparing a select
 
-            executeSQL(null, "sp_prepare", prepParam, false, 0, -1);
+            executeSQL(null, needCursor ? "sp_cursorprepare" : "sp_prepare",
+                    prepParam, false, 0, -1);
 
             clearResponseQueue();
 
@@ -972,6 +1012,7 @@ public class TdsCore {
                     "procName parameter must be 11 characters long.");
         }
 
+        // TODO Check if output parameters are handled ok
         // Check no text/image parameters
         for (int i = 0; i < params.length; i++) {
             if (params[i].sqlType.equals("text")
@@ -2580,7 +2621,7 @@ public class TdsCore {
     {
         int pktLen = in.readShort();
         byte type = (byte)in.read();
-        byte status = (byte)in.read();
+        /*byte status = (byte)*/in.read();
         pktLen -= 2;
         if (type == (byte)0x20) {
             // Only handle aknowledgements for now
@@ -2747,6 +2788,7 @@ public class TdsCore {
                 // These next four entries provide backwards
                 // compatibility with previous versions of jTDS
                 //
+                // TODO Remove these. They introduce incompatibilities with other drivers and are against the spec.
                 case (byte)0xC6: // CREATE
                 case (byte)0xC7: // DROP TABLE
                 case (byte)0xD8: // ALTER TABLE
@@ -2762,7 +2804,7 @@ public class TdsCore {
             }
         }
 
-        if ((currentToken.status & 0X20) != 0) {
+        if ((currentToken.status & DONE_CANCEL) != 0) {
             // Indicates cancel packet
             messages.addDiagnostic(9999, 0, 14,
                                     "Request cancelled", "", "", 0);

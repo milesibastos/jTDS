@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.BatchUpdateException;
 import java.sql.SQLWarning;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 /**
  * jTDS implementation of the java.sql.Statement interface.<p>
@@ -52,7 +53,7 @@ import java.util.ArrayList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.18 2004-09-23 16:13:02 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.19 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -97,8 +98,8 @@ public class JtdsStatement implements java.sql.Statement {
     protected ArrayList batchValues = null;
     /** Dummy result set for getGeneratedKeys. */
     protected JtdsResultSet genKeyResultSet;
-    /** Last update count. */
-    protected int updateCount = -1;
+    /** List of queued results (update counts, possibly followed by a ResultSet) */
+    protected LinkedList resultQueue = new LinkedList();
 
     /**
      * Construct a new Statement object.
@@ -224,7 +225,7 @@ public class JtdsStatement implements java.sql.Statement {
                                         boolean readAhead)
         throws SQLException {
         closeCurrentResultSet();
-        updateCount = -1;
+        resultQueue.clear();
         genKeyResultSet = null;
         String warningMessage = null;
 
@@ -235,28 +236,26 @@ public class JtdsStatement implements java.sql.Statement {
             || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY) {
             try {
                 if (connection.getServerType() == Driver.SQLSERVER) {
-                    JtdsResultSet rs =
+                    currentResult =
                             new MSCursorResultSet(this,
                                     sql,
                                     spName,
                                     params,
                                     resultSetType,
                                     resultSetConcurrency);
-                    currentResult = rs;
 
-                    return rs;
+                    return currentResult;
                 } else {
                     // Use client side cursor for Sybase
-                    JtdsResultSet rs =
+                    currentResult =
                         new CachedResultSet(this,
                                 sql,
                                 spName,
                                 params,
                                 resultSetType,
                                 resultSetConcurrency);
-                    currentResult = rs;
 
-                    return rs;
+                    return currentResult;
                 }
             } catch (SQLException e) {
                 if (connection == null || connection.isClosed()) {
@@ -275,12 +274,11 @@ public class JtdsStatement implements java.sql.Statement {
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
 
         if (tds.isResultSet()) {
-            JtdsResultSet rs = new JtdsResultSet(this,
-                                                 ResultSet.TYPE_FORWARD_ONLY,
-                                                 ResultSet.CONCUR_READ_ONLY,
-                                                 tds.getColumns(),
-                                                 readAhead);
-            currentResult = rs;
+            currentResult = new JtdsResultSet(this,
+                                              ResultSet.TYPE_FORWARD_ONLY,
+                                              ResultSet.CONCUR_READ_ONLY,
+                                              tds.getColumns(),
+                                              readAhead);
         } else {
                 throw new SQLException(
                             Messages.get("error.statement.noresult"), "24000");
@@ -314,7 +312,7 @@ public class JtdsStatement implements java.sql.Statement {
                                  boolean update)
         throws SQLException {
         closeCurrentResultSet();
-        updateCount = -1;
+        resultQueue.clear();
         genKeyResultSet = null;
         String warningMessage = null;
 
@@ -327,26 +325,24 @@ public class JtdsStatement implements java.sql.Statement {
             && !returnKeys) {
             try {
                 if (connection.getServerType() == Driver.SQLSERVER) {
-                    JtdsResultSet rs = new MSCursorResultSet(
+                    currentResult = new MSCursorResultSet(
                             this,
                             sql,
                             spName,
                             params,
                             resultSetType,
                             resultSetConcurrency);
-                    currentResult = rs;
 
                     return true;
                 } else {
                     // Use client side cursor for Sybase
-                    JtdsResultSet rs = new CachedResultSet(
+                    currentResult = new CachedResultSet(
                             this,
                             sql,
                             spName,
                             params,
                             resultSetType,
                             resultSetConcurrency);
-                    currentResult = rs;
 
                     return true;
                 }
@@ -364,75 +360,89 @@ public class JtdsStatement implements java.sql.Statement {
         //
         tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows);
 
-        if (returnKeys) {
-            // Look for SELECT @@IDENTITY result set
-            updateCount = 0;
+        if (warningMessage != null) {
+            // Update warning chain if cursor was downgraded
+            addWarning(new SQLWarning(Messages.get(
+                    "warning.cursordowngraded", warningMessage), "01000"));
+        }
 
-            while (!tds.isEndOfResponse()) {
-                if (tds.getMoreResults()) {
+        return processResults(returnKeys, update);
+    }
+
+    /**
+     * Queue up update counts until the end of the response is reached or a
+     * <code>ResultSet</code> is encountered into {@link #resultQueue}.
+     *
+     * @param returnKeys <code>true</code> if a generated keys
+     *                   <code>ResultSet</code> is expected
+     * @param update     <code>true</code> if the method is called from within
+     *                   <code>executeUpdate</code>
+     * @return           <false> if the first result is an update count,
+     *                   <true> if it's a <code>ResultSet</code>
+     * @throws SQLException if an error condition occurs
+     */
+    private boolean processResults(boolean returnKeys, boolean update) throws SQLException {
+        while (!tds.isEndOfResponse()) {
+            if (!tds.getMoreResults()) {
+                if (tds.isUpdateCount()) {
+                    if (update && connection.isLastUpdateCount()) {
+                        resultQueue.clear();
+                    }
+                    resultQueue.addLast(new Integer(tds.getUpdateCount()));
+                }
+            } else {
+                if (returnKeys) {
                     // This had better be the generated key
                     // FIXME We could use SELECT @@IDENTITY AS jTDS_SOMETHING and check the column name to make sure
                     if (tds.getNextRow()) {
-                        genKeyResultSet = new
-                            DummyResultSet(this,
-                                           tds.getColumns(),
-                                           tds.getRowData());
+                        genKeyResultSet = new DummyResultSet(this,
+                                tds.getColumns(),
+                                tds.getRowData());
                     }
                 } else {
-                    if (tds.isUpdateCount()) {
-                        updateCount = tds.getUpdateCount();
+                    // TODO Should we allow execution of multiple statements via executeUpdate?
+                    if (update && resultQueue.isEmpty()) {
+                        throw new SQLException(
+                                Messages.get("error.statement.nocount"), "07000");
                     }
-                }
-            }
-        } else {
-            if (update) {
-                updateCount = 0;
 
-                while (!tds.isEndOfResponse()) {
-                    if (!tds.getMoreResults()) {
-                        if (tds.isUpdateCount()) {
-                            updateCount = tds.getUpdateCount();
-                        }
+                    JtdsResultSet rs = new JtdsResultSet(
+                            this,
+                            ResultSet.TYPE_FORWARD_ONLY,
+                            ResultSet.CONCUR_READ_ONLY,
+                            tds.getColumns(),
+                            false);
+
+                    if (resultQueue.isEmpty()) {
+                        // This is the first result. Return it.
+                        currentResult = rs;
+                        return true;
                     } else {
-                        if (tds.getMoreResults()) {
-                            throw new SQLException(
-                               Messages.get("error.statement.nocount"), "07000");
-                        }
+                        // There were some update counts before. Queue it.
+                        resultQueue.add(rs);
+                        return false;
                     }
-
-                    if (!connection.isLastUpdateCount()){
-                        break;
-                    }
-                }
-            } else {
-                updateCount  = 0;
-
-                if (tds.getMoreResults()) {
-                    // Looks like we have a result set
-                    JtdsResultSet rs = new JtdsResultSet(this,
-                                                         ResultSet.TYPE_FORWARD_ONLY,
-                                                         ResultSet.CONCUR_READ_ONLY,
-                                                         tds.getColumns(),
-                                                         false);
-                    currentResult = rs;
-                    updateCount = -1;
-
-                    if (warningMessage != null) {
-                        //
-                        // Update warning chain if cursor was downgraded
-                        //
-                        addWarning(new SQLWarning(Messages.get(
-                                "warning.cursordowngraded", warningMessage), "01000"));
-                    }
-
-                    return true;
-                } else if (tds.isUpdateCount()) {
-                    updateCount = tds.getUpdateCount();
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Returns the first update count in {@link #resultQueue} or the specified
+     * default value if the queue is empty.
+     *
+     * @param defaultValue the value to return if there are no queued update
+     *                     counts (0 if called from <code>executeUpdate</code>,
+     *                     -1 if called from <code>getMoreResults</code>)
+     * @return             the first queued update count or the default value
+     *                     if the queue is empty
+     */
+    protected int getUpdateCount(int defaultValue) {
+        return resultQueue.isEmpty()
+                ? defaultValue
+                : ((Integer) resultQueue.getFirst()).intValue();
     }
 
 // ------------------ java.sql.Statement methods ----------------------
@@ -488,7 +498,7 @@ public class JtdsStatement implements java.sql.Statement {
     public int getUpdateCount() throws SQLException {
         checkOpen();
 
-        return updateCount;
+        return getUpdateCount(-1);
     }
 
     public void cancel() throws SQLException {
@@ -661,30 +671,28 @@ public class JtdsStatement implements java.sql.Statement {
                                        "HY092");
         }
 
-        updateCount = -1;
+        // Dequeue any results
+        if (!resultQueue.isEmpty()) {
+            // Remove the current update count
+            resultQueue.removeFirst();
 
-        if (tds.isEndOfResponse()) {
-            return false;
-        }
+            if (!resultQueue.isEmpty()) {
+                Object nextResult = resultQueue.getFirst();
 
-        if (!tds.getMoreResults()) {
-            if (tds.isUpdateCount()) {
-                updateCount = tds.getUpdateCount();
-            } else if (!tds.isEndOfResponse()) {
-                updateCount = 0;
+                // Next result is an update count
+                if (nextResult instanceof Integer) {
+                    return false;
+                }
+
+                // Next result is a ResultSet. Set currentResult and remove it.
+                currentResult = (JtdsResultSet) nextResult;
+                resultQueue.removeFirst();
+                return true;
             }
-
-            return false;
         }
 
-        JtdsResultSet rs = new JtdsResultSet(this,
-                                             ResultSet.TYPE_FORWARD_ONLY,
-                                             ResultSet.CONCUR_READ_ONLY,
-                                             tds.getColumns(),
-                                             false);
-        currentResult = rs;
-
-        return true;
+        // Queue update counts until the end of response or a ResultSet is reached
+        return processResults(false, false);
     }
 
     public void setEscapeProcessing(boolean enable) throws SQLException {
@@ -767,7 +775,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         executeSQL(sql, null, sqlWord, null, returnKeys, true);
 
-        return updateCount;
+        return getUpdateCount(0);
     }
 
     public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {

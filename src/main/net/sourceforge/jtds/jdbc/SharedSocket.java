@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.14 2004-09-12 09:33:15 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.15 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -917,7 +917,7 @@ class SharedSocket {
         }
 
         if (buffer[8] != TDS_DONE_TOKEN
-            || (buffer[9] & 0x20) == 0) {
+            || (buffer[9] & TdsCore.DONE_CANCEL) == 0) {
             return false; // Not a cancel packet
         }
 

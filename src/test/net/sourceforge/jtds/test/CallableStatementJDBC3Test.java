@@ -74,14 +74,14 @@ public class CallableStatementJDBC3Test extends TestBase {
      */
     public void testCallableRegisterOutParameter1() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("create procedure rop1 @bool bit, @whatever int OUTPUT as\r\n "
+        stmt.execute("create procedure #rop1 @bool bit, @whatever int OUTPUT as\r\n "
                      + "begin\r\n"
                      + "set @whatever = 1\r\n"
                      + "end");
         stmt.close();
-    	
+
         try {
-            CallableStatement cstmt = con.prepareCall("{call rop1(?,?)}");
+            CallableStatement cstmt = con.prepareCall("{call #rop1(?,?)}");
 
             cstmt.setNull(1, Types.BOOLEAN);
             cstmt.registerOutParameter(2, Types.INTEGER);
@@ -91,7 +91,7 @@ public class CallableStatementJDBC3Test extends TestBase {
             cstmt.close();
         } finally {
             stmt = con.createStatement();
-            stmt.execute("drop procedure rop1");
+            stmt.execute("drop procedure #rop1");
             stmt.close();
         }
     }
@@ -106,7 +106,7 @@ public class CallableStatementJDBC3Test extends TestBase {
                      + "set @whatever = null\r\n"
                      + "end");
         stmt.close();
-        
+
         CallableStatement cstmt = con.prepareCall("{call #rop2(?,?)}");
 
         cstmt.setNull(1, Types.BOOLEAN);

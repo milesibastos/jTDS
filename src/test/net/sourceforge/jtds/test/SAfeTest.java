@@ -65,13 +65,13 @@ public class SAfeTest extends DatabaseTestCase {
         int typeCnt = tds70orLater ? types.length : 2;
 
         for (int i = 0; i < typeCnt; i++) {
-            assertEquals(stmt.executeUpdate("CREATE TABLE #SAfe0001 (val " + types[i] + " NULL)"), 0);
+            assertEquals(0, stmt.executeUpdate("CREATE TABLE #SAfe0001 (val " + types[i] + " NULL)"));
 
             for (int j = 0; j < values.length; j++) {
                 String insQuery = values[j]==null ?
                     "INSERT INTO #SAfe0001 VALUES (NULL)" :
                     "INSERT INTO #SAfe0001 VALUES ('"+values[j]+"')";
-                assertEquals(stmt.executeUpdate(insQuery), 1);
+                assertEquals(1, stmt.executeUpdate(insQuery));
                 ResultSet rs = stmt.executeQuery("SELECT val FROM #SAfe0001");
 
                 assertTrue(rs.next());
@@ -87,10 +87,10 @@ public class SAfeTest extends DatabaseTestCase {
                 }
 
                 assertTrue(!rs.next());
-                assertEquals(stmt.executeUpdate("TRUNCATE TABLE #SAfe0001"), 0);
+                assertEquals(0, stmt.executeUpdate("TRUNCATE TABLE #SAfe0001"));
             }
 
-            assertTrue(stmt.executeUpdate("DROP TABLE #SAfe0001")==0);
+            assertEquals(0, stmt.executeUpdate("DROP TABLE #SAfe0001"));
         }
     }
 
@@ -177,7 +177,7 @@ public class SAfeTest extends DatabaseTestCase {
 
             threads[i] = new Thread() {
                 public void run() {
-                    ResultSet rs = null;
+                    ResultSet rs;
                     Statement stmt = null;
 
                     try {
@@ -216,12 +216,10 @@ public class SAfeTest extends DatabaseTestCase {
 
                         fail("An SQL Exception occured: "+e);
                     } finally {
-                        if (rs != null) {
-                            if (stmt != null) {
-                                try {
-                                    stmt.close();
-                                } catch (SQLException e) {
-                                }
+                        if (stmt != null) {
+                            try {
+                                stmt.close();
+                            } catch (SQLException e) {
                             }
                         }
 
@@ -656,6 +654,7 @@ public class SAfeTest extends DatabaseTestCase {
      * <code>PreparedStatement</code>s and <code>CallableStatement</code>s.
      */
     public void testPreparedAndCallableCursors0014() throws Exception {
+//        Logger.setActive(true);
         Statement stmt = con.createStatement();
         stmt.executeUpdate("CREATE TABLE #SAfe0014(id INT PRIMARY KEY)");
         stmt.executeUpdate("INSERT INTO #SAfe0014 VALUES (1)");

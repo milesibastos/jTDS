@@ -40,7 +40,7 @@ public class Tds8Test extends DatabaseTestCase {
 
     public static Test suite() {
 
-        if (!props.getProperty(Messages.get("prop.tds"), DefaultProperties.TDS_VERSION_70).equals(
+        if (!props.getProperty(Messages.get("prop.tds"), DefaultProperties.TDS_VERSION_80).equals(
                 DefaultProperties.TDS_VERSION_80)) {
 
             return new TestSuite();
@@ -115,7 +115,7 @@ public class Tds8Test extends DatabaseTestCase {
 
         assertEquals(rs.getLong(2), Long.MIN_VALUE);
         assertEquals(rs.getLong(3), Long.MAX_VALUE);
-        
+
         assertTrue(!rs.next());
         stmt2.close();
         rs.close();

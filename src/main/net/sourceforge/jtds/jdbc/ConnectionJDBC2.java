@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.32 2004-09-16 13:53:45 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.33 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -475,7 +475,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         for (int i = 0; i < params.length; i++) {
             if (!params[i].isSet) {
                 throw new SQLException(Messages.get("error.prepare.paramnotset",
-                                                          Integer.toString(i+1)),
+                                                    Integer.toString(i+1)),
                                        "07000");
             }
 
@@ -516,12 +516,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         //
-        // No so create the stored procedure now
+        // No, so create the stored procedure now
         //
         proc = new ProcEntry();
 
         if (serverType == Driver.SQLSERVER) {
-            proc.name = baseTds.microsoftPrepare(sql, params);
+            proc.name = baseTds.microsoftPrepare(sql, params,
+                    pstmt.getResultSetType(), pstmt.getResultSetConcurrency());
 
             if (proc.name == null) {
                 return null;
@@ -719,11 +720,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         loginTimeout = parseIntegerProperty(info, "prop.logintimeout");
         lobBuffer = parseLongProperty(info, "prop.lobbuffer");
 
-        // The TdsCore.PREPARE and TdsCore.PREPEXEC methods are only available with
-        // TDS 8.0+ (SQL Server 2000+); downgrade to TdsCore.EXECUTE_SQL if an invalid
-        // option is selected.
-        if (tdsVersion < Driver.TDS80
-                && (prepareSql == TdsCore.PREPARE || prepareSql == TdsCore.PREPEXEC)) {
+        // The TdsCore.PREPARE method is only available with TDS 8.0+ (SQL
+        // Server 2000+); downgrade to TdsCore.PREPARE if an invalid option
+        // is selected.
+        if (tdsVersion < Driver.TDS80 && prepareSql == TdsCore.PREPEXEC) {
+            prepareSql = TdsCore.PREPARE;
+        }
+        // For SQL Server 6.5, only sp_executesql is available.
+        // TODO Should also check for Sybase. Are there sp_ procedures for it?
+        if (tdsVersion < Driver.TDS70 && prepareSql == TdsCore.PREPARE) {
             prepareSql = TdsCore.EXECUTE_SQL;
         }
     }

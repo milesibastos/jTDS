@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.20 2004-09-23 14:26:59 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.21 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -880,6 +880,8 @@ public class Support {
                     } else {
                         value = list[i].getBytes("US-ASCII");
                     }
+                    // Replace the stream/reader with the String/byte[]
+                    list[i].value = value;
                 } catch (java.io.IOException e) {
                     throw new SQLException(Messages.get("error.generic.ioerror",
                                                               e.getMessage()),
@@ -892,7 +894,7 @@ public class Support {
             } else if (value instanceof byte[]) {
                 len += ((byte[]) value).length * 2 + 2;
             } else {
-                len += 10; // Default size
+                len += 32; // Default size
             }
         }
 

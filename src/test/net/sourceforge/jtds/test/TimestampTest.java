@@ -658,9 +658,9 @@ public class TimestampTest extends DatabaseTestCase {
             ResultSet rs = pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
-            assertTrue(
-                (e.getMessage().equals("parameter #1 has not been set")
-                || e.getMessage().equals("parameter #2 has not been set")));
+            assertTrue("07000".equals(e.getSQLState())
+                    && (e.getMessage().indexOf('1') >= 0
+                    || e.getMessage().indexOf('2') >= 0));
         }
 
         pStmt.clearParameters();
@@ -673,9 +673,9 @@ public class TimestampTest extends DatabaseTestCase {
             ResultSet rs = pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
-            assertTrue(
-                (e.getMessage().equals("parameter #1 has not been set")
-                || e.getMessage().equals("parameter #2 has not been set")));
+            assertTrue("07000".equals(e.getSQLState())
+                    && (e.getMessage().indexOf('1') >= 0
+                    || e.getMessage().indexOf('2') >= 0));
         }
 
         pStmt.clearParameters();
@@ -685,7 +685,8 @@ public class TimestampTest extends DatabaseTestCase {
             ResultSet rs = pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
-            assertTrue(e.getMessage().equals("parameter #2 has not been set"));
+            assertTrue("07000".equals(e.getSQLState())
+                    && e.getMessage().indexOf('2') >= 0);
         }
 
         pStmt.clearParameters();
@@ -695,7 +696,8 @@ public class TimestampTest extends DatabaseTestCase {
             ResultSet rs = pStmt.executeQuery();
             assertTrue("Failed to throw exception", false);
         } catch (SQLException e) {
-            assertTrue(e.getMessage().equals("parameter #1 has not been set"));
+            assertTrue("07000".equals(e.getSQLState())
+                    && e.getMessage().indexOf('1') >= 0);
         }
     }
 
@@ -1110,7 +1112,7 @@ public class TimestampTest extends DatabaseTestCase {
         PreparedStatement  pStmtB = cx.prepareStatement(
             "insert into #t0022b values (?, getdate())");
 
-        final int rowsToAdd = 1000;
+        final int rowsToAdd = 100;
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {
@@ -1389,7 +1391,7 @@ public class TimestampTest extends DatabaseTestCase {
         PreparedStatement pStmtB = cx.prepareStatement(
             "insert into #t0026b values (?, getdate())");
 
-        final int rowsToAdd = 1000;
+        final int rowsToAdd = 100;
         int count = 0;
 
         for (int i = 1; i <= rowsToAdd; i++) {

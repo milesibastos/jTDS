@@ -36,7 +36,7 @@ import java.sql.Types;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.20 2004-09-23 16:13:03 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.21 2004-09-28 09:11:46 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -55,6 +55,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     private static final int CURSOR_TYPE_DYNAMIC = 2;
     private static final int CURSOR_TYPE_FORWARD = 4;
     private static final int CURSOR_TYPE_STATIC = 8;
+    private static final int CURSOR_TYPE_PARAMETERIZED = 0x1000;
 
     private static final int CURSOR_CONCUR_READ_ONLY = 1;
     private static final int CURSOR_CONCUR_SCROLL_LOCKS = 2;
@@ -179,26 +180,17 @@ public class MSCursorResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a new Cursor result set using the internal sp_cursoropen procedure.
+     * Translates a JDBC result set type into SQL Server native @scrollOpt value
+     * for use with stored procedures such as sp_cursoropen, sp_cursorprepare
+     * or sp_cursorprepexec.
      *
-     * @param sql The SQL SELECT statement.
-     * @param procName Optional procedure name for cursors based on a stored procedure.
-     * @param parameters Optional stored procedure parameters.
-     * @throws SQLException
+     * @param resultSetType JDBC result set type (one of the
+     *                      <code>ResultSet.TYPE_<i>XXX</i></code> values)
+     * @return a value for the @scrollOpt parameter
      */
-    private void cursorCreate(String sql,
-                              String procName,
-                              ParamInfo[] parameters)
-    throws SQLException {
-        TdsCore tds = statement.getTds();
-        int prepareSql = statement.connection.getPrepareSql();
+    static int getCursorScrollOpt(int resultSetType, boolean parameterized) {
         int scrollOpt;
-        int ccOpt;
 
-        //
-        // Select the correct type of Server side cursor to
-        // match the scroll and concurrency options.
-        //
         switch (resultSetType) {
             case TYPE_SCROLL_INSENSITIVE:
                 scrollOpt = CURSOR_TYPE_STATIC;
@@ -214,16 +206,48 @@ public class MSCursorResultSet extends JtdsResultSet {
                 break;
         }
 
-        switch (concurrency) {
+        if (parameterized) {
+            scrollOpt |= CURSOR_TYPE_PARAMETERIZED;
+        }
+
+        return scrollOpt;
+    }
+
+    /**
+     * Translates a JDBC result set concurrency into SQL Server native @ccOpt
+     * value for use with stored procedures such as sp_cursoropen,
+     * sp_cursorprepare or sp_cursorprepexec.
+     *
+     * @param resultSetConcurrency JDBC result set concurrency (one of the
+     *                             <code>ResultSet.CONCUR_<i>XXX</i></code>
+     *                             values)
+     * @return a value for the @scrollOpt parameter
+     */
+    static int getCursorConcurrencyOpt(int resultSetConcurrency) {
+        switch (resultSetConcurrency) {
             case CONCUR_READ_ONLY:
             default:
-                ccOpt = CURSOR_CONCUR_READ_ONLY;
-                break;
+                return CURSOR_CONCUR_READ_ONLY;
 
             case CONCUR_UPDATABLE:
-                ccOpt = CURSOR_CONCUR_SCROLL_LOCKS;
-                break;
+                return CURSOR_CONCUR_SCROLL_LOCKS;
         }
+    }
+
+    /**
+     * Create a new Cursor result set using the internal sp_cursoropen procedure.
+     *
+     * @param sql The SQL SELECT statement.
+     * @param procName Optional procedure name for cursors based on a stored procedure.
+     * @param parameters Optional stored procedure parameters.
+     * @throws SQLException
+     */
+    private void cursorCreate(String sql,
+                              String procName,
+                              ParamInfo[] parameters)
+    throws SQLException {
+        TdsCore tds = statement.getTds();
+        int prepareSql = statement.connection.getPrepareSql();
 
         //
         // Simplify future tests for parameters
@@ -235,6 +259,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         // If there are no parameters we will opt for
         // the sp_cursoropen option only.
         //
+        // TODO Is this really the best solution? What if the query is complex?
         if (parameters == null) {
             prepareSql = TdsCore.UNPREPARED;
         }
@@ -294,22 +319,26 @@ public class MSCursorResultSet extends JtdsResultSet {
                 //
                 // At present procName is set to the value obtained by
                 // the connection.prepareSQL() call in JtdsPreparedStatement.
-                // Ideally we need to find a way eliminate the redundant prepare
-                // for PreparedStatements that are going to open cursors.
-                // This handle was obtained using sp_prepare not sp_cursorprepare
-                // so I am going to ignore it for now until Brian has finished the
-                // prepared statement logic.
+                // This handle was obtained using sp_cursorprepare not sp_prepare
+                // so it's ok to use here.
                 //
-//                try {
-//                    prepStmtHandle = new Integer(procName);
-//                } catch (NumberFormatException e) {
-//                    throw new IllegalStateException(
-//                               "Invalid prepared statement handle: " +
-//                                      procName);
-//                }
+                try {
+                    prepStmtHandle = new Integer(procName);
+                } catch (NumberFormatException e) {
+                    throw new IllegalStateException(
+                               "Invalid prepared statement handle: " +
+                                      procName);
+                }
             }
-//            procName = null;
         }
+
+        //
+        // Select the correct type of Server side cursor to
+        // match the scroll and concurrency options.
+        //
+        int scrollOpt = getCursorScrollOpt(resultSetType, parameters != null);
+        int ccOpt = getCursorConcurrencyOpt(concurrency);
+
         //
         // If using sp_cursoropen need to set a flag on scrollOpt.
         // The 0x1000 tells the server that there is a parameter

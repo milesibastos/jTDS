@@ -7,15 +7,12 @@ Changes from jTDS 0.9-rc2
    an output parameter is read before being set. This means that stored
    procedures that return only update counts are processed completely when
    executed and output parameter values are available right away.
- o Implemented full support for lastUpdateCount=true and changed the default
-   value of the parameter to false (when set to true some of the tests fail
-   because update counts are actually ignored).
  o Implemented some more support for spcursorprepare (still not complete, so
    not used yet).
  o Updated the documentation of sp_cursorprepare in apiCursors.html and some
    minor things in TDS.html.
  o prepareSql=3 (sp_prepare) is supported by TDS 7.0, small update to use it in
-   jTDS.
+   jTDS (until now it was downgraded to sp_executesql -- prepareSql=2).
 
 09/24/2004 - Alin Sinpalean
  o Updated JtdsDatabaseMetaData.getDriverVersion() to also include misc

@@ -1,7 +1,18 @@
 Changes from jTDS 0.3
 =====================
 
+09/05/2002 - Alin Sinpalean
+
+ o Added jdbc3_0-ext.jar to the lib folder, containing the .class files for
+   java.sql.Savepoint and java.sql.ParameterMetaData and changed the libraries
+   used by JBuilder to include this jar, too. This allows compilation of the
+   changes made by Justin under JDK 1.3 and should not affect compilation under
+   JDK 1.4.
+ o Fixed CursorResultSet.createCursor(): SCROLL_INSENSITIVE cursors could not
+   be created because of a syntax error.
+
 09/03/2002 - Justin SB
+
  o Added stubs to enable compilation with JDK 1.4 (no new functionality)
 
 08/30/2002 - Alin Sinpalean

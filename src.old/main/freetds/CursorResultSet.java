@@ -361,19 +361,32 @@ public class CursorResultSet extends AbstractResultSet {
              throws SQLException
     {
         cursorName = getNewCursorName();
-        String options = "";
+        StringBuffer query = new StringBuffer(sql.length()+50);
 
-        if ( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY )
-            options = "FAST_FORWARD ";
-        else if ( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE )
-            options = "SCROLL INSENSITIVE ";
+        query.append("DECLARE ").append(cursorName).append(" CURSOR ");
+
+        if( stmt.getResultSetType()==ResultSet.TYPE_FORWARD_ONLY &&
+            stmt.getResultSetConcurrency()==ResultSet.CONCUR_READ_ONLY )
+        {
+            query.append("FAST_FORWARD ");
+        }
         else
-            options = "SCROLL ";
+        {
+            if( stmt.getResultSetType() == ResultSet.TYPE_FORWARD_ONLY )
+                query.append("FORWARD_ONLY ");
+            else if( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_INSENSITIVE )
+                query.append("SCROLL STATIC ");
+            else if( stmt.getResultSetType() == ResultSet.TYPE_SCROLL_SENSITIVE )
+                query.append("SCROLL KEYSET ");
 
-        if ( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY )
-            options += "READ_ONLY ";
+            if( stmt.getResultSetConcurrency() == ResultSet.CONCUR_READ_ONLY )
+                query.append("READ_ONLY ");
+            else
+                query.append("OPTIMISTIC ");
+        }
 
-        stmt.execute("DECLARE " + cursorName + " CURSOR " + options + " FOR " + sql);
+        query.append("FOR ").append(sql);
+        stmt.execute(query.toString());
         stmt.execute("OPEN " + cursorName);
         open = true;
     }

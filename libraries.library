@@ -10,6 +10,7 @@
     <path>[lib/junit.jar]</path>
     <path>[lib/parser.jar]</path>
     <path>[lib/jdbc2_0-stdext.jar]</path>
+    <path>[lib/jdbc3_0-ext.jar]</path>
   </class>
 </library>
 

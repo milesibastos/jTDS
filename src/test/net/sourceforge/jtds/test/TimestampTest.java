@@ -185,9 +185,9 @@ public class TimestampTest extends DatabaseTestCase
         testEscape("select * from tmp where a like '\\%%'",
             "select * from tmp where a like '\\%%'");
         testEscape("select * from tmp where a like 'b%%' {escape 'b'}",
-            "select * from tmp where a like '\\%%' ");
+            "select * from tmp where a like 'b%%' ESCAPE 'b'");
         testEscape("select * from tmp where a like 'bbb' {escape 'b'}",
-            "select * from tmp where a like 'bbb' ");
+            "select * from tmp where a like 'bbb' ESCAPE 'b'");
         testEscape("select * from tmp where a='{fn user}'",
             "select * from tmp where a='{fn user}'");
         testEscape("select * from tmp where a={fn user()}",

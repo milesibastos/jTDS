@@ -58,7 +58,7 @@ class TdsInstance
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.20 2002-09-19 23:27:38 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.21 2002-09-23 14:17:08 alin_sinpalean Exp $";
 
     public TdsInstance(Tds tds_)
     {
@@ -89,7 +89,7 @@ class TdsInstance
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.20 2002-09-19 23:27:38 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.21 2002-09-23 14:17:08 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -117,7 +117,7 @@ public class TdsConnection implements ConnectionHelper, Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.20 2002-09-19 23:27:38 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.21 2002-09-23 14:17:08 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -423,8 +423,7 @@ public class TdsConnection implements ConnectionHelper, Connection
      */
     public java.util.Map getTypeMap() throws SQLException
     {
-        NotImplemented();
-        return null;
+        return new java.util.HashMap();
     }
 
     public synchronized void markAsClosed(java.sql.Statement stmt)

@@ -11,6 +11,12 @@ Changes from jTDS 0.3.1
    start because of the first row being prefetched). So, the first row is no
    longer prefetched, there's a "FETCH PRIOR" call that doesn't do anything but
    initializing the context. Thanks to wolfgang_a_h@gmx.at for finding the bug.
+   (bug submitted later as #613199)
+ o Bugfix #598679 (TdsConnection.getTypeMap not implemented): just looked at
+   the javadoc comment for the method and it says that it should return an
+   empty Map unless the application has added an entry. So, as the application
+   can't add an entry (setTypeMap throws an SQLException as well :o) ) we'll
+   just return an empty Map each time. :o)))
 
 ===============================================================================
 09/20/2002 - jTDS 0.3.2 released

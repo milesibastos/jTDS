@@ -43,7 +43,7 @@ import java.sql.Timestamp;
  * @author     Craig Spannring
  * @author     Igor Petrovski
  * @created    14 September 2001
- * @version    $Id: TdsComm.java,v 1.10 2004-03-07 23:03:32 alin_sinpalean Exp $
+ * @version    $Id: TdsComm.java,v 1.11 2004-03-14 16:07:03 alin_sinpalean Exp $
  */
 public class TdsComm implements TdsDefinitions {
 
@@ -95,17 +95,12 @@ public class TdsComm implements TdsDefinitions {
     private int tdsVer;
 
     /**
-     * Buffer used for reading the packet header.
-     */
-    byte tmpBuf[] = new byte[8];
-
-    /**
      * Buffer that will be used to return byte[] values by getByte(int, boolean)
      * to avoid allocating a new buffer each time if not necessary.
      */
     byte resBuffer[] = new byte[256];
 
-    public final static String cvsVersion = "$Id: TdsComm.java,v 1.10 2004-03-07 23:03:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsComm.java,v 1.11 2004-03-14 16:07:03 alin_sinpalean Exp $";
 
     final static int headerLength = 8;
 
@@ -147,13 +142,6 @@ public class TdsComm implements TdsDefinitions {
     public final static byte NTLMAUTH = 0x11;
 
     /**
-     * The minimum packet length that a TDS implementation can support is 512
-     * bytes. Buffer sizes are later updated to the actual buffer size that the
-     * DB server supports.
-     */
-    private final static int minPacketLength = 512;
-
-    /**
      * For debuging purposes it would be nice to uniquely identify each TDS
      * stream. <code>id</code> will be a unique value for each instance of this
      * class.
@@ -167,13 +155,11 @@ public class TdsComm implements TdsDefinitions {
 
     private TdsSocket tdsSocket = null;
 
-    public TdsComm(TdsSocket tdsSocket, int tdsVer) {
+    public TdsComm(TdsSocket tdsSocket, int tdsVer, int networkPacketSize) {
         this.tdsSocket = tdsSocket;
 
-        int packetSize = tdsSocket.getPacketSize() > 0 ?
-                tdsSocket.getPacketSize() : minPacketLength;
-        outBuffer = new byte[packetSize];
-        inBuffer = new byte[packetSize];
+        outBuffer = new byte[networkPacketSize];
+        inBuffer = new byte[networkPacketSize];
 
         // Added 2000-06-07
         this.tdsVer = tdsVer;
@@ -378,7 +364,7 @@ public class TdsComm implements TdsDefinitions {
     public synchronized void sendPacket()
             throws java.io.IOException {
         sendPhysicalPacket(true);
-        nextOutBufferIndex = 0;
+        nextOutBufferIndex = headerLength;
         packetType = 0;
         notify();
     }
@@ -425,8 +411,11 @@ public class TdsComm implements TdsDefinitions {
             storeShort(4, (short) 0);
             storeByte(6, (byte) (tdsVer == TDS70 ? 1 : 0));
             storeByte(7, (byte) 0);
-
-            tdsSocket.sendNetPacket(this, outBuffer);
+            //
+            // Store the returnred buffer as the original output
+            // buffer may be cached by TdsSocket
+            //
+            outBuffer = tdsSocket.sendNetPacket(this, outBuffer);
             packetsSent++;
 
             if (Logger.isActive()) {
@@ -633,7 +622,6 @@ public class TdsComm implements TdsDefinitions {
 
     void resizeOutbuf(int newsize) {
         if (newsize > outBuffer.length) {
-            tdsSocket.setPacketSize(newsize);
             byte[] newBuf = new byte[newsize];
             System.arraycopy(outBuffer, 0, newBuf, 0, outBuffer.length);
             outBuffer = newBuf;

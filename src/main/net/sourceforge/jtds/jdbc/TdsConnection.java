@@ -58,7 +58,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Alin Sinpalean
  * @author     The FreeTDS project
  * @created    March 16, 2001
- * @version    $Id: TdsConnection.java,v 1.19 2004-03-07 23:03:32 alin_sinpalean Exp $
+ * @version    $Id: TdsConnection.java,v 1.20 2004-03-14 16:07:03 alin_sinpalean Exp $
  * @see        Statement
  * @see        ResultSet
  * @see        DatabaseMetaData
@@ -88,6 +88,11 @@ public class TdsConnection implements Connection
     private boolean lastUpdateCount;
 
     private TdsSocket tdsSocket = null;
+    /**
+     * The network packet size to use for output packets
+     */
+    private int networkPacketSize;
+
     private SQLWarningChain warningChain;
 
     // SAfe Access to both of these fields is synchronized on procedureCache
@@ -115,7 +120,7 @@ public class TdsConnection implements Connection
     /**
      * CVS revision of the file.
      */
-    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.19 2004-03-07 23:03:32 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: TdsConnection.java,v 1.20 2004-03-14 16:07:03 alin_sinpalean Exp $";
 
     /**
      * Create a <code>Connection</code> to a database server.
@@ -194,6 +199,7 @@ public class TdsConnection implements Connection
         // Adellera
         setCharset(props.getProperty(Tds.PROP_CHARSET));
 
+        networkPacketSize = (tdsVer >= Tds.TDS70) ? 4096 : 512;
         Tds tmpTds = new Tds(this, tdsSocket, tdsVer, serverType, useUnicode);
         tdsPool.addElement(tmpTds);
         try {
@@ -282,6 +288,25 @@ public class TdsConnection implements Connection
      */
     protected byte getMaxPrecision() {
         return maxPrecision;
+    }
+
+    /**
+     * Get the network packet size for request packets.
+     *
+     * @return The packet size as an <code>int</code>.
+     */
+    protected int getNetworkPacketSize()
+    {
+        return networkPacketSize;
+    }
+
+    /**
+     * Set the network packet size for request packets.
+     * @param networkPacketSize The packet size eg 4096.
+     */
+    protected void setNetworkPacketSize(int networkPacketSize)
+    {
+        this.networkPacketSize = networkPacketSize;
     }
 
     /**

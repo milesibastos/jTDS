@@ -39,27 +39,59 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
+ * @version $Id: TdsSocket.java,v 1.3 2004-03-14 16:07:03 alin_sinpalean Exp $
  */
 public class TdsSocket {
 
-    //
-    // This inner class contains the state information for the virtual socket
-    //
+    /**
+     * This inner class contains the state information for the virtual socket.
+     */
     private static class VirtualSocket {
-        private TdsComm owner;      // The TdsComm object owning this state
-        private int timeOut;    // Query timeout value in msec or 0
-        private LinkedList pktQueue;   // Memory resident packet queue
-        private boolean flushInput; // True to discard network data
-        private boolean complete;   // True if output is complete TDS packet
-        private File queueFile;  // File object for disk packet queue
-        private RandomAccessFile diskQueue;// I/O Stream for disk packet queue
-        private int pktsOnDisk; // Number of packets cached to disk
-        private int inputPkts;  // Total of input packets in memory or disk
-        private int outputPkts; // Total of output packets in memory or disk
+        /**
+         * The TdsComm object owning this state.
+         */
+        private TdsComm owner;
+        /**
+         * Query timeout value in msec or 0.
+         */
+        private int timeOut;
+        /**
+         * Memory resident packet queue.
+         */
+        private LinkedList pktQueue;
+        /**
+         * True to discard network data.
+         */
+        private boolean flushInput;
+        /**
+         * True if output is complete TDS packet.
+         */
+        private boolean complete;
+        /**
+         * File object for disk packet queue.
+         */
+        private File queueFile;
+        /**
+         * I/O Stream for disk packet queue.
+         */
+        private RandomAccessFile diskQueue;
+        /**
+         * Number of packets cached to disk.
+         */
+        private int pktsOnDisk;
+        /**
+         * Total of input packets in memory or disk.
+         */
+        private int inputPkts;
+        /**
+         * Total of output packets in memory or disk.
+         */
+        private int outputPkts;
 
-        //
-        // Constuct object to hold state information for each caller
-        //
+        /**
+         * Constuct object to hold state information for each caller.
+         * @param comm
+         */
         VirtualSocket(TdsComm comm) {
             this.owner = comm;
             this.pktQueue = new LinkedList();
@@ -74,73 +106,70 @@ public class TdsSocket {
         }
     }
 
-    //
-    // The shared network socket
-    //
+    /**
+     * The shared network socket.
+     */
     private Socket socket = null;
-    //
-    // Input and output streams for network socket
-    //
+    /**
+     * Output stream for network socket.
+     */
     private DataOutputStream out = null;
+    /**
+     * Input stream for network socket.
+     */
     private DataInputStream in = null;
-    //
-    // Current maxium input buffer size
-    //
+    /**
+     * Current maxium input buffer size.
+     */
     private int maxBufSize = 512;
-    //
-    // Table of TdsComm 'VirtualSocket' objects sharing this socket
-    //
+    /**
+     * Table of TdsComm 'VirtualSocket' objects sharing this socket.
+     */
     private ArrayList socketTable = null;
-    //
-    // The TdsComm object that is expecting a response from the server
-    //
+    /**
+     * The TdsComm object that is expecting a response from the server.
+     */
     private TdsComm responseOwner = null;
-    //
-    // The TdsComm object that is currently building a send packet
-    //
+    /**
+     * The TdsComm object that is currently building a send packet.
+     */
     private TdsComm currentSender = null;
-    //
-    // The last network packet completed a TDS packet
-    //
+    /**
+     * The last network packet completed a TDS packet.
+     */
     private boolean tdsPacketComplete = false;
-    //
-    // Buffer for packet header
-    //
+    /**
+     * Buffer for packet header.
+     */
     private byte hdrBuf[] = new byte[8];
-    //
-    // Total memory usage in all instances of the driver
-    // NB. Access to this field should probably be synchronized
-    // but in practice lost updates will not matter much and I think
-    // all VMs tend to do atomic saves to integer variables.
-    //
+    /**
+     * Total memory usage in all instances of the driver
+     * NB. Access to this field should probably be synchronized
+     * but in practice lost updates will not matter much and I think
+     * all VMs tend to do atomic saves to integer variables.
+     */
     private static int globalMemUsage = 0;
-    //
-    // Peak memory usage for debug purposes
-    //
+    /**
+     * Peak memory usage for debug purposes.
+     */
     private static int peakMemUsage = 0;
-    //
-    // Max memory limit to use for buffers.
-    // Only when this limit is exceeded will the driver
-    // start caching to disk.
-    //
+    /**
+     * Max memory limit to use for buffers.
+     * Only when this limit is exceeded will the driver
+     * start caching to disk.
+     */
     private static int memoryBudget = 100000; // 100K
-    //
-    // Minimum number of packets that will be cached in memory
-    // before the driver tries to write to disk even if
-    // memoryBudget has been exceeded.
-    //
+    /**
+     * Minimum number of packets that will be cached in memory
+     * before the driver tries to write to disk even if
+     * memoryBudget has been exceeded.
+     */
     private static int minMemPkts = 8;
-    //
-    // Global flag to indicate that security constraints mean
-    // that attempts to create work files will fail.
-    //
+    /**
+     * Global flag to indicate that security constraints mean
+     * that attempts to create work files will fail.
+     */
     private static boolean securityViolation = false;
-    //
-    // The TDS version byte from a send header for use in sendCancel()
-    //
-    private byte tdsVerByte = 0;
-
-    private int packetSize = -1;
 
     /**
      * Construct a TdsSocket object specifying host name and port.
@@ -262,7 +291,7 @@ public class TdsSocket {
                 responseOwner == tdsComm &&
                 currentSender == null) {
             try {
-                sendCancel();
+                sendCancel(tdsComm);
             } catch (IOException e) {
                 ; // Ignore error as network is probably dead anyway
             }
@@ -303,7 +332,7 @@ public class TdsSocket {
      * @param buffer  The data to send.
      * @throws IOException
      */
-    public void sendNetPacket(TdsComm tdsComm, byte buffer[])
+    public byte[] sendNetPacket(TdsComm tdsComm, byte buffer[])
             throws IOException {
         synchronized (socketTable) {
 
@@ -336,6 +365,9 @@ public class TdsSocket {
                 // data to send later.
                 //
                 enqueueOutput(vsock, buffer);
+                // Return a new buffer to the caller so that
+                // the cached data is not overwritten.
+                buffer = new byte[buffer.length];
             } else {
                 //
                 // At this point we know that we are able to send the first
@@ -346,14 +378,13 @@ public class TdsSocket {
                     // This means the TDS Packet is complete
                     currentSender = null;
                     responseOwner = tdsComm;
-                    tdsVerByte = buffer[6]; // Used by sendCancel()
                 } else {
                     // This is the first of maybe several buffers to
                     // make up the complete TDS packet.
                     currentSender = tdsComm;
                 }
             }
-            return;
+            return buffer;
         }
     }
 
@@ -422,7 +453,7 @@ public class TdsSocket {
         }
     }
 
-    /*
+    /**
      * Lookup the TdsComm object in our virtual socket table.
      */
     private synchronized VirtualSocket lookup(TdsComm comm) {
@@ -437,9 +468,9 @@ public class TdsSocket {
         return entry;
     }
 
-    /*
+    /**
      * Return any server packet saved for the specified TdsComm object.
-    */
+     */
     private byte[] dequeueInput(VirtualSocket vsock)
             throws IOException {
         byte[] buf = dequeuePacket(vsock);
@@ -448,16 +479,16 @@ public class TdsSocket {
         return buf;
     }
 
-    /*
-     * Save a server packet for the specified TdsComm object
+    /**
+     * Save a server packet for the specified TdsComm object.
      */
     private void enqueueInput(VirtualSocket vsock, byte[] buffer)
             throws IOException {
-        enqueuePacket(vsock, buffer, false);
+        enqueuePacket(vsock, buffer);
         vsock.inputPkts++;
     }
 
-    /*
+    /**
      * Return any client request packet saved for the specified TdsComm object.
      */
     private byte[] dequeueOutput(VirtualSocket vsock)
@@ -470,23 +501,22 @@ public class TdsSocket {
         return buf;
     }
 
-    /*
-     * Save a client request packet for the specified TdsComm object
+    /**
+     * Save a client request packet for the specified TdsComm object.
      */
     private void enqueueOutput(VirtualSocket vsock, byte[] buffer)
             throws IOException {
-        enqueuePacket(vsock, buffer, true);
+        enqueuePacket(vsock, buffer);
         vsock.complete = buffer[1] != 0;
         vsock.outputPkts++;
     }
 
-    /*
+    /**
      * Save a packet buffer in a memory queue or to a disk queue
      * if the global memory limit for the driver has been exceeded.
      */
     private void enqueuePacket(VirtualSocket vsock,
-                               byte[] buffer,
-                               boolean copyBuffer)
+                               byte[] buffer)
             throws IOException {
         //
         // Check to see if we should start caching to disk
@@ -503,7 +533,7 @@ public class TdsSocket {
                 byte[] tmpBuf;
                 while (vsock.pktQueue.size() > 0) {
                     tmpBuf = (byte[]) vsock.pktQueue.removeFirst();
-                    vsock.diskQueue.write(tmpBuf);
+                    vsock.diskQueue.write(tmpBuf, 0, TdsComm.ntohs(tmpBuf, 2));
                     vsock.pktsOnDisk++;
                 }
             } catch (java.lang.SecurityException se) {
@@ -516,18 +546,11 @@ public class TdsSocket {
 
         if (vsock.diskQueue != null) {
             // Cache file exists so append buffer to it
-            vsock.diskQueue.write(buffer);
+            vsock.diskQueue.write(buffer, 0, TdsComm.ntohs(buffer, 2));
             vsock.pktsOnDisk++;
         } else {
             // Will cache in memory
-            if (copyBuffer) {
-                // Supplied buffer may be overwritten by caller so copy needed
-                byte[] tmpBuf = new byte[buffer.length];
-                System.arraycopy(buffer, 0, tmpBuf, 0, buffer.length);
-                vsock.pktQueue.addLast(tmpBuf);
-            } else {
-                vsock.pktQueue.addLast(buffer);
-            }
+            vsock.pktQueue.addLast(buffer);
             globalMemUsage += buffer.length;
             if (globalMemUsage > peakMemUsage)
                 peakMemUsage = globalMemUsage;
@@ -535,7 +558,7 @@ public class TdsSocket {
         return;
     }
 
-    /*
+    /**
      * Read a cached packet from the in memory queue or from a disk based queue.
      */
     private byte[] dequeuePacket(VirtualSocket vsock)
@@ -554,7 +577,7 @@ public class TdsSocket {
             vsock.diskQueue.read(buffer, 8, len - 8);
             vsock.pktsOnDisk--;
             if (vsock.pktsOnDisk < 1) {
-                // File now empty so delete close and delete it
+                // File now empty so close and delete it
                 try {
                     vsock.diskQueue.close();
                     vsock.queueFile.delete();
@@ -570,9 +593,9 @@ public class TdsSocket {
         return buffer;
     }
 
-    /*
+    /**
      * Read a physical TDS packet from the network.
-    */
+     */
     private byte[] readPacket(byte buffer[], VirtualSocket vsock, int timeOut)
             throws IOException,
             TdsUnknownPacketType,
@@ -580,16 +603,18 @@ public class TdsSocket {
         boolean queryTimedOut = false;
         do {
             // read the header with timeout specified
-            socket.setSoTimeout(timeOut);
+            if (timeOut > 0)
+                socket.setSoTimeout(timeOut);
             int len = 0;
             while (len == 0) {
                 try {
                     len = in.read(hdrBuf, 0, 1);
                 } catch (InterruptedIOException e) {
                     queryTimedOut = true;
-                    sendCancel();
+                    sendCancel(vsock.owner);
                 } finally {
-                    socket.setSoTimeout(0);
+                    if (timeOut > 0)
+                        socket.setSoTimeout(0);
                 }
             }
             if (len == -1)
@@ -652,7 +677,7 @@ public class TdsSocket {
         return buffer;
     }
 
-    /*
+    /**
      * Identify isolated cancel packets so that we can ignore them.
      */
     private boolean isUnwantedCancelAck(byte[] buffer) {
@@ -670,10 +695,10 @@ public class TdsSocket {
         return true;
     }
 
-    /*
+    /**
      * Send a cancel packet.
      */
-    private void sendCancel()
+    private void sendCancel(TdsComm comm)
             throws IOException {
         byte[] cancel = new byte[8];
         cancel[0] = TdsComm.CANCEL;
@@ -682,18 +707,10 @@ public class TdsSocket {
         cancel[3] = 8;
         cancel[4] = 0;
         cancel[5] = 0;
-        cancel[6] = tdsVerByte;
+        cancel[6] = (comm.getTdsVer() == Tds.TDS70)? (byte)1: (byte)0;
         cancel[7] = 0;
         out.write(cancel, 0, 8);
         if (Logger.isActive())
             Logger.println("TdsSocket: Send cancel packet");
-    }
-
-    protected void setPacketSize(int packetSize) {
-        this.packetSize = packetSize;
-    }
-
-    protected int getPacketSize() {
-        return packetSize;
     }
 }

@@ -47,7 +47,7 @@ import net.sourceforge.jtds.util.Logger;
  * @author     Igor Petrovski
  * @author     The FreeTDS project
  * @created    March 17, 2001
- * @version    $Id: Tds.java,v 1.39 2004-03-10 18:01:03 alin_sinpalean Exp $
+ * @version    $Id: Tds.java,v 1.40 2004-03-14 16:07:02 alin_sinpalean Exp $
  */
 public class Tds implements TdsDefinitions {
 
@@ -77,7 +77,7 @@ public class Tds implements TdsDefinitions {
 
     private int maxRows = 0;
 
-    public final static String cvsVersion = "$Id: Tds.java,v 1.39 2004-03-10 18:01:03 alin_sinpalean Exp $";
+    public final static String cvsVersion = "$Id: Tds.java,v 1.40 2004-03-14 16:07:02 alin_sinpalean Exp $";
 
     /**
      * The context of the result set currently being parsed.
@@ -95,7 +95,7 @@ public class Tds implements TdsDefinitions {
         this.serverType = serverType;
         this.useUnicode = useUnicode;
 
-        comm = new TdsComm(sock, tdsVer);
+        comm = new TdsComm(sock, tdsVer, connection.getNetworkPacketSize());
     }
 
     /**
@@ -2140,16 +2140,17 @@ public class Tds implements TdsDefinitions {
         switch (type) {
         case TDS_ENV_BLOCKSIZE:
             {
-                final String blocksize;
+                final int blocksize;
                 final int clen = comm.getByte() & 0xFF;
-                blocksize = comm.getString(clen, encoder);
+                blocksize = Integer.parseInt(comm.getString(clen, encoder));
                 if (tdsVer == TDS70) {
                     comm.skip(len - 2 - clen * 2);
                 } else {
                     comm.skip(len - 2 - clen);
                 }
+                conn.setNetworkPacketSize(blocksize);
                 // SAfe This was only done for TDS70. Why?
-                comm.resizeOutbuf(Integer.parseInt(blocksize));
+                comm.resizeOutbuf(blocksize);
                 if (Logger.isActive()) {
                     Logger.println("Changed blocksize to " + blocksize);
                 }

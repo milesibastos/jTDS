@@ -55,7 +55,7 @@ import net.sourceforge.jtds.util.*;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.10 2004-08-16 15:38:21 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.11 2004-08-17 16:46:31 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -876,12 +876,13 @@ class SharedSocket {
             }
 
             //
-            // SQL Server 2000 < SP2 does not set the last packet
+            // SQL Server 2000 < SP3 does not set the last packet
             // flag in the NT challenge packet.
             // If this is the first packet and the length is correct
             // force the last packet flag on.
             //
-            if (++packetCount == 1 && len == 59) {
+            if (++packetCount == 1 && serverType == Driver.SQLSERVER
+                    && "NTLMSSP".equals(new String(buffer, 11, 7))) {
                 buffer[1] = 1;
             }
         } while ((queryTimedOut && buffer[1] == 0)

@@ -12,6 +12,10 @@ Changes from jTDS 0.6
  o CursorResultSet.relative() now works according to the spec (i.e. same as
    next/previous), even if the cursor is positioned before the first row or
    after the last one.
+   
+02/10/2004 - Brian Heineman
+ o Corrected bug in Statement.executeBatch() where batch values were not being
+   cleared after execution.
 
 02/09/2004 - Alin Sinpalean
  o Implemented CursorResultSet.isLast() and added a check to currentRow() to

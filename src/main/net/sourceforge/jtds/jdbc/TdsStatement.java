@@ -44,7 +44,7 @@
  *
  * @see java.sql.Statement
  * @see ResultSet
- * @version $Id: TdsStatement.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $
+ * @version $Id: TdsStatement.java,v 1.18 2004-02-10 16:17:34 bheineman Exp $
  */
 package net.sourceforge.jtds.jdbc;
 
@@ -59,7 +59,7 @@ public class TdsStatement implements java.sql.Statement
      */
     public static final int RETURN_GENERATED_KEYS = 1;
 
-    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.17 2004-02-10 05:14:52 bheineman Exp $";
+    public static final String cvsVersion = "$Id: TdsStatement.java,v 1.18 2004-02-10 16:17:34 bheineman Exp $";
 
     private TdsConnection connection; // The connection that created us
 
@@ -874,6 +874,8 @@ public class TdsStatement implements java.sql.Statement
 
             tmpUpdateCounts[i] = Statement.EXECUTE_FAILED;
             throw new BatchUpdateException(e.getMessage(), tmpUpdateCounts);
+        } finally {
+            clearBatch();
         }
 
         return updateCounts;

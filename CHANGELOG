@@ -4,6 +4,9 @@ Changes from jTDS 1.0.1
 02/14/2005 - Alin Sinpalean
  o Applied patch [1120010] Fixed search string escape handling, submitted by
    James P. Moring.
+ o Corrected bug [1122481] how handle new behavior since 1.0.1. The DataSource
+   factory failed with NPE because the properties are no longer initialized in
+   the constructor. Added tests to ensure no regressions.
 
 02/12/2005 - Alin Sinpalean
  o Corrected bug [1120442] Statement hangs in socket read after

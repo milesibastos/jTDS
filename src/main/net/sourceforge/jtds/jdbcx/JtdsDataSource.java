@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.25 2005-02-02 13:42:49 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.26 2005-02-14 20:11:54 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -278,6 +278,8 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
 
+        ref.add(new StringRefAddr("description", description));
+
         return ref;
     }
 
@@ -327,6 +329,9 @@ public class JtdsDataSource
     }
 
     public int getLoginTimeout() throws SQLException {
+        if (loginTimeout == null) {
+            return 0;
+        }
         return Integer.parseInt(loginTimeout);
     }
 
@@ -359,6 +364,9 @@ public class JtdsDataSource
     }
 
     public int getPortNumber() {
+        if (portNumber == null) {
+            return 0;
+        }
         return Integer.parseInt(portNumber);
     }
 
@@ -392,6 +400,9 @@ public class JtdsDataSource
     }
 
     public int getServerType() {
+        if (serverType == null) {
+            return 0;
+        }
         return Integer.parseInt(serverType);
     }
 
@@ -472,6 +483,9 @@ public class JtdsDataSource
     }
 
     public int getPacketSize() {
+        if (packetSize == null) {
+            return 0;
+        }
         return Integer.parseInt(packetSize);
     }
 
@@ -488,6 +502,9 @@ public class JtdsDataSource
     }
 
     public int getPrepareSql() {
+        if (prepareSql == null) {
+            return 0;
+        }
         return Integer.parseInt(prepareSql);
     }
 
@@ -496,6 +513,9 @@ public class JtdsDataSource
     }
 
     public long getLobBuffer() {
+        if (lobBuffer == null) {
+            return 0;
+        }
         return Long.parseLong(lobBuffer);
     }
 
@@ -504,6 +524,9 @@ public class JtdsDataSource
     }
 
     public int getMaxStatements() {
+        if (maxStatements == null) {
+            return 0;
+        }
         return Integer.parseInt(maxStatements);
     }
 

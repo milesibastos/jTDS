@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.13 2005-01-14 06:02:24 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.14 2005-02-14 20:11:54 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -42,32 +42,70 @@ public class JtdsObjectFactory implements ObjectFactory {
             JtdsDataSource ds = new JtdsDataSource();
 
             ds.setServerName((String) ref.get(Messages.get(Driver.SERVERNAME)).getContent());
-            ds.setPortNumber(Integer.parseInt((String) ref.get(Messages.get(Driver.PORTNUMBER)).getContent()));
+            final Object portNumber = ref.get(Messages.get(Driver.PORTNUMBER)).getContent();
+            if (portNumber != null) {
+                ds.setPortNumber(Integer.parseInt((String) portNumber));
+            }
             ds.setDatabaseName((String) ref.get(Messages.get(Driver.DATABASENAME)).getContent());
             ds.setUser((String) ref.get(Messages.get(Driver.USER)).getContent());
             ds.setPassword((String) ref.get(Messages.get(Driver.PASSWORD)).getContent());
             ds.setCharset((String) ref.get(Messages.get(Driver.CHARSET)).getContent());
             ds.setLanguage((String) ref.get(Messages.get(Driver.LANGUAGE)).getContent());
             ds.setTds((String) ref.get(Messages.get(Driver.TDS)).getContent());
-            ds.setServerType(Integer.parseInt((String) ref.get(Messages.get(Driver.SERVERTYPE)).getContent()));
+            final Object serverType = ref.get(Messages.get(Driver.SERVERTYPE)).getContent();
+            if (serverType != null) {
+                ds.setServerType(Integer.parseInt((String) serverType));
+            }
             ds.setDomain((String) ref.get(Messages.get(Driver.DOMAIN)).getContent());
             ds.setInstance((String) ref.get(Messages.get(Driver.INSTANCE)).getContent());
-            ds.setLastUpdateCount("true".equals(ref.get(Messages.get(Driver.LASTUPDATECOUNT)).getContent()));
-            ds.setSendStringParametersAsUnicode("true".equals(
-                    ref.get(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE)).getContent()));
-            ds.setNamedPipe("true".equals(ref.get(Messages.get(Driver.NAMEDPIPE)).getContent()));
+            final Object lastUpdateCount = ref.get(Messages.get(Driver.LASTUPDATECOUNT)).getContent();
+            if (lastUpdateCount != null) {
+                ds.setLastUpdateCount("true".equals(lastUpdateCount));
+            }
+            final Object sendStringParametersAsUnicode =
+                    ref.get(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE)).getContent();
+            if (sendStringParametersAsUnicode != null) {
+                ds.setSendStringParametersAsUnicode("true".equals(sendStringParametersAsUnicode));
+            }
+            final Object namedPipe = ref.get(Messages.get(Driver.NAMEDPIPE)).getContent();
+            if (namedPipe != null) {
+                ds.setNamedPipe("true".equals(namedPipe));
+            }
             ds.setMacAddress((String) ref.get(Messages.get(Driver.MACADDRESS)).getContent());
-            ds.setMaxStatements(Integer.parseInt((String) ref.get(Messages.get(Driver.MAXSTATEMENTS)).getContent()));
-            ds.setPacketSize(Integer.parseInt((String) ref.get(Messages.get(Driver.PACKETSIZE)).getContent()));
-            ds.setPrepareSql(Integer.parseInt((String) ref.get(Messages.get(Driver.PREPARESQL)).getContent()));
-            ds.setLobBuffer(Long.parseLong((String) ref.get(Messages.get(Driver.LOBBUFFER)).getContent()));
-            ds.setLoginTimeout(Integer.parseInt((String) ref.get(Messages.get(Driver.LOGINTIMEOUT)).getContent()));
+            final Object maxStatements = ref.get(Messages.get(Driver.MAXSTATEMENTS)).getContent();
+            if (maxStatements != null) {
+                ds.setMaxStatements(Integer.parseInt((String) maxStatements));
+            }
+            final Object packetSize = ref.get(Messages.get(Driver.PACKETSIZE)).getContent();
+            if (packetSize != null) {
+                ds.setPacketSize(Integer.parseInt((String) packetSize));
+            }
+            final Object prepareSql = ref.get(Messages.get(Driver.PREPARESQL)).getContent();
+            if (prepareSql != null) {
+                ds.setPrepareSql(Integer.parseInt((String) prepareSql));
+            }
+            final Object lobBuffer = ref.get(Messages.get(Driver.LOBBUFFER)).getContent();
+            if (lobBuffer != null) {
+                ds.setLobBuffer(Long.parseLong((String) lobBuffer));
+            }
+            final Object loginTimeout = ref.get(Messages.get(Driver.LOGINTIMEOUT)).getContent();
+            if (loginTimeout != null) {
+                ds.setLoginTimeout(Integer.parseInt((String) loginTimeout));
+            }
             ds.setAppName((String) ref.get(Messages.get(Driver.APPNAME)).getContent());
             ds.setProgName((String) ref.get(Messages.get(Driver.PROGNAME)).getContent());
-            ds.setTcpNoDelay("true".equals(ref.get(Messages.get(Driver.TCPNODELAY)).getContent()));
-            ds.setXaEmulation("true".equals(ref.get(Messages.get(Driver.XAEMULATION)).getContent()));
+            final Object tcpNoDelay = ref.get(Messages.get(Driver.TCPNODELAY)).getContent();
+            if (tcpNoDelay != null) {
+                ds.setTcpNoDelay("true".equals(tcpNoDelay));
+            }
+            final Object xaEmulation = ref.get(Messages.get(Driver.XAEMULATION)).getContent();
+            if (xaEmulation != null) {
+                ds.setXaEmulation("true".equals(xaEmulation));
+            }
             ds.setLogFile((String) ref.get(Messages.get(Driver.LOGFILE)).getContent());
             ds.setSsl((String) ref.get(Messages.get(Driver.SSL)).getContent());
+
+            ds.setDescription((String) ref.get("description").getContent());
 
             return ds;
         }

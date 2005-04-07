@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.2
 =======================
 
+04/07/2005 - Alin Sinpalean
+ o Applied Mike and Dave's combined fix for bug [1176221] JtdsPreparedStatement
+   setTime setTimestamp Daylight DST Bug.
+
 04/04/2005 - David Kilzer
  o Refactored duplicate code in JtdsPreparedStatement.setDate(int, Date, Calendar),
    setTime(int, Time, Calendar) and setTimestamp(int, Timestamp, Calendar) into

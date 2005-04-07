@@ -22,7 +22,9 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.*;
-import java.util.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
 
 import net.sourceforge.jtds.util.Logger;
 
@@ -41,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.38 2005-03-12 22:39:29 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.39 2005-04-07 20:46:00 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -1055,6 +1057,69 @@ public class Support {
         }
 
         return sqle;
+    }
+
+    /**
+     * Convert a timestamp to a different Timezone.
+     *
+     * @param value  the timestamp value
+     * @param target the <code>Calendar</code> containing the TimeZone
+     * @return the new timestamp value as a <code>long</code>
+     */
+    public static long timeToZone(java.util.Date value, Calendar target) {
+        synchronized (cal) {
+            java.util.Date tmp = target.getTime();
+            try {
+                cal.setTime(value);
+                if (!Driver.JDBC3 && value instanceof Timestamp) {
+                    // Not Running under 1.4 so need to add milliseconds
+                    cal.set(Calendar.MILLISECOND,
+                            ((Timestamp)value).getNanos() / 1000000);
+                }
+                target.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY));
+                target.set(Calendar.MINUTE, cal.get(Calendar.MINUTE));
+                target.set(Calendar.SECOND, cal.get(Calendar.SECOND));
+                target.set(Calendar.MILLISECOND, cal.get(Calendar.MILLISECOND));
+                target.set(Calendar.YEAR, cal.get(Calendar.YEAR));
+                target.set(Calendar.MONTH, cal.get(Calendar.MONTH));
+                target.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH));
+                return target.getTime().getTime();
+            }
+            finally {
+                target.setTime(tmp);
+            }
+        }
+    }
+
+    /**
+     * Convert a timestamp from a different Timezone.
+     * @param value the timestamp value.
+     * @param target the Calendar containing the TimeZone.
+     * @return The new timestamp value as a <code>long</code>.
+     */
+    public static long timeFromZone(java.util.Date value , Calendar target) {
+        synchronized (cal) {
+            java.util.Date tmp = target.getTime();
+            try {
+                target.setTime(value);
+                if (!Driver.JDBC3 && value instanceof Timestamp) {
+                    // Not Running under 1.4 so need to add milliseconds
+                    target.set(Calendar.MILLISECOND,
+                            ((Timestamp)value).getNanos() / 1000000);
+                }
+                cal.set(Calendar.HOUR_OF_DAY, target.get(Calendar.HOUR_OF_DAY));
+                cal.set(Calendar.MINUTE, target.get(Calendar.MINUTE));
+                cal.set(Calendar.SECOND, target.get(Calendar.SECOND));
+                cal.set(Calendar.MILLISECOND, target.get(Calendar.MILLISECOND));
+                cal.set(Calendar.YEAR, target.get(Calendar.YEAR));
+                cal.set(Calendar.MONTH, target.get(Calendar.MONTH));
+                cal.set(Calendar.DAY_OF_MONTH, target.get(Calendar.DAY_OF_MONTH));
+                return cal.getTime().getTime();
+            }
+            finally {
+                target.setTime(tmp);
+            }
+        }
     }
 
     /**

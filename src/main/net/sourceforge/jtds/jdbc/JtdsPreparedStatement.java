@@ -36,7 +36,6 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.TimeZone;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -58,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.40 2005-04-04 20:55:30 ddkilzer Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.41 2005-04-07 20:46:00 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -734,7 +733,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
 
         if (x != null && cal != null) {
-            x = new java.sql.Date(adjustTimeByCalendar(x.getTime(), cal));
+            x = new java.sql.Date(Support.timeFromZone(x, cal));
         }
 
         setDate(parameterIndex, x);
@@ -744,7 +743,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
 
         if (x != null && cal != null) {
-            x = new java.sql.Time(adjustTimeByCalendar(x.getTime(), cal));
+            x = new Time(Support.timeFromZone(x, cal));
         }
 
         setTime(parameterIndex, x);
@@ -754,17 +753,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
 
         if (x != null && cal != null) {
-            x = new java.sql.Timestamp(adjustTimeByCalendar(x.getTime(), cal));
+            x = new java.sql.Timestamp(Support.timeFromZone(x, cal));
         }
 
         setTimestamp(parameterIndex, x);
-    }
-
-    private long adjustTimeByCalendar(long newTime, Calendar cal) {
-        TimeZone timeZone = TimeZone.getDefault();
-        newTime -= timeZone.getRawOffset();
-        newTime += cal.getTimeZone().getRawOffset();
-        return newTime;
     }
 
     public int executeUpdate(String sql) throws SQLException {

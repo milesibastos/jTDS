@@ -33,7 +33,6 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Map;
-import java.util.TimeZone;
 
 /**
  * jTDS implementation of the java.sql.CallableStatement interface.
@@ -47,7 +46,7 @@ import java.util.TimeZone;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.12 2005-01-10 11:18:02 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.13 2005-04-07 20:46:00 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -462,12 +461,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         java.sql.Date date = getDate(parameterIndex);
 
         if (date != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = date.getTime();
-
-            newTime -= cal.getTimeZone().getRawOffset();
-            newTime += timeZone.getRawOffset();
-            date = new java.sql.Date(newTime);
+            date = new java.sql.Date(Support.timeToZone(date, cal));
         }
 
         return date;
@@ -489,12 +483,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         java.sql.Time time = getTime(parameterIndex);
 
         if (time != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = time.getTime();
-
-            newTime -= cal.getTimeZone().getRawOffset();
-            newTime += timeZone.getRawOffset();
-            time = new java.sql.Time(newTime);
+            time = new java.sql.Time(Support.timeToZone(time, cal));
         }
 
         return time;
@@ -513,12 +502,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         Timestamp timestamp = getTimestamp(parameterIndex);
 
         if (timestamp != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = timestamp.getTime();
-
-            newTime -= cal.getTimeZone().getRawOffset();
-            newTime += timeZone.getRawOffset();
-            timestamp = new Timestamp(newTime);
+            timestamp = new Timestamp(Support.timeToZone(timestamp, cal));
         }
 
         return timestamp;

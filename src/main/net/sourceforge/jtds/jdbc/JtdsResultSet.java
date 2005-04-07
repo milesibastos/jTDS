@@ -38,7 +38,6 @@ import java.sql.Types;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.ArrayList;
 import java.text.NumberFormat;
 import java.io.UnsupportedEncodingException;
@@ -58,7 +57,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.33 2005-03-26 22:10:58 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.34 2005-04-07 20:46:00 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -1232,12 +1231,7 @@ public class JtdsResultSet implements ResultSet {
         java.sql.Date date = getDate(columnIndex);
 
         if (date != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = date.getTime();
-
-            newTime -= cal.getTimeZone().getRawOffset();
-            newTime += timeZone.getRawOffset();
-            date = new java.sql.Date(newTime);
+            date = new java.sql.Date(Support.timeToZone(date, cal));
         }
 
         return date;
@@ -1264,12 +1258,7 @@ public class JtdsResultSet implements ResultSet {
         java.sql.Time time = getTime(columnIndex);
 
         if (time != null && cal != null) {
-            TimeZone timeZone = TimeZone.getDefault();
-            long newTime = time.getTime();
-
-            newTime -= cal.getTimeZone().getRawOffset();
-            newTime += timeZone.getRawOffset();
-            time = new java.sql.Time(newTime);
+            return new Time(Support.timeToZone(time, cal));
         }
 
         return time;
@@ -1290,12 +1279,7 @@ public class JtdsResultSet implements ResultSet {
             Timestamp timestamp = getTimestamp(columnIndex);
 
             if (timestamp != null && cal != null) {
-                TimeZone timeZone = TimeZone.getDefault();
-                long newTime = timestamp.getTime();
-
-                newTime -= cal.getTimeZone().getRawOffset();
-                newTime += timeZone.getRawOffset();
-                timestamp = new Timestamp(newTime);
+                timestamp = new Timestamp(Support.timeToZone(timestamp, cal));
             }
 
             return timestamp;

@@ -9,6 +9,7 @@ Changes from jTDS 1.0.2
    addBatch.
  o Updated FAQ listing an additional reason why a ResultSet may be downgraded
    to update only read only: not a single SELECT statement.
+ o Added DBSolo to the links page per Marko Hantula's request.
 
 04/07/2005 - Alin Sinpalean
  o Applied Mike and Dave's combined fix for bug [1176221] JtdsPreparedStatement

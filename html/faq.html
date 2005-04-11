@@ -463,6 +463,11 @@
       <p>Connection timeouts occur when there is no server listening on the port
         (BTW, are you sure your SQL Server is configured to use TCP/IP and that
         you actually use named instances?).</p>
+      <p>On SQL Server 2005 the SQL Browser service must be running on the
+        server host as the instance name lookup port UDP 1434 is hosted by this
+        service on SQL Server 2005 rather than the SQL Server itself. The
+        default install does not configure the SQL Browser service to start
+        automatically so you must do it manually.</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="windowsAuth"></a>I was hoping that appending
         <code>";domain=X"</code> to the URL would be enough on a workstation that
@@ -525,7 +530,7 @@
         the <code>ResultSet</code> with the appropriate type and concurrency in
         the first place):</p>
       <ol>
-        <li>The executed query must be a single SELECT statement or a call to a 
+        <li>The executed query must be a single SELECT statement or a call to a
           procedure that consists of a single SELECT statement (even a SET or
           PRINT will cause the resulting ResultSet to be forward only read
           only). This is a SQL Server limitation and there's not much jTDS can

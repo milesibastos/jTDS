@@ -10,6 +10,8 @@ Changes from jTDS 1.0.2
  o Updated FAQ listing an additional reason why a ResultSet may be downgraded
    to update only read only: not a single SELECT statement.
  o Added DBSolo to the links page per Marko Hantula's request.
+ o Closed bug [991089] INSTANCE parameter does not work with SQL Server 2005
+   after adding an explanation to the FAQ on how to make it work.
 
 04/07/2005 - Alin Sinpalean
  o Applied Mike and Dave's combined fix for bug [1176221] JtdsPreparedStatement

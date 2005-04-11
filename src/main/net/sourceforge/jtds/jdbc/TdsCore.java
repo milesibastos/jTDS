@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.87 2005-04-04 20:36:58 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.88 2005-04-11 13:09:06 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -905,6 +905,18 @@ public class TdsCore {
 
         try {
             //
+            // If the current thread has been interrupted but the thread
+            // has caught the InterruptedException and continued to execute,
+            // we need to clear the Interrupted status now to ensure that
+            // we don't fail trying to obtain the connection mutex.
+            // The c3p0 connection pool software seems to start threads
+            // in an interrupted state under some circumstances.
+            //
+            if (Thread.interrupted()) {
+                // Thread.interrupted() will clear the interrupt status
+                Logger.println("Thread status of Interrupted found and cleared");
+            }
+            //
             // Obtain a lock on the connection giving exclusive access
             // to the network connection for this thread
             //
@@ -914,7 +926,7 @@ public class TdsCore {
                     connectionLock.acquire();
                 } catch (InterruptedException e) {
                     connectionLock = null;
-                    throw new IllegalStateException("Connection synchronization failed");
+                    throw new IllegalStateException("Thread execution interrupted");
                 }
             }
             checkOpen();
@@ -1337,12 +1349,24 @@ public class TdsCore {
     synchronized byte[] enlistConnection(int type, byte[] oleTranID) throws SQLException {
         Semaphore mutex = null;
         try {
+            //
+            // If the current thread has been interrupted but the thread
+            // has caught the InterruptedException and continued to execute,
+            // we need to clear the Interrupted status now to ensure that
+            // we don't fail trying to obtain the connection mutex.
+            // The c3p0 connection pool software seems to start threads
+            // in an interrupted state under some circumstances.
+            //
+            if (Thread.interrupted()) {
+                // Thread.interrupted() will clear the interrupt status
+                Logger.println("Thread status of Interrupted found and cleared");
+            }
             try {
                 mutex = connection.getMutex();
                 mutex.acquire();
             } catch (InterruptedException e) {
                 mutex = null;
-                throw new IllegalStateException("Connection synchronization failed");
+                throw new IllegalStateException("Thread execution interrupted");
             }
             out.setPacketType(MSDTC_PKT);
             out.write((short)type);

@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.35 2005-03-26 22:10:58 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.36 2005-04-11 13:23:48 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -865,7 +865,7 @@ public class JtdsStatement implements java.sql.Statement {
                     // created, MSCursorResultSet can never be followed by
                     // any other result sets, update counts or return variables.
                     openResultSets.add(currentResult);
-                } else if (currentResult instanceof JtdsResultSet) {
+                } else if (currentResult != null) {
                     currentResult.cacheResultSetRows();
                     openResultSets.add(currentResult);
                 }
@@ -915,6 +915,18 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (batchValues == null) {
             batchValues = new ArrayList();
+        }
+
+        if (escapeProcessing) {
+            ArrayList params = new ArrayList();
+            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+
+            if (tmp[1].length() != 0 || params.size() > 0) {
+                throw new SQLException(
+                        Messages.get("error.statement.badsql"), "07000");
+            }
+
+            sql = tmp[0];
         }
 
         batchValues.add(sql);

@@ -26,7 +26,7 @@ import java.sql.ResultSet;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.5 2005-03-06 09:42:06 alin_sinpalean Exp $
+ * @version $Id: BatchTest.java,v 1.6 2005-04-11 13:23:55 alin_sinpalean Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -319,6 +319,18 @@ public class BatchTest extends DatabaseTestCase {
         assertEquals(1, rs.getInt(1));
         assertFalse(rs.next());
         rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test for bug [1180169] JDBC escapes not allowed with Sybase addBatch.
+     */
+    public void testBatchEsc() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TESTBATCH (ts datetime)");
+        stmt.addBatch("INSERT INTO #TESTBATCH VALUES ({ts '1999-01-01 23:50:00'})");
+        int counts[] = stmt.executeBatch();
+        assertEquals(1, counts[0]);
         stmt.close();
     }
 

@@ -4,6 +4,7 @@ Changes from jTDS 1.0.2
 04/11/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1179773] jTDS fails when used with c3p0
    connection pool.
+ o Applied Mike's fix for bug [1180164] NPE in TdsData with mulit-byte charset.
 
 04/07/2005 - Alin Sinpalean
  o Applied Mike and Dave's combined fix for bug [1176221] JtdsPreparedStatement

@@ -44,7 +44,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.44 2005-03-12 22:39:29 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.45 2005-04-11 13:12:15 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1106,7 +1106,8 @@ public class TdsData {
                     //
                     if (connection.isWideChar() && len <= SYB_LONGVAR_MAX) {
                         try {
-                            len = pi.getString(connection.getCharset()).length();
+                            String tmp = pi.getString(connection.getCharset());
+                            len = (tmp == null) ? 0 : tmp.length();
                         } catch (IOException e) {
                             throw new SQLException(
                                     Messages.get("error.generic.ioerror", e.getMessage()), "HY000");

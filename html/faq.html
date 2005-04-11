@@ -521,10 +521,15 @@
         forward direction&quot;</code> or <code>&quot;ResultSet is read
         only&quot;</code> when using a scrollable/updateable
         <code>ResultSet</code>.</p>
-      <p>There are two possible causes to this (if we exclude not creating the
-        <code>ResultSet</code> with the appropriate type and concurrency in the
-        first place):</p>
+      <p>There are three possible causes to this (if we exclude not creating
+        the <code>ResultSet</code> with the appropriate type and concurrency in
+        the first place):</p>
       <ol>
+        <li>The executed query must be a single SELECT statement or a call to a 
+          procedure that consists of a single SELECT statement (even a SET or
+          PRINT will cause the resulting ResultSet to be forward only read
+          only). This is a SQL Server limitation and there's not much jTDS can
+          do about it.</li>
         <li>The scroll insensitive/updateable combination is not supported by
           SQL Server, so such a <code>ResultSet</code> is automatically
           downgraded to scroll insensitive/read-only by the server. Use the

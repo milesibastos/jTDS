@@ -2888,7 +2888,9 @@ public class LOBTest extends TestBase {
         String out = rs.getString(1);
         assertEquals(in.length, out.length());
         for (int i = 0; i < in.length; i++) {
-            assertEquals((int) in[i], (int) out.charAt(i));
+            if (in[i] != out.charAt(i)) {
+                fail("Result differs at position " + i);
+            }
         }
         assertFalse(rs.next());
         rs.close();

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.WriterOutputStream;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.33 2005-03-29 15:48:43 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.34 2005-04-13 15:56:21 alin_sinpalean Exp $
  */
 public class ClobImpl implements Clob {
 	private static final String EMPTY_CLOB = "";
@@ -235,6 +235,12 @@ public class ClobImpl implements Clob {
 
         if (length == 0) {
             return EMPTY_CLOB;
+        }
+
+        // Minor optimization: if the whole content is requested and it's in
+        // memory, return it
+        if (pos == 1 && _clob != null && length == this.length()) {
+            return _clob;
         }
 
         Reader reader = getCharacterStream();

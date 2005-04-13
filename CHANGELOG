@@ -4,6 +4,7 @@ Changes from jTDS 1.0.2
 04/13/2005 - Alin Sinpalean
  o Corrected bug [1182066] regression bug resultset: ResultSet.relative() was
    not working as expected.
+ o Minor performance optimizations in ClobImpl and LOBTest.
 
 04/11/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1179773] jTDS fails when used with c3p0

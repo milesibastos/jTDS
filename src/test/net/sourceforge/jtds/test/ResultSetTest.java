@@ -1256,6 +1256,48 @@ public class ResultSetTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test for bug [1182066] regression bug resultset: relative() not working
+     * as expected.
+     */
+    public void testRelative() throws Exception {
+        final int ROW_COUNT = 99;
+
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #test2 (i int primary key, v varchar(100))");
+        for (int i = 1; i <= ROW_COUNT; i++) {
+            stmt.executeUpdate("insert into #test2 (i, v) values (" + i + ", 'This is a test')");
+        }
+        stmt.close();
+
+        String sql = "select * from #test2";
+
+        PreparedStatement pstmt = con.prepareStatement(sql,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+        pstmt.setFetchSize(10);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        int resCnt = 0;
+
+        if (rs.next()) {
+            do {
+                assertEquals(++resCnt, rs.getInt(1));
+            } while (rs.relative(1));
+        }
+        assertEquals(ROW_COUNT, resCnt);
+
+        if (rs.previous()) {
+            do {
+                assertEquals(resCnt--, rs.getInt(1));
+            } while (rs.relative(-1));
+        }
+
+        pstmt.close();
+        assertEquals(0, resCnt);
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.45 2005-03-26 21:07:58 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.46 2005-04-13 14:19:51 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -1213,7 +1213,17 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         pos += row;
         if (getCurrentRow() == null) {
-            return cursorFetch(FETCH_RELATIVE, row);
+            if (pos < cursorPos) {
+                // If fetching backwards fetch the row and the rows before it,
+                // then restore pos
+                int savePos = pos;
+                boolean result = cursorFetch(FETCH_RELATIVE,
+                        pos - cursorPos - fetchSize + 1);
+                pos = savePos;
+                return result;
+            } else {
+                return cursorFetch(FETCH_RELATIVE, pos - cursorPos);
+            }
         } else {
             return true;
         }

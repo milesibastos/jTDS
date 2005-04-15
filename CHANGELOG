@@ -1,5 +1,12 @@
+===============================================================================
+04/15/2005 - jTDS 1.0.3 released
+===============================================================================
+
 Changes from jTDS 1.0.2
 =======================
+
+04/15/2005 - Alin Sinpalean
+ o Updated version number to 1.0.3.
 
 04/13/2005 - Alin Sinpalean
  o Corrected bug [1182066] regression bug resultset: ResultSet.relative() was

@@ -43,8 +43,6 @@ import java.text.NumberFormat;
 import java.io.UnsupportedEncodingException;
 import java.io.InputStreamReader;
 
-import net.sourceforge.jtds.util.ReaderInputStream;
-
 /**
  * jTDS Implementation of the java.sql.ResultSet interface supporting forward read
  * only result sets.
@@ -57,7 +55,7 @@ import net.sourceforge.jtds.util.ReaderInputStream;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.34 2005-04-07 20:46:00 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.35 2005-04-17 18:41:24 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -750,13 +748,13 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public InputStream getUnicodeStream(int columnIndex) throws SQLException {
-        Reader reader = getCharacterStream(columnIndex);
+        ClobImpl clob = (ClobImpl) getClob(columnIndex);
 
-        if (reader == null) {
+        if (clob == null) {
             return null;
         }
 
-        return new ReaderInputStream(reader, "UTF-16BE");
+        return clob.getBlobBuffer().getUnicodeStream();
     }
 
     public void updateAsciiStream(int columnIndex, InputStream inputStream, int length)

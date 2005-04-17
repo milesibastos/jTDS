@@ -25,6 +25,8 @@ import java.sql.Timestamp;
 import java.sql.SQLException;
 import java.util.GregorianCalendar;
 
+import net.sourceforge.jtds.util.BlobBuffer;
+
 /**
  * Implement TDS data types and related I/O logic.
  * <p>
@@ -44,7 +46,7 @@ import java.util.GregorianCalendar;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.45 2005-04-11 13:12:15 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.46 2005-04-17 18:41:24 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -638,7 +640,36 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new BlobImpl(connection, in);
+                    BlobImpl blob;
+                    in.skip(24); // Skip textptr and timestamp
+                    int dataLen = in.readInt();
+                    if (dataLen <= connection.getLobBuffer()) {
+                        //
+                        // OK Small enough to load into memory
+                        //
+                        byte[] data = new byte[dataLen];
+                        in.read(data);
+                        blob = new BlobImpl(connection, data);
+                    } else {
+                        // Too big, need to write straight to disk
+                        try {
+                            blob = new BlobImpl(connection);
+                            OutputStream out = blob.setBinaryStream(1);
+                            byte[] buffer = new byte[1024];
+                            int result;
+                            while ((result = in.read(buffer, 0,
+                                             Math.min(dataLen, buffer.length)))
+                                             != -1 && dataLen != 0) {
+                                out.write(buffer, 0, result);
+                                dataLen -= result;
+                            }
+                            out.close();
+                        } catch (SQLException e) {
+                            // Transform setBinaryStream SQLException
+                            throw new IOException(e.getMessage());
+                        }
+                    }
+                    return blob;
                 }
 
                 break;
@@ -647,7 +678,64 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    return new ClobImpl(connection, in, false, readTextMode, ci.charsetInfo);
+                    ClobImpl clob = new ClobImpl(connection);
+                    BlobBuffer blobBuffer = clob.getBlobBuffer();
+                    String charset;
+                    if (ci.charsetInfo != null) {
+                        charset = ci.charsetInfo.getCharset();
+                    } else {
+                        charset = connection.getCharset();
+                    }
+                    in.skip(24); // Skip textptr and timestamp
+                    int dataLen = in.readInt();
+                    if (dataLen <= connection.getLobBuffer()) {
+                        //
+                        // OK Small enough to load into memory
+                        //
+                        BufferedReader rdr =
+                            new BufferedReader(
+                                 new InputStreamReader(in.getInputStream(dataLen),
+                                                                         charset),
+                                                                         1024);
+                        byte[] data = new byte[dataLen * 2];
+                        int p = 0;
+                        int c;
+                        while ((c = rdr.read()) >= 0) {
+                            data[p++] = (byte)c;
+                            data[p++] = (byte)(c >> 8);
+                        }
+                        rdr.close();
+                        blobBuffer.setBuffer(data, false);
+                        if (p == 2 && data[0] == 0x20 && data[1] == 0
+                            && in.getTdsVersion() < Driver.TDS70) {
+                            // Single space with Sybase equates to empty string
+                            p = 0;
+                        }
+                        // Explicitly set length as multi byte character sets
+                        // may not fill array completely.
+                        blobBuffer.setLength(p);
+                    } else {
+                        // Too big, need to write straight to disk
+                        BufferedReader rdr =
+                            new BufferedReader(
+                                 new InputStreamReader(in.getInputStream(dataLen),
+                                                                         charset),
+                                                                         1024);
+                        try {
+                            OutputStream out = blobBuffer.setBinaryStream(1, false);
+                            int c;
+                            while ((c = rdr.read()) >= 0) {
+                                out.write(c);
+                                out.write(c >> 8);
+                            }
+                            out.close();
+                            rdr.close();
+                        } catch (SQLException e) {
+                            // Turn back into an IOException
+                            throw new IOException(e.getMessage());
+                        }
+                    }
+                    return clob;
                 }
 
                 break;
@@ -656,7 +744,36 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                	return new ClobImpl(connection, in, true, readTextMode, null);
+                    ClobImpl clob = new ClobImpl(connection);
+                    BlobBuffer blobBuffer = clob.getBlobBuffer();
+                    in.skip(24); // Skip textptr and timestamp
+                    int dataLen = in.readInt();
+                    if (dataLen <= connection.getLobBuffer()) {
+                        //
+                        // OK Small enough to load into memory
+                        //
+                        byte[] data = new byte[dataLen];
+                        in.read(data);
+                        blobBuffer.setBuffer(data, false);
+                    } else {
+                        // Too big, need to write straight to disk
+                        try {
+                            OutputStream out = blobBuffer.setBinaryStream(1, false);
+                            byte[] buffer = new byte[1024];
+                            int result;
+                            while ((result = in.read(buffer, 0,
+                                             Math.min(dataLen, buffer.length)))
+                                             != -1 && dataLen != 0) {
+                                out.write(buffer, 0, result);
+                                dataLen -= result;
+                            }
+                            out.close();
+                        } catch (SQLException e) {
+                            // Transform setBinaryStream SQLException
+                            throw new IOException(e.getMessage());
+                        }
+                    }
+                    return clob;
                 }
 
                 break;

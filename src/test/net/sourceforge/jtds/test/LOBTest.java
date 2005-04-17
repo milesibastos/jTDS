@@ -29,7 +29,7 @@ import java.util.*;
 // Changed get / set UnicodeStream tests to align with standard.
 //
 /**
- * @version 1.0
+ * @version $Id: LOBTest.java,v 1.27 2005-04-17 18:41:29 alin_sinpalean Exp $
  */
 public class LOBTest extends TestBase {
     private static final int LOB_LENGTH = 8000;
@@ -668,6 +668,76 @@ public class LOBTest extends TestBase {
         assertFalse(rs3.next());
         stmt4.close();
         rs3.close();
+    }
+
+    /**
+     * Test Long blob manipulation including updates to the middle of the
+     * <code>Blob</code>.
+     */
+    public void testBlobUpdate5() throws Exception {
+        byte[] data = new byte[100000];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte)('A'+i%10);
+        }
+        //
+        // Construct a blob
+        //
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT 0x00");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        Blob blob = rs.getBlob(1);
+        blob.setBytes(1, data);
+        byte[] tmp = blob.getBytes(1, (int)blob.length());
+        assertTrue(compare(data, tmp));
+        blob.setBytes(1, data);
+        tmp = blob.getBytes(1, (int)blob.length());
+        assertTrue(compare(data, tmp));
+        data[100] = 'a';
+        data[101] = 'b';
+        blob.setBytes(101, data, 100, 2);
+        tmp = blob.getBytes(1, (int)blob.length());
+        assertTrue(compare(data, tmp));
+        InputStream is = blob.getBinaryStream();
+        tmp = new byte[data.length];
+        int b;
+        int p = 0;
+        while ((b = is.read()) >= 0) {
+            tmp[p++] = (byte)b;
+        }
+        is.close();
+        assertTrue(compare(data, tmp));
+        tmp = blob.getBytes(101, 2);
+        assertTrue(compare(new byte[]{'a','b'}, tmp));
+        blob = rs.getBlob(1);
+        OutputStream os = blob.setBinaryStream(1);
+        for (int i = 0; i < data.length; i++) {
+            os.write(('A'+i%10));
+        }
+        os.close();
+        os = blob.setBinaryStream(101);
+        os.write('a');
+        os.write('b');
+        os.close();
+        tmp = blob.getBytes(1, (int)blob.length());
+        assertTrue(compare(data, tmp));
+        tmp = new byte[5000];
+        for (int i = 0; i < 5000; i++) {
+            tmp[i] = (byte)(0x80 + (i % 10));
+        }
+        blob.setBytes(100000-5000, tmp);
+        assertTrue(compare(tmp, blob.getBytes(100000-5000, 5000)));
+        assertEquals(100000L, blob.length());
+        assertEquals(100000-5000, blob.position(tmp, 100000-5000));
+        Blob blob2 = rs.getBlob(1);
+        blob2.setBytes(1, tmp);
+        assertEquals(100000-5000, blob.position(blob2, 1));
+        assertEquals(101, blob.position(new byte[]{'a','b'}, 1));
+        blob.truncate(10);
+        assertEquals(10L, blob.length());
+        tmp = new byte[10];
+        System.arraycopy(data, 0, tmp, 0, 10);
+        assertTrue(compare(tmp, blob.getBytes(1, (int)blob.length())));
     }
 
     public void testBlobSetNull1() throws Exception {
@@ -1980,6 +2050,83 @@ public class LOBTest extends TestBase {
         rs3.close();
     }
 
+    /**
+     * Test long <code>Clob</code> manipulation including indexed writes.
+     */
+    public void testClobUpdate6() throws Exception {
+        int size = 100000;
+        StringBuffer data = new StringBuffer(size);
+        for (int i = 0; i < size; i++) {
+            data.append((char)('A'+i%10));
+        }
+        //
+        // Construct a clob
+        //
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT ''");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        Clob clob = rs.getClob(1);
+        clob.setString(1, data.toString());
+        assertEquals((long)size, clob.length());
+        assertTrue(data.toString().equals(clob.getSubString(1, (int)clob.length())));
+        clob.setString(10, "THIS IS A TEST");
+        data.replace(9, 23, "THIS IS A TEST");
+        assertEquals("THIS IS A TEST", clob.getSubString(10, 14));
+        assertTrue(compare(data.toString(), clob.getSubString(1, (int)clob.length())));
+        clob.truncate(23);
+        assertEquals("ABCDEFGHITHIS IS A TEST", clob.getSubString(1, 23));
+        OutputStream os = clob.setAsciiStream(1);
+        for (int i = 0; i < size; i++) {
+            os.write(data.charAt(i));
+        }
+        os.close();
+        assertEquals((long)size, clob.length());
+        assertTrue(data.toString().equals(clob.getSubString(1, (int)clob.length())));
+        InputStream is = clob.getAsciiStream();
+        int b;
+        int p = 0;
+        while ((b = is.read()) >= 0) {
+            if ((char)b != data.charAt(p++)) {
+                fail("Mismatch at " + p);
+            }
+        }
+        is.close();
+        assertTrue(p == size);
+        Reader rdr = clob.getCharacterStream();
+        p = 0;
+        while ((b = rdr.read()) >= 0) {
+            if ((char)b != data.charAt(p++)) {
+                fail("Mismatch at " + p);
+            }
+        }
+        rdr.close();
+        assertTrue(p == size);
+        clob.truncate(0);
+        Writer wtr = clob.setCharacterStream(1);
+        for (int i = 0; i < size; i++) {
+            wtr.write(data.charAt(i));
+        }
+        wtr.close();
+        assertTrue(p == size);
+        assertTrue(data.toString().equals(clob.getSubString(1, (int)clob.length())));
+        wtr = clob.setCharacterStream(10000);
+        for (int i = 0; i < 8; i++) {
+            wtr.write('X');
+        }
+        wtr.close();
+        data.replace(10000-1, 10000-1+8, "XXXXXXXX");
+        assertTrue(data.toString().equals(clob.getSubString(1, (int)clob.length())));
+        clob.setString(100001, "XTESTX", 1, 4);
+        assertEquals((long)100000+4, clob.length());
+        assertEquals("JTEST", clob.getSubString(100000, 8));
+        assertEquals(100000, clob.position("JTEST", 100000));
+        Clob clob2 = rs.getClob(1);
+        clob.setString(1, "XXXXXXXX");
+        assertEquals(10000, clob.position("XXXXXXXX", 10000));
+        assertFalse(10000 == clob.position("XXXXXXXX", 10001));
+    }
+
     public void testClobSetNull1() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #clobsetnull1 (data TEXT NULL)");
@@ -3087,6 +3234,42 @@ public class LOBTest extends TestBase {
                 return 1;
             }
         }
+    }
+
+    /**
+     * Compares long byte arrays.
+     */
+    private boolean compare(byte []b1, byte[] b2) {
+        if (b1.length != b2.length) {
+            System.out.println("Compare failed: lengths differ");
+            return false;
+        }
+        for (int i = 0; i < b1.length; i++) {
+            if (b1[i] != b2[i]) {
+                System.out.println("Compare failed: bytes at " + i + " differ ["
+                        + b1[i] + "] [" + b2[i] + "]");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Compare long <code>String</code>s.
+     */
+    public boolean compare(String s1, String s2) {
+        if (s1.length() != s2.length()) {
+            System.out.println("Compare failed: lengths differ");
+            return false;
+        }
+        for (int i = 0; i < s1.length(); i++) {
+            if (s1.charAt(i) != s2.charAt(i)) {
+                System.out.println("Compare failed: bytes at " + i + " differ ["
+                        + s1.charAt(i) + "] [" + s2.charAt(i) + "]");
+                return false;
+            }
+        }
+        return true;
     }
 
     public static void main(String[] args) {

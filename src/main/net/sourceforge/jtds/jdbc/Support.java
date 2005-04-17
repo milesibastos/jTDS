@@ -17,7 +17,7 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.39 2005-04-07 20:46:00 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.40 2005-04-17 18:41:24 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -332,6 +332,14 @@ public class Support {
                     }
 
                     if (x instanceof byte[]) {
+                        //
+                        // Other drivers return a hex string eg 41424344 for "ABCD".
+                        // jTDS has always returned the bytes converted to a string.
+                        // Is it possible that the other drivers are more correct?
+                        //
+                        if (charSet == null) {
+                            charSet = "ISO-8859-1";
+                        }
                         try {
                             return new String((byte[]) x, charSet);
                         } catch (UnsupportedEncodingException e) {
@@ -340,6 +348,7 @@ public class Support {
                     }
 
                     return x.toString(); // Last hope!
+
                 case java.sql.Types.BIT:
                 case JtdsStatement.BOOLEAN:
                     if (x == null) {
@@ -379,6 +388,10 @@ public class Support {
                     }
 
                     if (x instanceof String) {
+                        //
+                        // Strictly speaking this conversion is not required by
+                        // the JDBC standard but jTDS has always supported it.
+                        //
                         if (charSet == null) {
                             charSet = "ISO-8859-1";
                         }
@@ -471,16 +484,44 @@ public class Support {
                     } else if (x instanceof Blob) {
                         return x;
                     } else if (x instanceof byte[]) {
-                        return new BlobImpl(callerReference, (byte[]) x);
+                        return new BlobImpl(getConnection(callerReference), (byte[]) x);
                     } else if (x instanceof Clob) {
+                        //
+                        // Convert CLOB to BLOB. Not required by the standard but we will
+                        // do it anyway.
+                        //
                         Clob clob = (Clob) x;
-
-                        x = clob.getSubString(1, (int) clob.length());
-                        // FIXME - Use reader to populate Blob
+                        try {
+                            if (charSet == null) {
+                                charSet = "ISO-8859-1";
+                            }
+                            Reader rdr = clob.getCharacterStream();
+                            BlobImpl blob = new BlobImpl(getConnection(callerReference));
+                            BufferedWriter out =
+                                new BufferedWriter(new OutputStreamWriter(blob.setBinaryStream(1), charSet));
+                            // TODO Use a buffer to improve performance
+                            int c;
+                            while ((c = rdr.read()) >= 0) {
+                                out.write(c);
+                            }
+                            out.close();
+                            rdr.close();
+                            return blob;
+                        } catch (UnsupportedEncodingException e) {
+                            // Unlikely to happen but fall back on in memory copy
+                            x = clob.getSubString(1, (int) clob.length());
+                        } catch (IOException e) {
+                            throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
+                            "HY000");
+                        }
                     }
 
                     if (x instanceof String) {
-                        BlobImpl blob = new BlobImpl(callerReference);
+                        //
+                        // Strictly speaking this conversion is also not required by
+                        // the JDBC standard but jTDS has always supported it.
+                        //
+                        BlobImpl blob = new BlobImpl(getConnection(callerReference));
                         String data = (String) x;
 
                         if (charSet == null) {
@@ -505,10 +546,35 @@ public class Support {
                     } else if (x instanceof Clob) {
                         return x;
                     } else if (x instanceof Blob) {
+                        //
+                        // Convert BLOB to CLOB
+                        //
                         Blob blob = (Blob) x;
-
-                        x = blob.getBytes(1, (int) blob.length());
-                        // FIXME - Use input stream to populate Clob
+                        if (charSet == null) {
+                            charSet = "ISO-8859-1";
+                        }
+                        try {
+                            BufferedReader rdr =
+                                new BufferedReader(
+                                        new InputStreamReader(blob.getBinaryStream(),
+                                                                            charSet));
+                            ClobImpl clob = new ClobImpl(getConnection(callerReference));
+                            Writer out = clob.setCharacterStream(1);
+                            // TODO Use a buffer to improve performance
+                            int c;
+                            while ((c = rdr.read()) >= 0) {
+                                out.write(c);
+                            }
+                            out.close();
+                            rdr.close();
+                            return clob;
+                        } catch (UnsupportedEncodingException e) {
+                            // Unlikely to happen but fall back on in memory copy
+                            x = blob.getBytes(1, (int) blob.length());
+                        } catch (IOException e) {
+                            throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
+                            "HY000");
+                        }
                     } else if (x instanceof BigDecimal) {
                         x = bigDecimalToString((BigDecimal) x);
                     } else if (x instanceof Boolean) {
@@ -518,7 +584,7 @@ public class Support {
                     }
 
                     if (x instanceof byte[]) {
-                        ClobImpl clob = new ClobImpl(callerReference);
+                        ClobImpl clob = new ClobImpl(getConnection(callerReference));
                         byte[] data = (byte[]) x;
 
                         if (charSet == null) {
@@ -533,7 +599,7 @@ public class Support {
 
                         return clob;
                     } else if (x instanceof String) {
-                        return new ClobImpl(callerReference, (String) x);
+                        return new ClobImpl(getConnection(callerReference), (String) x);
                     }
 
                     break;
@@ -1122,6 +1188,8 @@ public class Support {
         }
     }
 
+    // ------------- Private methods  ---------
+
     /**
      * Returns the connection for a given <code>ResultSet</code>,
      * <code>Statement</code> or <code>Connection</code> object.
@@ -1131,7 +1199,7 @@ public class Support {
      *        <code>ResultSet</code>
      * @return a connection
      */
-    public static ConnectionJDBC2 getConnection(Object callerReference) {
+    private static ConnectionJDBC2 getConnection(Object callerReference) {
         if (callerReference == null) {
             throw new IllegalArgumentException("callerReference cannot be null.");
         }
@@ -1154,8 +1222,6 @@ public class Support {
 
         return (ConnectionJDBC2) connection;
     }
-
-    // ------------- Private methods  ---------
 
     private Support() {
         // Prevent an instance of this class being created.

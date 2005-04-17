@@ -18,21 +18,22 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import net.sourceforge.jtds.util.*;
 
 /**
- * Class to implement an input stream for the server response.
- * <p>
+ * Implements an input stream for the server response.
+ * <p/>
  * Implementation note:
  * <ol>
- * <li>This class contains methods to read different types of data from the
+ *   <li>This class contains methods to read different types of data from the
  *     server response stream in TDS format.
- * <li>Character translation of String items is carried out.
+ *   <li>Character translation of String items is carried out.
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.16 2005-04-04 20:36:56 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.17 2005-04-17 18:41:24 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -53,10 +54,11 @@ public class ResponseStream {
     private char[] charBuffer = new char[255];
 
     /**
-     * Construct a RequestStream object.
+     * Constructs a <code>RequestStream</code> object.
      *
-     * @param socket The shared socket object to write to.
-     * @param streamId The unique id for this stream (from ResponseStream).
+     * @param socket     the shared socket object to write to
+     * @param streamId   the unique id for this stream (from ResponseStream)
+     * @param bufferSize the initial buffer size
      */
     ResponseStream(SharedSocket socket, int streamId, int bufferSize){
         this.streamId = streamId;
@@ -67,19 +69,19 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve the unique stream id.
+     * Retrieves the unique stream id.
      *
-     * @return the unique stream id as an <code>int</code>.
+     * @return the unique stream id as an <code>int</code>
      */
     int getStreamId() {
         return this.streamId;
     }
 
     /**
-     * Retrieve the next input byte without reading forward.
+     * Retrieves the next input byte without reading forward.
      *
-     * @return The next byte in the input stream as an <code>int</code>.
-     * @throws IOException
+     * @return the next byte in the input stream as an <code>int</code>
+     * @throws IOException if an I/O error occurs
      */
     int peek() throws IOException {
         int b = read();
@@ -90,10 +92,10 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve the next input byte from the server response stream.
+     * Reads the next input byte from the server response stream.
      *
-     * @return The next byte in the input stream as an <code>int</code>.
-     * @throws IOException
+     * @return the next byte in the input stream as an <code>int</code>
+     * @throws IOException if an I/O error occurs
      */
     int read() throws IOException {
         if (bufferPtr >= bufferLen) {
@@ -104,25 +106,25 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a byte array from the server response stream.
+     * Reads a byte array from the server response stream.
      *
-     * @param b The byte array.
-     * @return The number of bytes read as an <code>int</code>.
-     * @throws IOException
+     * @param b the byte array to read into
+     * @return the number of bytes read as an <code>int</code>
+     * @throws IOException if an I/O error occurs
      */
     int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
     /**
-     * Retrieve a byte array from the server response stream, specifying
-     * a start offset and length.
+     * Reads a byte array from the server response stream, specifying a start
+     * offset and length.
      *
-     * @param b The byte array.
-     * @param off The starting offset in the array.
-     * @param len The number of bytes to read.
-     * @return The number of bytes read as an <code>int</code>.
-     * @throws IOException
+     * @param b   the byte array
+     * @param off the starting offset in the array
+     * @param len the number of bytes to read
+     * @return the number of bytes read as an <code>int</code>
+     * @throws IOException if an I/O error occurs
      */
     int read(byte[] b, int off, int len) throws IOException {
         int bytesToRead = len;
@@ -145,11 +147,11 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a char array from the server response stream.
+     * Reads a char array from the server response stream.
      *
-     * @param c The char array.
-     * @return The byte array as a <code>byte[]</code>.
-     * @throws IOException
+     * @param c the char array
+     * @return the byte array as a <code>byte[]</code>
+     * @throws IOException if an I/O error occurs
      */
     int read(char[] c) throws IOException {
         for (int i = 0; i < c.length; i++) {
@@ -172,8 +174,8 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a String object from the server response stream.
-     * If the TDS protocol is 4.2 or 5.0 decode the string using the default
+     * Reads a <code>String</code> object from the server response stream. If
+     * the TDS protocol version is 4.2 or 5.0 decode the string use the default
      * server charset, otherwise use UCS2-LE (Unicode).
      *
      * @param len the length of the string to read <b>in bytes</b> in the case
@@ -191,9 +193,10 @@ public class ResponseStream {
     }
 
     /**
-     * Skip a string from the server response stream. If the TDS protocol is
-     * 4.2 or 5.0 <code>len</code> is the length in bytes, otherwise it's the
-     * length in UCS2-LE characters (length in bytes == 2 * <code>len</code>).
+     * Skips a <code>String</code> from the server response stream. If the TDS
+     * protocol version is 4.2 or 5.0 <code>len</code> is the length in bytes,
+     * otherwise it's the length in UCS2-LE characters (length in bytes == 2 *
+     * <code>len</code>).
      *
      * @param len the length of the string to skip <b>in bytes</b> in the case
      *            of TDS 4.2/5.0 and <b>in characters</b> for TDS 7.0+
@@ -213,8 +216,8 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a UCS2-LE (Unicode) encoded String object from the server
-     * response stream.
+     * Reads a UCS2-LE (Unicode) encoded String object from the server response
+     * stream.
      *
      * @param len the length of the string to read <b>in characters</b>
      * @return the result as a <code>String</code>
@@ -243,8 +246,9 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a String object from the server response stream,
-     * creating the string from a translated byte array.
+     * Reads a non Unicode <code>String</code> from the server response stream,
+     * creating the <code>String</code> from a translated <code>byte</code>
+     * array.
      *
      * @param len the length of the string to read <b>in bytes</b>
      * @return the result as a <code>String</code>
@@ -257,8 +261,8 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a String object from the server response stream, translating it
-     * from a byte array using the specified character set.
+     * Reads a <code>String</code> from the server response stream, translating
+     * it from a <code>byte</code> array using the specified character set.
      *
      * @param len the length of the string to read <b>in bytes</b>
      * @return the result as a <code>String</code>
@@ -270,8 +274,8 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a String object from the server response stream,
-     * creating the string from a translated byte array.
+     * Reads a <code>String</code> from the server response stream, creating
+     * it from a translated <code>byte</code> array.
      *
      * @param len  the length of the string to read <b>in bytes</b>
      * @param info descriptor of the charset to use
@@ -292,10 +296,10 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a short value from the server response stream.
+     * Reads a <code>short</code> value from the server response stream.
      *
-     * @return The result as a <code>short</code>.
-     * @throws IOException
+     * @return the result as a <code>short</code>
+     * @throws IOException if an I/O error occurs
      */
     short readShort() throws IOException {
         int b1 = read();
@@ -304,10 +308,10 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve an int value from the server response stream.
+     * Reads an <code>int</code> value from the server response stream.
      *
-     * @return The result as a <code>int</code>.
-     * @throws IOException
+     * @return the result as a <code>int</code>
+     * @throws IOException if an I/O error occurs
      */
     int readInt() throws IOException {
         int b1 = read();
@@ -319,10 +323,10 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve a long value from the server response stream.
+     * Reads a <code>long</code> value from the server response stream.
      *
-     * @return The result as a <code>long</code>.
-     * @throws IOException
+     * @return the result as a <code>long</code>
+     * @throws IOException if an I/O error occurs
      */
     long readLong() throws IOException {
         long b1 = ((long) read());
@@ -338,10 +342,10 @@ public class ResponseStream {
     }
 
     /**
-     * Discard bytes from the server response stream.
+     * Discards bytes from the server response stream.
      *
-     * @param skip The number of bytes to discard.
-     * @return The skip parameter as an <code>int</code>.
+     * @param skip the number of bytes to discard
+     * @return the number of bytes skipped
      */
     int skip(int skip) throws IOException {
         int tmp = skip;
@@ -385,7 +389,7 @@ public class ResponseStream {
     }
 
     /**
-     * Close this response stream. The stream id is unlinked from the
+     * Closes this response stream. The stream id is unlinked from the
      * underlying shared socket as well.
      */
     void close() {
@@ -394,27 +398,41 @@ public class ResponseStream {
     }
 
     /**
-     * Retrieve the TDS version number.
+     * Retrieves the TDS version number.
      *
-     * @return The TDS version as an <code>int</code>.
+     * @return the TDS version as an <code>int</code>
      */
     int getTdsVersion() {
         return socket.getTdsVersion();
     }
 
     /**
-     * Retrieve the Server type.
+     * Retrieves the server type.
      *
-     * @return The Server type as an <code>int</code>.
+     * @return the server type as an <code>int</code>
      */
     int getServerType() {
         return socket.getServerType();
     }
 
     /**
+     * Creates a simple <code>InputStream</code> over the server response.
+     * <p/>
+     * This method can be used to obtain a stream which can be passed to
+     * <code>InputStreamReader</code>s to assist in reading multi byte
+     * character sets.
+     *
+     * @param len the number of bytes available in the server response
+     * @return the <code>InputStream</code> built over the server response
+     */
+    InputStream getInputStream(int len) {
+        return new TdsInputStream(this, len);
+    }
+
+    /**
      * Read the next TDS packet from the network.
      *
-     * @throws IOException
+     * @throws IOException if an I/O error occurs
      */
     private void getPacket() throws IOException {
         while (bufferPtr >= bufferLen) {
@@ -428,6 +446,45 @@ public class ResponseStream {
 
             if (Logger.isActive()) {
                 Logger.logPacket(streamId, true, buffer);
+            }
+        }
+    }
+
+    /**
+     * Simple inner class implementing an <code>InputStream</code> over the
+     * server response.
+     */
+    private static class TdsInputStream extends InputStream {
+        /** The underlying <code>ResponseStream</code>. */
+        ResponseStream tds;
+        /** The maximum amount of data to make available. */
+        int maxLen;
+
+        /**
+         * Creates a <code>TdsInputStream</code> instance.
+         *
+         * @param tds    the underlying <code>ResponseStream</code>
+         * @param maxLen the maximum amount of data that will be available
+         */
+        public TdsInputStream(ResponseStream tds, int maxLen) {
+            this.tds = tds;
+            this.maxLen = maxLen;
+        }
+
+        public int read() throws IOException {
+            return (maxLen-- > 0)? tds.read(): -1;
+        }
+
+        public int read(byte[] bytes, int offset, int len) throws IOException {
+            if (maxLen < 1) {
+                return -1;
+            } else {
+                int bc = Math.min(maxLen, len);
+                if (bc > 0) {
+                    bc = tds.read(bytes, offset, bc);
+                    maxLen -= (bc == -1) ? 0 : bc;
+                }
+                return bc;
             }
         }
     }

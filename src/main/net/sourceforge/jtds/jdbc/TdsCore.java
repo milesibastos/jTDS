@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.88 2005-04-11 13:09:06 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.89 2005-04-17 18:41:24 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1233,7 +1233,7 @@ public class TdsCore {
         return procName;
     }
 
-    /**
+    /*
      * Read text or image data from the server using readtext.
      *
      * @param tabName The parent table for this column.
@@ -1243,7 +1243,11 @@ public class TdsCore {
      * @param length The number of bytes or characters to read.
      * @return A returned <code>String</code> or <code>byte[]</code>.
      * @throws SQLException
-     */
+     *
+     * This was a nice idea but it is difficult to actually use in practice and since
+     * SQL 2005 seems to be moving away from TEXT/IMAGE fields with varchar(max) etc
+     * I think it is probable that this code will never be put live.
+     *
     Object readText(String tabName, String colName, TextPtr textPtr, int offset, int length)
         throws SQLException {
         checkOpen();
@@ -1284,7 +1288,7 @@ public class TdsCore {
 
         if (getMoreResults()) {
             if (getNextRow()) {
-                // FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
+                / FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
                 results = rowData[0];
             }
         }
@@ -1294,7 +1298,7 @@ public class TdsCore {
 
         return results;
     }
-
+*/
     /**
      * Retrieve the length of a text or image column.
      *

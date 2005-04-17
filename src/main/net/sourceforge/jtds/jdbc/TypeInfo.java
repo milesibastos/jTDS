@@ -29,7 +29,7 @@ import java.sql.Types;
  * tests.
  *
  * @author David Eaves
- * @version $Id: TypeInfo.java,v 1.1 2005-01-05 12:24:12 alin_sinpalean Exp $
+ * @version $Id: TypeInfo.java,v 1.2 2005-04-17 18:41:25 alin_sinpalean Exp $
  */
 public class TypeInfo implements Comparable {
     static final int NUM_COLS = 18;
@@ -173,7 +173,14 @@ public class TypeInfo implements Comparable {
             case 9: // Sybase DATE
             case 6: // FLOAT
                 return 0;
-
+            case 12: // VARCHAR, SYSNAME and NVARCHAR all together with Sybase
+                if (typeName.equalsIgnoreCase("varchar")) {
+                    return 0;
+                }
+                if (typeName.equalsIgnoreCase("nvarchar")) {
+                    return 1;
+                }
+                return 2;
             // Special case as the same data type value is used for SYSNAME and
             // NVARCHAR (SYSNAME is essentially an alias for NVARCHAR). We
             // don't want applications preferring SYSNAME.

@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.30 2005-04-04 20:36:57 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.31 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -158,11 +158,11 @@ class SharedSocket {
      * but in practice lost updates will not matter much and I think
      * all VMs tend to do atomic saves to integer variables.
      */
-    private static int globalMemUsage = 0;
+    private static int globalMemUsage;
     /**
      * Peak memory usage for debug purposes.
      */
-    private static int peakMemUsage = 0;
+    private static int peakMemUsage;
     /**
      * Max memory limit to use for buffers.
      * Only when this limit is exceeded will the driver
@@ -663,7 +663,7 @@ class SharedSocket {
             // At this point we know that we are able to send the first
             // or subsequent packet of a new request.
             //
-            getOut().write(buffer, 0, getPktLen(buffer, 2));
+            getOut().write(buffer, 0, getPktLen(buffer));
 
             if (buffer[1] != 0) {
                 getOut().flush();
@@ -745,7 +745,7 @@ class SharedSocket {
 
                 while (vsock.pktQueue.size() > 0) {
                     tmpBuf = (byte[]) vsock.pktQueue.removeFirst();
-                    vsock.diskQueue.write(tmpBuf, 0, getPktLen(tmpBuf, 2));
+                    vsock.diskQueue.write(tmpBuf, 0, getPktLen(tmpBuf));
                     vsock.pktsOnDisk++;
                 }
             } catch (java.lang.SecurityException se) {
@@ -758,7 +758,7 @@ class SharedSocket {
 
         if (vsock.diskQueue != null) {
             // Cache file exists so append buffer to it
-            vsock.diskQueue.write(buffer, 0, getPktLen(buffer, 2));
+            vsock.diskQueue.write(buffer, 0, getPktLen(buffer));
             vsock.pktsOnDisk++;
         } else {
             // Will cache in memory
@@ -771,7 +771,6 @@ class SharedSocket {
         }
 
         vsock.inputPkts++;
-        return;
     }
 
     /**
@@ -793,7 +792,7 @@ class SharedSocket {
 
             vsock.diskQueue.readFully(hdrBuf, 0, TDS_HDR_LEN);
 
-            int len = getPktLen(hdrBuf, 2);
+            int len = getPktLen(hdrBuf);
 
             buffer = new byte[len];
             System.arraycopy(hdrBuf, 0, buffer, 0, TDS_HDR_LEN);
@@ -849,7 +848,7 @@ class SharedSocket {
         }
 
         // figure out how many bytes are remaining in this packet.
-        int len = getPktLen(hdrBuf, 2);
+        int len = getPktLen(hdrBuf);
 
         if (len < TDS_HDR_LEN || len > 65536) {
             throw new IOException("Invalid network packet length " + len);
@@ -964,13 +963,11 @@ class SharedSocket {
      * short integer.
      *
      * @param buf    array of data
-     * @param offset index into the buf array where the short integer is
-     *        stored
      * @return the 16 bit unsigned value as an <code>int</code>
      */
-    static int getPktLen(byte buf[], int offset) {
-        int lo = ((int) buf[offset + 1] & 0xff);
-        int hi = (((int) buf[offset] & 0xff) << 8);
+    static int getPktLen(byte buf[]) {
+        int lo = ((int) buf[3] & 0xff);
+        int hi = (((int) buf[2] & 0xff) << 8);
 
         return hi | lo;
     }

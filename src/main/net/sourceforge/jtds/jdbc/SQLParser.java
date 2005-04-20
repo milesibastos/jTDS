@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.19 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.20 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -57,7 +57,10 @@ class SQLParser {
     private char[] out;
     /** Current position in output buffer. */
     private int d;
-    /** Parameter list to be populated. */
+    /**
+     * Parameter list to be populated or <code>null</code> if no parameters
+     * are expected.
+     */
     private ArrayList params;
     /** Current expected terminator character. */
     private char terminator;
@@ -71,10 +74,11 @@ class SQLParser {
     private ConnectionJDBC2 connection;
 
     /**
-     * Construct a new Parser object to process the supplied SQL.
+     * Construct a new parser object to process the supplied SQL.
      *
-     * @param sql The SQL statement to parse.
-     * @param paramList The Parameter list array to populate.
+     * @param sql       the SQL statement to parse
+     * @param paramList the parameter list array to populate or
+     *                  <code>null</code> if no parameters are expected
      */
     SQLParser(String sql, ArrayList paramList, ConnectionJDBC2 connection) {
         in = sql.toCharArray();
@@ -92,11 +96,17 @@ class SQLParser {
      *
      * @param txt The text to insert.
      */
-    private void copyLiteral(String txt) {
+    private void copyLiteral(String txt) throws SQLException {
         for (int i = 0; i < txt.length(); i++) {
             char c = txt.charAt(i);
 
             if (c == '?') {
+                if (params == null) {
+                    throw new SQLException(
+                            Messages.get("error.parsesql.unexpectedparam",
+                                    String.valueOf(s)),
+                            "2A000");
+                }
                 // param marker embedded in escape
                 ParamInfo pi = new ParamInfo(d, connection.isUseUnicode());
                 params.add(pi);
@@ -151,7 +161,14 @@ class SQLParser {
      * @param name Optional parameter name or null.
      * @param pos The parameter marker position in the output buffer.
      */
-    private void copyParam(String name, int pos) {
+    private void copyParam(String name, int pos) throws SQLException {
+        if (params == null) {
+            throw new SQLException(
+                    Messages.get("error.parsesql.unexpectedparam",
+                            String.valueOf(s)),
+                    "2A000");
+        }
+
         ParamInfo pi = new ParamInfo(pos, connection.isUseUnicode());
         pi.name = name;
 
@@ -365,7 +382,7 @@ class SQLParser {
      * @param mask The validation mask
      * @return True if the escape was valid and processed OK.
      */
-    private boolean getDateTimeField(byte[] mask) {
+    private boolean getDateTimeField(byte[] mask) throws SQLException {
         skipWhiteSpace();
         if (in[s] == '?') {
             // Allow {ts ?} type construct
@@ -952,7 +969,7 @@ class SQLParser {
             // unless the connection is sending statements unprepared (i.e. by
             // building a plain query) and this is not a procedure call.
             //
-            if (params.size() > 255
+            if (params != null && params.size() > 255
                     && connection.getPrepareSql() != TdsCore.UNPREPARED
                     && procName != null) {
                 int limit = 255; // SQL 6.5 and Sybase < 12.50

@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.14 2005-04-04 20:36:55 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.15 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -50,7 +50,7 @@ public class RequestStream {
     /** The unique stream id. */
     private int streamId;
     /** True if stream is closed. */
-    private boolean isClosed = false;
+    private boolean isClosed;
     /** The current output buffer size*/
     private int bufferSize;
     /** The maximum decimal precision. */

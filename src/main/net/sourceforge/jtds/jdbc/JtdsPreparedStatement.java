@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.41 2005-04-07 20:46:00 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.42 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -69,15 +69,15 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     /** The parameter list for the call. */
     protected ParamInfo[] parameters;
     /** True to return generated keys. */
-    private boolean returnKeys = false;
+    private boolean returnKeys;
     /** The cached column meta data. */
-    protected ColInfo[] colMetaData = null;
+    protected ColInfo[] colMetaData;
     /** The cached parameter meta data. */
-    protected ParamInfo[] paramMetaData = null;
+    protected ParamInfo[] paramMetaData;
     /** Used to format numeric values when scale is specified. */
     private static NumberFormat f = NumberFormat.getInstance();
     /** Collection of handles used by this statement */
-    Collection handles = null;
+    Collection handles;
 
     /**
      * Construct a new preparedStatement object.
@@ -144,7 +144,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @param sql The SQL statement to process.
      * @return The SQL possibly in original form.
      */
-    protected String normalizeCall(String sql) {
+    protected static String normalizeCall(String sql) {
         String original = sql;
         sql = sql.trim();
 
@@ -168,10 +168,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             sql = sql.substring(1).trim();
 
             // OK now reconstruct as JDBC escaped call
-            return "{?=call " + sql + "}";
+            return "{?=call " + sql + '}';
         }
 
-        return "{call " + sql + "}";
+        return "{call " + sql + '}';
     }
 
     /**
@@ -526,7 +526,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             setString(parameterIndex, null);
         } else {
             try {
-               length = length / 2;
+               length /= 2;
                char[] tmp = new char[length];
                int pos = 0;
                int b1 = inputStream.read();
@@ -588,7 +588,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setArray(int arg0, Array arg1) throws SQLException {
-        this.notImplemented("PreparedStatement.setArray");
+        notImplemented("PreparedStatement.setArray");
     }
 
     public void setBlob(int parameterIndex, Blob x) throws SQLException {

@@ -33,11 +33,11 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.10 2005-02-09 08:28:59 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.11 2005-04-20 16:49:31 alin_sinpalean Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
-    private static PrintWriter log = null;
+    private static PrintWriter log;
 
     /**
      * Set the logging PrintWriter stream.

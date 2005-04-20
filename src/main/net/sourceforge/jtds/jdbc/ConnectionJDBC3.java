@@ -29,15 +29,15 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.11 2004-12-16 08:46:08 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.12 2005-04-20 16:49:15 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
-    private ArrayList savepoints = null;
+    private ArrayList savepoints;
     /** Maps each savepoint to a list of tmep procedures created since the savepoint */
-    private Map savepointProcInTran = null;
+    private Map savepointProcInTran;
     /** Counter for generating unique savepoint identifiers */
-    private int savepointId = 0;
+    private int savepointId;
 
     /**
      * Create a new database connection.
@@ -61,7 +61,7 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         try {
             statement = createStatement();
-            statement.execute("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds" 
+            statement.execute("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds"
                     + savepoint.getId());
         } finally {
             if (statement != null) {

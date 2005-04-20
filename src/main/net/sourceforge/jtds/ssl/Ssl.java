@@ -22,41 +22,41 @@ package net.sourceforge.jtds.ssl;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: Ssl.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
+ * @version $Id: Ssl.java,v 1.3 2005-04-20 16:49:30 alin_sinpalean Exp $
  */
 public interface Ssl {
     /**
      * SSL is not used.
      */
-    public static final String SSL_OFF = "off";
+    String SSL_OFF = "off";
     /**
      * SSL is requested; a plain socket is used if SSL is not available.
      */
-    public static final String SSL_REQUEST = "request";
+    String SSL_REQUEST = "request";
     /**
      * SSL is required; an exception if thrown if SSL is not available.
      */
-    public static final String SSL_REQUIRE = "require";
+    String SSL_REQUIRE = "require";
     /**
      * SSL is required and the server must return a certificate signed by a
      * client-trusted authority.
      */
-    public static final String SSL_AUTHENTICATE = "authenticate";
+    String SSL_AUTHENTICATE = "authenticate";
     /** Size of TLS record header. */
-    public static final int  TLS_HEADER_SIZE = 5;
+    int  TLS_HEADER_SIZE = 5;
     /** TLS Change Cipher Spec record type. */
-    public static final byte TYPE_CHANGECIPHERSPEC = 20;
+    byte TYPE_CHANGECIPHERSPEC = 20;
     /** TLS Alert record type. */
-    public static final byte TYPE_ALERT = 21;
+    byte TYPE_ALERT = 21;
     /** TLS Handshake record. */
-    public static final byte TYPE_HANDSHAKE = 22;
+    byte TYPE_HANDSHAKE = 22;
     /** TLS Application data record. */
-    public static final byte TYPE_APPLICATIONDATA = 23;
+    byte TYPE_APPLICATIONDATA = 23;
     /** TLS Hand shake Header Size. */
-    public final static int HS_HEADER_SIZE = 4;
+    int HS_HEADER_SIZE = 4;
     /** TLS Hand shake client key exchange sub type. */
-    public final static int TYPE_CLIENTKEYEXCHANGE = 16;
+    int TYPE_CLIENTKEYEXCHANGE = 16;
     /** TLS Hand shake client hello sub type. */
-    public final static int TYPE_CLIENTHELLO = 1;
+    int TYPE_CLIENTHELLO = 1;
 
 }

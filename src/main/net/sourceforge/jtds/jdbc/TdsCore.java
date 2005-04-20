@@ -50,8 +50,8 @@ import net.sourceforge.jtds.util.*;
  * @author Mike Hutchinson
  * @author Matt Brinkley
  * @author Alin Sinpalean
- * @author freeTDS project
- * @version $Id: TdsCore.java,v 1.89 2005-04-17 18:41:24 alin_sinpalean Exp $
+ * @author FreeTDS project
+ * @version $Id: TdsCore.java,v 1.90 2005-04-20 16:49:29 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -70,10 +70,6 @@ public class TdsCore {
         byte[] nonce;
         /** NTLM authentication message. */
         byte[] ntlmMessage;
-        /** The dynamicID from the last TDS_DYNAMIC token. */
-        String dynamicId;
-        /** The TDS token that preceded the dynamic parameter data. */
-        int previousToken;
         /** The dynamic parameters from the last TDS_DYNAMIC token. */
         ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
@@ -337,11 +333,31 @@ public class TdsCore {
     /** Sybase univarchar etc. */
     static final int SYB_UNICODE     = 16;
 
+    /** Map of system stored procedures that have shortcuts in TDS8. */
+    private static HashMap tds8SpNames = new HashMap();
+    static {
+        tds8SpNames.put("sp_cursor",            new Integer(1));
+        tds8SpNames.put("sp_cursoropen",        new Integer(2));
+        tds8SpNames.put("sp_cursorprepare",     new Integer(3));
+        tds8SpNames.put("sp_cursorexecute",     new Integer(4));
+        tds8SpNames.put("sp_cursorprepexec",    new Integer(5));
+        tds8SpNames.put("sp_cursorunprepare",   new Integer(6));
+        tds8SpNames.put("sp_cursorfetch",       new Integer(7));
+        tds8SpNames.put("sp_cursoroption",      new Integer(8));
+        tds8SpNames.put("sp_cursorclose",       new Integer(9));
+        tds8SpNames.put("sp_executesql",        new Integer(10));
+        tds8SpNames.put("sp_prepare",           new Integer(11));
+        tds8SpNames.put("sp_execute",           new Integer(12));
+        tds8SpNames.put("sp_prepexec",          new Integer(13));
+        tds8SpNames.put("sp_prepexecrpc",       new Integer(14));
+        tds8SpNames.put("sp_unprepare",         new Integer(15));
+    }
+
     //
     // Class variables
     //
     /** Name of the client host (it can take quite a while to find it out if DNS is configured incorrectly). */
-    private static String hostName = null;
+    private static String hostName;
     /** A reference to ntlm.SSPIJNIClient. */
     private static SSPIJNIClient sspiJNIClient;
 
@@ -384,8 +400,6 @@ public class TdsCore {
     private SQLDiagnostic messages;
     /** Indicates that this object is closed. */
     private boolean isClosed;
-    /** Indicates reading results from READTEXT command. */
-    private boolean readTextMode;
     /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
     private boolean ntlmAuthSSO;
     /** Indicates that a fatal error has occured and the connection will close. */
@@ -1220,7 +1234,7 @@ public class TdsCore {
                                 "error.generic.ioerror", ioe.getMessage()),
                                     "08S01"), ioe);
         } catch (SQLException e) {
-            if (e.getSQLState() != null && e.getSQLState().equals("08S01")) {
+            if ("08S01".equals(e.getSQLState())) {
                 // Serious error rethrow
                 throw e;
             }
@@ -1334,7 +1348,7 @@ public class TdsCore {
 
         if (!(results instanceof Number)) {
             throw new SQLException(
-                Messages.get("error.tdscore.badlen", tabName + "." + colName),
+                Messages.get("error.tdscore.badlen", tabName + '.' + colName),
                 "HY000");
         }
 
@@ -2338,7 +2352,6 @@ public class TdsCore {
             in.skip(1);
             params[i] = col;
         }
-        currentToken.previousToken  = TDS5_PARAMFMT2_TOKEN;
         currentToken.dynamParamInfo = params;
         currentToken.dynamParamData = new Object[paramCnt];
     }
@@ -2801,7 +2814,7 @@ public class TdsCore {
         if (tdsVersion >= Driver.TDS80 && col.collation != null) {
             TdsData.setColumnCharset(col, connection);
         }
-        Object value = TdsData.readData(connection, in, col, false);
+        Object value = TdsData.readData(connection, in, col);
 
         //
         // Real output parameters will either be unnamed or will have a valid
@@ -2918,11 +2931,10 @@ public class TdsCore {
      */
     private void tdsRowToken() throws IOException, ProtocolException {
         for (int i = 0; i < columns.length; i++) {
-            rowData[i] =  TdsData.readData(connection, in, columns[i], readTextMode);
+            rowData[i] =  TdsData.readData(connection, in, columns[i]);
         }
 
         endOfResults = false;
-        readTextMode = false;
     }
 
     /**
@@ -2945,7 +2957,7 @@ public class TdsCore {
 
         for (int i = 0; i < currentToken.dynamParamData.length; i++) {
             currentToken.dynamParamData[i] =
-                TdsData.readData(connection, in, currentToken.dynamParamInfo[i], false);
+                TdsData.readData(connection, in, currentToken.dynamParamInfo[i]);
             String name = currentToken.dynamParamInfo[i].realName;
             //
             // Real output parameters will either be unnamed or will have a valid
@@ -3197,7 +3209,7 @@ public class TdsCore {
         if (type == (byte)0x20) {
             // Only handle aknowledgements for now
             int len = in.read();
-            currentToken.dynamicId = in.readNonUnicodeString(len);
+            in.skip(len);
             pktLen -= len+1;
         }
         // FIXME This won't work with multi-byte charsets
@@ -3251,7 +3263,6 @@ public class TdsCore {
             in.skip(1);
             params[i] = col;
         }
-        currentToken.previousToken  = TDS5_PARAMFMT_TOKEN;
         currentToken.dynamParamInfo = params;
         currentToken.dynamParamData = new Object[paramCnt];
     }
@@ -3459,7 +3470,6 @@ public class TdsCore {
         throws IOException, SQLException {
         boolean haveParams    = parameters != null;
         boolean useParamNames = false;
-        currentToken.previousToken  = 0;
         currentToken.dynamParamInfo = null;
         currentToken.dynamParamData = null;
         //
@@ -3573,28 +3583,6 @@ public class TdsCore {
                         parameters[i]);
             }
         }
-    }
-
-    /**
-     * Map of system stored procedures that have shortcuts in TDS8.
-     */
-    private static HashMap tds8SpNames = new HashMap();
-    static {
-        tds8SpNames.put("sp_cursor",            new Integer(1));
-        tds8SpNames.put("sp_cursoropen",        new Integer(2));
-        tds8SpNames.put("sp_cursorprepare",     new Integer(3));
-        tds8SpNames.put("sp_cursorexecute",     new Integer(4));
-        tds8SpNames.put("sp_cursorprepexec",    new Integer(5));
-        tds8SpNames.put("sp_cursorunprepare",   new Integer(6));
-        tds8SpNames.put("sp_cursorfetch",       new Integer(7));
-        tds8SpNames.put("sp_cursoroption",      new Integer(8));
-        tds8SpNames.put("sp_cursorclose",       new Integer(9));
-        tds8SpNames.put("sp_executesql",        new Integer(10));
-        tds8SpNames.put("sp_prepare",           new Integer(11));
-        tds8SpNames.put("sp_execute",           new Integer(12));
-        tds8SpNames.put("sp_prepexec",          new Integer(13));
-        tds8SpNames.put("sp_prepexecrpc",       new Integer(14));
-        tds8SpNames.put("sp_unprepare",         new Integer(15));
     }
 
     /**

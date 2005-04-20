@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.76 2005-03-18 11:46:45 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.77 2005-04-20 16:49:14 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -158,7 +158,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** SQL Server 2000 collation. */
     private byte collation[];
     /** True if user specifies an explicit charset. */
-    private boolean charsetSpecified = false;
+    private boolean charsetSpecified;
     /** The database product name eg SQL SERVER. */
     private String databaseProductName;
     /** The product version eg 11.92. */
@@ -168,9 +168,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** The minor version number eg 92. */
     private int databaseMinorVersion;
     /** True if this connection is closed. */
-    private boolean closed = false;
+    private boolean closed;
     /** True if this connection is read only. */
-    private boolean readOnly = false;
+    private boolean readOnly;
     /** List of statements associated with this connection. */
     private ArrayList statements;
     /** Default transaction isolation level. */
@@ -180,9 +180,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** Diagnostc messages for this connection. */
     private SQLDiagnostic messages;
     /** Connection's current rowcount limit. */
-    private int rowCount = 0;
+    private int rowCount;
     /** Connection's current maximum field size limit. */
-    private int textSize = 0;
+    private int textSize;
     /** Maximum decimal precision. */
     private int maxPrecision = 38; // Sybase default
     /** Stored procedure unique ID number. */
@@ -202,19 +202,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** Send parameters as unicode. */
     private boolean useUnicode = true;
     /** Use named pipe IPC instead of TCP/IP sockets. */
-    private boolean namedPipe = false;
+    private boolean namedPipe;
     /** Only return the last update count. */
-    private boolean lastUpdateCount = false;
+    private boolean lastUpdateCount;
     /** TCP_NODELAY */
     private boolean tcpNoDelay = true;
     /** Login timeout value in seconds or 0. */
-    private int loginTimeout = 0;
+    private int loginTimeout;
     /** Sybase capability mask.*/
-    private int sybaseInfo = 0;
+    private int sybaseInfo;
     /** True if running distributed transaction. */
-    private boolean xaTransaction = false;
+    private boolean xaTransaction;
     /** Current emulated XA State eg start/end/prepare etc. */
-    private int xaState = 0;
+    private int xaState;
     /** Current XA Transaction ID. */
     private Object xid;
     /** True if driver should emulate distributed transactions. */
@@ -285,7 +285,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                         });
             }
 
-            if (namedPipe == true) {
+            if (namedPipe) {
                 // TODO Use namedPipe parameter to select implementation type
                 if(System.getProperty("os.name").toLowerCase().startsWith("windows")) {
                     // If the OS is Windows, use a local named pipe
@@ -406,6 +406,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             rs.close();
             stmt.close();
+        }
+    }
+
+    /**
+     * Called when this object goes out of scope to release all resources.
+     */
+    protected void finalize() {
+        try {
+            close();
+        } catch (SQLException e) {
+            // Ignore errors
         }
     }
 
@@ -816,7 +827,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The integer value of the string property value.
      * @throws SQLException If the property value can't be parsed.
      */
-    private int parseIntegerProperty(final Properties info, final String key)
+    private static int parseIntegerProperty(final Properties info, final String key)
             throws SQLException {
 
         final String propertyName = Messages.get(key);
@@ -836,7 +847,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return The long value of the string property value.
      * @throws SQLException If the property value can't be parsed.
      */
-    private long parseLongProperty(final Properties info, final String key)
+    private static long parseLongProperty(final Properties info, final String key)
             throws SQLException {
 
         final String propertyName = Messages.get(key);
@@ -1234,9 +1245,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param method The method name to report in the error message.
      * @throws SQLException
      */
-    void notImplemented(String method) throws SQLException {
+    static void notImplemented(String method) throws SQLException {
         throw new SQLException(
-                              Messages.get("error.generic.notimp", method), "HYC00");
+                Messages.get("error.generic.notimp", method), "HYC00");
     }
 
     /**
@@ -1291,9 +1302,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *
      * @return the hostname and port as a <code>String</code>.
      */
-    public String getRmHost()
-    {
-        return serverName + ":" + portNumber;
+    public String getRmHost() {
+        return serverName + ':' + portNumber;
     }
 
     /**
@@ -1589,13 +1599,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             case JtdsResultSet.HOLD_CURSORS_OVER_COMMIT:
                 break;
             case JtdsResultSet.CLOSE_CURSORS_AT_COMMIT:
-                throw new SQLException(Messages.get("error.generic.optvalue",
-                                                          "CLOSE_CURSORS_AT_COMMIT",
-                                                          "setHoldability"), "HY092");
+                throw new SQLException(
+                        Messages.get("error.generic.optvalue",
+                                "CLOSE_CURSORS_AT_COMMIT",
+                                "setHoldability"),
+                        "HY092");
             default:
-                throw new SQLException(Messages.get("error.generic.badoption",
-                                                          Integer.toString(holdability),
-                                                          "setHoldability"), "HY092");
+                throw new SQLException(
+                        Messages.get("error.generic.badoption",
+                                Integer.toString(holdability),
+                                "holdability"),
+                        "HY092");
         }
     }
 
@@ -1624,13 +1638,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 sql += (sybase)? "3": "SERIALIZABLE";
                 break;
             case java.sql.Connection.TRANSACTION_NONE:
-                throw new SQLException(Messages.get("error.generic.optvalue",
-                                                          "TRANSACTION_NONE",
-                                                          "setTransactionIsolation"), "HY024");
+                throw new SQLException(
+                        Messages.get("error.generic.optvalue",
+                                "TRANSACTION_NONE",
+                                "setTransactionIsolation"),
+                        "HY024");
             default:
-                throw new SQLException(Messages.get("error.generic.badoption",
-                                                          Integer.toString(level),
-                                                          "setTransactionIsolation"), "HY092");
+                throw new SQLException(
+                        Messages.get("error.generic.badoption",
+                                Integer.toString(level),
+                                "level"),
+                        "HY092");
         }
 
         transactionIsolation = level;
@@ -1693,8 +1711,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (catalog.length() > 32 || catalog.length() < 1) {
             throw new SQLException(
-                                  Messages.get("error.generic.badparam",
-                                                     catalog, "setCatalog"), "3D000");
+                    Messages.get("error.generic.badparam",
+                            catalog,
+                            "catalog"),
+                    "3D000");
         }
 
         String sql = tdsVersion >= Driver.TDS70 ?
@@ -1836,7 +1856,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw new SQLException(
                     Messages.get("error.generic.badoption",
                             Integer.toString(autoGeneratedKeys),
-                            "executeUpdate"),
+                            "autoGeneratedKeys"),
                     "HY092");
         }
 

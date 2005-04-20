@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.28 2005-03-18 11:46:52 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.29 2005-04-20 16:49:30 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -241,7 +241,7 @@ public class JtdsDataSource
                     : Integer.parseInt(serverType);
             url = "jdbc:jtds:"
                     + DefaultProperties.getServerTypeWithDefault(serverTypeDef)
-                    + ":";
+                    + ':';
         } catch (RuntimeException ex) {
             ex.printStackTrace();
             throw new SQLException(

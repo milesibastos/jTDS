@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.36 2005-04-11 13:23:48 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.37 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -73,11 +73,11 @@ public class JtdsStatement implements java.sql.Statement {
     /** The connection owning this statement object. */
     protected ConnectionJDBC2 connection;
     /** The TDS object used for server access. */
-    protected TdsCore tds = null;
+    protected TdsCore tds;
     /** The read query timeout in seconds */
-    protected int queryTimeout = 0;
+    protected int queryTimeout;
     /** The current <code>ResultSet</code>. */
-    protected JtdsResultSet currentResult = null;
+    protected JtdsResultSet currentResult;
     /** The current update count. */
     private int updateCount = -1;
     /** The fetch direction for result sets. */
@@ -93,17 +93,17 @@ public class JtdsStatement implements java.sql.Statement {
     /** The cursor name to be used for positioned updates. */
     protected String cursorName;
     /** True if this statement is closed. */
-    protected boolean closed = false;
+    protected boolean closed;
     /** The maximum field size (not used at present). */
-    protected int maxFieldSize = 0;
+    protected int maxFieldSize;
     /** The maximum number of rows to return (not used at present). */
-    protected int maxRows = 0;
+    protected int maxRows;
     /** True if SQL statements should be preprocessed. */
     protected boolean escapeProcessing = true;
     /** SQL Diagnostic exceptions and warnings. */
     protected SQLDiagnostic messages;
     /** Batched SQL Statement array. */
-    protected ArrayList batchValues = null;
+    protected ArrayList batchValues;
     /** Dummy result set for getGeneratedKeys. */
     protected JtdsResultSet genKeyResultSet;
     /**
@@ -139,8 +139,10 @@ public class JtdsStatement implements java.sql.Statement {
                 method = "createStatement";
             }
             throw new SQLException(
-                       Messages.get("error.generic.badparam", "TYPE", method),
-                                   "HY092");
+                       Messages.get("error.generic.badparam",
+                               "resultSetType",
+                               method),
+                    "HY092");
         }
         //
         // ditto for the result set concurrency
@@ -156,8 +158,10 @@ public class JtdsStatement implements java.sql.Statement {
                     method = "createStatement";
                 }
                 throw new SQLException(
-                           Messages.get("error.generic.badparam", "CONCURRENCY", method),
-                                       "HY092");
+                        Messages.get("error.generic.badparam",
+                                "resultSetConcurrency",
+                                method),
+                        "HY092");
         }
 
         this.connection = connection;
@@ -168,8 +172,8 @@ public class JtdsStatement implements java.sql.Statement {
     }
 
     /**
-     * Called when this object goes out of scope
-     * to close any resultSet object and this statement.
+     * Called when this object goes out of scope to close any
+     * <code>ResultSet</code> object and this statement.
      */
     protected void finalize() {
        try {
@@ -215,7 +219,7 @@ public class JtdsStatement implements java.sql.Statement {
      * @param method The method name to report in the error message.
      * @throws SQLException
      */
-    void notImplemented(String method) throws SQLException {
+    static void notImplemented(String method) throws SQLException {
         throw new SQLException(
                 Messages.get("error.generic.notimp", method), "HYC00");
     }
@@ -329,7 +333,7 @@ public class JtdsStatement implements java.sql.Statement {
                     // Serious error or timeout so return exception to caller
                     throw e;
                 }
-                warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
+                warningMessage = '[' + e.getSQLState() + "] " + e.getMessage();
             }
         }
 
@@ -407,7 +411,7 @@ public class JtdsStatement implements java.sql.Statement {
                     // Serious error or timeout so return exception to caller
                     throw e;
                 }
-                warningMessage = "[" + e.getSQLState() + "] " + e.getMessage();
+                warningMessage = '[' + e.getSQLState() + "] " + e.getMessage();
             }
         }
 
@@ -520,22 +524,6 @@ public class JtdsStatement implements java.sql.Statement {
         genKeyResultSet = null;
         tds.clearResponseQueue();
         closeAllResultSets();
-    }
-
-    /**
-     * Returns the first update count in {@link #resultQueue} or the specified
-     * default value if the queue is empty.
-     *
-     * @param defaultValue the value to return if there are no queued update
-     *                     counts (0 if called from <code>executeUpdate</code>,
-     *                     -1 if called from <code>getMoreResults</code>)
-     * @return             the first queued update count or the default value
-     *                     if the queue is empty
-     */
-    protected int getUpdateCount(int defaultValue) {
-        return resultQueue.isEmpty() || !(resultQueue.getFirst() instanceof Integer)
-                ? defaultValue
-                : ((Integer) resultQueue.getFirst()).intValue();
     }
 
 // ------------------ java.sql.Statement methods ----------------------
@@ -666,11 +654,11 @@ public class JtdsStatement implements java.sql.Statement {
             return new int[0];
         }
 
-        ArrayList counts = new ArrayList();
         int size = batchValues.size();
         int executeSize = connection.getBatchSize();
         executeSize = (executeSize == 0) ? Integer.MAX_VALUE : executeSize;
         SQLException sqlEx = null;
+        ArrayList counts = new ArrayList(size);
 
         try {
             tds.startBatch();
@@ -784,9 +772,11 @@ public class JtdsStatement implements java.sql.Statement {
             break;
 
         default:
-            throw new SQLException(Messages.get("error.generic.badoption",
-                                   Integer.toString(direction),
-                                   "setFetchDirection"), "24000");
+            throw new SQLException(
+                    Messages.get("error.generic.badoption",
+                            Integer.toString(direction),
+                            "direction"),
+                    "24000");
         }
     }
 
@@ -872,10 +862,11 @@ public class JtdsStatement implements java.sql.Statement {
                 currentResult = null;
                 break;
             default:
-                throw new SQLException(Messages.get("error.generic.badoption",
-                                                          Integer.toString(current),
-                                                          "getMoreResults"),
-                                       "HY092");
+                throw new SQLException(
+                        Messages.get("error.generic.badoption",
+                                Integer.toString(current),
+                                "current"),
+                        "HY092");
         }
 
         // Dequeue any results
@@ -918,10 +909,9 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         if (escapeProcessing) {
-            ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+            String tmp[] = new SQLParser(sql, null, connection).parse(false);
 
-            if (tmp[1].length() != 0 || params.size() > 0) {
+            if (tmp[1].length() != 0) {
                 throw new SQLException(
                         Messages.get("error.statement.badsql"), "07000");
             }
@@ -947,57 +937,7 @@ public class JtdsStatement implements java.sql.Statement {
     }
 
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
-        checkOpen();
-        initialize();
-
-        if (sql == null || sql.length() == 0) {
-            throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
-        }
-
-        boolean returnKeys;
-        String sqlWord = "";
-        if (escapeProcessing) {
-            ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
-
-            if (tmp[1].length() != 0 || params.size() > 0) {
-                throw new SQLException(
-                    Messages.get("error.statement.badsql"), "07000");
-            }
-
-            sql = tmp[0];
-            sqlWord = tmp[2];
-        } else {
-            // Escape processing turned off so
-            // see if we can extract "insert" from start of statement
-            sql = sql.trim();
-            if (sql.length() > 5) {
-                sqlWord = sql.substring(0,6).toLowerCase();
-            }
-        }
-
-        if (autoGeneratedKeys == RETURN_GENERATED_KEYS) {
-            returnKeys = sqlWord.equals("insert");
-
-            if (returnKeys) {
-                if (connection.getServerType() == Driver.SQLSERVER
-                        && connection.getDatabaseMajorVersion() >= 8) {
-                    sql += " SELECT SCOPE_IDENTITY() AS ID";
-                } else {
-                    sql += " SELECT @@IDENTITY AS ID";
-                }
-            }
-        } else if (autoGeneratedKeys == NO_GENERATED_KEYS) {
-            returnKeys = false;
-        } else {
-            throw new SQLException(
-                    Messages.get("error.generic.badoption",
-                            Integer.toString(autoGeneratedKeys),
-                            "executeUpdate"),
-                    "HY092");
-        }
-
-        executeSQL(sql, null, sqlWord, null, returnKeys, true);
+        execute(sql, autoGeneratedKeys);
 
         int res = getUpdateCount();
         return res == -1 ? 0 : res;
@@ -1014,10 +954,9 @@ public class JtdsStatement implements java.sql.Statement {
         boolean returnKeys;
         String sqlWord = "";
         if (escapeProcessing) {
-            ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+            String tmp[] = new SQLParser(sql, null, connection).parse(false);
 
-            if (tmp[1].length() != 0 || params.size() > 0) {
+            if (tmp[1].length() != 0) {
                 throw new SQLException(
                     Messages.get("error.statement.badsql"), "07000");
             }
@@ -1038,10 +977,11 @@ public class JtdsStatement implements java.sql.Statement {
         } else if (autoGeneratedKeys == NO_GENERATED_KEYS) {
             returnKeys = false;
         } else {
-            throw new SQLException(Messages.get("error.generic.badoption",
-                                                      Integer.toString(autoGeneratedKeys),
-                                                      "execute"),
-                                   "HY092");
+            throw new SQLException(
+                    Messages.get("error.generic.badoption",
+                            Integer.toString(autoGeneratedKeys),
+                            "autoGeneratedKeys"),
+                    "HY092");
         }
 
         if (returnKeys) {
@@ -1170,10 +1110,9 @@ public class JtdsStatement implements java.sql.Statement {
             throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
         if (escapeProcessing) {
-            ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params, connection).parse(false);
+            String tmp[] = new SQLParser(sql, null, connection).parse(false);
 
-            if (tmp[1].length() != 0 || params.size() > 0) {
+            if (tmp[1].length() != 0) {
                 throw new SQLException(
                     Messages.get("error.statement.badsql"), "07000");
             }

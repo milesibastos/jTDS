@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.55 2005-04-15 13:03:40 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.56 2005-04-20 16:49:15 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -206,21 +206,16 @@ public class Driver implements java.sql.Driver {
         final Map requiredTrueMap = createRequiredTrueMap();
 
         final DriverPropertyInfo[] dpi = new DriverPropertyInfo[propertyMap.size()];
-        final Iterator iterator = propertyMap.keySet().iterator();
+        final Iterator iterator = propertyMap.entrySet().iterator();
         for (int i = 0; iterator.hasNext(); i++) {
 
-            final String key = (String) iterator.next();
-            final String name = (String) propertyMap.get(key);
+            final Map.Entry entry = (Map.Entry) iterator.next();
+            final String key = (String) entry.getKey();
+            final String name = (String) entry.getValue();
 
             final DriverPropertyInfo info = new DriverPropertyInfo(name, parsedProps.getProperty(name));
             info.description = (String) descriptionMap.get(key);
-
-            if (requiredTrueMap.containsKey(name)) {
-                info.required = true;
-            }
-            else {
-                info.required = false;
-            }
+            info.required = requiredTrueMap.containsKey(name);
 
             if (choicesMap.containsKey(name)) {
                 info.choices = (String[]) choicesMap.get(name);
@@ -243,7 +238,7 @@ public class Driver implements java.sql.Driver {
      * @return The map of {@link DriverPropertyInfo} objects whose
      *         <code>choices</code> should be set.
      */
-    private Map createChoicesMap() {
+    private static Map createChoicesMap() {
 
         final HashMap choicesMap = new HashMap();
 
@@ -299,7 +294,7 @@ public class Driver implements java.sql.Driver {
      * @return The map of {@link DriverPropertyInfo} objects where
      *         <code>required</code> should be set to <code>true</code>.
      */
-    private Map createRequiredTrueMap() {
+    private static Map createRequiredTrueMap() {
         final HashMap requiredTrueMap = new HashMap();
         requiredTrueMap.put(Messages.get(Driver.SERVERNAME), null);
         requiredTrueMap.put(Messages.get(Driver.SERVERTYPE), null);
@@ -332,13 +327,13 @@ public class Driver implements java.sql.Driver {
 
         pos = nextToken(url, pos, token); // Skip jdbc
 
-        if (!token.toString().equalsIgnoreCase("jdbc")) {
+        if (!"jdbc".equalsIgnoreCase(token.toString())) {
             return null; // jdbc: missing
         }
 
         pos = nextToken(url, pos, token); // Skip jtds
 
-        if (!token.toString().equalsIgnoreCase("jtds")) {
+        if (!"jtds".equalsIgnoreCase(token.toString())) {
             return null; // jtds: missing
         }
 

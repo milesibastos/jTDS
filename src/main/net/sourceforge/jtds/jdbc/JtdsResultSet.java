@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.35 2005-04-17 18:41:24 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.36 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -88,27 +88,25 @@ public class JtdsResultSet implements ResultSet {
     /** The array of column descriptors. */
     protected ColInfo[] columns;
     /** The current result set row. */
-    protected Object[] currentRow = null;
+    protected Object[] currentRow;
     /** Cached row data for forward only result set. */
     protected ArrayList rowData;
     /** Index of current row in rowData. */
     protected int rowPtr;
     /** True if last column retrieved was null. */
-    protected boolean wasNull = false;
+    protected boolean wasNull;
     /** The parent statement or null if this is a dummy result set. */
     protected JtdsStatement statement;
     /** True if this result set is closed. */
-    protected boolean closed = false;
+    protected boolean closed;
     /** True if the query has been cancelled by another thread. */
-    protected boolean cancelled = false;
+    protected boolean cancelled;
     /** The fetch direction. */
     protected int fetchDirection = FETCH_FORWARD;
     /** The fetch size (only applies to cursor <code>ResultSet</code>s). */
     protected int fetchSize;
     /** The cursor name to be used for positioned updates. */
     protected String cursorName;
-    /** True if the resultset should read ahead to ensure return parameters are processed. */
-    protected boolean readAhead = true;
     /** Cache to optimize findColumn(String) lookups */
     private HashMap columnMap;
 
@@ -152,7 +150,7 @@ public class JtdsResultSet implements ResultSet {
      * @param columns The columns array
      * @return The new column count as an <code>int</code>.
      */
-    protected int getColumnCount(ColInfo[] columns) {
+    protected static int getColumnCount(ColInfo[] columns) {
         // MJH - Modified to cope with more than one hidden column
         int i;
         for (i = columns.length - 1; i >= 0 && columns[i].isHidden; i--);
@@ -319,7 +317,7 @@ public class JtdsResultSet implements ResultSet {
      * @param method The method name to report in the error message.
      * @throws SQLException
      */
-    protected void notImplemented(String method) throws SQLException {
+    protected static void notImplemented(String method) throws SQLException {
         throw new SQLException(Messages.get("error.generic.notimp", method), "HYC00");
     }
 
@@ -458,7 +456,7 @@ public class JtdsResultSet implements ResultSet {
                    // Skip to end of result set
                    // Could send cancel but this is safer as
                    // cancel could kill other statements in a batch.
-                   while (next()) ;
+                   while (next());
                 }
             } finally {
                 closed = true;
@@ -561,6 +559,7 @@ public class JtdsResultSet implements ResultSet {
                 rowsInResult = pos;
             } else {
                 pos = POS_AFTER_LAST;
+                currentRow = null;
             }
         } else {
             // Need to read from server response
@@ -651,22 +650,26 @@ public class JtdsResultSet implements ResultSet {
             break;
 
         default:
-            throw new SQLException(Messages.get("error.generic.badoption",
-                                   Integer.toString(direction),
-                                   "setFetchDirection"), "24000");
+            throw new SQLException(
+                    Messages.get("error.generic.badoption",
+                            Integer.toString(direction),
+                            "direction"),
+                    "24000");
         }
     }
 
-    public void setFetchSize(int size) throws SQLException {
+    public void setFetchSize(int rows) throws SQLException {
         checkOpen();
 
-        if (size < 0 || (statement != null && statement.getMaxRows() > 0 && size > statement.getMaxRows())) {
-            throw new SQLException(Messages.get("error.generic.badparam",
-                                         Integer.toString(size), "setFetchSize"),
+        if (rows < 0 || (statement != null && statement.getMaxRows() > 0 && rows > statement.getMaxRows())) {
+            throw new SQLException(
+                    Messages.get("error.generic.badparam",
+                            Integer.toString(rows),
+                            "rows"),
                                             "HY092");
         }
 
-        this.fetchSize = size;
+        this.fetchSize = rows;
     }
 
     public void updateNull(int columnIndex) throws SQLException {
@@ -915,7 +918,7 @@ public class JtdsResultSet implements ResultSet {
         checkOpen();
 
         if (columnMap == null) {
-            columnMap = new HashMap();
+            columnMap = new HashMap(columnCount);
         } else {
             Object pos = columnMap.get(columnName);
             if (pos != null) {
@@ -924,7 +927,7 @@ public class JtdsResultSet implements ResultSet {
         }
 
         // Rather than use toUpperCase()/toLowerCase(), which are costly,
-        // better do a sequential search. It's actually faster in most cases.
+        // just do a sequential search. It's actually faster in most cases.
         for (int i = 0; i < columnCount; i++) {
             if (columns[i].name.equalsIgnoreCase(columnName)) {
                 columnMap.put(columnName, new Integer(i + 1));

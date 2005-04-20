@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.14 2005-02-27 14:47:17 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.15 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 class ParamInfo implements Cloneable {
     /** Flag as an input parameter. */
@@ -41,9 +41,9 @@ class ParamInfo implements Cloneable {
     final static int UNICODE = 4;
 
     /** Internal TDS data type */
-    int tdsType = 0;
+    int tdsType;
     /** JDBC type constant from java.sql.Types */
-    int jdbcType = 0;
+    int jdbcType;
     /** Formal parameter name eg @P1 */
     String name;
     /** SQL type name eg varchar(10) */

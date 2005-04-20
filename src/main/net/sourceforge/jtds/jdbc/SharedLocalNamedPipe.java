@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.6 2005-02-19 20:11:11 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.7 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -49,17 +49,17 @@ public class SharedLocalNamedPipe extends SharedSocket {
         StringBuffer pipeName = new StringBuffer(64);
         pipeName.append("\\\\");
         if (serverName == null || serverName.length() == 0) {
-            pipeName.append( "." );
+            pipeName.append( '.' );
         } else {
             pipeName.append(serverName);
         }
         pipeName.append("\\pipe\\");
-        if (instance != null && !instance.equals("")) {
-            pipeName.append("MSSQL$").append(instance).append("\\");
+        if (instance != null && instance.length() != 0) {
+            pipeName.append("MSSQL$").append(instance).append('\\');
         }
         pipeName.append("sql\\query");
 
-        RandomAccessFile pipe = new RandomAccessFile(pipeName.toString(), "rw");
+        pipe = new RandomAccessFile(pipeName.toString(), "rw");
         OutputStream fos = new FileOutputStream(pipe.getFD());
         InputStream fis = new FileInputStream(pipe.getFD());
         setOut(new DataOutputStream(new BufferedOutputStream(fos, 4100)));

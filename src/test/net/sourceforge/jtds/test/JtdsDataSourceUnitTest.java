@@ -2,7 +2,6 @@ package net.sourceforge.jtds.test;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import java.util.Properties;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -10,16 +9,11 @@ import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.jdbc.Driver;
 
-import javax.naming.Reference;
-import javax.naming.NamingException;
-
-
-
 /**
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.12 2005-02-07 13:47:45 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.13 2005-04-20 16:49:31 alin_sinpalean Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 

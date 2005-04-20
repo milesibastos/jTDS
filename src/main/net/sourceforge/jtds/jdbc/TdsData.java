@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.46 2005-04-17 18:41:24 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.47 2005-04-20 16:49:30 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -600,12 +600,11 @@ public class TdsData {
      *        <code>ResultSet</code>
      * @param in The server ResponseStream.
      * @param ci The ColInfo column descriptor object.
-     * @param readTextMode True if reading results from ReadText;
      * @return The data item Object or null.
      * @throws IOException
      * @throws ProtocolException
      */
-    static Object readData(ConnectionJDBC2 connection, ResponseStream in, ColInfo ci, boolean readTextMode)
+    static Object readData(ConnectionJDBC2 connection, ResponseStream in, ColInfo ci)
             throws IOException, ProtocolException {
         int len;
 
@@ -1207,7 +1206,7 @@ public class TdsData {
                             String tmp     = pi.getString(charset);
                             if (!canEncode(tmp, charset)) {
                                 // Conversion fails need to send as unicode.
-                                pi.sqlType = "univarchar("+tmp.length()+")";
+                                pi.sqlType = "univarchar("+tmp.length()+')';
                                 pi.tdsType = SYBLONGBINARY;
                                 pi.length  = tmp.length();
                                 break;
@@ -1245,7 +1244,7 @@ public class TdsData {
                                 // Use Sybase 12.5+ long varchar type which
                                 // is limited to 16384 bytes.
                                 pi.tdsType = XSYBCHAR;
-                                pi.sqlType = "varchar(" + len + ")";
+                                pi.sqlType = "varchar(" + len + ')';
                             }
                         } else {
                             pi.tdsType = SYBTEXT;
@@ -1348,7 +1347,7 @@ public class TdsData {
                             } else {
                                 // Sybase long binary that can be used as a SP parameter
                                 pi.tdsType = SYBLONGBINARY;
-                                pi.sqlType = "varbinary(" + len + ")";
+                                pi.sqlType = "varbinary(" + len + ')';
                             }
                         } else {
                             // Sybase < 12.5 or SQL Server 6.5
@@ -1395,13 +1394,13 @@ public class TdsData {
                 pi.tdsType  = SYBDECIMAL;
                 if (connection.getMaxPrecision() > 28) {
                     if (pi.scale > 10 && pi.scale <= 38) {
-                        pi.sqlType = "decimal(38," + pi.scale + ")";
+                        pi.sqlType = "decimal(38," + pi.scale + ')';
                     } else {
                         pi.sqlType = "decimal(38,10)";
                     }
                 } else {
                     if (pi.scale > 10 && pi.scale <= 28) {
-                        pi.sqlType = "decimal(28," + pi.scale + ")";
+                        pi.sqlType = "decimal(28," + pi.scale + ')';
                     } else {
                         pi.sqlType = "decimal(28,10)";
                     }
@@ -1411,11 +1410,11 @@ public class TdsData {
                     BigDecimal value = (BigDecimal)pi.value;
                     if (connection.getMaxPrecision() > 28) {
                         if (value.scale() > 10 || value.abs().compareTo(limit38) > 0) {
-                            pi.sqlType = "decimal(38," + value.scale() + ")";
+                            pi.sqlType = "decimal(38," + value.scale() + ')';
                         }
                     } else {
                         if (value.scale() > 10 || value.abs().compareTo(limit28) > 0) {
-                            pi.sqlType = "decimal(28," + value.scale() + ")";
+                            pi.sqlType = "decimal(28," + value.scale() + ')';
                         }
                     }
                 }
@@ -2613,7 +2612,7 @@ public class TdsData {
         ColInfo ci = new ColInfo();
         len -= 2;
         ci.tdsType = in.read(); // TDS Type
-        len = len - in.read(); // Size of descriptor
+        len -= in.read(); // Size of descriptor
 
         switch (ci.tdsType) {
             case SYBINT1:
@@ -2638,7 +2637,7 @@ public class TdsData {
                     // Skip the buffer size and value
                     in.skip(2 + len);
                     throw new ProtocolException(ex.toString() + " [SQLState: "
-                            + ex.getSQLState() + "]");
+                            + ex.getSQLState() + ']');
                 }
 
                 in.skip(2); // Skip buffer size

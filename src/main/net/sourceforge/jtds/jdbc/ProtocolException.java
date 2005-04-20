@@ -21,16 +21,9 @@ package net.sourceforge.jtds.jdbc;
  * Exception class used to report errors in the TDS protocol.
  *
  * @author Mike Hutchinson
- * @version $Id: ProtocolException.java,v 1.2 2004-08-24 17:45:03 bheineman Exp $
+ * @version $Id: ProtocolException.java,v 1.3 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 public class ProtocolException extends Exception {
-    /**
-     * Construct a default ProtocolException.
-     */
-    public ProtocolException() {
-        super();
-    }
-
     /**
      * Construct a ProtocolException with message.
      *

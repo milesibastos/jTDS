@@ -26,24 +26,21 @@ import java.net.UnknownHostException;
 import jcifs.smb.NtlmPasswordAuthentication;
 import jcifs.smb.SmbNamedPipe;
 
-
 /**
  * This class implements inter-process communication (IPC) to the
  * database server using named pipes.
  *
  * @todo Extract abstract base class SharedIpc from {@link SharedSocket} and this class.
  * @todo Implement connection timeouts for named pipes.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.12 2004-08-28 19:10:01 bheineman Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.13 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
-
     /**
      * The shared named pipe.
      */
-    private SmbNamedPipe pipe = null;
-
+    private SmbNamedPipe pipe;
 
     /**
      * Default constructor.
@@ -51,20 +48,21 @@ public class SharedNamedPipe extends SharedSocket {
     private SharedNamedPipe() {
     }
 
-
     /**
      * Construct a SharedNamedPipe to the server.
-     * 
-     * @param host The SQL Server host name.
-     * @param tdsVersion The TDS protocol version.
-     * @param serverType The server type (SQL Server or Sybase).
-     * @param packetSize The data packet size (used for buffering the named pipe input stream).
-     * @param instance The database instance name.
-     * @param domain The domain used for Windows (NTLM) authentication.
-     * @param user The username.
-     * @param password The password.
-     * @throws IOException If named pipe or its input or output streams do not open.
-     * @throws UnknownHostException If host cannot be found for the named pipe.
+     *
+     * @param host       SQL Server host name
+     * @param tdsVersion TDS protocol version
+     * @param serverType server type (SQL Server or Sybase)
+     * @param packetSize data packet size (used for buffering the named pipe
+     *                   input stream)
+     * @param instance   database instance name
+     * @param domain     domain used for Windows (NTLM) authentication
+     * @param user       username
+     * @param password   password
+     * @throws IOException if the named pipe or its input or output streams do
+     *                     not open
+     * @throws UnknownHostException if host cannot be found for the named pipe
      */
     static SharedNamedPipe instance(
             String host, int tdsVersion, int serverType, int packetSize, String instance,
@@ -78,16 +76,15 @@ public class SharedNamedPipe extends SharedSocket {
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(domain, user, password);
 
-        StringBuffer url = new StringBuffer();
+        StringBuffer url = new StringBuffer(32);
 
         url.append("smb://");
         url.append(host);
-        url.append("/IPC$/");
+        url.append("/IPC$");
 
-        if (instance != null && !instance.equals("")) {
-            url.append("MSSQL$");
+        if (instance != null && instance.length() != 0) {
+            url.append("/MSSQL$");
             url.append(instance);
-            url.append("/");
         }
 
         url.append(DefaultProperties.NAMED_PIPE_PATH_SQLSERVER);
@@ -108,19 +105,17 @@ public class SharedNamedPipe extends SharedSocket {
         return newInstance;
     }
 
-
     /**
      * Get the connected status of this socket.
-     * 
-     * @return True if the underlying socket is connected.
+     *
+     * @return true if the underlying socket is connected
      */
     boolean isConnected() {
         return getPipe() != null;
     }
 
-
     /**
-     * Close the socket (noop if in shared mode)
+     * Close the socket (noop if in shared mode).
      */
     void close() throws IOException {
         super.close();
@@ -129,10 +124,10 @@ public class SharedNamedPipe extends SharedSocket {
         //getPipe().close();
     }
 
-
     /**
      * Force close the socket causing any pending reads/writes to fail.
-     * <p>Used by the login timer to abort a login attempt.
+     * <p/>
+     * Used by the login timer to abort a login attempt.
      */
     void forceClose() {
         try {
@@ -161,9 +156,9 @@ public class SharedNamedPipe extends SharedSocket {
 
     /**
      * Getter for {@link SharedNamedPipe#pipe} field.
-     * 
-     * @return The {@link SmbNamedPipe} used for communication.
-     */ 
+     *
+     * @return {@link SmbNamedPipe} used for communication
+     */
     private SmbNamedPipe getPipe() {
         return pipe;
     }
@@ -171,9 +166,9 @@ public class SharedNamedPipe extends SharedSocket {
 
     /**
      * Setter for {@link SharedNamedPipe#pipe} field.
-     * 
-     * @param pipe The {@link SmbNamedPipe} to be used for communication.
-     */ 
+     *
+     * @param pipe {@link SmbNamedPipe} to be used for communication
+     */
     private void setPipe(SmbNamedPipe pipe) {
         this.pipe = pipe;
     }
@@ -181,8 +176,10 @@ public class SharedNamedPipe extends SharedSocket {
 
     /**
      * Set the socket timeout.
-     * 
-     * @param timeout the timeout value in milliseconds
+     * <p/>
+     * Noop for now; timeouts are not implemented for SMB named pipes.
+     *
+     * @param timeout timeout value in milliseconds
      */
     protected void setTimeout(int timeout) {
         // FIXME - implement timeout functionality
@@ -201,11 +198,12 @@ public class SharedNamedPipe extends SharedSocket {
      * <p/>
      * <code>assert (packetSize == 0 || (packetSize >= {@link TdsCore#MIN_PKT_SIZE}
      * && packetSize <= {@link TdsCore#MAX_PKT_SIZE}))</code>
-     * 
-     * @param packetSize The requested packet size for the connection.
-     * @return minimum default packet size if <code>packetSize == 0</code>, else <code>packetSize</code>
+     *
+     * @param packetSize requested packet size for the connection
+     * @return minimum default packet size if <code>packetSize == 0</code>,
+     *         else <code>packetSize</code>
      */
-    private int calculateBufferSize(final int tdsVersion, final int packetSize) {
+    private static int calculateBufferSize(final int tdsVersion, final int packetSize) {
 
         if (packetSize == 0) {
             if (tdsVersion >= Driver.TDS70) {

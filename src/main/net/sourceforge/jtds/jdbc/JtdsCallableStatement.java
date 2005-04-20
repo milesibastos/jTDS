@@ -46,11 +46,11 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.13 2005-04-07 20:46:00 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.14 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
-    protected boolean paramWasNull = false;
+    protected boolean paramWasNull;
 
     /**
      * Construct a CallableStatement object.

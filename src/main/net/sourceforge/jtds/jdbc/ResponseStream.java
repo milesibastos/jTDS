@@ -33,7 +33,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.17 2005-04-17 18:41:24 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.18 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -47,7 +47,7 @@ public class ResponseStream {
     /** The unique stream id. */
     private int streamId;
     /** True if stream is closed. */
-    private boolean isClosed = false;
+    private boolean isClosed;
     /** A shared byte buffer. */
     private byte[] byteBuffer = new byte[255];
     /** A shared char buffer. */

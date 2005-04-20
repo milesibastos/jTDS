@@ -27,17 +27,17 @@ import java.lang.reflect.Field;
 
 /**
  * Base class for unit tests which do not connect to a database.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.8 2004-08-24 17:45:07 bheineman Exp $
- */ 
+ * @version $Id: UnitTestBase.java,v 1.9 2005-04-20 16:49:32 alin_sinpalean Exp $
+ */
 public abstract class UnitTestBase extends TestCase {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name The name of the test.
-     */ 
+     */
     public UnitTestBase(final String name) {
         super(name);
     }
@@ -45,12 +45,12 @@ public abstract class UnitTestBase extends TestCase {
 
     /**
      * Invoke a constructor on a class using reflection.
-     * 
+     *
      * @param klass The class.
      * @param classes The classes in the parameter list.
      * @param objects The objects to be used as parameters.
      * @return The object constructed.
-     */ 
+     */
     public static Object invokeConstructor(final Class klass, final Class[] classes, final Object[] objects) {
         try {
             Constructor constructor;
@@ -80,11 +80,11 @@ public abstract class UnitTestBase extends TestCase {
 
     /**
      * Get the value of an instance field on an object using reflection.
-     * 
+     *
      * @param instance The instance of the object.
      * @param fieldName The name of the field.
      * @return The object returned by getting the field.
-     */ 
+     */
     public static Object invokeGetInstanceField(final Object instance, final String fieldName) {
         try {
             Field field;
@@ -108,13 +108,13 @@ public abstract class UnitTestBase extends TestCase {
 
     /**
      * Invoke an instance method on an object using reflection.
-     * 
+     *
      * @param instance The instance of the object.
      * @param methodName The name of the method.
      * @param classes The classes in the parameter list.
      * @param objects The objects to be used as parameters.
      * @return The object returned by invoking the method.
-     */ 
+     */
     public static Object invokeInstanceMethod(
             final Object instance, final String methodName, final Class[] classes, final Object[] objects) {
 
@@ -143,13 +143,13 @@ public abstract class UnitTestBase extends TestCase {
 
     /**
      * Invoke a static method on a class using reflection.
-     * 
+     *
      * @param klass The class.
      * @param methodName The name of the method.
      * @param classes The classes in the parameter list.
      * @param objects The objects to be used as parameters.
      * @return The object returned by invoking the method.
-     */ 
+     */
     public static Object invokeStaticMethod(
             final Class klass, final String methodName, final Class[] classes, final Object[] objects) {
 
@@ -173,20 +173,6 @@ public abstract class UnitTestBase extends TestCase {
         catch (InvocationTargetException e) {
             throw new RuntimeException(e.getTargetException().getMessage());
         }
-    }
-
-
-    /**
-     * Compare two arrays element-by-element.
-     * <p/>
-     * The default JUnit {@link Assert#assertEquals(Object, Object)} method
-     * does not handle them properly.
-     * 
-     * @param expected The expected value.
-     * @param actual The actual value.
-     */
-    protected void assertEquals(Object[] expected, Object[] actual) {
-        assertEquals(null, expected, actual);
     }
 
 
@@ -224,7 +210,7 @@ public abstract class UnitTestBase extends TestCase {
 
     /**
      * @see Assert#failNotEquals(java.lang.String, java.lang.Object, java.lang.Object)
-     */ 
+     */
     private void failNotEquals(String message, Object[] expected, Object[] actual) {
         fail((String) invokeStaticMethod(Assert.class, "format",
                                          new Class[]{String.class, Object.class, Object.class},
@@ -234,10 +220,10 @@ public abstract class UnitTestBase extends TestCase {
 
     /**
      * Format an <code>Object[]</code> object to a <code>String</code>.
-     * 
+     *
      * @param object The object to be formatted.
      * @return Formatted string representing the object.
-     */ 
+     */
     private String format(Object[] object) {
         StringBuffer buf = new StringBuffer();
         if (object == null || object.length < 1) {

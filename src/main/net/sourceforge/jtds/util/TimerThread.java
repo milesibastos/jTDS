@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.3 2005-03-12 21:46:29 alin_sinpalean Exp $
+ * @version $Id: TimerThread.java,v 1.4 2005-04-20 16:49:31 alin_sinpalean Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -78,7 +78,7 @@ public class TimerThread extends Thread {
     /** List of <code>TimerRequest</code>s to execute, ordered by time. */
     private LinkedList timerList = new LinkedList();
     /** Time when the first request time out should occur. */
-    private long nextTimeout = 0;
+    private long nextTimeout;
 
     /**
      * Singleton getter.

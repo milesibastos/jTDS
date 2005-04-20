@@ -24,32 +24,37 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
- * This class implements a memory cached scrollable/updateable result set.
- * <p>
+ * A memory cached scrollable/updateable result set.
+ * <p/>
  * Notes:
  * <ol>
- * <li>For maximum performance use the scroll insensitive result set type.
- * <li>As the result set is cached in memory this implementation is limited
- * to small result sets.
- * <li>Updateable or scroll sensitive result sets are limited to selects which
- * reference one table only.
- * <li>Scroll sensitive result sets must have primary keys.
- * <li>Updates are optimistic. To guard against lost updates it is recommended
- * that the table includes a timestamp column.
- * <li>This class is a plug-in replacement for the MSCursorResultSet class which
- * may be advantageous in certain applications as the scroll insensitive result
- * set implemented here is much faster than the server side cursor.
- * <li>Updateable result sets cannot be built from the output of stored procedures.
- * <li>This implementation uses 'select ... for browse' to obtain the column meta
- * data needed to generate update statements etc.
- * <li>Named forward updateable cursors are also supported in which case positioned updates
- * and deletes are used referencing a server side declared cursor.
- * <li>Named forward read only declared cursors can have a larger fetch size specified
- * allowing a cursor alternative to the default direct select method.
- * <ol>
+ *   <li>For maximum performance use the scroll insensitive result set type.
+ *   <li>As the result set is cached in memory this implementation is limited
+ *     to small result sets.
+ *   <li>Updateable or scroll sensitive result sets are limited to selects
+ *     which reference one table only.
+ *   <li>Scroll sensitive result sets must have primary keys.
+ *   <li>Updates are optimistic. To guard against lost updates it is
+ *     recommended that the table includes a timestamp column.
+ *   <li>This class is a plug-in replacement for the MSCursorResultSet class
+ *     which may be advantageous in certain applications as the scroll
+ *     insensitive result set implemented here is much faster than the server
+ *     side cursor.
+ *   <li>Updateable result sets cannot be built from the output of stored
+ *     procedures.
+ *   <li>This implementation uses 'select ... for browse' to obtain the column
+ *     meta data needed to generate update statements etc.
+ *   <li>Named forward updateable cursors are also supported in which case
+ *     positioned updates and deletes are used referencing a server side
+ *     declared cursor.
+ *   <li>Named forward read only declared cursors can have a larger fetch size
+ *     specified allowing a cursor alternative to the default direct select
+ *     method.
+ * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.15 2005-03-26 22:10:58 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.16 2005-04-20 16:49:14 alin_sinpalean Exp $
+ * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
 
@@ -59,17 +64,15 @@ public class CachedResultSet extends JtdsResultSet {
     protected ParamInfo[] insertRow;
     /** The "update" row. */
     protected ParamInfo[] updateRow;
-    /** Indicates that result set is keyed. */
-    protected boolean hasKeys;
     // FIXME Remember if the row was updated/deleted for each row in the ResultSet
     /** Indicates that row has been updated. */
-    protected boolean rowUpdated = false;
+    protected boolean rowUpdated;
     /** Indicates that row has been deleted. */
-    protected boolean rowDeleted  = false;
+    protected boolean rowDeleted;
     /** The row count of the initial result set. */
     protected int initialRowCnt;
     /** True if this is a local temporary result set. */
-    protected boolean tempResultSet = false;
+    protected boolean tempResultSet;
     /** Cursor TdsCore object. */
     protected TdsCore cursorTds;
     /** Updates TdsCore object used for positioned updates. */
@@ -77,7 +80,7 @@ public class CachedResultSet extends JtdsResultSet {
     /** Flag to indicate Sybase. */
     protected boolean isSybase;
     /** Fetch size has been changed. */
-    protected boolean sizeChanged = false;
+    protected boolean sizeChanged;
     /** Original SQL statement. */
     protected String sql;
     /** Original procedure name. */
@@ -90,19 +93,19 @@ public class CachedResultSet extends JtdsResultSet {
     protected String tableName;
 
     /**
-     * Construct a new cached result set.
-     * <p>
-     * This result set will either be cached in memory or, if the
-     * cursor name is set, can be a forward only server side cursor.
-     * This latter form of cursor can also support positioned updates.
+     * Constructs a new cached result set.
+     * <p/>
+     * This result set will either be cached in memory or, if the cursor name
+     * is set, can be a forward only server side cursor. This latter form of
+     * cursor can also support positioned updates.
      *
-     * @param statement       The parent statement object.
-     * @param sql             The SQL statement used to build the result set.
-     * @param procName        An optional stored procedure name.
-     * @param procedureParams Parameters for prepared statements.
-     * @param resultSetType   The result set type eg scrollable.
-     * @param concurrency     The result set concurrency eg updateable.
-     * @exception java.sql.SQLException
+     * @param statement       the parent statement object
+     * @param sql             the SQL statement used to build the result set
+     * @param procName        an optional stored procedure name
+     * @param procedureParams parameters for prepared statements
+     * @param resultSetType   the result set type eg scrollable
+     * @param concurrency     the result set concurrency eg updateable
+     * @exception SQLException if an error occurs
      */
     CachedResultSet(JtdsStatement statement,
             String sql,
@@ -127,15 +130,16 @@ public class CachedResultSet extends JtdsResultSet {
         //
         // Now create the specified type of cursor
         //
-        cursorCreate(sql, procName, procedureParams);
+        cursorCreate();
     }
 
     /**
-     * Construct a cached result set based on locally generated data.
-     * @param statement       The parent statement object.
-     * @param colName         Array of column names.
-     * @param colType         Array of corresponding data types.
-     * @exception java.sql.SQLException
+     * Constructs a cached result set based on locally generated data.
+     *
+     * @param statement the parent statement object
+     * @param colName   array of column names
+     * @param colType   array of corresponding data types
+     * @exception SQLException if an error occurs
      */
     CachedResultSet(JtdsStatement statement,
                     String[] colName, int[] colType) throws SQLException {
@@ -167,11 +171,12 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a cached result set with the same columns
-     * (and optionally data) as an existing result set.
-     * @param rs The result set to copy.
-     * @param load Load data from the supplied result set.
-     * @throws SQLException
+     * Creates a cached result set with the same columns (and optionally data)
+     * as an existing result set.
+     *
+     * @param rs   the result set to copy
+     * @param load load data from the supplied result set
+     * @throws SQLException if an error occurs
      */
     CachedResultSet(JtdsResultSet rs, boolean load) throws SQLException {
         super((JtdsStatement)rs.getStatement(),
@@ -221,11 +226,12 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a cached result set containing one row.
-     * @param statement The parent statement object.
-     * @param columns   The column descriptor array.
-     * @param data      The row data.
-     * @throws SQLException
+     * Creates a cached result set containing one row.
+     *
+     * @param statement the parent statement object
+     * @param columns   the column descriptor array
+     * @param data      the row data
+     * @throws SQLException if an error occurs
      */
     CachedResultSet(JtdsStatement statement,
             ColInfo columns[], Object data[]) throws SQLException {
@@ -243,25 +249,22 @@ public class CachedResultSet extends JtdsResultSet {
 
     /**
      * Modify the concurrency of the result set.
-     * <p>Use to make result set read only once loaded.
-     * @param concurrency The concurrency value eg ResultSet.CONCUR_READ_ONLY.
+     * <p/>
+     * Use to make result set read only once loaded.
+     *
+     * @param concurrency the concurrency value eg
+     *                    <code>ResultSet.CONCUR_READ_ONLY</code>
      */
-    void setConcurrency(int concurrency)
-    {
+    void setConcurrency(int concurrency) {
         this.concurrency = concurrency;
     }
 
     /**
-     * Create a new scrollable result set in memory or a named server cursor.
+     * Creates a new scrollable result set in memory or a named server cursor.
      *
-     * @param sql        The SQL SELECT statement.
-     * @param procName   Optional procedure name for cursors based on a stored procedure.
-     * @param parameters Optional stored procedure parameters.
-     * @exception java.sql.SQLException
+     * @exception SQLException if an error occurs
      */
-    private void cursorCreate(String sql,
-                              String procName,
-                              ParamInfo[] parameters)
+    private void cursorCreate()
             throws SQLException {
         //
         boolean isSelect = false;
@@ -276,11 +279,10 @@ public class CachedResultSet extends JtdsResultSet {
             // We are going to need access to a SELECT statement for
             // this to work. Reparse the SQL now and check.
             //
-            ArrayList params = new ArrayList();
-            String tmp[] = new SQLParser(sql, params,
-                                (ConnectionJDBC2)statement.getConnection()).parse(true);
+            String tmp[] = new SQLParser(sql, null,
+                    (ConnectionJDBC2)statement.getConnection()).parse(true);
 
-            if (tmp[2].equals("select") && tmp[3] != null && tmp[3].length() > 0) {
+            if ("select".equals(tmp[2]) && tmp[3] != null && tmp[3].length() > 0) {
                 // OK We have a select with at least one table.
                 tableName = tmp[3];
                 isSelect = true;
@@ -312,14 +314,13 @@ public class CachedResultSet extends JtdsResultSet {
             // We need to substitute any parameters now as the prepended DECLARE CURSOR
             // will throw the parameter positions off.
             //
-            if (parameters != null && parameters.length > 0) {
+            if (procedureParams != null && procedureParams.length > 0) {
                 sql = Support.substituteParameters(sql,
-                                                   parameters,
-                                                   statement.getTds().getTdsVersion());
+                        procedureParams, statement.getTds().getTdsVersion());
             }
             StringBuffer cursorSQL = new StringBuffer(sql.length() + cursorName.length()+ 128);
             cursorSQL.append("DECLARE ").append(cursorName).append(" CURSOR FOR ").append(sql);
-            cursorTds.executeSQL(cursorSQL.toString(), procName, parameters,
+            cursorTds.executeSQL(cursorSQL.toString(), procName, procedureParams,
                     false, statement.getQueryTimeout(), statement.getMaxRows(),
                     statement.getMaxFieldSize(), true);
             cursorTds.clearResponseQueue();
@@ -356,7 +357,7 @@ public class CachedResultSet extends JtdsResultSet {
                 // OK Should have an SQL select statement
                 // append " FOR BROWSE" to obtain table names
                 // NB. We can't use any jTDS temporary stored proc
-                    cursorTds.executeSQL(sql + " FOR BROWSE", null, parameters,
+                    cursorTds.executeSQL(sql + " FOR BROWSE", null, procedureParams,
                             false, statement.getQueryTimeout(),
                             statement.getMaxRows(), statement.getMaxFieldSize(),
                             true);
@@ -399,7 +400,7 @@ public class CachedResultSet extends JtdsResultSet {
             //
             // Create a read only cursor using direct SQL
             //
-            cursorTds.executeSQL(sql, procName, parameters, false,
+            cursorTds.executeSQL(sql, procName, procedureParams, false,
                     statement.getQueryTimeout(), statement.getMaxRows(),
                     statement.getMaxFieldSize(), true);
             while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
@@ -424,21 +425,26 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Analyse the tables in the result set and determine if
-     * we have the primary key columns needed to make each updateable.
-     * <p>Sybase (and SQL 6.5) will automatically include any additional
-     * key and timestamp columns as hidden fields even if the user does
-     * not reference them in the select statement.
-     * <p>If table is unkeyed but there is an identity column then this
-     * is promoted to a key.
-     * <p>Alternatively we can update, provided all the columns in the
-     * table row have been selected, by regarding all of them as keys.
-     * <p>SQL Server 7+ does not return the correct primary key meta data for
-     * temporary tables so the driver has to query the catalog to locate any keys.
-     * @return <code>boolean<code> true if there is one table and it is keyed.
+     * Analyses the tables in the result set and determines if the primary key
+     * columns needed to make it updateable exist.
+     * <p/>
+     * Sybase (and SQL 6.5) will automatically include any additional key and
+     * timestamp columns as hidden fields even if the user does not reference
+     * them in the select statement.
+     * <p/>
+     * If the table is unkeyed but there is an identity column then this is
+     * promoted to a key.
+     * <p/>
+     * Alternatively we can update, provided all the columns in the table row
+     * have been selected, by regarding all of them as keys.
+     * <p/>
+     * SQL Server 7+ does not return the correct primary key meta data for
+     * temporary tables so the driver has to query the catalog to locate any
+     * keys.
+     *
+     * @return <code>true<code> if there is one table and it is keyed
      */
-    boolean isCursorUpdateable() throws SQLException
-    {
+    boolean isCursorUpdateable() throws SQLException {
         //
         // Get fully qualified table names and check keys
         //
@@ -460,8 +466,9 @@ public class CachedResultSet extends JtdsResultSet {
                 ci.isKey = true;
                 isKeyed = true;
             }
+            StringBuffer key = new StringBuffer();
             if (ci.tableName != null && ci.tableName.length() > 0) {
-                StringBuffer key = new StringBuffer();
+                key.setLength(0);
                 if (ci.catalog != null) {
                     key.append(ci.catalog).append('.');
                     if (ci.schema == null) {
@@ -486,10 +493,10 @@ public class CachedResultSet extends JtdsResultSet {
             sql.append("SELECT ");
             for (int i = 1; i <= 8; i++) {
                 if (i > 1) {
-                    sql.append(",");
+                    sql.append(',');
                 }
                 sql.append("index_col('tempdb..").append(tableName);
-                sql.append("', indid, ").append(i).append(")");
+                sql.append("', indid, ").append(i).append(')');
             }
             sql.append(" FROM tempdb..sysindexes WHERE id = object_id('tempdb..");
             sql.append(tableName).append("') AND indid > 0 AND ");
@@ -538,11 +545,11 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Fetch the next result row from the internal row array.
+     * Fetches the next result row from the internal row array.
      *
-     * @param rowNum The row number to fetch.
-     * @return <code>boolean</code> true if a result set row is returned.
-     * @throws java.sql.SQLException
+     * @param rowNum the row number to fetch
+     * @return <code>true</code> if a result set row is returned
+     * @throws SQLException if an error occurs
      */
     private boolean cursorFetch(int rowNum)
             throws SQLException {
@@ -619,7 +626,7 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Close the result set.
+     * Closes the result set.
      */
     private void cursorClose() throws SQLException {
         if (cursorName != null) {
@@ -638,14 +645,14 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Create a parameter object for an update, delete or insert statement.
+     * Creates a parameter object for an UPDATE, DELETE or INSERT statement.
      *
      * @param pos   the substitution position of the parameter marker in the SQL
-     * @param info  the ColInfo column descriptor
+     * @param info  the <code>ColInfo</code> column descriptor
      * @param value the column data item
-     * @return The new parameter as a <code>ParamInfo</code> object.
+     * @return the new parameter as a <code>ParamInfo</code> object
      */
-    protected ParamInfo buildParameter(int pos, ColInfo info, Object value)
+    protected static ParamInfo buildParameter(int pos, ColInfo info, Object value)
             throws SQLException {
 
         int length = 0;
@@ -675,10 +682,10 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Set the specified column's data value.
+     * Sets the specified column's data value.
      *
-     * @param colIndex The index of the column in the row.
-     * @param value The new column value.
+     * @param colIndex the index of the column in the row
+     * @param value    the new column value
      */
     protected void setColValue(int colIndex, int jdbcType, Object value, int length)
             throws SQLException {
@@ -728,16 +735,17 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Build a where clause for update or delete statements.
-     * @param sql The SQL Statement to append the where clause to.
-     * @param params The parameter descriptor array for this statement.
-     * @param select True if this where clause will be used in a select statement.
-     * @return The parameter list as a <code>ParamInfo[]</code>.
-     * @throws SQLException
+     * Builds a WHERE clause for UPDATE or DELETE statements.
+     *
+     * @param sql    the SQL Statement to append the WHERE clause to
+     * @param params the parameter descriptor array for this statement
+     * @param select true if this WHERE clause will be used in a select
+     *               statement
+     * @return the parameter list as a <code>ParamInfo[]</code>
+     * @throws SQLException if an error occurs
      */
     ParamInfo[] buildWhereClause(StringBuffer sql, ArrayList params, boolean select)
-        throws SQLException
-    {
+            throws SQLException {
         //
         // Now construct where clause
         //
@@ -762,8 +770,7 @@ public class CachedResultSet extends JtdsResultSet {
                         sql.append(" IS NULL");
                     }
                 } else {
-                    if (isKeyed && select)
-                    {
+                    if (isKeyed && select) {
                         // For refresh select only include key columns
                         if (columns[i].isKey) {
                             if (count > 0) {
@@ -797,17 +804,19 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Refresh a result set row from keyed tables.
-     * <p>If all the tables in the result set have primary keys then the
-     * result set row can be refreshed by refetching the individual table rows.
-     * @throws SQLException
+     * Refreshes a result set row from keyed tables.
+     * <p/>
+     * If all the tables in the result set have primary keys then the result
+     * set row can be refreshed by refetching the individual table rows.
+     *
+     * @throws SQLException if an error occurs
      */
     protected void refreshKeyedRows() throws SQLException
     {
         //
         // Construct a SELECT statement
         //
-        StringBuffer sql = new StringBuffer();
+        StringBuffer sql = new StringBuffer(100 + columns.length * 10);
         sql.append("SELECT ");
         int count = 0;
         for (int i = 0; i < columns.length; i++) {
@@ -862,17 +871,18 @@ public class CachedResultSet extends JtdsResultSet {
     }
 
     /**
-     * Refresh the row by rereading the result set.
-     * <p>
-     * Obviously very slow on large result sets but may
-     * be the only option if tables do not have keys.
+     * Refreshes the row by rereading the result set.
+     * <p/>
+     * Obviously very slow on large result sets but may be the only option if
+     * tables do not have keys.
      */
     protected void refreshReRead() throws SQLException
     {
         int savePos = pos;
-        cursorCreate(sql, procName, procedureParams);
+        cursorCreate();
         absolute(savePos);
     }
+
 //
 //  -------------------- java.sql.ResultSet methods -------------------
 //
@@ -1018,7 +1028,7 @@ public class CachedResultSet extends JtdsResultSet {
                      if (count > 0) {
                          sql.append(", ");
                      }
-                     sql.append("?");
+                     sql.append('?');
                      insertRow[i].markerPos = sql.length()-1;
                      params.add(insertRow[i]);
                      count++;

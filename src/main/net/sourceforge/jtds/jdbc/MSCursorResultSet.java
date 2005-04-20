@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.46 2005-04-13 14:19:51 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.47 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -288,12 +288,12 @@ public class MSCursorResultSet extends JtdsResultSet {
      */
     static int getCursorConcurrencyOpt(int resultSetConcurrency) {
         switch (resultSetConcurrency) {
+            case CONCUR_UPDATABLE:
+                return CURSOR_CONCUR_SCROLL_LOCKS;
+
             case CONCUR_READ_ONLY:
             default:
                 return CURSOR_CONCUR_READ_ONLY;
-
-            case CONCUR_UPDATABLE:
-                return CURSOR_CONCUR_SCROLL_LOCKS;
         }
     }
 
@@ -841,8 +841,8 @@ public class MSCursorResultSet extends JtdsResultSet {
                 if (tableName == null && col.tableName != null) {
                     if (col.catalog != null || col.schema != null) {
                         tableName = (col.catalog != null ? col.catalog : "")
-                                + "." + (col.schema != null ? col.schema : "")
-                                + "." + col.tableName;
+                                + '.' + (col.schema != null ? col.schema : "")
+                                + '.' + col.tableName;
                     } else {
                         tableName = col.tableName;
                     }

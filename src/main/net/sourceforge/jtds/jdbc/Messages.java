@@ -28,7 +28,7 @@ import java.util.ResourceBundle;
  *
  * @author David D. Kilzer
  * @author Mike Hutchinson
- * @version $Id: Messages.java,v 1.7 2004-09-01 15:33:59 alin_sinpalean Exp $
+ * @version $Id: Messages.java,v 1.8 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public final class Messages {
 
@@ -47,7 +47,7 @@ public final class Messages {
      * allocations and reallocations (about one for each <code>get()</code>
      * call).
      */
-    private static ResourceBundle defaultResource = null;
+    private static ResourceBundle defaultResource;
 
 
     /**

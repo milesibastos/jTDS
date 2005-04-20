@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.3
 =======================
 
+04/19/2005 - Alin Sinpalean
+ o Major code cleanup using various code inspection tools.
+
 04/17/2005 - Alin Sinpalean
  o Applied Mike's patch for bug [1172405] BLOB/CLOB position methods fail: a
    BlobBuffer class was introduced to handle LOB buffering to memory/disk and

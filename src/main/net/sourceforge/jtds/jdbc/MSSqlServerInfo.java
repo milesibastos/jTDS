@@ -48,12 +48,12 @@ import net.sourceforge.jtds.util.Logger;
  * </pre>
  *
  * @author Matt Brinkley
- * @version $Id: MSSqlServerInfo.java,v 1.7 2005-01-13 10:31:57 alin_sinpalean Exp $
+ * @version $Id: MSSqlServerInfo.java,v 1.8 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class MSSqlServerInfo {
-    private int m_numRetries = 3;
-    private int m_timeout = 2000;
-    private String[] m_serverInfoStrings = null;
+    private int numRetries = 3;
+    private int timeout = 2000;
+    private String[] serverInfoStrings;
 
     public MSSqlServerInfo(String host) throws SQLException {
         try {
@@ -67,13 +67,13 @@ public class MSSqlServerInfo {
             byte[] buf = new byte[4096];
 
             p = new DatagramPacket(buf, buf.length);
-            socket.setSoTimeout(m_timeout);
+            socket.setSoTimeout(timeout);
 
-            for (int i = 0; i < m_numRetries; i++) {
+            for (int i = 0; i < numRetries; i++) {
                 try {
                     socket.receive(p);
                     String infoString = extractString(buf, p.getLength());
-                    m_serverInfoStrings = split(infoString, ';');
+                    serverInfoStrings = split(infoString, ';');
 
                     return;
                 } catch (InterruptedIOException toEx) {
@@ -103,7 +103,7 @@ public class MSSqlServerInfo {
      *         found.
      */
     public int getPortForInstance(String instanceName) throws SQLException {
-        if (m_serverInfoStrings == null) {
+        if (serverInfoStrings == null) {
             return -1;
         }
 
@@ -115,25 +115,25 @@ public class MSSqlServerInfo {
         String curInstance = null;
         String curPort = null;
 
-        for (int index = 0; index < m_serverInfoStrings.length; index++) {
-            if (m_serverInfoStrings[index].length() == 0) {
+        for (int index = 0; index < serverInfoStrings.length; index++) {
+            if (serverInfoStrings[index].length() == 0) {
                 curInstance = null;
                 curPort = null;
             } else {
-                String key = m_serverInfoStrings[index];
+                String key = serverInfoStrings[index];
                 String value = "";
 
                 index++;
 
-                if (index < m_serverInfoStrings.length) {
-                    value = m_serverInfoStrings[index];
+                if (index < serverInfoStrings.length) {
+                    value = serverInfoStrings[index];
                 }
 
-                if (key.equals("InstanceName")) {
+                if ("InstanceName".equals(key)) {
                     curInstance = value;
                 }
 
-                if (key.equals("tcp")) {
+                if ("tcp".equals(key)) {
                     curPort = value;
                 }
 

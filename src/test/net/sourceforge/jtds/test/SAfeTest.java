@@ -110,8 +110,9 @@ public class SAfeTest extends DatabaseTestCase {
         Connection con2 = getConnection();
 
         Statement stmt = con.createStatement();
-        assertTrue(!stmt.execute(
-                "create table ##SAfe0001 (id int primary key, val varchar(20) null) "+
+        assertFalse(stmt.execute(
+                "create table ##SAfe0001 (id int primary key, val varchar(20) null)"));
+        assertFalse(stmt.execute(
                 "insert into ##SAfe0001 values (1, 'Line 1') "+
                 "insert into ##SAfe0001 values (2, 'Line 2')"));
         assertEquals(1, stmt.getUpdateCount());
@@ -174,8 +175,9 @@ public class SAfeTest extends DatabaseTestCase {
         Connection con2 = getConnection();
 
         Statement stmt = con.createStatement();
-        assertTrue(!stmt.execute(
-                "create table ##SAfe0002 (id int primary key, val varchar(20) null) "+
+        assertFalse(stmt.execute(
+                "create table ##SAfe0002 (id int primary key, val varchar(20) null)"));
+        assertFalse(stmt.execute(
                 "insert into ##SAfe0002 values (1, 'Line 1') "+
                 "insert into ##SAfe0002 values (2, 'Line 2')"));
         assertEquals(1, stmt.getUpdateCount());
@@ -282,9 +284,11 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testCursorResultSetConcurrency0003() throws Exception {
         Statement stmt0 = con.createStatement();
-        stmt0.execute("create table #SAfe0003(id int primary key, val varchar(20) null) "+
-            "insert into #SAfe0003 values (1, 'Line 1') "+
-            "insert into #SAfe0003 values (2, 'Line 2')");
+        stmt0.execute(
+                "create table #SAfe0003(id int primary key, val varchar(20) null)");
+        stmt0.execute(
+                "insert into #SAfe0003 values (1, 'Line 1') "+
+                "insert into #SAfe0003 values (2, 'Line 2')");
         while (stmt0.getMoreResults() || stmt0.getUpdateCount() != -1);
 
         final Object o1=new Object(), o2=new Object();
@@ -483,10 +487,12 @@ public class SAfeTest extends DatabaseTestCase {
      */
     public void testBitFields0005() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("create table #SAfe0005(id int primary key, bit1 bit not null, bit2 bit not null) "+
-            "insert into #SAfe0005 values (0, 0, 0) "+
-            "insert into #SAfe0005 values (1, 1, 1) "+
-            "insert into #SAfe0005 values (2, 0, 0)");
+        stmt.execute(
+                "create table #SAfe0005(id int primary key, bit1 bit not null, bit2 bit not null)");
+        stmt.execute(
+                "insert into #SAfe0005 values (0, 0, 0) "+
+                "insert into #SAfe0005 values (1, 1, 1) "+
+                "insert into #SAfe0005 values (2, 0, 0)");
         while (stmt.getMoreResults() || stmt.getUpdateCount() != -1);
 
         ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0005");
@@ -1428,6 +1434,35 @@ public class SAfeTest extends DatabaseTestCase {
         t.join();
 
         assertEquals(0, errors.size());
+    }
+
+    /**
+     * Test closing a <code>ResultSet</code> when it's out of scope.
+     * <p/>
+     * If a finalize() method which tries to call close() is added to
+     * JtdsResultSet the next() calls will be executed concurrently with any
+     * other result processing, with no synchronization whatsoever.
+     */
+    public void testSocketConcurrency5() throws Exception {
+        Statement stmt = con.createStatement();
+        assertTrue(stmt.execute(
+                "SELECT 1 SELECT 2, 3"));
+        ResultSet rs = stmt.getResultSet();
+        assertTrue(stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT));
+        ResultSet rs2 = stmt.getResultSet();
+
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        assertTrue(rs2.next());
+        assertEquals(2, rs2.getInt(1));
+        assertEquals(3, rs2.getInt(2));
+        assertFalse(rs2.next());
+        rs2.close();
+
+        stmt.close();
     }
 
     /**

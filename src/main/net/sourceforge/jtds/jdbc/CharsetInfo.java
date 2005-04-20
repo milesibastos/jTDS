@@ -37,7 +37,7 @@ import net.sourceforge.jtds.util.Logger;
  * of the <code>get</code> methods.
  *
  * @author Alin Sinpalean
- * @version $Id: CharsetInfo.java,v 1.3 2005-01-27 17:49:09 alin_sinpalean Exp $
+ * @version $Id: CharsetInfo.java,v 1.4 2005-04-20 16:49:14 alin_sinpalean Exp $
  */
 public final class CharsetInfo {
     //
@@ -200,9 +200,9 @@ public final class CharsetInfo {
     //
 
     /** The Java character set name. */
-    private String charset;
+    private final String charset;
     /** Indicates whether current charset is wide (ie multi-byte). */
-    private boolean wideChars;
+    private final boolean wideChars;
 
     /**
      * Constructs a <code>CharsetInfo</code> object from a character set

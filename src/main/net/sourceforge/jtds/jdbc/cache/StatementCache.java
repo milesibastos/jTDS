@@ -54,7 +54,7 @@ import java.util.Collection;
  * </ul>
  *
  * @author Brian Heineman
- * @version $Id: StatementCache.java,v 1.4 2004-10-26 12:53:36 alin_sinpalean Exp $
+ * @version $Id: StatementCache.java,v 1.5 2005-04-20 16:49:13 alin_sinpalean Exp $
  */
 public interface StatementCache {
 	/**
@@ -65,7 +65,7 @@ public interface StatementCache {
      * @param key the statement key whose associated handle is to be returned
      * @return statement handle
 	 */
-	public Object get(String key);
+	Object get(String key);
 
 	/**
 	 * Places the specified statement handle in the cache for the given key. If
@@ -74,7 +74,7 @@ public interface StatementCache {
      * @param key the statement key to associated with the handle
      * @param handle the statement handle
      */
-	public void put(String key, Object handle);
+	void put(String key, Object handle);
 
 	/**
 	 * Removes a statement key and handle from the cache for the specified key.
@@ -82,7 +82,7 @@ public interface StatementCache {
      * @param key the statement key whose associated handle is to be removed
      *            from the cache
 	 */
-	public void remove(String key);
+	void remove(String key);
 
 	/**
 	 * Returns a <code>Collection</code> of obsolete statement handles that may
@@ -92,5 +92,5 @@ public interface StatementCache {
 	 * @return <code>Collection</code> of obsolete statement handles to be
      *         removed
 	 */
-	public Collection getObsoleteHandles(Collection handles);
+	Collection getObsoleteHandles(Collection handles);
 }

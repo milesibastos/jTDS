@@ -1,6 +1,5 @@
 package net.sourceforge.jtds.test;
 
-import java.io.InputStream;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -199,6 +198,21 @@ public class Tds5Test extends DatabaseTestCase {
         assertEquals(new String(data), rs.getString(2));
         pstmt.close();
         stmt.close();
+    }
+
+    /**
+     * Illustrates how a statement is prepared each time it is executed and the
+     * same error is returned on each prepare. This could be optimized by
+     * somehow avoiding to prepare a statement that already failed.
+     */
+    public void testPrepare() throws Exception {
+        PreparedStatement pstmt = con.prepareStatement(
+                "SELECT ? AS value1, ? AS value2");
+        pstmt.setString(1, "1");
+        pstmt.setString(2, "2");
+        pstmt.execute();
+        pstmt.execute();
+        pstmt.close();
     }
 
     public static void main(String[] args) {

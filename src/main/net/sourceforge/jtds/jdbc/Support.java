@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.40 2005-04-17 18:41:24 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.41 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -833,11 +833,11 @@ public class Support {
                 cal.setTime((java.sql.Time) value);
                 buf.append('\'');
                 int t = cal.get(Calendar.HOUR_OF_DAY);
-                buf.append((t < 10) ? "0" + t + ":" : t + ":");
+                buf.append((t < 10) ? "0" + t + ':' : t + ":");
                 t = cal.get(Calendar.MINUTE);
-                buf.append((t < 10) ? "0" + t + ":" : t + ":");
+                buf.append((t < 10) ? "0" + t + ':' : t + ":");
                 t = cal.get(Calendar.SECOND);
-                buf.append((t < 10) ? "0" + t + "'" : t + "'");
+                buf.append((t < 10) ? "0" + t + '\'' : t + "'");
             }
         } else
             if (value instanceof java.sql.Timestamp) {
@@ -854,11 +854,11 @@ public class Support {
                 buf.append(dt);
                 buf.append(' ');
                 int t = cal.get(Calendar.HOUR_OF_DAY);
-                buf.append((t < 10) ? "0" + t + ":" : t + ":");
+                buf.append((t < 10) ? "0" + t + ':' : t + ":");
                 t = cal.get(Calendar.MINUTE);
-                buf.append((t < 10) ? "0" + t + ":" : t + ":");
+                buf.append((t < 10) ? "0" + t + ':' : t + ":");
                 t = cal.get(Calendar.SECOND);
-                buf.append((t < 10) ? "0" + t + "." : t + ".");
+                buf.append((t < 10) ? "0" + t + '.' : t + ".");
                 t = (int)(cal.getTime().getTime() % 1000L);
 
                 if (t < 100) {

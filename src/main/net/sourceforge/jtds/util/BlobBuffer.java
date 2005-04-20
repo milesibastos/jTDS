@@ -54,7 +54,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: BlobBuffer.java,v 1.1 2005-04-17 18:41:29 alin_sinpalean Exp $
+ * @version $Id: BlobBuffer.java,v 1.2 2005-04-20 16:49:31 alin_sinpalean Exp $
  */
 public class BlobBuffer {
 
@@ -138,7 +138,7 @@ public class BlobBuffer {
                 raFile.close();
             }
         } catch (IOException e) {
-            ; // Ignore we are going to delete anyway
+            // Ignore we are going to delete anyway
         } finally {
             if (blobFile != null) {
                 blobFile.delete();
@@ -271,7 +271,6 @@ public class BlobBuffer {
                 currentPage = INVALID_PAGE;
                 raFile.seek(readPtr);
                 raFile.readFully(bytes, offset, len);
-                readPtr += len;
             } else {
                 //
                 // Partial read so buffer locally
@@ -537,20 +536,17 @@ public class BlobBuffer {
      * An <code>InputStream</code> over the BLOB buffer.
      */
     private class BlobInputStream extends InputStream {
-        private BlobBuffer blob;
         private int readPtr;
         private boolean open;
 
         /**
          * Costructs an <code>InputStream</code> object over the BLOB buffer.
          *
-         * @param blob the parent <code>BlobBuffer</code> object
          * @param pos  the starting position (from 0)
          * @throws IOException if an I/O error occurs
          */
-        public BlobInputStream(BlobBuffer blob, long pos) throws IOException {
-            this.blob = blob;
-            blob.open();
+        public BlobInputStream(long pos) throws IOException {
+            BlobBuffer.this.open();
             open = true;
             readPtr = (int) pos;
         }
@@ -564,7 +560,7 @@ public class BlobBuffer {
                 try {
                     close();
                 } catch (IOException e) {
-                    ; // Ignore closing anyway
+                    // Ignore closing anyway
                 } finally {
                     super.finalize();
                 }
@@ -577,7 +573,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int available() throws IOException {
-            return (int) blob.getLength() - readPtr;
+            return (int) BlobBuffer.this.getLength() - readPtr;
         }
 
         /**
@@ -587,7 +583,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int read() throws IOException {
-            int b = blob.read(readPtr);
+            int b = BlobBuffer.this.read(readPtr);
             if (b >= 0) {
                 readPtr++;
             }
@@ -604,7 +600,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int read(byte[] bytes, int offset, int len) throws IOException {
-            int b = blob.read(readPtr, bytes, offset, len);
+            int b = BlobBuffer.this.read(readPtr, bytes, offset, len);
             if (b > 0) {
                 readPtr += b;
             }
@@ -618,7 +614,7 @@ public class BlobBuffer {
          */
         public void close() throws IOException {
             if (open) {
-                blob.close();
+                BlobBuffer.this.close();
                 open = false;
             }
         }
@@ -628,20 +624,17 @@ public class BlobBuffer {
      * A Big Endian Unicode <code>InputStream</code> over the CLOB buffer.
      */
     private class UnicodeInputStream extends InputStream {
-        private BlobBuffer blob;
         private int readPtr;
         private boolean open;
 
         /**
          * Costructs an InputStream object over the BLOB buffer.
          *
-         * @param blob the parent BlobBuffer object
          * @param pos  the starting position (from 0)
          * @throws IOException if an I/O error occurs
          */
-        public UnicodeInputStream(BlobBuffer blob, long pos) throws IOException {
-            this.blob = blob;
-            blob.open();
+        public UnicodeInputStream(long pos) throws IOException {
+            BlobBuffer.this.open();
             open = true;
             readPtr = (int) pos;
         }
@@ -655,7 +648,7 @@ public class BlobBuffer {
                 try {
                     close();
                 } catch (IOException e) {
-                    ; // Ignore closing anyway
+                    // Ignore closing anyway
                 } finally {
                     super.finalize();
                 }
@@ -668,7 +661,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int available() throws IOException {
-            return (int) blob.getLength() - readPtr;
+            return (int) BlobBuffer.this.getLength() - readPtr;
         }
 
         /**
@@ -682,7 +675,7 @@ public class BlobBuffer {
             // The XOR of 1 with the readPtr forces the bytes to be returned
             // in big endian order.
             //
-            int b = blob.read(readPtr ^ 1);
+            int b = BlobBuffer.this.read(readPtr ^ 1);
             if (b >= 0) {
                 readPtr++;
             }
@@ -696,7 +689,7 @@ public class BlobBuffer {
          */
         public void close() throws IOException {
             if (open) {
-                blob.close();
+                BlobBuffer.this.close();
                 open = false;
             }
         }
@@ -712,20 +705,17 @@ public class BlobBuffer {
      * is desired, comment out the line indicated in the read method.
      */
     private class AsciiInputStream extends InputStream {
-        private BlobBuffer blob;
         private int readPtr;
         private boolean open;
 
         /**
          * Costructs an InputStream object over the BLOB buffer.
          *
-         * @param blob the parent <code>BlobBuffer</code> object
          * @param pos  the starting position (from 0)
          * @throws IOException if an I/O error occurs
          */
-        public AsciiInputStream(BlobBuffer blob, long pos) throws IOException {
-            this.blob = blob;
-            blob.open();
+        public AsciiInputStream(long pos) throws IOException {
+            BlobBuffer.this.open();
             open = true;
             readPtr = (int) pos;
         }
@@ -739,7 +729,7 @@ public class BlobBuffer {
                 try {
                     close();
                 } catch (IOException e) {
-                    ; // Ignore closing anyway
+                    // Ignore closing anyway
                 } finally {
                     super.finalize();
                 }
@@ -752,7 +742,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int available() throws IOException {
-            return ((int) blob.getLength() - readPtr) / 2;
+            return ((int) BlobBuffer.this.getLength() - readPtr) / 2;
         }
 
         /**
@@ -762,10 +752,10 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int read() throws IOException {
-            int b1 = blob.read(readPtr);
+            int b1 = BlobBuffer.this.read(readPtr);
             if (b1 >= 0) {
                 readPtr++;
-                int b2 = blob.read(readPtr);
+                int b2 = BlobBuffer.this.read(readPtr);
                 if (b2 >= 0) {
                     readPtr++;
                     if (b2 != 0
@@ -787,7 +777,7 @@ public class BlobBuffer {
          */
         public void close() throws IOException {
             if (open) {
-                blob.close();
+                BlobBuffer.this.close();
                 open = false;
             }
         }
@@ -797,20 +787,17 @@ public class BlobBuffer {
      * Implements an <code>OutputStream</code> for BLOB data.
      */
     private class BlobOutputStream extends OutputStream {
-        private BlobBuffer blob;
         private int writePtr;
         private boolean open;
 
         /**
          * Costructs an OutputStream object over the BLOB buffer.
          *
-         * @param blob the parent BlobBuffer object
          * @param pos  the starting position (from 0)
          * @throws IOException if an I/O error occurs
          */
-        BlobOutputStream(BlobBuffer blob, long pos) throws IOException {
-            this.blob = blob;
-            blob.open();
+        BlobOutputStream(long pos) throws IOException {
+            BlobBuffer.this.open();
             open = true;
             writePtr = (int) pos;
         }
@@ -824,7 +811,7 @@ public class BlobBuffer {
                 try {
                     close();
                 } catch (IOException e) {
-                    ; // Ignore closing anyway
+                    // Ignore closing anyway
                 } finally {
                     super.finalize();
                 }
@@ -838,7 +825,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public void write(int b) throws IOException {
-            blob.write(writePtr++, b);
+            BlobBuffer.this.write(writePtr++, b);
         }
 
         /**
@@ -850,7 +837,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public void write(byte[] bytes, int offset, int len) throws IOException {
-            blob.write(writePtr, bytes, offset, len);
+            BlobBuffer.this.write(writePtr, bytes, offset, len);
             writePtr += len;
         }
 
@@ -861,7 +848,7 @@ public class BlobBuffer {
          */
         public void close() throws IOException {
             if (open) {
-                blob.close();
+                BlobBuffer.this.close();
                 open = false;
             }
         }
@@ -871,7 +858,6 @@ public class BlobBuffer {
      * Implements an ASCII <code>OutputStream</code> for CLOB data.
      */
     private class AsciiOutputStream extends OutputStream {
-        private BlobBuffer blob;
         private int writePtr;
         private boolean open;
 
@@ -879,13 +865,11 @@ public class BlobBuffer {
          * Costructs an ASCII <code>OutputStream</code> object over the BLOB
          * buffer.
          *
-         * @param blob the parent BlobBuffer object
          * @param pos  the starting position (from 0)
          * @throws IOException if an I/O error occurs
          */
-        AsciiOutputStream(BlobBuffer blob, long pos) throws IOException {
-            this.blob = blob;
-            blob.open();
+        AsciiOutputStream(long pos) throws IOException {
+            BlobBuffer.this.open();
             open = true;
             writePtr = (int) pos;
         }
@@ -899,7 +883,7 @@ public class BlobBuffer {
                 try {
                     close();
                 } catch (IOException e) {
-                    ; // Ignore closing anyway
+                    // Ignore closing anyway
                 } finally {
                     super.finalize();
                 }
@@ -913,8 +897,8 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public void write(int b) throws IOException {
-            blob.write(writePtr++, b);
-            blob.write(writePtr++, 0);
+            BlobBuffer.this.write(writePtr++, b);
+            BlobBuffer.this.write(writePtr++, 0);
         }
 
         /**
@@ -924,7 +908,7 @@ public class BlobBuffer {
          */
         public void close() throws IOException {
             if (open) {
-                blob.close();
+                BlobBuffer.this.close();
                 open = false;
             }
         }
@@ -957,12 +941,13 @@ public class BlobBuffer {
             len = (int) (this.length - pos);
         }
         try {
-            if (pos == 0 && len == buffer.length && blobFile == null) {
-                // There is no file and we do not need a subset of the data.
-                // We should copy the buffer as the user may modify its
-                // contents but this would be wasteful in most cases.
-                return buffer;
-            }
+            // Should not do this. It could cause trouble.
+//            if (pos == 0 && len == buffer.length && blobFile == null) {
+//                // There is no file and we do not need a subset of the data.
+//                // We should copy the buffer as the user may modify its
+//                // contents but this would be wasteful in most cases.
+//                return buffer;
+//            }
             // We do need a subset or we are reading from the file
             byte[] data = new byte[len];
             if (blobFile == null) {
@@ -970,7 +955,7 @@ public class BlobBuffer {
                 System.arraycopy(buffer, (int) (pos), data, 0, len);
             } else {
                 // Copy data from disk buffer
-                InputStream is = new BlobInputStream(this, pos);
+                InputStream is = new BlobInputStream(pos);
                 int bc = is.read(data);
                 is.close();
                 if (bc != data.length) {
@@ -995,9 +980,9 @@ public class BlobBuffer {
     public InputStream getBinaryStream(boolean ascii) throws SQLException {
         try {
             if (ascii) {
-                return new AsciiInputStream(this, 0);
+                return new AsciiInputStream(0);
             } else {
-                return new BlobInputStream(this, 0);
+                return new BlobInputStream(0);
             }
         } catch (IOException e) {
             throw new SQLException(Messages.get("error.generic.ioerror",
@@ -1015,7 +1000,7 @@ public class BlobBuffer {
      */
     public InputStream getUnicodeStream() throws SQLException {
         try {
-            return new UnicodeInputStream(this, 0);
+            return new UnicodeInputStream(0);
         } catch (IOException e) {
             throw new SQLException(Messages.get("error.generic.ioerror",
                     e.getMessage()),
@@ -1051,9 +1036,9 @@ public class BlobBuffer {
                 createBlobFile();
             }
             if (ascii) {
-                return new AsciiOutputStream(this, pos);
+                return new AsciiOutputStream(pos);
             } else {
-                return new BlobOutputStream(this, pos);
+                return new BlobOutputStream(pos);
             }
         } catch (IOException e) {
             throw new SQLException(Messages.get("error.generic.ioerror",
@@ -1243,9 +1228,7 @@ public class BlobBuffer {
                     int p;
                     for (p = 0;
                          p < pattern.length && buffer[i + p] == pattern[p];
-                         p++) {
-                        ;
-                    }
+                         p++);
                     if (p == pattern.length) {
                         return i + 1;
                     }
@@ -1256,9 +1239,7 @@ public class BlobBuffer {
                     int p;
                     for (p = 0;
                          p < pattern.length && read(i + p) == (pattern[p] & 0xFF);
-                         p++) {
-                        ;
-                    }
+                         p++);
                     if (p == pattern.length) {
                         close();
                         return i + 1;

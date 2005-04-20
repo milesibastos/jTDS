@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.26 2005-02-16 22:15:29 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.27 2005-04-20 16:49:22 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -64,7 +64,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * was installed that way). Initially <code>null</code>, set the first time
      * any of the methods that check this are called.
      */
-    Boolean caseSensitive = null;
+    Boolean caseSensitive;
 
     public JtdsDatabaseMetaData(ConnectionJDBC2 connection) {
         this.connection = connection;
@@ -448,11 +448,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     rsTmp.updateObject(17, rs.getObject(14));
                     rsTmp.updateObject(16, rs.getObject(8));
                 }
-                if (typeName.equals("image") || typeName.equals("text")) {
+                if ("image".equals(typeName) || "text".equals(typeName)) {
                     rsTmp.updateInt(7, Integer.MAX_VALUE);
                     rsTmp.updateInt(16, Integer.MAX_VALUE);
                 } else
-                if (typeName.equals("univarchar") || typeName.equals("unichar")) {
+                if ("univarchar".equals(typeName) || "unichar".equals(typeName)) {
                     rsTmp.updateInt(7, rs.getInt(7) / 2);
                     rsTmp.updateObject(16, rs.getObject(7));
                 } else {
@@ -1397,7 +1397,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         while (rs.next()) {
             int offset = 0;
             for (int i = 1; i + offset <= colNames.length; i++) {
-                if (i == 5 && !rsmd.getColumnName(i).equalsIgnoreCase("column_type")) {
+                if (i == 5 && !"column_type".equalsIgnoreCase(rsmd.getColumnName(i))) {
                     // With Sybase 11.92 despite what the documentation says, the
                     // column_type column is missing!
                     // Set the output value to 0 and shift the rest along by one.
@@ -1413,7 +1413,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                         }
                     }
                     rsTmp.updateString(i + offset, name);
-                } else if (rsmd.getColumnName(i).equalsIgnoreCase("data_type")) {
+                } else if ("data_type".equalsIgnoreCase(rsmd.getColumnName(i))) {
                     int type = TypeInfo.normalizeDataType(rs.getInt(i));
                     rsTmp.updateInt(i + offset, type);
                 } else {
@@ -3108,7 +3108,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
             rs.next();
 
-            caseSensitive = rs.getString(3).equalsIgnoreCase("MIXED") ?
+            caseSensitive = "MIXED".equalsIgnoreCase(rs.getString(3)) ?
                             Boolean.FALSE : Boolean.TRUE;
             s.close();
         }
@@ -3285,16 +3285,15 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param pattern the pattern to tranform
      * @return the transformed pattern as a <code>String</code>
      */
-    private String processEscapes(String pattern) {
+    private static String processEscapes(String pattern) {
         final char escChar = '\\';
 
         if (pattern == null || pattern.indexOf(escChar) == -1) {
             return pattern;
         }
 
-        StringBuffer buf = new StringBuffer();
-
         int len = pattern.length();
+        StringBuffer buf = new StringBuffer(len + 10);
 
         for (int i = 0; i < len; i++) {
             if (pattern.charAt(i) != escChar) {
@@ -3319,9 +3318,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @param call the stored procedure call to format
      * @return the formatted call escape as a <code>String</code>
      */
-    private String syscall(String catalog, String call)
-    {
-        StringBuffer sql = new StringBuffer();
+    private String syscall(String catalog, String call) {
+        StringBuffer sql = new StringBuffer(30 + call.length());
         sql.append("{call ");
         if (catalog != null) {
             if (tdsVersion >= Driver.TDS70) {

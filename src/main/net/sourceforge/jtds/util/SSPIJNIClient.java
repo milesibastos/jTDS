@@ -29,13 +29,13 @@ import java.sql.SQLException;
  */
 public class SSPIJNIClient {
     /** Singleton instance. */
-    private static SSPIJNIClient thisInstance = null;
+    private static SSPIJNIClient thisInstance;
 
     /** SSPI native library loaded flag. */
-    private static boolean libraryLoaded = false;
+    private static boolean libraryLoaded;
 
     /** SSPI client initialized flag. */
-    private boolean initialized = false;
+    private boolean initialized;
 
     /** Initializes the SSPI client. */
     private native void initialize();

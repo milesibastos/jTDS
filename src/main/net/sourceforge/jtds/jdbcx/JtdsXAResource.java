@@ -29,10 +29,10 @@ import net.sourceforge.jtds.util.Logger;
 /**
  * jTDS implementation of the XAResource interface.
  *
- * @version $Id: JtdsXAResource.java,v 1.2 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: JtdsXAResource.java,v 1.3 2005-04-20 16:49:30 alin_sinpalean Exp $
  */
 public class JtdsXAResource implements XAResource {
-    private Connection connection = null;
+    private Connection connection;
     private JtdsXAConnection xaConnection;
     private String rmHost;
 
@@ -61,12 +61,12 @@ public class JtdsXAResource implements XAResource {
     }
 
     public boolean setTransactionTimeout(int arg0) throws XAException {
-        Logger.println("XAResource.setTransactionTimeout("+arg0+")");
+        Logger.println("XAResource.setTransactionTimeout("+arg0+')');
         return false;
     }
 
     public boolean isSameRM(XAResource xares) throws XAException {
-        Logger.println("XAResource.isSameRM("+xares.toString()+")");
+        Logger.println("XAResource.isSameRM("+xares.toString()+')');
         if (xares instanceof JtdsXAResource) {
             if (((JtdsXAResource)xares).getRmHost().equals(this.rmHost)) {
                 return true;
@@ -76,37 +76,37 @@ public class JtdsXAResource implements XAResource {
     }
 
     public Xid[] recover(int flags) throws XAException {
-        Logger.println("XAResource.recover("+flags+")");
+        Logger.println("XAResource.recover("+flags+')');
         return XASupport.xa_recover(connection, xaConnection.getXAConnectionID(), flags);
     }
 
     public int prepare(Xid xid) throws XAException {
-        Logger.println("XAResource.prepare("+xid.toString()+")");
+        Logger.println("XAResource.prepare("+xid.toString()+')');
         return XASupport.xa_prepare(connection, xaConnection.getXAConnectionID(), xid);
     }
 
     public void forget(Xid xid) throws XAException {
-        Logger.println("XAResource.forget(" + xid + ")");
+        Logger.println("XAResource.forget(" + xid + ')');
         XASupport.xa_forget(connection, xaConnection.getXAConnectionID(), xid);
     }
 
     public void rollback(Xid xid) throws XAException {
-        Logger.println("XAResource.rollback(" +xid.toString()+")");
+        Logger.println("XAResource.rollback(" +xid.toString()+')');
         XASupport.xa_rollback(connection, xaConnection.getXAConnectionID(), xid);
     }
 
     public void end(Xid xid, int flags) throws XAException {
-        Logger.println("XAResource.end(" +xid.toString()+")");
+        Logger.println("XAResource.end(" +xid.toString()+')');
         XASupport.xa_end(connection, xaConnection.getXAConnectionID(), xid, flags);
     }
 
     public void start(Xid xid, int flags) throws XAException {
-        Logger.println("XAResource.start(" +xid.toString()+","+flags+")");
+        Logger.println("XAResource.start(" +xid.toString()+','+flags+')');
         XASupport.xa_start(connection, xaConnection.getXAConnectionID(), xid, flags);
     }
 
     public void commit(Xid xid, boolean commit) throws XAException {
-        Logger.println("XAResource.commit(" +xid.toString()+","+commit+")");
+        Logger.println("XAResource.commit(" +xid.toString()+','+commit+')');
         XASupport.xa_commit(connection, xaConnection.getXAConnectionID(), xid, commit);
     }
 

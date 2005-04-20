@@ -30,11 +30,11 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsInputStream.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
+ * @version $Id: TdsTlsInputStream.java,v 1.3 2005-04-20 16:49:31 alin_sinpalean Exp $
  */
 class TdsTlsInputStream extends FilterInputStream {
 
-    int bytesOutstanding = 0;
+    int bytesOutstanding;
 
     /**
      * Temporary buffer used to de-encapsulate inital TLS packets.
@@ -43,10 +43,10 @@ class TdsTlsInputStream extends FilterInputStream {
      */
     byte[] readBuffer = new byte[6144];
 
-    InputStream bufferStream = null;
+    InputStream bufferStream;
 
     /** False if TLS packets are encapsulated in TDS packets. */
-    boolean pureSSL = false;
+    boolean pureSSL;
 
     /**
      * Constructs a TdsTlsInputStream and bases it on an underlying stream.
@@ -80,7 +80,7 @@ class TdsTlsInputStream extends FilterInputStream {
 
         // Feed the client code bytes from the buffer
         int ret = bufferStream.read(b, off, len);
-        bytesOutstanding -= ret;
+        bytesOutstanding -= ret < 0 ? 0 : ret;
         if (bytesOutstanding == 0) {
             // All bytes in the buffer have been read.
             // The next read will prime it again.
@@ -96,21 +96,44 @@ class TdsTlsInputStream extends FilterInputStream {
      */
     private void primeBuffer() throws IOException {
         // first read the type (first byte for TDS and TLS).
-        in.read(readBuffer, 0, Ssl.TLS_HEADER_SIZE); // TLS packet hdr size = 5 TDS = 8
+        // TLS packet hdr size = 5 TDS = 8
+        readFully(readBuffer, 0, Ssl.TLS_HEADER_SIZE);
         int len;
         if (readBuffer[0] == TdsCore.REPLY_PKT) {
             len = ((readBuffer[2] & 0xFF) << 8) | (readBuffer[3] & 0xFF);
             // Read rest of header to skip
-            in.read(readBuffer, Ssl.TLS_HEADER_SIZE, TdsCore.PKT_HDR_LEN - Ssl.TLS_HEADER_SIZE );
+            readFully(readBuffer, Ssl.TLS_HEADER_SIZE, TdsCore.PKT_HDR_LEN - Ssl.TLS_HEADER_SIZE );
             len -= TdsCore.PKT_HDR_LEN;
-            in.read(readBuffer, 0, len); // Now get inner packet
+            readFully(readBuffer, 0, len); // Now get inner packet
         } else {
             len = ((readBuffer[3] & 0xFF) << 8) | (readBuffer[4] & 0xFF);
-            in.read(readBuffer, Ssl.TLS_HEADER_SIZE, len - Ssl.TLS_HEADER_SIZE);
+            readFully(readBuffer, Ssl.TLS_HEADER_SIZE, len - Ssl.TLS_HEADER_SIZE);
             pureSSL = true;
         }
 
         bufferStream = new ByteArrayInputStream(readBuffer, 0, len);
         bytesOutstanding = len;
+    }
+
+    /**
+     * Reads <code>len</code> bytes or throws an <code>IOException</code> if
+     * there aren't that many bytes available.
+     *
+     * @param b   buffer to read into
+     * @param off offset in the buffer where to start storing
+     * @param len amount of data to read
+     * @throws IOException if an I/O error occurs or not enough data is
+     *                     available
+     */
+    private void readFully(byte[] b, int off, int len) throws IOException {
+        int res = 0;
+        while (len > 0 && (res = in.read(b, off, len)) >= 0) {
+            off += res;
+            len -= res;
+        }
+
+        if (res < 0) {
+            throw new IOException();
+        }
     }
 }

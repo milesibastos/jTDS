@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.7 2005-02-09 08:28:51 alin_sinpalean Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.8 2005-04-20 16:49:23 alin_sinpalean Exp $
  */
 class SQLDiagnostic {
     /**
@@ -323,8 +323,8 @@ class SQLDiagnostic {
      */
     private final int serverType;
 
-    SQLException exceptions = null;
-    SQLWarning warnings = null;
+    SQLException exceptions;
+    SQLWarning warnings;
 
     void addWarning(SQLWarning w) {
         if (warnings == null) {

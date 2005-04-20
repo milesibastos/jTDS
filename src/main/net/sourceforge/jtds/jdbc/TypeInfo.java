@@ -29,32 +29,32 @@ import java.sql.Types;
  * tests.
  *
  * @author David Eaves
- * @version $Id: TypeInfo.java,v 1.2 2005-04-17 18:41:25 alin_sinpalean Exp $
+ * @version $Id: TypeInfo.java,v 1.3 2005-04-20 16:49:30 alin_sinpalean Exp $
  */
 public class TypeInfo implements Comparable {
     static final int NUM_COLS = 18;
 
-    private String typeName;
-    private int dataType;
-    private int precision;
-    private String literalPrefix;
-    private String literalSuffix;
-    private String createParams;
-    private short nullable;
-    private boolean caseSensitive;
-    private short searchable;
-    private boolean unsigned;
-    private boolean fixedPrecScale;
-    private boolean autoIncrement;
-    private String localTypeName;
-    private short minimumScale;
-    private short maximumScale;
-    private int sqlDataType;
-    private int sqlDatetimeSub;
-    private int numPrecRadix;
+    private final String typeName;
+    private final int dataType;
+    private final int precision;
+    private final String literalPrefix;
+    private final String literalSuffix;
+    private final String createParams;
+    private final short nullable;
+    private final boolean caseSensitive;
+    private final short searchable;
+    private final boolean unsigned;
+    private final boolean fixedPrecScale;
+    private final boolean autoIncrement;
+    private final String localTypeName;
+    private final short minimumScale;
+    private final short maximumScale;
+    private final int sqlDataType;
+    private final int sqlDatetimeSub;
+    private final int numPrecRadix;
 
-    private int normalizedType;
-    private int distanceFromJdbcType;
+    private final int normalizedType;
+    private final int distanceFromJdbcType;
 
 
     public TypeInfo(ResultSet rs) throws SQLException {
@@ -90,6 +90,21 @@ public class TypeInfo implements Comparable {
         this.typeName = typeName;
         this.dataType = dataType;
         this.autoIncrement = autoIncrement;
+        this.precision = 0;
+        this.literalPrefix = null;
+        this.literalSuffix = null;
+        this.createParams = null;
+        this.nullable = 0;
+        this.caseSensitive = false;
+        this.searchable = 0;
+        this.unsigned = false;
+        this.fixedPrecScale = false;
+        this.localTypeName = null;
+        this.minimumScale = 0;
+        this.maximumScale = 0;
+        this.sqlDataType = 0;
+        this.sqlDatetimeSub = 0;
+        this.numPrecRadix = 0;
 
         normalizedType = normalizeDataType(dataType);
         distanceFromJdbcType = determineDistanceFromJdbcType();
@@ -110,7 +125,7 @@ public class TypeInfo implements Comparable {
     public String toString() {
         return typeName + " ("
                 + (dataType != normalizedType ? dataType + "->" : "")
-                + normalizedType + ")";
+                + normalizedType + ')';
     }
 
     public void update(ResultSet rs) throws SQLException {

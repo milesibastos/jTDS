@@ -29,7 +29,7 @@ import java.sql.Types;
  * tests.
  *
  * @author David Eaves
- * @version $Id: TypeInfo.java,v 1.3 2005-04-20 16:49:30 alin_sinpalean Exp $
+ * @version $Id: TypeInfo.java,v 1.4 2005-04-21 09:35:14 alin_sinpalean Exp $
  */
 public class TypeInfo implements Comparable {
     static final int NUM_COLS = 18;
@@ -71,12 +71,21 @@ public class TypeInfo implements Comparable {
         fixedPrecScale = rs.getBoolean(11);
         autoIncrement = rs.getBoolean(12);
         localTypeName = rs.getString(13);
-        minimumScale = rs.getShort(14);
-        maximumScale = rs.getShort(15);
-        sqlDataType = rs.getInt(16);
-        sqlDatetimeSub = rs.getInt(17);
-        numPrecRadix = rs.getInt(18);
-
+        if (rs.getMetaData().getColumnCount() >= 18) {
+            // Some servers provide more information
+            minimumScale = rs.getShort(14);
+            maximumScale = rs.getShort(15);
+            sqlDataType = rs.getInt(16);
+            sqlDatetimeSub = rs.getInt(17);
+            numPrecRadix = rs.getInt(18);
+        } else {
+            // Must initialize final fields
+            minimumScale = 0;
+            maximumScale = 0;
+            sqlDataType = 0;
+            sqlDatetimeSub = 0;
+            numPrecRadix = 0;
+        }
         normalizedType = normalizeDataType(dataType);
         distanceFromJdbcType = determineDistanceFromJdbcType();
     }
@@ -142,11 +151,14 @@ public class TypeInfo implements Comparable {
         rs.updateBoolean(11, fixedPrecScale);
         rs.updateBoolean(12, autoIncrement);
         rs.updateString(13, localTypeName);
-        rs.updateShort(14, minimumScale);
-        rs.updateShort(15, maximumScale);
-        rs.updateInt(16, sqlDataType);
-        rs.updateInt(17, sqlDatetimeSub);
-        rs.updateInt(18, numPrecRadix);
+        if (rs.getMetaData().getColumnCount() >= 18) {
+            // Some servers provide more information
+            rs.updateShort(14, minimumScale);
+            rs.updateShort(15, maximumScale);
+            rs.updateInt(16, sqlDataType);
+            rs.updateInt(17, sqlDatetimeSub);
+            rs.updateInt(18, numPrecRadix);
+        }
     }
 
     /**

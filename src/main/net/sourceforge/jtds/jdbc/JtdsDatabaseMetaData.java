@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.27 2005-04-20 16:49:22 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.28 2005-04-21 09:35:14 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -417,7 +417,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         JtdsResultSet rs = (JtdsResultSet)s.executeQuery();
 
-        rs.setColumnCount(18);
         CachedResultSet rsTmp = new CachedResultSet((JtdsStatement)s, colNames, colTypes);
         rsTmp.moveToInsertRow();
         int colCnt = rs.getMetaData().getColumnCount();
@@ -438,15 +437,14 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     rsTmp.updateObject(i, rs.getObject(i));
                 }
                 if (colCnt >= 20) {
-                    // SYBASE 12.5
-                    rsTmp.updateObject(13, rs.getObject(15));
-                    rsTmp.updateObject(16, rs.getObject(18));
-                    rsTmp.updateObject(17, rs.getObject(17));
-                    rsTmp.updateObject(18, rs.getObject(20));
+                    // SYBASE 11.92, 12.5
+                    for (int i = 13; i <= 18; i++) {
+                        rsTmp.updateObject(i, rs.getObject(i + 2));
+                    }
                 } else {
-                    // SYBASE 11.92
-                    rsTmp.updateObject(17, rs.getObject(14));
+                    // SYBASE 11.03
                     rsTmp.updateObject(16, rs.getObject(8));
+                    rsTmp.updateObject(17, rs.getObject(14));
                 }
                 if ("image".equals(typeName) || "text".equals(typeName)) {
                     rsTmp.updateInt(7, Integer.MAX_VALUE);
@@ -1401,7 +1399,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     // With Sybase 11.92 despite what the documentation says, the
                     // column_type column is missing!
                     // Set the output value to 0 and shift the rest along by one.
-                    rsTmp.updateInt(i, DatabaseMetaData.procedureColumnUnknown);
+                    String colName = rs.getString(4);
+                    if (colName != null && colName.equals("RETURN_VALUE")) {
+                        rsTmp.updateInt(i, DatabaseMetaData.procedureColumnReturn);
+                    } else {
+                        rsTmp.updateInt(i, DatabaseMetaData.procedureColumnUnknown);
+                    }
                     offset = 1;
                 }
                 if (i == 3) {
@@ -1418,6 +1421,31 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     rsTmp.updateInt(i + offset, type);
                 } else {
                     rsTmp.updateObject(i + offset, rs.getObject(i));
+                }
+            }
+            if (serverType == Driver.SYBASE && rsmd.getColumnCount() >= 22) {
+                //
+                // For Sybase 12.5+ we can obtain column in/out status from
+                // the mode column.
+                //
+                String mode = rs.getString(22);
+                if (mode != null) {
+                    if (mode.equalsIgnoreCase("in")) {
+                        rsTmp.updateInt(5, DatabaseMetaData.procedureColumnIn);
+                    } else
+                    if (mode.equalsIgnoreCase("out")) {
+                        rsTmp.updateInt(5, DatabaseMetaData.procedureColumnInOut);
+                    }
+                }
+             }
+             if (serverType == Driver.SYBASE || tdsVersion == Driver.TDS42) {
+                //
+                // Standardise the name of the return_value column as
+                // @RETURN_VALUE for Sybase and SQL 6.5
+                //
+                String colName = rs.getString(4);
+                if (colName != null && colName.equals("RETURN_VALUE")) {
+                    rsTmp.updateString(4, "@RETURN_VALUE");
                 }
             }
             rsTmp.insertRow();
@@ -3357,7 +3385,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
     private static CachedResultSet createTypeInfoResultSet(JtdsResultSet rs) throws SQLException {
         CachedResultSet result = new CachedResultSet(rs, false);
-        result.setColumnCount(TypeInfo.NUM_COLS);
+        if (result.getMetaData().getColumnCount() > TypeInfo.NUM_COLS) {
+            result.setColumnCount(TypeInfo.NUM_COLS);
+        }
         result.setColLabel(3, "PRECISION");
         result.setColLabel(11, "FIXED_PREC_SCALE");
         upperCaseColumnNames(result);

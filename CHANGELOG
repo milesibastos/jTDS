@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.3
 =======================
 
+04/20/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1184376] Sybase getProcedureColumns bug.
+
 04/19/2005 - Alin Sinpalean
  o Major code cleanup using various code inspection tools.
 

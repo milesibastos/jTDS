@@ -22,7 +22,7 @@ import java.sql.*;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.12 2005-02-17 21:49:00 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.13 2005-04-21 09:35:36 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -633,6 +633,34 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
             }
         } finally {
             dropTable("jTDSTYPETEST");
+        }
+    }
+
+    /**
+     * Test for bug [1184376] Sybase getProcedureColumns bug
+     */
+    public void testProcedureColumns() throws Exception {
+        try {
+            dropProcedure("jtds_testparam");
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE PROC jtds_testparam @p1 int, @p2 int output as\r\n" +
+                    "BEGIN\r\n" +
+                    "  SELECT @p2 = @p1\r\n" +
+                    "END");
+            DatabaseMetaData dbmd = con.getMetaData();
+            ResultSet rs = dbmd.getProcedureColumns(null, null, "jtds_testparam", "%");
+            assertTrue(rs.next());
+            assertEquals("@RETURN_VALUE", rs.getString("COLUMN_NAME"));
+            assertEquals(DatabaseMetaData.procedureColumnReturn, rs.getInt("COLUMN_TYPE"));
+            assertTrue(rs.next());
+            assertEquals("@p1", rs.getString("COLUMN_NAME"));
+            assertEquals(DatabaseMetaData.procedureColumnIn, rs.getInt("COLUMN_TYPE"));
+            assertTrue(rs.next());
+            assertEquals("@p2", rs.getString("COLUMN_NAME"));
+            assertEquals(DatabaseMetaData.procedureColumnInOut, rs.getInt("COLUMN_TYPE"));
+            stmt.close();
+        } finally {
+            dropProcedure("jtds_testparam");
         }
     }
 

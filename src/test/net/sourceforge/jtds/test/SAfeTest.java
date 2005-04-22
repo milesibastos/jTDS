@@ -1689,4 +1689,21 @@ public class SAfeTest extends DatabaseTestCase {
             con.commit();
         }
     }
+
+    /**
+     * Test for bug [1187927] Driver Hangs on Statement.execute().
+     * <p/>
+     * Versions 1.0.3 and prior entered an infinite loop when parsing an
+     * unterminated multi-line comment.
+     */
+    public void testUnterminatedCommentParsing() throws Exception {
+        Statement stmt = con.createStatement();
+        try {
+            stmt.execute("/* This is an unterminated comment");
+            fail("Expecting parse exception");
+        } catch (SQLException ex) {
+            assertEquals("22025", ex.getSQLState());
+        }
+        stmt.close();
+    }
 }

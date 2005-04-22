@@ -44,7 +44,7 @@ import java.sql.SQLException;
  * Joel Fouse.
  * </ol>
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.20 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.21 2005-04-22 20:21:21 alin_sinpalean Exp $
  */
 class SQLParser {
     /** Input buffer with SQL statement. */
@@ -286,7 +286,7 @@ class SQLParser {
     /**
      * Skip multi-line comments
      */
-    private void skipMultiComments() {
+    private void skipMultiComments() throws SQLException {
         int block = 0;
 
         do {
@@ -299,6 +299,10 @@ class SQLParser {
 
                 // comments should be passed on to the server
                 out[d++] = in[s++];
+            } else {
+                throw new SQLException(
+                        Messages.get("error.parsesql.missing", "*/"),
+                        "22025");
             }
         } while (block > 0);
     }
@@ -822,8 +826,7 @@ class SQLParser {
      *
      * @return the table name as a <code>String</code>
      */
-    private String getTableName()
-    {
+    private String getTableName() throws SQLException {
         // FIXME If the resulting table name contains a '(' (i.e. is a function) "rollback" and return null
         StringBuffer name = new StringBuffer(128);
         char c = (s < len)? in[s]: ' ';

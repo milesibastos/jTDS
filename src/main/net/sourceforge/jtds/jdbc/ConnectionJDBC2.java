@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.77 2005-04-20 16:49:14 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.78 2005-04-22 19:25:57 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -968,7 +968,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         } catch (UnsupportedEncodingException ex) {
             throw new SQLException(
                     Messages.get("error.charset.invalid", ref,
-                            charsetInfo.getCharset()),
+                            ci.getCharset()),
                     "2C000");
         }
 

@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.3
 =======================
 
+04/22/2005 - Alin Sinpalean
+ o Corrected bug [1187872] Supported CodePage: error in error message.
+
 04/20/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1184376] Sybase getProcedureColumns bug.
 

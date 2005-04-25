@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.78 2005-04-22 19:25:57 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.79 2005-04-25 11:47:00 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -613,6 +613,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (!autoCommit) {
             procInTran.remove(key);
         }
+    }
+
+    /**
+     * Retrieves the maximum statement cache size.
+     *
+     * @return the maximum statement cache size
+     */
+    int getMaxStatements() {
+        return maxStatements;
     }
 
     /**
@@ -1793,7 +1802,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
-        String[] result = new SQLParser(sql, new ArrayList(), this).parse(false);
+        String[] result = SQLParser.parse(sql, new ArrayList(), this, false);
 
         return result[0];
     }

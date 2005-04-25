@@ -7,7 +7,7 @@ import java.sql.SQLException;
 /**
  * Test for miscellaneous JDBC 3.0 features.
  *
- * @version $Id: JDBC3Test.java,v 1.1 2005-04-04 20:37:23 alin_sinpalean Exp $
+ * @version $Id: JDBC3Test.java,v 1.2 2005-04-25 11:47:01 alin_sinpalean Exp $
  */
 public class JDBC3Test extends TestBase {
     public JDBC3Test(String name) {
@@ -76,6 +76,35 @@ public class JDBC3Test extends TestBase {
             // Ignore
         }
         assertFalse(stmt.getMoreResults());
+        stmt.close();
+    }
+
+    /**
+     * Test closing a <code>ResultSet</code> when it's out of scope.
+     * <p/>
+     * If a finalize() method which tries to call close() is added to
+     * JtdsResultSet the next() calls will be executed concurrently with any
+     * other result processing, with no synchronization whatsoever.
+     */
+    public void testSocketConcurrency5() throws Exception {
+        Statement stmt = con.createStatement();
+        assertTrue(stmt.execute(
+                "SELECT 1 SELECT 2, 3"));
+        ResultSet rs = stmt.getResultSet();
+        assertTrue(stmt.getMoreResults(Statement.KEEP_CURRENT_RESULT));
+        ResultSet rs2 = stmt.getResultSet();
+
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        assertTrue(rs2.next());
+        assertEquals(2, rs2.getInt(1));
+        assertEquals(3, rs2.getInt(2));
+        assertFalse(rs2.next());
+        rs2.close();
+
         stmt.close();
     }
 }

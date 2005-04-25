@@ -17,10 +17,10 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.BatchUpdateException;
 import java.sql.SQLWarning;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.37 2005-04-20 16:49:22 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.38 2005-04-25 11:47:01 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -396,15 +396,10 @@ public class JtdsStatement implements java.sql.Statement {
                 && !returnKeys
                 && (sqlWord.equals("select") || sqlWord.startsWith("exec"))) {
             try {
-                 currentResult = new MSCursorResultSet(
-                            this,
-                            sql,
-                            spName,
-                            params,
-                            resultSetType,
-                            resultSetConcurrency);
+                currentResult = new MSCursorResultSet(this, sql, spName,
+                        params, resultSetType, resultSetConcurrency);
 
-                    return true;
+                return true;
             } catch (SQLException e) {
                 if (connection == null || connection.isClosed()
                         || "HYT00".equals(e.getSQLState())) {
@@ -909,7 +904,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         if (escapeProcessing) {
-            String tmp[] = new SQLParser(sql, null, connection).parse(false);
+            String tmp[] = SQLParser.parse(sql, null, connection, false);
 
             if (tmp[1].length() != 0) {
                 throw new SQLException(
@@ -954,7 +949,7 @@ public class JtdsStatement implements java.sql.Statement {
         boolean returnKeys;
         String sqlWord = "";
         if (escapeProcessing) {
-            String tmp[] = new SQLParser(sql, null, connection).parse(false);
+            String tmp[] = SQLParser.parse(sql, null, connection, false);
 
             if (tmp[1].length() != 0) {
                 throw new SQLException(
@@ -1110,7 +1105,7 @@ public class JtdsStatement implements java.sql.Statement {
             throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
         if (escapeProcessing) {
-            String tmp[] = new SQLParser(sql, null, connection).parse(false);
+            String tmp[] = SQLParser.parse(sql, null, connection, false);
 
             if (tmp[1].length() != 0) {
                 throw new SQLException(

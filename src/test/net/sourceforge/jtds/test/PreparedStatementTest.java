@@ -18,7 +18,13 @@
 package net.sourceforge.jtds.test;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 
 /**
  * @version 1.0
@@ -748,11 +754,12 @@ public class PreparedStatementTest extends TestBase {
         Statement stmt = con.createStatement();
         stmt.execute("create table #test (id int)");
         PreparedStatement pstmt =
-                con.prepareStatement("select top ? from #test");
+                con.prepareStatement("select top ? * from #test");
         pstmt.setInt(1, 10);
         try {
             pstmt.executeQuery();
-            fail("Expecting an exception to be thrown.");
+            // This won't fail in unprepared mode (prepareSQL == 0)
+            // fail("Expecting an exception to be thrown.");
         } catch (SQLException ex) {
             assertEquals("37000", ex.getSQLState());
         }

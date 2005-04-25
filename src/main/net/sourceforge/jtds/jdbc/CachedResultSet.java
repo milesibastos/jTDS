@@ -53,7 +53,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.16 2005-04-20 16:49:14 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.17 2005-04-25 11:47:00 alin_sinpalean Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -279,8 +279,8 @@ public class CachedResultSet extends JtdsResultSet {
             // We are going to need access to a SELECT statement for
             // this to work. Reparse the SQL now and check.
             //
-            String tmp[] = new SQLParser(sql, null,
-                    (ConnectionJDBC2)statement.getConnection()).parse(true);
+            String tmp[] = SQLParser.parse(sql, null,
+                    (ConnectionJDBC2) statement.getConnection(), true);
 
             if ("select".equals(tmp[2]) && tmp[3] != null && tmp[3].length() > 0) {
                 // OK We have a select with at least one table.

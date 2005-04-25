@@ -28,7 +28,7 @@ import java.io.UnsupportedEncodingException;
  * This class is a descriptor for procedure and prepared statement parameters.
  *
  * @author Mike Hutchinson
- * @version $Id: ParamInfo.java,v 1.15 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: ParamInfo.java,v 1.16 2005-04-25 11:47:01 alin_sinpalean Exp $
  */
 class ParamInfo implements Cloneable {
     /** Flag as an input parameter. */
@@ -83,6 +83,21 @@ class ParamInfo implements Cloneable {
      */
     ParamInfo(int pos, boolean isUnicode) {
         markerPos = pos;
+        this.isUnicode = isUnicode;
+    }
+
+    /**
+     * Construct a parameter for statement caching.
+     *
+     * @param name      the formal name of the parameter
+     * @param pos       the offset of the ? symbol in the parsed SQL string
+     * @param isRetVal  <code>true</code> if the parameter is a return value
+     * @param isUnicode <code>true</code> if the parameter is Unicode encoded
+     */
+    ParamInfo(String name, int pos, boolean isRetVal, boolean isUnicode) {
+        this.name      = name;
+        this.markerPos = pos;
+        this.isRetVal  = isRetVal;
         this.isUnicode = isUnicode;
     }
 

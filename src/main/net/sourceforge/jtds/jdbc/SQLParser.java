@@ -17,9 +17,12 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.sql.SQLException;
+
+import net.sourceforge.jtds.jdbc.cache.SimpleLRUCache;
+import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
 
 /**
  * Process JDBC escape strings and parameter markers in the SQL string.
@@ -43,10 +46,51 @@ import java.sql.SQLException;
  * <li>SQL comments are parsed correctly thanks to code supplied by
  * Joel Fouse.
  * </ol>
+ *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.21 2005-04-22 20:21:21 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.22 2005-04-25 11:47:01 alin_sinpalean Exp $
  */
 class SQLParser {
+    /**
+     * Serialized version of a parsed SQL query (the value stored in the cache
+     * for a parsed SQL).
+     * <p/>
+     * Holds the parsed SQL query and the names, positions and return value and
+     * unicode flags for the parameters.
+     */
+    private static class CachedSQLQuery {
+        final String[]  parsedSql;
+        final String[]  paramNames;
+        final int[]     paramMarkerPos;
+        final boolean[] paramIsRetVal;
+        final boolean[] paramIsUnicode;
+
+        CachedSQLQuery(String[] parsedSql, ArrayList params) {
+            this.parsedSql = parsedSql;
+
+            if (params != null) {
+                final int size = params.size();
+                paramNames     = new String[size];
+                paramMarkerPos = new int[size];
+                paramIsRetVal  = new boolean[size];
+                paramIsUnicode = new boolean[size];
+
+                for (int i = 0; i < size; i++) {
+                    ParamInfo paramInfo = (ParamInfo) params.get(i);
+                    paramNames[i]     = paramInfo.name;
+                    paramMarkerPos[i] = paramInfo.markerPos;
+                    paramIsRetVal[i]  = paramInfo.isRetVal;
+                    paramIsUnicode[i] = paramInfo.isUnicode;
+                }
+            } else {
+                paramNames = null;
+                paramMarkerPos = null;
+                paramIsRetVal = null;
+                paramIsUnicode = null;
+            }
+        }
+    }
+
     /** Input buffer with SQL statement. */
     private char[] in;
     /** Current position in input buffer. */
@@ -72,6 +116,70 @@ class SQLParser {
     private String tableName;
     /** Connection object for server specific parsing. */
     private ConnectionJDBC2 connection;
+    /** LRU cache of previously parsed SQL */
+    private static SimpleLRUCache cache;
+
+    /**
+     * Parse the SQL statement processing JDBC escapes and parameter markers.
+     *
+     * @param extractTable
+     *            true to return the first table name in the FROM clause of a select
+     * @return The processed SQL statement, any procedure name, the first SQL keyword and (optionally) the first table name as
+     *         elements 0 1, 2 and 3 of the returned <code>String[]</code>.
+     * @throws SQLException if a parse error occurs
+     */
+    static String[] parse(String sql, ArrayList paramList,
+                          ConnectionJDBC2 connection, boolean extractTable)
+            throws SQLException {
+    	// Don't cache extract table parse requests, just process it
+    	if (extractTable) {
+    		SQLParser parser = new SQLParser(sql, paramList, connection);
+    		return parser.parse(extractTable);
+    	}
+
+        SimpleLRUCache cache = getCache(connection);
+
+        SQLCacheKey cacheKey = new SQLCacheKey(sql, connection.getServerType(),
+                connection.getDatabaseMajorVersion(),
+                connection.getDatabaseMinorVersion());
+
+        // By not synchronizing on the cache, we're admitting that the possibility of multiple
+        // parses of the same statement can occur.  However, it is 1) unlikely under normal
+        // usage, and 2) harmless to the cache.  By avoiding a synchronization block around
+        // the get()-parse()-put(), we reduce the contention greatly in the nominal case.
+        CachedSQLQuery cachedQuery = (CachedSQLQuery) cache.get(cacheKey);
+        if (cachedQuery == null) {
+            // Parse and cache SQL
+            SQLParser parser = new SQLParser(sql, paramList, connection);
+            cachedQuery = new CachedSQLQuery(parser.parse(extractTable),
+                    paramList);
+            cache.put(cacheKey, cachedQuery);
+        } else {
+            // Create full ParamInfo objects out of cached object
+            final int length = (cachedQuery.paramNames == null)
+                    ? 0 : cachedQuery.paramNames.length;
+            for (int i = 0; i < length; i++) {
+                ParamInfo paramInfo = new ParamInfo(cachedQuery.paramNames[i],
+                                                    cachedQuery.paramMarkerPos[i],
+                                                    cachedQuery.paramIsRetVal[i],
+                                                    cachedQuery.paramIsUnicode[i]);
+                paramList.add(paramInfo);
+            }
+        }
+        return cachedQuery.parsedSql;
+    }
+
+    // --------------------------- Private Methods --------------------------------
+
+    private synchronized static SimpleLRUCache getCache(ConnectionJDBC2 connection) {
+        if (cache == null) {
+            int maxStatements = connection.getMaxStatements();
+            maxStatements = Math.max(0, maxStatements);
+            maxStatements = Math.min(1000, maxStatements);
+            cache = new SimpleLRUCache(maxStatements);
+        }
+        return cache;
+    }
 
     /**
      * Construct a new parser object to process the supplied SQL.
@@ -80,7 +188,7 @@ class SQLParser {
      * @param paramList the parameter list array to populate or
      *                  <code>null</code> if no parameters are expected
      */
-    SQLParser(String sql, ArrayList paramList, ConnectionJDBC2 connection) {
+    private SQLParser(String sql, ArrayList paramList, ConnectionJDBC2 connection) {
         in = sql.toCharArray();
         len = in.length;
         out = new char[len + 256]; // Allow extra for curdate/curtime
@@ -88,6 +196,7 @@ class SQLParser {
         d = 0;
         params = paramList;
         procName = "";
+
         this.connection = connection;
     }
 
@@ -208,7 +317,7 @@ class SQLParser {
                 while (in[s] == '.') {
                     out[d++] = in[s++];
                 }
-            } else  {
+            } else {
                 break;
             }
         } while (true);
@@ -220,7 +329,7 @@ class SQLParser {
                     "22025");
         }
 
-        return new String(out, start, d-start);
+        return new String(out, start, d - start);
     }
 
     /**
@@ -233,8 +342,8 @@ class SQLParser {
         char c = in[s++];
 
         while (Character.isJavaIdentifierPart(c) || c == '@') {
-           out[d++] = c;
-           c = in[s++];
+            out[d++] = c;
+            c = in[s++];
         }
 
         s--;
@@ -273,9 +382,9 @@ class SQLParser {
         }
     }
 
-   /**
-    * Skip single-line comments.
-    */
+    /**
+     * Skip single-line comments.
+     */
     private void skipSingleComments() {
         while (s < len && in[s] != '\n' && in[s] != '\r') {
             // comments should be passed on to the server
@@ -290,8 +399,8 @@ class SQLParser {
         int block = 0;
 
         do {
-            if (s < len-1) {
-                if (in[s] == '/' && in[s+1] == '*') {
+            if (s < len - 1) {
+                if (in[s] == '/' && in[s + 1] == '*') {
                     block++;
                 } else if (in[s] == '*' && in[s + 1] == '/') {
                     block--;
@@ -395,13 +504,13 @@ class SQLParser {
             return in[s] == terminator;
         }
         out[d++] = '\'';
-        terminator = (in[s] == '\'' || in[s] == '"')? in[s++]: '}';
+        terminator = (in[s] == '\'' || in[s] == '"') ? in[s++] : '}';
         skipWhiteSpace();
         int ptr = 0;
 
         while (ptr < mask.length) {
             char c = in[s++];
-            if (c == ' ' && out[d-1] == ' ') {
+            if (c == ' ' && out[d - 1] == ' ') {
                 continue; // Eliminate multiple spaces
             }
 
@@ -574,19 +683,19 @@ class SQLParser {
         fnMap.put("curdate",  "convert(datetime, convert(varchar, getdate(), 112))");
         fnMap.put("curtime",  "convert(datetime, convert(varchar, getdate(), 108))");
         fnMap.put("dayname",  "datename(weekday,$)");
-        fnMap.put("dayofmonth",  "datepart(day,$)");
+        fnMap.put("dayofmonth", "datepart(day,$)");
         fnMap.put("dayofweek",  "datepart(weekday,$)");
         fnMap.put("dayofyear",  "datepart(dayofyear,$)");
         fnMap.put("hour",       "datepart(hour,$)");
-        fnMap.put("minute",       "datepart(minute,$)");
-        fnMap.put("second",       "datepart(second,$)");
+        fnMap.put("minute",     "datepart(minute,$)");
+        fnMap.put("second",     "datepart(second,$)");
         fnMap.put("year",       "datepart(year,$)");
-        fnMap.put("quarter",       "datepart(quarter,$)");
-        fnMap.put("month",       "datepart(month,$)");
+        fnMap.put("quarter",    "datepart(quarter,$)");
+        fnMap.put("month",      "datepart(month,$)");
         fnMap.put("week",       "datepart(week,$)");
-        fnMap.put("monthname",   "datename(month,$)");
-        fnMap.put("timestampadd",   "dateadd($)");
-        fnMap.put("timestampdiff",   "datediff($)");
+        fnMap.put("monthname",  "datename(month,$)");
+        fnMap.put("timestampadd", "dateadd($)");
+        fnMap.put("timestampdiff", "datediff($)");
         // convert jdbc to sql types
         cvMap.put("binary", "varbinary");
         cvMap.put("char", "varchar");
@@ -643,8 +752,7 @@ class SQLParser {
                     }
                     if (name.equals("concat")) {
                         out[d++] = '+'; s++;
-                    } else
-                    if (name.equals("mod")) {
+                    } else if (name.equals("mod")) {
                         out[d++] = '%'; s++;
                     } else {
                         out[d++] = c; s++;
@@ -664,7 +772,7 @@ class SQLParser {
             }
         }
 
-        String args = String.valueOf(out, argStart, d-argStart).trim();
+        String args = String.valueOf(out, argStart, d - argStart).trim();
 
         d = argStart;
         mustbe(')', false);
@@ -699,12 +807,12 @@ class SQLParser {
         //
         String fn;
         if (connection.getServerType() == Driver.SQLSERVER) {
-            fn = (String)msFnMap.get(name);
+            fn = (String) msFnMap.get(name);
             if (fn == null) {
-                fn = (String)fnMap.get(name);
+                fn = (String) fnMap.get(name);
             }
         } else {
-            fn = (String)fnMap.get(name);
+            fn = (String) fnMap.get(name);
         }
         if (fn == null) {
             // Not mapped so assume simple case
@@ -717,7 +825,7 @@ class SQLParser {
         //
         // Process timestamp interval constants
         //
-        if (args.length() > 8 && args.substring(0,8).equalsIgnoreCase("sql_tsi_")) {
+        if (args.length() > 8 && args.substring(0, 8).equalsIgnoreCase("sql_tsi_")) {
             args = args.substring(8);
             if (args.length() > 11 && args.substring(0, 11).equalsIgnoreCase("frac_second")) {
                 args = "millisecond" + args.substring(11);
@@ -829,7 +937,7 @@ class SQLParser {
     private String getTableName() throws SQLException {
         // FIXME If the resulting table name contains a '(' (i.e. is a function) "rollback" and return null
         StringBuffer name = new StringBuffer(128);
-        char c = (s < len)? in[s]: ' ';
+        char c = (s < len) ? in[s] : ' ';
         while (s < len && Character.isWhitespace(c)) {
             out[d++] = c; s++; c = (s < len)? in[s]: ' ';
         }
@@ -843,21 +951,21 @@ class SQLParser {
         // Skip any leading comments before fist table name
         //
         while (c == '/' || c == '-') {
-            if ( c == '/') {
-                if (s+1 < len && in[s+1] == '*') {
+            if (c == '/') {
+                if (s + 1 < len && in[s + 1] == '*') {
                     skipMultiComments();
                     s++;
                 } else {
                     break;
                 }
             } else {
-                if (s+1 < len && in[s+1] == '-') {
+                if (s + 1 < len && in[s + 1] == '-') {
                     skipSingleComments();
                 } else {
                     break;
                 }
             }
-            c = (s < len)? in[s]: ' ';
+            c = (s < len) ? in[s] : ' ';
             while (s < len && Character.isWhitespace(c)) {
                 out[d++] = c; s++; c = (s < len)? in[s]: ' ';
             }
@@ -873,29 +981,29 @@ class SQLParser {
             if (c == '[' || c == '"') {
                 int start = d;
                 copyString();
-                name.append(String.valueOf(out, start, d-start));
-                c = (s < len)? in[s]: ' ';
+                name.append(String.valueOf(out, start, d - start));
+                c = (s < len) ? in[s] : ' ';
             } else {
                 int start = d;
                 while (s < len && !Character.isWhitespace(c) && c != '.' && c != ',') {
                     out[d++] = c; s++;
-                    c = (s < len)? in[s]: ' ';
+                    c = (s < len) ? in[s] : ' ';
                 }
-                name.append(String.valueOf(out, start, d-start));
+                name.append(String.valueOf(out, start, d - start));
             }
             while (s < len && Character.isWhitespace(c)) {
                 out[d++] = c; s++;
-                c = (s < len)? in[s]: ' ';
+                c = (s < len) ? in[s] : ' ';
             }
             if (c != '.') {
                 break;
             }
             name.append(c);
             out[d++] = c; s++;
-            c = (s < len)? in[s]: ' ';
+            c = (s < len) ? in[s] : ' ';
             while (s < len && Character.isWhitespace(c)) {
                 out[d++] = c; s++;
-                c = (s < len)? in[s]: ' ';
+                c = (s < len) ? in[s] : ' ';
             }
         }
         return name.toString();
@@ -913,7 +1021,6 @@ class SQLParser {
     String[] parse(boolean extractTable) throws SQLException {
         boolean isSelect = false;
         try {
-            //
             while (s < len) {
                 final char c = in[s];
 
@@ -967,6 +1074,7 @@ class SQLParser {
                         break;
                 }
             }
+
             //
             // Impose a reasonable maximum limit on the number of parameters
             // unless the connection is sending statements unprepared (i.e. by
@@ -1002,7 +1110,7 @@ class SQLParser {
             // return sql and procname
             result[0] = new String(out, 0, d);
             result[1] = procName;
-            result[2] = (keyWord == null)? "": keyWord;
+            result[2] = (keyWord == null) ? "" : keyWord;
             result[3] = tableName;
             return result;
         } catch (IndexOutOfBoundsException e) {

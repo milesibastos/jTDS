@@ -1,9 +1,14 @@
 Changes from jTDS 1.0.3
 =======================
 
+04/25/2005 - Alin Sinpalean
+ o Applied Brett Wooldridge's patch for RFE [1172683] Improve the performance 
+   of Prepared Statements. The patch implements a cache for parsed SQL
+   statements (parsed sql and parameter information, where available).
+
 04/22/2005 - Alin Sinpalean
  o Corrected bug [1187872] Supported CodePage: error in error message.
- o Corrected bug [1187927] Driver Hangs on Statement.execute(). Versions 1.0.3 
+ o Corrected bug [1187927] Driver Hangs on Statement.execute(). Versions 1.0.3
    and prior entered an infinite loop when parsing an unterminated multi-line
    comment.
 

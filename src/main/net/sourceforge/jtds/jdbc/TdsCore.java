@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.90 2005-04-20 16:49:29 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.91 2005-04-28 09:31:52 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -869,6 +869,7 @@ public class TdsCore {
      */
     void submitSQL(String sql) throws SQLException {
         checkOpen();
+        messages.clearWarnings();
 
         if (sql.length() == 0) {
             throw new IllegalArgumentException("submitSQL() called with empty SQL String");
@@ -1079,6 +1080,9 @@ public class TdsCore {
     String microsoftPrepare(String sql, ParamInfo[] params,
                             int resultSetType, int resultSetConcurrency)
             throws SQLException {
+        checkOpen();
+        messages.clearWarnings();
+
         int prepareSql = connection.getPrepareSql();
 
         if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
@@ -1104,7 +1108,24 @@ public class TdsCore {
             spSql.append(" as ");
             spSql.append(Support.substituteParamMarkers(sql, params));
 
-            submitSQL(spSql.toString());
+            try {
+                submitSQL(spSql.toString());
+            } catch (SQLException e) {
+                if ("08S01".equals(e.getSQLState())) {
+                    // Serious (I/O) error, rethrow
+                    throw e;
+                }
+
+                // This exception probably caused by failure to prepare
+                // Add a warning
+                messages.addWarning((SQLWarning) Support.linkException(
+                        new SQLWarning(
+                                Messages.get("error.prepare.prepfailed",
+                                        e.getMessage()),
+                                e.getSQLState(), e.getErrorCode()),
+                        e));
+                return null;
+            }
 
             return procName;
         } else if (prepareSql == PREPARE) {
@@ -1185,6 +1206,7 @@ public class TdsCore {
     synchronized String sybasePrepare(String sql, ParamInfo[] params)
         throws SQLException {
         checkOpen();
+        messages.clearWarnings();
         if (sql == null || sql.length() == 0) {
             throw new IllegalArgumentException(
                     "sql parameter must be at least 1 character long.");

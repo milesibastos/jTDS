@@ -1,8 +1,14 @@
 Changes from jTDS 1.0.3
 =======================
 
+04/28/2005 - Alin Sinpalean
+ o Corrected bug [1180777] collation-related execption on update - if a prepare
+   failed, execution was not retried (unprepared) and failed.
+ o Removed the ConnectionJDBC2 finalizer, as the resources will be freed anyway
+   when garbage collected.
+
 04/25/2005 - Alin Sinpalean
- o Applied Brett Wooldridge's patch for RFE [1172683] Improve the performance 
+ o Applied Brett Wooldridge's patch for RFE [1172683] Improve the performance
    of Prepared Statements. The patch implements a cache for parsed SQL
    statements (parsed sql and parameter information, where available).
 

@@ -766,6 +766,40 @@ public class PreparedStatementTest extends TestBase {
         pstmt.close();
     }
 
+    /**
+     * Test for bug [1180777] collation-related execption on update.
+     * <p/>
+     * If a statement prepare fails the statement should still be executed
+     * (unprepared) and a warning should be added to the connection (the
+     * prepare failed, this is a connection event even if it happened on
+     * statement execute).
+     */
+    public void testPrepareFailWarning() throws SQLException {
+        try {
+            PreparedStatement pstmt = con.prepareStatement(
+                    "CREATE VIEW prepFailWarning AS SELECT 1 AS value");
+            pstmt.execute();
+            // Check that a warning was generated on the connection.
+            // Although not totally correct (the warning should be generated on
+            // the statement) the warning is generated while preparing the
+            // statement, so it belongs to the connection.
+            assertNotNull(con.getWarnings());
+            pstmt.close();
+
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM prepFailWarning");
+            assertTrue(rs.next());
+            assertEquals(1, rs.getInt(1));
+            assertFalse(rs.next());
+            rs.close();
+            stmt.close();
+        } finally {
+            Statement stmt = con.createStatement();
+            stmt.execute("DROP VIEW prepFailWarning");
+            stmt.close();
+        }
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

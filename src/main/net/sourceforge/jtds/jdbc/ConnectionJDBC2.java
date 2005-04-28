@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.79 2005-04-25 11:47:00 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.80 2005-04-28 09:31:52 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -410,17 +410,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Called when this object goes out of scope to release all resources.
-     */
-    protected void finalize() {
-        try {
-            close();
-        } catch (SQLException e) {
-            // Ignore errors
-        }
-    }
-
-    /**
      * Retrive the shared socket.
      *
      * @return The <code>SharedSocket</code> object.
@@ -548,6 +537,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             proc.name = baseTds.microsoftPrepare(sql, params,
                     pstmt.getResultSetType(), pstmt.getResultSetConcurrency());
 
+            // TODO Should "cache" the fact that the statement cannot be prepared
             if (proc.name == null) {
                 return null;
             }

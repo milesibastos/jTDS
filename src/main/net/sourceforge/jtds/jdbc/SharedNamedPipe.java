@@ -34,7 +34,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  *
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.13 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.14 2005-04-28 14:29:28 alin_sinpalean Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
     /**
@@ -45,7 +45,8 @@ public class SharedNamedPipe extends SharedSocket {
     /**
      * Default constructor.
      */
-    private SharedNamedPipe() {
+    private SharedNamedPipe(int tdsVersion, int serverType) {
+        super(tdsVersion, serverType);
     }
 
     /**
@@ -69,10 +70,7 @@ public class SharedNamedPipe extends SharedSocket {
             String domain, String user, String password)
             throws IOException, UnknownHostException {
 
-        SharedNamedPipe newInstance = new SharedNamedPipe();
-
-        newInstance.setTdsVersion(tdsVersion);
-        newInstance.setServerType(serverType);
+        SharedNamedPipe newInstance = new SharedNamedPipe(tdsVersion, serverType);
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(domain, user, password);
 
@@ -100,7 +98,7 @@ public class SharedNamedPipe extends SharedSocket {
                 new DataInputStream(
                         new BufferedInputStream(
                                 newInstance.getPipe().getNamedPipeInputStream(),
-                                newInstance.calculateBufferSize(tdsVersion, packetSize))));
+                                SharedNamedPipe.calculateBufferSize(tdsVersion, packetSize))));
 
         return newInstance;
     }

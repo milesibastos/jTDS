@@ -28,12 +28,12 @@ import java.net.SocketException;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsSocket.java,v 1.2 2005-02-02 00:43:10 alin_sinpalean Exp $
+ * @version $Id: TdsTlsSocket.java,v 1.3 2005-04-28 14:29:31 alin_sinpalean Exp $
  */
 class TdsTlsSocket extends Socket {
-    private Socket delegate;
-    private InputStream istm;
-    private OutputStream ostm;
+    private final Socket delegate;
+    private final InputStream istm;
+    private final OutputStream ostm;
 
     /**
      * Constructs a TdsTlsSocket around an underlying socket.

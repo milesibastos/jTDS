@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.29 2005-04-20 16:49:30 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.30 2005-04-28 14:29:30 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -82,7 +82,7 @@ public class JtdsDataSource
     /**
      * Driver instance used for obtaining connections.
      */
-    private static Driver driver = new Driver();
+    private static final Driver driver = new Driver();
 
     /**
      * Constructs a new datasource.

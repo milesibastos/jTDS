@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.36 2005-04-20 16:49:22 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.37 2005-04-28 14:29:26 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -68,7 +68,7 @@ public class JtdsResultSet implements ResultSet {
     protected static final int POS_AFTER_LAST = -1;
 
     /** Initial size for row array. */
-    protected final static int INITIAL_ROW_COUNT = 1000;
+    protected static final int INITIAL_ROW_COUNT = 1000;
 
     /*
      * Protected Instance variables.
@@ -80,9 +80,9 @@ public class JtdsResultSet implements ResultSet {
     /** The fetch direction. */
     protected int direction = FETCH_FORWARD;
     /** The result set type. */
-    protected int resultSetType = TYPE_FORWARD_ONLY;
+    protected int resultSetType;
     /** The result set concurrency. */
-    protected int concurrency = CONCUR_READ_ONLY;
+    protected int concurrency;
     /** Number of visible columns in row. */
     protected int columnCount;
     /** The array of column descriptors. */

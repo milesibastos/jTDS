@@ -29,7 +29,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.29 2005-04-17 18:41:23 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.30 2005-04-28 14:29:25 alin_sinpalean Exp $
  */
 public class BlobImpl implements Blob {
     /**
@@ -39,7 +39,7 @@ public class BlobImpl implements Blob {
     private static final byte[] EMPTY_BLOB = new byte[0];
 
     /** The underlying <code>BlobBuffer</code>. */
-    private BlobBuffer blobBuffer;
+    private final BlobBuffer blobBuffer;
 
     /**
      * Constructs a new empty <code>Blob</code> instance.

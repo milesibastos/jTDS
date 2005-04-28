@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.80 2005-04-28 09:31:52 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.81 2005-04-28 14:29:25 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -114,7 +114,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
 
     /** The orginal connection URL. */
-    private String url;
+    private final String url;
     /** The server host name. */
     private String serverName;
     /** The server port number. */
@@ -148,9 +148,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** The server protocol version. */
     private int tdsVersion;
     /** The network TCP/IP socket. */
-    private SharedSocket socket;
+    private final SharedSocket socket;
     /** The cored TDS protocol object. */
-    private TdsCore baseTds;
+    private final TdsCore baseTds;
     /** The initial network packet size. */
     private int netPacketSize = TdsCore.MIN_PKT_SIZE;
     /** User requested packet size. */
@@ -172,13 +172,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** True if this connection is read only. */
     private boolean readOnly;
     /** List of statements associated with this connection. */
-    private ArrayList statements;
+    private final ArrayList statements = new ArrayList();
     /** Default transaction isolation level. */
     private int transactionIsolation = java.sql.Connection.TRANSACTION_READ_COMMITTED;
     /** Default auto commit state. */
     private boolean autoCommit = true;
     /** Diagnostc messages for this connection. */
-    private SQLDiagnostic messages;
+    private final SQLDiagnostic messages;
     /** Connection's current rowcount limit. */
     private int rowCount;
     /** Connection's current maximum field size limit. */
@@ -188,7 +188,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** Stored procedure unique ID number. */
     private int spSequenceNo = 1;
     /** Procedures in this transaction. */
-    private ArrayList procInTran = new ArrayList();
+    private final ArrayList procInTran = new ArrayList();
     /** Java charset for encoding. */
     private CharsetInfo charsetInfo;
     /** Method for preparing SQL used in Prepared Statements. */
@@ -220,11 +220,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** True if driver should emulate distributed transactions. */
     private boolean xaEmulation = true;
     /** Mutual exclusion lock to control access to connection. */
-    private Semaphore mutex = new Semaphore(1);
+    private final Semaphore mutex = new Semaphore(1);
     /** SSL setting. */
     private String ssl;
     /** The maximum size of a batch. */
     private int batchSize;
+    /** A cached <code>TdsCore</code> instance to reuse on new statements. */
+    private TdsCore cachedTds;
 
     /**
      * Default constructor.
@@ -232,6 +234,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Used for testing.
      */
     private ConnectionJDBC2() {
+        url = null;
+        socket = null;
+        baseTds = null;
+        messages = null;
     }
 
     /**
@@ -243,7 +249,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     ConnectionJDBC2(String url, Properties info)
             throws SQLException {
-        this.statements = new ArrayList();
         this.url = url;
         //
         // Extract properties into instance variables
@@ -1462,6 +1467,38 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return this.mutex;
     }
 
+    /**
+     * Releases (either closes or caches) a <code>TdsCore</code>.
+     *
+     * @param tds the <code>TdsCore</code> instance to release
+     * @throws SQLException if an error occurs while closing or cleaning up
+     * @todo Should probably synchronize on another object
+     */
+    synchronized void releaseTds(TdsCore tds) throws SQLException {
+        if (cachedTds != null) {
+            // There's already a cached TdsCore; close this one
+            tds.close();
+        } else {
+            // No cached TdsCore; clean up this one and cache it
+            tds.clearResponseQueue();
+            tds.cleanUp();
+            cachedTds = tds;
+        }
+    }
+
+    /**
+     * Retrieves the cached <code>TdsCore</code> or <code>null</code> if
+     * nothing is cached and resets the cache (sets it to <code>null</code>).
+     *
+     * @return the value of {@see cachedTds}
+     * @todo Should probably synchronize on another object
+     */
+    synchronized TdsCore getCachedTds() {
+        TdsCore result = cachedTds;
+        cachedTds = null;
+        return result;
+    }
+
     //
     // ------------------- java.sql.Connection interface methods -------------------
     //
@@ -1531,6 +1568,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // Close network connection
                 //
                 baseTds.close();
+                if (cachedTds != null) {
+                    cachedTds = null;
+                }
                 socket.close();
             } catch (IOException e) {
                 // Ignore
@@ -1767,7 +1807,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public Statement createStatement(int type, int concurrency, int holdability)
-    throws SQLException {
+            throws SQLException {
         checkOpen();
         setHoldability(holdability);
 
@@ -1806,7 +1846,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public CallableStatement prepareCall(String sql, int type, int concurrency)
-    throws SQLException {
+            throws SQLException {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
@@ -1834,7 +1874,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public PreparedStatement prepareStatement(String sql)
-    throws SQLException {
+            throws SQLException {
         checkOpen();
 
         return prepareStatement(sql,
@@ -1843,7 +1883,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys)
-    throws SQLException {
+            throws SQLException {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
@@ -1870,7 +1910,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public PreparedStatement prepareStatement(String sql, int type, int concurrency)
-    throws SQLException {
+            throws SQLException {
         checkOpen();
 
         if (sql == null || sql.length() == 0) {
@@ -1900,7 +1940,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public PreparedStatement prepareStatement(String sql, int[] columnIndexes)
-    throws SQLException {
+            throws SQLException {
         if (columnIndexes == null) {
             throw new SQLException(
                                   Messages.get("error.generic.nullparam", "prepareStatement"),"HY092");
@@ -1920,7 +1960,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     public PreparedStatement prepareStatement(String sql, String[] columnNames)
-    throws SQLException {
+            throws SQLException {
         if (columnNames == null) {
             throw new SQLException(
                                   Messages.get("error.generic.nullparam", "prepareStatement"),"HY092");
@@ -1931,7 +1971,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         return prepareStatement(sql, JtdsStatement.RETURN_GENERATED_KEYS);
     }
-
 
     /**
      * Releases all savepoints. Used internally when committing or rolling back

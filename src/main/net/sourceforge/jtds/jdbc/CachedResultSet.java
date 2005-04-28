@@ -53,7 +53,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.17 2005-04-25 11:47:00 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.18 2005-04-28 14:29:25 alin_sinpalean Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -72,11 +72,11 @@ public class CachedResultSet extends JtdsResultSet {
     /** The row count of the initial result set. */
     protected int initialRowCnt;
     /** True if this is a local temporary result set. */
-    protected boolean tempResultSet;
+    protected final boolean tempResultSet;
     /** Cursor TdsCore object. */
-    protected TdsCore cursorTds;
+    protected final TdsCore cursorTds;
     /** Updates TdsCore object used for positioned updates. */
-    protected TdsCore updateTds;
+    protected final TdsCore updateTds;
     /** Flag to indicate Sybase. */
     protected boolean isSybase;
     /** Fetch size has been changed. */
@@ -84,9 +84,9 @@ public class CachedResultSet extends JtdsResultSet {
     /** Original SQL statement. */
     protected String sql;
     /** Original procedure name. */
-    protected String procName;
+    protected final String procName;
     /** Original parameters. */
-    protected ParamInfo[] procedureParams;
+    protected final ParamInfo[] procedureParams;
     /** Table is keyed. */
     protected boolean isKeyed;
     /** First table name in select. */
@@ -118,15 +118,18 @@ public class CachedResultSet extends JtdsResultSet {
         this.sql = sql;
         this.procName = procName;
         this.procedureParams = procedureParams;
-        this.updateTds = this.cursorTds;
-        if (resultSetType == ResultSet.TYPE_FORWARD_ONLY && cursorName != null) {
-            if (concurrency == ResultSet.CONCUR_UPDATABLE) {
-                this.updateTds = new TdsCore((ConnectionJDBC2)statement.getConnection(),
-                        statement.getMessages());
-            }
+        if (resultSetType == ResultSet.TYPE_FORWARD_ONLY
+                && concurrency == ResultSet.CONCUR_UPDATABLE
+                && cursorName != null) {
+            this.updateTds = new TdsCore(
+                    (ConnectionJDBC2) statement.getConnection(),
+                    statement.getMessages());
+        } else {
+            this.updateTds = this.cursorTds;
         }
-        isSybase = Driver.SYBASE ==
-            ((ConnectionJDBC2)statement.getConnection()).getServerType();
+        this.isSybase = Driver.SYBASE ==
+            ((ConnectionJDBC2) statement.getConnection()).getServerType();
+        this.tempResultSet = false;
         //
         // Now create the specified type of cursor
         //
@@ -168,6 +171,10 @@ public class CachedResultSet extends JtdsResultSet {
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
         this.cursorName    = null;
+        this.cursorTds     = null;
+        this.updateTds     = null;
+        this.procName      = null;
+        this.procedureParams = null;
     }
 
     /**
@@ -213,6 +220,10 @@ public class CachedResultSet extends JtdsResultSet {
         this.pos           = POS_BEFORE_FIRST;
         this.tempResultSet = true;
         this.cursorName    = null;
+        this.cursorTds     = null;
+        this.updateTds     = null;
+        this.procName      = null;
+        this.procedureParams = null;
         //
         // Load result set into buffer
         //
@@ -245,6 +256,10 @@ public class CachedResultSet extends JtdsResultSet {
         this.tempResultSet = true;
         this.cursorName    = null;
         this.rowData.add(copyRow(data));
+        this.cursorTds     = null;
+        this.updateTds     = null;
+        this.procName      = null;
+        this.procedureParams = null;
     }
 
     /**

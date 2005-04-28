@@ -2,6 +2,10 @@ Changes from jTDS 1.0.3
 =======================
 
 04/28/2005 - Alin Sinpalean
+ o Implemented caching of a single TdsCore instance in ConnectionJDBC2. When a
+   statement is closed its TdsCore is cached and reused on the next statement
+   creation.
+ o Made a lot of properties final.
  o Corrected bug [1180777] collation-related execption on update - if a prepare
    failed, execution was not retried (unprepared) and failed.
  o Removed the ConnectionJDBC2 finalizer, as the resources will be freed anyway

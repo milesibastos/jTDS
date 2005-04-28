@@ -31,11 +31,11 @@ import java.sql.SQLException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSetMetaData.java,v 1.6 2004-10-22 15:15:20 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSetMetaData.java,v 1.7 2005-04-28 14:29:26 alin_sinpalean Exp $
  */
 public class JtdsResultSetMetaData implements ResultSetMetaData {
-    private ColInfo[] columns;
-    private int columnCount;
+    private final ColInfo[] columns;
+    private final int columnCount;
 
     /**
      * Construct ResultSetMetaData object over the current ColInfo array.

@@ -24,11 +24,11 @@ import java.sql.SQLException;
  * Savepoint implementation class.
  *
  * @author Brian Heineman
- * @version $Id: SavepointImpl.java,v 1.4 2004-08-24 17:45:01 bheineman Exp $
+ * @version $Id: SavepointImpl.java,v 1.5 2005-04-28 14:29:27 alin_sinpalean Exp $
  */
 class SavepointImpl implements Savepoint {
-    private int id;
-    private String name;
+    private final int id;
+    private final String name;
 
     /**
      * Constructs a savepoint with a specific identifier.

@@ -43,15 +43,15 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.28 2005-04-21 09:35:14 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.29 2005-04-28 14:29:25 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
 
-    // internal data needed by this implemention.
-    int tdsVersion;
-    int serverType;
-    ConnectionJDBC2 connection;
+    // Internal data needed by this implemention.
+    private final int tdsVersion;
+    private final int serverType;
+    private final ConnectionJDBC2 connection;
 
     /**
      * Length of a sysname object (table name, catalog name etc.) -- 128 for

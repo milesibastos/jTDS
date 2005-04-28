@@ -23,10 +23,10 @@ import java.util.*;
  * Implements a light-weight statement cache using a <code>HashMap</code>.
  *
  * @author Brian Heineman
- * @version $Id: DefaultStatementCache.java,v 1.4 2004-10-26 12:53:36 alin_sinpalean Exp $
+ * @version $Id: DefaultStatementCache.java,v 1.5 2005-04-28 14:29:13 alin_sinpalean Exp $
  */
 public class DefaultStatementCache extends AbstractStatementCache {
-	private HashMap cache = new HashMap();
+	private final HashMap cache = new HashMap();
 
 	/**
 	 * Initializes the <code>maximumCacheTarget</code>.

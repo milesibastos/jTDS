@@ -30,7 +30,7 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsInputStream.java,v 1.3 2005-04-20 16:49:31 alin_sinpalean Exp $
+ * @version $Id: TdsTlsInputStream.java,v 1.4 2005-04-28 14:29:31 alin_sinpalean Exp $
  */
 class TdsTlsInputStream extends FilterInputStream {
 
@@ -41,7 +41,7 @@ class TdsTlsInputStream extends FilterInputStream {
      * Initial size should be enough for login phase after which no
      * buffering is required.
      */
-    byte[] readBuffer = new byte[6144];
+    final byte[] readBuffer = new byte[6144];
 
     InputStream bufferStream;
 

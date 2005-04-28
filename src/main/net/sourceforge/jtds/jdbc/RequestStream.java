@@ -36,11 +36,11 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.15 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.16 2005-04-28 14:29:26 alin_sinpalean Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
-    private SharedSocket socket;
+    private final SharedSocket socket;
     /** The output packet buffer. */
     private byte[] buffer;
     /** The offset of the next byte to write. */
@@ -48,7 +48,7 @@ public class RequestStream {
     /** The request packet type. */
     private byte pktType;
     /** The unique stream id. */
-    private int streamId;
+    private final int streamId;
     /** True if stream is closed. */
     private boolean isClosed;
     /** The current output buffer size*/
@@ -478,7 +478,7 @@ public class RequestStream {
                 throw new IOException("BigDecimal to big to send");
             }
 
-            if (socket.getServerType() == Driver.SYBASE) {
+            if (socket.serverType == Driver.SYBASE) {
                 write((byte) len);
                 // Sybase TDS5 stores MSB first opposite sign!
                 // length, prec, scale already sent in parameter descriptor.
@@ -529,7 +529,7 @@ public class RequestStream {
      * @return The Server type as an <code>int</code>.
      */
     int getServerType() {
-        return socket.getServerType();
+        return socket.serverType;
     }
 
     /**

@@ -27,10 +27,10 @@ import java.util.*;
  * the life of the connection.
  *
  * @author Brian Heineman
- * @version $Id: FastStatementCache.java,v 1.2 2004-10-26 12:53:36 alin_sinpalean Exp $
+ * @version $Id: FastStatementCache.java,v 1.3 2005-04-28 14:29:13 alin_sinpalean Exp $
  */
 public class FastStatementCache implements StatementCache {
-	private HashMap cache = new HashMap();
+	private final HashMap cache = new HashMap();
 
 	/**
 	 * Returns a statement handle associated with the specified key or

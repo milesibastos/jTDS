@@ -54,7 +54,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: BlobBuffer.java,v 1.2 2005-04-20 16:49:31 alin_sinpalean Exp $
+ * @version $Id: BlobBuffer.java,v 1.3 2005-04-28 14:29:31 alin_sinpalean Exp $
  */
 public class BlobBuffer {
 
@@ -82,6 +82,7 @@ public class BlobBuffer {
      * Invalid page marker.
      */
     private static final int INVALID_PAGE = -1;
+
     /**
      * The BLOB buffer or the current page buffer.
      */
@@ -117,7 +118,7 @@ public class BlobBuffer {
     /**
      * The maximum size of an in memory buffer.
      */
-    private int maxMemSize;
+    private final int maxMemSize;
 
     /**
      * Creates a blob buffer.

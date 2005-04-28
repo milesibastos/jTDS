@@ -29,17 +29,17 @@ import net.sourceforge.jtds.util.Logger;
 /**
  * jTDS implementation of the XAResource interface.
  *
- * @version $Id: JtdsXAResource.java,v 1.3 2005-04-20 16:49:30 alin_sinpalean Exp $
+ * @version $Id: JtdsXAResource.java,v 1.4 2005-04-28 14:29:30 alin_sinpalean Exp $
  */
 public class JtdsXAResource implements XAResource {
-    private Connection connection;
-    private JtdsXAConnection xaConnection;
-    private String rmHost;
+    private final Connection connection;
+    private final JtdsXAConnection xaConnection;
+    private final String rmHost;
 
     public JtdsXAResource(JtdsXAConnection xaConnection, Connection connection) {
         this.xaConnection = xaConnection;
         this.connection = connection;
-        rmHost = ((ConnectionJDBC2)connection).getRmHost();
+        rmHost = ((ConnectionJDBC2) connection).getRmHost();
         Logger.println("JtdsXAResource created");
     }
 

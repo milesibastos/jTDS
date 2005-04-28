@@ -27,13 +27,13 @@ import net.sourceforge.jtds.jdbc.XASupport;
 /**
  * jTDS implementation of the <code>XAConnection</code> interface.
  *
- * @version $Id: JtdsXAConnection.java,v 1.3 2004-11-17 15:04:37 alin_sinpalean Exp $
+ * @version $Id: JtdsXAConnection.java,v 1.4 2005-04-28 14:29:30 alin_sinpalean Exp $
  */
 public class JtdsXAConnection extends PooledConnection implements XAConnection {
     /** The XAResource used by the transaction manager to control this connection.*/
-    private XAResource resource;
-    private JtdsDataSource dataSource;
-    private int xaConnectionId;
+    private final XAResource resource;
+    private final JtdsDataSource dataSource;
+    private final int xaConnectionId;
 
     /**
      * Construct a new <code>XAConnection</code> object.
@@ -54,8 +54,7 @@ public class JtdsXAConnection extends PooledConnection implements XAConnection {
      *
      * @return the XA connection ID as an <code>Integer</code>
      */
-    int getXAConnectionID()
-    {
+    int getXAConnectionID() {
         return this.xaConnectionId;
     }
 
@@ -76,8 +75,7 @@ public class JtdsXAConnection extends PooledConnection implements XAConnection {
         super.close();
     }
 
-    protected JtdsDataSource getXADataSource()
-    {
+    protected JtdsDataSource getXADataSource() {
         return this.dataSource;
     }
 }

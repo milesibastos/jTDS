@@ -57,11 +57,11 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.43 2005-04-25 11:47:01 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.44 2005-04-28 14:29:25 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
-    protected String sql;
+    protected final String sql;
     /** The first SQL keyword in the SQL string.*/
     protected String sqlWord;
     /** The procedure name for CallableStatements. */
@@ -109,8 +109,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             throw new SQLException(Messages.get("error.prepare.nosql"), "07000");
         }
 
-        this.sql = parsedSql[0];
-
         if (parsedSql[1].length() > 1) {
             if (this instanceof JtdsCallableStatement) {
                 // Procedure call
@@ -122,12 +120,13 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         if (returnKeys && sqlWord.equals("insert")) {
             if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
-                this.sql += " SELECT SCOPE_IDENTITY() AS ID";
+                this.sql = parsedSql[0] + " SELECT SCOPE_IDENTITY() AS ID";
             } else {
-                this.sql += " SELECT @@IDENTITY AS ID";
+                this.sql = parsedSql[0] + " SELECT @@IDENTITY AS ID";
             }
             this.returnKeys = true;
         } else {
+            this.sql = parsedSql[0];
             this.returnKeys = false;
         }
 

@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.31 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.32 2005-04-28 14:29:28 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -75,11 +75,11 @@ class SharedSocket {
         /**
          * The stream ID of the stream objects owning this state.
          */
-        int owner;
+        final int owner;
         /**
          * Memory resident packet queue.
          */
-        LinkedList pktQueue;
+        final LinkedList pktQueue;
         /**
          * True to discard network data.
          */
@@ -143,7 +143,7 @@ class SharedSocket {
     /**
      * Table of stream objects sharing this socket.
      */
-    private ArrayList socketTable = new ArrayList();
+    private final ArrayList socketTable = new ArrayList();
     /**
      * The Stream ID of the object that is expecting a response from the server.
      */
@@ -151,7 +151,7 @@ class SharedSocket {
     /**
      * Buffer for packet header.
      */
-    private byte hdrBuf[] = new byte[TDS_HDR_LEN];
+    private final byte hdrBuf[] = new byte[TDS_HDR_LEN];
     /**
      * Total memory usage in all instances of the driver
      * NB. Access to this field should probably be synchronized
@@ -187,7 +187,7 @@ class SharedSocket {
     /**
      * The servertype one of Driver.SQLSERVER or Driver.SYBASE
      */
-    private int serverType;
+    protected final int serverType;
     /**
      * The character set to use for converting strings to/from bytes.
      */
@@ -230,7 +230,9 @@ class SharedSocket {
      */
     private static final int TDS_HDR_LEN   = 8;
 
-    protected SharedSocket() {
+    protected SharedSocket(int tdsVersion, int serverType) {
+        this.tdsVersion = tdsVersion;
+        this.serverType = serverType;
     }
 
     /**
@@ -250,8 +252,7 @@ class SharedSocket {
     SharedSocket(String host, int port, int tdsVersion, int serverType,
     		boolean tcpNoDelay, int timeout)
             throws IOException, UnknownHostException {
-        setTdsVersion(tdsVersion);
-        setServerType(serverType);
+        this(tdsVersion, serverType);
         this.host = host;
         this.port = port;
         if (Driver.JDBC3) {
@@ -416,29 +417,6 @@ class SharedSocket {
     }
 
     /**
-     * Retrieve the SQL Server type that is associated with the connection
-     * supported by this socket.
-     * <ol>
-     * <li>Microsoft SQL Server.
-     * <li>Sybase SQL Server.
-     * </ol>
-     *
-     * @return the SQL Server type as an <code>int</code>
-     */
-    int getServerType() {
-        return serverType;
-    }
-
-    /**
-     * Set the SQL Server type field.
-     *
-     * @param serverType the SQL Server type as an <code>int</code>
-     */
-    protected void setServerType(int serverType) {
-        this.serverType = serverType;
-    }
-
-    /**
      * Set the global buffer memory limit for all instances of this driver.
      *
      * @param memoryBudget the global memory budget
@@ -517,7 +495,7 @@ class SharedSocket {
                     cancel[3] = 8;
                     cancel[4] = 0;
                     cancel[5] = 0;
-                    cancel[6] = (getTdsVersion() >= Driver.TDS70) ? (byte) 1 : 0;
+                    cancel[6] = (tdsVersion >= Driver.TDS70) ? (byte) 1 : 0;
                     cancel[7] = 0;
                     getOut().write(cancel, 0, TDS_HDR_LEN);
                     getOut().flush();

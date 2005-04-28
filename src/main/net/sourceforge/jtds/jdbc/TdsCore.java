@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.91 2005-04-28 09:31:52 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.92 2005-04-28 14:29:28 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -365,17 +365,17 @@ public class TdsCore {
     // Instance variables
     //
     /** The Connection object that created this object. */
-    private ConnectionJDBC2 connection;
+    private final ConnectionJDBC2 connection;
     /** The TDS version being supported by this connection. */
     private int tdsVersion;
     /** The make of SQL Server (Sybase/Microsoft). */
-    private int serverType;
+    private final int serverType;
     /** The Shared network socket object. */
-    private SharedSocket socket;
+    private final SharedSocket socket;
     /** The output server request stream. */
-    private RequestStream out;
+    private final RequestStream out;
     /** The input server response stream. */
-    private ResponseStream in;
+    private final ResponseStream in;
     /** True if the server response is fully read. */
     private boolean endOfResponse = true;
     /** True if the current result set is at end of file. */
@@ -397,7 +397,7 @@ public class TdsCore {
     /** The index of the next output parameter to populate. */
     private int nextParam = -1;
     /** The head of the diagnostic messages chain. */
-    private SQLDiagnostic messages;
+    private final SQLDiagnostic messages;
     /** Indicates that this object is closed. */
     private boolean isClosed;
     /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
@@ -413,14 +413,13 @@ public class TdsCore {
     /** Indicates pending cancel that needs to be cleared. */
     private boolean cancelPending;
     /** Synchronization monitor for {@link #cancelPending}. */
-    private Object cancelMonitor = new Object();
+    private final Object cancelMonitor = new Object();
 
     /**
      * Construct a TdsCore object.
      *
      * @param connection The connection which owns this object.
      * @param messages The SQLDiagnostic messages chain.
-     * @todo cache a TdsCore instance inside the Connection using WeakReference
      */
     TdsCore(ConnectionJDBC2 connection, SQLDiagnostic messages) {
         this.connection = connection;
@@ -3855,6 +3854,30 @@ public class TdsCore {
                 }
             }
         }
+    }
+
+    /**
+     * Releases parameter and result set data and metadata to free up memory.
+     * <p/>
+     * This is useful before the <code>TdsCore</code> is cached for reuse.
+     */
+    public void cleanUp() {
+        if (endOfResponse) {
+            // Clean up parameters
+            returnParam = null;
+            parameters = null;
+            // Clean up result data and meta data
+            columns = null;
+            rowData = null;
+            tables = null;
+        }
+    }
+
+    /**
+     * Returns the diagnostic chain for this instance.
+     */
+    public SQLDiagnostic getMessages() {
+        return messages;
     }
 
     /**

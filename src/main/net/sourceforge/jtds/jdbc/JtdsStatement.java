@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.38 2005-04-25 11:47:01 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.39 2005-04-28 14:29:26 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -101,7 +101,7 @@ public class JtdsStatement implements java.sql.Statement {
     /** True if SQL statements should be preprocessed. */
     protected boolean escapeProcessing = true;
     /** SQL Diagnostic exceptions and warnings. */
-    protected SQLDiagnostic messages;
+    protected final SQLDiagnostic messages;
     /** Batched SQL Statement array. */
     protected ArrayList batchValues;
     /** Dummy result set for getGeneratedKeys. */
@@ -110,7 +110,7 @@ public class JtdsStatement implements java.sql.Statement {
      * List of queued results (update counts, possibly followed by a
      * <code>ResultSet</code>).
      */
-    protected LinkedList resultQueue = new LinkedList();
+    protected final LinkedList resultQueue = new LinkedList();
     /** List of open result sets. */
     protected ArrayList openResultSets;
 
@@ -167,8 +167,14 @@ public class JtdsStatement implements java.sql.Statement {
         this.connection = connection;
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
-        this.messages = new SQLDiagnostic(connection.getServerType());
-        this.tds = new TdsCore(this.connection, messages);
+
+        this.tds = connection.getCachedTds();
+        if (this.tds == null) {
+            this.messages = new SQLDiagnostic(connection.getServerType());
+            this.tds = new TdsCore(this.connection, messages);
+        } else {
+            this.messages = tds.getMessages();
+        }
     }
 
     /**
@@ -338,15 +344,12 @@ public class JtdsStatement implements java.sql.Statement {
         }
 
         //
-        // Could not open a Cursor so try a direct select
+        // Could not open a cursor (or was not requested) so try a direct select
         //
         tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
                 maxFieldSize, true);
 
-        // FIXME Should we ignore update counts here?
-        while (!tds.getMoreResults() && !tds.isEndOfResponse());
-
-        if (tds.isResultSet()) {
+        if (tds.getMoreResults()) {
             currentResult = new JtdsResultSet(this,
                                               ResultSet.TYPE_FORWARD_ONLY,
                                               ResultSet.CONCUR_READ_ONLY,
@@ -605,8 +608,7 @@ public class JtdsStatement implements java.sql.Statement {
                 closeAllResultSets();
 
                 if (!connection.isClosed()) {
-                    tds.clearResponseQueue();
-                    tds.close();
+                    connection.releaseTds(tds);
                 }
             } finally {
                 closed = true;

@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.7 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.8 2005-04-28 14:29:28 alin_sinpalean Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -43,8 +43,7 @@ public class SharedLocalNamedPipe extends SharedSocket {
      */
     public SharedLocalNamedPipe(String serverName, int tdsVersion, int serverType, String instance)
             throws IOException {
-        setTdsVersion(tdsVersion);
-        setServerType(serverType);
+        super(tdsVersion, serverType);
 
         StringBuffer pipeName = new StringBuffer(64);
         pipeName.append("\\\\");

@@ -25,15 +25,15 @@ import net.sourceforge.jtds.jdbc.TdsCore;
 
 /**
  * Unit tests for the {@link SharedNamedPipe} class.
- * 
+ *
  * @author David D. Kilzer
- * @version $Id: NamedPipeUnitTest.java,v 1.6 2004-08-24 17:45:07 bheineman Exp $
+ * @version $Id: NamedPipeUnitTest.java,v 1.7 2005-04-28 14:29:31 alin_sinpalean Exp $
  */
 public class NamedPipeUnitTest extends UnitTestBase {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name The name of the test.
      */
     public NamedPipeUnitTest(final String name) {
@@ -88,19 +88,16 @@ public class NamedPipeUnitTest extends UnitTestBase {
     /**
      * Helper method to invoke {@link SharedNamedPipe#calculateBufferSize(int, int)}
      * using reflection.
-     * 
+     *
      * @param tdsVersion The TDS version as an <code>int</code>.
      * @param packetSize The packet size as an <code>int</code>.
      * @return Result of calling {@link SharedNamedPipe#calculateBufferSize(int, int)}.
      */
     private int invoke_calculateBufferSize(int tdsVersion, int packetSize) {
-
-        SharedNamedPipe instance = (SharedNamedPipe) invokeConstructor(
-                SharedNamedPipe.class, new Class[]{}, new Object[]{});
-
         Class[] classes = new Class[]{int.class, int.class};
         Object[] objects = new Object[]{new Integer(tdsVersion), new Integer(packetSize)};
 
-        return ((Integer) invokeInstanceMethod(instance, "calculateBufferSize", classes, objects)).intValue();
+        return ((Integer) invokeStaticMethod(SharedNamedPipe.class,
+                "calculateBufferSize", classes, objects)).intValue();
     }
 }

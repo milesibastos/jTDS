@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.4 2005-04-20 16:49:31 alin_sinpalean Exp $
+ * @version $Id: TimerThread.java,v 1.5 2005-04-28 14:29:31 alin_sinpalean Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -50,9 +50,9 @@ public class TimerThread extends Thread {
      */
     private static class TimerRequest {
         /** The time when this timeout will expire. */
-        long time;
+        final long time;
         /** Target to notify when the timeout expires. */
-        TimerListener target;
+        final TimerListener target;
 
         /**
          * Create a <code>TimerRequest</code>.
@@ -76,7 +76,7 @@ public class TimerThread extends Thread {
     private static TimerThread instance;
 
     /** List of <code>TimerRequest</code>s to execute, ordered by time. */
-    private LinkedList timerList = new LinkedList();
+    private final LinkedList timerList = new LinkedList();
     /** Time when the first request time out should occur. */
     private long nextTimeout;
 

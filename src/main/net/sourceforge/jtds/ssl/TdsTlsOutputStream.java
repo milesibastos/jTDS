@@ -39,14 +39,14 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsOutputStream.java,v 1.3 2005-02-04 15:46:31 alin_sinpalean Exp $
+ * @version $Id: TdsTlsOutputStream.java,v 1.4 2005-04-28 14:29:31 alin_sinpalean Exp $
  */
 class TdsTlsOutputStream extends FilterOutputStream {
     /**
      * Used for holding back CKE, CCS and FIN records.
      */
-    private List bufferedRecords = new ArrayList();
-    private int  totalSize;
+    final private List bufferedRecords = new ArrayList();
+    private int totalSize;
 
     /**
      * Constructs a TdsTlsOutputStream based on an underlying output stream.

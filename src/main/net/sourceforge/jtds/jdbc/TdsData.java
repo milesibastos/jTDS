@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.47 2005-04-20 16:49:30 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.48 2005-04-28 14:29:29 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -56,7 +56,7 @@ public class TdsData {
      */
     private static class TypeInfo {
         /** The SQL type name. */
-        public String sqlType;
+        public final String sqlType;
         /**
          * The size of this type or &lt; 0 for variable sizes.
          * <p> Special values as follows:
@@ -67,24 +67,24 @@ public class TdsData {
          * <li> -1 varchar, varbinary, null types.
          * </ol>
          */
-        public int size;
+        public final int size;
         /**
          * The precision of the type.
          * <p>If this is -1 precision must be calculated from buffer size
          * eg for varchar fields.
          */
-        public int precision;
+        public final int precision;
         /**
          * The display size of the type.
          * <p>-1 If the display size must be calculated from the buffer size.
          */
-        public int displaySize;
+        public final int displaySize;
         /** true if type is a signed numeric. */
-        public boolean isSigned;
+        public final boolean isSigned;
         /** true if type requires TDS80 collation. */
-        public boolean isCollation;
+        public final boolean isCollation;
         /** The java.sql.Types constant for this data type. */
-        public int jdbcType;
+        public final int jdbcType;
 
         /**
          * Construct a new TDS data type descriptor.

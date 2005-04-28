@@ -24,7 +24,7 @@ import java.util.*;
  * is one of the services provided by this class.
  *
  * @author Brian Heineman
- * @version $Id: AbstractStatementCache.java,v 1.3 2004-10-25 19:33:40 bheineman Exp $
+ * @version $Id: AbstractStatementCache.java,v 1.4 2005-04-28 14:29:13 alin_sinpalean Exp $
  */
 abstract class AbstractStatementCache implements StatementCache {
 	private static final Integer INTEGER_ONE = new Integer(1);
@@ -35,7 +35,7 @@ abstract class AbstractStatementCache implements StatementCache {
 	 * However, each cache implementation must make a "best effort" to adhere
 	 * to this maximum cache limit.
 	 */
-	protected int maximumCacheTarget;
+	protected final int maximumCacheTarget;
 
 	/**
 	 * A map of statement handle latches and the associated latch count.  Latches
@@ -46,7 +46,7 @@ abstract class AbstractStatementCache implements StatementCache {
 	 * the latch for a statement handles should be removed of decremented when
 	 * {@link #getObsoleteHandles} is called.
 	 */
-	private HashMap latches = new HashMap();
+	private final HashMap latches = new HashMap();
 
 	/**
 	 * Initializes the <code>maximumCacheTarget</code>.
@@ -90,7 +90,7 @@ abstract class AbstractStatementCache implements StatementCache {
 			}
 		}
 	}
-	
+
 	/**
 	 * Removes a single latch from the given statement handle.
 	 *

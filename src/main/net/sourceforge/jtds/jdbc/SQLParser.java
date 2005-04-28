@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.22 2005-04-25 11:47:01 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.23 2005-04-28 14:29:27 alin_sinpalean Exp $
  */
 class SQLParser {
     /**
@@ -91,21 +91,24 @@ class SQLParser {
         }
     }
 
+    /** LRU cache of previously parsed SQL */
+    private static SimpleLRUCache cache;
+
     /** Input buffer with SQL statement. */
-    private char[] in;
+    private final char[] in;
     /** Current position in input buffer. */
     private int s;
     /** Length of input buffer. */
-    private int len;
+    private final int len;
     /** Output buffer to contain parsed SQL. */
-    private char[] out;
+    private final char[] out;
     /** Current position in output buffer. */
     private int d;
     /**
      * Parameter list to be populated or <code>null</code> if no parameters
      * are expected.
      */
-    private ArrayList params;
+    private final ArrayList params;
     /** Current expected terminator character. */
     private char terminator;
     /** Procedure name in call escape. */
@@ -115,9 +118,7 @@ class SQLParser {
     /** First table name in from clause */
     private String tableName;
     /** Connection object for server specific parsing. */
-    private ConnectionJDBC2 connection;
-    /** LRU cache of previously parsed SQL */
-    private static SimpleLRUCache cache;
+    private final ConnectionJDBC2 connection;
 
     /**
      * Parse the SQL statement processing JDBC escapes and parameter markers.

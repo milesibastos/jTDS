@@ -33,11 +33,11 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.18 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.19 2005-04-28 14:29:27 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
-    private SharedSocket socket;
+    private final SharedSocket socket;
     /** The Input packet buffer. */
     private byte[] buffer;
     /** The offset of the next byte to read. */
@@ -45,13 +45,13 @@ public class ResponseStream {
     /** The length of current input packet. */
     private int bufferLen;
     /** The unique stream id. */
-    private int streamId;
+    private final int streamId;
     /** True if stream is closed. */
     private boolean isClosed;
     /** A shared byte buffer. */
-    private byte[] byteBuffer = new byte[255];
+    private final byte[] byteBuffer = new byte[255];
     /** A shared char buffer. */
-    private char[] charBuffer = new char[255];
+    private final char[] charBuffer = new char[255];
 
     /**
      * Constructs a <code>RequestStream</code> object.
@@ -412,7 +412,7 @@ public class ResponseStream {
      * @return the server type as an <code>int</code>
      */
     int getServerType() {
-        return socket.getServerType();
+        return socket.serverType;
     }
 
     /**

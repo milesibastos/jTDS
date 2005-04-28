@@ -24,22 +24,20 @@ import net.sourceforge.jtds.jdbc.Support;
 /**
  * jTDS implementation of the <code>Xid</code> interface.
  *
- * @version $Id: JtdsXid.java,v 1.2 2004-12-03 14:42:35 alin_sinpalean Exp $
+ * @version $Id: JtdsXid.java,v 1.3 2005-04-28 14:29:30 alin_sinpalean Exp $
  */
 public class JtdsXid implements Xid {
-    /** The global transaction ID. */
-    private byte gtran[];
-    /** The branch qualifier ID. */
-    private byte bqual[];
     /** The size of an XID in bytes. */
     public static final int XID_SIZE = 140;
+
+    /** The global transaction ID. */
+    private final byte gtran[];
+    /** The branch qualifier ID. */
+    private final byte bqual[];
     /** The format ID. */
-    public int fmtId;
+    public final int fmtId;
     /** Precalculated hash value. */
     public int hash;
-
-    public JtdsXid() {
-    }
 
     /**
      * Construct an XID using an offset into a byte buffer.

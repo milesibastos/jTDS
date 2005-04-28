@@ -40,7 +40,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: SocketFactories.java,v 1.6 2005-02-04 15:46:31 alin_sinpalean Exp $
+ * @version $Id: SocketFactories.java,v 1.7 2005-04-28 14:29:30 alin_sinpalean Exp $
  */
 public class SocketFactories {
     /**
@@ -58,10 +58,10 @@ public class SocketFactories {
      * The socket factory for creating sockets based on the SSL setting.
      */
     private static class TdsTlsSocketFactory extends SocketFactory {
-
-        private String ssl;
-        private Socket socket;
         private static SSLSocketFactory factorySingleton;
+
+        private final String ssl;
+        private final Socket socket;
 
         /**
          * Constructs a TdsTlsSocketFactory.

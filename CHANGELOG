@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/04/2005 - Alin Sinpalean
+ o Corrected a bug that was causing the ResultSet position to be reset to the
+   beginning of the cached block if a reread was attempted after updateRow().
+
 04/28/2005 - Alin Sinpalean
  o Implemented caching of a single TdsCore instance in ConnectionJDBC2. When a
    statement is closed its TdsCore is cached and reused on the next statement

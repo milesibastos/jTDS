@@ -1298,6 +1298,52 @@ public class ResultSetTest extends TestBase {
         assertEquals(0, resCnt);
     }
 
+    /**
+     * Test that after updateRow() the cursor is positioned correctly.
+     */
+    public void testUpdateRowPosition() throws Exception {
+        final int ROW_COUNT = 99;
+        final int TEST_ROW = 33;
+
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #testPos (i int primary key, v varchar(100))");
+        for (int i = 1; i <= ROW_COUNT; i++) {
+            stmt.executeUpdate("insert into #testPos (i, v) values (" + i + ", 'This is a test')");
+        }
+        stmt.close();
+
+        String sql = "select * from #testPos order by i";
+
+        PreparedStatement pstmt = con.prepareStatement(sql,
+                ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+        pstmt.setFetchSize(10);
+
+        ResultSet rs = pstmt.executeQuery();
+
+        for (int i = 1; i <= TEST_ROW; i++) {
+            assertTrue(rs.next());
+            assertEquals(i, rs.getInt(1));
+        }
+
+        // We're on TEST_ROW now
+        assertEquals(TEST_ROW, rs.getRow());
+        rs.updateString(2, "This is another test");
+        rs.updateRow();
+        assertEquals(TEST_ROW, rs.getRow());
+        assertEquals(TEST_ROW, rs.getInt(1));
+        rs.refreshRow();
+        assertEquals(TEST_ROW, rs.getRow());
+        assertEquals(TEST_ROW, rs.getInt(1));
+
+        for (int i = TEST_ROW + 1; i <= ROW_COUNT; i++) {
+            assertTrue(rs.next());
+            assertEquals(i, rs.getInt(1));
+        }
+
+        pstmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

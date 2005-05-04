@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.92 2005-04-28 14:29:28 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.93 2005-05-04 08:56:11 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1153,7 +1153,8 @@ public class TdsCore {
             if (needCursor) {
                 // Select the correct type of Server side cursor to
                 // match the scroll and concurrency options.
-                scrollOpt = MSCursorResultSet.getCursorScrollOpt(resultSetType, true);
+                scrollOpt = MSCursorResultSet.getCursorScrollOpt(resultSetType,
+                        resultSetConcurrency, true);
                 ccOpt = MSCursorResultSet.getCursorConcurrencyOpt(resultSetConcurrency);
 
                 // Setup scroll options parameter

@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.47 2005-04-20 16:49:22 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.48 2005-05-04 08:56:11 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -52,10 +52,11 @@ public class MSCursorResultSet extends JtdsResultSet {
     private static final Integer FETCH_REPEAT   = new Integer(128);
     private static final Integer FETCH_INFO     = new Integer(256);
 
-    private static final int CURSOR_TYPE_KEYSET = 1;
-    private static final int CURSOR_TYPE_DYNAMIC = 2;
-    private static final int CURSOR_TYPE_FORWARD = 4;
-    private static final int CURSOR_TYPE_STATIC = 8;
+    private static final int CURSOR_TYPE_KEYSET = 0x01;
+    private static final int CURSOR_TYPE_DYNAMIC = 0x02;
+    private static final int CURSOR_TYPE_FORWARD = 0x04;
+    private static final int CURSOR_TYPE_STATIC = 0x08;
+    private static final int CURSOR_TYPE_FASTFORWARDONLY = 0x10;
     private static final int CURSOR_TYPE_PARAMETERIZED = 0x1000;
 
     private static final int CURSOR_CONCUR_READ_ONLY = 1;
@@ -243,11 +244,17 @@ public class MSCursorResultSet extends JtdsResultSet {
      * for use with stored procedures such as sp_cursoropen, sp_cursorprepare
      * or sp_cursorprepexec.
      *
-     * @param resultSetType JDBC result set type (one of the
-     *                      <code>ResultSet.TYPE_<i>XXX</i></code> values)
+     * @param resultSetType        JDBC result set type (one of the
+     *                             <code>ResultSet.TYPE_<i>XXX</i></code>
+     *                             values)
+     * @param resultSetConcurrency JDBC result set concurrency (one of the
+     *                             <code>ResultSet.CONCUR_<i>XXX</i></code>
+     *                             values)
      * @return a value for the @scrollOpt parameter
      */
-    static int getCursorScrollOpt(int resultSetType, boolean parameterized) {
+    static int getCursorScrollOpt(int resultSetType,
+                                          int resultSetConcurrency,
+                                          boolean parameterized) {
         int scrollOpt;
 
         switch (resultSetType) {
@@ -261,7 +268,8 @@ public class MSCursorResultSet extends JtdsResultSet {
 
             case TYPE_FORWARD_ONLY:
             default:
-                scrollOpt = CURSOR_TYPE_FORWARD;
+                scrollOpt = (resultSetConcurrency == CURSOR_CONCUR_READ_ONLY)
+                        ? CURSOR_TYPE_FASTFORWARDONLY : CURSOR_TYPE_FORWARD;
                 break;
         }
 
@@ -411,7 +419,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Select the correct type of Server side cursor to
         // match the scroll and concurrency options.
         //
-        int scrollOpt = getCursorScrollOpt(resultSetType, parameters != null);
+        int scrollOpt = getCursorScrollOpt(resultSetType, concurrency,
+                parameters != null);
         int ccOpt = getCursorConcurrencyOpt(concurrency);
 
         //
@@ -641,6 +650,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             if (actualScroll != scrollOpt) {
                 switch (actualScroll) {
                     case CURSOR_TYPE_FORWARD:
+                    case CURSOR_TYPE_FASTFORWARDONLY:
                         this.resultSetType = TYPE_FORWARD_ONLY;
                         break;
 
@@ -769,8 +779,11 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         tds.clearResponseQueue();
 
-        pos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
-        cursorPos = pos;
+        cursorPos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
+        if (fetchType != FETCH_REPEAT) {
+            // Do not change ResultSet position when refreshing
+            pos = cursorPos;
+        }
         rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
 
         statement.getMessages().checkErrors();
@@ -1073,10 +1086,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             throw new SQLException(Messages.get("error.resultset.insrow"), "24000");
         }
 
-        // Save and restore current position
-        int crtPos = pos;
         cursorFetch(FETCH_REPEAT, 0);
-        pos = crtPos;
     }
 
     public void updateRow() throws SQLException {
@@ -1173,10 +1183,7 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         // Reload if dirty
         if (SQL_ROW_DIRTY.equals(currentRow[columns.length - 1])) {
-            // Save and restore ResultSet position
-            int crtPos = pos;
             cursorFetch(FETCH_REPEAT, 0);
-            pos = crtPos;
             currentRow = getCurrentRow();
         }
 

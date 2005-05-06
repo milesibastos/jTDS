@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.39 2005-04-28 14:29:26 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.40 2005-05-06 11:29:28 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -349,7 +349,11 @@ public class JtdsStatement implements java.sql.Statement {
         tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
                 maxFieldSize, true);
 
-        if (tds.getMoreResults()) {
+        // Ignore update counts preceding the result set. All drivers seem to
+        // do this.
+        while (!tds.getMoreResults() && !tds.isEndOfResponse());
+
+        if (tds.isResultSet()) {
             currentResult = new JtdsResultSet(this,
                                               ResultSet.TYPE_FORWARD_ONLY,
                                               ResultSet.CONCUR_READ_ONLY,

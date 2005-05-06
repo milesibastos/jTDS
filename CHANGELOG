@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/06/2005 - Alin Sinpalean
+ o Corrected bug [1195511] Recent change to JtdsStatement breaks Sybase
+   metadata.
+
 05/04/2005 - Alin Sinpalean
  o Corrected a bug that was causing the ResultSet position to be reset to the
    beginning of the cached block if a reread was attempted after updateRow().

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.81 2005-04-28 14:29:25 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.82 2005-05-09 20:36:24 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1586,7 +1586,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (getAutoCommit()) {
             throw new SQLException(
-                    Messages.get("error.connection.autocommit"), "25000");
+                    Messages.get("error.connection.autocommit", "commit"), "25000");
         }
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
@@ -1600,7 +1600,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (getAutoCommit()) {
             throw new SQLException(
-                    Messages.get("error.connection.autocommit"), "25000");
+                    Messages.get("error.connection.autocommit", "rollback"), "25000");
         }
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");

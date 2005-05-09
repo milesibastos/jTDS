@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/09/2005 - David Kilzer
+ o Made the error.connection.autocommit message in ConnectionJDBC2 specific to
+   the method being called (commit() or rollback()) by introducing a parameter.
+
 05/06/2005 - Alin Sinpalean
  o Corrected bug [1195511] Recent change to JtdsStatement breaks Sybase
    metadata.

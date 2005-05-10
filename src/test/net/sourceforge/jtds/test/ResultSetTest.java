@@ -1344,6 +1344,47 @@ public class ResultSetTest extends TestBase {
         pstmt.close();
     }
 
+    /**
+     * Test for bug [1197603] Cursor downgrade error in CachedResultSet --
+     * updateable result sets were incorrectly downgraded to read only forward
+     * only ones when client side cursors were used.
+     */
+    public void testUpdateableClientCursor() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #testUpdateableClientCursor "
+                + "(i int primary key, v varchar(100))");
+        stmt.executeUpdate("insert into #testUpdateableClientCursor "
+                + "(i, v) values (1, 'This is a test')");
+        stmt.close();
+
+        // Use a statement that the server won't be able to create a cursor on
+        String sql = "select * from #testUpdateableClientCursor where i = ?";
+
+        PreparedStatement pstmt = con.prepareStatement(sql,
+                ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_UPDATABLE);
+        pstmt.setInt(1, 1);
+        ResultSet rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+
+        assertNull(pstmt.getWarnings());
+        rs.updateString(2, "This is another test");
+        rs.updateRow();
+        rs.close();
+        pstmt.close();
+
+        stmt = con.createStatement();
+        rs = stmt.executeQuery(
+                "select * from #testUpdateableClientCursor");
+        assertTrue(rs.next());
+        assertEquals(1, rs.getInt(1));
+        assertEquals("This is another test", rs.getString(2));
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

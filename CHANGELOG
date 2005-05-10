@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/10/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1197603] Cursor downgrade error in
+   CachedResultSet and added a test case.
+
 05/09/2005 - David Kilzer
  o Made the error.connection.autocommit message in ConnectionJDBC2 specific to
    the method being called (commit() or rollback()) by introducing a parameter.

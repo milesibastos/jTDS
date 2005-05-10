@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.23 2005-04-28 14:29:27 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.24 2005-05-10 15:44:04 alin_sinpalean Exp $
  */
 class SQLParser {
     /**
@@ -94,6 +94,8 @@ class SQLParser {
     /** LRU cache of previously parsed SQL */
     private static SimpleLRUCache cache;
 
+    /** Original SQL string */
+    private final String sql;
     /** Input buffer with SQL statement. */
     private final char[] in;
     /** Current position in input buffer. */
@@ -125,7 +127,8 @@ class SQLParser {
      *
      * @param extractTable
      *            true to return the first table name in the FROM clause of a select
-     * @return The processed SQL statement, any procedure name, the first SQL keyword and (optionally) the first table name as
+     * @return The processed SQL statement, any procedure name, the first SQL
+     *         keyword and (optionally) the first table name as
      *         elements 0 1, 2 and 3 of the returned <code>String[]</code>.
      * @throws SQLException if a parse error occurs
      */
@@ -172,6 +175,11 @@ class SQLParser {
 
     // --------------------------- Private Methods --------------------------------
 
+    /**
+     * Retrieves the statement cache, creating it if required.
+     *
+     * @return the cache as a <code>SimpleLRUCache</code>
+     */
     private synchronized static SimpleLRUCache getCache(ConnectionJDBC2 connection) {
         if (cache == null) {
             int maxStatements = connection.getMaxStatements();
@@ -182,19 +190,52 @@ class SQLParser {
         return cache;
     }
 
+
+    /** Lookup table to test if character is part of an identifier. */
+    private static boolean identifierChar[] = {
+            false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false,
+            false, false, false, true,  true,  false, false, false,
+            false, false, false, false, false, false, false, false,
+            true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  false, false, false, false, false, false,
+            true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  false, false, false, false, true,
+            false, true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  false, false, false, false, false
+    };
+
     /**
-     * Construct a new parser object to process the supplied SQL.
+     * Determines if character could be part of an SQL identifier.
+     * <p/>
+     * Characters > 127 are assumed to be unicode letters in other
+     * languages than english which is reasonable in this application.
+     * @param ch the character to test.
+     * @return <code>boolean</code> true if ch in A-Z a-z 0-9 @ $ # _.
+     */
+    private static boolean isIdentifier(int ch) {
+        return ch > 127 || identifierChar[ch];
+    }
+
+    /**
+     * Constructs a new parser object to process the supplied SQL.
      *
-     * @param sql       the SQL statement to parse
+     * @param sqlIn     the SQL statement to parse
      * @param paramList the parameter list array to populate or
      *                  <code>null</code> if no parameters are expected
+     * @param connection the parent Connection object
      */
-    private SQLParser(String sql, ArrayList paramList, ConnectionJDBC2 connection) {
-        in = sql.toCharArray();
+    private SQLParser(String sqlIn, ArrayList paramList, ConnectionJDBC2 connection) {
+        sql = sqlIn;
+        in  = sql.toCharArray();
         len = in.length;
         out = new char[len + 256]; // Allow extra for curdate/curtime
-        s = 0;
-        d = 0;
         params = paramList;
         procName = "";
 
@@ -202,13 +243,15 @@ class SQLParser {
     }
 
     /**
-     * Insert a String literal in the output buffer.
+     * Inserts a String literal in the output buffer.
      *
      * @param txt The text to insert.
      */
     private void copyLiteral(String txt) throws SQLException {
-        for (int i = 0; i < txt.length(); i++) {
-            char c = txt.charAt(i);
+        final int len = txt.length();
+
+        for (int i = 0; i < len; i++) {
+            final char c = txt.charAt(i);
 
             if (c == '?') {
                 if (params == null) {
@@ -227,7 +270,7 @@ class SQLParser {
     }
 
     /**
-     * Copy over an embedded string literal unchanged.
+     * Copies over an embedded string literal unchanged.
      */
     private void copyString() {
         char saveTc = terminator;
@@ -239,26 +282,24 @@ class SQLParser {
 
         terminator = tc;
 
-        do {
-            out[d++] = in[s++];
+        out[d++] = in[s++];
 
-            while (in[s] != tc) {
-                out[d++] = in[s++];
-            }
-
+        while (in[s] != tc) {
             out[d++] = in[s++];
-        } while (s < len && in[s] == tc);
+        }
+
+        out[d++] = in[s++];
 
         terminator = saveTc;
     }
 
     /**
-     * Copy over possible SQL keyword eg 'SELECT'
+     * Copies over possible SQL keyword eg 'SELECT'
      */
     private String copyKeyWord() {
         int start = d;
 
-        while (s < len && Character.isJavaIdentifierPart(in[s])) {
+        while (s < len && isIdentifier(in[s])) {
             out[d++] = in[s++];
         }
 
@@ -266,7 +307,7 @@ class SQLParser {
     }
 
     /**
-     * Build a new parameter item.
+     * Builds a new parameter item.
      *
      * @param name Optional parameter name or null.
      * @param pos The parameter marker position in the output buffer.
@@ -293,7 +334,7 @@ class SQLParser {
     }
 
     /**
-     * Copy an embedded stored procedure identifier over to the output buffer.
+     * Copies an embedded stored procedure identifier over to the output buffer.
      *
      * @return The identifier as a <code>String</code>.
      */
@@ -306,7 +347,7 @@ class SQLParser {
             } else {
                 char c = in[s++];
 
-                while (Character.isJavaIdentifierPart(c) || c == '#' || c == ';') {
+                while (isIdentifier(c) || c == ';') {
                     out[d++] = c;
                     c = in[s++];
                 }
@@ -326,7 +367,9 @@ class SQLParser {
         if (d == start) {
             // Procedure name expected but found something else
             throw new SQLException(
-                    Messages.get("error.parsesql.syntax", "call", String.valueOf(s)),
+                    Messages.get("error.parsesql.syntax",
+                            "call",
+                            String.valueOf(s)),
                     "22025");
         }
 
@@ -334,7 +377,7 @@ class SQLParser {
     }
 
     /**
-     * Copy an embedded parameter name to the output buffer.
+     * Copies an embedded parameter name to the output buffer.
      *
      * @return The identifier as a <code>String</code>.
      */
@@ -342,7 +385,7 @@ class SQLParser {
         int start = d;
         char c = in[s++];
 
-        while (Character.isJavaIdentifierPart(c) || c == '@') {
+        while (isIdentifier(c)) {
             out[d++] = c;
             c = in[s++];
         }
@@ -353,7 +396,16 @@ class SQLParser {
     }
 
     /**
-     * Check that the next character is as expected.
+     * Copies over white space.
+     */
+    private void copyWhiteSpace() {
+        while (s < in.length && Character.isWhitespace(in[s])) {
+            out[d++] = in[s++];
+        }
+    }
+
+    /**
+     * Checks that the next character is as expected.
      *
      * @param c The expected character.
      * @param copy True if found character should be copied.
@@ -363,7 +415,9 @@ class SQLParser {
         throws SQLException {
         if (in[s] != c) {
             throw new SQLException(
-                    Messages.get("error.parsesql.mustbe", String.valueOf(s), String.valueOf(c)),
+                    Messages.get("error.parsesql.mustbe",
+                            String.valueOf(s),
+                            String.valueOf(c)),
                     "22019");
         }
 
@@ -375,7 +429,7 @@ class SQLParser {
     }
 
     /**
-     * Skip embedded white space.
+     * Skips embedded white space.
      */
     private void skipWhiteSpace() {
         while (Character.isWhitespace(in[s])) {
@@ -384,7 +438,7 @@ class SQLParser {
     }
 
     /**
-     * Skip single-line comments.
+     * Skips single-line comments.
      */
     private void skipSingleComments() {
         while (s < len && in[s] != '\n' && in[s] != '\r') {
@@ -394,7 +448,7 @@ class SQLParser {
     }
 
     /**
-     * Skip multi-line comments
+     * Skips multi-line comments
      */
     private void skipMultiComments() throws SQLException {
         int block = 0;
@@ -406,7 +460,6 @@ class SQLParser {
                 } else if (in[s] == '*' && in[s + 1] == '/') {
                     block--;
                 }
-
                 // comments should be passed on to the server
                 out[d++] = in[s++];
             } else {
@@ -415,12 +468,13 @@ class SQLParser {
                         "22025");
             }
         } while (block > 0);
+        out[d++] = in[s++];
     }
 
     /**
-     * Process the JDBC {call procedure [(&#63;,&#63;,&#63;)]} type escape.
+     * Processes the JDBC {call procedure [(&#63;,&#63;,&#63;)]} type escape.
      *
-     * @throws SQLException
+     * @throws SQLException if an error occurs
      */
     private void callEscape() throws SQLException {
         // Insert EXECUTE into SQL so that proc can be called as normal SQL
@@ -574,37 +628,10 @@ class SQLParser {
         '#','#',':','#','#',':','#','#'
     };
 
-    /**
-     * Process the JDBC escape {t 'HH:MM:SS'}.
-     *
-     * @throws SQLException
-     */
-    private void timeEscape() throws SQLException {
-
-        if (!getDateTimeField(timeMask)) {
-            throw new SQLException(
-                    Messages.get("error.parsesql.syntax", "time", String.valueOf(s)),
-                    "22019");
-        }
-    }
-
     /** Syntax mask for date escape. */
     private static final byte[] dateMask = {
         '#','#','#','#','-','#','#','-','#','#'
     };
-
-    /**
-     * Process the JDBC escape {d 'CCCC-MM-DD'}.
-     *
-     * @throws SQLException
-     */
-    private void dateEscape() throws SQLException {
-        if (!getDateTimeField(dateMask)) {
-            throw new SQLException(
-                    Messages.get("error.parsesql.syntax", "date", String.valueOf(s)),
-                    "22019");
-        }
-    }
 
     /** Syntax mask for timestamp escape. */
     static final byte[] timestampMask = {
@@ -613,20 +640,7 @@ class SQLParser {
     };
 
     /**
-     * Process the JDBC escape {ts 'CCCC-MM-DD HH:MM:SS[.NNN]'}.
-     *
-     * @throws SQLException
-     */
-    private void timestampEscape() throws SQLException {
-        if (!getDateTimeField(timestampMask)) {
-            throw new SQLException(
-                    Messages.get("error.parsesql.syntax", "timestamp", String.valueOf(s)),
-                    "22019");
-        }
-    }
-
-    /**
-     * Process the JDBC escape {oj left outer join etc}.
+     * Processes the JDBC escape {oj left outer join etc}.
      *
      * @throws SQLException
      */
@@ -709,7 +723,7 @@ class SQLParser {
     }
 
     /**
-     * Process the JDBC escape {fn function()}.
+     * Processes the JDBC escape {fn function()}.
      *
      * @throws SQLException
      */
@@ -826,17 +840,20 @@ class SQLParser {
         //
         // Process timestamp interval constants
         //
-        if (args.length() > 8 && args.substring(0, 8).equalsIgnoreCase("sql_tsi_")) {
+        if (args.length() > 8
+            && args.substring(0, 8).equalsIgnoreCase("sql_tsi_")) {
             args = args.substring(8);
-            if (args.length() > 11 && args.substring(0, 11).equalsIgnoreCase("frac_second")) {
+            if (args.length() > 11
+                && args.substring(0, 11).equalsIgnoreCase("frac_second")) {
                 args = "millisecond" + args.substring(11);
             }
         }
         //
         // Substitute mapped function name and arguments
         //
-        for (int i = 0; i < fn.length(); i++) {
-            char c = fn.charAt(i);
+        final int len = fn.length();
+        for (int i = 0; i < len; i++) {
+            final char c = fn.charAt(i);
             if (c == '$') {
                 // Substitute arguments
                 copyLiteral(args);
@@ -847,7 +864,7 @@ class SQLParser {
     }
 
     /**
-     * Process the JDBC escape {escape 'X'}.
+     * Processes the JDBC escape {escape 'X'}.
      *
      * @throws SQLException
      */
@@ -865,7 +882,7 @@ class SQLParser {
     }
 
     /**
-     * Process the JDBC escape sequences.
+     * Processes the JDBC escape sequences.
      *
      * @throws SQLException
      */
@@ -883,45 +900,66 @@ class SQLParser {
             skipWhiteSpace();
 
             while (Character.isLetter(in[s])) {
-                escBuf.append(in[s++]);
+                escBuf.append(Character.toLowerCase(in[s++]));
             }
 
             skipWhiteSpace();
             String esc = escBuf.toString();
 
-            if (esc.equalsIgnoreCase("call")) {
+            if (esc.equals("call")) {
                 callEscape();
             } else {
-                throw new SQLException(Messages.get("error.parsesql.syntax",
-                                                          "call",
-                                                          String.valueOf(s)),
-                                       "22019");
+                throw new SQLException(
+                        Messages.get("error.parsesql.syntax",
+                                "call",
+                                String.valueOf(s)),
+                        "22019");
             }
         } else {
             while (Character.isLetter(in[s])) {
-                escBuf.append(in[s++]);
+                escBuf.append(Character.toLowerCase(in[s++]));
             }
 
             skipWhiteSpace();
             String esc = escBuf.toString();
 
-            if (esc.equalsIgnoreCase("call")) {
+            if (esc.equals("call")) {
                 callEscape();
-            } else if (esc.equalsIgnoreCase("t")) {
-                timeEscape();
-            } else if (esc.equalsIgnoreCase("d")) {
-                dateEscape();
-            } else if (esc.equalsIgnoreCase("ts")) {
-                timestampEscape();
-            } else if (esc.equalsIgnoreCase("oj")) {
+            } else if (esc.equals("t")) {
+                if (!getDateTimeField(timeMask)) {
+                    throw new SQLException(
+                            Messages.get("error.parsesql.syntax",
+                                         "time",
+                                         String.valueOf(s)),
+                            "22019");
+                }
+            } else if (esc.equals("d")) {
+                if (!getDateTimeField(dateMask)) {
+                    throw new SQLException(
+                            Messages.get("error.parsesql.syntax",
+                                         "date",
+                                         String.valueOf(s)),
+                            "22019");
+                }
+            } else if (esc.equals("ts")) {
+                if (!getDateTimeField(timestampMask)) {
+                    throw new SQLException(
+                            Messages.get("error.parsesql.syntax",
+                                         "timestamp",
+                                         String.valueOf(s)),
+                            "22019");
+                }
+            } else if (esc.equals("oj")) {
                 outerJoinEscape();
-            } else if (esc.equalsIgnoreCase("fn")) {
+            } else if (esc.equals("fn")) {
                 functionEscape();
-            } else if (esc.equalsIgnoreCase("escape")) {
+            } else if (esc.equals("escape")) {
                 likeEscape();
             } else {
                 throw new SQLException(
-                        Messages.get("error.parsesql.badesc", esc, String.valueOf(s)),
+                        Messages.get("error.parsesql.badesc",
+                                esc,
+                                String.valueOf(s)),
                         "22019");
             }
         }
@@ -931,17 +969,14 @@ class SQLParser {
     }
 
     /**
-     * Extract the first table name following the keyword FROM.
+     * Extracts the first table name following the keyword FROM.
      *
      * @return the table name as a <code>String</code>
      */
     private String getTableName() throws SQLException {
-        // FIXME If the resulting table name contains a '(' (i.e. is a function) "rollback" and return null
         StringBuffer name = new StringBuffer(128);
+        copyWhiteSpace();
         char c = (s < len) ? in[s] : ' ';
-        while (s < len && Character.isWhitespace(c)) {
-            out[d++] = c; s++; c = (s < len)? in[s]: ' ';
-        }
         if (c == '{') {
             // Start of {oj ... } we can assume that there is
             // more than one table in select and therefore
@@ -949,28 +984,26 @@ class SQLParser {
             return "";
         }
         //
-        // Skip any leading comments before fist table name
+        // Skip any leading comments before first table name
         //
-        while (c == '/' || c == '-') {
+        while (c == '/' || c == '-' && s + 1 < len) {
             if (c == '/') {
-                if (s + 1 < len && in[s + 1] == '*') {
+                if (in[s + 1] == '*') {
                     skipMultiComments();
-                    s++;
                 } else {
                     break;
                 }
             } else {
-                if (s + 1 < len && in[s + 1] == '-') {
+                if (in[s + 1] == '-') {
                     skipSingleComments();
                 } else {
                     break;
                 }
             }
+            copyWhiteSpace();
             c = (s < len) ? in[s] : ' ';
-            while (s < len && Character.isWhitespace(c)) {
-                out[d++] = c; s++; c = (s < len)? in[s]: ' ';
-            }
         }
+
         if (c == '{') {
             // See comment above
             return "";
@@ -983,17 +1016,20 @@ class SQLParser {
                 int start = d;
                 copyString();
                 name.append(String.valueOf(out, start, d - start));
+                copyWhiteSpace();
                 c = (s < len) ? in[s] : ' ';
             } else {
                 int start = d;
-                while (s < len && !Character.isWhitespace(c) && c != '.' && c != ',') {
-                    out[d++] = c; s++;
-                    c = (s < len) ? in[s] : ' ';
+                c = (s < len) ? in[s++] : ' ';
+                while ((isIdentifier(c))
+                       && c != '.'
+                       && c != ',') {
+                    out[d++] = c;
+                    c = (s < len) ? in[s++] : ' ';
                 }
                 name.append(String.valueOf(out, start, d - start));
-            }
-            while (s < len && Character.isWhitespace(c)) {
-                out[d++] = c; s++;
+                s--;
+                copyWhiteSpace();
                 c = (s < len) ? in[s] : ' ';
             }
             if (c != '.') {
@@ -1001,17 +1037,14 @@ class SQLParser {
             }
             name.append(c);
             out[d++] = c; s++;
+            copyWhiteSpace();
             c = (s < len) ? in[s] : ' ';
-            while (s < len && Character.isWhitespace(c)) {
-                out[d++] = c; s++;
-                c = (s < len) ? in[s] : ' ';
-            }
         }
         return name.toString();
     }
 
     /**
-     * Parse the SQL statement processing JDBC escapes and parameter markers.
+     * Parses the SQL statement processing JDBC escapes and parameter markers.
      *
      * @param extractTable true to return the first table name in the FROM clause of a select
      * @return The processed SQL statement, any procedure name, the first
@@ -1020,7 +1053,9 @@ class SQLParser {
      * @throws SQLException
      */
     String[] parse(boolean extractTable) throws SQLException {
-        boolean isSelect = false;
+        boolean isSelect   = false;
+        boolean isModified = false;
+        boolean isSlowScan = true;
         try {
             while (s < len) {
                 final char c = in[s];
@@ -1028,6 +1063,7 @@ class SQLParser {
                 switch (c) {
                     case '{':
                         escape();
+                        isModified = true;
                         break;
                     case '[':
                     case '"':
@@ -1052,19 +1088,20 @@ class SQLParser {
                         }
                         break;
                     default:
-                        if (Character.isLetter(c)) {
+                        if (isSlowScan && Character.isLetter(c)) {
                             if (keyWord == null) {
                                 keyWord = copyKeyWord();
                                 if (keyWord.equals("select")) {
                                     isSelect = true;
                                 }
+                                isSlowScan = extractTable && isSelect;
                                 break;
                             }
                             if (extractTable && isSelect) {
                                 String sqlWord = copyKeyWord();
                                 if (sqlWord.equals("from")) {
                                     // Ensure only first 'from' is processed
-                                    extractTable = false;
+                                    isSlowScan = false;
                                     tableName = getTableName();
                                 }
                                 break;
@@ -1103,13 +1140,14 @@ class SQLParser {
                 if (params.size() > limit) {
                     throw new SQLException(
                         Messages.get("error.parsesql.toomanyparams",
-                                Integer.toString(limit)), "22025");
+                                Integer.toString(limit)),
+                        "22025");
                 }
             }
             String result[] = new String[4];
 
             // return sql and procname
-            result[0] = new String(out, 0, d);
+            result[0] = (isModified) ? new String(out, 0, d) : sql;
             result[1] = procName;
             result[2] = (keyWord == null) ? "" : keyWord;
             result[3] = tableName;
@@ -1117,7 +1155,8 @@ class SQLParser {
         } catch (IndexOutOfBoundsException e) {
             // Should only come here if string is invalid in some way.
             throw new SQLException(
-                    Messages.get("error.parsesql.missing", String.valueOf(terminator)),
+                    Messages.get("error.parsesql.missing",
+                            String.valueOf(terminator)),
                     "22025");
         }
     }

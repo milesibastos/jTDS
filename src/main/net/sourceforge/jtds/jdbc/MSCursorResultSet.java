@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.48 2005-05-04 08:56:11 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.49 2005-05-10 15:14:54 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -153,13 +153,14 @@ public class MSCursorResultSet extends JtdsResultSet {
     /**
      * Set the specified column's data value.
      *
-     * @param colIndex The index of the column in the row.
-     * @param value The new column value.
+     * @param colIndex index of the column
+     * @param value    new column value
+     * @return the value, possibly converted to an internal type
      */
-    protected void setColValue(int colIndex, int jdbcType, Object value, int length)
+    protected Object setColValue(int colIndex, int jdbcType, Object value, int length)
             throws SQLException {
 
-        super.setColValue(colIndex, jdbcType, value, length);
+        value = super.setColValue(colIndex, jdbcType, value, length);
 
         if (!onInsertRow && getCurrentRow() == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
@@ -203,6 +204,8 @@ public class MSCursorResultSet extends JtdsResultSet {
                     || ci.sqlType.equals("nchar")
                     || ci.sqlType.equals("nvarchar");
         }
+
+        return value;
     }
 
     /**

@@ -53,7 +53,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.19 2005-05-10 14:38:46 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.20 2005-05-10 15:14:50 alin_sinpalean Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -699,13 +699,14 @@ public class CachedResultSet extends JtdsResultSet {
     /**
      * Sets the specified column's data value.
      *
-     * @param colIndex the index of the column in the row
-     * @param value    the new column value
+     * @param colIndex index of the column
+     * @param value    new column value
+     * @return the value, possibly converted to an internal type
      */
-    protected void setColValue(int colIndex, int jdbcType, Object value, int length)
+    protected Object setColValue(int colIndex, int jdbcType, Object value, int length)
             throws SQLException {
 
-        super.setColValue(colIndex, jdbcType, value, length);
+        value = super.setColValue(colIndex, jdbcType, value, length);
 
         if (!onInsertRow && currentRow == null) {
             throw new SQLException(Messages.get("error.resultset.norow"), "24000");
@@ -747,6 +748,8 @@ public class CachedResultSet extends JtdsResultSet {
             pi.jdbcType  = jdbcType;
             pi.isSet     = true;
         }
+
+        return value;
     }
 
     /**

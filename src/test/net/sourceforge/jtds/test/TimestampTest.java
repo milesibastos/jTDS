@@ -2286,8 +2286,8 @@ public class TimestampTest extends DatabaseTestCase {
         PreparedStatement pstmt = con.prepareStatement(
                 "INSERT INTO #testTimestampRange VALUES (?, ?)");
         pstmt.setInt(1, 1);
-        pstmt.setDate(2, Date.valueOf("0012-03-03")); // This should fail
         try {
+            pstmt.setDate(2, Date.valueOf("0012-03-03")); // This should fail
             pstmt.executeUpdate();
             fail("Expecting an exception to be thrown. Date out of range.");
         } catch (SQLException ex) {

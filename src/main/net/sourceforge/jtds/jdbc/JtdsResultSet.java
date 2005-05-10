@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.37 2005-04-28 14:29:26 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.38 2005-05-10 15:14:53 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -214,10 +214,11 @@ public class JtdsResultSet implements ResultSet {
     /**
      * Set the specified column's data value.
      *
-     * @param colIndex The index of the column in the row.
-     * @param value The new column value.
+     * @param colIndex index of the column
+     * @param value    new column value
+     * @return the value, possibly converted to an internal type
      */
-    protected void setColValue(int colIndex, int jdbcType, Object value, int length)
+    protected Object setColValue(int colIndex, int jdbcType, Object value, int length)
         throws SQLException {
         checkOpen();
         checkUpdateable();
@@ -226,6 +227,18 @@ public class JtdsResultSet implements ResultSet {
                     Integer.toString(colIndex)),
                     "07009");
         }
+        //
+        // Convert java date/time objects to internal DateTime objects
+        //
+        if (value instanceof java.sql.Timestamp) {
+            value = new DateTime((java.sql.Timestamp) value);
+        } else if (value instanceof java.sql.Date) {
+            value = new DateTime((java.sql.Date) value);
+        } else if (value instanceof java.sql.Time) {
+            value = new DateTime((java.sql.Time) value);
+        }
+
+        return value;
     }
 
     /**
@@ -812,6 +825,11 @@ public class JtdsResultSet implements ResultSet {
         // handle them
         if (value instanceof UniqueIdentifier) {
             return value.toString();
+        }
+        // Don't return DateTime objects as the user won't know how to
+        // handle them
+        if (value instanceof DateTime) {
+            return ((DateTime) value).toObject();
         }
 
         return value;

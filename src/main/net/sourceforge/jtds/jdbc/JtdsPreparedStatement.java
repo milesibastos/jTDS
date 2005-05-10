@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.44 2005-04-28 14:29:25 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.45 2005-05-10 15:14:52 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -345,6 +345,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             pi.length = ((byte[]) x).length;
         } else {
             pi.length   = length;
+        }
+
+        if (x instanceof Date) {
+            x = new DateTime((Date) x);
+        } else if (x instanceof Time) {
+            x = new DateTime((Time) x);
+        } else if (x instanceof Timestamp) {
+            x = new DateTime((Timestamp) x);
         }
 
         pi.value = x;

@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.41 2005-04-20 16:49:23 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.42 2005-05-10 15:14:56 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -410,6 +410,8 @@ public class Support {
                 case java.sql.Types.TIMESTAMP:
                     if (x == null) {
                         return null;
+                    } else if (x instanceof DateTime) {
+                        return ((DateTime) x).toTimestamp();
                     } else if (x instanceof java.sql.Timestamp) {
                         return x;
                     } else if (x instanceof java.sql.Date) {
@@ -425,6 +427,8 @@ public class Support {
                 case java.sql.Types.DATE:
                     if (x == null) {
                         return null;
+                    } else if (x instanceof DateTime) {
+                        return ((DateTime) x).toDate();
                     } else if (x instanceof java.sql.Date) {
                         return x;
                     } else if (x instanceof java.sql.Time) {
@@ -448,6 +452,8 @@ public class Support {
                 case java.sql.Types.TIME:
                     if (x == null) {
                         return null;
+                    } else if (x instanceof DateTime) {
+                        return ((DateTime) x).toTime();
                     } else if (x instanceof java.sql.Time) {
                         return x;
                     } else if (x instanceof java.sql.Date) {
@@ -766,6 +772,10 @@ public class Support {
             Clob clob = (Clob) value;
 
             value = clob.getSubString(1, (int) clob.length());
+        }
+
+        if (value instanceof DateTime) {
+            value =((DateTime) value).toObject();
         }
 
         if (value instanceof byte[]) {

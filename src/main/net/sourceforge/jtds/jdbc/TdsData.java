@@ -20,10 +20,7 @@ package net.sourceforge.jtds.jdbc;
 import java.io.*;
 import java.math.BigInteger;
 import java.math.BigDecimal;
-import java.util.Calendar;
-import java.sql.Timestamp;
 import java.sql.SQLException;
-import java.util.GregorianCalendar;
 
 import net.sourceforge.jtds.util.BlobBuffer;
 
@@ -46,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.48 2005-04-28 14:29:29 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.49 2005-05-10 15:14:57 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -906,11 +903,7 @@ public class TdsData {
             case SYBDATE:
                 len = (ci.tdsType == SYBDATEN)? in.read(): 4;
                 if (len == 4) {
-                    int daysSince1900 = in.readInt();
-                    synchronized (cal) {
-                        sybDateToCalendar(daysSince1900, cal);
-                        return new java.sql.Date(cal.getTime().getTime());
-                    }
+                    return new DateTime(in.readInt(), -1);
                 } else {
                     // Invalid length or 0 for null
                     in.skip(len);
@@ -921,14 +914,7 @@ public class TdsData {
             case SYBTIME:
                 len = (ci.tdsType == SYBTIMEN)? in.read(): 4;
                 if (len == 4) {
-                    synchronized (cal) {
-                        int time = in.readInt();
-                        sybTimeToCalendar(time, cal);
-                        cal.set(Calendar.YEAR, 1970);
-                        cal.set(Calendar.MONTH, 0);
-                        cal.set(Calendar.DAY_OF_MONTH, 1);
-                        return new java.sql.Time(cal.getTime().getTime());
-                    }
+                    return new DateTime(-1, in.readInt());
                 } else {
                     // Invalid length or 0 for null
                     in.skip(len);
@@ -1766,21 +1752,15 @@ public class TdsData {
                 break;
 
             case SYBDATETIMN:
-                putDateTimeValue(out, pi.value);
+                putDateTimeValue(out, (DateTime) pi.value);
                 break;
 
             case SYBDATEN:
                 if (pi.value == null) {
                     out.write((byte)0);
                 } else {
-                    synchronized (cal) {
-                        out.write((byte) 4);
-                        cal.setTime((java.util.Date) pi.value);
-                        int daysSince1900 = calendarToSybDate(cal.get(Calendar.YEAR),
-                                                              cal.get(Calendar.MONTH) + 1,
-                                                              cal.get(Calendar.DAY_OF_MONTH));
-                        out.write((int) daysSince1900);
-                    }
+                    out.write((byte)4);
+                    out.write((int)((DateTime) pi.value).getDate());
                 }
                 break;
 
@@ -1788,12 +1768,8 @@ public class TdsData {
                if (pi.value == null) {
                    out.write((byte)0);
                } else {
-                   synchronized (cal) {
-                       out.write((byte) 4);
-                       int time = calendarToSybTime(cal, pi.value);
-                       cal.setTime((java.util.Date) pi.value);
-                       out.write((int) time);
-                   }
+                   out.write((byte)4);
+                   out.write((int)((DateTime) pi.value).getTime());
                }
                break;
 
@@ -1867,7 +1843,7 @@ public class TdsData {
                            CharsetInfo charsetInfo,
                            byte[] collation,
                            ParamInfo pi)
-    throws IOException, SQLException {
+            throws IOException {
         int len;
         String tmp;
         byte[] buf;
@@ -2199,7 +2175,7 @@ public class TdsData {
             case SYBDATETIMN:
                 out.write((byte) SYBDATETIMN);
                 out.write((byte) 8);
-                putDateTimeValue(out, pi.value);
+                putDateTimeValue(out, (DateTime) pi.value);
                 break;
 
             case SYBBIT:
@@ -2276,78 +2252,6 @@ public class TdsData {
     private TdsData() {
     }
 
-    /**
-     * Convert a Julian date from the Sybase epoch of 1900-01-01
-     * to a Calendar object.
-     * @param julianDate The Sybase days from 1900 value.
-     * @param cal The Calendar object to populate.
-     *
-     * Algorithm  from Fliegel, H F and van Flandern, T C (1968).
-     * Communications of the ACM, Vol 11, No 10 (October, 1968).
-     * <pre>
-     *           SUBROUTINE GDATE (JD, YEAR,MONTH,DAY)
-     *     C
-     *     C---COMPUTES THE GREGORIAN CALENDAR DATE (YEAR,MONTH,DAY)
-     *     C   GIVEN THE JULIAN DATE (JD).
-     *     C
-     *           INTEGER JD,YEAR,MONTH,DAY,I,J,K
-     *     C
-     *           L= JD+68569
-     *           N= 4*L/146097
-     *           L= L-(146097*N+3)/4
-     *           I= 4000*(L+1)/1461001
-     *           L= L-1461*I/4+31
-     *           J= 80*L/2447
-     *           K= L-2447*J/80
-     *           L= J/11
-     *           J= J+2-12*L
-     *           I= 100*(N-49)+I+L
-     *     C
-     *           YEAR= I
-     *           MONTH= J
-     *           DAY= K
-     *     C
-     *           RETURN
-     *           END
-     * </pre>
-     */
-    private static void sybDateToCalendar(int julianDate, GregorianCalendar cal) {
-        int l = julianDate + 68569 + 2415021;
-        int n = 4 * l / 146097;
-        l = l - (146097 * n + 3) / 4;
-        int i = 4000 * (l + 1) / 1461001;
-        l = l - 1461 * i / 4 + 31;
-        int j = 80 * l / 2447;
-        int k = l - 2447 * j / 80;
-        l = j / 11;
-        j = j + 2 - 12 * l;
-        i = 100 * (n - 49) + i + l;
-        cal.set(Calendar.YEAR, i);
-        cal.set(Calendar.MONTH, j-1);
-        cal.set(Calendar.DAY_OF_MONTH, k);
-    }
-
-    /**
-     * Convert a Sybase time from midnight in 300th seconds to
-     * a java calendar object.
-     * @param time The Sybase time value.
-     * @param cal The Calendar to be updated.
-     */
-    private static void sybTimeToCalendar(int time, GregorianCalendar cal) {
-        int hours = time / 1080000;
-        cal.set(Calendar.HOUR_OF_DAY, hours);
-        time = time - hours * 1080000;
-        int minutes = time / 18000;
-        cal.set(Calendar.MINUTE, minutes);
-        time = time - (minutes * 18000);
-        int seconds = time / 300;
-        cal.set(Calendar.SECOND, seconds);
-        time = time - seconds * 300;
-        time = (int) Math.round(time * 1000 / 300f);
-        cal.set(Calendar.MILLISECOND, time);
-    }
-
-    private static GregorianCalendar cal = new GregorianCalendar();
     private static BigDecimal limit28 = new BigDecimal("999999999999999999");
     private static BigDecimal limit38 = new BigDecimal("9999999999999999999999999999");
 
@@ -2360,141 +2264,46 @@ public class TdsData {
      * @throws java.io.IOException
      */
     private static Object getDatetimeValue(ResponseStream in, final int type)
-    throws IOException, ProtocolException {
+            throws IOException, ProtocolException {
         int len;
         int daysSince1900;
         int time;
-        int hours;
         int minutes;
 
-        synchronized (cal) {
-            if (type == SYBDATETIMN) {
-                len = in.read(); // No need to & with 0xff
-            } else if (type == SYBDATETIME4) {
-                len = 4;
-            } else {
-                len = 8;
-            }
-
-            switch (len) {
-                case 0:
-                    return null;
-
-                case 8:
-                    // A datetime is made of of two 32 bit integers
-                    // The first one is the number of days since 1900
-                    // The second integer is the number of seconds*300
-                    // Negative days indicate dates earlier than 1900.
-                    // The full range is 1753-01-01 to 9999-12-31.
-                    daysSince1900 = in.readInt();
-                    sybDateToCalendar(daysSince1900, cal);
-                    time = in.readInt();
-                    sybTimeToCalendar(time, cal);
-//
-//                  getTimeInMillis() is protected in java vm 1.3 :-(
-//                  return new Timestamp(cal.getTimeInMillis());
-//
-                    return new Timestamp(cal.getTime().getTime());
-                case 4:
-                    // A smalldatetime is two 16 bit integers.
-                    // The first is the number of days past January 1, 1900,
-                    // the second smallint is the number of minutes past
-                    // midnight.
-                    // The full range is 1900-01-01 to 2079-06-06.
-                    daysSince1900 = ((int) in.readShort()) & 0xFFFF;
-                    sybDateToCalendar(daysSince1900, cal);
-                    minutes = in.readShort();
-                    hours = minutes / 60;
-                    cal.set(Calendar.HOUR_OF_DAY, hours);
-                    minutes = minutes - hours * 60;
-                    cal.set(Calendar.MINUTE, minutes);
-                    cal.set(Calendar.SECOND, 0);
-                    cal.set(Calendar.MILLISECOND, 0);
-//                    return new Timestamp(cal.getTimeInMillis());
-                    return new Timestamp(cal.getTime().getTime());
-                default:
-                    throw new ProtocolException("Invalid DATETIME value with size of "
-                                                + len + " bytes.");
-            }
-        }
-    }
-
-    /**
-     * Convert a calendar date into days since 1900 (Sybase epoch).
-     * <p>
-     * Algorithm  from Fliegel, H F and van Flandern, T C (1968).
-     * Communications of the ACM, Vol 11, No 10 (October, 1968).
-     *
-     * <pre>
-     *           INTEGER FUNCTION JD (YEAR,MONTH,DAY)
-     *     C
-     *     C---COMPUTES THE JULIAN DATE (JD) GIVEN A GREGORIAN CALENDAR
-     *     C   DATE (YEAR,MONTH,DAY).
-     *     C
-     *           INTEGER YEAR,MONTH,DAY,I,J,K
-     *     C
-     *           I= YEAR
-     *           J= MONTH
-     *           K= DAY
-     *     C
-     *           JD= K-32075+1461*(I+4800+(J-14)/12)/4+367*(J-2-(J-14)/12*12)
-     *          2    /12-3*((I+4900+(J-14)/12)/100)/4
-     *     C
-     *           RETURN
-     *           END
-     * </pre>
-     *
-     * @param year The year eg 2003.
-     * @param month The month 1-12.
-     * @param day The day in month 1-31.
-     * @return The julian date adjusted for Sybase epoch of 1900.
-     * @throws SQLException if the date is outside the accepted range, 1753-9999
-     */
-    private static int calendarToSybDate(int year, int month, int day) throws SQLException {
-        if (year < 1753 || year > 9999) {
-            throw new SQLException(Messages.get("error.datetime.range"), "22003");
+        if (type == SYBDATETIMN) {
+            len = in.read(); // No need to & with 0xff
+        } else if (type == SYBDATETIME4) {
+            len = 4;
+        } else {
+            len = 8;
         }
 
-        return day - 32075 + 1461 * (year + 4800 + (month - 14) / 12) /
-        4 + 367 * (month - 2 - (month - 14) / 12 * 12) /
-        12 - 3 * ((year + 4900 + (month -14) / 12) / 100) /
-        4 - 2415021;
-    }
+        switch (len) {
+            case 0:
+                return null;
 
-    /**
-     * Convert a java Date type to integer 300th seconds since
-     * midnight.
-     * <p>
-     * NB. If rounding causes the time to wrap then the day field in the
-     * Calendar object will be incremented by one.
-     * @param cal The Calendar object to update.
-     * @param value The java Date object to convert.
-     * @return Number of 300th seconds from Midnight.
-     */
-    private static int calendarToSybTime(GregorianCalendar cal, Object value)
-    {
-        cal.setTime((java.util.Date) value);
-
-        if (!Driver.JDBC3 && value instanceof java.sql.Timestamp) {
-            // Not Running under 1.4 so need to add milliseconds
-            cal.set(Calendar.MILLISECOND,
-                    ((java.sql.Timestamp)value).getNanos() / 1000000);
+            case 8:
+                // A datetime is made of of two 32 bit integers
+                // The first one is the number of days since 1900
+                // The second integer is the number of seconds*300
+                // Negative days indicate dates earlier than 1900.
+                // The full range is 1753-01-01 to 9999-12-31.
+                daysSince1900 = in.readInt();
+                time = in.readInt();
+                return new DateTime(daysSince1900, time);
+            case 4:
+                // A smalldatetime is two 16 bit integers.
+                // The first is the number of days past January 1, 1900,
+                // the second smallint is the number of minutes past
+                // midnight.
+                // The full range is 1900-01-01 to 2079-06-06.
+                daysSince1900 = ((int) in.readShort()) & 0xFFFF;
+                minutes = in.readShort();
+                return new DateTime((short) daysSince1900, (short) minutes);
+            default:
+                throw new ProtocolException("Invalid DATETIME value with size of "
+                                            + len + " bytes.");
         }
-
-        int time = cal.get(Calendar.HOUR_OF_DAY) * 1080000;
-        time += cal.get(Calendar.MINUTE) * 18000;
-        time += cal.get(Calendar.SECOND) * 300;
-
-        if (value instanceof java.sql.Timestamp) {
-            time += Math.round(cal.get(Calendar.MILLISECOND) * 300f / 1000);
-        }
-        if (time > 25919999) {
-            // Time field has overflowed need to increment days
-            // Sybase does not allow invalid time component
-            time = 0;
-            cal.add(Calendar.DATE, 1);
-        }
-        return time;
     }
 
     /**
@@ -2504,36 +2313,15 @@ public class TdsData {
      * @param out   the server request stream
      * @param value the date value to write
      */
-    private static void putDateTimeValue(RequestStream out, Object value)
-            throws SQLException, IOException {
-        int daysSince1900;
-        int time;
-
+    private static void putDateTimeValue(RequestStream out, DateTime value)
+            throws IOException {
         if (value == null) {
             out.write((byte) 0);
             return;
         }
-
-        synchronized (cal) {
-            out.write((byte) 8);
-            if (value instanceof java.sql.Date) {
-                time = 0;
-                cal.setTime((java.util.Date) value);
-            } else {
-                time = calendarToSybTime(cal, value);
-            }
-
-            if (value instanceof java.sql.Time) {
-                daysSince1900 = 0;
-            } else {
-                daysSince1900 = calendarToSybDate(cal.get(Calendar.YEAR),
-                                                  cal.get(Calendar.MONTH) + 1,
-                                                  cal.get(Calendar.DAY_OF_MONTH));
-            }
-
-            out.write((int) daysSince1900);
-            out.write((int) time);
-        }
+        out.write((byte) 8);
+        out.write((int)value.getDate());
+        out.write((int)value.getTime());
     }
 
     /**

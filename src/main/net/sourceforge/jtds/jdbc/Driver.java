@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.56 2005-04-20 16:49:15 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.57 2005-05-12 07:59:00 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -313,7 +313,7 @@ public class Driver implements java.sql.Driver {
         Properties props = new Properties();
 
         // Take local copy of existing properties
-        for (Enumeration e = info.keys(); e.hasMoreElements();) {
+        for (Enumeration e = info.propertyNames(); e.hasMoreElements();) {
             String key = (String) e.nextElement();
             String value = info.getProperty(key);
 

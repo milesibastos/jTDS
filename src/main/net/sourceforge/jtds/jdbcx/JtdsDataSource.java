@@ -44,10 +44,13 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.30 2005-04-28 14:29:30 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.31 2005-05-12 08:18:43 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
+    /** Serial version UID */
+    static final long serialVersionUID = 01000300L;
+
     protected String serverName;
     protected String serverType;
     protected String portNumber;

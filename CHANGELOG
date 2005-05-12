@@ -4,6 +4,7 @@ Changes from jTDS 1.0.3
 05/11/2005 - Alin Sinpalean
  o Corrected bug [1200027] Enhancement: Change how Properties keys are
    determined.
+ o Added serialVersionUID to JtdsDataSource.
 
 05/10/2005 - Alin Sinpalean
  o Applied Mike's patch [1197446] Optimized handling of datetime values.

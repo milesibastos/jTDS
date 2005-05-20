@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.42 2005-05-10 15:14:56 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.43 2005-05-20 12:02:25 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -288,7 +288,7 @@ public class Support {
                     } else if (x instanceof BigDecimal) {
                         return x;
                     } else if (x instanceof Number) {
-                        return new BigDecimal(((Number) x).doubleValue());
+                        return new BigDecimal(x.toString());
                     } else if (x instanceof String) {
                         return new BigDecimal((String) x);
                     } else if (x instanceof Boolean) {

@@ -25,9 +25,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.Random;
 
 /**
- * @version 1.0
+ * @version $Id: PreparedStatementTest.java,v 1.38 2005-05-20 12:02:31 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -342,6 +343,32 @@ public class PreparedStatementTest extends TestBase {
         assertFalse(rs.next());
         rs.close();
         stmt.close();
+    }
+
+    /**
+     * Test for bug [1204658] Conversion from Number to BigDecimal causes data
+     * corruption.
+     */
+    public void testPreparedStatementSetObject6() throws Exception {
+        final Long TEST_VALUE = new Long(2265157674817400199L);
+
+        Statement s = con.createStatement();
+        s.execute("CREATE TABLE #psso6 (test_value NUMERIC(22,0))");
+
+        PreparedStatement ps = con.prepareStatement(
+                "insert into #psso6(test_value) values (?)");
+        ps.setObject(1, TEST_VALUE, Types.DECIMAL);
+        assertEquals(1, ps.executeUpdate());
+        ps.close();
+
+        ResultSet rs = s.executeQuery("select test_value from #psso6");
+        assertTrue(rs.next());
+        assertEquals("Persisted value not equal to original value",
+                TEST_VALUE.longValue(), rs.getLong(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        s.close();
     }
 
     /**

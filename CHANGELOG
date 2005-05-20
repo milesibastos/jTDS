@@ -1,6 +1,10 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/20/2005 - Alin Sinpalean
+ o Corrected bug [1204658] Conversion from Number to BigDecimal causes data
+   corruption.
+
 05/11/2005 - Alin Sinpalean
  o Corrected bug [1200027] Enhancement: Change how Properties keys are
    determined.

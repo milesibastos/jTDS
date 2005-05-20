@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.32 2005-04-28 14:29:28 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.33 2005-05-20 12:02:25 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -822,7 +822,7 @@ class SharedSocket {
                 && packetType != TdsCore.QUERY_PKT
                 && packetType != TdsCore.REPLY_PKT) {
             throw new IOException("Unknown packet type 0x" +
-                                    Integer.toHexString(packetType));
+                                    Integer.toHexString(packetType & 0xFF));
         }
 
         // figure out how many bytes are remaining in this packet.

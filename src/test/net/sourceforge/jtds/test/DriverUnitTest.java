@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  *
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.15 2005-03-07 21:57:45 alin_sinpalean Exp $
+ * @version $Id: DriverUnitTest.java,v 1.16 2005-05-25 09:24:04 alin_sinpalean Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -157,8 +157,7 @@ public class DriverUnitTest extends UnitTestBase {
             String.valueOf(TdsCore.UNPREPARED),
             String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES),
             String.valueOf(TdsCore.EXECUTE_SQL),
-            String.valueOf(TdsCore.PREPARE),
-            String.valueOf(TdsCore.PREPEXEC),
+            String.valueOf(TdsCore.PREPARE)
         };
         String[] expectedServerTypeChoices = new String[]{
             String.valueOf(Driver.SQLSERVER),
@@ -178,6 +177,7 @@ public class DriverUnitTest extends UnitTestBase {
         expectedChoicesMap.put(Messages.get(Driver.SERVERTYPE), expectedServerTypeChoices);
         expectedChoicesMap.put(Messages.get(Driver.TDS), expectedTdsChoices);
         expectedChoicesMap.put(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get(Driver.CACHEMETA), expectedBooleanChoices);
 
         final Map infoMap = new HashMap();
         loadDriverPropertyInfoMap(infoMap);

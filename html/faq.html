@@ -187,6 +187,13 @@
           Currently jTDS automatically falls back from 8.0 to 7.0 (if used with
           SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying
           the value for this parameter is only necessary for SQL Server 6.5.</dd>
+        <dt><code>cachemetadata</code> (default - <code>false</code>)</dt>
+        <dd>When used with prepareSQL=3, setting this property to
+          <code>true</code> will cause the driver to cache column meta data for
+          SELECT statements. Caching the meta data will reduce the processing
+          overhead when reusing statements that return small result sets that
+          have many columns but may lead to unexpected errors if the database
+          schema changes after the statement has been prepared. Use with care.
         <dt><code>charset</code> (default - the character set the server was installed
           with)</dt>
         <dd>Very important setting, determines the byte value to character mapping
@@ -257,8 +264,7 @@
               <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation</td></tr>
               <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (usually fastest)</td></tr>
               <tr><td><code>2</code></td><td>sp_executesql is used</td></tr>
-              <tr><td><code>3 (experimental)</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute</td></tr>
-              <tr><td><code>4 (experimental)</code></td><td>sp_prepexec and sp_cursorprepexec are used in conjunction with sp_execute and sp_cursorexecute</td></tr>
+              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute</td></tr>
             </tbody>
           </table>
           </dd></dt>

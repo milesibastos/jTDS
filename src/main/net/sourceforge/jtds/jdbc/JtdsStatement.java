@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.41 2005-05-13 18:46:19 ddkilzer Exp $
+ * @version $Id: JtdsStatement.java,v 1.42 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -113,6 +113,8 @@ public class JtdsStatement implements java.sql.Statement {
     protected final LinkedList resultQueue = new LinkedList();
     /** List of open result sets. */
     protected ArrayList openResultSets;
+    /** The cached column meta data. */
+    protected ColInfo[] colMetaData;
 
     /**
      * Construct a new Statement object.
@@ -346,9 +348,20 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // Could not open a cursor (or was not requested) so try a direct select
         //
-        tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
-                maxFieldSize, true);
-
+        if (spName != null
+                && connection.getUseMetadataCache()
+                && connection.getPrepareSql() == TdsCore.PREPARE
+                && colMetaData != null
+                && connection.getServerType() == Driver.SQLSERVER) {
+            // There is cached meta data available for this
+            // prepared statement
+            tds.setColumns(colMetaData);
+            tds.executeSQL(sql, spName, params, true, queryTimeout, maxRows,
+                    maxFieldSize, true);
+        } else {
+            tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
+                    maxFieldSize, true);
+        }
         // Ignore update counts preceding the result set. All drivers seem to
         // do this.
         while (!tds.getMoreResults() && !tds.isEndOfResponse());

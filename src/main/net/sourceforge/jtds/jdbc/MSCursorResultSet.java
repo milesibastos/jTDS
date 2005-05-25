@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.49 2005-05-10 15:14:54 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.50 2005-05-25 09:24:03 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -85,8 +85,6 @@ public class MSCursorResultSet extends JtdsResultSet {
     /*
      * Instance variables.
      */
-    /** The prepared statment handle from prepare/prepexec. */
-    private Integer prepStmtHandle;
     /** Set when <code>moveToInsertRow()</code> was called. */
     private boolean onInsertRow;
     /** The "insert row". */
@@ -322,6 +320,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             throws SQLException {
         TdsCore tds = statement.getTds();
         int prepareSql = statement.connection.getPrepareSql();
+        Integer prepStmtHandle = null;
 
         //
         // If this cursor is going to be a named forward only cursor
@@ -399,10 +398,9 @@ public class MSCursorResultSet extends JtdsResultSet {
                     }
                 }
                 sql = buf.toString();
-            } else
-            // Prepared Statement Handle?
-            if (TdsCore.isPreparedProcedureName(procName)) {
+            } else if (TdsCore.isPreparedProcedureName(procName)) {
                 //
+                // Prepared Statement Handle
                 // At present procName is set to the value obtained by
                 // the connection.prepareSQL() call in JtdsPreparedStatement.
                 // This handle was obtained using sp_cursorprepare not sp_prepare
@@ -425,7 +423,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         int scrollOpt = getCursorScrollOpt(resultSetType, concurrency,
                 parameters != null);
         int ccOpt = getCursorConcurrencyOpt(concurrency);
-
         //
         // Create parameter objects
         //
@@ -448,7 +445,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Setup statement handle param
         //
         ParamInfo pStmtHand = null;
-        if (prepareSql == TdsCore.PREPEXEC || prepareSql == TdsCore.PREPARE) {
+        if (prepareSql == TdsCore.PREPARE) {
             pStmtHand = new ParamInfo(Types.INTEGER, prepStmtHandle, ParamInfo.OUTPUT);
         }
         //
@@ -470,48 +467,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         ParamInfo pSQL = new ParamInfo(Types.LONGVARCHAR, sql, ParamInfo.UNICODE);
         //
-        // If using the prepare/execute model, now need to pepare SQL
-        //
-        if (prepareSql == TdsCore.PREPARE && prepStmtHandle == null) {
-            ParamInfo params[] = new ParamInfo[6];
-
-            // Setup statement handle param
-            params[0] = pStmtHand;
-
-            // Setup parameter definitions
-            params[1] = pParamDef;
-
-            // Setup statement param
-            params[2] = pSQL;
-
-            // Setup flag param
-            params[3] = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
-            // Setup scroll options
-            params[4] = pScrollOpt;
-            // Setup concurrency options
-            params[5] = pConCurOpt;
-
-            columns = null; // Will be populated if preparing a select
-
-            // Use sp_cursorprepare approach
-            tds.executeSQL(null, "sp_cursorprepare", params, false,
-                    statement.getQueryTimeout(), -1, -1, true);
-            tds.clearResponseQueue();
-
-            // columns will now hold meta data for select statements
-            prepStmtHandle = (Integer) pStmtHand.getOutValue();
-
-            if (prepStmtHandle == null) {
-                // Some types of statements cannot be prepared
-                prepareSql = TdsCore.UNPREPARED;
-                if (parameters != null) {
-                    // Ensure that sp_cursoropen will recognise user params
-                    pScrollOpt.value = new Integer(
-                            ((Integer)pScrollOpt.getOutValue()).intValue() | 0x1000);
-                }
-            }
-        }
-        //
         // OK now open the Cursor
         //
         if (prepareSql == TdsCore.PREPARE && prepStmtHandle != null) {
@@ -525,8 +480,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             // Setup cursor handle param
             params[1] = pCursor;
             // Setup scroll options (mask off parameter flag)
-            pScrollOpt.value = new Integer(
-                    ((Integer)pScrollOpt.getOutValue()).intValue() & 0XFF);
+            pScrollOpt.value = new Integer(scrollOpt & 0xFF);
             params[2] = pScrollOpt;
             // Setup concurrency options
             params[3] = pConCurOpt;
@@ -534,35 +488,6 @@ public class MSCursorResultSet extends JtdsResultSet {
             params[4] = pRowCount;
             parameters = params;
             procName = "sp_cursorexecute";
-        } else if (prepareSql == TdsCore.PREPEXEC) {
-            // Use sp_cursorprepexec approach
-            ParamInfo[] params = new ParamInfo[7 + parameters.length];
-            System.arraycopy(parameters, 0, params, 7, parameters.length);
-
-            // Setup statement handle param
-            params[0] = pStmtHand;
-
-            // Setup cursor handle param
-            params[1] = pCursor;
-
-            // Setup parameter definitions
-            params[2] = pParamDef;
-
-            // Setup statement param
-            params[3] = pSQL;
-
-            // Setup scroll options
-            params[4] = pScrollOpt;
-
-            // Setup concurrency options
-            params[5] = pConCurOpt;
-
-            // Setup numRows parameter
-            params[6] = pRowCount;
-
-            parameters = params;
-
-            procName = "sp_cursorprepexec";
         } else {
             // Use sp_cursoropen approach
             ParamInfo[] params;
@@ -619,13 +544,10 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Retrieve values of output parameters
         //
         PARAM_CURSOR_HANDLE.value = pCursor.getOutValue();
-        actualScroll = ((Integer)pScrollOpt.getOutValue()).intValue();
-        actualCc     = ((Integer)pConCurOpt.getOutValue()).intValue();
-        rowsInResult = ((Integer)pRowCount.getOutValue()).intValue();
-        if (prepareSql == TdsCore.PREPEXEC) {
-            prepStmtHandle = (Integer)pStmtHand.getOutValue();
-        }
-
+        actualScroll = ((Integer) pScrollOpt.getOutValue()).intValue();
+        actualCc     = ((Integer) pConCurOpt.getOutValue()).intValue();
+        rowsInResult = ((Integer) pRowCount.getOutValue()).intValue();
+        //
         if ((retVal == null) || (retVal.intValue() != 0)) {
             throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
         }
@@ -695,10 +617,6 @@ public class MSCursorResultSet extends JtdsResultSet {
             statement.addWarning(new SQLWarning(Messages.get(
                     "warning.cursordowngraded", resultSetType + "/" + concurrency), "01000"));
         }
-
-        //
-        // TODO: Save the value of the prepStmtHandle for reuse later
-        //
     }
 
     /**
@@ -977,16 +895,6 @@ public class MSCursorResultSet extends JtdsResultSet {
                 statement.getQueryTimeout(), -1, -1, true);
         tds.clearResponseQueue();
         statement.getMessages().checkErrors();
-        //
-        // If using prepared statements unprepare now to prevent resource leaks on server.
-        //
-        if (prepStmtHandle != null) {
-            param[0].value = prepStmtHandle;
-            tds.executeSQL(null, "sp_cursorunprepare", param, false,
-                    statement.getQueryTimeout(), -1, -1, true);
-            tds.clearResponseQueue();
-            statement.getMessages().checkErrors();
-        }
     }
 
 //

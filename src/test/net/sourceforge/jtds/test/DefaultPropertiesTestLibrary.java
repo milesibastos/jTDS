@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.14 2005-03-18 11:46:53 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.15 2005-05-25 09:24:04 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -295,6 +295,18 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         }
     }
 
+    /**
+     * Test the <code>cachemetadata</code> property.
+     */
+    public void test_cachemetadata() {
+        String fieldName = "useMetadataCache";
+        String messageKey = Driver.CACHEMETA;
+        String expectedValue = String.valueOf(DefaultProperties.CACHEMETA);
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
 
     /**
      * Test the <code>tcpNoDelay</code> property.

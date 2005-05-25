@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.19 2005-03-18 11:46:52 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.20 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -56,6 +56,10 @@ public final class DefaultProperties {
     public static final String BATCH_SIZE_SQLSERVER = "0";
     /** Default <code>batchSize</code> property for Sybase. */
     public static final String BATCH_SIZE_SYBASE = "1000";
+    /** Default <code>cachemetadata</code> property. */
+    public static final String CACHEMETA = "false";
+    /** Default <code>charset</code> property. */
+    public static final String CHARSET = "";
     /** Default <code>databaseName</code> property. */
     public static final String DATABASE_NAME = "";
     /** Default <code>instance</code> property. */
@@ -88,8 +92,6 @@ public final class DefaultProperties {
     public static final String PORT_NUMBER_SQLSERVER = "1433";
     /** Default <code>portNumber</code> property for Sybase. */
     public static final String PORT_NUMBER_SYBASE = "7100";
-    /** Default <code>charset</code> property. */
-    public static final String CHARSET = "";
     /** Default <code>language</code> property. */
     public static final String LANGUAGE = "";
     /** Default <code>prepareSql</code> property. */
@@ -192,6 +194,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.MAXSTATEMENTS, MAX_STATEMENTS);
         addDefaultPropertyIfNotSet(props, Driver.NAMEDPIPE, NAMED_PIPE);
         addDefaultPropertyIfNotSet(props, Driver.PACKETSIZE, Driver.TDS, packetSizeDefaults);
+        addDefaultPropertyIfNotSet(props, Driver.CACHEMETA, CACHEMETA);
         addDefaultPropertyIfNotSet(props, Driver.CHARSET, CHARSET);
         addDefaultPropertyIfNotSet(props, Driver.LANGUAGE, LANGUAGE);
         addDefaultPropertyIfNotSet(props, Driver.PREPARESQL, PREPARE_SQL);

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.93 2005-05-04 08:56:11 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.94 2005-05-25 09:24:03 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -316,8 +316,6 @@ public class TdsCore {
     public static final int EXECUTE_SQL = 2;
     /** Prepare SQL using sp_prepare and sp_execute */
     public static final int PREPARE = 3;
-    /** Prepare SQL using sp_prepexec and sp_execute */
-    public static final int PREPEXEC = 4;
 
     //
     // Sybase capability flags
@@ -461,6 +459,17 @@ public class TdsCore {
      */
     ColInfo[] getColumns() {
         return columns;
+    }
+
+    /**
+     * Sets the column meta data.
+     *
+     * @param columns the column descriptor array
+     */
+    void setColumns(ColInfo[] columns) {
+        this.columns = columns;
+        this.rowData = new Object[columns.length];
+        this.tables  = null;
     }
 
     /**
@@ -845,14 +854,11 @@ public class TdsCore {
         Semaphore mutex = null;
         try {
             mutex = connection.getMutex();
-            mutex.acquire();
             synchronized (cancelMonitor) {
                 if (!cancelPending && !endOfResponse) {
                     cancelPending = socket.cancel(out.getStreamId());
                 }
             }
-        } catch (InterruptedException e) {
-            mutex = null;
         } finally {
             if (mutex != null) {
                 mutex.release();
@@ -919,29 +925,11 @@ public class TdsCore {
 
         try {
             //
-            // If the current thread has been interrupted but the thread
-            // has caught the InterruptedException and continued to execute,
-            // we need to clear the Interrupted status now to ensure that
-            // we don't fail trying to obtain the connection mutex.
-            // The c3p0 connection pool software seems to start threads
-            // in an interrupted state under some circumstances.
-            //
-            if (Thread.interrupted()) {
-                // Thread.interrupted() will clear the interrupt status
-                Logger.println("Thread status of Interrupted found and cleared");
-            }
-            //
             // Obtain a lock on the connection giving exclusive access
             // to the network connection for this thread
             //
             if (connectionLock == null) {
                 connectionLock = connection.getMutex();
-                try {
-                    connectionLock.acquire();
-                } catch (InterruptedException e) {
-                    connectionLock = null;
-                    throw new IllegalStateException("Thread execution interrupted");
-                }
             }
             checkOpen();
             clearResponseQueue();
@@ -1069,6 +1057,7 @@ public class TdsCore {
      *
      * @param sql                  the SQL statement to prepare.
      * @param params               the actual parameter list
+     * @param needCursor           true if a cursorprepare is required
      * @param resultSetType        value of the resultSetType parameter when
      *                             the Statement was created
      * @param resultSetConcurrency value of the resultSetConcurrency parameter
@@ -1076,9 +1065,13 @@ public class TdsCore {
      * @return name of the procedure or prepared statement handle.
      * @exception SQLException
      */
-    String microsoftPrepare(String sql, ParamInfo[] params,
-                            int resultSetType, int resultSetConcurrency)
+    String microsoftPrepare(String sql,
+                            ParamInfo[] params,
+                            boolean needCursor,
+                            int resultSetType,
+                            int resultSetConcurrency)
             throws SQLException {
+        //
         checkOpen();
         messages.clearWarnings();
 
@@ -1109,6 +1102,7 @@ public class TdsCore {
 
             try {
                 submitSQL(spSql.toString());
+                return procName;
             } catch (SQLException e) {
                 if ("08S01".equals(e.getSQLState())) {
                     // Serious (I/O) error, rethrow
@@ -1123,13 +1117,9 @@ public class TdsCore {
                                         e.getMessage()),
                                 e.getSQLState(), e.getErrorCode()),
                         e));
-                return null;
             }
 
-            return procName;
         } else if (prepareSql == PREPARE) {
-            boolean needCursor = resultSetType != ResultSet.TYPE_FORWARD_ONLY
-                    || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY;
             int scrollOpt, ccOpt;
 
             ParamInfo prepParam[] = new ParamInfo[needCursor ? 6 : 4];
@@ -1166,29 +1156,45 @@ public class TdsCore {
                 prepParam[5] = new ParamInfo(Types.INTEGER,
                         new Integer(ccOpt),
                         ParamInfo.OUTPUT);
-
-                // TODO Implement support for preparing cursors (including SP support)
-                // Don't forget to include scrollability and concurrency into
-                // the prepared statement key and to remove the
-                // sp_cursorunprepare call from MSCursorResultSet (in the
-                // current implementation this would unprepare the statement
-                // when the first result set is closed, but leave the statement
-                // in the cache, causing problems on reuse).
-                return null;
             }
 
             columns = null; // Will be populated if preparing a select
+            try {
+                executeSQL(null, needCursor ? "sp_cursorprepare" : "sp_prepare",
+                        prepParam, false, 0, -1, -1, true);
 
-            executeSQL(null, needCursor ? "sp_cursorprepare" : "sp_prepare",
-                    prepParam, false, 0, -1, -1, true);
-
-            clearResponseQueue();
-
-            // columns will now hold meta data for select statements
-            Integer prepareHandle = (Integer) prepParam[0].getOutValue();
-
-            if (prepareHandle != null) {
-                return prepareHandle.toString();
+                int resultCount = 0;
+                while (!endOfResponse) {
+                    nextToken();
+                    if (isResultSet()) {
+                        resultCount++;
+                    }
+                }
+                // columns will now hold meta data for any select statements
+                if (resultCount != 1) {
+                    // More than one result set was returned or none
+                    // therefore metadata not available or unsafe.
+                    columns = null;
+                }
+                Integer prepareHandle = (Integer) prepParam[0].getOutValue();
+                if (prepareHandle != null) {
+                    return prepareHandle.toString();
+                }
+                // Probably an exception occured, check for it
+                messages.checkErrors();
+            } catch (SQLException e) {
+                if ("08S01".equals(e.getSQLState())) {
+                    // Serious (I/O) error, rethrow
+                    throw e;
+                }
+                // This exception probably caused by failure to prepare
+                // Add a warning
+                messages.addWarning((SQLWarning) Support.linkException(
+                        new SQLWarning(
+                                Messages.get("error.prepare.prepfailed",
+                                        e.getMessage()),
+                                e.getSQLState(), e.getErrorCode()),
+                        e));
             }
         }
 
@@ -1196,15 +1202,15 @@ public class TdsCore {
     }
 
     /**
-     * Create a light weight stored procedure on a Sybase server.
+     * Creates a light weight stored procedure on a Sybase server.
      *
-     * @param sql The SQL statement to prepare.
-     * @param params The actual parameter list
-     * @return name of the procedure.
-     * @throws SQLException
+     * @param sql    SQL statement to prepare
+     * @param params the actual parameter list
+     * @return name of the procedure
+     * @throws SQLException if an error occurs
      */
     synchronized String sybasePrepare(String sql, ParamInfo[] params)
-        throws SQLException {
+            throws SQLException {
         checkOpen();
         messages.clearWarnings();
         if (sql == null || sql.length() == 0) {
@@ -1228,7 +1234,11 @@ public class TdsCore {
             }
         }
 
+        Semaphore mutex = null;
+
         try {
+            mutex = connection.getMutex();
+
             out.setPacketType(SYBQUERY_PKT);
             out.write((byte)TDS5_DYNAMIC_TOKEN);
 
@@ -1248,6 +1258,7 @@ public class TdsCore {
             endOfResponse = false;
             clearResponseQueue();
             messages.checkErrors();
+            return procName;
         } catch (IOException ioe) {
             connection.setClosed();
             throw Support.linkException(
@@ -1264,117 +1275,63 @@ public class TdsCore {
             // This exception probably caused by failure to prepare
             // Return null;
             return null;
-        }
-
-        return procName;
-    }
-
-    /*
-     * Read text or image data from the server using readtext.
-     *
-     * @param tabName The parent table for this column.
-     * @param colName The name of the text or image column.
-     * @param textPtr The text pointer structure.
-     * @param offset The starting offset in the text object.
-     * @param length The number of bytes or characters to read.
-     * @return A returned <code>String</code> or <code>byte[]</code>.
-     * @throws SQLException
-     *
-     * This was a nice idea but it is difficult to actually use in practice and since
-     * SQL 2005 seems to be moving away from TEXT/IMAGE fields with varchar(max) etc
-     * I think it is probable that this code will never be put live.
-     *
-    Object readText(String tabName, String colName, TextPtr textPtr, int offset, int length)
-        throws SQLException {
-        checkOpen();
-        if (colName == null || colName.length() == 0
-            || tabName == null || tabName.length() == 0) {
-            throw new SQLException(Messages.get("error.tdscore.badtext"), "HY000");
-        }
-
-        if (textPtr == null) {
-            throw new SQLException(
-                Messages.get("error.tdscore.notextptr", tabName + "." + colName),
-                                     "HY000");
-        }
-
-        Object results = null;
-        StringBuffer sql = new StringBuffer(256);
-
-        sql.append("set textsize ");
-        sql.append((length + 1) * 2);
-        sql.append("\r\nreadtext ");
-        sql.append(tabName);
-        sql.append('.');
-        sql.append(colName);
-        sql.append(" 0x");
-        sql.append(Support.toHex(textPtr.ptr));
-        sql.append(' ');
-        sql.append(offset);
-        sql.append(' ');
-        sql.append(length);
-        sql.append("\r\nset textsize 1");
-
-        if (Logger.isActive()) {
-            Logger.println(sql.toString());
-        }
-
-        executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
-        readTextMode = true;
-
-        if (getMoreResults()) {
-            if (getNextRow()) {
-                / FIXME - this will not be valid since a Blob/Clob is returned instead of byte[]/String
-                results = rowData[0];
+        } finally {
+            if (mutex != null) {
+                mutex.release();
             }
         }
-
-        clearResponseQueue();
-        messages.checkErrors();
-
-        return results;
     }
-*/
+
     /**
-     * Retrieve the length of a text or image column.
+     * Drops a Sybase temporary stored procedure.
      *
-     * @param tabName The parent table for this column.
-     * @param colName The name of the text or image column.
-     * @return The length of the column as a <code>int</code>.
-     * @throws SQLException
+     * @param procName the temporary procedure name
+     * @throws SQLException if an error occurs
      */
-    int dataLength(String tabName, String colName) throws SQLException {
+    synchronized void sybaseUnPrepare(String procName)
+            throws SQLException {
         checkOpen();
-        if (colName == null || colName.length() == 0
-            || tabName == null || tabName.length() == 0) {
-            throw new SQLException(Messages.get("error.tdscore.badtext"), "HY000");
+        messages.clearWarnings();
+
+        if (procName == null || procName.length() != 11) {
+            throw new IllegalArgumentException(
+                    "procName parameter must be 11 characters long.");
         }
 
-        Object results = null;
-        StringBuffer sql = new StringBuffer(128);
+        Semaphore mutex = null;
+        try {
+            mutex = connection.getMutex();
 
-        sql.append("select datalength(");
-        sql.append(colName);
-        sql.append(") from ");
-        sql.append(tabName);
-        executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
-
-        if (getMoreResults()) {
-            if (getNextRow()) {
-                results = rowData[0];
+            out.setPacketType(SYBQUERY_PKT);
+            out.write((byte)TDS5_DYNAMIC_TOKEN);
+            out.write((short) (15));
+            out.write((byte) 4);
+            out.write((byte) 0);
+            out.write((byte) 10);
+            out.writeAscii(procName.substring(1));
+            out.write((short)0);
+            out.flush();
+            endOfResponse = false;
+            clearResponseQueue();
+            messages.checkErrors();
+        } catch (IOException ioe) {
+            connection.setClosed();
+            throw Support.linkException(
+                new SQLException(
+                       Messages.get(
+                                "error.generic.ioerror", ioe.getMessage()),
+                                    "08S01"), ioe);
+        } catch (SQLException e) {
+            if ("08S01".equals(e.getSQLState())) {
+                // Serious error rethrow
+                throw e;
+            }
+            // This exception probably caused by failure to unprepare
+        } finally {
+            if (mutex != null) {
+                mutex.release();
             }
         }
-
-        clearResponseQueue();
-        messages.checkErrors();
-
-        if (!(results instanceof Number)) {
-            throw new SQLException(
-                Messages.get("error.tdscore.badlen", tabName + '.' + colName),
-                "HY000");
-        }
-
-        return ((Number) results).intValue();
     }
 
     /**
@@ -1389,25 +1346,8 @@ public class TdsCore {
     synchronized byte[] enlistConnection(int type, byte[] oleTranID) throws SQLException {
         Semaphore mutex = null;
         try {
-            //
-            // If the current thread has been interrupted but the thread
-            // has caught the InterruptedException and continued to execute,
-            // we need to clear the Interrupted status now to ensure that
-            // we don't fail trying to obtain the connection mutex.
-            // The c3p0 connection pool software seems to start threads
-            // in an interrupted state under some circumstances.
-            //
-            if (Thread.interrupted()) {
-                // Thread.interrupted() will clear the interrupt status
-                Logger.println("Thread status of Interrupted found and cleared");
-            }
-            try {
-                mutex = connection.getMutex();
-                mutex.acquire();
-            } catch (InterruptedException e) {
-                mutex = null;
-                throw new IllegalStateException("Thread execution interrupted");
-            }
+            mutex = connection.getMutex();
+
             out.setPacketType(MSDTC_PKT);
             out.write((short)type);
             switch (type) {
@@ -3473,7 +3413,7 @@ public class TdsCore {
             out.write(sql);
             if (!sendNow) {
                 // Batch SQL statements
-                out.write("\r\n");
+                out.write(" ");
             }
         }
     }
@@ -3643,12 +3583,11 @@ public class TdsCore {
         throws IOException, SQLException {
         int prepareSql = connection.getPrepareSql();
 
-        if (parameters == null
-                && (prepareSql == EXECUTE_SQL || prepareSql == PREPARE || prepareSql == PREPEXEC)) {
-            // Downgrade EXECUTE_SQL, PREPARE and PREPEXEC to UNPREPARED
+        if (parameters == null && prepareSql == EXECUTE_SQL) {
+            // Downgrade EXECUTE_SQL to UNPREPARED
             // if there are no parameters.
             //
-            // Should we downgrade TEMPORARY_STORED_PROCEDURES as well?
+            // Should we downgrade TEMPORARY_STORED_PROCEDURES and PREPARE as well?
             // No it may be a complex select with no parameters but costly to
             // evaluate for each execution.
             prepareSql = UNPREPARED;
@@ -3661,73 +3600,61 @@ public class TdsCore {
             prepareSql = EXECUTE_SQL;
         }
 
-        if (isPreparedProcedureName(procName)) {
-            // If the procedure is a prepared handle then redefine the
-            // procedure name as sp_execute with the handle as a parameter.
-            ParamInfo params[];
-
+        if (procName == null) {
+            // No procedure name so not a callable statement and also
+            // not a temporary stored procedure call.
             if (parameters != null) {
-                params = new ParamInfo[1 + parameters.length];
-                System.arraycopy(parameters, 0, params, 1, parameters.length);
-            } else {
-                params = new ParamInfo[1];
+                if (prepareSql == TdsCore.UNPREPARED) {
+                    // Low tech approach just substitute parameter data into the
+                    // SQL statement.
+                    sql = Support.substituteParameters(sql, parameters, tdsVersion);
+                } else {
+                    // If we have parameters then we need to use sp_executesql to
+                    // parameterise the statement unless the user has specified
+                    ParamInfo[] params;
+
+                    params = new ParamInfo[2 + parameters.length];
+                    System.arraycopy(parameters, 0, params, 2, parameters.length);
+
+                    params[0] = new ParamInfo(Types.LONGVARCHAR,
+                            Support.substituteParamMarkers(sql, parameters),
+                            ParamInfo.UNICODE);
+                    TdsData.getNativeType(connection, params[0]);
+
+                    params[1] = new ParamInfo(Types.LONGVARCHAR,
+                            Support.getParameterDefinitions(parameters),
+                            ParamInfo.UNICODE);
+                    TdsData.getNativeType(connection, params[1]);
+
+                    parameters = params;
+
+                    // Use sp_executesql approach
+                    procName = "sp_executesql";
+                }
             }
+        } else {
+            // Either a stored procedure name has been supplied or this
+            // statement should executed using a prepared statement handle
+            if (isPreparedProcedureName(procName)) {
+                // If the procedure is a prepared handle then redefine the
+                // procedure name as sp_execute with the handle as a parameter.
+                ParamInfo params[];
 
-            params[0] = new ParamInfo(Types.INTEGER, new Integer(procName), ParamInfo.INPUT);
+                if (parameters != null) {
+                    params = new ParamInfo[1 + parameters.length];
+                    System.arraycopy(parameters, 0, params, 1, parameters.length);
+                } else {
+                    params = new ParamInfo[1];
+                }
 
-            TdsData.getNativeType(connection, params[0]);
-
-            parameters = params;
-
-            // Use sp_execute approach
-            procName = "sp_execute";
-        } else if (procName == null) {
-            if (prepareSql == PREPEXEC) {
-                // TODO: Make this option work with batch execution!
-                ParamInfo params[] = new ParamInfo[3 + parameters.length];
-
-                System.arraycopy(parameters, 0, params, 3, parameters.length);
-
-                // Setup prepare handle param
-                params[0] = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
+                params[0] = new ParamInfo(Types.INTEGER, new Integer(procName),
+                        ParamInfo.INPUT);
                 TdsData.getNativeType(connection, params[0]);
-
-                // Setup parameter descriptor param
-                params[1] = new ParamInfo(Types.LONGVARCHAR,
-                        Support.getParameterDefinitions(parameters),
-                        ParamInfo.UNICODE);
-                TdsData.getNativeType(connection, params[1]);
-
-                // Setup sql statemement param
-                params[2] = new ParamInfo(Types.LONGVARCHAR,
-                        Support.substituteParamMarkers(sql, parameters),
-                        ParamInfo.UNICODE);
-                TdsData.getNativeType(connection, params[2]);
 
                 parameters = params;
 
-                // Use sp_prepexec approach
-                procName = "sp_prepexec";
-            } else if (prepareSql != TdsCore.UNPREPARED && parameters != null) {
-                ParamInfo[] params;
-
-                params = new ParamInfo[2 + parameters.length];
-                System.arraycopy(parameters, 0, params, 2, parameters.length);
-
-                params[0] = new ParamInfo(Types.LONGVARCHAR,
-                        Support.substituteParamMarkers(sql, parameters),
-                        ParamInfo.UNICODE);
-                TdsData.getNativeType(connection, params[0]);
-
-                params[1] = new ParamInfo(Types.LONGVARCHAR,
-                        Support.getParameterDefinitions(parameters),
-                        ParamInfo.UNICODE);
-                TdsData.getNativeType(connection, params[1]);
-
-                parameters = params;
-
-                // Use sp_executesql approach
-                procName = "sp_executesql";
+                // Use sp_execute approach
+                procName = "sp_execute";
             }
         }
 
@@ -3745,10 +3672,15 @@ public class TdsCore {
                 out.write((short) procName.length());
                 out.write(procName);
             }
-
+            //
+            // If noMetaData is true then column meta data will be supressed.
+            // This option is used by sp_cursorfetch or optionally by sp_execute
+            // provided that the required meta data has been cached.
+            //
             out.write((short) (noMetaData ? 2 : 0));
 
             if (parameters != null) {
+                // Send the required parameter data
                 for (int i = nextParam + 1; i < parameters.length; i++) {
                     if (parameters[i].name != null) {
                        out.write((byte) parameters[i].name.length());
@@ -3770,22 +3702,18 @@ public class TdsCore {
                 out.write((byte) DONE_END_OF_RESPONSE);
             }
         } else if (sql.length() > 0) {
-            if (parameters != null) {
-                sql = Support.substituteParameters(sql, parameters, tdsVersion);
-            }
-
-            // Simple query
+            // Simple SQL query with no parameters
             out.setPacketType(QUERY_PKT);
             out.write(sql);
             if (!sendNow) {
                 // Append SQL packets
-                out.write("\r\n");
+                out.write(" ");
             }
         }
     }
 
     /**
-     * Set the server row count (to limit the number of rows in a result set)
+     * Sets the server row count (to limit the number of rows in a result set)
      * and text size (to limit the size of returned TEXT/NTEXT fields).
      *
      * @param rowCount the number of rows to return or 0 for no limit or -1 to
@@ -3830,9 +3758,9 @@ public class TdsCore {
     }
 
     /**
-     * Wait for the first byte of the server response.
+     * Waits for the first byte of the server response.
      *
-     * @param timeOut The time out period in seconds or 0.
+     * @param timeOut the timeout period in seconds or 0
      */
     private void wait(int timeOut) throws IOException, SQLException {
         Object timer = null;
@@ -3882,10 +3810,10 @@ public class TdsCore {
     }
 
     /**
-     * Convert a user supplied MAC address into a byte array.
+     * Converts a user supplied MAC address into a byte array.
      *
-     * @param macString The MAC address as a hex string.
-     * @return The MAC address as a <code>byte[]</code>.
+     * @param macString the MAC address as a hex string
+     * @return the MAC address as a <code>byte[]</code>
      */
     private static byte[] getMACAddress(String macString) {
         byte[] mac = new byte[6];
@@ -3912,10 +3840,10 @@ public class TdsCore {
     }
 
     /**
-     * Try to figure out what client name we should identify ourselves as. Get
-     * the hostname of this machine,
+     * Tries to figure out what client name we should identify ourselves as.
+     * Gets the hostname of this machine,
      *
-     * @return    name we will use as the client.
+     * @return name to use as the client
      */
     private static String getHostName() {
         if (hostName != null) {
@@ -3956,10 +3884,10 @@ public class TdsCore {
     }
 
     /**
-     * This is a <B>very</B> poor man's "encryption."
+     * A <B>very</B> poor man's "encryption".
      *
-     * @param  pw  password to encrypt
-     * @return     encrypted password
+     * @param pw password to encrypt
+     * @return encrypted password
      */
     private static String tds7CryptPass(final String pw) {
         final int xormask = 0x5A5A;

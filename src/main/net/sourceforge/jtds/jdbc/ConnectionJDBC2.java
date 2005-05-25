@@ -61,25 +61,9 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.82 2005-05-09 20:36:24 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.83 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
-    /**
-     * Class used to describe a cached stored procedure for prepared statements.
-     */
-    protected static class ProcEntry {
-        /** The stored procedure name. */
-        private String name;
-        /** The column meta data (Sybase only). */
-        private ColInfo[] colMetaData;
-        /** The parameter meta data (Sybase only). */
-        private ParamInfo[] paramMetaData;
-
-        public final String toString() {
-        	return name;
-        }
-    }
-
     /**
      * SQL query to determine the server charset on Sybase.
      */
@@ -225,6 +209,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private String ssl;
     /** The maximum size of a batch. */
     private int batchSize;
+    /** Use metadata cache for prepared statements. */
+    private boolean useMetadataCache;
     /** A cached <code>TdsCore</code> instance to reuse on new statements. */
     private TdsCore cachedTds;
 
@@ -471,6 +457,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                    ParamInfo[] params,
                                    boolean returnKeys)
             throws SQLException {
+
+        boolean cursorNeeded =
+                pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
+                    || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
+                    || pstmt.cursorName != null;
+
         if (prepareSql == TdsCore.UNPREPARED
                 || prepareSql == TdsCore.EXECUTE_SQL) {
             return null; // User selected not to use procs
@@ -485,9 +477,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 return null; // Sybase cannot use @@IDENTITY in proc
             }
 
-            if (pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
-                || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
-                || pstmt.cursorName != null) {
+            if (cursorNeeded) {
                 //
                 // We are going to use the CachedResultSet so there is
                 // no point in preparing the SQL as it will be discarded
@@ -517,7 +507,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
         }
 
-        String key = Support.getStatementKey(sql, params, serverType, getCatalog());
+        String key = Support.getStatementKey(sql, params, serverType,
+                getCatalog(), autoCommit, cursorNeeded);
 
         //
         // See if we have already built this one
@@ -525,45 +516,52 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         ProcEntry proc = (ProcEntry) statementCache.get(key);
 
         if (proc != null) {
+            // Yes found in cache OK
+            pstmt.setColMetaData(proc.getColMetaData());
             if (serverType == Driver.SYBASE) {
-                pstmt.setColMetaData(proc.colMetaData);
-                pstmt.setParamMetaData(proc.paramMetaData);
+                pstmt.setParamMetaData(proc.getParamMetaData());
             }
-
-            return proc.name;
-        }
-
-        //
-        // No, so create the stored procedure now
-        //
-        proc = new ProcEntry();
-
-        if (serverType == Driver.SQLSERVER) {
-            proc.name = baseTds.microsoftPrepare(sql, params,
-                    pstmt.getResultSetType(), pstmt.getResultSetConcurrency());
-
-            // TODO Should "cache" the fact that the statement cannot be prepared
-            if (proc.name == null) {
-                return null;
-            }
-            // TODO Find some way of getting parameter meta data for MS
         } else {
-            proc.name = baseTds.sybasePrepare(sql, params);
+            //
+            // No, so create the stored procedure now
+            //
+            proc = new ProcEntry();
 
-            if (proc.name == null) {
-                return null;
+            if (serverType == Driver.SQLSERVER) {
+                proc.setName(
+                        baseTds.microsoftPrepare(
+                                sql, params, cursorNeeded,
+                                pstmt.getResultSetType(),
+                                pstmt.getResultSetConcurrency()));
+
+                if (proc.toString() == null) {
+                    proc.setType(ProcEntry.PREP_FAILED);
+                } else if (prepareSql == TdsCore.TEMPORARY_STORED_PROCEDURES) {
+                    proc.setType(ProcEntry.PROCEDURE);
+                } else {
+                    proc.setType((cursorNeeded)? ProcEntry.CURSOR: ProcEntry.PREPARE);
+                    // Meta data may be returned by sp_prepare
+                    proc.setColMetaData(baseTds.getColumns());
+                    pstmt.setColMetaData(proc.getColMetaData());
+                }
+                // TODO Find some way of getting parameter meta data for MS
+            } else {
+                proc.setName(baseTds.sybasePrepare(sql, params));
+
+                if (proc.toString() == null) {
+                    proc.setType(ProcEntry.PREP_FAILED);
+                } else {
+                    proc.setType(ProcEntry.PROCEDURE);
+                }
+                // Sybase gives us lots of useful information about the result set
+                proc.setColMetaData(baseTds.getColumns());
+                proc.setParamMetaData(baseTds.getParameters());
+                pstmt.setColMetaData(proc.getColMetaData());
+                pstmt.setParamMetaData(proc.getParamMetaData());
             }
-
-            // Sybase gives us lots of useful information about the result set
-            proc.colMetaData = baseTds.getColumns();
-            proc.paramMetaData = baseTds.getParameters();
-            pstmt.setColMetaData(proc.colMetaData);
-            pstmt.setParamMetaData(proc.paramMetaData);
+            // OK we have built a proc so add it to the cache.
+            addCachedProcedure(key, proc);
         }
-
-        // OK we have built a proc so add it to the cache.
-        addCachedProcedure(key, proc);
-
         // Add the handle to the prepared statement so that the handles
         // can be used to clean up the statement cache properly when the
         // prepared statement is closed.
@@ -573,8 +571,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         pstmt.handles.add(proc);
 
-        // Give the user the name
-        return proc.name;
+        // Give the user the name will be null if prepare failed
+        return proc.toString();
     }
 
     /**
@@ -589,7 +587,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     void addCachedProcedure(String key, ProcEntry proc) {
         statementCache.put(key, proc);
 
-        if (!autoCommit) {
+        if (!autoCommit
+                && proc.getType() == ProcEntry.PROCEDURE
+                && serverType == Driver.SQLSERVER) {
             procInTran.add(key);
         }
     }
@@ -625,7 +625,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the server type as an <code>int</code> where 1 == SQLSERVER and
      *         2 == SYBASE.
      */
-    int getServerType() {
+    public int getServerType() {
         return this.serverType;
     }
 
@@ -729,6 +729,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the boolean indicating whether metadata caching
+     * is enabled.
+     *
+     * @return <code>true</code> if metadata caching is enabled,
+     *         <code>false</code> if caching is disabled
+     */
+    boolean getUseMetadataCache() {
+       return this.useMetadataCache;
+    }
+
+    /**
      * Transfers the properties to the local instance variables.
      *
      * @param info The connection properties Object.
@@ -759,6 +770,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 info.getProperty(Messages.get(Driver.NAMEDPIPE)));
         tcpNoDelay = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.TCPNODELAY)));
+        useMetadataCache = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.CACHEMETA)));
         xaEmulation = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.XAEMULATION)));
         charsetSpecified = serverCharset.length() > 0;
@@ -790,20 +803,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         lobBuffer = parseLongProperty(info, Driver.LOBBUFFER);
 
         maxStatements = parseIntegerProperty(info, Driver.MAXSTATEMENTS);
-        if (maxStatements <= 0) {
-        	statementCache = new NonCachingStatementCache();
-        } else if (maxStatements == Integer.MAX_VALUE) {
-        	statementCache = new FastStatementCache();
-        } else {
-        	statementCache = new DefaultStatementCache(maxStatements);
-        }
 
+        statementCache = new ProcedureCache(maxStatements);
         prepareSql = parseIntegerProperty(info, Driver.PREPARESQL);
-        // The TdsCore.PREPEXEC method is only available with TDS 8.0+ (SQL
-        // Server 2000+); downgrade to TdsCore.PREPARE if an invalid option
-        // is selected.
-        if (tdsVersion < Driver.TDS80 && prepareSql == TdsCore.PREPEXEC) {
-            prepareSql = TdsCore.PREPARE;
+        if (prepareSql < 0) {
+            prepareSql = 0;
+        } else if (prepareSql > 3) {
+            prepareSql = 3;
         }
         // For Sybase use equivalent of sp_executesql.
         if (tdsVersion < Driver.TDS70 && prepareSql == TdsCore.PREPARE) {
@@ -1143,8 +1149,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Remove a statement object from the list maintained by the connection and
-     * clean up the statement cache if necessary.
+     * Removes a statement object from the list maintained by the connection
+     * and cleans up the statement cache if necessary.
      * <p>
      * Synchronized because it accesses the statement list, the statement cache
      * and the <code>baseTds</code>.
@@ -1153,7 +1159,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     synchronized void removeStatement(JtdsStatement statement)
             throws SQLException {
-        // Remove the JtdsStatement
+        // Remove the JtdsStatement from the statement list
         for (int i = 0; i < statements.size(); i++) {
             WeakReference wr = (WeakReference) statements.get(i);
 
@@ -1167,41 +1173,52 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         if (statement instanceof JtdsPreparedStatement) {
-            // Clean up the prepared statement cache
-            Collection handles = statementCache.getObsoleteHandles(
-                    ((JtdsPreparedStatement) statement).handles);
-
+            // Release the prepared statement handles or procedures
+            Collection handles = ((JtdsPreparedStatement) statement).handles;
             if (handles != null) {
-                StringBuffer cleanupSql = new StringBuffer(handles.size() * 32);
-
                 for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
-                    String handle = iterator.next().toString();
-
-                    // FIXME - Add support for sp_cursorunprepare
-                    if (TdsCore.isPreparedProcedureName(handle)) {
-                        cleanupSql.append("EXEC sp_unprepare ");
-                    } else {
-                        cleanupSql.append("DROP PROC ");
-                    }
-
-                    cleanupSql.append(handle);
-                    cleanupSql.append('\n');
+                    ProcEntry handle = (ProcEntry)iterator.next();
+                    handle.release();
                 }
-
-                baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0,
-                        -1, -1, true);
-                baseTds.clearResponseQueue();
+            }
+            // Clean up the prepared statement cache
+            handles = statementCache.getObsoleteHandles(handles);
+            if (handles != null) {
+                if (serverType == Driver.SQLSERVER) {
+                    // SQL Server unprepare
+                    StringBuffer cleanupSql = new StringBuffer(handles.size() * 32);
+                    for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
+                        ProcEntry pe = (ProcEntry) iterator.next();
+                        // Could get put back if in a transaction that is
+                        // rolled back
+                        pe.appendDropSQL(cleanupSql);
+                    }
+                    if (cleanupSql.length() > 0) {
+                        baseTds.executeSQL(cleanupSql.toString(), null, null, true, 0,
+                                            -1, -1, true);
+                        baseTds.clearResponseQueue();
+                    }
+                } else {
+                    // Sybase unprepare
+                    for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
+                        ProcEntry pe = (ProcEntry)iterator.next();
+                        if (pe.toString() != null) {
+                            // Remove the Sybase light weight proc
+                            baseTds.sybaseUnPrepare(pe.toString());
+                        }
+                    }
+                }
             }
         }
     }
 
     /**
-     * Add a statement object to the list maintained by the connection.
-     * <p>WeakReferences are used so that statements can still be
-     * closed and garbage collected even if not explicitly closed
-     * by the connection.
+     * Adds a statement object to the list maintained by the connection.
+     * <p/>
+     * WeakReferences are used so that statements can still be closed and
+     * garbage collected even if not explicitly closed by the connection.
      *
-     * @param statement The statement to add.
+     * @param statement statement to add
      */
     void addStatement(JtdsStatement statement) {
         synchronized (statements) {
@@ -1219,9 +1236,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Check that this connection is still open.
+     * Checks that the connection is still open.
      *
-     * @throws SQLException if connection closed.
+     * @throws SQLException if the connection is closed
      */
     void checkOpen() throws SQLException {
         if (closed) {
@@ -1231,9 +1248,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Check that this connection is in local transaction mode.
+     * Checks that this connection is in local transaction mode.
      *
-     * @param method The method name being tested.
+     * @param method the method name being tested
      * @throws SQLException if in XA distributed transaction mode
      */
     void checkLocal(String method) throws SQLException {
@@ -1244,10 +1261,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Report that user tried to call a method which has not been implemented.
+     * Reports that user tried to call a method which has not been implemented.
      *
-     * @param method The method name to report in the error message.
-     * @throws SQLException
+     * @param method the method name to report in the error message
+     * @throws SQLException always, with the not implemented message
      */
     static void notImplemented(String method) throws SQLException {
         throw new SQLException(
@@ -1255,64 +1272,63 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrive the DBMS major version.
+     * Retrieves the DBMS major version.
      *
-     * @return The version as an <code>int</code>.
+     * @return the version as an <code>int</code>
      */
-    int getDatabaseMajorVersion() {
+    public int getDatabaseMajorVersion() {
         return this.databaseMajorVersion;
     }
 
     /**
-     * Retrive the DBMS minor version.
+     * Retrieves the DBMS minor version.
      *
-     * @return The version as an <code>int</code>.
+     * @return the version as an <code>int</code>
      */
-    int getDatabaseMinorVersion() {
+    public int getDatabaseMinorVersion() {
         return this.databaseMinorVersion;
     }
 
     /**
-     * Retrive the DBMS product name.
+     * Retrieves the DBMS product name.
      *
-     * @return The name as a <code>String</code>.
+     * @return the name as a <code>String</code>
      */
     String getDatabaseProductName() {
         return this.databaseProductName;
     }
 
     /**
-     * Retrive the DBMS proeuct version.
+     * Retrieves the DBMS product version.
      *
-     * @return The version as a <code>String</code>.
+     * @return the version as a <code>String</code>
      */
     String getDatabaseProductVersion() {
         return this.databaseProductVersion;
     }
 
     /**
-     * Retrieve the original connection URL.
+     * Retrieves the original connection URL.
      *
-     * @return The connection url as a <code>String</code>.
+     * @return the connection url as a <code>String</code>
      */
     String getURL() {
         return this.url;
     }
 
     /**
-     * Retrieve the host and port for this connection.
+     * Retrieves the host and port for this connection.
      * <p>
      * Used to identify same resource manager in XA transactions.
      *
-     * @return the hostname and port as a <code>String</code>.
+     * @return the hostname and port as a <code>String</code>
      */
     public String getRmHost() {
         return serverName + ':' + portNumber;
     }
 
     /**
-     * Used to force the closed status on the statement if an
-     * IO error has occurred.
+     * Forces the closed status on the statement if an I/O error has occurred.
      */
     void setClosed() {
         closed = true;
@@ -1327,18 +1343,18 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Invoke the <code>xp_jtdsxa</code> extended stored procedure on the server.
-     * <p>
+     * Invokes the <code>xp_jtdsxa</code> extended stored procedure on the
+     * server.
+     * <p/>
      * Synchronized because it accesses the <code>baseTds</code>.
      *
      * @param args the arguments eg cmd, rmid, flags etc.
      * @param data option byte data eg open string xid etc.
-     * @return optional byte data eg OLE cookie.
+     * @return optional byte data eg OLE cookie
      * @throws SQLException if an error condition occurs
      */
     synchronized byte[][] sendXaPacket(int args[], byte[] data)
-            throws SQLException
-    {
+            throws SQLException {
         ParamInfo params[] = new ParamInfo[6];
         params[0] = new ParamInfo(Types.INTEGER, null, ParamInfo.RETVAL);
         params[1] = new ParamInfo(Types.INTEGER, new Integer(args[1]), ParamInfo.INPUT);
@@ -1394,14 +1410,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Enlist the current connection in a distributed transaction.
+     * Enlists the current connection in a distributed transaction.
      *
      * @param oleTranID the OLE transaction cookie or null to delist
      * @throws SQLException if an error condition occurs
      */
     synchronized void enlistConnection(byte[] oleTranID)
-            throws SQLException
-    {
+            throws SQLException {
         if (oleTranID != null) {
             // TODO: Stored procs are no good but maybe prepare will be OK.
             this.prepareSql = TdsCore.EXECUTE_SQL;
@@ -1414,7 +1429,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Set the XA transaction ID when running in emulation mode.
+     * Sets the XA transaction ID when running in emulation mode.
      *
      * @param xid the XA Transaction ID
      */
@@ -1424,7 +1439,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Get the XA transaction ID when running in emulation mode.
+     * Gets the XA transaction ID when running in emulation mode.
      *
      * @return the transaction ID as an <code>Object</code>
      */
@@ -1433,7 +1448,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Set the XA state variable.
+     * Sets the XA state variable.
      *
      * @param value the XA state value
      */
@@ -1442,7 +1457,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieve the XA state variable.
+     * Retrieves the XA state variable.
      *
      * @return the xa state variable as an <code>int</code>
      */
@@ -1451,7 +1466,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieve the XA Emulation flag.
+     * Retrieves the XA Emulation flag.
      * @return True if in XA emulation mode.
      */
     boolean isXaEmulation() {
@@ -1459,11 +1474,29 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieve the connection mutex.
+     * Retrieves the connection mutex and acquires an exclusive lock on the
+     * network connection.
      *
      * @return the mutex object as a <code>Semaphore</code>
      */
     Semaphore getMutex() {
+        //
+        // If the current thread has been interrupted but the thread
+        // has caught the InterruptedException and continued to execute,
+        // we need to clear the Interrupted status now to ensure that
+        // we don't fail trying to obtain the connection mutex.
+        // The c3p0 connection pool software seems to start threads
+        // in an interrupted state under some circumstances.
+        //
+        if (Thread.interrupted()) {
+            // Thread.interrupted() will clear the interrupt status
+            Logger.println("Thread status of Interrupted found and cleared");
+        }
+        try {
+            this.mutex.acquire();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("Thread execution interrupted");
+        }
         return this.mutex;
     }
 
@@ -1586,7 +1619,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (getAutoCommit()) {
             throw new SQLException(
-                    Messages.get("error.connection.autocommit", "commit"), "25000");
+                    Messages.get("error.connection.autocommit", "commit"),
+                    "25000");
         }
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 COMMIT TRAN");
@@ -1600,14 +1634,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (getAutoCommit()) {
             throw new SQLException(
-                    Messages.get("error.connection.autocommit", "rollback"), "25000");
+                    Messages.get("error.connection.autocommit", "rollback"),
+                    "25000");
         }
 
         baseTds.submitSQL("IF @@TRANCOUNT > 0 ROLLBACK TRAN");
 
         for (int i = 0; i < procInTran.size(); i++) {
             String key = (String) procInTran.get(i);
-            if (key != null && tdsVersion != Driver.TDS50) {
+            if (key != null) {
                 statementCache.remove(key);
             }
         }
@@ -1698,35 +1733,40 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         checkOpen();
         checkLocal("setAutoCommit");
 
-        if (!this.autoCommit) {
-            // If we're in manual commit mode the spec requires that we commit
-            // the transaction when setAutoCommit() is called
-            commit();
-        }
-
         if (this.autoCommit == autoCommit) {
             // If we don't need to change the current auto commit mode, don't
-            // submit a request
+            // submit a request but...
+            if (!this.autoCommit) {
+                // If we're in manual commit mode the spec requires that we commit
+                // the transaction when setAutoCommit() is called
+                commit();
+            }
             return;
         }
 
-        String sql;
+        StringBuffer sql = new StringBuffer(70);
+        //
+        if (!this.autoCommit) {
+            // If we're in manual commit mode the spec requires that we commit
+            // the transaction when setAutoCommit() is called
+            sql.append("IF @@TRANCOUNT > 0 COMMIT TRAN\r\n");
+        }
 
         if (serverType == Driver.SYBASE) {
             if (autoCommit) {
-                sql = "SET CHAINED OFF";
+                sql.append("SET CHAINED OFF");
             } else {
-                sql = "SET CHAINED ON";
+                sql.append("SET CHAINED ON");
             }
         } else {
             if (autoCommit) {
-                sql = "SET IMPLICIT_TRANSACTIONS OFF";
+                sql.append("SET IMPLICIT_TRANSACTIONS OFF");
             } else {
-                sql = "SET IMPLICIT_TRANSACTIONS ON";
+                sql.append("SET IMPLICIT_TRANSACTIONS ON");
             }
         }
 
-        baseTds.submitSQL(sql);
+        baseTds.submitSQL(sql.toString());
         this.autoCommit = autoCommit;
     }
 

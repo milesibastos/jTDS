@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.31 2005-05-12 08:18:43 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.32 2005-05-25 09:24:03 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -79,6 +79,7 @@ public class JtdsDataSource
     protected String logFile;
     protected String ssl;
     protected String batchSize;
+    protected String cacheMetaData;
 
     protected String description;
 
@@ -235,6 +236,9 @@ public class JtdsDataSource
         if (batchSize != null) {
             props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
         }
+        if (cacheMetaData != null) {
+            props.setProperty(Messages.get(Driver.CACHEMETA), cacheMetaData);
+        }
 
         String url;
 
@@ -290,6 +294,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
         ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
+        ref.add(new StringRefAddr(Messages.get(Driver.CACHEMETA), cacheMetaData));
 
         ref.add(new StringRefAddr("description", description));
 
@@ -592,5 +597,13 @@ public class JtdsDataSource
             return 0;
         }
         return Integer.parseInt(batchSize);
+    }
+
+    public boolean getCacheMetaData() {
+        return Boolean.valueOf(cacheMetaData).booleanValue();
+    }
+
+    public void setCacheMetaData(boolean cacheMetaData) {
+        this.cacheMetaData = String.valueOf(cacheMetaData);
     }
 }

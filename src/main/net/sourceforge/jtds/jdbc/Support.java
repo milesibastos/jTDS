@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.44 2005-05-20 12:59:58 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.45 2005-05-25 09:24:03 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -881,26 +881,47 @@ public class Support {
     /**
      * Generates a unique statement key for a given SQL statement.
      *
-     * @param sql the sql statment to generate the key for
-     * @param params the statement parameters
+     * @param sql        the sql statment to generate the key for
+     * @param params     the statement parameters
      * @param serverType the type of server to generate the key for
-     * @param catalog the catalog is required for uniqueness on Microsoft SQL Server
+     * @param catalog    the catalog is required for uniqueness on Microsoft
+     *                   SQL Server
+     * @param autoCommit true if in auto commit mode
+     * @param cursor     true if this is a prepared cursor
      * @return the unique statement key
      */
-    static String getStatementKey(String sql, ParamInfo[] params, int serverType, String catalog) {
-        StringBuffer key = new StringBuffer(sql.length() + catalog.length() + 10 * params.length);
+    static String getStatementKey(String sql, ParamInfo[] params,
+                                  int serverType, String catalog,
+                                  boolean autoCommit, boolean cursor) {
+        StringBuffer key;
 
-        key.append(catalog); // Not sure if this is required for sybase
-        key.append(sql);
-
-        //
-        // Append parameter data types to key (not needed for sybase).
-        //
-        for (int i = 0; i < params.length && serverType != Driver.SYBASE; i++) {
-            key.append(params[i].sqlType);
+        if (serverType == Driver.SQLSERVER) {
+            key = new StringBuffer(1 + catalog.length() + sql.length()
+                    + 11 * params.length);
+            // Need to distinguish otherwise identical SQL for cursor and
+            // non cursor prepared statements (sp_prepare/sp_cursorprepare).
+            key.append((cursor) ? 'C':'X');
+            // Need to ensure that the current database is included in the key
+            // as procedures and handles are database specific.
+            key.append(catalog);
+            // Now the actual SQL statement
+            key.append(sql);
+            //
+            // Append parameter data types to key.
+            //
+            for (int i = 0; i < params.length; i++) {
+                key.append(params[i].sqlType);
+            }
+        } else {
+            key = new StringBuffer(sql.length() + 2);
+            // A simple key works for Sybase just need to know if
+            // proc created in chained mode or not.
+            key.append((autoCommit) ? 'T': 'F');
+            // Now the actual SQL statement
+            key.append(sql);
         }
 
-    	return key.toString();
+        return key.toString();
     }
 
     /**

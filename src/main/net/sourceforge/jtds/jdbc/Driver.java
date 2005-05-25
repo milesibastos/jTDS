@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.57 2005-05-12 07:59:00 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.58 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -79,6 +79,7 @@ public class Driver implements java.sql.Driver {
     //
     public static final String APPNAME       = "prop.appname";
     public static final String BATCHSIZE     = "prop.batchsize";
+    public static final String CACHEMETA     = "prop.cachemetadata";
     public static final String CHARSET       = "prop.charset";
     public static final String DATABASENAME  = "prop.databasename";
     public static final String DOMAIN        = "prop.domain";
@@ -243,17 +244,18 @@ public class Driver implements java.sql.Driver {
         final HashMap choicesMap = new HashMap();
 
         final String[] booleanChoices = new String[]{"true", "false"};
+        choicesMap.put(Messages.get(Driver.CACHEMETA), booleanChoices);
         choicesMap.put(Messages.get(Driver.LASTUPDATECOUNT), booleanChoices);
         choicesMap.put(Messages.get(Driver.NAMEDPIPE), booleanChoices);
         choicesMap.put(Messages.get(Driver.TCPNODELAY), booleanChoices);
         choicesMap.put(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), booleanChoices);
+        choicesMap.put(Messages.get(Driver.XAEMULATION), booleanChoices);
 
         final String[] prepareSqlChoices = new String[]{
             String.valueOf(TdsCore.UNPREPARED),
             String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES),
             String.valueOf(TdsCore.EXECUTE_SQL),
             String.valueOf(TdsCore.PREPARE),
-            String.valueOf(TdsCore.PREPEXEC),
         };
         choicesMap.put(Messages.get(Driver.PREPARESQL), prepareSqlChoices);
 

@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.45 2005-05-10 15:14:52 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.46 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -70,8 +70,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     protected ParamInfo[] parameters;
     /** True to return generated keys. */
     private boolean returnKeys;
-    /** The cached column meta data. */
-    protected ColInfo[] colMetaData;
     /** The cached parameter meta data. */
     protected ParamInfo[] paramMetaData;
     /** Used to format numeric values when scale is specified. */

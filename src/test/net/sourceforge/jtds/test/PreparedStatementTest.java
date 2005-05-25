@@ -25,10 +25,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.Random;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.38 2005-05-20 12:02:31 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.39 2005-05-25 09:24:04 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -825,6 +824,120 @@ public class PreparedStatementTest extends TestBase {
             stmt.execute("DROP VIEW prepFailWarning");
             stmt.close();
         }
+    }
+
+    /**
+     * Test that preparedstatement logic copes with commit modes and
+     * database changes.
+     */
+    public void testPrepareModes() throws Exception {
+        //
+        // To see in detail what is happening enable logging and study the prepare
+        // statements that are being executed.
+        // For example if maxStatements=0 then the log should show that each
+        // statement is prepared and then unprepared at statement close.
+        //
+//        DriverManager.setLogStream(System.out);
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (id int primary key, data varchar(255))");
+        //
+        // Statement prepared with auto commit = true
+        //
+        PreparedStatement pstmt1 = con.prepareStatement("INSERT INTO #TEST (id, data) VALUES (?,?)");
+        pstmt1.setInt(1, 1);
+        pstmt1.setString(2, "Line one");
+        assertEquals(1, pstmt1.executeUpdate());
+        //
+        // Move to manual commit mode
+        //
+        con.setAutoCommit(false);
+        //
+        // Ensure a new transaction is started
+        //
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        assertNotNull(rs);
+        rs.close();
+        //
+        // With Sybase this execution should cause a new proc to be created
+        // as we are now in chained mode
+        //
+        pstmt1.setInt(1, 2);
+        pstmt1.setString(2, "Line two");
+        assertEquals(1, pstmt1.executeUpdate());
+        //
+        // Statement prepared with auto commit = false
+        //
+        PreparedStatement pstmt2 = con.prepareStatement("SELECT * FROM #TEST WHERE id = ?");
+        pstmt2.setInt(1, 2);
+        rs = pstmt2.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("Line two", rs.getString("data"));
+        //
+        // Change catalog
+        //
+        String oldCat = con.getCatalog();
+        con.setCatalog("master");
+        //
+        // Executiion from another database should cause SQL Server to create
+        // a new handle or store proc
+        //
+        pstmt2.setInt(1, 1);
+        rs = pstmt2.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("Line one", rs.getString("data"));
+        //
+        // Now change back to original database
+        //
+        con.setCatalog(oldCat);
+        //
+        // Roll back transaction which should cause SQL Server procs (but not
+        // handles to be lost) causing statement to be prepared again.
+        //
+        pstmt2.setInt(1, 1);
+        rs = pstmt2.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("Line one", rs.getString("data"));
+        //
+        // Now return to auto commit mode
+        //
+        con.setAutoCommit(true);
+        //
+        // With Sybase statement will be prepared again as now in chained off mode
+        //
+        pstmt2.setInt(1, 1);
+        rs = pstmt2.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("Line one", rs.getString("data"));
+        pstmt2.close();
+        pstmt1.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that statements which cannot be prepared are remembered.
+     */
+    public void testNoPrepare() throws Exception {
+ //       DriverManager.setLogStream(System.out);
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (id int primary key, data text)");
+        //
+        // Statement cannot be prepared on Sybase due to text field
+        //
+        PreparedStatement pstmt1 = con.prepareStatement("INSERT INTO #TEST (id, data) VALUES (?,?)");
+        pstmt1.setInt(1, 1);
+        pstmt1.setString(2, "Line one");
+        assertEquals(1, pstmt1.executeUpdate());
+        //
+        // This time should not try and prepare
+        //
+        pstmt1.setInt(1, 2);
+        pstmt1.setString(2, "Line two");
+        assertEquals(1, pstmt1.executeUpdate());
+        pstmt1.close();
     }
 
     public static void main(String[] args) {

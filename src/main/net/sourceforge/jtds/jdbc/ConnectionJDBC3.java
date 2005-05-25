@@ -28,8 +28,8 @@ import java.sql.*;
  * @author Alin Sinpalean
  * @author Brian Heineman
  * @author Mike Hutchinson
- *  created    March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.12 2005-04-20 16:49:15 alin_sinpalean Exp $
+ * @created March 30, 2004
+ * @version $Id: ConnectionJDBC3.java,v 1.13 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -227,8 +227,11 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
      */
     void addCachedProcedure(String key, ProcEntry proc) {
         super.addCachedProcedure(key, proc);
-
-        addCachedProcedure(key);
+        if (getServerType() == Driver.SQLSERVER
+                && proc.getType() == ProcEntry.PROCEDURE) {
+            // Only need to track SQL Server temp stored procs
+            addCachedProcedure(key);
+        }
     }
 
     /**

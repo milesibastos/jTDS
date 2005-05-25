@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/25/2005 - Alin Sinpalean
+ o Applied Mike's last patch posted in RFE tracker [1172683] Improve the
+   performance of Prepared Statements. The patch implements metadata caching
+   and removes support for sp_prepexec and sp_cursorprepexec (prepareSQL=4).
+
 05/20/2005 - Alin Sinpalean
  o Corrected bug [1204658] Conversion from Number to BigDecimal causes data
    corruption.

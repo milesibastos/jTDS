@@ -1,11 +1,23 @@
-/*
- * File: SQLCacheKey.java
- *
- * Author: Alin Sinpalean
- *
- * Created: Apr 21, 2005
- */
+//jTDS JDBC Driver for Microsoft SQL Server and Sybase
+//Copyright (C) 2004 The jTDS Project
+//
+//This library is free software; you can redistribute it and/or
+//modify it under the terms of the GNU Lesser General Public
+//License as published by the Free Software Foundation; either
+//version 2.1 of the License, or (at your option) any later version.
+//
+//This library is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty of
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//Lesser General Public License for more details.
+//
+//You should have received a copy of the GNU Lesser General Public
+//License along with this library; if not, write to the Free Software
+//Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
 package net.sourceforge.jtds.jdbc.cache;
+
+import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 
 /**
  * Cache key for an SQL query, consisting of the query and server type, major
@@ -13,7 +25,7 @@ package net.sourceforge.jtds.jdbc.cache;
  *
  * @author Brett Wooldridge
  * @author Alin Sinpalean
- * @version $Id: SQLCacheKey.java,v 1.1 2005-04-25 11:46:55 alin_sinpalean Exp $
+ * @version $Id: SQLCacheKey.java,v 1.2 2005-05-25 09:24:02 alin_sinpalean Exp $
  */
 public class SQLCacheKey {
     private final String sql;
@@ -22,12 +34,11 @@ public class SQLCacheKey {
     private final int minorVersion;
     private final int hashCode;
 
-    public SQLCacheKey(String sql, int serverType, int majorVersion,
-                       int minorVersion) {
+    public SQLCacheKey(String sql, ConnectionJDBC2 connection) {
         this.sql = sql;
-        this.serverType   = serverType;
-        this.majorVersion = majorVersion;
-        this.minorVersion = minorVersion;
+        this.serverType = connection.getServerType();
+        this.majorVersion = connection.getDatabaseMajorVersion();
+        this.minorVersion = connection.getDatabaseMinorVersion();
 
         this.hashCode = sql.hashCode()
                 ^ (serverType << 24 | majorVersion << 16 | minorVersion);

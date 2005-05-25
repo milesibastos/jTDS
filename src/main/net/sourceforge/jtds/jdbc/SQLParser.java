@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.24 2005-05-10 15:44:04 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.25 2005-05-25 09:24:03 alin_sinpalean Exp $
  */
 class SQLParser {
     /**
@@ -143,9 +143,7 @@ class SQLParser {
 
         SimpleLRUCache cache = getCache(connection);
 
-        SQLCacheKey cacheKey = new SQLCacheKey(sql, connection.getServerType(),
-                connection.getDatabaseMajorVersion(),
-                connection.getDatabaseMinorVersion());
+        SQLCacheKey cacheKey = new SQLCacheKey(sql, connection);
 
         // By not synchronizing on the cache, we're admitting that the possibility of multiple
         // parses of the same statement can occur.  However, it is 1) unlikely under normal

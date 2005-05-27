@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.51 2005-05-27 12:31:37 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.52 2005-05-27 13:42:51 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -597,7 +597,7 @@ public class MSCursorResultSet extends JtdsResultSet {
                                 Messages.get("warning.concurrtype", Integer.toString(actualCc)),
                                 "01000"));
                 }
-                downgradeWarning = resultSetType < this.resultSetType;
+                downgradeWarning = concurrency < this.concurrency;
                 this.concurrency = concurrency;
             }
 

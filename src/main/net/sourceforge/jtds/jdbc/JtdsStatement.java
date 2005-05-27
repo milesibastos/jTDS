@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.43 2005-05-27 12:31:37 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.44 2005-05-27 13:25:23 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -607,7 +607,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
     }
 
-    public synchronized void clearBatch() throws SQLException {
+    public void clearBatch() throws SQLException {
         checkOpen();
 
         if (batchValues != null) {
@@ -621,7 +621,7 @@ public class JtdsStatement implements java.sql.Statement {
         messages.clearWarnings();
     }
 
-    public synchronized void close() throws SQLException {
+    public void close() throws SQLException {
         if (!closed) {
             try {
                 closeAllResultSets();
@@ -661,7 +661,7 @@ public class JtdsStatement implements java.sql.Statement {
      *
      * @return update counts as an <code>int[]</code>
      */
-    public synchronized int[] executeBatch()
+    public int[] executeBatch()
             throws SQLException, BatchUpdateException {
         checkOpen();
         initialize();
@@ -743,7 +743,7 @@ public class JtdsStatement implements java.sql.Statement {
         }
     }
 /*
-    public synchronized int[] executeBatch() throws SQLException {
+    public int[] executeBatch() throws SQLException {
         checkOpen();
 
         if (batchValues == null || batchValues.size() == 0) {
@@ -913,7 +913,7 @@ public class JtdsStatement implements java.sql.Statement {
         return executeUpdate(sql, NO_GENERATED_KEYS);
     }
 
-    public synchronized void addBatch(String sql) throws SQLException {
+    public void addBatch(String sql) throws SQLException {
         checkOpen();
 
         if (sql == null) {

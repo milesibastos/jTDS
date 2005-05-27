@@ -7,6 +7,8 @@ Changes from jTDS 1.0.3
    response flag not being reset when a cancel packet was sent.
  o Corrected an issue causing hidden columns to "become visible" in result set
    meta data obtained from prepared statements.
+ o Corrected bug [1209039] jTDS can deadlock when used with C3P0 connection 
+   pooling; unnecessary synchronization on statements caused deadlocks.
 
 05/25/2005 - Alin Sinpalean
  o Applied Mike's last patch posted in RFE tracker [1172683] Improve the

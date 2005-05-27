@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.42 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.43 2005-05-27 12:31:37 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -311,6 +311,7 @@ public class JtdsStatement implements java.sql.Statement {
         //
         if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
             || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
+            || connection.getUseCursors()
             || cursorName != null) {
             try {
                 if (connection.getServerType() == Driver.SQLSERVER) {
@@ -412,6 +413,7 @@ public class JtdsStatement implements java.sql.Statement {
         if (connection.getServerType() == Driver.SQLSERVER
             && (resultSetType != ResultSet.TYPE_FORWARD_ONLY
                 || resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
+                || connection.getUseCursors()
                 || cursorName != null)
             && !returnKeys
             && (sqlWord.equals("select") || sqlWord.startsWith("exec"))) {

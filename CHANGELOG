@@ -1,6 +1,13 @@
 Changes from jTDS 1.0.3
 =======================
 
+05/27/2005 - Alin Sinpalean
+ o Added initial support for fast forward only cursors.
+ o Corrected yet another cancel synchronization issue caused by the end of
+   response flag not being reset when a cancel packet was sent.
+ o Corrected an issue causing hidden columns to "become visible" in result set
+   meta data obtained from prepared statements.
+
 05/25/2005 - Alin Sinpalean
  o Applied Mike's last patch posted in RFE tracker [1172683] Improve the
    performance of Prepared Statements. The patch implements metadata caching

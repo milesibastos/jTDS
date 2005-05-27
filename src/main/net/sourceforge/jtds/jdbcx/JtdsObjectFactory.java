@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.17 2005-05-25 09:24:04 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.18 2005-05-27 12:31:42 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -112,6 +112,10 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object cacheMetaData = ref.get(Messages.get(Driver.CACHEMETA)).getContent();
             if (cacheMetaData != null) {
                 ds.setCacheMetaData("true".equals(cacheMetaData));
+            }
+            final Object useCursors = ref.get(Messages.get(Driver.USECURSORS)).getContent();
+            if (useCursors != null) {
+                ds.setUseCursors("true".equals(useCursors));
             }
 
             ds.setDescription((String) ref.get("description").getContent());

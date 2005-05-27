@@ -42,7 +42,7 @@ import java.util.Properties;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.15 2005-05-25 09:24:04 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.16 2005-05-27 12:31:42 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -321,6 +321,18 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         }
     }
 
+    /**
+     * Test the <code>usecursors</code> property.
+     */
+    public void test_usecursors() {
+        String fieldName = "useCursors";
+        String messageKey = Driver.USECURSORS;
+        String expectedValue = String.valueOf(DefaultProperties.USECURSORS);
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
 
     /**
      * Test the <code>wsid</code> property.

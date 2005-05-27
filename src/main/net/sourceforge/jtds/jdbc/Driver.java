@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.58 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.59 2005-05-27 12:31:37 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -102,6 +102,7 @@ public class Driver implements java.sql.Driver {
     public static final String SSL           = "prop.ssl";
     public static final String TCPNODELAY    = "prop.tcpnodelay";
     public static final String TDS           = "prop.tds";
+    public static final String USECURSORS    = "prop.usecursors";
     public static final String USER          = "prop.user";
     public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";
     public static final String WSID          = "prop.wsid";
@@ -249,6 +250,7 @@ public class Driver implements java.sql.Driver {
         choicesMap.put(Messages.get(Driver.NAMEDPIPE), booleanChoices);
         choicesMap.put(Messages.get(Driver.TCPNODELAY), booleanChoices);
         choicesMap.put(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), booleanChoices);
+        choicesMap.put(Messages.get(Driver.USECURSORS), booleanChoices);
         choicesMap.put(Messages.get(Driver.XAEMULATION), booleanChoices);
 
         final String[] prepareSqlChoices = new String[]{

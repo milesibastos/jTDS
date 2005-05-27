@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.20 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.21 2005-05-27 12:31:37 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -102,6 +102,8 @@ public final class DefaultProperties {
     public static final String TCP_NODELAY = "true";
     /** Default <code>sendStringParametersAsUnicode</code> property. */
     public static final String USE_UNICODE = "true";
+    /** Default <code>useCursors</code> property. */
+    public static final String USECURSORS = "false";
     /** Default <code>user</code> property. */
     public static final String USER = "";
     /** Default <code>wsid</code> property. */
@@ -203,6 +205,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.XAEMULATION, XAEMULATION);
         addDefaultPropertyIfNotSet(props, Driver.LOGFILE, LOGFILE);
         addDefaultPropertyIfNotSet(props, Driver.SSL, SSL);
+        addDefaultPropertyIfNotSet(props, Driver.USECURSORS, USECURSORS);
 
         return props;
     }

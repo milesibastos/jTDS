@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.83 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.84 2005-05-27 12:31:37 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -211,6 +211,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int batchSize;
     /** Use metadata cache for prepared statements. */
     private boolean useMetadataCache;
+    /** Use fast forward cursors for forward only result sets. */
+    private boolean useCursors;
     /** A cached <code>TdsCore</code> instance to reuse on new statements. */
     private TdsCore cachedTds;
 
@@ -461,6 +463,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         boolean cursorNeeded =
                 pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
                     || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
+                    || useCursors
                     || pstmt.cursorName != null;
 
         if (prepareSql == TdsCore.UNPREPARED
@@ -736,7 +739,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *         <code>false</code> if caching is disabled
      */
     boolean getUseMetadataCache() {
-       return this.useMetadataCache;
+        return this.useMetadataCache;
+    }
+
+    /**
+     * Retrieves the boolean indicating whether fast forward only cursors
+     * should be used for forward only result sets.
+     *
+     * @return <code>true</code> fast forward cursors are requested
+     */
+    boolean getUseCursors() {
+        return this.useCursors;
     }
 
     /**
@@ -770,6 +783,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 info.getProperty(Messages.get(Driver.NAMEDPIPE)));
         tcpNoDelay = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.TCPNODELAY)));
+        useCursors = (serverType == Driver.SQLSERVER)
+                && "true".equalsIgnoreCase(
+                        info.getProperty(Messages.get(Driver.USECURSORS)));
         useMetadataCache = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.CACHEMETA)));
         xaEmulation = "true".equalsIgnoreCase(

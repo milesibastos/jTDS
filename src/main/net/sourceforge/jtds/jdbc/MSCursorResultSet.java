@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.50 2005-05-25 09:24:03 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.51 2005-05-27 12:31:37 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -58,6 +58,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     private static final int CURSOR_TYPE_STATIC = 0x08;
     private static final int CURSOR_TYPE_FASTFORWARDONLY = 0x10;
     private static final int CURSOR_TYPE_PARAMETERIZED = 0x1000;
+    private static final int CURSOR_TYPE_AUTO_FETCH = 0x2000;
 
     private static final int CURSOR_CONCUR_READ_ONLY = 1;
     private static final int CURSOR_CONCUR_SCROLL_LOCKS = 2;
@@ -254,8 +255,8 @@ public class MSCursorResultSet extends JtdsResultSet {
      * @return a value for the @scrollOpt parameter
      */
     static int getCursorScrollOpt(int resultSetType,
-                                          int resultSetConcurrency,
-                                          boolean parameterized) {
+                                  int resultSetConcurrency,
+                                  boolean parameterized) {
         int scrollOpt;
 
         switch (resultSetType) {
@@ -269,8 +270,9 @@ public class MSCursorResultSet extends JtdsResultSet {
 
             case TYPE_FORWARD_ONLY:
             default:
-                scrollOpt = (resultSetConcurrency == CURSOR_CONCUR_READ_ONLY)
-                        ? CURSOR_TYPE_FASTFORWARDONLY : CURSOR_TYPE_FORWARD;
+                scrollOpt = (resultSetConcurrency == CONCUR_READ_ONLY)
+                        ? (CURSOR_TYPE_FASTFORWARDONLY | CURSOR_TYPE_AUTO_FETCH)
+                        : CURSOR_TYPE_FORWARD;
                 break;
         }
 
@@ -338,14 +340,6 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (parameters != null && parameters.length == 0) {
             parameters = null;
-        }
-        //
-        // If there are no parameters we will opt for
-        // the sp_cursoropen option only.
-        //
-        // TODO Is this really the best solution? What if the query is complex?
-        if (parameters == null) {
-            prepareSql = TdsCore.UNPREPARED;
         }
         //
         // SQL 6.5 does not support stored procs (with params) in the sp_cursor call
@@ -436,7 +430,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         // Setup number of rows parameter
         //
-        ParamInfo pRowCount   = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
+        ParamInfo pRowCount   = new ParamInfo(Types.INTEGER, new Integer(fetchSize), ParamInfo.OUTPUT);
         //
         // Setup cursor handle parameter
         //
@@ -471,86 +465,70 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (prepareSql == TdsCore.PREPARE && prepStmtHandle != null) {
             // Use sp_cursorexecute approach
-            ParamInfo[] params = new ParamInfo[5 + parameters.length];
-            System.arraycopy(parameters, 0, params, 5, parameters.length);
+            procName = "sp_cursorexecute";
+            if (parameters == null) {
+                parameters = new ParamInfo[5];
+            } else {
+                ParamInfo[] params = new ParamInfo[5 + parameters.length];
+                System.arraycopy(parameters, 0, params, 5, parameters.length);
+                parameters = params;
+            }
             // Setup statement handle param
             pStmtHand.isOutput = false;
             pStmtHand.value = prepStmtHandle;
-            params[0] = pStmtHand;
+            parameters[0] = pStmtHand;
             // Setup cursor handle param
-            params[1] = pCursor;
+            parameters[1] = pCursor;
             // Setup scroll options (mask off parameter flag)
-            pScrollOpt.value = new Integer(scrollOpt & 0xFF);
-            params[2] = pScrollOpt;
-            // Setup concurrency options
-            params[3] = pConCurOpt;
-            // Setup numRows parameter
-            params[4] = pRowCount;
-            parameters = params;
-            procName = "sp_cursorexecute";
+            pScrollOpt.value = new Integer(scrollOpt & ~CURSOR_TYPE_PARAMETERIZED);
         } else {
             // Use sp_cursoropen approach
-            ParamInfo[] params;
-
+            procName = "sp_cursoropen";
             if (parameters == null) {
-                params = new ParamInfo[5];
+                parameters = new ParamInfo[5];
             } else {
-                params = new ParamInfo[6 + parameters.length];
+                ParamInfo[] params = new ParamInfo[6 + parameters.length];
                 System.arraycopy(parameters, 0, params, 6, parameters.length);
-                params[5] = pParamDef;
+                parameters = params;
+                parameters[5] = pParamDef;
             }
             // Setup cursor handle param
-            params[0] = pCursor;
-
+            parameters[0] = pCursor;
             // Setup statement param
-            params[1] = pSQL;
-
-            // Setup scroll options
-            params[2] = pScrollOpt;
-
-            // Setup concurrency options
-            params[3] = pConCurOpt;
-
-            // Setup numRows parameter
-            params[4] = pRowCount;
-
-            parameters = params;
-
-            procName = "sp_cursoropen";
+            parameters[1] = pSQL;
         }
+        // Setup scroll options
+        parameters[2] = pScrollOpt;
+        // Setup concurrency options
+        parameters[3] = pConCurOpt;
+        // Setup numRows parameter
+        parameters[4] = pRowCount;
 
         tds.executeSQL(null, procName, parameters, false,
                 statement.getQueryTimeout(), statement.getMaxRows(),
                 statement.getMaxFieldSize(), true);
 
-        while (!tds.getMoreResults() && !tds.isEndOfResponse());
-
-        if (tds.isResultSet()) {
-            this.columns = copyInfo(tds.getColumns());
-            this.columnCount = getColumnCount(columns);
-        } else {
-            statement.getMessages().addException(new SQLException(
-                    Messages.get("error.statement.noresult"), "24000"));
+        // Load column meta data and any eventual rows (fast forward cursors)
+        processOutput(tds, true);
+        if ((scrollOpt & CURSOR_TYPE_AUTO_FETCH) != 0) {
+            // If autofetching, the cursor position is on the first row
+            cursorPos = 1;
         }
 
-        tds.clearResponseQueue();
-        statement.messages.checkErrors();
+        // Check the return value
         Integer retVal = tds.getReturnStatus();
-
-        int actualScroll;
-        int actualCc;
+        if ((retVal == null) || (retVal.intValue() != 0)) {
+            throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
+        }
 
         //
         // Retrieve values of output parameters
         //
         PARAM_CURSOR_HANDLE.value = pCursor.getOutValue();
-        actualScroll = ((Integer) pScrollOpt.getOutValue()).intValue();
-        actualCc     = ((Integer) pConCurOpt.getOutValue()).intValue();
+        int actualScroll = ((Integer) pScrollOpt.getOutValue()).intValue();
+        int actualCc     = ((Integer) pConCurOpt.getOutValue()).intValue();
         rowsInResult = ((Integer) pRowCount.getOutValue()).intValue();
-        //
-        if ((retVal == null) || (retVal.intValue() != 0)) {
-            throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
-        }
+
         //
         // Set the cursor name if required allowing positioned updates.
         // We need to do this here as any downgrade warnings will be wiped
@@ -572,30 +550,37 @@ public class MSCursorResultSet extends JtdsResultSet {
         // Check for downgrade of scroll or concurrency options
         //
         if ((actualScroll != (scrollOpt & 0xFFF)) || (actualCc != ccOpt)) {
+            boolean downgradeWarning = false;
+
             if (actualScroll != scrollOpt) {
+                int resultSetType;
                 switch (actualScroll) {
                     case CURSOR_TYPE_FORWARD:
                     case CURSOR_TYPE_FASTFORWARDONLY:
-                        this.resultSetType = TYPE_FORWARD_ONLY;
+                        resultSetType = TYPE_FORWARD_ONLY;
                         break;
 
                     case CURSOR_TYPE_STATIC:
-                        this.resultSetType = TYPE_SCROLL_INSENSITIVE;
+                        resultSetType = TYPE_SCROLL_INSENSITIVE;
                         break;
 
                     case CURSOR_TYPE_DYNAMIC:
                     case CURSOR_TYPE_KEYSET:
-                        this.resultSetType = TYPE_SCROLL_SENSITIVE;
+                        resultSetType = TYPE_SCROLL_SENSITIVE;
                         break;
 
                     default:
+                        resultSetType = this.resultSetType;
                         statement.getMessages().addWarning(new SQLWarning(
                                 Messages.get("warning.cursortype", Integer.toString(actualScroll)),
                                 "01000"));
                 }
+                downgradeWarning = resultSetType < this.resultSetType;
+                this.resultSetType = resultSetType;
             }
 
             if (actualCc != ccOpt) {
+                int concurrency;
                 switch (actualCc) {
                     case CURSOR_CONCUR_READ_ONLY:
                         concurrency = CONCUR_READ_ONLY;
@@ -607,15 +592,22 @@ public class MSCursorResultSet extends JtdsResultSet {
                         break;
 
                     default:
+                        concurrency = this.concurrency;
                         statement.getMessages().addWarning(new SQLWarning(
                                 Messages.get("warning.concurrtype", Integer.toString(actualCc)),
                                 "01000"));
                 }
+                downgradeWarning = resultSetType < this.resultSetType;
+                this.concurrency = concurrency;
             }
 
-            // SAfe This warning goes to the Statement, not the ResultSet
-            statement.addWarning(new SQLWarning(Messages.get(
-                    "warning.cursordowngraded", resultSetType + "/" + concurrency), "01000"));
+            if (downgradeWarning) {
+                // SAfe This warning goes to the Statement, not the ResultSet
+                statement.addWarning(new SQLWarning(
+                        Messages.get( "warning.cursordowngraded",
+                                resultSetType + "/" + concurrency),
+                        "01000"));
+            }
         }
     }
 
@@ -679,26 +671,8 @@ public class MSCursorResultSet extends JtdsResultSet {
                     statement.getQueryTimeout(), -1, -1, true);
         }
 
-        while (!tds.getMoreResults() && !tds.isEndOfResponse());
-
-        int i = 0;
-        if (tds.isResultSet()) {
-            // With TDS 7 the data row (if any) is sent without any
-            // preceding resultset header.
-            // With TDS 8 there is a dummy result set header first
-            // then the data. This case also used if meta data not supressed.
-            if (tds.isRowData() || tds.getNextRow()) {
-                do {
-                    rowCache[i++] = copyRow(tds.getRowData());
-                } while (tds.getNextRow());
-            }
-        }
-        // Set the rest of the rows to null
-        for (; i < rowCache.length; ++i) {
-            rowCache[i] = null;
-        }
-
-        tds.clearResponseQueue();
+        // Load rows
+        processOutput(tds, false);
 
         cursorPos = ((Integer) PARAM_ROWNUM_OUT.getOutValue()).intValue();
         if (fetchType != FETCH_REPEAT) {
@@ -706,8 +680,6 @@ public class MSCursorResultSet extends JtdsResultSet {
             pos = cursorPos;
         }
         rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
-
-        statement.getMessages().checkErrors();
 
         return getCurrentRow() != null;
     }
@@ -895,6 +867,50 @@ public class MSCursorResultSet extends JtdsResultSet {
                 statement.getQueryTimeout(), -1, -1, true);
         tds.clearResponseQueue();
         statement.getMessages().checkErrors();
+    }
+
+    /**
+     * Processes the output of a cursor open or fetch operation. Fetches a
+     * batch of rows from the <code>TdsCore</code>, loading them into the row
+     * cache and optionally sets the column meta data (if called on cursor
+     * open). Consumes all the response and checks for server returned errors.
+     *
+     * @param tds     the <code>TdsCore</code> instance
+     * @param setMeta whether column meta data needs to be loaded (cursor open)
+     * @throws SQLException if an error occurs or an error message is returned
+     *                      by the server
+     */
+    private void processOutput(TdsCore tds, boolean setMeta) throws SQLException {
+        while (!tds.getMoreResults() && !tds.isEndOfResponse());
+
+        int i = 0;
+        if (tds.isResultSet()) {
+            // Set column meta data if necessary
+            if (setMeta) {
+                this.columns = copyInfo(tds.getColumns());
+                this.columnCount = getColumnCount(columns);
+            }
+            // With TDS 7 the data row (if any) is sent without any
+            // preceding resultset header.
+            // With TDS 8 there is a dummy result set header first
+            // then the data. This case also used if meta data not supressed.
+            if (tds.isRowData() || tds.getNextRow()) {
+                do {
+                    rowCache[i++] = copyRow(tds.getRowData());
+                } while (tds.getNextRow());
+            }
+        } else if (setMeta) {
+            statement.getMessages().addException(new SQLException(
+                    Messages.get("error.statement.noresult"), "24000"));
+        }
+
+        // Set the rest of the rows to null
+        for (; i < rowCache.length; ++i) {
+            rowCache[i] = null;
+        }
+
+        tds.clearResponseQueue();
+        statement.messages.checkErrors();
     }
 
 //

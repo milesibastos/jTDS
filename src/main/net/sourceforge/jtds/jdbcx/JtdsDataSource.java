@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.32 2005-05-25 09:24:03 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.33 2005-05-27 12:31:42 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -80,6 +80,7 @@ public class JtdsDataSource
     protected String ssl;
     protected String batchSize;
     protected String cacheMetaData;
+    protected String useCursors;
 
     protected String description;
 
@@ -239,6 +240,9 @@ public class JtdsDataSource
         if (cacheMetaData != null) {
             props.setProperty(Messages.get(Driver.CACHEMETA), cacheMetaData);
         }
+        if (useCursors != null) {
+            props.setProperty(Messages.get(Driver.USECURSORS), useCursors);
+        }
 
         String url;
 
@@ -295,6 +299,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
         ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
         ref.add(new StringRefAddr(Messages.get(Driver.CACHEMETA), cacheMetaData));
+        ref.add(new StringRefAddr(Messages.get(Driver.USECURSORS), useCursors));
 
         ref.add(new StringRefAddr("description", description));
 
@@ -605,5 +610,13 @@ public class JtdsDataSource
 
     public void setCacheMetaData(boolean cacheMetaData) {
         this.cacheMetaData = String.valueOf(cacheMetaData);
+    }
+
+    public boolean getUseCursors() {
+        return Boolean.valueOf(useCursors).booleanValue();
+    }
+
+    public void setUseCursors(boolean useCursors) {
+        this.useCursors = String.valueOf(useCursors);
     }
 }

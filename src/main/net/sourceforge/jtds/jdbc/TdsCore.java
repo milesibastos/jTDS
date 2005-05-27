@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.94 2005-05-25 09:24:03 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.95 2005-05-27 12:31:37 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -857,6 +857,10 @@ public class TdsCore {
             synchronized (cancelMonitor) {
                 if (!cancelPending && !endOfResponse) {
                     cancelPending = socket.cancel(out.getStreamId());
+                }
+                // If a cancel request was sent, reset the end of response flag
+                if (cancelPending) {
+                    endOfResponse = false;
                 }
             }
         } finally {

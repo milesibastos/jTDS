@@ -2336,6 +2336,19 @@ public class TimestampTest extends DatabaseTestCase {
         assertEquals(0, c1.get(Calendar.MILLISECOND));
         rs.close();
         pstmt.close();
+
+        stmt = con.createStatement();
+        rs = stmt.executeQuery("select datepart(hour, d), datepart(minute, d),"
+                + " datepart(second, d), datepart(millisecond, d)"
+                + " from #testWriteDate");
+        assertTrue(rs.next());
+        assertEquals(0, rs.getInt(1));
+        assertEquals(0, rs.getInt(2));
+        assertEquals(0, rs.getInt(3));
+        assertEquals(0, rs.getInt(4));
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
     }
 
     /**

@@ -29,7 +29,7 @@ import java.util.GregorianCalendar;
  * Java classes.
  *
  * @author Mike Hutchinson
- * @version $Id: DateTime.java,v 1.1 2005-05-10 15:14:51 alin_sinpalean Exp $
+ * @version $Id: DateTime.java,v 1.2 2005-05-30 11:37:47 alin_sinpalean Exp $
  */
 public class DateTime {
     /** Per thread instance of Calendar used for conversions. */
@@ -91,8 +91,8 @@ public class DateTime {
      * @param time server time field
      */
     DateTime(short date, short time) {
-        this.date = (int)date & 0xFFFF;
-        this.time = time * 60 * 300;
+        this.date = (int) date & 0xFFFF;
+        this.time = (int) time * 60 * 300;
     }
 
     /**
@@ -175,7 +175,7 @@ public class DateTime {
      * @return the datetime date component as an <code>int</code>
      */
     int getDate() {
-        return (date == DATE_NOT_USED)? 0: date;
+        return (date == DATE_NOT_USED) ? 0 : date;
     }
 
     /**
@@ -183,9 +183,8 @@ public class DateTime {
      *
      * @return the datetime time component as an <code>int</code>
      */
-    int getTime()
-    {
-        return time;
+    int getTime() {
+        return (time == TIME_NOT_USED) ? 0 : time;
     }
 
     /**
@@ -321,15 +320,17 @@ public class DateTime {
             minute = 0;
             second = 0;
             millis = 0;
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
-            cal.set(Calendar.YEAR, this.year);
-            cal.set(Calendar.MONTH, this.month - 1);
-            cal.set(Calendar.DAY_OF_MONTH, this.day);
-            cal.add(Calendar.DATE, 1);
-            year   = (short)cal.get(Calendar.YEAR);
-            month  = (short)(cal.get(Calendar.MONTH) + 1);
-            day    = (short)cal.get(Calendar.DAY_OF_MONTH);
-            date++;
+            if (date != DATE_NOT_USED) {
+                GregorianCalendar cal = (GregorianCalendar)calendar.get();
+                cal.set(Calendar.YEAR, this.year);
+                cal.set(Calendar.MONTH, this.month - 1);
+                cal.set(Calendar.DAY_OF_MONTH, this.day);
+                cal.add(Calendar.DATE, 1);
+                year   = (short)cal.get(Calendar.YEAR);
+                month  = (short)(cal.get(Calendar.MONTH) + 1);
+                day    = (short)cal.get(Calendar.DAY_OF_MONTH);
+                date++;
+            }
         }
     }
 

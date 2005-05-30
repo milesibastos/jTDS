@@ -4,6 +4,8 @@ Changes from jTDS 1.0.3
 05/30/2005 - Alin Sinpalean
  o Changed the default prepareSQL mode from 1 (temporary stored procedures) to
    3 (sp_prepare) for SQL Server. For Sybase, the default is still 1.
+ o Corrected a bug in DateTime that was causing -1 to be stored as the time
+   component of a DATETIME field for a Date value.
 
 05/27/2005 - Alin Sinpalean
  o Added initial support for fast forward only cursors.

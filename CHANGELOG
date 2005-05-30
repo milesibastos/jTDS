@@ -6,6 +6,9 @@ Changes from jTDS 1.0.3
    3 (sp_prepare) for SQL Server. For Sybase, the default is still 1.
  o Corrected a bug in DateTime that was causing -1 to be stored as the time
    component of a DATETIME field for a Date value.
+ o Applied Mike's patch [1210936] Change byte array to string conversions; the
+   patch changes the way byte[] to String conversions are made (now hex values
+   are returned) and also a bug with SELECT DISTINCT not working with Sybase.
 
 05/27/2005 - Alin Sinpalean
  o Added initial support for fast forward only cursors.

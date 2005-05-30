@@ -1385,6 +1385,33 @@ public class ResultSetTest extends TestBase {
         stmt.close();
     }
 
+    /**
+     * Test bug with Sybase where readonly scrollable result set based on a
+     * SELECT DISTINCT returns duplicate rows.
+     */
+    public void testDistinctBug() throws Exception {
+        Statement stmt = con.createStatement(
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        stmt.execute( "CREATE TABLE #testdistinct (id int primary key, c varchar(255))");
+        stmt.addBatch("INSERT INTO #testdistinct VALUES(1, 'AAAA')");
+        stmt.addBatch("INSERT INTO #testdistinct VALUES(2, 'AAAA')");
+        stmt.addBatch("INSERT INTO #testdistinct VALUES(3, 'BBBB')");
+        stmt.addBatch("INSERT INTO #testdistinct VALUES(4, 'BBBB')");
+        stmt.addBatch("INSERT INTO #testdistinct VALUES(5, 'CCCC')");
+        int counts[] = stmt.executeBatch();
+        assertEquals(5, counts.length);
+
+        ResultSet rs = stmt.executeQuery(
+                "SELECT DISTINCT c FROM #testdistinct");
+        assertNotNull(rs);
+        int rowCount = 0;
+        while (rs.next()) {
+            rowCount++;
+        }
+        assertEquals(3, rowCount);
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

@@ -1677,4 +1677,35 @@ public class SAfeTest extends DatabaseTestCase {
         }
         stmt.close();
     }
+
+    /**
+     * Test that getString() on a varbinary column returns a hex string.
+     */
+    public void testBytesToString() throws Exception {
+        Statement stmt = con.createStatement(
+                ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        stmt.execute(
+                "CREATE TABLE #testbytes (id int primary key, b varbinary(8), i image, c varchar(255) null)");
+        assertEquals(1, stmt.executeUpdate(
+                "INSERT INTO #testbytes VALUES (1, 0x41424344, 0x41424344, null)"));
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #testbytes");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("41424344", rs.getString(2));
+        assertEquals("41424344", rs.getString(3));
+        Clob clob = rs.getClob(2);
+        assertEquals("41424344", clob.getSubString(1, (int)clob.length()));
+        clob = rs.getClob(3);
+        assertEquals("41424344", clob.getSubString(1, (int)clob.length()));
+        //
+        // Check that updating sensitive result sets yields the correct
+        // results. This test is mainly for Sybase scroll sensitive client
+        // side cursors.
+        //
+        rs.updateBytes(4, new byte[]{0x41, 0x42, 0x43, 0x44});
+        rs.updateRow();
+        assertEquals("ABCD", rs.getString(4));
+        stmt.close();
+    }
 }

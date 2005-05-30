@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.45 2005-05-25 09:24:03 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.46 2005-05-30 12:41:20 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -302,19 +302,7 @@ public class Support {
                     }
 
                     if (x instanceof byte[]) {
-                        //
-                        // Other drivers return a hex string eg 41424344 for "ABCD".
-                        // jTDS has always returned the bytes converted to a string.
-                        // Is it possible that the other drivers are more correct?
-                        //
-                        if (charSet == null) {
-                            charSet = "ISO-8859-1";
-                        }
-                        try {
-                            return new String((byte[]) x, charSet);
-                        } catch (UnsupportedEncodingException e) {
-                            return new String((byte[]) x);
-                        }
+                        return toHex((byte[])x);
                     }
 
                     return x.toString(); // Last hope!
@@ -526,27 +514,20 @@ public class Support {
                         // Convert BLOB to CLOB
                         //
                         Blob blob = (Blob) x;
-                        if (charSet == null) {
-                            charSet = "ISO-8859-1";
-                        }
                         try {
-                            BufferedReader rdr =
-                                new BufferedReader(
-                                        new InputStreamReader(blob.getBinaryStream(),
-                                                                            charSet));
+                            InputStream is = blob.getBinaryStream();
                             ClobImpl clob = new ClobImpl(getConnection(callerReference));
                             Writer out = clob.setCharacterStream(1);
                             // TODO Use a buffer to improve performance
-                            int c;
-                            while ((c = rdr.read()) >= 0) {
-                                out.write(c);
+                            int b;
+                            // These reads/writes are buffered by the undelying blob buffers
+                            while ((b = is.read()) >= 0) {
+                                out.write(hex[b >> 4]);
+                                out.write(hex[b & 0x0F]);
                             }
                             out.close();
-                            rdr.close();
+                            is.close();
                             return clob;
-                        } catch (UnsupportedEncodingException e) {
-                            // Unlikely to happen but fall back on in memory copy
-                            x = blob.getBytes(1, (int) blob.length());
                         } catch (IOException e) {
                             throw new SQLException(Messages.get("error.generic.ioerror", e.getMessage()),
                             "HY000");
@@ -559,17 +540,7 @@ public class Support {
 
                     if (x instanceof byte[]) {
                         ClobImpl clob = new ClobImpl(getConnection(callerReference));
-                        byte[] data = (byte[]) x;
-
-                        if (charSet == null) {
-                            charSet = "ISO-8859-1";
-                        }
-
-                        try {
-                            clob.setString(1, new String(data, charSet));
-                        } catch (UnsupportedEncodingException e) {
-                            clob.setString(1, new String(data));
-                        }
+                        clob.setString(1, toHex((byte[]) x));
 
                         return clob;
                     } else if (x instanceof String) {

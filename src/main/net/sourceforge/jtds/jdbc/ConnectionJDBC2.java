@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.85 2005-05-30 11:05:34 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.86 2005-05-30 12:41:19 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -171,6 +171,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int maxPrecision = 38; // Sybase default
     /** Stored procedure unique ID number. */
     private int spSequenceNo = 1;
+    /** Cursor unique ID number. */
+    private int cursorSequenceNo = 1;
     /** Procedures in this transaction. */
     private final ArrayList procInTran = new ArrayList();
     /** Java charset for encoding. */
@@ -421,7 +423,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieve the next unique stored procedure name.
+     * Retrieves the next unique stored procedure name.
      * <p>Notes:
      * <ol>
      * <li>Some versions of Sybase require an id with
@@ -431,12 +433,26 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * <li>The leading '#jtds' indicates this is a temporary procedure and
      * the '#' is removed by the lower level TDS5 routines.
      * </ol>
-     * @return The sp name as a <code>String</code>.
+     * Not synchronized because it's only called from the synchronized
+     * {@link #prepareSQL} method.
+     *
+     * @return the next temporary SP name as a <code>String</code>
      */
     String getProcName() {
         String seq = "000000" + Integer.toHexString(spSequenceNo++).toUpperCase();
 
         return "#jtds" + seq.substring(seq.length() - 6, seq.length());
+    }
+
+    /**
+     * Retrieves the next unique cursor name.
+     *
+     * @return the next cursor name as a <code>String</code>
+     */
+    synchronized String getCursorName() {
+        String seq = "000000" + Integer.toHexString(cursorSequenceNo++).toUpperCase();
+
+        return "_jtds" + seq.substring(seq.length() - 6, seq.length());
     }
 
     /**

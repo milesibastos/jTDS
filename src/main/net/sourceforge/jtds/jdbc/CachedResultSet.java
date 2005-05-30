@@ -17,9 +17,11 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import java.io.UnsupportedEncodingException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -53,7 +55,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.20 2005-05-10 15:14:50 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.21 2005-05-30 12:41:19 alin_sinpalean Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -91,6 +93,8 @@ public class CachedResultSet extends JtdsResultSet {
     protected boolean isKeyed;
     /** First table name in select. */
     protected String tableName;
+    /** The parent connection object */
+    protected ConnectionJDBC2 connection;
 
     /**
      * Constructs a new cached result set.
@@ -114,6 +118,7 @@ public class CachedResultSet extends JtdsResultSet {
             int resultSetType,
             int concurrency) throws SQLException {
         super(statement, resultSetType, concurrency, null);
+        this.connection = (ConnectionJDBC2) statement.getConnection();
         this.cursorTds = statement.getTds();
         this.sql = sql;
         this.procName = procName;
@@ -121,14 +126,12 @@ public class CachedResultSet extends JtdsResultSet {
         if (resultSetType == ResultSet.TYPE_FORWARD_ONLY
                 && concurrency == ResultSet.CONCUR_UPDATABLE
                 && cursorName != null) {
-            this.updateTds = new TdsCore(
-                    (ConnectionJDBC2) statement.getConnection(),
-                    statement.getMessages());
+            // Need an addtional TDS for positioned updates
+            this.updateTds = new TdsCore(connection, statement.getMessages());
         } else {
             this.updateTds = this.cursorTds;
         }
-        this.isSybase = Driver.SYBASE ==
-            ((ConnectionJDBC2) statement.getConnection()).getServerType();
+        this.isSybase = Driver.SYBASE == connection.getServerType();
         this.tempResultSet = false;
         //
         // Now create the specified type of cursor
@@ -283,7 +286,23 @@ public class CachedResultSet extends JtdsResultSet {
             throws SQLException {
         //
         boolean isSelect = false;
-        SQLWarning warning = null;
+        int requestedConcurrency = concurrency;
+        int requestedType = resultSetType;
+
+        //
+        // If the useCursor property is set we will try and use a server
+        // side cursor for forward read only cursors. With the default
+        // fetch size of 100 this is a reasonable emulation of the
+        // MS fast forward cursor.
+        //
+        if (cursorName == null
+                && connection.getUseCursors()
+                && resultSetType == ResultSet.TYPE_FORWARD_ONLY
+                && concurrency == ResultSet.CONCUR_READ_ONLY) {
+        	// The useCursors connection property was set true
+        	// so we need to create a private cursor name
+        	cursorName = connection.getCursorName();
+        }
         //
         // Validate the SQL statement to ensure we have a select.
         //
@@ -297,48 +316,62 @@ public class CachedResultSet extends JtdsResultSet {
             String tmp[] = SQLParser.parse(sql, new ArrayList(),
                     (ConnectionJDBC2) statement.getConnection(), true);
 
-            if ("select".equals(tmp[2]) && tmp[3] != null && tmp[3].length() > 0) {
-                // OK We have a select with at least one table.
-                tableName = tmp[3];
+            if ("select".equals(tmp[2])) {
                 isSelect = true;
+            	if (tmp[3] != null && tmp[3].length() > 0) {
+            		// OK We have a select with at least one table.
+            		tableName = tmp[3];
+            	} else {
+            		// Can't find a table name so can't update
+                    concurrency = ResultSet.CONCUR_READ_ONLY;
+            	}
             } else {
                 // No good we can't update and we can't declare a cursor
                 cursorName = null;
                 if (concurrency == ResultSet.CONCUR_UPDATABLE) {
                     concurrency = ResultSet.CONCUR_READ_ONLY;
-                    warning = new SQLWarning(
-                            Messages.get("warning.cursordowngraded", "CONCUR_READ_ONLY"), "01000");
                 }
                 if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
                     resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
-                    SQLWarning warning2 = new SQLWarning(
-                            Messages.get("warning.cursordowngraded", "TYPE_SCROLL_INSENSITIVE"), "01000");
-                    if (warning != null) {
-                        warning.setNextWarning(warning2);
-                    } else {
-                        warning = warning2;
-                    }
                 }
             }
         }
         //
-        // If a cursor name is specified we try and declare a conventional cursor
+        // If a cursor name is specified we try and declare a conventional cursor.
+        // A server error will occur if we try to create a named cursor on a non
+        // select statement.
         //
         if (cursorName != null) {
             //
-            // We need to substitute any parameters now as the prepended DECLARE CURSOR
-            // will throw the parameter positions off.
+            // Create and execute DECLARE CURSOR
             //
+            StringBuffer cursorSQL =
+                    new StringBuffer(sql.length() + cursorName.length()+ 128);
+            cursorSQL.append("DECLARE ").append(cursorName)
+                    .append(" CURSOR FOR ");
+            //
+            // We need to adjust any parameter offsets now as the prepended
+            // DECLARE CURSOR will throw the parameter positions off.
+            //
+            ParamInfo[] parameters = procedureParams;
             if (procedureParams != null && procedureParams.length > 0) {
-                sql = Support.substituteParameters(sql,
-                        procedureParams, statement.getTds().getTdsVersion());
+                parameters = new ParamInfo[procedureParams.length];
+                int offset = cursorSQL.length();
+                for (int i = 0; i < parameters.length; i++) {
+                    // Clone parameters to avoid corrupting offsets in original
+                    parameters[i] = (ParamInfo) procedureParams[i].clone();
+                    parameters[i].markerPos += offset;
+                }
             }
-            StringBuffer cursorSQL = new StringBuffer(sql.length() + cursorName.length()+ 128);
-            cursorSQL.append("DECLARE ").append(cursorName).append(" CURSOR FOR ").append(sql);
-            cursorTds.executeSQL(cursorSQL.toString(), procName, procedureParams,
+            cursorSQL.append(sql);
+            cursorTds.executeSQL(cursorSQL.toString(), null, parameters,
                     false, statement.getQueryTimeout(), statement.getMaxRows(),
                     statement.getMaxFieldSize(), true);
             cursorTds.clearResponseQueue();
+            cursorTds.getMessages().checkErrors();
+            //
+            // OK now open cursor and fetch the first set (fetchSize) rows
+            //
             cursorSQL.setLength(0);
             cursorSQL.append("\r\nOPEN ").append(cursorName);
             if (fetchSize > 1 && isSybase) {
@@ -346,27 +379,35 @@ public class CachedResultSet extends JtdsResultSet {
                 cursorSQL.append(" FOR ").append(cursorName);
             }
             cursorSQL.append("\r\nFETCH ").append(cursorName);
-            //
-            // OK Declare cursor, open it and fetch first (fetchSize) rows.
-            //
             cursorTds.executeSQL(cursorSQL.toString(), null, null, false,
                     statement.getQueryTimeout(), statement.getMaxRows(),
                     statement.getMaxFieldSize(), true);
-
+            //
+            // Check we have a result set
+            //
             while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
             if (!cursorTds.isResultSet()) {
                 throw new SQLException(Messages.get("error.statement.noresult"), "24000");
             }
             columns = cursorTds.getColumns();
+            if (connection.getServerType() == Driver.SQLSERVER) {
+                // Last column will be rowstat but will not be marked as hidden
+                // as we do not have the Column meta data returned by the API
+                // cursor.
+                // Hide it now to avoid confusion (also should not be updated).
+                if (columns.length > 0) {
+                    columns[columns.length - 1].isHidden = true;
+                }
+            }
             columnCount = getColumnCount(columns);
+            rowsInResult = cursorTds.isDataInResultSet() ? 1 : 0;
         } else {
             //
             // Open a memory cached scrollable or forward only possibly updateable cursor
             //
-            if (isSelect &&
-                (concurrency == ResultSet.CONCUR_UPDATABLE ||
-                 resultSetType != ResultSet.TYPE_FORWARD_ONLY)) {
+            if (isSelect && (concurrency == ResultSet.CONCUR_UPDATABLE
+                    || resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE)) {
                 // Need to execute SELECT .. FOR BROWSE to get
                 // the MetaData we require for updates etc
                 // OK Should have an SQL select statement
@@ -399,43 +440,48 @@ public class CachedResultSet extends JtdsResultSet {
                     // No so downgrade
                     if (concurrency == ResultSet.CONCUR_UPDATABLE) {
                         concurrency = ResultSet.CONCUR_READ_ONLY;
-                        statement.addWarning(new SQLWarning(
-                                Messages.get("warning.cursordowngraded",
-                                             "CONCUR_READ_ONLY"), "01000"));
                     }
                     if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
                         resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
-                        statement.addWarning(new SQLWarning(
-                                Messages.get("warning.cursordowngraded",
-                                             "TYPE_SCROLL_INSENSITIVE"), "01000"));
                     }
                 }
-                return;
-            }
-            //
-            // Create a read only cursor using direct SQL
-            //
-            cursorTds.executeSQL(sql, procName, procedureParams, false,
-                    statement.getQueryTimeout(), statement.getMaxRows(),
-                    statement.getMaxFieldSize(), true);
-            while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
+            } else {
+                //
+                // Create a read only cursor using direct SQL
+                //
+                cursorTds.executeSQL(sql, procName, procedureParams, false,
+                        statement.getQueryTimeout(), statement.getMaxRows(),
+                        statement.getMaxFieldSize(), true);
+                while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
-            if (!cursorTds.isResultSet()) {
-                throw new SQLException(Messages.get("error.statement.noresult"), "24000");
+                if (!cursorTds.isResultSet()) {
+                    throw new SQLException(
+                            Messages.get("error.statement.noresult"), "24000");
+                }
+                columns = cursorTds.getColumns();
+                columnCount = getColumnCount(columns);
+                rowData = new ArrayList(INITIAL_ROW_COUNT);
+                //
+                // Load result set into buffer
+                //
+                cacheResultSetRows();
+                rowsInResult  = rowData.size();
+                initialRowCnt = rowsInResult;
+                pos = POS_BEFORE_FIRST;
             }
-            columns = cursorTds.getColumns();
-            columnCount = getColumnCount(columns);
-            rowData = new ArrayList(INITIAL_ROW_COUNT);
-            //
-            // Load result set into buffer
-            //
-            cacheResultSetRows();
-            rowsInResult  = rowData.size();
-            initialRowCnt = rowsInResult;
-            pos = POS_BEFORE_FIRST;
-            if (warning != null) {
-                statement.addWarning(warning);
-            }
+        }
+        //
+        // Report any cursor downgrade warnings
+        //
+        if (concurrency < requestedConcurrency) {
+            statement.addWarning(new SQLWarning(
+                    Messages.get("warning.cursordowngraded",
+                            "CONCUR_READ_ONLY"), "01000"));
+        }
+        if (resultSetType < requestedType) {
+            statement.addWarning(new SQLWarning(
+                    Messages.get("warning.cursordowngraded",
+                            "TYPE_SCROLL_INSENSITIVE"), "01000"));
         }
     }
 
@@ -667,7 +713,7 @@ public class CachedResultSet extends JtdsResultSet {
      * @param value the column data item
      * @return the new parameter as a <code>ParamInfo</code> object
      */
-    protected static ParamInfo buildParameter(int pos, ColInfo info, Object value)
+    protected static ParamInfo buildParameter(int pos, ColInfo info, Object value, boolean isUnicode)
             throws SQLException {
 
         int length = 0;
@@ -690,7 +736,8 @@ public class CachedResultSet extends JtdsResultSet {
         ParamInfo param = new ParamInfo(info, null, value, length);
         param.isUnicode = info.sqlType.equals("nvarchar") ||
                           info.sqlType.equals("nchar") ||
-                          info.sqlType.equals("ntext");
+                          info.sqlType.equals("ntext") ||
+                          isUnicode;
         param.markerPos = pos;
 
         return param;
@@ -797,7 +844,8 @@ public class CachedResultSet extends JtdsResultSet {
                             sql.append(columns[i].realName);
                             sql.append("=?");
                             count++;
-                            params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
+                            params.add(buildParameter(sql.length() - 1, columns[i],
+                                    currentRow[i], connection.isUseUnicode()));
                         }
                     } else {
                         // Include all available 'searchable' columns in updates/deletes to protect
@@ -812,7 +860,8 @@ public class CachedResultSet extends JtdsResultSet {
                             sql.append(columns[i].realName);
                             sql.append("=?");
                             count++;
-                            params.add(buildParameter(sql.length()-1, columns[i], currentRow[i]));
+                            params.add(buildParameter(sql.length() - 1, columns[i],
+                                    currentRow[i], connection.isUseUnicode()));
                         }
                     }
                 }
@@ -1249,8 +1298,21 @@ public class CachedResultSet extends JtdsResultSet {
              ConnectionJDBC2 con = (ConnectionJDBC2)statement.getConnection();
              for (int i = 0; i < updateRow.length; i++) {
                  if (updateRow[i] != null) {
-                     currentRow[i] = Support.convert(con, updateRow[i].value,
+                     if (updateRow[i].value instanceof byte[]
+                         && (columns[i].jdbcType == Types.CHAR ||
+                             columns[i].jdbcType == Types.VARCHAR ||
+                             columns[i].jdbcType == Types.LONGVARCHAR)) {
+                         // Need to handle byte[] to varchar otherwise field
+                         // will be set to hex string rather than characters.
+                         try {
+                             currentRow[i] = new String((byte[])updateRow[i].value, con.getCharset());
+                         } catch (UnsupportedEncodingException e) {
+                             currentRow[i] = new String((byte[])updateRow[i].value);
+                         }
+                     } else {
+                         currentRow[i] = Support.convert(con, updateRow[i].value,
                                                  columns[i].jdbcType, con.getCharset());
+                     }
                  }
              }
          }
@@ -1347,4 +1409,13 @@ public class CachedResultSet extends JtdsResultSet {
              return absolute(pos+row);
          }
      }
+
+     public String getCursorName() throws SQLException {
+        checkOpen();
+        // Hide internal cursor names
+        if (cursorName != null && !cursorName.startsWith("_jtds")) {
+            return this.cursorName;
+        }
+        throw new SQLException(Messages.get("error.resultset.noposupdate"), "24000");
+    }
 }

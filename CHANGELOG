@@ -9,9 +9,11 @@ Changes from jTDS 1.0.3
  o Applied Mike's patch [1210936] Change byte array to string conversions; the
    patch changes the way byte[] to String conversions are made (now hex values
    are returned) and also a bug with SELECT DISTINCT not working with Sybase.
+ o Added information about the useCursors property (and fast forward-only
+   cursors to the FAQ).
 
 05/27/2005 - Alin Sinpalean
- o Added initial support for fast forward only cursors.
+ o Added initial support for fast forward-only cursors.
  o Corrected yet another cancel synchronization issue caused by the end of
    response flag not being reset when a cancel packet was sent.
  o Corrected an issue causing hidden columns to "become visible" in result set

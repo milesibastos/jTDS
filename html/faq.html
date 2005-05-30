@@ -194,6 +194,8 @@
           overhead when reusing statements that return small result sets that
           have many columns but may lead to unexpected errors if the database
           schema changes after the statement has been prepared. Use with care.
+          Only applicable to SQL Server (there is no prepareSQL=3 mode for
+          Sybase).
         <dt><code>charset</code> (default - the character set the server was installed
           with)</dt>
         <dd>Very important setting, determines the byte value to character mapping
@@ -262,10 +264,10 @@
               <tr><th>Value</th><th>Description</th></tr>
             </thead>
             <tbody>
-              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation (slower, proof of concept implementation)</td></tr>
+              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation, literals are inserted in the SQL (slower)</td></tr>
               <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (faster)</td></tr>
               <tr><td><code>2</code></td><td>sp_executesql is used (fast)</td></tr>
-              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute (faster)</td></tr>
+              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute (faster, SQL Server only)</td></tr>
             </tbody>
           </table>
         </dd>
@@ -273,7 +275,8 @@
           <code>512</code> for TDS 4.2/5.0)</dt>
         <dd>The network packet size (a multiple of 512).</dd>
         <dt><code>tcpNoDelay</code> (default - <code>true</code>)</dt>
-        <dd><code>true</code> to enable TCP_NODELAY on the socket; <code>false</code> to disable it.</dd>
+        <dd><code>true</code> to enable TCP_NODELAY on the socket;
+          <code>false</code> to disable it.</dd>
         <dt><code>lobBuffer</code> (default - <code>32768</code>)</dt>
         <dd>The amount of LOB data to buffer in memory before caching to disk. The
           value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>
@@ -333,6 +336,26 @@
           running out of space with very large batches. The problem doesn't
           seem to occur with SQL Server, hence the default limit of 0
           (unlimited) in this case.</dd>
+        <dt><code>useCursors</code> (default - <code>false</code>)</dt>
+        <dd>Instructs jTDS to use server side cursors instead of direct selects
+          (AKA firehose cursors) for forward-only read-only result sets (with
+          other types of result sets server- or client-side cursors are always
+          used).<br/>
+          With firehose cursors the SELECT query is sent and the server
+          responds with all the resulting rows. This is the fastest approach
+          but it means that the driver has to cache all results if another
+          request needs to be made before all rows have been processed. So when
+          using multiple <code>Statement</code>s per <code>Connection</code> it
+          is preferable to have server-side cursors instead; these will allow
+          the driver to request only a limited number of rows at a time
+          (controllable through the <code>fetchSize</code> property of a
+          <code>Statement</code>). This means extra request-response cycles,
+          but less caching by the driver.<br/>
+          With SQL Server a so called
+          <a href="http://msdn.microsoft.com/library/en-us/acdata/ac_8_con_07_3tdf.asp">fast
+          forward-only cursor</a> will be created when this property is set to
+          <code>true</code>. With Sybase a usual forward-only read-only cursor
+          is created.</dd>
       </dl>
       <p>These properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

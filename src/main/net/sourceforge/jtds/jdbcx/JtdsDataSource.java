@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.33 2005-05-27 12:31:42 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.34 2005-05-30 15:20:28 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -79,6 +79,8 @@ public class JtdsDataSource
     protected String logFile;
     protected String ssl;
     protected String batchSize;
+    protected String bufferMaxMemory;
+    protected String bufferMinPackets;
     protected String cacheMetaData;
     protected String useCursors;
 
@@ -237,6 +239,12 @@ public class JtdsDataSource
         if (batchSize != null) {
             props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
         }
+        if (bufferMaxMemory != null) {
+            props.setProperty(Messages.get(Driver.BUFFERMAXMEMORY), bufferMaxMemory);
+        }
+        if (bufferMinPackets != null) {
+            props.setProperty(Messages.get(Driver.BUFFERMINPACKETS), bufferMinPackets);
+        }
         if (cacheMetaData != null) {
             props.setProperty(Messages.get(Driver.CACHEMETA), cacheMetaData);
         }
@@ -298,6 +306,8 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
         ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
+        ref.add(new StringRefAddr(Messages.get(Driver.BUFFERMAXMEMORY), bufferMaxMemory));
+        ref.add(new StringRefAddr(Messages.get(Driver.BUFFERMINPACKETS), bufferMinPackets));
         ref.add(new StringRefAddr(Messages.get(Driver.CACHEMETA), cacheMetaData));
         ref.add(new StringRefAddr(Messages.get(Driver.USECURSORS), useCursors));
 
@@ -602,6 +612,28 @@ public class JtdsDataSource
             return 0;
         }
         return Integer.parseInt(batchSize);
+    }
+
+    public int getBufferMaxMemory() {
+        if (bufferMaxMemory == null) {
+            return 0;
+        }
+        return Integer.parseInt(bufferMaxMemory);
+    }
+
+    public void setBufferMaxMemory(int bufferMaxMemory) {
+        this.bufferMaxMemory = String.valueOf(bufferMaxMemory);
+    }
+
+    public int getBufferMinPackets() {
+        if (bufferMinPackets == null) {
+            return 0;
+        }
+        return Integer.parseInt(bufferMinPackets);
+    }
+
+    public void setBufferMinPackets(int bufferMinPackets) {
+        this.bufferMinPackets = String.valueOf(bufferMinPackets);
     }
 
     public boolean getCacheMetaData() {

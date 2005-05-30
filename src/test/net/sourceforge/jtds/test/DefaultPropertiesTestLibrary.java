@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.17 2005-05-30 11:12:08 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.18 2005-05-30 15:20:28 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -297,9 +297,49 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     }
 
     /**
-     * Test the <code>cachemetadata</code> property.
+     * Test the <code>batchSize</code> property.
      */
-    public void test_cachemetadata() {
+    public void test_batchSize() {
+        String fieldName = "batchSize";
+        String messageKey = Driver.BATCHSIZE;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName,
+                DefaultProperties.BATCH_SIZE_SQLSERVER);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName,
+                    DefaultProperties.BATCH_SIZE_SYBASE);
+        }
+    }
+
+    /**
+     * Test the <code>bufferMaxMemory</code> property.
+     */
+    public void test_bufferMaxMemory() {
+        String fieldName = "bufferMaxMemory";
+        String messageKey = Driver.BUFFERMAXMEMORY;
+        String expectedValue = DefaultProperties.BUFFER_MAX_MEMORY;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+    /**
+     * Test the <code>bufferMinPackets</code> property.
+     */
+    public void test_bufferMinPackets() {
+        String fieldName = "bufferMinPackets";
+        String messageKey = Driver.BUFFERMINPACKETS;
+        String expectedValue = DefaultProperties.BUFFER_MIN_PACKETS;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+    /**
+     * Test the <code>cacheMetaData</code> property.
+     */
+    public void test_cacheMetaData() {
         String fieldName = "useMetadataCache";
         String messageKey = Driver.CACHEMETA;
         String expectedValue = DefaultProperties.CACHEMETA;

@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.86 2005-05-30 12:41:19 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.87 2005-05-30 15:20:27 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -215,6 +215,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean useMetadataCache;
     /** Use fast forward cursors for forward only result sets. */
     private boolean useCursors;
+    /** The global buffer memory limit for all connections (in kilobytes). */
+    private int bufferMaxMemory;
+    /** The minimum number of packets per statement to buffer to memory. */
+    private int bufferMinPackets;
     /** A cached <code>TdsCore</code> instance to reuse on new statements. */
     private TdsCore cachedTds;
 
@@ -260,11 +264,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                       "08003");
             }
         }
-        //
-        // TODO These parameters should be set from the connection properties
-        //
-        SharedSocket.setMemoryBudget(100000);
-        SharedSocket.setMinMemPkts(8);
+
+        SharedSocket.setMemoryBudget(bufferMaxMemory * 1024);
+        SharedSocket.setMinMemPkts(bufferMinPackets);
 
         try {
             Object timer = null;
@@ -857,6 +859,18 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (batchSize < 0) {
             throw new SQLException(Messages.get("error.connection.badprop",
                     Messages.get(Driver.BATCHSIZE)), "08001");
+        }
+
+        bufferMaxMemory = parseIntegerProperty(info, Driver.BUFFERMAXMEMORY);
+        if (bufferMaxMemory < 0) {
+            throw new SQLException(Messages.get("error.connection.badprop",
+                    Messages.get(Driver.BUFFERMAXMEMORY)), "08001");
+        }
+
+        bufferMinPackets = parseIntegerProperty(info, Driver.BUFFERMINPACKETS);
+        if (bufferMinPackets < 1) {
+            throw new SQLException(Messages.get("error.connection.badprop",
+                    Messages.get(Driver.BUFFERMINPACKETS)), "08001");
         }
     }
 

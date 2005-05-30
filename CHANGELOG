@@ -11,6 +11,9 @@ Changes from jTDS 1.0.3
    are returned) and also a bug with SELECT DISTINCT not working with Sybase.
  o Added information about the useCursors property (and fast forward-only
    cursors to the FAQ).
+ o Made the maximum global buffer memory and minimum local buffer packets
+   configurable from the connection properties by adding two new properties:
+   bufferMaxMemory and bufferMinPackets.
 
 05/27/2005 - Alin Sinpalean
  o Added initial support for fast forward-only cursors.

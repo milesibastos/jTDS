@@ -356,16 +356,45 @@
           forward-only cursor</a> will be created when this property is set to
           <code>true</code>. With Sybase a usual forward-only read-only cursor
           is created.</dd>
+        <dt><code>bufferMaxMemory</code> (default - <code>1024</code>)</dt>
+        <dd>Controls the global buffer memory limit for all connections (in
+          kilobytes). When the amount of buffered server response packets
+          reaches this limit additional packets are buffered to disk; there is
+          however one exception: each <code>Statement</code> gets to buffer at
+          least <code>&lt;bufferMinPackets&gt;</code> to memory before this
+          limit is enforced. This means that this limit can and will usually be
+          exceeded.<br/>
+          Server responses are buffered to disk only when a request is made on
+          a <code>Statement</code> while another <code>Statement</code>
+          belonging to the same Connection still hasn't processed all its
+          results. These situations can be avoided in most cases by setting the
+          <code>useCursors</code> property, but this will also affect
+          performance.<br/>
+          See also <code>bufferMinPackets</code>.</dd>
+        <dt><code>bufferMinPackets</code> (default - <code>8</code>)</dt>
+        <dd>Controls the minimum number of packets per statement to buffer to
+          memory. Each <code>Statement</code> will buffer at least this many
+          packets before being forced to use a temporary file if the
+          <code>&lt;bufferMaxMemory&gt;</code> is reached, to ensure good
+          performance even when one <code>Statement</code> caches a very large
+          amount of data.<br/>
+          Server responses are buffered to disk only when a request is made on
+          a <code>Statement</code> while another <code>Statement</code>
+          belonging to the same Connection still hasn't processed all its
+          results. These situations can be avoided in most cases by setting the
+          <code>useCursors</code> property, but this will also affect
+          performance.<br/>
+          See also <code>bufferMaxMemory</code>.</dd>
       </dl>
-      <p>These properties can be passed to jTDS in one of three ways: in the URL, in
+      <p>Properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>
         or by using the <code>TdsDataSource</code>'s setters (if connections are
         obtained through a <code>DataSource</code> rather than using the
         <code>DriverManager</code>). Because there is no URL when using the
         <code>TdsDataSource</code> there are three other properties (with
         setters and getters) to take the place of those items that are part of
-        the URL: <code>serverName</code>, <code>portNumber</code> and
-        <code>databaseName</code> (their meaning is quite clear).</p>
+        the URL's syntax: <code>serverName</code>, <code>portNumber</code> and
+        <code>databaseName</code> (their meaning should be quite clear).</p>
       <p><a href="#">^ top ^</a></p>
       <p class="question"><a name="benchmarks"></a>jTDS is supposed to be the
         fastest JDBC driver around. Have you got any figures to prove that? Or

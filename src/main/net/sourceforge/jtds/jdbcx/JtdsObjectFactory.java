@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.18 2005-05-27 12:31:42 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.19 2005-05-30 15:20:28 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -108,6 +108,14 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object batchSize = ref.get(Messages.get(Driver.BATCHSIZE)).getContent();
             if (batchSize != null) {
                 ds.setBatchSize(Integer.parseInt((String) batchSize));
+            }
+            final Object bufferMaxMemory = ref.get(Messages.get(Driver.BUFFERMAXMEMORY)).getContent();
+            if (bufferMaxMemory != null) {
+                ds.setBufferMaxMemory(Integer.parseInt((String) bufferMaxMemory));
+            }
+            final Object bufferMinPackets = ref.get(Messages.get(Driver.BUFFERMINPACKETS)).getContent();
+            if (bufferMinPackets != null) {
+                ds.setBufferMinPackets(Integer.parseInt((String) bufferMinPackets));
             }
             final Object cacheMetaData = ref.get(Messages.get(Driver.CACHEMETA)).getContent();
             if (cacheMetaData != null) {

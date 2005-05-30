@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.22 2005-05-30 11:12:08 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.23 2005-05-30 15:20:28 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -56,7 +56,11 @@ public final class DefaultProperties {
     public static final String BATCH_SIZE_SQLSERVER = "0";
     /** Default <code>batchSize</code> property for Sybase. */
     public static final String BATCH_SIZE_SYBASE = "1000";
-    /** Default <code>cachemetadata</code> property. */
+    /** Default <code>bufferMaxMemory</code> property. */
+    public static final String BUFFER_MAX_MEMORY = "1024";
+    /** Default <code>bufferMinPackets</code> property. */
+    public static final String BUFFER_MIN_PACKETS = "8";
+    /** Default <code>cacheMetaData</code> property. */
     public static final String CACHEMETA = "false";
     /** Default <code>charset</code> property. */
     public static final String CHARSET = "";
@@ -216,6 +220,8 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.LOGFILE, LOGFILE);
         addDefaultPropertyIfNotSet(props, Driver.SSL, SSL);
         addDefaultPropertyIfNotSet(props, Driver.USECURSORS, USECURSORS);
+        addDefaultPropertyIfNotSet(props, Driver.BUFFERMAXMEMORY, BUFFER_MAX_MEMORY);
+        addDefaultPropertyIfNotSet(props, Driver.BUFFERMINPACKETS, BUFFER_MIN_PACKETS);
 
         return props;
     }

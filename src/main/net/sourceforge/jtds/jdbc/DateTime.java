@@ -29,7 +29,7 @@ import java.util.GregorianCalendar;
  * Java classes.
  *
  * @author Mike Hutchinson
- * @version $Id: DateTime.java,v 1.2 2005-05-30 11:37:47 alin_sinpalean Exp $
+ * @version $Id: DateTime.java,v 1.3 2005-05-30 15:35:33 alin_sinpalean Exp $
  */
 public class DateTime {
     /** Per thread instance of Calendar used for conversions. */
@@ -132,6 +132,7 @@ public class DateTime {
         timeValue = t;
         GregorianCalendar cal = (GregorianCalendar)calendar.get();
         cal.setTime((java.util.Date) t);
+        this.date   = DATE_NOT_USED;
         this.year   = 1900;
         this.month  = 1;
         this.day    = 1;
@@ -140,7 +141,6 @@ public class DateTime {
         this.second = (short)cal.get(Calendar.SECOND);
         this.millis = (short)cal.get(Calendar.MILLISECOND);
         packTime();
-        this.date  = DATE_NOT_USED;
         this.year  = 1970;
         this.month = 1;
         this.day   = 1;

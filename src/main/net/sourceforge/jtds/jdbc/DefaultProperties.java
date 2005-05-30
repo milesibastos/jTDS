@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.21 2005-05-27 12:31:37 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.22 2005-05-30 11:12:08 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -94,8 +94,10 @@ public final class DefaultProperties {
     public static final String PORT_NUMBER_SYBASE = "7100";
     /** Default <code>language</code> property. */
     public static final String LANGUAGE = "";
-    /** Default <code>prepareSql</code> property. */
-    public static final String PREPARE_SQL = String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES);
+    /** Default <code>prepareSql</code> property for SQL Server. */
+    public static final String PREPARE_SQLSERVER = String.valueOf(TdsCore.PREPARE);
+    /** Default <code>prepareSql</code> property for Sybase. */
+    public static final String PREPARE_SYBASE = String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES);
     /** Default <code>progName</code> property. */
     public static final String PROG_NAME = "jTDS";
     /** Default <code>tcpNoDelay</code> property. */
@@ -138,6 +140,8 @@ public final class DefaultProperties {
     private static final HashMap packetSizeDefaults;
     /** Default max batch size based on server type */
     private static final HashMap batchSizeDefaults;
+    /** Default prepare SQL mode based on server type */
+    private static final HashMap prepareSQLDefaults;
 
     static {
         tdsDefaults = new HashMap(2);
@@ -159,6 +163,12 @@ public final class DefaultProperties {
                 BATCH_SIZE_SQLSERVER);
         batchSizeDefaults.put(String.valueOf(Driver.SYBASE),
                 BATCH_SIZE_SYBASE);
+
+        prepareSQLDefaults = new HashMap(2);
+        prepareSQLDefaults.put(String.valueOf(Driver.SQLSERVER),
+                PREPARE_SQLSERVER);
+        prepareSQLDefaults.put(String.valueOf(Driver.SYBASE),
+                PREPARE_SYBASE);
     }
 
     /**
@@ -199,7 +209,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.CACHEMETA, CACHEMETA);
         addDefaultPropertyIfNotSet(props, Driver.CHARSET, CHARSET);
         addDefaultPropertyIfNotSet(props, Driver.LANGUAGE, LANGUAGE);
-        addDefaultPropertyIfNotSet(props, Driver.PREPARESQL, PREPARE_SQL);
+        addDefaultPropertyIfNotSet(props, Driver.PREPARESQL, Driver.SERVERTYPE, prepareSQLDefaults);
         addDefaultPropertyIfNotSet(props, Driver.SENDSTRINGPARAMETERSASUNICODE, USE_UNICODE);
         addDefaultPropertyIfNotSet(props, Driver.TCPNODELAY, TCP_NODELAY);
         addDefaultPropertyIfNotSet(props, Driver.XAEMULATION, XAEMULATION);

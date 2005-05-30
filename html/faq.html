@@ -254,20 +254,21 @@
           is always the last as the triggers execute first. If <code>false</code>
           all update counts are returned; use <code>getMoreResults()</code> to
           loop through them.</dd>
-        <dt><code>prepareSQL</code> (default - <code>1</code>)</dt>
+        <dt><code>prepareSQL</code> (default - <code>3</code> for SQL Server,
+          <code>1</code> for Sybase)</dt>
         <dd>This parameter specifies the mechanism used for Prepared Statements.
           <table class="inner" cellpadding="0" cellspacing="0">
             <thead>
               <tr><th>Value</th><th>Description</th></tr>
             </thead>
             <tbody>
-              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation</td></tr>
-              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (usually fastest)</td></tr>
-              <tr><td><code>2</code></td><td>sp_executesql is used</td></tr>
-              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute</td></tr>
+              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation (slower, proof of concept implementation)</td></tr>
+              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (faster)</td></tr>
+              <tr><td><code>2</code></td><td>sp_executesql is used (fast)</td></tr>
+              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute (faster)</td></tr>
             </tbody>
           </table>
-          </dd></dt>
+        </dd>
         <dt><code>packetSize</code> (default - <code>4096</code> for TDS 7.0/8.0;
           <code>512</code> for TDS 4.2/5.0)</dt>
         <dd>The network packet size (a multiple of 512).</dd>
@@ -323,7 +324,7 @@
               <tr><td><code>authenticate</code></td><td>Same as <code>require</code> except the server's certificate must be signed by a trusted CA</td></tr>
             </tbody>
           </table>
-          </dd></dt>
+        </dd>
         <dt><code>batchSize</code> (default - <code>0</code> for SQL Server;
           <code>1000</code> for Sybase)</dt>
         <dd>Controls how many statements are sent to the server in a batch.

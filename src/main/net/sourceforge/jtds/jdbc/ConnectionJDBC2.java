@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.84 2005-05-27 12:31:37 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.85 2005-05-30 11:05:34 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -459,17 +459,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                    ParamInfo[] params,
                                    boolean returnKeys)
             throws SQLException {
-
-        boolean cursorNeeded =
-                pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
-                    || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
-                    || useCursors
-                    || pstmt.cursorName != null;
-
         if (prepareSql == TdsCore.UNPREPARED
                 || prepareSql == TdsCore.EXECUTE_SQL) {
             return null; // User selected not to use procs
         }
+
+        boolean cursorNeeded =
+                pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
+                || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
+                || useCursors
+                || pstmt.cursorName != null;
 
         if (serverType == Driver.SYBASE) {
             if (tdsVersion != Driver.TDS50) {
@@ -542,7 +541,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 } else if (prepareSql == TdsCore.TEMPORARY_STORED_PROCEDURES) {
                     proc.setType(ProcEntry.PROCEDURE);
                 } else {
-                    proc.setType((cursorNeeded)? ProcEntry.CURSOR: ProcEntry.PREPARE);
+                    proc.setType((cursorNeeded) ? ProcEntry.CURSOR : ProcEntry.PREPARE);
                     // Meta data may be returned by sp_prepare
                     proc.setColMetaData(baseTds.getColumns());
                     pstmt.setColMetaData(proc.getColMetaData());
@@ -1716,16 +1715,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         switch (level) {
             case java.sql.Connection.TRANSACTION_READ_UNCOMMITTED:
-                sql += (sybase)? "0": "READ UNCOMMITTED";
+                sql += (sybase) ? "0" : "READ UNCOMMITTED";
                 break;
             case java.sql.Connection.TRANSACTION_READ_COMMITTED:
-                sql += (sybase)? "1": "READ COMMITTED";
+                sql += (sybase) ? "1" : "READ COMMITTED";
                 break;
             case java.sql.Connection.TRANSACTION_REPEATABLE_READ:
-                sql += (sybase)? "2": "REPEATABLE READ";
+                sql += (sybase) ? "2" : "REPEATABLE READ";
                 break;
             case java.sql.Connection.TRANSACTION_SERIALIZABLE:
-                sql += (sybase)? "3": "SERIALIZABLE";
+                sql += (sybase) ? "3" : "SERIALIZABLE";
                 break;
             case java.sql.Connection.TRANSACTION_NONE:
                 throw new SQLException(
@@ -1812,8 +1811,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     "3D000");
         }
 
-        String sql = tdsVersion >= Driver.TDS70 ?
-                     ("use [" + catalog + ']') : "use " + catalog;
+        String sql = tdsVersion >= Driver.TDS70
+                ? ("use [" + catalog + ']') : "use " + catalog;
         baseTds.submitSQL(sql);
     }
 

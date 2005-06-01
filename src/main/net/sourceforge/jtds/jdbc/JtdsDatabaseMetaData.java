@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.29 2005-04-28 14:29:25 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.30 2005-06-01 17:24:14 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -2969,22 +2969,93 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     //--------------------------JDBC 2.0-----------------------------
 
     /**
-     * JDBC 2.0 Does the database support the given result set type?
+     * Does the database support the given result set type?
+     * <p/>
+     * Supported types for SQL Server:
+     * <table>
+     *   <tr>
+     *     <td valign="top">JDBC type</td>
+     *     <td valign="top">SQL Server cursor type</td>
+     *     <td valign="top">Server load</td>
+     *     <td valign="top">Description</td>
+     *   </tr>
+     *   <tr>
+     *     <td valign="top">TYPE_FORWARD_ONLY</td>
+     *     <td valign="top">Forward-only, dynamic (fast forward-only, static with <code>useCursors=true</code>)</td>
+     *     <td valign="top">Light</td>
+     *     <td valign="top">Fast, will read all data (less fast, doesn't read all data with <code>useCursors=true</code>). Forward only.</td>
+     *   </tr>
+     *   <tr>
+     *     <td valign="top">TYPE_SCROLL_INSENSITIVE</td>
+     *     <td valign="top">Static cursor</td>
+     *     <td valign="top">Heavy</td>
+     *     <td valign="top">Only use with CONCUR_READ_ONLY. SQL Server generates a temporary table, so changes made by others are not visible. Scrollable.</td>
+     *   </tr>
+     *   <tr>
+     *     <td valign="top">TYPE_SCROLL_SENSITIVE</td>
+     *     <td valign="top">Keyset cursor</td>
+     *     <td valign="top">Medium</td>
+     *     <td valign="top">Others' updates or deletes visible, but not others' inserts. Scrollable.</td>
+     *   </tr>
+     *   <tr>
+     *     <td valign="top">TYPE_SCROLL_SENSITIVE + 1</td>
+     *     <td valign="top">Dynamic cursor</td>
+     *     <td valign="top">Heavy</td>
+     *     <td valign="top">Others' updates, deletes and inserts visible. Scrollable.</td>
+     *   </tr>
+     * </table>
      *
      * @param type defined in <code>java.sql.ResultSet</code>
      * @return <code>true</code> if so; <code>false</code> otherwise
      * @throws SQLException if a database access error occurs
      *
      * @see Connection
+     * @see #supportsResultSetConcurrency
      */
     public boolean supportsResultSetType(int type) throws SQLException {
-        // jTDS supports all ResultSet types (more or less)
-        return true;
+        // jTDS supports all standard ResultSet types plus
+        // TYPE_SCROLL_SENSITIVE + 1
+        return type >= ResultSet.TYPE_FORWARD_ONLY
+                && type <= ResultSet.TYPE_SCROLL_SENSITIVE + 1;
     }
 
     /**
-     * JDBC 2.0 Does the database support the concurrency type in combination
-     * with the given result set type?
+     * Does the database support the concurrency type in combination with the
+     * given result set type?
+     * <p/>
+     * Supported concurrencies for SQL Server:
+     * <table>
+     *   <tr>
+     *     <td>JDBC concurrency</td>
+     *     <td>SQL Server concurrency</td>
+     *     <td>Row locks</td>
+     *     <td>Description</td>
+     *   </tr>
+     *   <tr>
+     *     <td>CONCUR_READ_ONLY</td>
+     *     <td>Read only</td>
+     *     <td>No</td>
+     *     <td>Read-only.</td>
+     *   </tr>
+     *   <tr>
+     *     <td>CONCUR_UPDATABLE</td>
+     *     <td>Optimistic concurrency, updatable</td>
+     *     <td>No</td>
+     *     <td>Row integrity checked with timestamp comparison or, when not available, value comparison (except text and image fields).</td>
+     *   </tr>
+     *   <tr>
+     *     <td>CONCUR_UPDATABLE+1</td>
+     *     <td>Pessimistic concurrency, updatable</td>
+     *     <td>Yes</td>
+     *     <td>Row integrity is ensured by locking rows.</td>
+     *   </tr>
+     *   <tr>
+     *     <td>CONCUR_UPDATABLE+2</td>
+     *     <td>Optimistic concurrency, updatable</td>
+     *     <td>No</td>
+     *     <td>Row integrity checked with value comparison (except text and image fields).</td>
+     *   </tr>
+     * </table>
      *
      * @param type defined in <code>java.sql.ResultSet</code>
      * @param concurrency type defined in <code>java.sql.ResultSet</code>
@@ -2992,11 +3063,24 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      *
      * @see Connection
+     * @see #supportsResultSetType
      */
     public boolean supportsResultSetConcurrency(int type, int concurrency)
-    throws SQLException {
-        // jTDS supports both read-only and updatable ResultSets (more or less)
-        return true;
+            throws SQLException {
+        // jTDS supports both all standard ResultSet concurencies plus
+        // CONCUR_UPDATABLE + 1 and CONCUR_UPDATABLE + 2, except the
+        // TYPE_SCROLL_INSENSITIVE/CONCUR_UPDATABLE combination on SQL Server
+        if (!supportsResultSetType(type)) {
+            return false;
+        }
+
+        if (concurrency < ResultSet.CONCUR_READ_ONLY
+                || concurrency > ResultSet.CONCUR_UPDATABLE + 2) {
+            return false;
+        }
+
+        return type != ResultSet.TYPE_SCROLL_INSENSITIVE
+                || concurrency == ResultSet.CONCUR_READ_ONLY;
     }
 
     /**
@@ -3008,8 +3092,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean ownUpdatesAreVisible(int type) throws SQLException {
-        // No support in SQL Server for this
-        return false;
+        return true;
     }
 
     /**
@@ -3021,7 +3104,6 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean ownDeletesAreVisible(int type) throws SQLException {
-        // Yes, own deletes are visible
         return true;
     }
 
@@ -3034,8 +3116,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean ownInsertsAreVisible(int type) throws SQLException {
-        // No support in SQL Server for this
-        return false;
+        return true;
     }
 
     /**
@@ -3048,7 +3129,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean othersUpdatesAreVisible(int type) throws SQLException {
         // Updates are visibile in scroll sensitive ResultSets
-        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
+        return type >= ResultSet.TYPE_SCROLL_SENSITIVE;
     }
 
     /**
@@ -3061,7 +3142,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean othersDeletesAreVisible(int type) throws SQLException {
         // Deletes are visibile in scroll sensitive ResultSets
-        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
+        return type >= ResultSet.TYPE_SCROLL_SENSITIVE;
     }
 
     /**
@@ -3073,9 +3154,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean othersInsertsAreVisible(int type) throws SQLException {
-        // Inserts should be visibile in scroll sensitive ResultSets
-        // TODO Not sure if this is true for keyset cursors (should work with dynamic)
-        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
+        // Inserts are only visibile with dynamic cursors
+        return type == ResultSet.TYPE_SCROLL_SENSITIVE + 1;
     }
 
     /**
@@ -3102,7 +3182,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @throws SQLException if a database access error occurs
      */
     public boolean deletesAreDetected(int type) throws SQLException {
-        return type == ResultSet.TYPE_SCROLL_SENSITIVE;
+        return true;
     }
 
     /**

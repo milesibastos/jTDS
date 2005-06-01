@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.38 2005-05-10 15:14:53 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.39 2005-06-01 17:24:14 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -319,7 +319,7 @@ public class JtdsResultSet implements ResultSet {
      * @throws SQLException if connection closed.
      */
     protected void checkUpdateable() throws SQLException {
-        if (concurrency != ResultSet.CONCUR_UPDATABLE) {
+        if (concurrency == ResultSet.CONCUR_READ_ONLY) {
             throw new SQLException(Messages.get("error.resultset.readonly"), "24000");
         }
     }

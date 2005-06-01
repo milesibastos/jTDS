@@ -36,6 +36,7 @@ public class ClientSideCursorTest extends DatabaseTestCase {
 
     /**
      * General test of scrollable cursor functionality.
+     * <p/>
      * When running on SQL Server this test will exercise MSCursorResultSet.
      * When running on Sybase this test will exercise CachedResultSet.
      */
@@ -108,11 +109,11 @@ public class ClientSideCursorTest extends DatabaseTestCase {
 
     /**
      * Test support for JDBC 1 style positioned updates with named cursors.
+     * <p/>
      * When running on SQL Server this test will exercise MSCursorResultSet.
      * When running on Sybase this test will exercise CachedResultSet.
      */
-     public void testPositionedUpdate() throws Exception
-     {
+     public void testPositionedUpdate() throws Exception {
          assertTrue(con.getMetaData().supportsPositionedDelete());
          assertTrue(con.getMetaData().supportsPositionedUpdate());
          Statement stmt = con.createStatement();
@@ -147,14 +148,11 @@ public class ClientSideCursorTest extends DatabaseTestCase {
 
      /**
       * Test optimistic updates throw exception if row is changed on disk.
-      * NB This test can only work with Sybase at present as the MSCursorResultSet
-      * implementation always uses scroll locks which causes the test to hang.
+      * <p/>
+      * When running on SQL Server this test will exercise MSCursorResultSet.
+      * When running on Sybase this test will exercise CachedResultSet.
       */
-     public void testOptimisticUpdates() throws Exception
-     {
-         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-             return;
-         }
+     public void testOptimisticUpdates() throws Exception {
          Connection con2 = getConnection();
          try {
              dropTable("jTDS_CachedCursorTest");
@@ -180,6 +178,7 @@ public class ClientSideCursorTest extends DatabaseTestCase {
                  }
              }
              rs.close();
+             stmt.close();
          } finally {
              if (con2 != null) {
                  con2.close();

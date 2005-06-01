@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.87 2005-05-30 15:20:27 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.88 2005-06-01 17:24:14 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -483,7 +483,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         boolean cursorNeeded =
-                pstmt.getResultSetConcurrency() == ResultSet.CONCUR_UPDATABLE
+                pstmt.getResultSetConcurrency() != ResultSet.CONCUR_READ_ONLY
                 || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
                 || useCursors
                 || pstmt.cursorName != null;

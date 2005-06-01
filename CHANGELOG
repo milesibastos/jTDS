@@ -1,6 +1,14 @@
 Changes from jTDS 1.0.3
 =======================
 
+06/01/2005 - Alin Sinpalean
+ o Initial implementation for extended scrollability/updatability support
+   (TYPE_SCROLL_SENSITIVE for keyset cursors, TYPE_SCROLL_SENSITIVE + 1 for
+   dynamic cursors, CONCUR_UPDATABLE for optimistic concurrency w/ timestamps,
+   CONCUR_UPDATABLE + 1 for pessimistic concurrency and  CONCUR_UPDATABLE + 2
+   for optimistic concurrency w/ value checking). All the new values work with
+   Sybase too, but the behavior is the same as the default.
+
 05/30/2005 - Alin Sinpalean
  o Changed the default prepareSQL mode from 1 (temporary stored procedures) to
    3 (sp_prepare) for SQL Server. For Sybase, the default is still 1.

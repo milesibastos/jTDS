@@ -22,7 +22,7 @@ import java.sql.*;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.13 2005-04-21 09:35:36 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.14 2005-06-01 17:24:14 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -38,8 +38,8 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         DatabaseMetaData dbmd = con.getMetaData();
         assertFalse("dataDefinitionCausesTransactionCommit", dbmd.dataDefinitionCausesTransactionCommit());
         assertFalse("dataDefinitionIgnoredInTransactions", dbmd.dataDefinitionIgnoredInTransactions());
-        assertFalse("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_FORWARD_ONLY));
-        assertFalse("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertTrue("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_FORWARD_ONLY));
+        assertTrue("deletesAreDetected", dbmd.deletesAreDetected(ResultSet.TYPE_SCROLL_INSENSITIVE));
         assertFalse("doesMaxRowSizeIncludeBlobs", dbmd.doesMaxRowSizeIncludeBlobs());
         assertFalse("insertsAreDetected", dbmd.insertsAreDetected(ResultSet.TYPE_FORWARD_ONLY));
         assertFalse("insertsAreDetected", dbmd.insertsAreDetected(ResultSet.TYPE_SCROLL_INSENSITIVE));
@@ -53,14 +53,15 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         assertTrue("nullsAreSortedLow", dbmd.nullsAreSortedLow());
         assertFalse("othersDeletesAreVisible",dbmd.othersDeletesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
         assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
-        assertTrue("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE + 1));
         assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
         assertTrue("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
-        assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY));
-        assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
-        assertFalse("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
-        assertFalse("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
-        assertFalse("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertTrue("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertTrue("ownInsertsAreVisible", dbmd.ownInsertsAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertTrue("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_SCROLL_SENSITIVE));
         assertFalse("storesLowerCaseIdentifiers", dbmd.storesLowerCaseIdentifiers());
         assertFalse("storesLowerCaseQuotedIdentifiers", dbmd.storesLowerCaseQuotedIdentifiers());
         assertFalse("storesUpperCaseIdentifiers", dbmd.storesUpperCaseIdentifiers());
@@ -98,8 +99,12 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY));
         assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE));
         assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY));
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE + 1));
+        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE + 2));
         assertTrue("supportsResultSetType", dbmd.supportsResultSetType(ResultSet.TYPE_FORWARD_ONLY));
         assertTrue("supportsResultSetType", dbmd.supportsResultSetType(ResultSet.TYPE_SCROLL_INSENSITIVE));
+        assertTrue("supportsResultSetType", dbmd.supportsResultSetType(ResultSet.TYPE_SCROLL_SENSITIVE));
+        assertTrue("supportsResultSetType", dbmd.supportsResultSetType(ResultSet.TYPE_SCROLL_SENSITIVE + 1));
         assertTrue("supportsSchemasInDataManipulation", dbmd.supportsSchemasInDataManipulation());
         assertTrue("supportsSchemasInIndexDefinitions", dbmd.supportsSchemasInIndexDefinitions());
         assertTrue("supportsSchemasInProcedureCalls", dbmd.supportsSchemasInProcedureCalls());
@@ -129,7 +134,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         assertFalse("othersDeletesAreVisible",dbmd.othersDeletesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
         assertFalse("othersInsertsAreVisible",dbmd.othersInsertsAreVisible(ResultSet.TYPE_FORWARD_ONLY));
         assertFalse("othersUpdatesAreVisible",dbmd.othersUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
-        assertFalse("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
+        assertTrue("ownUpdatesAreVisible", dbmd.ownUpdatesAreVisible(ResultSet.TYPE_FORWARD_ONLY));
         assertTrue("storesMixedCaseIdentifiers", dbmd.storesMixedCaseIdentifiers());
         assertTrue("storesMixedCaseQuotedIdentifiers", dbmd.storesMixedCaseQuotedIdentifiers());
         assertTrue("supportsCoreSQLGrammar", dbmd.supportsCoreSQLGrammar());
@@ -138,7 +143,9 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         assertFalse("supportsMixedCaseQuotedIdentifiers", dbmd.supportsMixedCaseQuotedIdentifiers());
         assertTrue("supportsPositionedDelete", dbmd.supportsPositionedDelete());
         assertTrue("supportsPositionedUpdate", dbmd.supportsPositionedUpdate());
-        assertTrue("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE));
+        assertFalse("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE));
+        assertFalse("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE + 1));
+        assertFalse("supportsResultSetConcurrency", dbmd.supportsResultSetConcurrency(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE + 2));
         assertTrue("supportsSchemasInPrivilegeDefinitions", dbmd.supportsSchemasInPrivilegeDefinitions());
         assertFalse("supportsSelectForUpdate", dbmd.supportsSelectForUpdate());
         assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_REPEATABLE_READ));

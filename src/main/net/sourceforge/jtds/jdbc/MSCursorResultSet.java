@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.52 2005-05-27 13:42:51 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.53 2005-06-01 17:24:14 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -63,6 +63,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     private static final int CURSOR_CONCUR_READ_ONLY = 1;
     private static final int CURSOR_CONCUR_SCROLL_LOCKS = 2;
     private static final int CURSOR_CONCUR_OPTIMISTIC = 4;
+    private static final int CURSOR_CONCUR_OPTIMISTIC_VALUES = 8;
 
     private static final Integer CURSOR_OP_INSERT = new Integer(4);
     private static final Integer CURSOR_OP_UPDATE = new Integer(33);
@@ -268,6 +269,10 @@ public class MSCursorResultSet extends JtdsResultSet {
                 scrollOpt = CURSOR_TYPE_KEYSET;
                 break;
 
+            case TYPE_SCROLL_SENSITIVE + 1:
+                scrollOpt = CURSOR_TYPE_DYNAMIC;
+                break;
+
             case TYPE_FORWARD_ONLY:
             default:
                 scrollOpt = (resultSetConcurrency == CONCUR_READ_ONLY)
@@ -300,7 +305,13 @@ public class MSCursorResultSet extends JtdsResultSet {
     static int getCursorConcurrencyOpt(int resultSetConcurrency) {
         switch (resultSetConcurrency) {
             case CONCUR_UPDATABLE:
+                return CURSOR_CONCUR_OPTIMISTIC;
+
+            case CONCUR_UPDATABLE + 1:
                 return CURSOR_CONCUR_SCROLL_LOCKS;
+
+            case CONCUR_UPDATABLE + 2:
+                return CURSOR_CONCUR_OPTIMISTIC_VALUES;
 
             case CONCUR_READ_ONLY:
             default:
@@ -564,9 +575,12 @@ public class MSCursorResultSet extends JtdsResultSet {
                         resultSetType = TYPE_SCROLL_INSENSITIVE;
                         break;
 
-                    case CURSOR_TYPE_DYNAMIC:
                     case CURSOR_TYPE_KEYSET:
                         resultSetType = TYPE_SCROLL_SENSITIVE;
+                        break;
+
+                    case CURSOR_TYPE_DYNAMIC:
+                        resultSetType = TYPE_SCROLL_SENSITIVE + 1;
                         break;
 
                     default:
@@ -586,9 +600,16 @@ public class MSCursorResultSet extends JtdsResultSet {
                         concurrency = CONCUR_READ_ONLY;
                         break;
 
-                    case CURSOR_CONCUR_SCROLL_LOCKS:
                     case CURSOR_CONCUR_OPTIMISTIC:
                         concurrency = CONCUR_UPDATABLE;
+                        break;
+
+                    case CURSOR_CONCUR_SCROLL_LOCKS:
+                        concurrency = CONCUR_UPDATABLE + 1;
+                        break;
+
+                    case CURSOR_CONCUR_OPTIMISTIC_VALUES:
+                        concurrency = CONCUR_UPDATABLE + 2;
                         break;
 
                     default:

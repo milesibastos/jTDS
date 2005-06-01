@@ -25,7 +25,7 @@ import java.util.ArrayList;
 /**
  * @version 1.0
  */
-public class ResultSetTest extends TestBase {
+public class ResultSetTest extends DatabaseTestCase {
     public ResultSetTest(String name) {
         super(name);
     }
@@ -1410,6 +1410,115 @@ public class ResultSetTest extends TestBase {
         }
         assertEquals(3, rowCount);
         stmt.close();
+    }
+
+    /**
+     * Test pessimistic concurrency for SQL Server (for Sybase optimistic
+     * concurrency will always be used).
+     */
+    public void testPessimisticConcurrency() throws Exception {
+        dropTable("pessimisticConcurrency");
+        Connection con2 = getConnection();
+        try {
+            Statement stmt = con.createStatement(
+                    ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_UPDATABLE + 1);
+            stmt.execute("CREATE TABLE pessimisticConcurrency (id int primary key, data varchar(255))");
+            for (int i = 0; i < 4; i++) {
+                stmt.executeUpdate("INSERT INTO pessimisticConcurrency VALUES("+i+", 'Table A line "+i+"')");
+            }
+
+            // Open cursor
+            ResultSet rs = stmt.executeQuery("SELECT id, data FROM pessimisticConcurrency");
+            assertNull(rs.getWarnings());
+            assertEquals(ResultSet.TYPE_SCROLL_SENSITIVE, rs.getType());
+            assertEquals(ResultSet.CONCUR_UPDATABLE + 1, rs.getConcurrency());
+            // If not a MSCursorResultSet, give up as no locking will happen
+            if (rs.getClass().getName().indexOf("MSCursorResultSet") == -1) {
+                rs.close();
+                stmt.close();
+                return;
+            }
+
+            final Statement stmt2 = con2.createStatement();
+            new Thread() {
+                public void run() {
+                    try {
+                        sleep(1000);
+                        stmt2.cancel();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }.start();
+
+            while (rs.next()) {
+                if (rs.getInt(1) == 1) {
+                    try {
+                        stmt2.executeUpdate(
+                                "UPDATE pessimisticConcurrency SET data = 'NEW VALUE' WHERE id = 1");
+                        fail("Expected locking to occur");
+                    } catch (SQLException e) {
+                        // Expected cancel exception
+                        assertEquals("S1008", e.getSQLState());
+                    }
+                }
+            }
+            rs.close();
+            stmt.close();
+        } finally {
+            dropTable("pessimisticConcurrency");
+            if (con2 != null) {
+                con2.close();
+            }
+        }
+    }
+
+    /**
+     * Test if dynamic cursors (<code>ResultSet.TYPE_SCROLL_SENSITIVE+1</code>)
+     * see others' updates. SQL Server only.
+     */
+    public void testDynamicCursors() throws Exception {
+        final int ROWS = 4;
+        dropTable("dynamicCursors");
+        Connection con2 = getConnection();
+        try {
+            Statement stmt = con.createStatement(
+                    ResultSet.TYPE_SCROLL_SENSITIVE + 1,
+                    ResultSet.CONCUR_READ_ONLY);
+            stmt.execute("CREATE TABLE dynamicCursors (id int primary key, data varchar(255))");
+            for (int i = 0; i < ROWS; i++) {
+                stmt.executeUpdate("INSERT INTO dynamicCursors VALUES(" + i + ", 'Table A line " + i + "')");
+            }
+
+            // Open cursor
+            ResultSet rs = stmt.executeQuery("SELECT id, data FROM dynamicCursors");
+            // If not a MSCursorResultSet, give up as it will not see inserts
+            if (rs.getClass().getName().indexOf("MSCursorResultSet") == -1) {
+                rs.close();
+                stmt.close();
+                return;
+            }
+
+            // Insert new row from other connection
+            Statement stmt2 = con2.createStatement();
+            assertEquals(1, stmt2.executeUpdate(
+                    "INSERT INTO dynamicCursors VALUES(" + ROWS + ", 'Table A line " + ROWS + "')"));
+            stmt2.close();
+
+            // Count rows and make sure the newly inserted row is visible
+            int cnt;
+            for (cnt = 0; rs.next(); cnt++);
+            assertEquals(ROWS + 1, cnt);
+
+            rs.close();
+            stmt.close();
+        } finally {
+            dropTable("dynamicCursors");
+            if (con2 != null) {
+                con2.close();
+            }
+        }
     }
 
     public static void main(String[] args) {

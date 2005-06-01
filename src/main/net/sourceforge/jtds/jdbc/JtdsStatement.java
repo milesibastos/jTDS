@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.44 2005-05-27 13:25:23 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.45 2005-06-01 17:24:14 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -129,9 +129,8 @@ public class JtdsStatement implements java.sql.Statement {
         //
         // This is a good point to do common validation of the result set type
         //
-        if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-                && resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE
-                && resultSetType != ResultSet.TYPE_SCROLL_SENSITIVE) {
+        if (resultSetType < ResultSet.TYPE_FORWARD_ONLY
+                || resultSetType > ResultSet.TYPE_SCROLL_SENSITIVE + 1) {
             String method;
             if (this instanceof JtdsCallableStatement) {
                 method = "prepareCall";
@@ -147,10 +146,10 @@ public class JtdsStatement implements java.sql.Statement {
                     "HY092");
         }
         //
-        // ditto for the result set concurrency
+        // Ditto for the result set concurrency
         //
-        if (resultSetConcurrency != ResultSet.CONCUR_READ_ONLY
-                && resultSetConcurrency != ResultSet.CONCUR_UPDATABLE) {
+        if (resultSetConcurrency < ResultSet.CONCUR_READ_ONLY
+                || resultSetConcurrency > ResultSet.CONCUR_UPDATABLE + 2) {
                 String method;
                 if (this instanceof JtdsCallableStatement) {
                     method = "prepareCall";

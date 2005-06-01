@@ -48,62 +48,115 @@
 
 
 <p class="title">jTDS result set information</p>
+
 <p>jTDS supports the following result set types on MS SQL Server.</p>
-
-<table class="inner" cellspacing="0" width="80%">
-<tr>
-<th align="left">Result Set Type</th><th align="left">Result Set Concurrency</th><th align="left">Supported</th><th align="left">Comments</th>
-</tr>
-<tr>
-<td>&nbsp;&nbsp;FORWARD_ONLY</td><td>READ_ONLY</th><td>Yes</td><td>Default result set using a direct select.</td>
-</tr>
-<tr>
-<td>&nbsp;&nbsp;FORWARD_ONLY</td><td>UPDATEABLE</th><td>Yes</td><td>Uses a forward_only dynamic scroll_locks cursor.</td>
-</tr>
-<tr>
-<td>&nbsp;&nbsp;SCROLL_INSENSITIVE</td><td>READ_ONLY</th><td>Yes</td><td>Uses a scroll static read_only cursor.</td>
-</tr>
-<tr>
-<td>&nbsp;&nbsp;SCROLL_INSENSITIVE</td><td>UPDATEABLE</th><td>No</td><td>Cursor downgraded to SCROLL_SENSITIVE.</td>
-</tr>
-<tr>
-<td>&nbsp;&nbsp;SCROLL_SENSITIVE</td><td>READ_ONLY</th><td>Yes</td><td>Uses a scroll keyset read_only cursor.</td>
-</tr>
-<tr>
-<td>&nbsp;&nbsp;SCROLL_SENSITIVE</td><td>UPDATEABLE</th><td>Yes</td><td>Uses a scroll keyset scroll_locks cursor.</td>
-</tr>
+<table class="inner" cellspacing="0">
+  <tr>
+    <th align="left">JDBC Type</td>
+    <th align="left">SQL Server Cursor Type</td>
+    <th align="left">Server Load</td>
+    <th align="left">Description</td>
+  </tr>
+  <tr>
+    <td rowspan="3">TYPE_FORWARD_ONLY</td>
+    <td>Firehose cursor (direct select) when read-only</td>
+    <td>Light</td>
+    <td>Fast, but driver will have to read all data. Not recommended when using multiple result sets. Forward only.</td>
+  </tr>
+  <tr>
+    <td>Fast forward-only (static) cursor when read-only and <code>useCursors=true</code></td>
+    <td>Heavy</td>
+    <td>Slower than firehose cursors (multiple fetch requests), driver doesn't have to read all data. Forward only.</td>
+  </tr>
+  <tr>
+    <td>Forward-only dynamic cursor when updatable</td>
+    <td>Heavy</td>
+    <td>Others' updates, deletes and inserts visible. Forward only.</td>
+  </tr>
+  <tr>
+    <td>TYPE_SCROLL_INSENSITIVE</td>
+    <td>Static cursor</td>
+    <td>Heavy</td>
+    <td>Only works with read-only concurrency (updatable is downgraded). SQL Server generates a temporary table, so changes made by others are not visible. Scrollable.</td>
+  </tr>
+  <tr>
+    <td>TYPE_SCROLL_SENSITIVE</td>
+    <td>Keyset cursor</td>
+    <td>Medium</td>
+    <td>Others' updates or deletes visible, but not others' inserts. Scrollable.</td>
+  </tr>
+  <tr>
+    <td>TYPE_SCROLL_SENSITIVE+1</td>
+    <td>Dynamic cursor</td>
+    <td>Heavy</td>
+    <td>Others' updates, deletes and inserts visible. Scrollable.</td>
+  </tr>
 </table>
-<p>jTDS supports the following result set types on Sybase.</p>
 
+<p>jTDS supports the following result set concurrencies on MS SQL Server.</p>
+<table class="inner" cellspacing="0">
+  <tr>
+    <th align="left">JDBC Concurrency</td>
+    <th align="left">SQL Server Concurrency</td>
+    <th align="left">Row Locks</td>
+    <th align="left">Description</td>
+  </tr>
+  <tr>
+    <td>CONCUR_READ_ONLY</td>
+    <td>Read only</td>
+    <td>No</td>
+    <td>Read-only.</td>
+  </tr>
+  <tr>
+    <td>CONCUR_UPDATABLE</td>
+    <td>Optimistic concurrency, updatable</td>
+    <td>No</td>
+    <td>Row integrity checked using timestamp comparison or, when not available, value comparison (except text and image fields).</td>
+  </tr>
+  <tr>
+    <td>CONCUR_UPDATABLE+1</td>
+    <td>Pessimistic concurrency, updatable</td>
+    <td>Yes</td>
+    <td>Row integrity is ensured by locking rows.</td>
+  </tr>
+  <tr>
+    <td>CONCUR_UPDATABLE+2</td>
+    <td>Optimistic concurrency, updatable</td>
+    <td>No</td>
+    <td>Row integrity checked using value comparison (except text and image fields).</td>
+  </tr>
+</table>
+
+<p>jTDS supports the following result set types on Sybase.</p>
 <table class="inner" cellspacing="0" width="80%">
 <tr>
 <th align="left">Result Set Type</th><th align="left">Result Set Concurrency</th><th align="left">Supported</th><th align="left">Comments</th>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;FORWARD_ONLY</td><td>READ_ONLY</th><td>Yes</td><td>Default result set using a direct select.</td>
+<td>&nbsp;&nbsp;TYPE_FORWARD_ONLY</td><td>CONCUR_READ_ONLY</th><td>Yes</td><td>Default result set using a direct select.</td>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;FORWARD_ONLY</td><td>UPDATEABLE</th><td>Yes</td><td>Uses a client side cursor with optimistic locking.</td>
+<td>&nbsp;&nbsp;TYPE_FORWARD_ONLY</td><td>CONCUR_UPDATEABLE</th><td>Yes</td><td>Uses a client side cursor with optimistic locking.</td>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;SCROLL_INSENSITIVE</td><td>READ_ONLY</th><td>Yes</td><td>Uses a client side cursor.</td>
+<td>&nbsp;&nbsp;TYPE_SCROLL_INSENSITIVE</td><td>CONCUR_READ_ONLY</th><td>Yes</td><td>Uses a client side cursor.</td>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;SCROLL_INSENSITIVE</td><td>UPDATEABLE</th><td>Yes</td><td>Uses a client side cursor with optimistic locking.</td>
+<td>&nbsp;&nbsp;TYPE_SCROLL_INSENSITIVE</td><td>CONCUR_UPDATEABLE</th><td>Yes</td><td>Uses a client side cursor with optimistic locking.</td>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;SCROLL_SENSITIVE</td><td>READ_ONLY</th><td>Yes</td><td>Uses a client side cursor.</td>
+<td>&nbsp;&nbsp;TYPE_SCROLL_SENSITIVE</td><td>CONCUR_READ_ONLY</th><td>Yes</td><td>Uses a client side cursor.</td>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;SCROLL_SENSITIVE</td><td>UPDATEABLE</th><td>Yes</td><td>Uses a client side cursor with optimistic locking.</td>
+<td>&nbsp;&nbsp;TYPE_SCROLL_SENSITIVE</td><td>CONCUR_UPDATEABLE</th><td>Yes</td><td>Uses a client side cursor with optimistic locking.</td>
 </tr>
 </table>
 <p>Notes:</p>
 <ol>
-<li>Updateable result sets can only be built from select statements containing one base table.</li>
-<li>Tables used to build UPDATEABLE and SCROLL_SENSITIVE result sets should have primary keys.</li>
+<li>CONCUR_UPDATEABLE result sets can only be built from select statements containing one base table.</li>
+<li>Tables used to build CONCUR_UPDATEABLE and TYPE_SCROLL_SENSITIVE result sets should have primary keys.</li>
 <li>Use the Statement.getWarnings() and ResultSet.getWarnings() methods to check that the actual result set
-returned has not been downgraded, for example from updateable to read only.</li>
+returned has not been downgraded, for example from CONCUR_UPDATEABLE to read only.</li>
 <li>For SQL Server cursors the fetch size defaults to 100 rows while for Sybase the entire result set is cached in the
 client. Therefore care must be taken with Sybase to limit the size of result sets to avoid "out of memory" errors.
 </ol>

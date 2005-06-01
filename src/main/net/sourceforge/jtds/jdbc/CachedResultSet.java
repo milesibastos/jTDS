@@ -55,7 +55,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.21 2005-05-30 12:41:19 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.22 2005-06-01 17:24:05 alin_sinpalean Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -124,7 +124,7 @@ public class CachedResultSet extends JtdsResultSet {
         this.procName = procName;
         this.procedureParams = procedureParams;
         if (resultSetType == ResultSet.TYPE_FORWARD_ONLY
-                && concurrency == ResultSet.CONCUR_UPDATABLE
+                && concurrency != ResultSet.CONCUR_READ_ONLY
                 && cursorName != null) {
             // Need an addtional TDS for positioned updates
             this.updateTds = new TdsCore(connection, statement.getMessages());
@@ -198,7 +198,7 @@ public class CachedResultSet extends JtdsResultSet {
         // OK If the user requested an updateable result set tell them
         // they can't have one!
         //
-        if (concurrency == ResultSet.CONCUR_UPDATABLE) {
+        if (concurrency != ResultSet.CONCUR_READ_ONLY) {
             concurrency = ResultSet.CONCUR_READ_ONLY;
             stmt.addWarning(new SQLWarning(
                 Messages.get("warning.cursordowngraded",
@@ -208,7 +208,7 @@ public class CachedResultSet extends JtdsResultSet {
         // If the user requested a scroll sensitive cursor tell them
         // they can't have that either!
         //
-        if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+        if (resultSetType >= ResultSet.TYPE_SCROLL_SENSITIVE) {
             resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
             stmt.addWarning(new SQLWarning(
                 Messages.get("warning.cursordowngraded",
@@ -307,7 +307,7 @@ public class CachedResultSet extends JtdsResultSet {
         // Validate the SQL statement to ensure we have a select.
         //
         if (resultSetType != ResultSet.TYPE_FORWARD_ONLY
-            || concurrency == ResultSet.CONCUR_UPDATABLE
+            || concurrency != ResultSet.CONCUR_READ_ONLY
             || cursorName != null) {
             //
             // We are going to need access to a SELECT statement for
@@ -328,10 +328,8 @@ public class CachedResultSet extends JtdsResultSet {
             } else {
                 // No good we can't update and we can't declare a cursor
                 cursorName = null;
-                if (concurrency == ResultSet.CONCUR_UPDATABLE) {
-                    concurrency = ResultSet.CONCUR_READ_ONLY;
-                }
-                if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+                concurrency = ResultSet.CONCUR_READ_ONLY;
+                if (resultSetType != ResultSet.TYPE_FORWARD_ONLY) {
                     resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
                 }
             }
@@ -406,8 +404,8 @@ public class CachedResultSet extends JtdsResultSet {
             //
             // Open a memory cached scrollable or forward only possibly updateable cursor
             //
-            if (isSelect && (concurrency == ResultSet.CONCUR_UPDATABLE
-                    || resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE)) {
+            if (isSelect && (concurrency != ResultSet.CONCUR_READ_ONLY
+                    || resultSetType >= ResultSet.TYPE_SCROLL_SENSITIVE)) {
                 // Need to execute SELECT .. FOR BROWSE to get
                 // the MetaData we require for updates etc
                 // OK Should have an SQL select statement
@@ -438,10 +436,8 @@ public class CachedResultSet extends JtdsResultSet {
                 //
                 if (!isCursorUpdateable()) {
                     // No so downgrade
-                    if (concurrency == ResultSet.CONCUR_UPDATABLE) {
-                        concurrency = ResultSet.CONCUR_READ_ONLY;
-                    }
-                    if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+                    concurrency = ResultSet.CONCUR_READ_ONLY;
+                    if (resultSetType != ResultSet.TYPE_FORWARD_ONLY) {
                         resultSetType = ResultSet.TYPE_SCROLL_INSENSITIVE;
                     }
                 }
@@ -678,7 +674,7 @@ public class CachedResultSet extends JtdsResultSet {
         currentRow = (Object[])rowData.get(rowNum-1);
         rowDeleted = currentRow == null;
 
-        if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE &&
+        if (resultSetType >= ResultSet.TYPE_SCROLL_SENSITIVE &&
             currentRow != null) {
             refreshRow();
         }
@@ -1134,8 +1130,8 @@ public class CachedResultSet extends JtdsResultSet {
              }
          }
          //
-         if (resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE ||
-             resultSetType == ResultSet.TYPE_FORWARD_ONLY && cursorName == null)
+         if (resultSetType >= ResultSet.TYPE_SCROLL_SENSITIVE
+                 || (resultSetType == ResultSet.TYPE_FORWARD_ONLY && cursorName == null))
          {
              //
              // Now insert copy of row into result set buffer
@@ -1145,7 +1141,7 @@ public class CachedResultSet extends JtdsResultSet {
              for (int i = 0; i < insertRow.length; i++) {
                  if (insertRow[i] != null) {
                      row[i] = Support.convert(con, insertRow[i].value,
-                                               columns[i].jdbcType, con.getCharset());
+                             columns[i].jdbcType, con.getCharset());
                  }
              }
              rowData.add(row);
@@ -1187,7 +1183,7 @@ public class CachedResultSet extends JtdsResultSet {
          //
          // If row is being updated discard updates now
          //
-         if (concurrency == CONCUR_UPDATABLE) {
+         if (concurrency != ResultSet.CONCUR_READ_ONLY) {
              cancelRowUpdates();
              rowUpdated = false;
          }
@@ -1319,7 +1315,7 @@ public class CachedResultSet extends JtdsResultSet {
          //
          // Update state of cached row data
          //
-         if (keysChanged && resultSetType == ResultSet.TYPE_SCROLL_SENSITIVE) {
+         if (keysChanged && resultSetType >= ResultSet.TYPE_SCROLL_SENSITIVE) {
              // Leave hole at current position and add updated row to end of set
              rowData.add(currentRow);
              rowsInResult = rowData.size();

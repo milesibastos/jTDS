@@ -27,7 +27,7 @@ import java.sql.Statement;
 import java.sql.Types;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.39 2005-05-25 09:24:04 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.40 2005-06-02 11:59:12 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -921,7 +921,7 @@ public class PreparedStatementTest extends TestBase {
      * Test that statements which cannot be prepared are remembered.
      */
     public void testNoPrepare() throws Exception {
- //       DriverManager.setLogStream(System.out);
+        //       DriverManager.setLogStream(System.out);
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #TEST (id int primary key, data text)");
         //
@@ -938,6 +938,32 @@ public class PreparedStatementTest extends TestBase {
         pstmt1.setString(2, "Line two");
         assertEquals(1, pstmt1.executeUpdate());
         pstmt1.close();
+    }
+
+    /**
+     * Tests that float (single precision - 32 bit) values are not converted to
+     * double (thus loosing precision).
+     */
+    public void testFloatValues() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.executeUpdate("create table #floatTest (v real)");
+        stmt.executeUpdate("insert into #floatTest (v) values (2.3)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement(
+                "select * from #floatTest where v = ?");
+        pstmt.setFloat(1, 2.3f);
+        ResultSet rs = pstmt.executeQuery();
+        assertTrue(rs.next());
+        assertEquals(2.3f, rs.getFloat(1), 0);
+        assertTrue(rs.getObject(1) instanceof Float);
+        assertEquals(2.3f, ((Float) rs.getObject(1)).floatValue(), 0);
+
+        // Just make sure that conversion to double will break this
+        assertFalse(2.3 - rs.getDouble(1) == 0);
+        assertFalse(rs.next());
+        rs.close();
+        pstmt.close();
     }
 
     public static void main(String[] args) {

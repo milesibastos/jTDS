@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.88 2005-06-01 17:24:14 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.89 2005-06-02 16:10:34 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -458,7 +458,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Try to convert the SQL statement into a stored procedure.
+     * Try to convert the SQL statement into a statement prepare.
      * <p>
      * Synchronized because it accesses the procedure cache and the
      * <code>baseTds</code>, but the method call also needs to made in a
@@ -467,26 +467,25 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * transaction isn't rolled back between this method call and the actual
      * execution.
      *
-     * @param sql    the SQL statement to prepare
-     * @param params the parameters
+     * @param pstmt        the target prepared statement
+     * @param sql          the SQL statement to prepare
+     * @param params       the parameters
+     * @param returnKeys   indicates whether the statement will return
+     *                     generated keys
+     * @param cursorNeeded indicates whether a cursor prepare is needed
      * @return the SQL procedure name as a <code>String</code> or null if the
      *         SQL cannot be prepared
      */
     synchronized String prepareSQL(JtdsPreparedStatement pstmt,
                                    String sql,
                                    ParamInfo[] params,
-                                   boolean returnKeys)
+                                   boolean returnKeys,
+                                   boolean cursorNeeded)
             throws SQLException {
         if (prepareSql == TdsCore.UNPREPARED
                 || prepareSql == TdsCore.EXECUTE_SQL) {
             return null; // User selected not to use procs
         }
-
-        boolean cursorNeeded =
-                pstmt.getResultSetConcurrency() != ResultSet.CONCUR_READ_ONLY
-                || pstmt.getResultSetType() != ResultSet.TYPE_FORWARD_ONLY
-                || useCursors
-                || pstmt.cursorName != null;
 
         if (serverType == Driver.SYBASE) {
             if (tdsVersion != Driver.TDS50) {

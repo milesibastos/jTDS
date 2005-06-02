@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.49 2005-06-02 11:32:32 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.50 2005-06-02 16:10:34 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -398,11 +398,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             // between the moment when the statement is prepared and the moment
             // when it's executed.
             synchronized (connection) {
-                String spName = connection.prepareSQL(this, sql, parameters, returnKeys);
-                executeSQL(sql, spName, sqlWord, parameters, returnKeys, true);
+                String spName = connection.prepareSQL(this, sql, parameters, returnKeys, false);
+                executeSQL(sql, spName, parameters, returnKeys, true, false);
             }
         } else {
-            executeSQL(sql, procName, sqlWord, parameters, returnKeys, true);
+            executeSQL(sql, procName, parameters, returnKeys, true, false);
         }
 
         int res = getUpdateCount();
@@ -445,17 +445,18 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public boolean execute() throws SQLException {
         checkOpen();
         initialize();
+        boolean useCursor = useCursor(returnKeys, sqlWord);
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
             // between the moment when the statement is prepared and the moment
             // when it's executed.
             synchronized (connection) {
-                String spName = connection.prepareSQL(this, sql, parameters, returnKeys);
-                return executeSQL(sql, spName, sqlWord, parameters, returnKeys, false);
+                String spName = connection.prepareSQL(this, sql, parameters, returnKeys, useCursor);
+                return executeSQL(sql, spName, parameters, returnKeys, false, useCursor);
             }
         } else {
-            return executeSQL(sql, procName, sqlWord, parameters, returnKeys, false);
+            return executeSQL(sql, procName, parameters, returnKeys, false, useCursor);
         }
     }
 
@@ -636,7 +637,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         //
         if (connection.getServerType() == Driver.SYBASE) {
             // Sybase does return the parameter types for prepared sql.
-            connection.prepareSQL(this, sql, new ParamInfo[0], false);
+            connection.prepareSQL(this, sql, new ParamInfo[0], false, false);
         }
 
         try {
@@ -660,17 +661,18 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public ResultSet executeQuery() throws SQLException {
         checkOpen();
         initialize();
+        boolean useCursor = useCursor(false, null);
 
         if (procName == null && !(this instanceof JtdsCallableStatement)) {
             // Sync on the connection to make sure rollback() isn't called
             // between the moment when the statement is prepared and the moment
             // when it's executed.
             synchronized (connection) {
-                String spName = connection.prepareSQL(this, sql, parameters, false);
-                return executeSQLQuery(sql, spName, parameters);
+                String spName = connection.prepareSQL(this, sql, parameters, false, useCursor);
+                return executeSQLQuery(sql, spName, parameters, useCursor);
             }
         } else {
-            return executeSQLQuery(sql, procName, parameters);
+            return executeSQLQuery(sql, procName, parameters, useCursor);
         }
     }
 
@@ -682,7 +684,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 colMetaData = currentResult.columns;
             } else if (connection.getServerType() == Driver.SYBASE) {
                 // Sybase can provide meta data as a by product of preparing the call.
-                connection.prepareSQL(this, sql, new ParamInfo[0], false);
+                connection.prepareSQL(this, sql, new ParamInfo[0], false, false);
 
                 if (colMetaData == null) {
                     return null; // Sorry still no go

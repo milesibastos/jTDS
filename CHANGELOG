@@ -3,6 +3,9 @@ Changes from jTDS 1.0.3
 
 06/02/2005 - Alin Sinpalean
  o Applied Mike's fix for bug #1212905 PreparedStatement.setFloat issue.
+ o Moved all the "create cursor or use direct execution" logic into a single
+   place and corrected an issue where useCursors=true would cause a cursor
+   prepare to be issued even on executeUpdate().
 
 06/01/2005 - Alin Sinpalean
  o Initial implementation for extended scrollability/updatability support

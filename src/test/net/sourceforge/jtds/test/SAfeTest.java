@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version 1.0
+ * @version $Id: SAfeTest.java,v 1.52 2005-06-02 16:10:42 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -1706,6 +1706,29 @@ public class SAfeTest extends DatabaseTestCase {
         rs.updateBytes(4, new byte[]{0x41, 0x42, 0x43, 0x44});
         rs.updateRow();
         assertEquals("ABCD", rs.getString(4));
+        stmt.close();
+    }
+
+    /**
+     * Tests that <code>executeUpdate("SELECT ...")</code> fails.
+     */
+    public void testExecuteUpdateSelect() throws Exception {
+        Statement stmt = con.createStatement();
+        try {
+            stmt.executeUpdate("select 1");
+            fail("Expecting an exception to be thrown");
+        } catch (SQLException ex) {
+            assertEquals("07000", ex.getSQLState());
+        }
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("select 1");
+        try {
+            pstmt.executeUpdate();
+            fail("Expecting an exception to be thrown");
+        } catch (SQLException ex) {
+            assertEquals("07000", ex.getSQLState());
+        }
         stmt.close();
     }
 }

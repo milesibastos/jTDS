@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.49 2005-05-10 15:14:57 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.50 2005-06-02 11:32:32 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -1280,8 +1280,12 @@ public class TdsData {
                 pi.sqlType = "bit";
                 break;
 
-            case java.sql.Types.FLOAT:
             case java.sql.Types.REAL:
+                pi.tdsType = SYBFLTN;
+                pi.sqlType = "real";
+                break;
+
+            case java.sql.Types.FLOAT:
             case java.sql.Types.DOUBLE:
                 pi.tdsType = SYBFLTN;
                 pi.sqlType = "float";
@@ -1539,6 +1543,12 @@ public class TdsData {
                 out.write((byte) 4);
                 break;
             case SYBFLTN:
+                if (pi.value instanceof Float) {
+                    out.write((byte) 4);
+                } else {
+                    out.write((byte) 8);
+                }
+                break;
             case SYBDATETIMN:
                 out.write((byte) 8);
                 break;
@@ -1745,8 +1755,13 @@ public class TdsData {
                 if (pi.value == null) {
                     out.write((byte) 0);
                 } else {
-                    out.write((byte) 8);
-                    out.write(((Number) pi.value).doubleValue());
+                    if (pi.value instanceof Float) {
+                        out.write((byte) 4);
+                        out.write(((Number) pi.value).floatValue());
+                    } else {
+                        out.write((byte) 8);
+                        out.write(((Number) pi.value).doubleValue());
+                    }
                 }
 
                 break;
@@ -2161,13 +2176,18 @@ public class TdsData {
 
             case SYBFLTN:
                 out.write((byte) pi.tdsType);
-                out.write((byte) 8);
-
-                if (pi.value == null) {
-                    out.write((byte) 0);
+                if (pi.value instanceof Float) {
+                    out.write((byte) 4);
+                    out.write((byte) 4);
+                    out.write(((Number) pi.value).floatValue());
                 } else {
                     out.write((byte) 8);
-                    out.write(((Number) pi.value).doubleValue());
+                    if (pi.value == null) {
+                        out.write((byte) 0);
+                    } else {
+                        out.write((byte) 8);
+                        out.write(((Number) pi.value).doubleValue());
+                    }
                 }
 
                 break;
@@ -2488,8 +2508,8 @@ public class TdsData {
 
             default:
                 throw new ProtocolException("Unsupported TDS data type 0x"
-                		                    + Integer.toHexString(ci.tdsType)
-											+ " in sql_variant");
+                                            + Integer.toHexString(ci.tdsType)
+                                            + " in sql_variant");
         }
         //
         // For compatibility with the MS driver convert to String.

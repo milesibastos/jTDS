@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.39 2005-06-01 17:24:14 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.40 2005-06-02 11:32:32 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -633,7 +633,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public float getFloat(int columnIndex) throws SQLException {
-        return ((Double) Support.convert(this, getColumn(columnIndex), java.sql.Types.FLOAT, null)).floatValue();
+        return ((Float) Support.convert(this, getColumn(columnIndex), java.sql.Types.REAL, null)).floatValue();
     }
 
     public int getInt(int columnIndex) throws SQLException {
@@ -720,7 +720,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateFloat(int columnIndex, float x) throws SQLException {
-        setColValue(columnIndex, Types.DOUBLE, new Double(x), 0);
+        setColValue(columnIndex, Types.REAL, new Float(x), 0);
     }
 
     public void updateInt(int columnIndex, int x) throws SQLException {

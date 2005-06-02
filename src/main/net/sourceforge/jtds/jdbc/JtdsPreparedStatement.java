@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.48 2005-05-27 13:25:22 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.49 2005-06-02 11:32:32 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -468,7 +468,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        setParameter(parameterIndex, new Double(x), java.sql.Types.FLOAT, 0, 0);
+        setParameter(parameterIndex, new Float(x), java.sql.Types.REAL, 0, 0);
     }
 
     public void setInt(int parameterIndex, int x) throws SQLException {

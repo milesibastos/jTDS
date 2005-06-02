@@ -46,7 +46,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.14 2005-04-20 16:49:22 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.15 2005-06-02 11:32:32 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -144,7 +144,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public float getFloat(int parameterIndex) throws SQLException {
-        return ((Double) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.FLOAT, null)).floatValue();
+        return ((Float) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.REAL, null)).floatValue();
     }
 
     public int getInt(int parameterIndex) throws SQLException {

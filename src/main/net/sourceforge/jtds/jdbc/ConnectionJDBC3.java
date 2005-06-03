@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @created March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.13 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.14 2005-06-03 12:08:50 alin_sinpalean Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -116,7 +116,27 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
         Object tmpSavepoint = savepoints.remove(index);
 
         if (savepointProcInTran != null) {
-            // FIXME Shouldn't procedures removed here be moved instead into the "wrapping" savepoint?
+            if (index != 0) {
+                // If this wasn't the outermost savepoint, move all procedures
+                // to the "wrapping" savepoint's list; when and if that
+                // savepoint will be rolled back it will clear these procedures
+                // too
+                List keys = (List) savepointProcInTran.get(savepoint);
+
+                if (keys != null) {
+                    Savepoint wrapping = (Savepoint) savepoints.get(index - 1);
+                    List wrappingKeys =
+                            (List) savepointProcInTran.get(wrapping);
+                    if (wrappingKeys == null) {
+                        wrappingKeys = new ArrayList();
+                    }
+                    wrappingKeys.addAll(keys);
+                    savepointProcInTran.put(wrapping, wrappingKeys);
+                }
+            }
+
+            // If this was the outermost savepoint, just drop references to
+            // all procedures; they will be managed by the connection
             savepointProcInTran.remove(tmpSavepoint);
         }
     }

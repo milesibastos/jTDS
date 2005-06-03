@@ -1,6 +1,9 @@
 Changes from jTDS 1.0.3
 =======================
 
+06/03/2005 - Alin Sinpalean
+ o Removed no longer needed cache classes.
+
 06/02/2005 - Alin Sinpalean
  o Applied Mike's fix for bug #1212905 PreparedStatement.setFloat issue.
  o Moved all the "create cursor or use direct execution" logic into a single

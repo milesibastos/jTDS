@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.95 2005-05-27 12:31:37 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.96 2005-06-03 12:29:09 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2493,7 +2493,6 @@ public class TdsCore {
             int nameLen = in.read();
             String name = in.readNonUnicodeString(nameLen);
 
-            // FIXME This will not work for multi-byte charsets
             bytesRead = bytesRead + 1 + nameLen;
             col.realName  = name;
             col.name = name;
@@ -2609,8 +2608,7 @@ public class TdsCore {
                     if (nameLen == 0) {
                         continue; // Sybase/SQL 6.5 use a zero length name to terminate list
                     }
-                    tabName = in.readString(nameLen);
-                    // FIXME This will not work for multi-byte charsets
+                    tabName = in.readNonUnicodeString(nameLen);
                     bytesRead += nameLen;
                 }
                 table = new TableMetaData();
@@ -2691,8 +2689,7 @@ public class TdsCore {
                     final int nameLen = in.read();
                     bytesRead += 1;
                     final String colName = in.readString(nameLen);
-                    // FIXME This won't work with multi-byte charsets
-                    bytesRead += (tdsVersion >= Driver.TDS70)? nameLen * 2: nameLen;
+                    bytesRead += (tdsVersion >= Driver.TDS70) ? nameLen * 2 : nameLen;
                     col.realName = colName;
                 }
             }
@@ -2727,18 +2724,17 @@ public class TdsCore {
         int severity = in.read();
         int msgLen = in.readShort();
         String message = in.readString(msgLen);
-        sizeSoFar += 2 + ((tdsVersion >= Driver.TDS70)? msgLen * 2: msgLen);
+        sizeSoFar += 2 + ((tdsVersion >= Driver.TDS70) ? msgLen * 2 : msgLen);
         final int srvNameLen = in.read();
         String server = in.readString(srvNameLen);
-        sizeSoFar += 1 + ((tdsVersion >= Driver.TDS70)? srvNameLen * 2: srvNameLen);
+        sizeSoFar += 1 + ((tdsVersion >= Driver.TDS70) ? srvNameLen * 2 : srvNameLen);
 
         final int procNameLen = in.read();
         String procName = in.readString(procNameLen);
-        sizeSoFar += 1 + ((tdsVersion >= Driver.TDS70)? procNameLen * 2: procNameLen);
+        sizeSoFar += 1 + ((tdsVersion >= Driver.TDS70) ? procNameLen * 2 : procNameLen);
 
         int line = in.readShort();
         sizeSoFar += 2;
-        // FIXME This won't work with multi-byte charsets
         // Skip any EED information to read rest of packet
         if (pktLen - sizeSoFar > 0)
             in.skip(pktLen - sizeSoFar);
@@ -3145,7 +3141,6 @@ public class TdsCore {
 
         int line = in.readShort();
         sizeSoFar += 2;
-        // FIXME This won't work with multi-byte charsets
         // Skip any EED information to read rest of packet
         if (pktLen - sizeSoFar > 0)
             in.skip(pktLen - sizeSoFar);
@@ -3178,7 +3173,6 @@ public class TdsCore {
             in.skip(len);
             pktLen -= len+1;
         }
-        // FIXME This won't work with multi-byte charsets
         in.skip(pktLen);
     }
 

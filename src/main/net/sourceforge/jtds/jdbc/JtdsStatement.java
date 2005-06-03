@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.46 2005-06-02 16:10:34 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.47 2005-06-03 12:29:09 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -495,7 +495,6 @@ public class JtdsStatement implements java.sql.Statement {
                                 tds.getRowData());
                     }
                 } else {
-                    // TODO Should we allow execution of multiple statements via executeUpdate?
                     if (update && resultQueue.isEmpty()) {
                         throw new SQLException(
                                 Messages.get("error.statement.nocount"), "07000");

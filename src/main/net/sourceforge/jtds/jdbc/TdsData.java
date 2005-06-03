@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.50 2005-06-02 11:32:32 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.51 2005-06-03 12:29:09 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -361,7 +361,6 @@ public class TdsData {
             int lenName = in.readShort();
 
             ci.tableName = in.readString(lenName);
-            // FIXME This will not work for multi-byte charsets
             bytesRead += 6 + ((in.getTdsVersion() >= Driver.TDS70) ? lenName * 2 : lenName);
         } else if (ci.bufferSize == -2) {
             // longvarchar longvarbinary
@@ -779,7 +778,6 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    // FIXME Use collation for reading
                     String value = in.readNonUnicodeString(len,
                             ci.charsetInfo == null ? connection.getCharsetInfo() : ci.charsetInfo);
 
@@ -819,7 +817,6 @@ public class TdsData {
                     // This is a TDS 7+ long string
                     len = in.readShort();
                     if (len != -1) {
-                        // FIXME Use collation for reading
                         return in.readNonUnicodeString(len,
                                 ci.charsetInfo == null ? connection.getCharsetInfo() : ci.charsetInfo);
                     }
@@ -1832,11 +1829,9 @@ public class TdsData {
         //
         // For TDS 8 write a collation string
         // I am assuming this can be all zero for now if none is known
-        // TODO Set collation info?
         //
         if (types[pi.tdsType].isCollation) {
             if (pi.collation != null) {
-                // FIXME Also encode the value according to the collation
                 out.write(pi.collation);
             } else {
                 byte collation[] = {0x00, 0x00, 0x00, 0x00, 0x00};

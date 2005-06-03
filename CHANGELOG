@@ -5,6 +5,7 @@ Changes from jTDS 1.0.3
  o Removed no longer needed cache classes.
  o Corrected an issue with savepoints, which was causing cached procedures to
    not be dropped by the driver on a savepoint rollback.
+ o Removed already fixed or outdated TODO comments.
 
 06/02/2005 - Alin Sinpalean
  o Applied Mike's fix for bug #1212905 PreparedStatement.setFloat issue.

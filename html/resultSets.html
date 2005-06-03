@@ -153,10 +153,10 @@
 </table>
 <p>Notes:</p>
 <ol>
-<li>CONCUR_UPDATEABLE result sets can only be built from select statements containing one base table.</li>
-<li>Tables used to build CONCUR_UPDATEABLE and TYPE_SCROLL_SENSITIVE result sets should have primary keys.</li>
+<li>Updateable result sets can only be built from select statements containing one base table.</li>
+<li>Tables used to build CONCUR_UPDATEABLE and/or TYPE_SCROLL_SENSITIVE result sets should have primary keys.</li>
 <li>Use the Statement.getWarnings() and ResultSet.getWarnings() methods to check that the actual result set
-returned has not been downgraded, for example from CONCUR_UPDATEABLE to read only.</li>
+returned has not been downgraded, for example from updateable to read only.</li>
 <li>For SQL Server cursors the fetch size defaults to 100 rows while for Sybase the entire result set is cached in the
 client. Therefore care must be taken with Sybase to limit the size of result sets to avoid "out of memory" errors.
 </ol>

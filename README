@@ -51,12 +51,12 @@ jTDS is used in a number of commercial applications. It has been tested with and
 is actually recommended as the driver to use for MS SQL Server by pretty much
 all open source AND commercial database management tools:
 
- o iSQL-Viewer (http://isql.sourceforge.net/)
- o SQL Workbench/J (http://www.kellerer.org/workbench/)
- o SQuirreL SQL Client (http://squirrel-sql.sourceforge.net/)
+ o iSQL-Viewer (http://isql.sourceforge.net)
+ o SQL Workbench/J (http://www.sql-workbench.net)
+ o SQuirreL SQL Client (http://squirrel-sql.sourceforge.net)
  o Db-Visualizer (http://www.minq.se/products/dbvis/index.html)
- o SQL Developer (http://sqldeveloper.solyp.com/, really nice tool).
- o Artiso Visual Case (http://www.visualcase.com/)
+ o SQL Developer (http://sqldeveloper.solyp.com, really nice tool).
+ o Artiso Visual Case (http://www.visualcase.com)
 
 There are quite a few database management tools that come bundled together with
 jTDS:

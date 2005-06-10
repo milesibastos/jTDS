@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.3
 =======================
 
+06/10/2005 - Alin Sinpalean
+ o Corrected bug [1217786] Moving to "beforeFirst" with ResultSet.absolute(-X)
+   and a number of related absolute() and relative() issues with
+   MSCursorResultSet.
+
 06/03/2005 - Alin Sinpalean
  o Removed no longer needed cache classes.
  o Corrected an issue with savepoints, which was causing cached procedures to
@@ -8,7 +13,7 @@ Changes from jTDS 1.0.3
  o Removed already fixed or outdated TODO comments.
 
 06/02/2005 - Alin Sinpalean
- o Applied Mike's fix for bug #1212905 PreparedStatement.setFloat issue.
+ o Applied Mike's fix for bug [1212905] PreparedStatement.setFloat issue.
  o Moved all the "create cursor or use direct execution" logic into a single
    place and corrected an issue where useCursors=true would cause a cursor
    prepare to be issued even on executeUpdate().

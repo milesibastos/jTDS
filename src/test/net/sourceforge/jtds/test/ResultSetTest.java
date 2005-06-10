@@ -1088,6 +1088,84 @@ public class ResultSetTest extends DatabaseTestCase {
     }
 
     /**
+     * Test that calling <code>absolute()</code> with very large positive
+     * values positions the cursor after the last row and with very large
+     * negative values positions the cursor before the first row.
+     */
+    public void testAbsoluteLargeValue() throws SQLException {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+
+        stmt.executeUpdate(
+                "create table #absoluteLargeValue (val int primary key)");
+        stmt.executeUpdate(
+                "insert into #absoluteLargeValue (val) values (1)");
+        stmt.executeUpdate(
+                "insert into #absoluteLargeValue (val) values (2)");
+        stmt.executeUpdate(
+                "insert into #absoluteLargeValue (val) values (3)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select val from #absoluteLargeValue order by val");
+
+        assertFalse(rs.absolute(10));
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isAfterLast());
+        assertFalse(rs.next());
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isAfterLast());
+
+        assertFalse(rs.absolute(-10));
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isBeforeFirst());
+        assertFalse(rs.previous());
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isBeforeFirst());
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
+     * Test that calling <code>absolute()</code> with very large positive
+     * values positions the cursor after the last row and with very large
+     * negative values positions the cursor before the first row.
+     */
+    public void testRelativeLargeValue() throws SQLException {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+
+        stmt.executeUpdate(
+                "create table #relativeLargeValue (val int primary key)");
+        stmt.executeUpdate(
+                "insert into #relativeLargeValue (val) values (1)");
+        stmt.executeUpdate(
+                "insert into #relativeLargeValue (val) values (2)");
+        stmt.executeUpdate(
+                "insert into #relativeLargeValue (val) values (3)");
+
+        ResultSet rs = stmt.executeQuery(
+                "select val from #relativeLargeValue order by val");
+
+        assertFalse(rs.relative(10));
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isAfterLast());
+        assertFalse(rs.next());
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isAfterLast());
+
+        assertFalse(rs.relative(-10));
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isBeforeFirst());
+        assertFalse(rs.previous());
+        assertEquals(0, rs.getRow());
+        assertTrue(rs.isBeforeFirst());
+
+        rs.close();
+        stmt.close();
+    }
+
+    /**
      * Test that <code>read()</code> works ok on the stream returned by
      * <code>ResultSet.getUnicodeStream()</code> (i.e. it doesn't always fill
      * the buffer, regardless of whether there's available data or not).

@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.53 2005-06-01 17:24:14 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.54 2005-06-10 09:00:27 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -111,7 +111,7 @@ public class MSCursorResultSet extends JtdsResultSet {
     private final ParamInfo PARAM_ROWNUM_IN = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
 
     /** <code>sp_cursorfetch</code> numrows IN parameter (for actual fetches). */
-    private final ParamInfo PARAM_NUMROWS_IN = new ParamInfo(Types.INTEGER, new Integer(1), ParamInfo.INPUT);
+    private final ParamInfo PARAM_NUMROWS_IN = new ParamInfo(Types.INTEGER, null, ParamInfo.INPUT);
 
     /** <code>sp_cursorfetch</code> rownum OUT parameter (for FETCH_INFO). */
     private final ParamInfo PARAM_ROWNUM_OUT = new ParamInfo(Types.INTEGER, null, ParamInfo.OUTPUT);
@@ -145,6 +145,7 @@ public class MSCursorResultSet extends JtdsResultSet {
             throws SQLException {
         super(statement, resultSetType, concurrency, null);
 
+        PARAM_NUMROWS_IN.value = new Integer(fetchSize);
         rowCache = new Object[fetchSize][];
 
         cursorCreate(sql, procName, procedureParams);
@@ -1106,6 +1107,11 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkOpen();
         checkScrollable();
 
+        // Don't bother if we're already before the first row
+        if (pos == POS_BEFORE_FIRST) {
+            return false;
+        }
+
         // Save current ResultSet position
         int initPos = pos;
         // Decrement current position
@@ -1154,9 +1160,14 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkOpen();
         checkScrollable();
 
-        pos = row;
+        pos = (row >= 0) ? row : (rowsInResult - row + 1);
         if (getCurrentRow() == null) {
-            return cursorFetch(FETCH_ABSOLUTE, row);
+            boolean result = cursorFetch(FETCH_ABSOLUTE, row);
+            if (cursorPos == 1 && row + rowsInResult < 0) {
+                pos = 0;
+                result = false;
+            }
+            return result;
         } else {
             return true;
         }
@@ -1166,7 +1177,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkOpen();
         checkScrollable();
 
-        pos += row;
+        pos = (pos == POS_AFTER_LAST) ? (rowsInResult + 1 + row) : (pos + row);
         if (getCurrentRow() == null) {
             if (pos < cursorPos) {
                 // If fetching backwards fetch the row and the rows before it,
@@ -1174,7 +1185,11 @@ public class MSCursorResultSet extends JtdsResultSet {
                 int savePos = pos;
                 boolean result = cursorFetch(FETCH_RELATIVE,
                         pos - cursorPos - fetchSize + 1);
-                pos = savePos;
+                if (result) {
+                    pos = savePos;
+                } else {
+                    pos = POS_BEFORE_FIRST;
+                }
                 return result;
             } else {
                 return cursorFetch(FETCH_RELATIVE, pos - cursorPos);

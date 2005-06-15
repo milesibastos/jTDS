@@ -5,6 +5,7 @@ Changes from jTDS 1.0.3
  o Applied Mike's fix for bug [1047208] SQLException chaining not implemented
    correctly, with a few additions in places where exceptions might have gotten
    lost.
+ o Removed SSPIJNIClient.main() and hexDump() as they weren't used anyway.
 
 06/10/2005 - Alin Sinpalean
  o Corrected bug [1217786] Moving to "beforeFirst" with ResultSet.absolute(-X)

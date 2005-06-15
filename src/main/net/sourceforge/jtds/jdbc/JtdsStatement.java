@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.47 2005-06-03 12:29:09 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.48 2005-06-15 14:56:58 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -360,9 +360,19 @@ public class JtdsStatement implements java.sql.Statement {
             tds.executeSQL(sql, spName, params, false, queryTimeout, maxRows,
                     maxFieldSize, true);
         }
+
+        // Update warning chain if cursor was downgraded before processing results
+        if (warningMessage != null) {
+            addWarning(new SQLWarning(
+                    Messages.get("warning.cursordowngraded", warningMessage), "01000"));
+        }
+
         // Ignore update counts preceding the result set. All drivers seem to
         // do this.
         while (!tds.getMoreResults() && !tds.isEndOfResponse());
+
+        // check for server side errors
+        messages.checkErrors();
 
         if (tds.isResultSet()) {
             currentResult = new JtdsResultSet(this,
@@ -370,16 +380,8 @@ public class JtdsStatement implements java.sql.Statement {
                                               ResultSet.CONCUR_READ_ONLY,
                                               tds.getColumns());
         } else {
-                throw new SQLException(
-                            Messages.get("error.statement.noresult"), "24000");
-        }
-
-        if (warningMessage != null) {
-            //
-            // Update warning chain if cursor was downgraded
-            //
-            addWarning(new SQLWarning(
-                    Messages.get("warning.cursordowngraded", warningMessage), "01000"));
+            throw new SQLException(
+                    Messages.get("error.statement.noresult"), "24000");
         }
 
         return currentResult;
@@ -496,8 +498,11 @@ public class JtdsStatement implements java.sql.Statement {
                     }
                 } else {
                     if (update && resultQueue.isEmpty()) {
-                        throw new SQLException(
+                        // Throw exception but queue up any previous ones
+                        SQLException ex = new SQLException(
                                 Messages.get("error.statement.nocount"), "07000");
+                        ex.setNextException(messages.exceptions);
+                        throw ex;
                     }
 
                     resultQueue.add(new JtdsResultSet(
@@ -509,6 +514,9 @@ public class JtdsStatement implements java.sql.Statement {
                 }
             }
         }
+
+        // Check for server side errors
+        getMessages().checkErrors();
 
         return !resultQueue.isEmpty();
     }
@@ -534,6 +542,9 @@ public class JtdsStatement implements java.sql.Statement {
         resultQueue.clear();
         genKeyResultSet = null;
         tds.clearResponseQueue();
+        // FIXME Should old exceptions found now be thrown instead of lost?
+        messages.exceptions = null;
+        messages.clearWarnings();
         closeAllResultSets();
     }
 
@@ -718,15 +729,29 @@ public class JtdsStatement implements java.sql.Statement {
         if (!closed) {
             try {
                 closeAllResultSets();
-
-                if (!connection.isClosed()) {
-                    connection.releaseTds(tds);
-                }
             } finally {
-                closed = true;
-                tds = null;
-                connection.removeStatement(this);
-                connection = null;
+                SQLException releaseEx = null;
+                try {
+                    if (!connection.isClosed()) {
+                        connection.releaseTds(tds);
+                    }
+                    // Check for server side errors
+                    tds.getMessages().checkErrors();
+                } catch (SQLException ex) {
+                    // Remember any exception thrown
+                    releaseEx = ex;
+                } finally {
+                    // Clean up everything
+                    closed = true;
+                    tds = null;
+                    connection.removeStatement(this);
+                    connection = null;
+
+                    // Re-throw any caught exception
+                    if (releaseEx != null) {
+                        throw releaseEx;
+                    }
+                }
             }
         }
     }
@@ -942,6 +967,9 @@ public class JtdsStatement implements java.sql.Statement {
                                 "current"),
                         "HY092");
         }
+
+        // Check for server side errors
+        messages.checkErrors();
 
         // Dequeue any results
         if (!resultQueue.isEmpty() || processResults(false, false)) {

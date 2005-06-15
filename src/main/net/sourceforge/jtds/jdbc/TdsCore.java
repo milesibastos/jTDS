@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.96 2005-06-03 12:29:09 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.97 2005-06-15 14:56:58 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -612,7 +612,8 @@ public class TdsCore {
      * Get the next result set or update count from the TDS stream.
      *
      * @return <code>boolean</code> if the next item is a result set.
-     * @throws SQLException
+     * @throws SQLException if an I/O or protocol error occurs; server errors
+     *                      are queued up and not thrown
      */
     boolean getMoreResults() throws SQLException {
         checkOpen();
@@ -623,7 +624,6 @@ public class TdsCore {
                && !currentToken.isResultSet()) {
             nextToken();
         }
-        messages.checkErrors();
 
         //
         // Cursor opens are followed by TDS_TAB_INFO and TDS_COL_INFO
@@ -653,8 +653,6 @@ public class TdsCore {
             }
             currentToken.token = saveToken;
         }
-
-        messages.checkErrors();
 
         return currentToken.isResultSet();
     }
@@ -724,7 +722,8 @@ public class TdsCore {
      * Consume packets from the server response queue up to (and including) the
      * first response terminator.
      *
-     * @throws SQLException if an error occurs
+     * @throws SQLException if an I/O or protocol error occurs; server errors
+     *                      are queued up and not thrown
      */
     void consumeOneResponse() throws SQLException {
         checkOpen();
@@ -736,13 +735,15 @@ public class TdsCore {
                 return;
             }
         }
-        messages.checkErrors();
     }
 
     /**
      * Retrieve the next data row from the result set.
      *
-     * @return <code>boolean</code> - <code>false</code> if at end of results.
+     * @return <code>false</code> if at the end of results, <code>true</code>
+     *         otherwise
+     * @throws SQLException if an I/O or protocol error occurs; server errors
+     *                      are queued up and not thrown
      */
     boolean getNextRow() throws SQLException {
         if (endOfResponse || endOfResults) {
@@ -755,8 +756,6 @@ public class TdsCore {
         while (!currentToken.isRowData() && !currentToken.isEndToken()) {
             nextToken(); // Could be messages
         }
-
-        messages.checkErrors();
 
         return currentToken.isRowData();
     }
@@ -831,9 +830,7 @@ public class TdsCore {
     }
 
     /**
-     * Close the TDSCore connection object and associated streams.
-     *
-     * @throws SQLException
+     * Close the <code>TdsCore</code> connection object and associated streams.
      */
     void close() throws SQLException {
        if (!isClosed) {
@@ -3797,6 +3794,8 @@ public class TdsCore {
             columns = null;
             rowData = null;
             tables = null;
+            // Clean up warnings; any exceptions will be cleared when thrown
+            messages.clearWarnings();
         }
     }
 

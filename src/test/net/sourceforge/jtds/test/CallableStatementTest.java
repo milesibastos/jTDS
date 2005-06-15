@@ -833,6 +833,33 @@ public class CallableStatementTest extends TestBase {
         cstmt.close();
     }
 
+    /**
+     * Test for bug [1047208] SQLException chaining not implemented correctly:
+     * checks that all errors are returned and that output variables are also
+     * returned.
+     */
+    public void testErrorOutputParams() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE PROC #error_proc @p1 int out AS \r\n" +
+                     "RAISERROR ('TEST EXCEPTION', 15, 1)\r\n" +
+                     "SELECT @P1=100\r\n" +
+                     "CREATE TABLE #DUMMY (id int)\r\n" +
+                     "INSERT INTO #DUMMY VALUES(1)\r\n"+
+                     "INSERT INTO #DUMMY VALUES(1)");
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{call #error_proc(?)}");
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        try {
+            cstmt.execute();
+            fail("Expecting exception");
+        } catch (SQLException e) {
+            assertEquals("TEST EXCEPTION", e.getMessage());
+        }
+        assertEquals(100, cstmt.getInt(1));
+        cstmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

@@ -55,7 +55,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.22 2005-06-01 17:24:05 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.23 2005-06-15 14:56:57 alin_sinpalean Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -193,7 +193,7 @@ public class CachedResultSet extends JtdsResultSet {
                 rs.getStatement().getResultSetType(),
                 rs.getStatement().getResultSetConcurrency(), null);
         //
-        JtdsStatement stmt = ((JtdsStatement)rs.getStatement());
+        JtdsStatement stmt = ((JtdsStatement) rs.getStatement());
         //
         // OK If the user requested an updateable result set tell them
         // they can't have one!
@@ -386,7 +386,11 @@ public class CachedResultSet extends JtdsResultSet {
             while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
             if (!cursorTds.isResultSet()) {
-                throw new SQLException(Messages.get("error.statement.noresult"), "24000");
+                // Throw exception but queue up any others
+                SQLException ex = new SQLException(
+                        Messages.get("error.statement.noresult"), "24000");
+                ex.setNextException(statement.getMessages().exceptions);
+                throw ex;
             }
             columns = cursorTds.getColumns();
             if (connection.getServerType() == Driver.SQLSERVER) {
@@ -417,7 +421,11 @@ public class CachedResultSet extends JtdsResultSet {
                             true);
                 while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
                 if (!cursorTds.isResultSet()) {
-                    throw new SQLException(Messages.get("error.statement.noresult"), "24000");
+                    // Throw exception but queue up any others
+                    SQLException ex = new SQLException(
+                            Messages.get("error.statement.noresult"), "24000");
+                    ex.setNextException(statement.getMessages().exceptions);
+                    throw ex;
                 }
                 columns = cursorTds.getColumns();
                 columnCount = getColumnCount(columns);
@@ -451,8 +459,11 @@ public class CachedResultSet extends JtdsResultSet {
                 while (!cursorTds.getMoreResults() && !cursorTds.isEndOfResponse());
 
                 if (!cursorTds.isResultSet()) {
-                    throw new SQLException(
+                    // Throw exception but queue up any others
+                    SQLException ex = new SQLException(
                             Messages.get("error.statement.noresult"), "24000");
+                    ex.setNextException(statement.getMessages().exceptions);
+                    throw ex;
                 }
                 columns = cursorTds.getColumns();
                 columnCount = getColumnCount(columns);
@@ -479,6 +490,10 @@ public class CachedResultSet extends JtdsResultSet {
                     Messages.get("warning.cursordowngraded",
                             "TYPE_SCROLL_INSENSITIVE"), "01000"));
         }
+        //
+        // Report any SQLExceptions
+        //
+        statement.getMessages().checkErrors();
     }
 
     /**
@@ -579,6 +594,8 @@ public class CachedResultSet extends JtdsResultSet {
                     }
                 }
             }
+            // Report any errors found
+            statement.getMessages().checkErrors();
         }
         //
         // Final fall back make all columns pseudo keys!
@@ -637,12 +654,14 @@ public class CachedResultSet extends JtdsResultSet {
                 if (!cursorTds.isResultSet() || !cursorTds.getNextRow()) {
                     pos = POS_AFTER_LAST;
                     currentRow = null;
+                    statement.getMessages().checkErrors();
                     return false;
                 }
             }
             currentRow = statement.getTds().getRowData();
             pos++;
             rowsInResult = pos;
+            statement.getMessages().checkErrors();
 
             return currentRow != null;
 

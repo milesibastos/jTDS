@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.3
 =======================
 
+06/15/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1047208] SQLException chaining not implemented
+   correctly, with a few additions in places where exceptions might have gotten
+   lost.
+
 06/10/2005 - Alin Sinpalean
  o Corrected bug [1217786] Moving to "beforeFirst" with ResultSet.absolute(-X)
    and a number of related absolute() and relative() issues with

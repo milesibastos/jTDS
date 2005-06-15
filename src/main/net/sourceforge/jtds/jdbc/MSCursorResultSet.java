@@ -37,7 +37,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.54 2005-06-10 09:00:27 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.55 2005-06-15 14:56:58 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -555,8 +555,10 @@ public class MSCursorResultSet extends JtdsResultSet {
             tds.executeSQL(null, "sp_cursoroption", params, true, 0, -1, -1, true);
             tds.clearResponseQueue();
             if (tds.getReturnStatus().intValue() != 0) {
-                throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
+                statement.getMessages().addException(
+                        new SQLException(Messages.get("error.resultset.openfail"), "24000"));
             }
+            statement.getMessages().checkErrors();
         }
         //
         // Check for downgrade of scroll or concurrency options

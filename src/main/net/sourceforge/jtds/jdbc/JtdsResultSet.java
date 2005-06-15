@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.40 2005-06-02 11:32:32 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.41 2005-06-15 14:56:58 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -586,6 +586,9 @@ public class JtdsResultSet implements ResultSet {
                 rowsInResult = pos;
             }
         }
+
+        // Check for server side errors
+        statement.getMessages().checkErrors();
 
         return currentRow != null;
     }

@@ -393,7 +393,20 @@
           <code>Types.BLOB</code> for IMAGE and <code>Types.CLOB</code> for
           TEXT/NTEXT when <code>true</code>, <code>Types.LONGVARBINARY</code>
           for IMAGE and <code>Types.LONGVARCHAR</code> for TEXT/NTEXT when
-          <code>false</code>.</dd>
+          <code>false</code>.<br/>
+          This is useful when printing out directly the values returned by
+          <code>getObject()</code> (e.g. when using JSTL or other frameworks),
+          as <code>Blob</code> and <code>Clob</code> don't implement
+          <code>toString()</code> (both because it's not required and because
+          it can easily lead to <code>OutOfMemoryError</code>s in unexpected
+          situations, such as when logging data). The default setting of
+          <code>true</code> has the advantage that the amount of data that is
+          cached in memory for a large object can be controlled via the
+          <code>lobBuffer</code> property; a setting of <code>false</code> will
+          still use the <code>Blob</code> and <code>Clob</code> implementations
+          internally but the values will be materialized to memory when
+          <code>getObject()</code> is called, possibly leading to memory
+          issues.</dd>
       </dl>
       <p>Properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

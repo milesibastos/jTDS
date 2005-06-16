@@ -1,3 +1,7 @@
+===============================================================================
+06/16/2005 - jTDS 1.1 released
+===============================================================================
+
 Changes from jTDS 1.0.3
 =======================
 
@@ -5,6 +9,7 @@ Changes from jTDS 1.0.3
  o Added the useLOBs connection property to control whether large types (IMAGE
    and TEXT/NTEXT) should be mapped by default to LOBs or Java types (String
    and byte[]). Default is true, i.e. map to LOBs by default.
+ o Updated version number to 1.1.
 
 06/15/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1047208] SQLException chaining not implemented

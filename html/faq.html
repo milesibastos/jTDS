@@ -385,6 +385,15 @@
           <code>useCursors</code> property, but this will also affect
           performance.<br/>
           See also <code>bufferMaxMemory</code>.</dd>
+        <dt><code>useLOBs</code> (default - <code>true</code>)</dt>
+        <dd>Controls whether large types (IMAGE and TEXT/NTEXT) should be
+          mapped by default (when using <code>getObject()</code>) to LOBs or
+          Java types (<code>String</code> and <code>byte[]</code>). The default
+          JDBC type constant returned is also controlled by this property:
+          <code>Types.BLOB</code> for IMAGE and <code>Types.CLOB</code> for
+          TEXT/NTEXT when <code>true</code>, <code>Types.LONGVARBINARY</code>
+          for IMAGE and <code>Types.LONGVARCHAR</code> for TEXT/NTEXT when
+          <code>false</code>.</dd>
       </dl>
       <p>Properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

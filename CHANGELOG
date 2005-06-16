@@ -1,6 +1,11 @@
 Changes from jTDS 1.0.3
 =======================
 
+06/16/2005 - Alin Sinpalean
+ o Added the useLOBs connection property to control whether large types (IMAGE
+   and TEXT/NTEXT) should be mapped by default to LOBs or Java types (String
+   and byte[]). Default is true, i.e. map to LOBs by default.
+
 06/15/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1047208] SQLException chaining not implemented
    correctly, with a few additions in places where exceptions might have gotten

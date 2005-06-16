@@ -28,17 +28,19 @@ import java.sql.*;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ParameterMetaDataImpl.java,v 1.5 2005-03-09 12:51:56 alin_sinpalean Exp $
+ * @version $Id: ParameterMetaDataImpl.java,v 1.6 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class ParameterMetaDataImpl implements ParameterMetaData {
-    private ParamInfo[] parameterList;
+    private final ParamInfo[] parameterList;
+    private final boolean useLOBs;
 
-    public ParameterMetaDataImpl(ParamInfo[] parameterList) {
+    public ParameterMetaDataImpl(ParamInfo[] parameterList, boolean useLOBs) {
         if (parameterList == null) {
             parameterList = new ParamInfo[0];
         }
 
         this.parameterList = parameterList;
+        this.useLOBs = useLOBs;
     }
 
     public int getParameterCount() throws SQLException {
@@ -50,7 +52,11 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
     }
 
     public int getParameterType(int param) throws SQLException {
-        return getParameter(param).jdbcType;
+        if (useLOBs) {
+            return getParameter(param).jdbcType;
+        } else {
+            return Support.convertLOBType(getParameter(param).jdbcType);
+        }
     }
 
     public int getScale(int param) throws SQLException {
@@ -88,9 +94,7 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
     }
 
     public String getParameterClassName(int param) throws SQLException {
-        ParamInfo pi = getParameter(param);
-
-        return Support.getClassName(pi.jdbcType);
+        return Support.getClassName(getParameterType(param));
     }
 
     public int getParameterMode(int param) throws SQLException {

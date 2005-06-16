@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.89 2005-06-02 16:10:34 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.90 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -219,6 +219,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private int bufferMaxMemory;
     /** The minimum number of packets per statement to buffer to memory. */
     private int bufferMinPackets;
+    /** Map large types (IMAGE and TEXT/NTEXT) to LOBs by default. */
+    private boolean useLOBs;
     /** A cached <code>TdsCore</code> instance to reuse on new statements. */
     private TdsCore cachedTds;
 
@@ -759,13 +761,25 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
-     * Retrieves the boolean indicating whether fast forward only cursors
-     * should be used for forward only result sets.
+     * Indicates whether fast forward only cursors should be used for forward
+     * only result sets.
      *
-     * @return <code>true</code> fast forward cursors are requested
+     * @return <code>true</code> if fast forward cursors are requested
      */
     boolean getUseCursors() {
         return this.useCursors;
+    }
+
+    /**
+     * Indicates whether large types (IMAGE and TEXT/NTEXT) should be mapped by
+     * default to LOB types or <code>String</code> and <code>byte[]</code>
+     * respectively.
+     *
+     * @return <code>true</code> if the default mapping should be to LOBs,
+     *         <code>false</code> otherwise
+     */
+    boolean getUseLOBs() {
+        return this.useLOBs;
     }
 
     /**
@@ -802,6 +816,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         useCursors = (serverType == Driver.SQLSERVER)
                 && "true".equalsIgnoreCase(
                         info.getProperty(Messages.get(Driver.USECURSORS)));
+        useLOBs = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.USELOBS)));
         useMetadataCache = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.CACHEMETA)));
         xaEmulation = "true".equalsIgnoreCase(

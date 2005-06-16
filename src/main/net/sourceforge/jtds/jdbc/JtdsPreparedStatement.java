@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.50 2005-06-02 16:10:34 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.51 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -725,8 +725,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             }
         }
 
-        return new JtdsResultSetMetaData(
-                colMetaData, JtdsResultSet.getColumnCount(colMetaData));
+        return new JtdsResultSetMetaData(colMetaData,
+                JtdsResultSet.getColumnCount(colMetaData),
+                connection.getUseLOBs());
     }
 
     public void setTime(int parameterIndex, Time x) throws SQLException {

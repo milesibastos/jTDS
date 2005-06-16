@@ -31,11 +31,12 @@ import java.sql.SQLException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSetMetaData.java,v 1.7 2005-04-28 14:29:26 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSetMetaData.java,v 1.8 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class JtdsResultSetMetaData implements ResultSetMetaData {
     private final ColInfo[] columns;
     private final int columnCount;
+    private final boolean useLOBs;
 
     /**
      * Construct ResultSetMetaData object over the current ColInfo array.
@@ -43,9 +44,10 @@ public class JtdsResultSetMetaData implements ResultSetMetaData {
      * @param columns The current ColInfo row descriptor array.
      * @param columnCount The number of visible columns.
      */
-    JtdsResultSetMetaData(ColInfo[] columns, int columnCount) {
+    JtdsResultSetMetaData(ColInfo[] columns, int columnCount, boolean useLOBs) {
         this.columns = columns;
         this.columnCount = columnCount;
+        this.useLOBs = useLOBs;
     }
 
     /**
@@ -76,7 +78,11 @@ public class JtdsResultSetMetaData implements ResultSetMetaData {
     }
 
     public int getColumnType(int column) throws SQLException {
-        return getColumn(column).jdbcType;
+        if (useLOBs) {
+            return getColumn(column).jdbcType;
+        } else {
+            return Support.convertLOBType(getColumn(column).jdbcType);
+        }
     }
 
     public int getPrecision(int column) throws SQLException {
@@ -132,7 +138,7 @@ public class JtdsResultSetMetaData implements ResultSetMetaData {
     }
 
     public String getColumnClassName(int column) throws SQLException {
-        return Support.getClassName(getColumn(column).jdbcType);
+        return Support.getClassName(getColumnType(column));
     }
 
     public String getColumnLabel(int column) throws SQLException {

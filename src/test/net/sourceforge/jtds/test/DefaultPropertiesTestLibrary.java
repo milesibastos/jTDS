@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.18 2005-05-30 15:20:28 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.19 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -363,12 +363,25 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     }
 
     /**
-     * Test the <code>usecursors</code> property.
+     * Test the <code>useCursors</code> property.
      */
     public void test_usecursors() {
         String fieldName = "useCursors";
         String messageKey = Driver.USECURSORS;
         String expectedValue = DefaultProperties.USECURSORS;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+    /**
+     * Test the <code>useLOBs</code> property.
+     */
+    public void test_useLOBs() {
+        String fieldName = "useLOBs";
+        String messageKey = Driver.USELOBS;
+        String expectedValue = DefaultProperties.USELOBS;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);

@@ -44,12 +44,12 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.34 2005-05-30 15:20:28 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.35 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
-    /** Serial version UID */
-    static final long serialVersionUID = 01000300L;
+    /** Serial version UID. */
+    static final long serialVersionUID = 01010000L;
 
     protected String serverName;
     protected String serverType;
@@ -83,6 +83,7 @@ public class JtdsDataSource
     protected String bufferMinPackets;
     protected String cacheMetaData;
     protected String useCursors;
+    protected String useLOBs;
 
     protected String description;
 
@@ -251,6 +252,9 @@ public class JtdsDataSource
         if (useCursors != null) {
             props.setProperty(Messages.get(Driver.USECURSORS), useCursors);
         }
+        if (useLOBs != null) {
+            props.setProperty(Messages.get(Driver.USELOBS), useLOBs);
+        }
 
         String url;
 
@@ -310,6 +314,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.BUFFERMINPACKETS), bufferMinPackets));
         ref.add(new StringRefAddr(Messages.get(Driver.CACHEMETA), cacheMetaData));
         ref.add(new StringRefAddr(Messages.get(Driver.USECURSORS), useCursors));
+        ref.add(new StringRefAddr(Messages.get(Driver.USELOBS), useLOBs));
 
         ref.add(new StringRefAddr("description", description));
 
@@ -650,5 +655,13 @@ public class JtdsDataSource
 
     public void setUseCursors(boolean useCursors) {
         this.useCursors = String.valueOf(useCursors);
+    }
+
+    public boolean getUseLOBs() {
+        return Boolean.valueOf(useLOBs).booleanValue();
+    }
+
+    public void setUseLOBs(boolean useLOBs) {
+        this.useLOBs = String.valueOf(useLOBs);
     }
 }

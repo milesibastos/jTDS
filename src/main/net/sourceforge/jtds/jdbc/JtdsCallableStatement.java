@@ -46,7 +46,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.15 2005-06-02 11:32:32 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.16 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -207,11 +207,17 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             return value.toString();
         }
 
+        // If the user requested String/byte[] instead of LOBs, do the conversion
+        if (!connection.getUseLOBs()) {
+            value = Support.convertLOB(value);
+        }
+
         return value;
     }
 
     public String getString(int parameterIndex) throws SQLException {
-        return (String) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.VARCHAR, connection.getCharset());
+        return (String) Support.convert(this, getOutputValue(parameterIndex),
+                java.sql.Types.VARCHAR, connection.getCharset());
     }
 
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName)

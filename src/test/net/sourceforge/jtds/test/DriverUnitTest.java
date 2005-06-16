@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  *
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.17 2005-05-27 12:31:42 alin_sinpalean Exp $
+ * @version $Id: DriverUnitTest.java,v 1.18 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -179,6 +179,7 @@ public class DriverUnitTest extends UnitTestBase {
         expectedChoicesMap.put(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), expectedBooleanChoices);
         expectedChoicesMap.put(Messages.get(Driver.CACHEMETA), expectedBooleanChoices);
         expectedChoicesMap.put(Messages.get(Driver.USECURSORS), expectedBooleanChoices);
+        expectedChoicesMap.put(Messages.get(Driver.USELOBS), expectedBooleanChoices);
 
         final Map infoMap = new HashMap();
         loadDriverPropertyInfoMap(infoMap);

@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.19 2005-05-30 15:20:28 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.20 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -124,6 +124,10 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object useCursors = ref.get(Messages.get(Driver.USECURSORS)).getContent();
             if (useCursors != null) {
                 ds.setUseCursors("true".equals(useCursors));
+            }
+            final Object useLOBs = ref.get(Messages.get(Driver.USELOBS)).getContent();
+            if (useLOBs != null) {
+                ds.setUseLOBs("true".equals(useLOBs));
             }
 
             ds.setDescription((String) ref.get("description").getContent());

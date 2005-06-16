@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.41 2005-06-15 14:56:58 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.42 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -834,6 +834,10 @@ public class JtdsResultSet implements ResultSet {
         if (value instanceof DateTime) {
             return ((DateTime) value).toObject();
         }
+        // If the user requested String/byte[] instead of LOBs, do the conversion
+        if (!((ConnectionJDBC2) statement.getConnection()).getUseLOBs()) {
+            value = Support.convertLOB(value);
+        }
 
         return value;
     }
@@ -1111,7 +1115,13 @@ public class JtdsResultSet implements ResultSet {
     public ResultSetMetaData getMetaData() throws SQLException {
         checkOpen();
 
-        return new JtdsResultSetMetaData(this.columns, this.columnCount);
+        // If this is a DatabaseMetaData built result set, avoid getting an
+        // exception because the statement is closed and assume no LOBs
+        boolean useLOBs = this instanceof CachedResultSet && statement.closed
+                ? false
+                : ((ConnectionJDBC2) statement.getConnection()).getUseLOBs();
+        return new JtdsResultSetMetaData(this.columns, this.columnCount,
+                useLOBs);
     }
 
     public SQLWarning getWarnings() throws SQLException {

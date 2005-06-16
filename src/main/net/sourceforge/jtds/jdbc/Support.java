@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.46 2005-05-30 12:41:20 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.47 2005-06-16 09:32:27 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -1155,6 +1155,54 @@ public class Support {
             finally {
                 target.setTime(tmp);
             }
+        }
+    }
+
+    /**
+     * Converts a LOB to the equivalent Java type, i.e. <code>Clob</code> to
+     * <code>String</code> and <code>Blob</code> to <code>byte[]</code>. If the
+     * value passed is not a LOB object, it is left unchanged and no exception
+     * is thrown; the idea is to transparently convert only LOBs.
+     *
+     * @param value an object that may be a LOB
+     * @return if the value was a LOB, the equivalent Java object, otherwise
+     *         the original value
+     * @throws SQLException if an error occurs while reading the LOB contents
+     */
+    public static Object convertLOB(Object value) throws SQLException {
+        if (value instanceof Clob) {
+            Clob c = (Clob) value;
+            return c.getSubString(1, (int) c.length());
+        }
+
+        if (value instanceof Blob) {
+            Blob b = (Blob) value;
+            return b.getBytes(1, (int) b.length());
+        }
+
+        return value;
+    }
+
+    /**
+     * Converts a LOB type constant to the equivalent Java type constant, i.e.
+     * <code>Types.CLOB</code> to <code>Types.LONGVARCHAR</code> and
+     * <code>Types.BLOB</code> to <code>Types.LONGVARBINARY</code>. If the
+     * type passed is not that of a LOB, it is left unchanged and no exception
+     * is thrown; the idea is to transparently convert only LOB types.
+     *
+     * @param type a {@link Types} constant defining a JDBC type, possibly a
+     *             LOB
+     * @return if the type was that of a LOB, the equivalent Java object type,
+     *         otherwise the original type
+     */
+    public static int convertLOBType(int type) {
+        switch (type) {
+            case Types.BLOB:
+                return Types.LONGVARBINARY;
+            case Types.CLOB:
+                return Types.LONGVARCHAR;
+            default:
+                return type;
         }
     }
 

@@ -44,6 +44,7 @@
         <exclude name="**/SavepointTest.java"/>
         <exclude name="**/CallableStatementJDBC3Test.java"/>
         <exclude name="**/DatabaseMetaDataJDBC3Test.java"/>
+        <exclude name="**/ConnectionJDBC3Test.java"/>
       </fileset>
     </copy>
     <copy todir="${build}/classes">

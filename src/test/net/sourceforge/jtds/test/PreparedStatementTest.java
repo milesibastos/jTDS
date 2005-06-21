@@ -25,9 +25,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.sql.ParameterMetaData;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.40 2005-06-02 11:59:12 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.41 2005-06-21 17:04:45 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -963,6 +964,27 @@ public class PreparedStatementTest extends TestBase {
         assertFalse(2.3 - rs.getDouble(1) == 0);
         assertFalse(rs.next());
         rs.close();
+        pstmt.close();
+    }
+
+    /**
+     * Test for bug [1222205] getParameterMetaData returns not implemented.
+     */
+    public void testGetParamMetaData() throws SQLException {
+        PreparedStatement pstmt = con.prepareStatement("SELECT ?,?,?");
+        pstmt.setString(1, "TEST");
+        pstmt.setBigDecimal(2, new BigDecimal("123.45"));
+        pstmt.setBoolean(3, true);
+
+        ParameterMetaData pmd = pstmt.getParameterMetaData();
+        assertEquals(3, pmd.getParameterCount());
+        assertEquals(Types.VARCHAR, pmd.getParameterType(1));
+        assertEquals("java.lang.String", pmd.getParameterClassName(1));
+        assertEquals(2, pmd.getScale(2));
+        assertEquals(38, pmd.getPrecision(2));
+        assertEquals(ParameterMetaData.parameterModeIn,
+                pmd.getParameterMode(3));
+
         pstmt.close();
     }
 

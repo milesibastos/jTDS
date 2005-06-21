@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.51 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.52 2005-06-21 17:04:21 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -132,14 +132,19 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     /**
-     * This method converts native call syntax into (hopefully) valid JDBC escape syntax.
-     * NB. This method is required for backwards compatibility with previous versions of jTDS.
-     * Strictly speaking only the JDBC syntax needs to be recognised,
-     * constructions such as "?=#testproc ?,?" are neither valid native syntax nor valid escapes.
-     * All the substrings and trims below are not as bad as they look. The objects created all refer back
-     * to the original sql string it is just the start and length positions which change.
-     * @param sql The SQL statement to process.
-     * @return The SQL possibly in original form.
+     * This method converts native call syntax into (hopefully) valid JDBC
+     * escape syntax.
+     * <p/>
+     * <b>Note:</b> This method is required for backwards compatibility with
+     * previous versions of jTDS. Strictly speaking only the JDBC syntax needs
+     * to be recognised, constructions such as "?=#testproc ?,?" are neither
+     * valid native syntax nor valid escapes. All the substrings and trims
+     * below are not as bad as they look. The objects created all refer back to
+     * the original sql string it is just the start and length positions which
+     * change.
+     *
+     * @param sql the SQL statement to process
+     * @return the SQL, possibly in original form
      */
     protected static String normalizeCall(String sql) {
         String original = sql;
@@ -159,7 +164,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             sql = sql.substring(1).trim();
 
             if (sql.length() < 1 || sql.charAt(0) != '=') {
-                return original; // Give up error will be reported elsewhere
+                return original; // Give up, error will be reported elsewhere
             }
 
             sql = sql.substring(1).trim();
@@ -642,8 +647,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         try {
             Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
-            Class[] parameterTypes = new Class[] {ParamInfo[].class};
-            Object[] arguments = new Object[] {parameters};
+            Class[] parameterTypes = new Class[] {ParamInfo[].class, Boolean.TYPE};
+            Object[] arguments = new Object[] {parameters, Boolean.valueOf(connection.getUseLOBs())};
             Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
 
             return (ParameterMetaData) pmdConstructor.newInstance(arguments);

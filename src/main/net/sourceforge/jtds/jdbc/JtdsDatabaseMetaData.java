@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.30 2005-06-01 17:24:14 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.31 2005-06-21 17:04:21 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -583,6 +583,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             query = syscall(primaryCatalog, query);
         } else if (foreignCatalog != null) {
             query = syscall(foreignCatalog, query);
+        } else {
+            query = syscall(null, query);
         }
 
         CallableStatement s = connection.prepareCall(query);

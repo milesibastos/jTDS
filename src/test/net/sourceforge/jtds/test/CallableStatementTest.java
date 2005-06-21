@@ -458,6 +458,15 @@ public class CallableStatementTest extends TestBase {
             assertEquals(cstmt.getInt(1), 1);
             assertTrue(!cstmt.wasNull());
             cstmt.close();
+
+            cstmt = con.prepareCall("rop4 ?");
+
+            cstmt.registerOutParameter(1, Types.VARCHAR);
+            cstmt.execute();
+
+            assertEquals(cstmt.getInt(1), 1);
+            assertTrue(!cstmt.wasNull());
+            cstmt.close();
         } finally {
             stmt = con.createStatement();
             stmt.execute("drop procedure rop4");

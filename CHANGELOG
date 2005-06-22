@@ -6,6 +6,8 @@ Changes from jTDS 1.1
    current implementation Statement.close() does throw any server side errors
    (to make sure the user doesn't miss any) but Connection.close() ignores
    them.
+ o Applied Mike's fix for bug [1222238] Unable to connect to Sybase 10 with TDS
+   5.
 
 06/21/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1222205] getParameterMetaData returns not

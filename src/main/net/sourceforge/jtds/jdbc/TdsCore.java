@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.97 2005-06-15 14:56:58 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.98 2005-06-22 09:04:25 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2945,34 +2945,40 @@ public class TdsCore {
     }
 
     /**
-     * Process a TDS 5.0 capability token.
+     * Processes a TDS 5.0 capability token.
      * <p>
      * Sent after login to describe the server's capabilities.
      *
-     * @throws IOException
+     * @throws IOException if an I/O error occurs
      */
-    private void tdsCapabilityToken()
-        throws IOException, ProtocolException
-    {
+    private void tdsCapabilityToken() throws IOException, ProtocolException {
         in.readShort(); // Packet length
         if (in.read() != 1) {
             throw new ProtocolException("TDS_CAPABILITY: expected request string");
         }
         int capLen = in.read();
-        if (capLen != 10) {
+        if (capLen != 10 && capLen != 0) {
             throw new ProtocolException("TDS_CAPABILITY: byte count not 10");
         }
         byte capRequest[] = new byte[10];
-        in.read(capRequest);
+        if (capLen == 0) {
+            Logger.println("TDS_CAPABILITY: Invalid request length");
+        } else {
+            in.read(capRequest);
+        }
         if (in.read() != 2) {
             throw new ProtocolException("TDS_CAPABILITY: expected response string");
         }
         capLen = in.read();
-        if (capLen != 10) {
+        if (capLen != 10 && capLen != 0) {
             throw new ProtocolException("TDS_CAPABILITY: byte count not 10");
         }
         byte capResponse[] = new byte[10];
-        in.read(capResponse);
+        if (capLen == 0) {
+            Logger.println("TDS_CAPABILITY: Invalid response length");
+        } else {
+            in.read(capResponse);
+        }
         //
         // jTDS sends   01 0A 03 84 0E EF 65 7F FF FF FF D6
         // Sybase 11.92 01 0A 00 00 00 23 61 41 CF FF FF C6

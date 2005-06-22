@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.52 2005-06-02 16:10:42 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.53 2005-06-22 08:53:29 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -272,6 +272,61 @@ public class SAfeTest extends DatabaseTestCase {
         // Make sure the connection is still alive
         stmt.executeQuery("select 1");
         stmt.close();
+    }
+
+    /**
+     * Test for bug [1222199] Delayed exception thrown in statement close.
+     */
+    public void testQueryTimeout() throws Exception {
+        try {
+            dropTable("jtdsStmtTest");
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE jtdsStmtTest (id int primary key, data text)");
+            assertEquals(1, stmt.executeUpdate("INSERT INTO jtdsStmtTest VALUES(1, " +
+                    "'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')"));
+            assertEquals(1, stmt.executeUpdate("INSERT INTO jtdsStmtTest VALUES(2, " +
+                    "'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')"));
+            //
+            // Query timeout
+            //
+            try {
+                stmt.setQueryTimeout(-1);
+                fail("Expected error timeout < 0");
+            } catch (SQLException e) {
+                ; // Ignore
+            }
+            con.setAutoCommit(false);
+            assertEquals(1, stmt.executeUpdate("UPDATE jtdsStmtTest SET data = '' WHERE id = 1"));
+            Connection con2 = getConnection();
+            Statement stmt2 = con2.createStatement();
+            stmt2.setQueryTimeout(1);
+            assertEquals(1, stmt2.getQueryTimeout());
+            try {
+                stmt2.executeQuery("SELECT * FROM jtdsStmtTest WHERE id = 1");
+                fail("Expected time out exception");
+            } catch (SQLException e) {
+                // This exception is cause by the query timer expiring:
+                // java.sql.SQLException: The query has timed out.
+                // But note a cancel packet is still pending.
+                assertEquals("HYT00", e.getSQLState());
+            }
+            //
+            // The close triggers another exception
+            // java.sql.SQLException: Request cancelled
+            // which is caused when the cancel packet itself is reached
+            // in the input stream.
+            // The exception means that the close does not complete and the
+            // actual network socket is not closed when it should be but only
+            // when (if) the connection object itself is garbage collected.
+            //
+            con2.close();
+            con.rollback();
+            con.setAutoCommit(true);
+            stmt.close();
+        } finally {
+            con.setAutoCommit(true);
+            dropTable("jtdsStmtTest");
+        }
     }
 
     // MT-unsafe!!!

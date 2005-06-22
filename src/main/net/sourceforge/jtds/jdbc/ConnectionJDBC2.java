@@ -61,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.90 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.91 2005-06-22 08:53:21 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1646,24 +1646,31 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     WeakReference wr = (WeakReference)tmpList.get(i);
 
                     if (wr != null) {
-                        Statement stmt = (Statement)wr.get();
+                        Statement stmt = (Statement) wr.get();
                         if (stmt != null) {
-                            stmt.close();
+                            try {
+                                stmt.close();
+                            } catch (SQLException ex) {
+                                // Ignore
+                            }
                         }
                     }
                 }
 
-                //
-                // Tell the server the session is ending
-                //
-                baseTds.closeConnection();
-                //
-                // Close network connection
-                //
-                baseTds.close();
-                if (cachedTds != null) {
-                    cachedTds = null;
+                try {
+                    // Tell the server the session is ending
+                    baseTds.closeConnection();
+                    // Close network connection
+                    baseTds.close();
+                    // Close cached TdsCore
+                    if (cachedTds != null) {
+                        cachedTds.close();
+                        cachedTds = null;
+                    }
+                } catch (SQLException ex) {
+                    // Ignore
                 }
+
                 socket.close();
             } catch (IOException e) {
                 // Ignore

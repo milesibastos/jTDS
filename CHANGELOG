@@ -1,6 +1,12 @@
 Changes from jTDS 1.1
 =======================
 
+06/22/2005 - Alin Sinpalean
+ o Corrected bug [1222199] Delayed exception thrown in statement close. In the
+   current implementation Statement.close() does throw any server side errors
+   (to make sure the user doesn't miss any) but Connection.close() ignores
+   them.
+
 06/21/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1222205] getParameterMetaData returns not
    implemented.

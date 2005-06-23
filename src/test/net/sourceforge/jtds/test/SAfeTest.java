@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.53 2005-06-22 08:53:29 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.54 2005-06-23 14:15:04 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -293,7 +293,7 @@ public class SAfeTest extends DatabaseTestCase {
                 stmt.setQueryTimeout(-1);
                 fail("Expected error timeout < 0");
             } catch (SQLException e) {
-                ; // Ignore
+                assertEquals("HY092", e.getSQLState());
             }
             con.setAutoCommit(false);
             assertEquals(1, stmt.executeUpdate("UPDATE jtdsStmtTest SET data = '' WHERE id = 1"));
@@ -305,7 +305,7 @@ public class SAfeTest extends DatabaseTestCase {
                 stmt2.executeQuery("SELECT * FROM jtdsStmtTest WHERE id = 1");
                 fail("Expected time out exception");
             } catch (SQLException e) {
-                // This exception is cause by the query timer expiring:
+                // This exception is caused by the query timer expiring:
                 // java.sql.SQLException: The query has timed out.
                 // But note a cancel packet is still pending.
                 assertEquals("HYT00", e.getSQLState());
@@ -321,7 +321,6 @@ public class SAfeTest extends DatabaseTestCase {
             //
             con2.close();
             con.rollback();
-            con.setAutoCommit(true);
             stmt.close();
         } finally {
             con.setAutoCommit(true);

@@ -1319,6 +1319,8 @@ public class ResultSetTest extends DatabaseTestCase {
                 rs = null;
             }
         } catch (OutOfMemoryError err) {
+            // Do not remove this. Although not really used, it will free
+            // memory, avoiding another OutOfMemoryError
             results = null;
             if (rs != null) {
                 // This used to fail, because the parser got confused
@@ -1519,13 +1521,15 @@ public class ResultSetTest extends DatabaseTestCase {
             }
 
             final Statement stmt2 = con2.createStatement();
+            // No better idea to store exceptions
+            final ArrayList container = new ArrayList();
             new Thread() {
                 public void run() {
                     try {
                         sleep(1000);
                         stmt2.cancel();
                     } catch (Exception ex) {
-                        ex.printStackTrace();
+                        container.add(ex);
                     }
                 }
             }.start();
@@ -1542,8 +1546,13 @@ public class ResultSetTest extends DatabaseTestCase {
                     }
                 }
             }
+            // Check for exceptions thrown in the cancel thread
+            if (container.size() != 0) {
+                throw (SQLException) container.get(0);
+            }
             rs.close();
             stmt.close();
+            stmt2.close();
         } finally {
             dropTable("pessimisticConcurrency");
             if (con2 != null) {

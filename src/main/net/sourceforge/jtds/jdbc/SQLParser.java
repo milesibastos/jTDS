@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.25 2005-05-25 09:24:03 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.26 2005-06-23 12:29:40 alin_sinpalean Exp $
  */
 class SQLParser {
     /**
@@ -697,7 +697,7 @@ class SQLParser {
         fnMap.put("curtime",  "convert(datetime, convert(varchar, getdate(), 108))");
         fnMap.put("dayname",  "datename(weekday,$)");
         fnMap.put("dayofmonth", "datepart(day,$)");
-        fnMap.put("dayofweek",  "datepart(weekday,$)");
+        fnMap.put("dayofweek", "((datepart(weekday,$)+@@DATEFIRST-1)%7+1)");
         fnMap.put("dayofyear",  "datepart(dayofyear,$)");
         fnMap.put("hour",       "datepart(hour,$)");
         fnMap.put("minute",     "datepart(minute,$)");

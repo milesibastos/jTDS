@@ -2352,6 +2352,33 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     /**
+     * Test for bug [1226210] {fn dayofweek()} depends on the language.
+     */
+    public void testDayOfWeek() throws Exception {
+        PreparedStatement pstmt =
+                con.prepareStatement("SELECT {fn dayofweek({fn curdate()})}");
+
+        // Execute and retrieve the day of week with the default @@DATEFIRST
+        ResultSet rs = pstmt.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        int day = rs.getInt(1);
+
+        // Set a new (very unlikely) value for @@DATEFIRST (Thursday)
+        Statement stmt = con.createStatement();
+        assertEquals(0, stmt.executeUpdate("SET DATEFIRST 4"));
+        stmt.close();
+
+        // Now re-execute and compare the two values
+        rs = pstmt.executeQuery();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(day, rs.getInt(1));
+
+        pstmt.close();
+    }
+
+    /**
      * Java 1.3 Timestamp.getDate() does not add the nano seconds to
      * the millisecond value returned. This causes the timestamp tests
      * to fail. If running under java 1.3 we add the nanos ourselves.

@@ -1,6 +1,10 @@
 Changes from jTDS 1.1
 =======================
 
+06/23/2005 - Alin Sinpalean
+ o Corrected bug [1226210] {fn dayofweek()} depends on the language. Fix
+   submitted by Xavier Poinsard.
+
 06/22/2005 - Alin Sinpalean
  o Corrected bug [1222199] Delayed exception thrown in statement close. In the
    current implementation Statement.close() does throw any server side errors

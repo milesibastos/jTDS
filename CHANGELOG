@@ -1,6 +1,10 @@
 Changes from jTDS 1.1
 =======================
 
+06/27/2005 - Alin Sinpalean
+ o Per Mike's suggestion, changed the SQLState of query cancelled exceptions to
+   HY008 instead of S1008.
+
 06/23/2005 - Alin Sinpalean
  o Corrected bug [1226210] {fn dayofweek()} depends on the language. Fix
    submitted by Xavier Poinsard.

@@ -1542,7 +1542,7 @@ public class ResultSetTest extends DatabaseTestCase {
                         fail("Expected locking to occur");
                     } catch (SQLException e) {
                         // Expected cancel exception
-                        assertEquals("S1008", e.getSQLState());
+                        assertEquals("HY008", e.getSQLState());
                     }
                 }
             }

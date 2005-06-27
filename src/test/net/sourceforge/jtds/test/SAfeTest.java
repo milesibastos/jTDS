@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.54 2005-06-23 14:15:04 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.55 2005-06-27 13:53:31 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -146,7 +146,7 @@ public class SAfeTest extends DatabaseTestCase {
         } catch( SQLException ex ) {
             assertEquals(
                     "Expecting cancel exception. Got " + ex.getMessage(),
-                    "S1008", ex.getSQLState());
+                    "HY008", ex.getSQLState());
         }
 
         con.setAutoCommit(true);
@@ -255,10 +255,10 @@ public class SAfeTest extends DatabaseTestCase {
                 // Can't fail here, the cancel() request might be out of order
             } catch (SQLException ex) {
                 // Request was canceled
-                if (!"S1008".equals(ex.getSQLState())) {
+                if (!"HY008".equals(ex.getSQLState())) {
                     ex.printStackTrace();
                 }
-                assertEquals("S1008", ex.getSQLState());
+                assertEquals("HY008", ex.getSQLState());
             }
 
             // Wait for the cancel to finish executing

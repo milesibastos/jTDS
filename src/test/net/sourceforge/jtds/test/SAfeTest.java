@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.55 2005-06-27 13:53:31 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.56 2005-06-28 13:40:34 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -307,8 +307,15 @@ public class SAfeTest extends DatabaseTestCase {
             } catch (SQLException e) {
                 // This exception is caused by the query timer expiring:
                 // java.sql.SQLException: The query has timed out.
-                // But note a cancel packet is still pending.
+                // But note a cancel ACK is still pending.
                 assertEquals("HYT00", e.getSQLState());
+            }
+            try {
+                stmt2.close();
+            } catch (SQLException e) {
+                // The cancel ACK should not throw an exception. It should be
+                // masked by the driver.
+                fail("Not expecting a cancel ACK exception.");
             }
             //
             // The close triggers another exception

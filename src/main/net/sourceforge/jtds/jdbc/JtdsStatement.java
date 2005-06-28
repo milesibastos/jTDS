@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.48 2005-06-15 14:56:58 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.49 2005-06-28 13:40:23 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -707,7 +707,7 @@ public class JtdsStatement implements java.sql.Statement {
         checkOpen();
 
         if (tds != null) {
-            tds.cancel();
+            tds.cancel(false);
         }
     }
 

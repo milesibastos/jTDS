@@ -1,6 +1,13 @@
 Changes from jTDS 1.1
 =======================
 
+06/28/2005 - Alin Sinpalean
+ o Applied Mike's additional patch for bug [1222199] Delayed exception thrown
+   in statement close. "Execution cancelled" exceptions are now only thrown if
+   the cancel was caused by a call to Statement.cancel(); if a timeout is the
+   cause, the exception is masked as an exception was already thrown when the
+   execution timed out.
+
 06/27/2005 - Alin Sinpalean
  o Per Mike's suggestion, changed the SQLState of query cancelled exceptions to
    HY008 instead of S1008.

@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.HashSet;
 
 import net.sourceforge.jtds.jdbc.cache.*;
 import net.sourceforge.jtds.util.*;
@@ -61,7 +62,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.91 2005-06-22 08:53:21 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.92 2005-06-28 15:40:41 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -587,7 +588,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // can be used to clean up the statement cache properly when the
         // prepared statement is closed.
         if (pstmt.handles == null) {
-        	pstmt.handles = new ArrayList(1);
+        	pstmt.handles = new HashSet(10);
         }
 
         pstmt.handles.add(proc);

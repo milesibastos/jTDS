@@ -7,6 +7,10 @@ Changes from jTDS 1.1
    the cancel was caused by a call to Statement.cancel(); if a timeout is the
    cause, the exception is masked as an exception was already thrown when the
    execution timed out.
+ o Corrected a memory leak caused by the prepared statement's handles
+   collection being implemented through an ArrayList rather than a Set. The
+   same handle would be added again and again on each execution and never
+   removed until the statement was closed.
 
 06/27/2005 - Alin Sinpalean
  o Per Mike's suggestion, changed the SQLState of query cancelled exceptions to

@@ -1,6 +1,11 @@
 Changes from jTDS 1.1
 =======================
 
+06/29/2005 - Alin Sinpalean
+ o Corrected a bug with prepare handles caching where the usage count was
+   decremented twice when a statement was closed, causing premature release of
+   handles.
+
 06/28/2005 - Alin Sinpalean
  o Applied Mike's additional patch for bug [1222199] Delayed exception thrown
    in statement close. "Execution cancelled" exceptions are now only thrown if

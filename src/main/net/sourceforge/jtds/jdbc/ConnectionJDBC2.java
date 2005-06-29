@@ -62,7 +62,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.92 2005-06-28 15:40:41 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.93 2005-06-29 12:56:48 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1234,16 +1234,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
 
         if (statement instanceof JtdsPreparedStatement) {
-            // Release the prepared statement handles or procedures
-            Collection handles = ((JtdsPreparedStatement) statement).handles;
-            if (handles != null) {
-                for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
-                    ProcEntry handle = (ProcEntry)iterator.next();
-                    handle.release();
-                }
-            }
-            // Clean up the prepared statement cache
-            handles = statementCache.getObsoleteHandles(handles);
+            // Clean up the prepared statement cache; getObsoleteHandles will
+            // decrement the usage count for the set of used handles
+            Collection handles = statementCache.getObsoleteHandles(
+                    ((JtdsPreparedStatement) statement).handles);
             if (handles != null) {
                 if (serverType == Driver.SQLSERVER) {
                     // SQL Server unprepare

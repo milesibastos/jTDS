@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import java.util.HashSet;
 
 import net.sourceforge.jtds.jdbc.cache.*;
 import net.sourceforge.jtds.util.*;
@@ -62,7 +61,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.94 2005-06-30 10:37:26 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.95 2005-06-30 10:59:09 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -538,11 +537,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         ProcEntry proc = (ProcEntry) statementCache.get(key);
 
         if (proc != null) {
-            // If already used by this statement, decrement use count
-            if (pstmt.handles != null && pstmt.handles.contains(proc)) {
+            //
+            // Yes found in cache OK
+            //
+
+            // If already used by the statement, decrement use count
+            if (pstmt.handles != null && pstmt.handles.containsValue(proc)) {
                 proc.release();
             }
-            // Yes found in cache OK
+
             pstmt.setColMetaData(proc.getColMetaData());
             if (serverType == Driver.SYBASE) {
                 pstmt.setParamMetaData(proc.getParamMetaData());
@@ -592,10 +595,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // can be used to clean up the statement cache properly when the
         // prepared statement is closed.
         if (pstmt.handles == null) {
-        	pstmt.handles = new HashSet(10);
+        	pstmt.handles = new HashMap(10);
         }
 
-        pstmt.handles.add(proc);
+        pstmt.handles.put(key, proc);
 
         // Give the user the name will be null if prepare failed
         return proc.toString();
@@ -1251,8 +1254,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (statement instanceof JtdsPreparedStatement) {
             // Clean up the prepared statement cache; getObsoleteHandles will
             // decrement the usage count for the set of used handles
-            Collection handles = statementCache.getObsoleteHandles(
-                    ((JtdsPreparedStatement) statement).handles);
+            Collection handles = null;
+            if (((JtdsPreparedStatement) statement).handles != null) {
+                handles = ((JtdsPreparedStatement) statement).handles.values();
+            }
+
+            handles = statementCache.getObsoleteHandles(handles);
+
             if (handles != null) {
                 if (serverType == Driver.SQLSERVER) {
                     // SQL Server unprepare

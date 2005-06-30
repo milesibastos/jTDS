@@ -4,6 +4,8 @@ Changes from jTDS 1.1
 06/30/2005 - Alin Sinpalean
  o Corrected bug [1229636] Memory Leak in Prepared Statements, based on Mike's
    initial patch.
+ o Realized that my initial fix will not work with maxStatements=0 (as opposed
+   to Mike's) so made some more changes.
 
 06/29/2005 - Alin Sinpalean
  o Corrected a bug with prepare handles caching where the usage count was

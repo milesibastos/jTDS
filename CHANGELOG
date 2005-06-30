@@ -1,6 +1,10 @@
 Changes from jTDS 1.1
 =======================
 
+06/30/2005 - Alin Sinpalean
+ o Corrected bug [1229636] Memory Leak in Prepared Statements, based on Mike's
+   initial patch.
+
 06/29/2005 - Alin Sinpalean
  o Corrected a bug with prepare handles caching where the usage count was
    decremented twice when a statement was closed, causing premature release of

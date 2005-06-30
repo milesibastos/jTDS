@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.ProcEntry;
 /**
  * LRU cache for procedures and statement handles.
  *
- * @version $Id: ProcedureCache.java,v 1.1 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: ProcedureCache.java,v 1.2 2005-06-30 10:37:22 alin_sinpalean Exp $
  */
 public class ProcedureCache implements StatementCache {
 
@@ -148,26 +148,14 @@ public class ProcedureCache implements StatementCache {
             // cache disabled.
             return;
         }
-        // Need to scavenge some existing entries
-        CacheEntry ce = tail.prior;
-        while (ce != head && cache.size() >= cacheSize) {
-            if (ce.value.getRefCount() == 0) {
-                // remove entry from linked list
-                ce.unlink();
-                // Add to free list for reclaiming
-                free.add(ce.value);
-                // Remove from HashMap
-                cache.remove(ce.key);
-                break;
-            }
-            ce = ce.prior;
-        }
-        //
-        // Now add new entry to cache
-        //
-        ce = new CacheEntry(key, (ProcEntry) handle);
+
+        // Add new entry to cache
+        CacheEntry ce = new CacheEntry(key, (ProcEntry) handle);
         cache.put(key, ce);
         ce.link(head);
+
+        // See if we need to scavenge some existing entries
+        scavengeCache();
     }
 
     /**
@@ -207,6 +195,9 @@ public class ProcedureCache implements StatementCache {
             }
         }
 
+        // Scavenge some existing entries
+        scavengeCache();
+
         if (cache != null) {
             // Ok the cache is enabled
             if (free.size() > 0) {
@@ -223,6 +214,29 @@ public class ProcedureCache implements StatementCache {
             // This will result in statements being prepared and unprepared
             // with each statement creation/close.
             return handles;
+        }
+    }
+
+    /**
+     * Removes unused entries trying to bring down the cache to the requested
+     * size. The removed entries are placed in the {@link #free} list.
+     * <p/>
+     * <b>Note:</b> entries that are in use will not be removed so it is
+     * possible for the cache to still be larger than {@link #cacheSize} after
+     * the call finishes.
+     */
+    private void scavengeCache() {
+        CacheEntry ce = tail.prior;
+        while (ce != head && cache.size() > cacheSize) {
+            if (ce.value.getRefCount() == 0) {
+                // remove entry from linked list
+                ce.unlink();
+                // Add to free list for reclaiming
+                free.add(ce.value);
+                // Remove from HashMap
+                cache.remove(ce.key);
+            }
+            ce = ce.prior;
         }
     }
 }

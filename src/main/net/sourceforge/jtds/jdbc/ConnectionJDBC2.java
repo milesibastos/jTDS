@@ -62,7 +62,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.93 2005-06-29 12:56:48 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.94 2005-06-30 10:37:26 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -538,6 +538,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         ProcEntry proc = (ProcEntry) statementCache.get(key);
 
         if (proc != null) {
+            // If already used by this statement, decrement use count
+            if (pstmt.handles != null && pstmt.handles.contains(proc)) {
+                proc.release();
+            }
             // Yes found in cache OK
             pstmt.setColMetaData(proc.getColMetaData());
             if (serverType == Driver.SYBASE) {
@@ -867,6 +871,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // For SQL 6.5 sp_executesql not available so use stored procedures.
         if (tdsVersion < Driver.TDS50 && prepareSql == TdsCore.EXECUTE_SQL) {
             prepareSql = TdsCore.TEMPORARY_STORED_PROCEDURES;
+        }
+
+        if (prepareSql == TdsCore.TEMPORARY_STORED_PROCEDURES
+                && maxStatements == 0
+                && serverType == Driver.SQLSERVER) {
+            //  Need to cache to some extent to track rollbacks
+            //  that drop temporary stored procs on SQL Server
+            maxStatements = 1;
         }
 
         ssl = info.getProperty(Messages.get(Driver.SSL));
@@ -1221,14 +1233,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     synchronized void removeStatement(JtdsStatement statement)
             throws SQLException {
         // Remove the JtdsStatement from the statement list
-        for (int i = 0; i < statements.size(); i++) {
-            WeakReference wr = (WeakReference) statements.get(i);
+        synchronized (statements) {
+            for (int i = 0; i < statements.size(); i++) {
+                WeakReference wr = (WeakReference) statements.get(i);
 
-            if (wr != null) {
-                Statement stmt = (Statement) wr.get();
+                if (wr != null) {
+                    Statement stmt = (Statement) wr.get();
 
-                if (stmt != null && stmt == statement) {
-                    statements.set(i, null);
+                    if (stmt != null && stmt == statement) {
+                        statements.set(i, null);
+                        break;
+                    }
                 }
             }
         }
@@ -1635,6 +1650,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
                 synchronized (statements) {
                     tmpList = new ArrayList(statements);
+                    statements.clear();
                 }
 
                 for (int i = 0; i < tmpList.size(); i++) {

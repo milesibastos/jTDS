@@ -28,7 +28,7 @@ import java.sql.Types;
 import java.sql.ParameterMetaData;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.41 2005-06-21 17:04:45 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.42 2005-06-30 10:37:26 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -837,6 +837,8 @@ public class PreparedStatementTest extends TestBase {
         // statements that are being executed.
         // For example if maxStatements=0 then the log should show that each
         // statement is prepared and then unprepared at statement close.
+        // If maxStatements < 4 then you will see statements being unprepared
+        // when the cache is full.
         //
 //        DriverManager.setLogStream(System.out);
         Statement stmt = con.createStatement();
@@ -916,6 +918,16 @@ public class PreparedStatementTest extends TestBase {
         pstmt2.close();
         pstmt1.close();
         stmt.close();
+        //
+        // Now we create a final prepared statement to demonstate that
+        // the cache is flushed correctly when the number of statements
+        // exceeds the cachesize. For example setting maxStatements=1
+        // will cause three statements to be unprepared when this statement
+        // is closed
+        //
+        pstmt1 = con.prepareStatement("SELECT id, data FROM #TEST");
+        pstmt1.executeQuery();
+        pstmt1.close();
     }
 
     /**

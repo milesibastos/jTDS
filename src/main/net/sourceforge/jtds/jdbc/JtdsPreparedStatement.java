@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.52 2005-06-21 17:04:21 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.53 2005-06-30 10:37:26 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -393,6 +393,17 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
 // -------------------- java.sql.PreparedStatement methods follow -----------------
+
+    public void close() throws SQLException {
+        try {
+            super.close();
+        } finally {
+            // Null these fields to reduce memory usage while
+            // wating for Statement.finalize() to execute.
+            this.handles = null;
+            this.parameters = null;
+        }
+    }
 
     public int executeUpdate() throws SQLException {
         checkOpen();

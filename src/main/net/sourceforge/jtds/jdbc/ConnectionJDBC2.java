@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.HashSet;
 
 import net.sourceforge.jtds.jdbc.cache.*;
 import net.sourceforge.jtds.util.*;
@@ -61,7 +62,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.95 2005-06-30 10:59:09 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.96 2005-07-01 15:10:03 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -542,7 +543,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             //
 
             // If already used by the statement, decrement use count
-            if (pstmt.handles != null && pstmt.handles.containsValue(proc)) {
+            if (pstmt.handles != null && pstmt.handles.contains(proc)) {
                 proc.release();
             }
 
@@ -595,10 +596,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // can be used to clean up the statement cache properly when the
         // prepared statement is closed.
         if (pstmt.handles == null) {
-        	pstmt.handles = new HashMap(10);
+            pstmt.handles = new HashSet(10);
         }
 
-        pstmt.handles.put(key, proc);
+        pstmt.handles.add(proc);
 
         // Give the user the name will be null if prepare failed
         return proc.toString();
@@ -874,14 +875,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // For SQL 6.5 sp_executesql not available so use stored procedures.
         if (tdsVersion < Driver.TDS50 && prepareSql == TdsCore.EXECUTE_SQL) {
             prepareSql = TdsCore.TEMPORARY_STORED_PROCEDURES;
-        }
-
-        if (prepareSql == TdsCore.TEMPORARY_STORED_PROCEDURES
-                && maxStatements == 0
-                && serverType == Driver.SQLSERVER) {
-            //  Need to cache to some extent to track rollbacks
-            //  that drop temporary stored procs on SQL Server
-            maxStatements = 1;
         }
 
         ssl = info.getProperty(Messages.get(Driver.SSL));
@@ -1254,12 +1247,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (statement instanceof JtdsPreparedStatement) {
             // Clean up the prepared statement cache; getObsoleteHandles will
             // decrement the usage count for the set of used handles
-            Collection handles = null;
-            if (((JtdsPreparedStatement) statement).handles != null) {
-                handles = ((JtdsPreparedStatement) statement).handles.values();
-            }
-
-            handles = statementCache.getObsoleteHandles(handles);
+            Collection handles = statementCache.getObsoleteHandles(
+                                          ((JtdsPreparedStatement) statement).handles);
 
             if (handles != null) {
                 if (serverType == Driver.SQLSERVER) {

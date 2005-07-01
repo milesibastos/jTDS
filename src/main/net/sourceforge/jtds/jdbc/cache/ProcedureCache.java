@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.ProcEntry;
 /**
  * LRU cache for procedures and statement handles.
  *
- * @version $Id: ProcedureCache.java,v 1.3 2005-06-30 11:22:37 alin_sinpalean Exp $
+ * @version $Id: ProcedureCache.java,v 1.4 2005-07-01 15:09:43 alin_sinpalean Exp $
  */
 public class ProcedureCache implements StatementCache {
 
@@ -74,6 +74,8 @@ public class ProcedureCache implements StatementCache {
         }
     }
 
+    /** The maximum initial HashMap size. */
+    private static final int MAX_INITIAL_SIZE = 50;
     /** The actual cache instance. */
     private HashMap cache;
     /** Maximum cache size or 0 to disable. */
@@ -92,11 +94,9 @@ public class ProcedureCache implements StatementCache {
      */
     public ProcedureCache(int cacheSize) {
         this.cacheSize = cacheSize;
-        if (cacheSize > 0) {
-            cache = new HashMap(Math.min(1000, cacheSize + 1));
-        }
-        head = new CacheEntry(null, null);
-        tail = new CacheEntry(null, null);
+        cache = new HashMap(Math.min(MAX_INITIAL_SIZE, cacheSize + 1));
+        head  = new CacheEntry(null, null);
+        tail  = new CacheEntry(null, null);
         head.next = tail;
         tail.prior = head;
         free = new ArrayList();
@@ -113,10 +113,6 @@ public class ProcedureCache implements StatementCache {
      *         does not exist
      */
     public synchronized Object get(String key) {
-        if (cache == null) {
-            // cache disabled.
-            return null;
-        }
         CacheEntry ce = (CacheEntry) cache.get(key);
         if (ce != null) {
             // remove entry from linked list
@@ -141,11 +137,6 @@ public class ProcedureCache implements StatementCache {
      * @param handle proc entry to be inserted into the cache
      */
     public synchronized void put(String key, Object handle) {
-        if (cache == null) {
-            // cache disabled.
-            return;
-        }
-
         // Increment usage count
         ((ProcEntry) handle).addRef();
 
@@ -164,10 +155,6 @@ public class ProcedureCache implements StatementCache {
      * @param key value that identifies the cache entry
      */
     public synchronized void remove(String key) {
-        if (cache == null) {
-            // cache disabled.
-            return;
-        }
         CacheEntry ce = (CacheEntry) cache.get(key);
         if (ce != null) {
             // remove entry from linked list
@@ -198,22 +185,14 @@ public class ProcedureCache implements StatementCache {
         // Scavenge some existing entries
         scavengeCache();
 
-        if (cache != null) {
-            // Ok the cache is enabled
-            if (free.size() > 0) {
-                // There are redundant entries to drop
-                Collection list = free;
-                free = new ArrayList();
-                return list;
-            } else {
-                // Nothing to do this time
-                return null;
-            }
+        if (free.size() > 0) {
+            // There are redundant entries to drop
+            Collection list = free;
+            free = new ArrayList();
+            return list;
         } else {
-            // Cache is disabled so return the callers statement list.
-            // This will result in statements being prepared and unprepared
-            // with each statement creation/close.
-            return handles;
+            // Nothing to do this time
+            return null;
         }
     }
 

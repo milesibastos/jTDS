@@ -35,7 +35,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Collection;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.54 2005-06-30 10:59:09 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.55 2005-07-01 15:10:04 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -75,7 +75,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     /** Used to format numeric values when scale is specified. */
     private static NumberFormat f = NumberFormat.getInstance();
     /** Collection of handles used by this statement */
-    Map handles;
+    Collection handles;
 
     /**
      * Construct a new preparedStatement object.

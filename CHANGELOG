@@ -1,6 +1,13 @@
 Changes from jTDS 1.1
 =======================
 
+07/01/2005 - Alin Sinpalean
+ o Applied yet another patch for bug [1229636] Memory Leak in Prepared
+   Statements, with a minor change. This seems to finally fix the caching and
+   memory leaks; handles are always cached, even if maxStatements=0, retrieved
+   from the connection cache and the statement list of handles is implemented
+   by a Set, to make sure no memory leaks due to duplicates occur.
+
 06/30/2005 - Alin Sinpalean
  o Corrected bug [1229636] Memory Leak in Prepared Statements, based on Mike's
    initial patch.

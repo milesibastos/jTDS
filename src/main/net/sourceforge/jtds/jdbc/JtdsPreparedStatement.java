@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.55 2005-07-01 15:10:04 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.56 2005-07-04 11:30:58 alin_sinpalean Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -659,7 +659,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         try {
             Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
             Class[] parameterTypes = new Class[] {ParamInfo[].class, Boolean.TYPE};
-            Object[] arguments = new Object[] {parameters, Boolean.valueOf(connection.getUseLOBs())};
+            Object[] arguments = new Object[] {parameters,
+                                               connection.getUseLOBs() ? Boolean.TRUE : Boolean.FALSE};
             Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
 
             return (ParameterMetaData) pmdConstructor.newInstance(arguments);

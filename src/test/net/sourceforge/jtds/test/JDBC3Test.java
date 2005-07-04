@@ -3,11 +3,15 @@ package net.sourceforge.jtds.test;
 import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.PreparedStatement;
+import java.sql.ParameterMetaData;
+import java.sql.Types;
+import java.math.BigDecimal;
 
 /**
  * Test for miscellaneous JDBC 3.0 features.
  *
- * @version $Id: JDBC3Test.java,v 1.2 2005-04-25 11:47:01 alin_sinpalean Exp $
+ * @version $Id: JDBC3Test.java,v 1.3 2005-07-04 11:31:09 alin_sinpalean Exp $
  */
 public class JDBC3Test extends TestBase {
     public JDBC3Test(String name) {
@@ -106,5 +110,26 @@ public class JDBC3Test extends TestBase {
         rs2.close();
 
         stmt.close();
+    }
+
+    /**
+     * Test for bug [1222205] getParameterMetaData returns not implemented.
+     */
+    public void testGetParamMetaData() throws SQLException {
+        PreparedStatement pstmt = con.prepareStatement("SELECT ?,?,?");
+        pstmt.setString(1, "TEST");
+        pstmt.setBigDecimal(2, new BigDecimal("123.45"));
+        pstmt.setBoolean(3, true);
+
+        ParameterMetaData pmd = pstmt.getParameterMetaData();
+        assertEquals(3, pmd.getParameterCount());
+        assertEquals(Types.VARCHAR, pmd.getParameterType(1));
+        assertEquals("java.lang.String", pmd.getParameterClassName(1));
+        assertEquals(2, pmd.getScale(2));
+        assertEquals(38, pmd.getPrecision(2));
+        assertEquals(ParameterMetaData.parameterModeIn,
+                pmd.getParameterMode(3));
+
+        pstmt.close();
     }
 }

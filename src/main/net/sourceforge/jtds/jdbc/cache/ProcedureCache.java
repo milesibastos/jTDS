@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.ProcEntry;
 /**
  * LRU cache for procedures and statement handles.
  *
- * @version $Id: ProcedureCache.java,v 1.4 2005-07-01 15:09:43 alin_sinpalean Exp $
+ * @version $Id: ProcedureCache.java,v 1.5 2005-07-05 16:44:25 alin_sinpalean Exp $
  */
 public class ProcedureCache implements StatementCache {
 
@@ -94,7 +94,7 @@ public class ProcedureCache implements StatementCache {
      */
     public ProcedureCache(int cacheSize) {
         this.cacheSize = cacheSize;
-        cache = new HashMap(Math.min(MAX_INITIAL_SIZE, cacheSize + 1));
+        cache = new HashMap(Math.min(MAX_INITIAL_SIZE, cacheSize) + 1);
         head  = new CacheEntry(null, null);
         tail  = new CacheEntry(null, null);
         head.next = tail;

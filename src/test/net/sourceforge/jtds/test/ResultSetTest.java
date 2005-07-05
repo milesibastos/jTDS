@@ -1608,6 +1608,25 @@ public class ResultSetTest extends DatabaseTestCase {
         }
     }
 
+    /**
+     * Test for bug [1232733] setFetchSize(0) causes exception.
+     */
+    public void testZeroFetchSize() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
+        stmt.setFetchSize(0);
+
+        ResultSet rs = stmt.executeQuery("SELECT 1 UNION SELECT 2");
+        assertTrue(rs.next());
+
+        rs.setFetchSize(0);
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

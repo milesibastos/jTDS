@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.49 2005-06-28 13:40:23 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.50 2005-07-05 15:51:26 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -69,6 +69,7 @@ public class JtdsStatement implements java.sql.Statement {
     static final int DATALINK = 70;
     static final Integer SUCCESS_NO_INFO = new Integer(-2);
     static final Integer EXECUTE_FAILED = new Integer(-3);
+    static final int DEFAULT_FETCH_SIZE = 100;
 
     /** The connection owning this statement object. */
     protected ConnectionJDBC2 connection;
@@ -89,7 +90,7 @@ public class JtdsStatement implements java.sql.Statement {
     /** The fetch size (default 100, only used by cursor
      * <code>ResultSet</code>s).
      */
-    protected int fetchSize = 100;
+    protected int fetchSize = DEFAULT_FETCH_SIZE;
     /** The cursor name to be used for positioned updates. */
     protected String cursorName;
     /** True if this statement is closed. */
@@ -647,6 +648,16 @@ public class JtdsStatement implements java.sql.Statement {
                 && (sqlWord == null || sqlWord.equals("select") || sqlWord.startsWith("exec"));
     }
 
+    /**
+     * Retrieve the default fetch size for this statement.
+     *
+     * @return the default fetch size for a new <code>ResultSet</code>
+     */
+    int getDefaultFetchSize() {
+        return (0 < this.maxRows && this.maxRows < DEFAULT_FETCH_SIZE)
+                ? this.maxRows : DEFAULT_FETCH_SIZE;
+    }
+
 // ------------------ java.sql.Statement methods ----------------------
 
     public int getFetchDirection() throws SQLException {
@@ -887,7 +898,9 @@ public class JtdsStatement implements java.sql.Statement {
                 Messages.get("error.generic.optltzero", "setFetchSize"),
                     "HY092");
         }
-
+        if (rows == 0) {
+            rows = getDefaultFetchSize();
+        }
         this.fetchSize = rows;
     }
 
@@ -911,7 +924,10 @@ public class JtdsStatement implements java.sql.Statement {
                 Messages.get("error.generic.optltzero", "setMaxRows"),
                     "HY092");
         }
-
+        if (max > 0 && max < this.fetchSize) {
+            // Just for consistency with setFetchSize()
+            this.fetchSize = max;
+        }
         this.maxRows = max;
     }
 

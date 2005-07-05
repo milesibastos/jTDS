@@ -1,8 +1,11 @@
 Changes from jTDS 1.1
 =======================
 
+07/05/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1232733] setFetchSize(0) causes exception.
+
 07/04/2005 - Alin Sinpalean
- o Corrected some compilation issues with Java 1.3.
+ o Corrected some build issues with Java 1.3.
 
 07/01/2005 - Alin Sinpalean
  o Applied yet another patch for bug [1229636] Memory Leak in Prepared

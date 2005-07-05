@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.42 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.43 2005-07-05 15:51:25 alin_sinpalean Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -682,9 +682,11 @@ public class JtdsResultSet implements ResultSet {
                     Messages.get("error.generic.badparam",
                             Integer.toString(rows),
                             "rows"),
-                                            "HY092");
+                    "HY092");
         }
-
+        if (rows == 0 && statement != null) {
+            rows = statement.getDefaultFetchSize();
+        }
         this.fetchSize = rows;
     }
 

@@ -20,6 +20,8 @@ Changes from jTDS 1.1
    initial patch.
  o Realized that my initial fix will not work with maxStatements=0 (as opposed
    to Mike's) so made some more changes.
+ o Corrected synchronization issue in ConnectionJDBC2.removeStatement() for the
+   ConnectionJDBC2.statements instance variable.
 
 06/29/2005 - Alin Sinpalean
  o Corrected a bug with prepare handles caching where the usage count was

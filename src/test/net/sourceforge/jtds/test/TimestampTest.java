@@ -2379,6 +2379,55 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
     /**
+     * Test for bug [1235845] getTimestamp() returns illegal value after
+     * getString().
+     */
+    public void testGetString() throws SQLException {
+        Statement stmt = con.createStatement();
+
+        ResultSet rs = stmt.executeQuery("select getdate()");
+        assertTrue(rs.next());
+        String stringValue = rs.getString(1);
+        String timestampValue = rs.getTimestamp(1).toString();
+        assertEquals(stringValue, timestampValue);
+        rs.close();
+
+        stmt.close();
+    }
+
+    /**
+     * Test for bug [1234531] Dates before 01/01/1900 broken due to DateTime
+     * value markers.
+     */
+    public void test1899Date() throws Exception {
+        // Per the SQL Server documentation
+        // Send:    12/31/1899 23:59:59.990
+        // Receive: 12/31/1899 23:59:59.990
+        Calendar originalValue = Calendar.getInstance();
+
+        originalValue.set(Calendar.MONTH, Calendar.DECEMBER);
+        originalValue.set(Calendar.DAY_OF_MONTH, 31);
+        originalValue.set(Calendar.YEAR, 1899);
+        originalValue.set(Calendar.HOUR_OF_DAY, 23);
+        originalValue.set(Calendar.MINUTE, 59);
+        originalValue.set(Calendar.SECOND, 59);
+        originalValue.set(Calendar.MILLISECOND, 990);
+
+        PreparedStatement pstmt = con.prepareStatement("select ?");
+        pstmt.setTimestamp(1, new Timestamp(originalValue.getTime().getTime()));
+        ResultSet rs = pstmt.executeQuery();
+
+        assertTrue(rs.next());
+        final long expectedTime = originalValue.getTime().getTime();
+        final long actualTime = getTimeInMs(rs);
+        assertEquals(expectedTime, actualTime);
+        assertFalse(rs.next());
+
+        rs.close();
+        pstmt.close();
+    }
+
+    /**
      * Java 1.3 Timestamp.getDate() does not add the nano seconds to
      * the millisecond value returned. This causes the timestamp tests
      * to fail. If running under java 1.3 we add the nanos ourselves.

@@ -1,5 +1,10 @@
 Changes from jTDS 1.1
-=======================
+=====================
+
+07/11/2005 - Alin Sinpalean
+ o Applied Mike's fix for bugs [1234531] Dates before 01/01/1900 broken due to
+   DateTime value markers and [1235845] getTimestamp() returns illegal value
+   after getString().
 
 07/05/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1232733] setFetchSize(0) causes exception.

@@ -29,7 +29,7 @@ import java.util.GregorianCalendar;
  * Java classes.
  *
  * @author Mike Hutchinson
- * @version $Id: DateTime.java,v 1.3 2005-05-30 15:35:33 alin_sinpalean Exp $
+ * @version $Id: DateTime.java,v 1.4 2005-07-11 13:33:30 alin_sinpalean Exp $
  */
 public class DateTime {
     /** Per thread instance of Calendar used for conversions. */
@@ -39,9 +39,9 @@ public class DateTime {
         }
     };
     /** Indicates date value not used. */
-    static final int DATE_NOT_USED = -1;
+    static final int DATE_NOT_USED = Integer.MIN_VALUE;
     /** Indicates time value not used. */
-    static final int TIME_NOT_USED = -1;
+    static final int TIME_NOT_USED = Integer.MIN_VALUE;
     /** The date component of the server datetime value. */
     private int   date;
     /** The time component of the server datetime value. */
@@ -428,6 +428,17 @@ public class DateTime {
             if (!unpacked) {
                 unpackDateTime();
             }
+            //
+            // Make local copies to avoid corrupting unpacked
+            // components.
+            //
+            int day    = this.day;
+            int month  = this.month;
+            int year   = this.year;
+            int millis = this.millis;
+            int second = this.second;
+            int minute = this.minute;
+            int hour  = this.hour;
             char buf[] = new char[23];
             int p = 0;
             if (date != DATE_NOT_USED) {
@@ -448,7 +459,7 @@ public class DateTime {
                 year /= 10;
                 buf[--p] = (char)('0' + year % 10);
                 p += 10;
-                if (time != -1) {
+                if (time != TIME_NOT_USED) {
                     buf[p++] = ' ';
                 }
             }

@@ -18,6 +18,7 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
+import java.math.BigDecimal;
 //
 // MJH - Changes for new jTDS version
 // Added registerOutParameter to testCallableStatementParsing2
@@ -866,6 +867,30 @@ public class CallableStatementTest extends TestBase {
             assertEquals("TEST EXCEPTION", e.getMessage());
         }
         assertEquals(100, cstmt.getInt(1));
+        cstmt.close();
+    }
+
+    /**
+     * Test for bug [1236078] Procedure doesn't get called for some BigDecimal
+     * values - invalid bug.
+     */
+    public void testBigDecimal() throws Exception {
+        Statement stmt = con.createStatement();
+        assertEquals(0, stmt.executeUpdate("CREATE TABLE #dec_test "
+                + "(ColumnVC varchar(50) NULL, ColumnDec decimal(18,4) NULL)"));
+        assertEquals(0, stmt.executeUpdate("CREATE PROCEDURE #dec_test2"
+                + "(@inVc varchar(32), @inBd decimal(18,4)) AS "
+                + "begin "
+                + "update #dec_test set columnvc = @inVc, columndec = @inBd "
+                + "end"));
+        assertEquals(1, stmt.executeUpdate(
+                "insert #dec_test (columnvc, columndec) values (null, null)"));
+        stmt.close();
+
+        CallableStatement cstmt = con.prepareCall("{call #dec_test2 (?,?)}");
+        cstmt.setString(1, "D: " + new java.util.Date());
+        cstmt.setBigDecimal(2, new BigDecimal("2.9E+7"));
+        assertEquals(1, cstmt.executeUpdate());
         cstmt.close();
     }
 

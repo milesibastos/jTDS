@@ -12,7 +12,7 @@ import junit.framework.TestCase;
 
 /**
  * @author  builder
- * @version $Id: TestBase.java,v 1.20 2004-12-10 13:17:30 alin_sinpalean Exp $
+ * @version $Id: TestBase.java,v 1.21 2005-07-27 11:02:57 alin_sinpalean Exp $
  */
 public abstract class TestBase extends TestCase {
 
@@ -37,18 +37,19 @@ public abstract class TestBase extends TestCase {
     public Connection getConnection() throws Exception {
         Class.forName(props.getProperty("driver"));
         String url = props.getProperty("url");
-        Connection con = DriverManager.getConnection(url, props);
-//        showWarnings(con.getWarnings());
-        initLanguage(con);
-
-        return con;
+        return DriverManager.getConnection(url, props);
     }
 
-    public void showWarnings(SQLWarning w) {
-        while (w != null) {
-            System.out.println(w.getMessage());
-            w = w.getNextWarning();
+    public Connection getConnection(Properties override) throws Exception {
+        Properties newProps = new Properties(props);
+        for (Iterator it = override.keySet().iterator(); it.hasNext();) {
+            String key = (String) it.next();
+            newProps.setProperty(key, override.getProperty(key));
         }
+
+        Class.forName(newProps.getProperty("driver"));
+        String url = newProps.getProperty("url");
+        return DriverManager.getConnection(url, newProps);
     }
 
     private void disconnect() throws Exception {
@@ -95,13 +96,6 @@ public abstract class TestBase extends TestCase {
         }
 
         System.out.println();
-    }
-
-    private void initLanguage(Connection con) throws SQLException {
-        Statement stmt = con.createStatement();
-
-        stmt.executeUpdate("set LANGUAGE 'us_english'");
-        stmt.close();
     }
 
     private static Properties loadProperties(String fileName) {

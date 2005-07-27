@@ -38,8 +38,6 @@ public class SanityTest extends TestBase {
                      stmt.execute( "DECLARE cursor1 SCROLL CURSOR FOR"
                                    + "\nSELECT * FROM #test"));
 
-        showWarnings(stmt.getWarnings());
-
         assertEquals("Expected an update count", false,
                      stmt.execute("OPEN cursor1"));
 

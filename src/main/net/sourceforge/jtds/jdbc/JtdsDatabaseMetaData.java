@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.31 2005-06-21 17:04:21 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.32 2005-07-27 11:02:33 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -207,7 +207,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         while (rs.next()) {
             for (int i = 1; i <= colCnt; i++) {
                 if (i == 3) {
-                    int type = TypeInfo.normalizeDataType(rs.getInt(i));
+                    int type = TypeInfo.normalizeDataType(rs.getInt(i), connection.getUseLOBs());
                     rsTmp.updateInt(i, type);
                 } else {
                     rsTmp.updateObject(i, rs.getObject(i));
@@ -430,7 +430,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                 for (int i = 1; i <= 4; i++) {
                     rsTmp.updateObject(i, rs.getObject(i));
                 }
-                rsTmp.updateInt(5, TypeInfo.normalizeDataType(rs.getInt(5)));
+                rsTmp.updateInt(5, TypeInfo.normalizeDataType(rs.getInt(5), connection.getUseLOBs()));
                 String typeName = rs.getString(6);
                 rsTmp.updateString(6, typeName);
                 for (int i = 8; i <= 12; i++) {
@@ -460,7 +460,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                 // MS SQL Server - Mainly OK but we need to fix some data types.
                 for (int i = 1; i <= colCnt; i++) {
                     if (i == 5) {
-                        int type = TypeInfo.normalizeDataType(rs.getInt(i));
+                        int type = TypeInfo.normalizeDataType(rs.getInt(i), connection.getUseLOBs());
                         rsTmp.updateInt(i, type);
                     } else {
                         rsTmp.updateObject(i, rs.getObject(i));
@@ -1419,7 +1419,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     }
                     rsTmp.updateString(i + offset, name);
                 } else if ("data_type".equalsIgnoreCase(rsmd.getColumnName(i))) {
-                    int type = TypeInfo.normalizeDataType(rs.getInt(i));
+                    int type = TypeInfo.normalizeDataType(rs.getInt(i), connection.getUseLOBs());
                     rsTmp.updateInt(i + offset, type);
                 } else {
                     rsTmp.updateObject(i + offset, rs.getObject(i));
@@ -1928,7 +1928,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         try {
-            return createTypeInfoResultSet(rs);
+            return createTypeInfoResultSet(rs, connection.getUseLOBs());
         } finally {
             // CachedResultSet retains reference to same statement as rs, so don't close statement
             rs.close();
@@ -3465,7 +3465,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
     }
 
-    private static CachedResultSet createTypeInfoResultSet(JtdsResultSet rs) throws SQLException {
+    private static CachedResultSet createTypeInfoResultSet(JtdsResultSet rs, boolean useLOBs) throws SQLException {
         CachedResultSet result = new CachedResultSet(rs, false);
         if (result.getMetaData().getColumnCount() > TypeInfo.NUM_COLS) {
             result.setColumnCount(TypeInfo.NUM_COLS);
@@ -3476,7 +3476,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         result.setConcurrency(ResultSet.CONCUR_UPDATABLE);
         result.moveToInsertRow();
 
-        for (Iterator iter = getSortedTypes(rs).iterator(); iter.hasNext();) {
+        for (Iterator iter = getSortedTypes(rs, useLOBs).iterator(); iter.hasNext();) {
             TypeInfo ti = (TypeInfo) iter.next();
             ti.update(result);
             result.insertRow();
@@ -3488,11 +3488,11 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         return result;
     }
 
-    private static Collection getSortedTypes(ResultSet rs) throws SQLException {
+    private static Collection getSortedTypes(ResultSet rs, boolean useLOBs) throws SQLException {
         List types = new ArrayList(40);  // 40 should be enough capacity to hold all types
 
         while (rs.next()) {
-            types.add(new TypeInfo(rs));
+            types.add(new TypeInfo(rs, useLOBs));
         }
 
         Collections.sort(types);

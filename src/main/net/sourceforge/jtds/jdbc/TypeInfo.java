@@ -29,7 +29,7 @@ import java.sql.Types;
  * tests.
  *
  * @author David Eaves
- * @version $Id: TypeInfo.java,v 1.4 2005-04-21 09:35:14 alin_sinpalean Exp $
+ * @version $Id: TypeInfo.java,v 1.5 2005-07-27 11:02:34 alin_sinpalean Exp $
  */
 public class TypeInfo implements Comparable {
     static final int NUM_COLS = 18;
@@ -56,8 +56,7 @@ public class TypeInfo implements Comparable {
     private final int normalizedType;
     private final int distanceFromJdbcType;
 
-
-    public TypeInfo(ResultSet rs) throws SQLException {
+    public TypeInfo(ResultSet rs, boolean useLOBs) throws SQLException {
         typeName = rs.getString(1);
         dataType = rs.getInt(2);
         precision = rs.getInt(3);
@@ -86,7 +85,7 @@ public class TypeInfo implements Comparable {
             sqlDatetimeSub = 0;
             numPrecRadix = 0;
         }
-        normalizedType = normalizeDataType(dataType);
+        normalizedType = normalizeDataType(dataType, useLOBs);
         distanceFromJdbcType = determineDistanceFromJdbcType();
     }
 
@@ -115,7 +114,7 @@ public class TypeInfo implements Comparable {
         this.sqlDatetimeSub = 0;
         this.numPrecRadix = 0;
 
-        normalizedType = normalizeDataType(dataType);
+        normalizedType = normalizeDataType(dataType, true);
         distanceFromJdbcType = determineDistanceFromJdbcType();
     }
 
@@ -232,9 +231,10 @@ public class TypeInfo implements Comparable {
      * Return a {@link java.sql.Types}-defined type for an SQL Server specific data type.
      *
      * @param serverDataType the data type, as returned by the server
+     * @param useLOBs        whether LOB data types are used for large types
      * @return the equivalent data type defined by <code>java.sql.Types</code>
      */
-    public static int normalizeDataType(int serverDataType) {
+    public static int normalizeDataType(int serverDataType, boolean useLOBs) {
         switch (serverDataType) {
             case 35: // Sybase UNIVARCHAR
                 return Types.VARCHAR;
@@ -247,15 +247,15 @@ public class TypeInfo implements Comparable {
             case 6: // FLOAT
                 return Types.DOUBLE;
             case -1: // LONGVARCHAR
-                return Types.CLOB;
+                return useLOBs ? Types.CLOB : Types.LONGVARCHAR;
             case -4: // LONGVARBINARY
-                return Types.BLOB;
+                return useLOBs ? Types.BLOB : Types.LONGVARBINARY;
             case -8: // NCHAR
                 return Types.CHAR;
             case -9: // SYSNAME / NVARCHAR
                 return Types.VARCHAR;
             case -10: // NTEXT
-                return Types.CLOB;
+                return useLOBs ? Types.CLOB : Types.LONGVARCHAR;
             case -11: // UNIQUEIDENTIFIER
                 return Types.CHAR;
             case -150: // SQL_VARIANT

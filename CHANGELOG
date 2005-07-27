@@ -1,6 +1,9 @@
 Changes from jTDS 1.1
 =====================
 
+07/27/2005 - Alin Sinpalean
+ o Corrected bug [1245775] Column type inconsistency when useLOBs=false.
+
 07/11/2005 - Alin Sinpalean
  o Applied Mike's fix for bugs [1234531] Dates before 01/01/1900 broken due to
    DateTime value markers and [1235845] getTimestamp() returns illegal value

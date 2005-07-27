@@ -18,11 +18,14 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
+import java.util.Properties;
+
+import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.14 2005-06-01 17:24:14 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.15 2005-07-27 11:02:57 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -669,6 +672,42 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         } finally {
             dropProcedure("jtds_testparam");
         }
+    }
+
+    /**
+     * Test for bug [1245775] Column type inconsistency when useLOBs=false.
+     */
+    public void testProcedureUseLOBsFalse() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("useLOBs", "false");
+        Connection con = getConnection(props);
+
+        try {
+            DatabaseMetaData meta = con.getMetaData();
+            ResultSet rs = meta.getTypeInfo();
+            while (rs.next()) {
+                if ("text".equalsIgnoreCase(rs.getString(1))
+                        || "ntext".equalsIgnoreCase(rs.getString(1))) {
+                    assertEquals(Types.LONGVARCHAR, rs.getInt(2));
+                } else if ("image".equalsIgnoreCase(rs.getString(1))) {
+                    assertEquals(Types.LONGVARBINARY, rs.getInt(2));
+                }
+            }
+        } finally {
+            con.close();
+        }
+
+        DatabaseMetaData meta = this.con.getMetaData();
+        ResultSet rs = meta.getTypeInfo();
+        while (rs.next()) {
+            if ("text".equalsIgnoreCase(rs.getString(1))
+                    || "ntext".equalsIgnoreCase(rs.getString(1))) {
+                assertEquals(Types.CLOB, rs.getInt(2));
+            } else if ("image".equalsIgnoreCase(rs.getString(1))) {
+                assertEquals(Types.BLOB, rs.getInt(2));
+            }
+        }
+
     }
 
     public static void main(String[] args) {

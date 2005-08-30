@@ -294,15 +294,16 @@
           before timing out.</dd>
         <dt><code>namedPipe</code> (default - <code>false</code>)</dt>
         <dd>When set to <code>true</code>, named pipe communication is used to
-          connect to the database instead of TCP/IP sockets. When the server
-          name is "localhost" or starts with "127.", local named pipes (via the
-          Windows filesystem) are used. These usually have better performance
-          than TCP/IP communication, but only work when the SQL Server and
-          client are on the same machine. If the server name is not "localhost"
-          or "127.<i>something</i>" the <a href="http://jcifs.samba.org/">JCIFS</a>
-          library is used. JCIFS is a named pipe over TCP/IP implementation and
-          requires Windows (NTLM) authentication, so the <code>domain</code>
-          parameter is required.<br/>
+          connect to the database instead of TCP/IP sockets. When the
+          <code>os.name</code> system property starts with "windows"
+          (case-insensitive), named pipes (both local and remote) are accessed
+          through the Windows filesystem by opening a <code>RandomAccessFile</code>
+          to the path. When the SQL Server and the client are on the same machine,
+          a named pipe will usually have better performance than TCP/IP sockets
+          since the network layer is eliminated. Otherwise the
+          <a href="http://jcifs.samba.org/">JCIFS</a> library is used. JCIFS
+          provides a pure Java named pipe implementation and uses NTLM
+          authentication, so the <code>domain</code> parameter is required.<br/>
           This feature supports the <code>instance</code> parameter (which changes
           the named pipe URL), but it does not currently support the named pipe at
           a location other than <code>/sql/query</code> on the server. The

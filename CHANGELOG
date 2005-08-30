@@ -1,6 +1,11 @@
 Changes from jTDS 1.1
 =====================
 
+08/30/2005 - David Kilzer
+ o Updated FAQ to reflect new behavior of the namedPipe parameter since
+   patch [1122494] SQL Server Authentication & Named pipes was applied
+   in jTDS 1.0.3.
+
 07/27/2005 - Alin Sinpalean
  o Corrected bug [1245775] Column type inconsistency when useLOBs=false.
 

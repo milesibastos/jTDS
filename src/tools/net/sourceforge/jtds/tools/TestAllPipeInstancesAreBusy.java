@@ -1,3 +1,20 @@
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
+// Copyright (C) 2005 The jTDS Project
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
 package net.sourceforge.jtds.tools;
 
 import junit.framework.TestCase;
@@ -20,6 +37,9 @@ import java.io.PrintWriter;
  * See also <a href="http://support.microsoft.com/default.aspx?scid=KB;EN-US;165189">
  * INF: Multiple Named Pipes Connections May Cause Error 17832</a> on
  * Microsoft's knowledgebase web site.
+ *
+ * @author David D. Kilzer
+ * @version $Id: TestAllPipeInstancesAreBusy.java,v 1.2 2005-09-06 22:57:08 ddkilzer Exp $
  */
 public class TestAllPipeInstancesAreBusy extends TestCase {
 

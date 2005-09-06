@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.97 2005-09-06 22:42:26 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.98 2005-09-06 23:03:21 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -426,7 +426,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         final long retryTimeout = (loginTimeout > 0 ? loginTimeout : 20) * 1000;
         final long startLoginTimeout = System.currentTimeMillis();
         final Random random = new Random(startLoginTimeout);
-        final boolean isWindowsOS = System.getProperty("os.name").toLowerCase().startsWith("windows");
+        final boolean isWindowsOS = Support.isWindowsOS();
 
         SharedSocket socket = null;
         IOException lastIOException = null;

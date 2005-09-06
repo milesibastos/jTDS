@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.47 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.48 2005-09-06 23:03:21 ddkilzer Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -1204,6 +1204,17 @@ public class Support {
             default:
                 return type;
         }
+    }
+
+    /**
+     * Checks the <code>os.name</code> system property to see if it starts
+     * with "windows".
+     *
+     * @return <code>true</code> if <code>os.name</code> starts with "windows",
+     * else <code>false</code>.
+     */
+    public static boolean isWindowsOS() {
+        return System.getProperty("os.name").toLowerCase().startsWith("windows");
     }
 
     // ------------- Private methods  ---------

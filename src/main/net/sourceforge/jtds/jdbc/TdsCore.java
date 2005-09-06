@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.100 2005-06-28 13:40:23 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.101 2005-09-06 23:03:21 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -1851,7 +1851,7 @@ public class TdsCore {
         if (user == null || user.length() == 0) {
             // See if executing on a Windows platform and if so try and
             // use the single sign on native library.
-            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            if (Support.isWindowsOS()) {
                 ntlmAuthSSO = true;
                 ntlmAuth = true;
             } else {

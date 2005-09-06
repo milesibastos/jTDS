@@ -7,6 +7,8 @@ Changes from jTDS 1.1
    used to manually reproduce the error.  Updated "loginTimeout" entry on
    FAQ.  Added more use of Support.linkException() in ConnectionJDBC2
    constructor.
+ o Created new Support.isWindowsOS() method to consolidate duplicate code.
+   Added SupportUnitTest class to test new method.
 
 08/30/2005 - David Kilzer
  o Updated FAQ to reflect new behavior of the namedPipe parameter since

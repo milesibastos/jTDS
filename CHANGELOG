@@ -1,6 +1,13 @@
 Changes from jTDS 1.1
 =====================
 
+09/06/2005 - David Kilzer
+ o Applied patch for bug [1277000] "All pipe instances are busy" error not
+   handled properly.  Added TestAllPipInstancesAreBusy tool class which is
+   used to manually reproduce the error.  Updated "loginTimeout" entry on
+   FAQ.  Added more use of Support.linkException() in ConnectionJDBC2
+   constructor.
+
 08/30/2005 - David Kilzer
  o Updated FAQ to reflect new behavior of the namedPipe parameter since
    patch [1122494] SQL Server Authentication & Named pipes was applied

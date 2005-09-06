@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.HashSet;
+import java.util.Random;
 
 import net.sourceforge.jtds.jdbc.cache.*;
 import net.sourceforge.jtds.util.*;
@@ -62,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.96 2005-07-01 15:10:03 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.97 2005-09-06 22:42:26 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -286,16 +287,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
 
             if (namedPipe) {
-                // TODO Use namedPipe parameter to select implementation type
-                if(System.getProperty("os.name").toLowerCase().startsWith("windows")) {
-                    // If the OS is Windows, use a local named pipe
-                    socket = new SharedLocalNamedPipe(serverName, tdsVersion, serverType,
-                            instanceName);
-                } else {
-                    // Otherwise use a named pipe over TCP/IP
-                    socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType,
-                            packetSize, instanceName, domainName, user, password);
-                }
+                // Use named pipe
+                socket = createNamedPipe();
             } else {
                 // Use plain TCP/IP socket
                 socket = new SharedSocket(serverName, portNumber, tdsVersion,
@@ -366,16 +359,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                             e.getMessage()), "08S03"), e);
         } catch (IOException e) {
             if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
-                throw new SQLException(
-                        Messages.get("error.connection.timeout"), "HYT01");
+                throw Support.linkException(
+                        new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
             }
             throw Support.linkException(
                     new SQLException(Messages.get("error.connection.ioerror",
                             e.getMessage()), "08S01"), e);
         } catch (SQLException e) {
             if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
-                throw new SQLException(
-                        Messages.get("error.connection.timeout"), "HYT01");
+                throw Support.linkException(
+                        new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
             }
 
             throw e;
@@ -408,6 +401,89 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             stmt.close();
         }
     }
+
+
+    /**
+     * Creates a {@link SharedSocket} object representing a connection to a named
+     * pipe.  If the <code>os.name</code> system property starts with "Windows"
+     * (case-insensitive), a {@link SharedLocalNamedPipe} object is created.
+     * Else a {@link SharedNamedPipe} is created which uses
+     * <a href="http://jcifs.samba.org/">jCIFS</a> to provide a pure-Java
+     * implementation of Windows named pipes.
+     * <p>
+     * This method will retry for <code>loginTimeout</code> seconds to create a
+     * named pipe if an <code>IOException</code> continues to be thrown stating,
+     * "All pipe instances are busy".  If <code>loginTimeout</code> is set to
+     * zero (e.g., not set), a default of 20 seconds will be used.
+     *
+     * @return an object representing the named pipe connection
+     * @throws IOException on error; if an <code>IOException</code> is thrown with
+     * a message stating "All pipe instances are busy", then the method timed out
+     * after <code>loginTimeout</code> milliseconds attempting to create a named pipe.
+     */
+    private SharedSocket createNamedPipe() throws IOException {
+
+        final long retryTimeout = (loginTimeout > 0 ? loginTimeout : 20) * 1000;
+        final long startLoginTimeout = System.currentTimeMillis();
+        final Random random = new Random(startLoginTimeout);
+        final boolean isWindowsOS = System.getProperty("os.name").toLowerCase().startsWith("windows");
+
+        SharedSocket socket = null;
+        IOException lastIOException = null;
+        int exceptionCount = 0;
+
+        do {
+            try {
+                // TODO Use namedPipe parameter to select implementation type
+                if (isWindowsOS) {
+                    // If the OS is Windows, use a local named pipe
+                    socket = new SharedLocalNamedPipe(serverName, tdsVersion, serverType, instanceName);
+                }
+                else {
+                    // Otherwise use a named pipe over TCP/IP (jCIFS)
+                    socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType,
+                                                      packetSize, instanceName, domainName, user, password);
+                }
+            }
+            catch (IOException ioe) {
+                exceptionCount++;
+                lastIOException = ioe;
+                if (ioe.getMessage().toLowerCase().indexOf("all pipe instances are busy") >= 0) {
+                    // Per a Microsoft knowledgebase article, wait 200 ms to 1 second each time
+                    // we get an "All pipe instances are busy" error.
+                    // http://support.microsoft.com/default.aspx?scid=KB;EN-US;165189
+                    try {
+                        final int randomWait = random.nextInt(800) + 200;
+                        if (Logger.isActive()) {
+                            Logger.println("Retry #" + exceptionCount + " Wait " + randomWait + " ms: " +
+                                           ioe.getMessage());
+                        }
+                        Thread.sleep(randomWait);
+                    }
+                    catch (InterruptedException ie) {
+                        // Do nothing; retry again
+                    }
+                }
+                else {
+                    throw ioe;
+                }
+            }
+        } while (socket == null && (System.currentTimeMillis() - startLoginTimeout) < retryTimeout);
+
+        if (socket == null) {
+            String message = "Connection timed out to named pipe";
+            if (lastIOException != null) {
+                message += " (" + lastIOException.getMessage() + ")";
+                if (Logger.isActive()) {
+                    Logger.logException(lastIOException);
+                }
+            }
+            throw new IOException(message);
+        }
+
+        return socket;
+    }
+
 
     /**
      * Retrive the shared socket.

@@ -291,7 +291,13 @@
           usually not a problem with most applications, use with care.</dd>
         <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
         <dd>The amount of time to wait (in seconds) for a successful connection
-          before timing out.</dd>
+          before timing out.<br/>
+          If <code>namedPipe</code> is <code>true</code> and <code>loginTimeout</code>
+          is non-zero, the value of <code>loginTimeout</code> is used for the retry
+          timeout when "All pipe instances are busy" error messages are received while
+          attempting to connect to the server.  If <code>namedPipe</code> is
+          <code>true</code> and <code>loginTimeout</code> is zero (the default), a
+          value of 20 seconds is used for the named pipe retry timeout.</dd>
         <dt><code>namedPipe</code> (default - <code>false</code>)</dt>
         <dd>When set to <code>true</code>, named pipe communication is used to
           connect to the database instead of TCP/IP sockets. When the

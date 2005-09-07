@@ -7,6 +7,8 @@ Changes from jTDS 1.1
    for SQLException and SQLWarning classes.  Linked IOException thrown from
    ConnectionJDBC2.createNamedPipe() for connection timeouts using the new
    method.
+ o Applied Mike's fix for bug [1273988] Insert UTF8 string fails when length
+   is 255 (ASE12.5.2).
 
 09/06/2005 - David Kilzer
  o Applied patch for bug [1277000] "All pipe instances are busy" error not

@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.48 2005-09-06 23:03:21 ddkilzer Exp $
+ * @version $Id: Support.java,v 1.49 2005-09-07 17:00:10 ddkilzer Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -1064,35 +1064,64 @@ public class Support {
     }
 
     /**
-     * Link an the original cause exception to a SQL Exception.
-     * <p>If running under VM 1.4+ the Exception.initCause() method
-     * will be used to chain the exception.
-     * Modeled after the code written by Brian Heineman.
+     * Link the original cause to an <code>SQLWarning</code>.
+     * <p>
+     * This convenience method calls {@link #linkException(Exception, Throwable)}
+     * and casts the result for cleaner code elsewhere.
      *
-     * @param sqle The SQLException to enhance.
-     * @param cause The child exception to link.
-     * @return The enhanced <code>SQLException</code>.
+     * @param sqle The <code>SQLWarning</code> to enhance.
+     * @param cause The <code>Throwable</code> to link.
+     * @return The original <code>SQLWarning</code> object.
+     */
+    public static SQLWarning linkException(SQLWarning sqle, Throwable cause) {
+        return (SQLWarning) linkException((Exception) sqle, cause);
+    }
+
+    /**
+     * Link the original cause to an <code>SQLException</code>.
+     * <p>
+     * This convenience method calls {@link #linkException(Exception, Throwable)}
+     * and casts the result for cleaner code elsewhere.
+     *
+     * @param sqle The <code>SQLException</code> to enhance.
+     * @param cause The <code>Throwable</code> to link.
+     * @return The original <code>SQLException</code> object.
      */
     public static SQLException linkException(SQLException sqle, Throwable cause) {
-        Class sqlExceptionClass = sqle.getClass();
+        return (SQLException) linkException((Exception) sqle, cause);
+    }
+
+    /**
+     * Link the original cause to an <code>Exception</code>.
+     * <p>
+     * If running under JVM 1.4+ the {@link Exception#initCause(Throwable)}
+     * method will be invoked to chain the exception, else the exception is
+     * logged via the {@link Logger} class.
+     * Modeled after the code written by Brian Heineman.
+     *
+     * @param exception The <code>Exception</code> to enhance.
+     * @param cause The <code>Throwable</code> to link.
+     * @return The original <code>Exception</code> object.
+     */
+    public static Throwable linkException(Exception exception, Throwable cause) {
+        Class exceptionClass = exception.getClass();
         Class[] parameterTypes = new Class[] {Throwable.class};
         Object[] arguments = new Object[] {cause};
 
         try {
-            Method initCauseMethod = sqlExceptionClass.getMethod("initCause",
-                                                                 parameterTypes);
-            initCauseMethod.invoke(sqle, arguments);
+            Method initCauseMethod = exceptionClass.getMethod("initCause", parameterTypes);
+            initCauseMethod.invoke(exception, arguments);
         } catch (NoSuchMethodException e) {
-            // Ignore; this method does not exist in older JVM's.
+            // Best we can do; this method does not exist in older JVMs.
             if (Logger.isActive()) {
-                Logger.logException((Exception) cause); // Best we can do
+                Logger.logException((Exception) cause);
             }
         } catch (Exception e) {
-            // Ignore all other exceptions, do not prevent the main exception
-            // from being returned if reflection fails for any reason...
+            // Ignore all other exceptions.  Do not prevent the main exception
+            // from being returned if reflection fails for any reason.
         }
 
-        return sqle;
+        return exception;
     }
 
     /**

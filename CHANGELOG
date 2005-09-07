@@ -1,6 +1,13 @@
 Changes from jTDS 1.1
 =====================
 
+09/07/2005 - David Kilzer
+ o Extracted code from the original Support.linkException() method to accept
+   generic Exception objects.  Provided linkException() convenience methods
+   for SQLException and SQLWarning classes.  Linked IOException thrown from
+   ConnectionJDBC2.createNamedPipe() for connection timeouts using the new
+   method.
+
 09/06/2005 - David Kilzer
  o Applied patch for bug [1277000] "All pipe instances are busy" error not
    handled properly.  Added TestAllPipInstancesAreBusy tool class which is

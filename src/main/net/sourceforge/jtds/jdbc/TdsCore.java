@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.101 2005-09-06 23:03:21 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.102 2005-09-07 17:00:10 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -1120,7 +1120,7 @@ public class TdsCore {
 
                 // This exception probably caused by failure to prepare
                 // Add a warning
-                messages.addWarning((SQLWarning) Support.linkException(
+                messages.addWarning(Support.linkException(
                         new SQLWarning(
                                 Messages.get("error.prepare.prepfailed",
                                         e.getMessage()),
@@ -1198,7 +1198,7 @@ public class TdsCore {
                 }
                 // This exception probably caused by failure to prepare
                 // Add a warning
-                messages.addWarning((SQLWarning) Support.linkException(
+                messages.addWarning(Support.linkException(
                         new SQLWarning(
                                 Messages.get("error.prepare.prepfailed",
                                         e.getMessage()),

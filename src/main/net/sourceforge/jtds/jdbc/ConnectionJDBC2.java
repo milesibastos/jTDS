@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.98 2005-09-06 23:03:21 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.99 2005-09-07 17:00:10 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -452,12 +452,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     // Per a Microsoft knowledgebase article, wait 200 ms to 1 second each time
                     // we get an "All pipe instances are busy" error.
                     // http://support.microsoft.com/default.aspx?scid=KB;EN-US;165189
+                    final int randomWait = random.nextInt(800) + 200;
+                    if (Logger.isActive()) {
+                        Logger.println("Retry #" + exceptionCount + " Wait " + randomWait + " ms: " +
+                                       ioe.getMessage());
+                    }
                     try {
-                        final int randomWait = random.nextInt(800) + 200;
-                        if (Logger.isActive()) {
-                            Logger.println("Retry #" + exceptionCount + " Wait " + randomWait + " ms: " +
-                                           ioe.getMessage());
-                        }
                         Thread.sleep(randomWait);
                     }
                     catch (InterruptedException ie) {
@@ -471,14 +471,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         } while (socket == null && (System.currentTimeMillis() - startLoginTimeout) < retryTimeout);
 
         if (socket == null) {
-            String message = "Connection timed out to named pipe";
+            final IOException ioException = new IOException("Connection timed out to named pipe");
             if (lastIOException != null) {
-                message += " (" + lastIOException.getMessage() + ")";
-                if (Logger.isActive()) {
-                    Logger.logException(lastIOException);
-                }
+                Support.linkException(ioException, lastIOException);
             }
-            throw new IOException(message);
+            throw ioException;
         }
 
         return socket;

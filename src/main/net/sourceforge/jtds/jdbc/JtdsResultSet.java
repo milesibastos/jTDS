@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.43 2005-07-05 15:51:25 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSet.java,v 1.44 2005-09-08 23:35:58 ddkilzer Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -216,6 +216,7 @@ public class JtdsResultSet implements ResultSet {
      *
      * @param colIndex index of the column
      * @param value    new column value
+     * @param length   the length of a stream parameter
      * @return the value, possibly converted to an internal type
      */
     protected Object setColValue(int colIndex, int jdbcType, Object value, int length)

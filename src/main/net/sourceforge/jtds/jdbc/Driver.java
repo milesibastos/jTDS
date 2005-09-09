@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.62 2005-06-16 09:53:48 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.63 2005-09-09 22:12:39 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -171,18 +171,7 @@ public class Driver implements java.sql.Driver {
             return null;
         }
 
-        Properties props = parseURL(url, info);
-
-        if (props == null) {
-            throw new SQLException(Messages.get("error.driver.badurl", url), "08001");
-        }
-
-        if (props.getProperty(Messages.get(Driver.LOGINTIMEOUT)) == null) {
-            props.setProperty(Messages.get(Driver.LOGINTIMEOUT), Integer.toString(DriverManager.getLoginTimeout()));
-        }
-
-        // Set default properties
-        props = DefaultProperties.addDefaultProperties(props);
+        Properties props = setupConnectProperties(url, info);
 
         if (JDBC3) {
             return new ConnectionJDBC3(url, props);
@@ -230,6 +219,32 @@ public class Driver implements java.sql.Driver {
         }
 
         return dpi;
+    }
+
+    /**
+     * Sets up properties for the {@link #connect(String, java.util.Properties)} method.
+     *
+     * @param url the URL of the database to which to connect
+     * @param info a list of arbitrary string tag/value pairs as
+     * connection arguments.
+     * @return the set of properties for the connection
+     * @throws SQLException if an error occurs parsing the URL
+     */
+    private Properties setupConnectProperties(String url, Properties info) throws SQLException {
+
+        Properties props = parseURL(url, info);
+
+        if (props == null) {
+            throw new SQLException(Messages.get("error.driver.badurl", url), "08001");
+        }
+
+        if (props.getProperty(Messages.get(Driver.LOGINTIMEOUT)) == null) {
+            props.setProperty(Messages.get(Driver.LOGINTIMEOUT), Integer.toString(DriverManager.getLoginTimeout()));
+        }
+
+        // Set default properties
+        props = DefaultProperties.addDefaultProperties(props);
+        return props;
     }
 
     /**

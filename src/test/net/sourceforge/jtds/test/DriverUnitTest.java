@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  *
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.18 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: DriverUnitTest.java,v 1.19 2005-09-09 22:12:39 ddkilzer Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -55,7 +55,7 @@ public class DriverUnitTest extends UnitTestBase {
         TestSuite testSuite = new TestSuite(DriverUnitTest.class);
 
         testSuite.addTest(
-                Test_Driver_parseURL.suite("test_parseURL_DefaultProperties"));
+                Test_Driver_setupConnectProperties.suite("test_setupConnectProperties_DefaultProperties"));
 
         testSuite.addTest(
                 Test_Driver_getPropertyInfo.suite("test_getPropertyInfo_DefaultProperties"));
@@ -252,9 +252,9 @@ public class DriverUnitTest extends UnitTestBase {
 
 
     /**
-     * Class used to test {@link Driver#parseURL(String, Properties)}.
+     * Class used to test {@link Driver#setupConnectProperties(String, java.util.Properties)}.
      */
-    public static class Test_Driver_parseURL extends DefaultPropertiesTestLibrary {
+    public static class Test_Driver_setupConnectProperties extends DefaultPropertiesTestLibrary {
 
         /**
          * Construct a test suite for this library.
@@ -263,13 +263,13 @@ public class DriverUnitTest extends UnitTestBase {
          * @return The test suite.
          */
         public static Test suite(String name) {
-            return new TestSuite(Test_Driver_parseURL.class, name);
+            return new TestSuite(Test_Driver_setupConnectProperties.class, name);
         }
 
         /**
          * Default constructor.
          */
-        public Test_Driver_parseURL() {
+        public Test_Driver_setupConnectProperties() {
             setTester(
                     new DefaultPropertiesTester() {
 
@@ -278,15 +278,11 @@ public class DriverUnitTest extends UnitTestBase {
                                 String key, String expected) {
 
                             Properties results =
-                                    (Properties) invokeStaticMethod(
-                                            Driver.class, "parseURL",
+                                    (Properties) invokeInstanceMethod(
+                                            new Driver(), "setupConnectProperties",
                                             new Class[]{String.class, Properties.class},
                                             new Object[]{url, properties});
-                            results =
-                                    (Properties) invokeStaticMethod(
-                                            DefaultProperties.class, "addDefaultProperties",
-                                            new Class[]{ Properties.class},
-                                            new Object[]{ results});
+
                             assertEquals(message, expected, results.getProperty(Messages.get(key)));
                         }
                     }

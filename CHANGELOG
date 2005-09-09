@@ -1,6 +1,11 @@
 Changes from jTDS 1.1
 =====================
 
+09/09/2005 - David Kilzer
+ o Applied Mike's patch to fix a small bug with getProcedureColumns() in
+   JtdsDatabaseMetaData and SQL Server 7.0 where the RETURN_VALUE
+   parameter was not prefixed with an '@' character.
+
 09/07/2005 - David Kilzer
  o Extracted code from the original Support.linkException() method to accept
    generic Exception objects.  Provided linkException() convenience methods

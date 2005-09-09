@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.32 2005-07-27 11:02:33 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.33 2005-09-09 19:02:52 ddkilzer Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1440,10 +1440,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     }
                 }
              }
-             if (serverType == Driver.SYBASE || tdsVersion == Driver.TDS42) {
+             if (serverType == Driver.SYBASE 
+                 || tdsVersion == Driver.TDS42
+                 || tdsVersion == Driver.TDS70) {
                 //
                 // Standardise the name of the return_value column as
-                // @RETURN_VALUE for Sybase and SQL 6.5
+                // @RETURN_VALUE for Sybase and SQL < 2000
                 //
                 String colName = rs.getString(4);
                 if (colName != null && colName.equals("RETURN_VALUE")) {

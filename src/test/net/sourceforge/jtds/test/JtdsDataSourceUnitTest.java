@@ -13,16 +13,15 @@ import net.sourceforge.jtds.jdbc.Driver;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.13 2005-04-20 16:49:31 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.14 2005-09-09 21:55:13 ddkilzer Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
     /**
      * Construct a test suite for this class.
      * <p/>
-     * The test suite includes the tests in this class, and adds tests
-     * from {@link DefaultPropertiesTestLibrary} after creating an
-     * anonymous {@link DefaultPropertiesTester} object.
+     * The test suite includes the tests in this class as
+     * well as {@link Test_JtdsDataSource_getConnection}.
      *
      * @return The test suite to run.
      */

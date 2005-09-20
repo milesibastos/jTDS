@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.34 2005-09-20 21:10:20 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.35 2005-09-20 22:02:57 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -256,46 +256,67 @@ class SharedSocket {
         this.host = host;
         this.port = port;
         if (Driver.JDBC3) {
-            try {
-                // Create the Socket
-                Constructor constructor =
-                        Socket.class.getConstructor(new Class[] {});
-                this.socket =
-                        (Socket) constructor.newInstance(new Object[] {});
-
-                // Create the InetSocketAddress
-                constructor = Class.forName("java.net.InetSocketAddress")
-                        .getConstructor(new Class[] {String.class, int.class});
-                Object address = constructor.newInstance(
-                                new Object[] {host, new Integer(port)});
-
-                // Call Socket.connect(InetSocketAddress, int)
-                Method connect = Socket.class.getMethod("connect", new Class[]
-                        {Class.forName("java.net.SocketAddress"), int.class});
-                connect.invoke(this.socket,
-                        new Object[] {address, new Integer(timeout * 1000)});
-            } catch (InvocationTargetException ite) {
-                // Reflection was OK but invocation of socket.connect()
-                // has failed. Try to report the underlying reason
-                Throwable cause = ite.getTargetException();
-                if (cause instanceof IOException) {
-                    // OK was an IOException or subclass so just throw it
-                    throw (IOException) cause;
-                }
-                // Something else so return invocation exception anyway
-                // (This should not normally occur)
-                throw new IOException("Could not create socket: " + cause);
-            } catch (Exception e) {
-                // Reflection has failed for some reason e.g. security so
-                // try to create a socket in the old way.
-                this.socket = new Socket(host, port);
-            }
+            this.socket = createSocketForJDBC3(host, port, timeout);
         } else {
             this.socket = new Socket(host, port);
         }
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(tcpNoDelay);
+    }
+
+    /**
+     * Creates a {@link Socket} through reflection when {@link Driver#JDBC3}
+     * is <code>true</code>.  Reflection must be used to stay compatible
+     * with JDK 1.3.
+     *
+     * @param host       the SQL Server host name
+     * @param port       the connection port eg 1433
+     * @param timeout    timeout for establishing connection, in seconds
+     *                   (only used with Java 1.4+, no support in earlier
+     *                   versions)
+     * @return a socket open to the host and port with the given timeout
+     * @throws IOException if socket open fails
+     */
+    private Socket createSocketForJDBC3(String host, int port, int timeout)
+            throws IOException {
+        try {
+            // Create the Socket
+            Constructor constructor =
+                    Socket.class.getConstructor(new Class[] {});
+            Socket socket =
+                    (Socket) constructor.newInstance(new Object[] {});
+
+            // Create the InetSocketAddress
+            constructor = Class.forName("java.net.InetSocketAddress")
+                    .getConstructor(new Class[] {String.class, int.class});
+            Object address = constructor.newInstance(
+                            new Object[] {host, new Integer(port)});
+
+            // Call Socket.connect(InetSocketAddress, int)
+            Method connect = Socket.class.getMethod("connect", new Class[]
+                    {Class.forName("java.net.SocketAddress"), int.class});
+            connect.invoke(socket,
+                    new Object[] {address, new Integer(timeout * 1000)});
+
+            return socket;
+        } catch (InvocationTargetException ite) {
+            // Reflection was OK but invocation of socket.connect()
+            // has failed. Try to report the underlying reason
+            Throwable cause = ite.getTargetException();
+            if (cause instanceof IOException) {
+                // OK was an IOException or subclass so just throw it
+                throw (IOException) cause;
+            }
+            // Something else so return invocation exception anyway
+            // (This should not normally occur)
+            throw (IOException) Support.linkException(
+                    new IOException("Could not create socket"), cause);
+        } catch (Exception e) {
+            // Reflection has failed for some reason e.g. security so
+            // try to create a socket in the old way.
+            return new Socket(host, port);
+        }
     }
 
     /**

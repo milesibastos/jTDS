@@ -13,7 +13,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.14 2005-09-09 21:55:13 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.15 2005-09-20 21:14:40 ddkilzer Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -56,7 +56,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
         assertNotNull(new JtdsDataSource());
     }
 
-    public static class Test_JtdsDataSource_getConnection extends UnitTestBase {
+    private static class Test_JtdsDataSource_getConnection extends UnitTestBase {
         // TODO Specify host name separately in the properties so that testing can be more accurate
         public Test_JtdsDataSource_getConnection(String name) {
             super(name);

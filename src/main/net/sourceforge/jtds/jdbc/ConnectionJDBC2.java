@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.100 2005-09-20 23:36:25 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.101 2005-09-20 23:49:07 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -323,7 +323,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             }
 
             //
-            // Now try and login
+            // Now try to login
             //
             baseTds.login(serverName,
                           databaseName,
@@ -440,7 +440,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 }
                 else {
                     // Otherwise use a named pipe over TCP/IP (jCIFS)
-                    socket = SharedNamedPipe.instance(serverName, tdsVersion, serverType,
+                    socket = new SharedNamedPipe(serverName, tdsVersion, serverType,
                                                       packetSize, instanceName, domainName, user, password);
                 }
             }

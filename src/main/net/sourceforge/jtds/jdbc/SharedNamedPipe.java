@@ -34,20 +34,13 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  *
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.14 2005-04-28 14:29:28 alin_sinpalean Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.15 2005-09-20 23:49:07 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
     /**
      * The shared named pipe.
      */
     private SmbNamedPipe pipe;
-
-    /**
-     * Default constructor.
-     */
-    private SharedNamedPipe(int tdsVersion, int serverType) {
-        super(tdsVersion, serverType);
-    }
 
     /**
      * Construct a SharedNamedPipe to the server.
@@ -65,12 +58,12 @@ public class SharedNamedPipe extends SharedSocket {
      *                     not open
      * @throws UnknownHostException if host cannot be found for the named pipe
      */
-    static SharedNamedPipe instance(
+    public SharedNamedPipe(
             String host, int tdsVersion, int serverType, int packetSize, String instance,
             String domain, String user, String password)
             throws IOException, UnknownHostException {
 
-        SharedNamedPipe newInstance = new SharedNamedPipe(tdsVersion, serverType);
+        super(tdsVersion, serverType);
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(domain, user, password);
 
@@ -87,20 +80,14 @@ public class SharedNamedPipe extends SharedSocket {
 
         url.append(DefaultProperties.NAMED_PIPE_PATH_SQLSERVER);
 
-        newInstance.setPipe(
-                new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth));
+        setPipe(new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth));
 
-        newInstance.setOut(
-                new DataOutputStream(
-                        newInstance.getPipe().getNamedPipeOutputStream()));
+        setOut(new DataOutputStream(getPipe().getNamedPipeOutputStream()));
 
-        newInstance.setIn(
-                new DataInputStream(
-                        new BufferedInputStream(
-                                newInstance.getPipe().getNamedPipeInputStream(),
-                                SharedNamedPipe.calculateBufferSize(tdsVersion, packetSize))));
-
-        return newInstance;
+        setIn(new DataInputStream(
+                new BufferedInputStream(
+                        getPipe().getNamedPipeInputStream(),
+                        SharedNamedPipe.calculateBufferSize(tdsVersion, packetSize))));
     }
 
     /**

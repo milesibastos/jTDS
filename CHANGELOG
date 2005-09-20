@@ -6,6 +6,9 @@ Changes from jTDS 1.1
    argument to the RequestStream constructor.  This value should never
    change during the life of the RequestStream, and thus should be set
    in the constructor.  Updated SharedSocket.getRequestStream() method.
+ o Refactored SharedSocket constructor to take only a single argument
+   of type ConnectionJDBC2.  Added some package-private getter methods
+   to ConnectionJDBC2.
 
 09/09/2005 - David Kilzer
  o Applied Mike's patch to fix a small bug with getProcedureColumns() in

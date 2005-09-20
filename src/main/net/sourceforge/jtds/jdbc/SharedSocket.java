@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.35 2005-09-20 22:02:57 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.36 2005-09-20 23:36:25 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -239,30 +239,21 @@ class SharedSocket {
      * Construct a <code>SharedSocket</code> object specifying host name and
      * port.
      *
-     * @param host       the SQL Server host name
-     * @param port       the connection port eg 1433
-     * @param tdsVersion the TDS protocol version
-     * @param tcpNoDelay <code>true</code> to enable TCP_NODELAY on the
-     *                   underlying socket; <code>false</code> to disable
-     * @param timeout    timeout for establishing connection, in seconds
-     *                   (only used with Java 1.4+, no support in earlier
-     *                   versions)
+     * @param connection the connection object
      * @throws IOException if socket open fails
      */
-    SharedSocket(String host, int port, int tdsVersion, int serverType,
-    		boolean tcpNoDelay, int timeout)
-            throws IOException, UnknownHostException {
-        this(tdsVersion, serverType);
-        this.host = host;
-        this.port = port;
+    SharedSocket(ConnectionJDBC2 connection) throws IOException, UnknownHostException {
+        this(connection.getTdsVersion(), connection.getServerType());
+        this.host = connection.getServerName();
+        this.port = connection.getPortNumber();
         if (Driver.JDBC3) {
-            this.socket = createSocketForJDBC3(host, port, timeout);
+            this.socket = createSocketForJDBC3(connection);
         } else {
-            this.socket = new Socket(host, port);
+            this.socket = new Socket(this.host, this.port);
         }
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
-        this.socket.setTcpNoDelay(tcpNoDelay);
+        this.socket.setTcpNoDelay(connection.getTcpNoDelay());
     }
 
     /**
@@ -270,16 +261,14 @@ class SharedSocket {
      * is <code>true</code>.  Reflection must be used to stay compatible
      * with JDK 1.3.
      *
-     * @param host       the SQL Server host name
-     * @param port       the connection port eg 1433
-     * @param timeout    timeout for establishing connection, in seconds
-     *                   (only used with Java 1.4+, no support in earlier
-     *                   versions)
+     * @param connection the connection object
      * @return a socket open to the host and port with the given timeout
      * @throws IOException if socket open fails
      */
-    private Socket createSocketForJDBC3(String host, int port, int timeout)
-            throws IOException {
+    private Socket createSocketForJDBC3(ConnectionJDBC2 connection) throws IOException {
+        final String host = connection.getServerName();
+        final int port = connection.getPortNumber();
+        final int loginTimeout = connection.getLoginTimeout();
         try {
             // Create the Socket
             Constructor constructor =
@@ -297,7 +286,7 @@ class SharedSocket {
             Method connect = Socket.class.getMethod("connect", new Class[]
                     {Class.forName("java.net.SocketAddress"), int.class});
             connect.invoke(socket,
-                    new Object[] {address, new Integer(timeout * 1000)});
+                    new Object[] {address, new Integer(loginTimeout * 1000)});
 
             return socket;
         } catch (InvocationTargetException ite) {

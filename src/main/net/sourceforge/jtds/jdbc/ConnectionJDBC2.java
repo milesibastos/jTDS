@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.99 2005-09-07 17:00:10 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.100 2005-09-20 23:36:25 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -291,8 +291,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 socket = createNamedPipe();
             } else {
                 // Use plain TCP/IP socket
-                socket = new SharedSocket(serverName, portNumber, tdsVersion,
-                        serverType, tcpNoDelay, loginTimeout);
+                socket = new SharedSocket(this);
             }
 
             if (timer != null && TimerThread.getInstance().hasExpired(timer)) {
@@ -862,6 +861,42 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     boolean getUseLOBs() {
         return this.useLOBs;
+    }
+
+    /**
+     * Retrieves the login timeout for this connection.
+     *
+     * @return the login timeout
+     */
+    int getLoginTimeout() {
+        return this.loginTimeout;
+    }
+
+    /**
+     * Retrieves the port number for this connection.
+     *
+     * @return the port number
+     */
+    int getPortNumber() {
+        return this.portNumber;
+    }
+
+    /**
+     * Retrieves the server name for this connection.
+     *
+     * @return the server name
+     */
+    String getServerName() {
+        return this.serverName;
+    }
+
+    /**
+     * Retrieves the tcpNoDelay setting for this connection.
+     *
+     * @return the tcpNoDelay setting
+     */
+    boolean getTcpNoDelay() {
+        return this.tcpNoDelay;
     }
 
     /**

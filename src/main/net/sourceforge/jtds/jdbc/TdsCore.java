@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.102 2005-09-07 17:00:10 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.103 2005-09-20 21:10:20 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -430,9 +430,8 @@ public class TdsCore {
         this.messages = messages;
         serverType = connection.getServerType();
         tdsVersion = socket.getTdsVersion();
-        out = socket.getRequestStream(connection.getNetPacketSize());
+        out = socket.getRequestStream(connection.getNetPacketSize(), connection.getMaxPrecision());
         in = socket.getResponseStream(out, connection.getNetPacketSize());
-        out.setMaxPrecision(connection.getMaxPrecision());
     }
 
     /**

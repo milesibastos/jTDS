@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.16 2005-04-28 14:29:26 alin_sinpalean Exp $
+ * @version $Id: RequestStream.java,v 1.17 2005-09-20 21:10:20 ddkilzer Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -63,13 +63,15 @@ public class RequestStream {
      * @param streamId   the unique id for this stream
      * @param bufferSize the initial buffer size to use (the current network
      *                   packet size)
+     * @param maxPrecision the maximum precision for numeric/decimal types
      */
-    RequestStream(SharedSocket socket, int streamId, int bufferSize) {
+    RequestStream(SharedSocket socket, int streamId, int bufferSize, int maxPrecision) {
         this.streamId = streamId;
         this.socket = socket;
         this.bufferSize = bufferSize;
         this.buffer = new byte[bufferSize];
         this.bufferPtr = TdsCore.PKT_HDR_LEN;
+        this.maxPrecision = maxPrecision;
     }
 
     /**
@@ -107,15 +109,6 @@ public class RequestStream {
      */
     int getMaxPrecision() {
         return this.maxPrecision;
-    }
-
-    /**
-     * Set the maximum decimal precision.
-     *
-     * @param precision The precision either 28 or 38.
-     */
-    void setMaxPrecision(int precision) {
-        this.maxPrecision = precision;
     }
 
     /**

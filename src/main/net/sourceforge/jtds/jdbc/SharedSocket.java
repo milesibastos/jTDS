@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.33 2005-05-20 12:02:25 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.34 2005-09-20 21:10:20 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -359,9 +359,10 @@ class SharedSocket {
      *
      * @param bufferSize the initial buffer size to be used by the
      *                   <code>RequestStream</code>
+     * @param maxPrecision the maximum precision for numeric/decimal types
      * @return the server request stream as a <code>RequestStream</code>
      */
-    RequestStream getRequestStream(int bufferSize) {
+    RequestStream getRequestStream(int bufferSize, int maxPrecision) {
         synchronized (socketTable) {
             int id;
             for (id = 0; id < socketTable.size(); id++) {
@@ -378,7 +379,7 @@ class SharedSocket {
                 socketTable.set(id, vsock);
             }
 
-            return new RequestStream(this, id, bufferSize);
+            return new RequestStream(this, id, bufferSize, maxPrecision);
         }
     }
 

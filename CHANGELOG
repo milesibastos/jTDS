@@ -1,6 +1,12 @@
 Changes from jTDS 1.1
 =====================
 
+09/20/2005 - David Kilzer
+ o Removed RequestStream.setMaxPrecision() and added a 'maxPrecision'
+   argument to the RequestStream constructor.  This value should never
+   change during the life of the RequestStream, and thus should be set
+   in the constructor.  Updated SharedSocket.getRequestStream() method.
+
 09/09/2005 - David Kilzer
  o Applied Mike's patch to fix a small bug with getProcedureColumns() in
    JtdsDatabaseMetaData and SQL Server 7.0 where the RETURN_VALUE

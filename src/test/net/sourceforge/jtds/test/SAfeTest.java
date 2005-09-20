@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.56 2005-06-28 13:40:34 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.57 2005-09-20 18:01:17 ddkilzer Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -1666,7 +1666,7 @@ public class SAfeTest extends DatabaseTestCase {
         stmt.setMaxFieldSize(3);
         rs = stmt.executeQuery("select * from #testMaxFieldSize");
         assertNotNull(rs);
-        assertNull(stmt.getWarnings());
+        assertNull(stmt.getWarnings().getMessage(), stmt.getWarnings());
         assertNull(rs.getWarnings());
         assertTrue(rs.next());
         assertEquals(1, rs.getInt(1));

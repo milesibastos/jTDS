@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.101 2005-09-20 23:49:07 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.102 2005-09-21 01:22:26 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -288,7 +288,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
             if (namedPipe) {
                 // Use named pipe
-                socket = createNamedPipe();
+                socket = createNamedPipe(this);
             } else {
                 // Use plain TCP/IP socket
                 socket = new SharedSocket(this);
@@ -415,13 +415,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * "All pipe instances are busy".  If <code>loginTimeout</code> is set to
      * zero (e.g., not set), a default of 20 seconds will be used.
      *
+     * @param connection the connection object
      * @return an object representing the named pipe connection
      * @throws IOException on error; if an <code>IOException</code> is thrown with
      * a message stating "All pipe instances are busy", then the method timed out
      * after <code>loginTimeout</code> milliseconds attempting to create a named pipe.
      */
-    private SharedSocket createNamedPipe() throws IOException {
+    private SharedSocket createNamedPipe(ConnectionJDBC2 connection) throws IOException {
 
+        final long loginTimeout = connection.getLoginTimeout();
         final long retryTimeout = (loginTimeout > 0 ? loginTimeout : 20) * 1000;
         final long startLoginTimeout = System.currentTimeMillis();
         final Random random = new Random(startLoginTimeout);
@@ -436,12 +438,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // TODO Use namedPipe parameter to select implementation type
                 if (isWindowsOS) {
                     // If the OS is Windows, use a local named pipe
-                    socket = new SharedLocalNamedPipe(serverName, tdsVersion, serverType, instanceName);
+                    socket = new SharedLocalNamedPipe(connection);
                 }
                 else {
                     // Otherwise use a named pipe over TCP/IP (jCIFS)
-                    socket = new SharedNamedPipe(serverName, tdsVersion, serverType,
-                                                      packetSize, instanceName, domainName, user, password);
+                    socket = new SharedNamedPipe(connection);
                 }
             }
             catch (IOException ioe) {
@@ -471,9 +472,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (socket == null) {
             final IOException ioException = new IOException("Connection timed out to named pipe");
-            if (lastIOException != null) {
-                Support.linkException(ioException, lastIOException);
-            }
+            Support.linkException(ioException, lastIOException);
             throw ioException;
         }
 
@@ -864,12 +863,48 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the domain name for this connection.
+     *
+     * @return the domain name
+     */
+    String getDomainName() {
+        return this.domainName;
+    }
+
+    /**
+     * Retrieves the instance name for this connection.
+     *
+     * @return the instance name
+     */
+    String getInstanceName() {
+        return this.instanceName;
+    }
+
+    /**
      * Retrieves the login timeout for this connection.
      *
      * @return the login timeout
      */
     int getLoginTimeout() {
         return this.loginTimeout;
+    }
+
+    /**
+     * Retrieves the packet size for this connection.
+     *
+     * @return the packet size
+     */
+    int getPacketSize() {
+        return this.packetSize;
+    }
+
+    /**
+     * Retrieves the password for this connection.
+     *
+     * @return the password
+     */
+    String getPassword() {
+        return this.password;
     }
 
     /**
@@ -897,6 +932,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     boolean getTcpNoDelay() {
         return this.tcpNoDelay;
+    }
+
+    /**
+     * Retrieves the user for this connection.
+     *
+     * @return the user
+     */
+    String getUser() {
+        return this.user;
     }
 
     /**

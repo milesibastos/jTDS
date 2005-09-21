@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.9 2005-09-09 20:39:59 ddkilzer Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.10 2005-09-21 01:22:26 ddkilzer Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -35,17 +35,16 @@ public class SharedLocalNamedPipe extends SharedSocket {
     /**
      * Creates a new instance of <code>SharedLocalNamedPipe</code>.
      *
-     * @param serverName name of the server
-     * @param tdsVersion the TDS protocol version
-     * @param serverType the server type (SQL Server or Sybase)
-     * @param instance   the database instance name
+     * @param connection the connection object
      * @throws IOException if an I/O error occurs
      */
-    public SharedLocalNamedPipe(String serverName, int tdsVersion, int serverType, String instance)
-            throws IOException {
-        super(tdsVersion, serverType);
+    public SharedLocalNamedPipe(ConnectionJDBC2 connection) throws IOException {
+        super(connection.getTdsVersion(), connection.getServerType());
 
-        StringBuffer pipeName = new StringBuffer(64);
+        final String serverName = connection.getServerName();
+        final String instanceName = connection.getInstanceName();
+
+        final StringBuffer pipeName = new StringBuffer(64);
         pipeName.append("\\\\");
         if (serverName == null || serverName.length() == 0) {
             pipeName.append( '.' );
@@ -53,16 +52,21 @@ public class SharedLocalNamedPipe extends SharedSocket {
             pipeName.append(serverName);
         }
         pipeName.append("\\pipe");
-        if (instance != null && instance.length() != 0) {
-            pipeName.append("\\MSSQL$").append(instance);
+        if (instanceName != null && instanceName.length() != 0) {
+            pipeName.append("\\MSSQL$").append(instanceName);
         }
         pipeName.append(DefaultProperties.NAMED_PIPE_PATH_SQLSERVER.replace('/', '\\'));
 
-        pipe = new RandomAccessFile(pipeName.toString(), "rw");
-        OutputStream fos = new FileOutputStream(pipe.getFD());
-        InputStream fis = new FileInputStream(pipe.getFD());
-        setOut(new DataOutputStream(new BufferedOutputStream(fos, 4100)));
-        setIn(new DataInputStream(new BufferedInputStream(fis, 4100)));
+        this.pipe = new RandomAccessFile(pipeName.toString(), "rw");
+
+        final int bufferSize = Support.calculateNamedPipeBufferSize(
+                connection.getTdsVersion(), connection.getPacketSize());
+        setOut(new DataOutputStream(
+                new BufferedOutputStream(
+                        new FileOutputStream(this.pipe.getFD()), bufferSize)));
+        setIn(new DataInputStream(
+                new BufferedInputStream(
+                        new FileInputStream(this.pipe.getFD()), bufferSize)));
     }
 
     /**

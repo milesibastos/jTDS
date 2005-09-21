@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.49 2005-09-07 17:00:10 ddkilzer Exp $
+ * @version $Id: Support.java,v 1.50 2005-09-21 01:22:26 ddkilzer Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -1285,4 +1285,32 @@ public class Support {
         // Prevent an instance of this class being created.
     }
 
+    /**
+     * Calculate the buffer size to use when buffering the <code>InputStream</code>
+     * for named pipes.
+     * <p/>
+     * The buffer size is tied directly to the packet size because each request
+     * to the <code>SmbNamedPipe</code> will send a request for a particular
+     * size of packet.  In other words, if you only request 1 byte, the
+     * <code>SmbNamedPipe</code> will send a request out and only ask for 1 byte
+     * back.  Buffering the expected packet size ensures that all of the data
+     * will be returned in the buffer without wasting any space.
+     *
+     * @param tdsVersion the TDS version for the connection
+     * @param packetSize requested packet size for the connection
+     * @return minimum default packet size if <code>packetSize == 0</code>,
+     *         else <code>packetSize</code>
+     */
+    static int calculateNamedPipeBufferSize(final int tdsVersion, final int packetSize) {
+
+        if (packetSize == 0) {
+            if (tdsVersion >= Driver.TDS70) {
+                return TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
+            }
+
+            return TdsCore.MIN_PKT_SIZE;
+        }
+
+        return packetSize;
+    }
 }

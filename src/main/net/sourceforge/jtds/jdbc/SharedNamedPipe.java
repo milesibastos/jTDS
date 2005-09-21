@@ -34,7 +34,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  *
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.15 2005-09-20 23:49:07 ddkilzer Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.16 2005-09-21 01:22:26 ddkilzer Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
     /**
@@ -43,39 +43,30 @@ public class SharedNamedPipe extends SharedSocket {
     private SmbNamedPipe pipe;
 
     /**
-     * Construct a SharedNamedPipe to the server.
+     * Creates a new instance of <code>SharedNamedPipe</code>.
      *
-     * @param host       SQL Server host name
-     * @param tdsVersion TDS protocol version
-     * @param serverType server type (SQL Server or Sybase)
-     * @param packetSize data packet size (used for buffering the named pipe
-     *                   input stream)
-     * @param instance   database instance name
-     * @param domain     domain used for Windows (NTLM) authentication
-     * @param user       username
-     * @param password   password
+     * @param connection
      * @throws IOException if the named pipe or its input or output streams do
      *                     not open
      * @throws UnknownHostException if host cannot be found for the named pipe
      */
-    public SharedNamedPipe(
-            String host, int tdsVersion, int serverType, int packetSize, String instance,
-            String domain, String user, String password)
-            throws IOException, UnknownHostException {
+    public SharedNamedPipe(ConnectionJDBC2 connection) throws IOException {
 
-        super(tdsVersion, serverType);
+        super(connection.getTdsVersion(), connection.getServerType());
 
-        NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(domain, user, password);
+        NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(
+                connection.getDomainName(), connection.getUser(), connection.getPassword());
 
         StringBuffer url = new StringBuffer(32);
 
         url.append("smb://");
-        url.append(host);
+        url.append(connection.getServerName());
         url.append("/IPC$");
 
-        if (instance != null && instance.length() != 0) {
+        final String instanceName = connection.getInstanceName();
+        if (instanceName != null && instanceName.length() != 0) {
             url.append("/MSSQL$");
-            url.append(instance);
+            url.append(instanceName);
         }
 
         url.append(DefaultProperties.NAMED_PIPE_PATH_SQLSERVER);
@@ -84,10 +75,11 @@ public class SharedNamedPipe extends SharedSocket {
 
         setOut(new DataOutputStream(getPipe().getNamedPipeOutputStream()));
 
+        final int bufferSize = Support.calculateNamedPipeBufferSize(
+                connection.getTdsVersion(), connection.getPacketSize());
         setIn(new DataInputStream(
                 new BufferedInputStream(
-                        getPipe().getNamedPipeInputStream(),
-                        SharedNamedPipe.calculateBufferSize(tdsVersion, packetSize))));
+                        getPipe().getNamedPipeInputStream(), bufferSize)));
     }
 
     /**
@@ -168,36 +160,5 @@ public class SharedNamedPipe extends SharedSocket {
      */
     protected void setTimeout(int timeout) {
         // FIXME - implement timeout functionality
-    }
-
-
-    /**
-     * Calculate the buffer size to use when buffering the {@link SmbNamedPipe}
-     * <code>InputStream</code>.  The buffer size is tied directly to the packet
-     * size because each request to the <code>SmbNamedPipe</code> will send a
-     * request for a particular size of packet.  In other words, if you only
-     * request 1 byte, the <code>SmbNamedPipe</code> will send a request out
-     * and only ask for 1 byte back.  Buffering the expected packet size ensures
-     * that all of the data will be returned in the buffer without wasting any
-     * space.
-     * <p/>
-     * <code>assert (packetSize == 0 || (packetSize >= {@link TdsCore#MIN_PKT_SIZE}
-     * && packetSize <= {@link TdsCore#MAX_PKT_SIZE}))</code>
-     *
-     * @param packetSize requested packet size for the connection
-     * @return minimum default packet size if <code>packetSize == 0</code>,
-     *         else <code>packetSize</code>
-     */
-    private static int calculateBufferSize(final int tdsVersion, final int packetSize) {
-
-        if (packetSize == 0) {
-            if (tdsVersion >= Driver.TDS70) {
-                return TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
-            }
-
-            return TdsCore.MIN_PKT_SIZE;
-        }
-
-        return packetSize;
     }
 }

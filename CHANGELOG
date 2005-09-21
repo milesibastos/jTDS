@@ -10,6 +10,13 @@ Changes from jTDS 1.1
    of type ConnectionJDBC2.  Added some package-private getter methods
    to ConnectionJDBC2.
  o Replaced SharedNamedPipe.instance() method with a public constructor.
+ o Simplified SharedNamedPipe and SharedLocalNamedPipe constructors by
+   passing in a ConnectionJDBC2 object instead of a laundry list of
+   data values.  Added more package-private getter methods to the
+   ConnectionJDBC2 class.  Moved SharedNamedPipe.calculateBufferSize()
+   to Support.calculateNamedPipeBufferSize().  Changed hard-coded buffer
+   values in SharedLocalNamedPipe constructor to use the value returned
+   from Support.calculateNamedPipeBufferSize().
 
 09/09/2005 - David Kilzer
  o Applied Mike's patch to fix a small bug with getProcedureColumns() in

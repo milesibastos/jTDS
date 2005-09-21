@@ -13,7 +13,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.15 2005-09-20 21:14:40 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.16 2005-09-21 20:54:52 ddkilzer Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -29,9 +29,8 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         final TestSuite testSuite = new TestSuite(JtdsDataSourceUnitTest.class);
 
-        testSuite.addTest(
-                JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.suite(
-                        "test_getConnection"));
+        testSuite.addTest(new TestSuite(
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.class, "test_getConnection"));
 
         return testSuite;
     }
@@ -56,21 +55,19 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
         assertNotNull(new JtdsDataSource());
     }
 
-    private static class Test_JtdsDataSource_getConnection extends UnitTestBase {
+    public static class Test_JtdsDataSource_getConnection extends UnitTestBase {
         // TODO Specify host name separately in the properties so that testing can be more accurate
         public Test_JtdsDataSource_getConnection(String name) {
             super(name);
         }
 
         /**
-         * Construct a test suite for this library.
+         * Provides a null test suite so that JUnit will not try to instantiate this class directly.
          *
-         * @param name The name of the tests.
-         * @return The test suite.
+         * @return The test suite (always <code>null</code>).
          */
-        public static Test suite(String name) {
-            return new TestSuite(
-                    JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.class, name);
+        public static final Test suite() {
+            return null;
         }
 
         /**

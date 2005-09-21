@@ -18,6 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -55,7 +56,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.23 2005-06-15 14:56:57 alin_sinpalean Exp $
+ * @version $Id: CachedResultSet.java,v 1.24 2005-09-21 21:50:34 ddkilzer Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -804,11 +805,21 @@ public class CachedResultSet extends JtdsResultSet {
             pi.length   = 0;
             pi.jdbcType = ci.jdbcType;
             pi.isSet    = true;
+            if (pi.jdbcType == Types.NUMERIC || pi.jdbcType == Types.DECIMAL) {
+                pi.scale = TdsData.DEFAULT_SCALE;
+            } else {
+                pi.scale = 0;
+            }
         } else {
             pi.value     = value;
             pi.length    = length;
-            pi.jdbcType  = jdbcType;
             pi.isSet     = true;
+            pi.jdbcType  = jdbcType;
+            if (pi.value instanceof BigDecimal) {
+                pi.scale = ((BigDecimal)pi.value).scale();
+            } else {
+                pi.scale = 0;
+            }
         }
 
         return value;

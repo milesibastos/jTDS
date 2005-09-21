@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.44 2005-09-08 23:35:58 ddkilzer Exp $
+ * @version $Id: JtdsResultSet.java,v 1.45 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -466,7 +466,7 @@ public class JtdsResultSet implements ResultSet {
     public void close() throws SQLException {
         if (!closed) {
             try {
-                if (!statement.getConnection().isClosed()) {
+                if (!getConnection().isClosed()) {
                    // Skip to end of result set
                    // Could send cancel but this is safer as
                    // cancel could kill other statements in a batch.
@@ -712,8 +712,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public byte[] getBytes(int columnIndex) throws SQLException {
-        String charSet = (statement != null) ?
-                ((ConnectionJDBC2) statement.getConnection()).getCharset() : null;
+        String charSet = (statement != null) ? getConnection().getCharset() : null;
         return (byte[]) Support.convert(this, getColumn(columnIndex), java.sql.Types.BINARY, charSet);
     }
 
@@ -838,7 +837,7 @@ public class JtdsResultSet implements ResultSet {
             return ((DateTime) value).toObject();
         }
         // If the user requested String/byte[] instead of LOBs, do the conversion
-        if (!((ConnectionJDBC2) statement.getConnection()).getUseLOBs()) {
+        if (!getConnection().getUseLOBs()) {
             value = Support.convertLOB(value);
         }
 
@@ -853,7 +852,7 @@ public class JtdsResultSet implements ResultSet {
             // Need to do some conversion and testing here
             jdbcType = Support.getJdbcType(x);
             if (x instanceof BigDecimal) {
-                int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
+                int prec = getConnection().getMaxPrecision();
                 x = Support.normalizeBigDecimal((BigDecimal)x, prec);
             } else if (x instanceof Blob) {
                 Blob blob = (Blob) x;
@@ -888,7 +887,7 @@ public class JtdsResultSet implements ResultSet {
 
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
 
-        if (scale < 0 || scale > 28) {
+        if (scale < 0 || scale > getConnection().getMaxPrecision()) {
             throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
         }
 
@@ -920,8 +919,7 @@ public class JtdsResultSet implements ResultSet {
             return (String) tmp;
         }
 
-        String charSet = (statement != null) ?
-                ((ConnectionJDBC2) statement.getConnection()).getCharset() : null;
+        String charSet = (statement != null) ? getConnection().getCharset() : null;
 
         return (String) Support.convert(this, tmp, java.sql.Types.VARCHAR, charSet);
     }
@@ -1042,7 +1040,7 @@ public class JtdsResultSet implements ResultSet {
         checkOpen();
         checkUpdateable();
         if (x != null) {
-            int prec = ((ConnectionJDBC2) statement.getConnection()).getMaxPrecision();
+            int prec = getConnection().getMaxPrecision();
             x = Support.normalizeBigDecimal(x, prec);
         }
         setColValue(columnIndex, Types.DECIMAL, x, 0);
@@ -1122,7 +1120,7 @@ public class JtdsResultSet implements ResultSet {
         // exception because the statement is closed and assume no LOBs
         boolean useLOBs = this instanceof CachedResultSet && statement.closed
                 ? false
-                : ((ConnectionJDBC2) statement.getConnection()).getUseLOBs();
+                : getConnection().getUseLOBs();
         return new JtdsResultSetMetaData(this.columns, this.columnCount,
                 useLOBs);
     }
@@ -1335,6 +1333,17 @@ public class JtdsResultSet implements ResultSet {
     public Timestamp getTimestamp(String columnName, Calendar cal)
         throws SQLException {
         return getTimestamp(findColumn(columnName), cal);
+    }
+
+    /**
+     * Returns the {@link ConnectionJDBC2} object referenced by the
+     * {@link #statement} instance variable.
+     *
+     * @return {@link ConnectionJDBC2} object.
+     * @throws SQLException on error.
+     */
+    private ConnectionJDBC2 getConnection() throws SQLException {
+        return (ConnectionJDBC2) statement.getConnection();
     }
 
 }

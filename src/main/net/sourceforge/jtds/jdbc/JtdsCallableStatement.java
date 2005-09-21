@@ -46,7 +46,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.16 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.17 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -170,7 +170,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
         if (sqlType == java.sql.Types.DECIMAL
             || sqlType == java.sql.Types.NUMERIC) {
-            registerOutParameter(parameterIndex, sqlType, -1);
+            registerOutParameter(parameterIndex, sqlType, TdsData.DEFAULT_SCALE);
         } else {
             registerOutParameter(parameterIndex, sqlType, 0);
         }
@@ -178,6 +178,11 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
     public void registerOutParameter(int parameterIndex, int sqlType, int scale)
         throws SQLException {
+
+        if (scale < 0 || scale > connection.getMaxPrecision()) {
+            throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
+        }
+
         ParamInfo pi = getParameter(parameterIndex);
 
         pi.isOutput = true;

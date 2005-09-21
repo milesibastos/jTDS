@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.50 2005-09-21 01:22:26 ddkilzer Exp $
+ * @version $Id: Support.java,v 1.51 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -59,8 +59,8 @@ public class Support {
     private static final BigDecimal BIG_DECIMAL_ONE = new BigDecimal(1.0);
     private static final java.sql.Date DATE_ZERO = new java.sql.Date(0);
     private static final java.sql.Time TIME_ZERO = new java.sql.Time(0);
-    private static final BigInteger maxValue28 = new BigInteger("9999999999999999999999999999");
-    private static final BigInteger maxValue38 = new BigInteger("99999999999999999999999999999999999999");
+    private static final BigInteger MAX_VALUE_28 = new BigInteger("9999999999999999999999999999");
+    private static final BigInteger MAX_VALUE_38 = new BigInteger("99999999999999999999999999999999999999");
 
     /**
      * Convert java clases to java.sql.Type constant.
@@ -136,8 +136,15 @@ public class Support {
      */
     static BigDecimal normalizeBigDecimal(BigDecimal value, int maxPrecision)
             throws SQLException {
+
         if (value == null) {
             return null;
+        }
+
+        if (value.scale() < 0) {
+            // Java 1.5 BigDecimal allows negative scales.
+            // jTDS cannot send these so re-scale.
+            value = value.setScale(0);
         }
 
         if (value.scale() > maxPrecision) {
@@ -147,7 +154,7 @@ public class Support {
             value = value.setScale(maxPrecision, BigDecimal.ROUND_HALF_UP);
         }
 
-        BigInteger max = (maxPrecision == 28) ? maxValue28 : maxValue38;
+        BigInteger max = (maxPrecision == TdsData.DEFAULT_PRECISION_28) ? MAX_VALUE_28 : MAX_VALUE_38;
 
         while (value.abs().unscaledValue().compareTo(max) > 0) {
             // OK we need to reduce the scale if possible to preserve
@@ -694,8 +701,10 @@ public class Support {
      *
      * @param buf The buffer in which the data will be embeded.
      * @param value The data object.
+     * @param isUnicode Set to <code>true</code> if Unicode strings should be used, else <code>false</code>.
+     * @param connection The {@link ConnectionJDBC2} object.
      */
-    static void embedData(StringBuffer buf, Object value, boolean isUnicode, int tdsVersion)
+    static void embedData(StringBuffer buf, Object value, boolean isUnicode, ConnectionJDBC2 connection)
             throws SQLException {
         buf.append(' ');
         if (value == null) {
@@ -724,7 +733,7 @@ public class Support {
 
             if (len >= 0) {
                 buf.append('0').append('x');
-                if (len == 0 && tdsVersion < Driver.TDS70) {
+                if (len == 0 && connection.getTdsVersion() < Driver.TDS70) {
                     // Zero length binary values are not allowed
                     buf.append('0').append('0');
                 } else {
@@ -831,7 +840,7 @@ public class Support {
             // 0.1000000000000000055511151231....
             //
             String tmp = value.toString();
-            int maxlen = (tdsVersion == Driver.TDS42 || tdsVersion == Driver.TDS70) ? 28 : 38;
+            int maxlen = connection.getMaxPrecision();
             if (tmp.charAt(0) == '-') {
                 maxlen++;
             }
@@ -983,9 +992,10 @@ public class Support {
      *
      * @param sql The SQL containing parameter markers to substitute.
      * @param list The parameter descriptors.
+     * @param connection The current connection.
      * @return The modified SQL statement.
      */
-    static String substituteParameters(String sql, ParamInfo[] list, int tdsVersion)
+    static String substituteParameters(String sql, ParamInfo[] list, ConnectionJDBC2 connection)
             throws SQLException {
         int len = sql.length();
 
@@ -1036,8 +1046,8 @@ public class Support {
             if (pos > 0) {
                 buf.append(sql.substring(start, list[i].markerPos));
                 start = pos + 1;
-                Support.embedData(buf, list[i].value,
-                        tdsVersion >= Driver.TDS70 && list[i].isUnicode, tdsVersion);
+                final boolean isUnicode = connection.getTdsVersion() >= Driver.TDS70 && list[i].isUnicode;
+                Support.embedData(buf, list[i].value, isUnicode, connection);
             }
         }
 

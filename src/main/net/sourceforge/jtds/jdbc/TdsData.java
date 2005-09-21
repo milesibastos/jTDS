@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.52 2005-09-07 17:54:21 ddkilzer Exp $
+ * @version $Id: TdsData.java,v 1.53 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class TdsData {
     /**
@@ -247,6 +247,10 @@ public class TdsData {
 
     /** Default Decimal Scale. */
     static final int DEFAULT_SCALE = 10;
+    /** Default precision for SQL Server 6.5 and 7. */
+    static final int DEFAULT_PRECISION_28 = 28;
+    /** Default precision for Sybase and SQL Server 2000 and newer. */
+    static final int DEFAULT_PRECISION_38 = 38;
 
     /**
      * TDS 8 supplies collation information for character data types.
@@ -1366,12 +1370,8 @@ public class TdsData {
                 } else {
                     // int8 not supported send as a decimal field
                     pi.tdsType  = SYBDECIMAL;
-
-                    if (connection.getMaxPrecision() > 28) {
-                        pi.sqlType = "decimal(38)";
-                    } else {
-                        pi.sqlType = "decimal(28)";
-                    }
+                    pi.sqlType = "decimal(" + connection.getMaxPrecision() + ')';
+                    pi.scale = 0;
                 }
 
                 break;
@@ -1379,32 +1379,14 @@ public class TdsData {
             case java.sql.Types.DECIMAL:
             case java.sql.Types.NUMERIC:
                 pi.tdsType  = SYBDECIMAL;
-                if (connection.getMaxPrecision() > 28) {
-                    if (pi.scale > 10 && pi.scale <= 38) {
-                        pi.sqlType = "decimal(38," + pi.scale + ')';
-                    } else {
-                        pi.sqlType = "decimal(38,10)";
-                    }
-                } else {
-                    if (pi.scale > 10 && pi.scale <= 28) {
-                        pi.sqlType = "decimal(28," + pi.scale + ')';
-                    } else {
-                        pi.sqlType = "decimal(28,10)";
-                    }
-                }
-
+                int prec = connection.getMaxPrecision();
+                int scale = DEFAULT_SCALE;
                 if (pi.value instanceof BigDecimal) {
-                    BigDecimal value = (BigDecimal)pi.value;
-                    if (connection.getMaxPrecision() > 28) {
-                        if (value.scale() > 10 || value.abs().compareTo(limit38) > 0) {
-                            pi.sqlType = "decimal(38," + value.scale() + ')';
-                        }
-                    } else {
-                        if (value.scale() > 10 || value.abs().compareTo(limit28) > 0) {
-                            pi.sqlType = "decimal(28," + value.scale() + ')';
-                        }
-                    }
+                    scale = ((BigDecimal)pi.value).scale();
+                } else if (pi.scale >= 0 && pi.scale <= prec) {
+                    scale = pi.scale;
                 }
+                pi.sqlType = "decimal(" + prec + ',' + scale + ')';
 
                 break;
 
@@ -1563,7 +1545,11 @@ public class TdsData {
                     if (pi.value instanceof BigDecimal) {
                         out.write((byte) ((BigDecimal) pi.value).scale());
                     } else {
-                        out.write((byte) 10);
+                        if (pi.scale >= 0 && pi.scale <= TdsData.DEFAULT_PRECISION_38) {
+                            out.write((byte) pi.scale);
+                        } else {
+                            out.write((byte) DEFAULT_SCALE);
+                        }
                     }
                 }
 
@@ -2227,7 +2213,7 @@ public class TdsData {
                 if (pi.jdbcType == java.sql.Types.BIGINT) {
                     scale = 0;
                 } else {
-                    if (pi.scale > DEFAULT_SCALE && pi.scale < prec) {
+                    if (pi.scale >= 0 && pi.scale <= prec) {
                         scale = pi.scale;
                     } else {
                         scale = DEFAULT_SCALE;
@@ -2244,8 +2230,7 @@ public class TdsData {
                     }
                 }
 
-                int maxLen = (prec <= 28) ? 13 : 17;
-                out.write((byte) maxLen);
+                out.write((byte) out.getMaxDecimalBytes());
                 out.write((byte) prec);
                 out.write((byte) scale);
                 out.write(value);
@@ -2266,9 +2251,6 @@ public class TdsData {
      */
     private TdsData() {
     }
-
-    private static BigDecimal limit28 = new BigDecimal("999999999999999999");
-    private static BigDecimal limit38 = new BigDecimal("9999999999999999999999999999");
 
     /**
      * Get a DATETIME value from the server response stream.

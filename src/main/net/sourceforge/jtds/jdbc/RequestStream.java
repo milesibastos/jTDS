@@ -36,7 +36,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: RequestStream.java,v 1.17 2005-09-20 21:10:20 ddkilzer Exp $
+ * @version $Id: RequestStream.java,v 1.18 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class RequestStream {
     /** The shared network socket. */
@@ -109,6 +109,16 @@ public class RequestStream {
      */
     int getMaxPrecision() {
         return this.maxPrecision;
+    }
+
+    /**
+     * Returns the maximum number of bytes required to output a decimal
+     * given the current {@link #maxPrecision}.
+     *
+     * @return the maximum number of bytes required to output a decimal.
+     */
+    byte getMaxDecimalBytes() {
+        return (byte) ((maxPrecision <= TdsData.DEFAULT_PRECISION_28) ? 13 : 17);
     }
 
     /**
@@ -455,8 +465,6 @@ public class RequestStream {
      * @throws IOException
      */
     void write(BigDecimal value) throws IOException {
-        final byte prec = (byte)maxPrecision;
-        final byte maxLen = (prec <= 28) ? (byte) 13 : (byte) 17;
 
         if (value == null) {
             write((byte) 0);
@@ -466,7 +474,7 @@ public class RequestStream {
             byte mantisse[] = bi.abs().toByteArray();
             byte len = (byte) (mantisse.length + 1);
 
-            if (len > maxLen) {
+            if (len > getMaxDecimalBytes()) {
                 // Should never happen now as value is normalized elsewhere
                 throw new IOException("BigDecimal to big to send");
             }

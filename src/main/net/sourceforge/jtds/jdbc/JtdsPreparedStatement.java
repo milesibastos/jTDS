@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.56 2005-07-04 11:30:58 alin_sinpalean Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.57 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -330,16 +330,19 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                                 Integer.toString(targetSqlType)), "HY092");
         }
 
-        pi.scale = (scale < 0) ? 0 : scale;
         // Update parameter descriptor
         if (targetSqlType == java.sql.Types.DECIMAL
             || targetSqlType == java.sql.Types.NUMERIC) {
-            pi.precision = connection.getMaxPrecision();
 
+            pi.precision = connection.getMaxPrecision();
             if (x instanceof BigDecimal) {
                 x = Support.normalizeBigDecimal((BigDecimal) x, pi.precision);
                 pi.scale = ((BigDecimal) x).scale();
+            } else {
+                pi.scale = (scale < 0) ? TdsData.DEFAULT_SCALE : scale;
             }
+        } else {
+            pi.scale = (scale < 0) ? 0 : scale;
         }
 
         if (x instanceof String) {
@@ -587,7 +590,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
         throws SQLException {
-        if (scale < 0 || scale > 28) {
+        if (scale < 0 || scale > connection.getMaxPrecision()) {
             throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
         }
         setObjectBase(parameterIndex, x, targetSqlType, scale);
@@ -658,9 +661,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         try {
             Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
-            Class[] parameterTypes = new Class[] {ParamInfo[].class, Boolean.TYPE};
-            Object[] arguments = new Object[] {parameters,
-                                               connection.getUseLOBs() ? Boolean.TRUE : Boolean.FALSE};
+            Class[] parameterTypes = new Class[] {ParamInfo[].class, ConnectionJDBC2.class};
+            Object[] arguments = new Object[] {parameters, connection};
             Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
 
             return (ParameterMetaData) pmdConstructor.newInstance(arguments);
@@ -726,9 +728,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 StringBuffer testSql = new StringBuffer(sql.length() + 128);
                 testSql.append("SET FMTONLY ON ");
                 testSql.append(
-                        Support.substituteParameters(sql,
-                                params,
-                                connection.getTdsVersion()));
+                        Support.substituteParameters(sql, params, connection));
                 testSql.append(" SET FMTONLY OFF");
 
                 try {

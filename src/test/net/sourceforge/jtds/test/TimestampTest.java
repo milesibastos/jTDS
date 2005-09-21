@@ -777,7 +777,7 @@ public class TimestampTest extends DatabaseTestCase {
                         cstmt.setObject(1, datatypes[i][2], jtype, 10);
                     }
                 } else if (jtype == java.sql.Types.VARCHAR) {
-                    cstmt.registerOutParameter(1, jtype, 255);
+                    cstmt.registerOutParameter(1, jtype);
 
                     if (pass == 0) {
                         cstmt.setObject(1, datatypes[i][2]);

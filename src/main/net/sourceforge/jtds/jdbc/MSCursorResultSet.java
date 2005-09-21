@@ -17,6 +17,7 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Types;
@@ -37,7 +38,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.55 2005-06-15 14:56:58 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.56 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -196,6 +197,11 @@ public class MSCursorResultSet extends JtdsResultSet {
             pi.length   = 0;
             pi.jdbcType = ci.jdbcType;
             pi.isSet    = true;
+            if (pi.jdbcType == Types.NUMERIC || pi.jdbcType == Types.DECIMAL) {
+                pi.scale = TdsData.DEFAULT_SCALE;
+            } else {
+                pi.scale = 0;
+            }
         } else {
             pi.value     = value;
             pi.length    = length;
@@ -204,6 +210,11 @@ public class MSCursorResultSet extends JtdsResultSet {
             pi.isUnicode = ci.sqlType.equals("ntext")
                     || ci.sqlType.equals("nchar")
                     || ci.sqlType.equals("nvarchar");
+            if (pi.value instanceof BigDecimal) {
+                pi.scale = ((BigDecimal)pi.value).scale();
+            } else {
+                pi.scale = 0;
+            }
         }
 
         return value;
@@ -368,7 +379,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         // substitute these into the SQL statement now.
         //
         if (parameters != null && prepareSql == TdsCore.UNPREPARED) {
-            sql = Support.substituteParameters(sql, parameters, tds.getTdsVersion());
+            sql = Support.substituteParameters(sql, parameters, statement.connection);
             parameters = null;
         }
         //

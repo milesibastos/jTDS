@@ -28,19 +28,22 @@ import java.sql.*;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ParameterMetaDataImpl.java,v 1.6 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: ParameterMetaDataImpl.java,v 1.7 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class ParameterMetaDataImpl implements ParameterMetaData {
     private final ParamInfo[] parameterList;
+    private final int maxPrecision;
     private final boolean useLOBs;
 
-    public ParameterMetaDataImpl(ParamInfo[] parameterList, boolean useLOBs) {
+
+    public ParameterMetaDataImpl(ParamInfo[] parameterList, ConnectionJDBC2 connection) {
         if (parameterList == null) {
             parameterList = new ParamInfo[0];
         }
 
         this.parameterList = parameterList;
-        this.useLOBs = useLOBs;
+        this.maxPrecision = connection.getMaxPrecision();
+        this.useLOBs = connection.getUseLOBs();
     }
 
     public int getParameterCount() throws SQLException {
@@ -86,7 +89,7 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
     public int getPrecision(int param) throws SQLException {
         ParamInfo pi = getParameter(param);
 
-        return (pi.precision >= 0) ? pi.precision : 38;
+        return (pi.precision >= 0) ? pi.precision : maxPrecision;
     }
 
     public String getParameterTypeName(int param) throws SQLException {

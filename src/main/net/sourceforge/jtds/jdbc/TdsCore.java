@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.103 2005-09-20 21:10:20 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.104 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -990,7 +990,7 @@ public class TdsCore {
                                     Integer.toString(i + 1)), "07000");
                         }
                     }
-                    sql = Support.substituteParameters(sql, parameters, getTdsVersion());
+                    sql = Support.substituteParameters(sql, parameters, connection);
                     parameters = null;
                 } else {
                     //
@@ -3418,7 +3418,7 @@ public class TdsCore {
             }
         } else if (sql.length() > 0) {
             if (parameters != null) {
-                sql = Support.substituteParameters(sql, parameters, tdsVersion);
+                sql = Support.substituteParameters(sql, parameters, connection);
             }
 
             out.setPacketType(QUERY_PKT);
@@ -3470,7 +3470,7 @@ public class TdsCore {
                 }
                 if (parameters[i].tdsType != TdsData.SYBLONGDATA) {
                     // prepared statement substitute parameters into SQL
-                    sql = Support.substituteParameters(sql, parameters, tdsVersion);
+                    sql = Support.substituteParameters(sql, parameters, connection);
                     haveParams = false;
                     procName = null;
                     break;
@@ -3619,7 +3619,7 @@ public class TdsCore {
                 if (prepareSql == TdsCore.UNPREPARED) {
                     // Low tech approach just substitute parameter data into the
                     // SQL statement.
-                    sql = Support.substituteParameters(sql, parameters, tdsVersion);
+                    sql = Support.substituteParameters(sql, parameters, connection);
                 } else {
                     // If we have parameters then we need to use sp_executesql to
                     // parameterise the statement unless the user has specified

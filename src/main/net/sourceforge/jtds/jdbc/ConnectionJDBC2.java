@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.102 2005-09-21 01:22:26 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.103 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -170,7 +170,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** Connection's current maximum field size limit. */
     private int textSize;
     /** Maximum decimal precision. */
-    private int maxPrecision = 38; // Sybase default
+    private int maxPrecision = TdsData.DEFAULT_PRECISION_38; // Sybase default
     /** Stored procedure unique ID number. */
     private int spSequenceNo = 1;
     /** Cursor unique ID number. */
@@ -387,8 +387,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (serverType == Driver.SYBASE) {
             baseTds.submitSQL(SYBASE_INITIAL_SQL);
         } else {
-            // Also discover the maximum decimal precision (28 for MS SQL pre
-            // 2000, configurable to 28/38 for 2000 and later)
+            // Also discover the maximum decimal precision:  28 (default)
+            // or 38 for MS SQL Server 6.5/7, or 38 for 2000 and later.
             Statement stmt = this.createStatement();
             ResultSet rs = stmt.executeQuery(SQL_SERVER_INITIAL_SQL);
 

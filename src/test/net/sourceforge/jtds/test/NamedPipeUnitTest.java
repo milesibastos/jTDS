@@ -19,6 +19,7 @@ package net.sourceforge.jtds.test;
 
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.SharedNamedPipe;
+import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbc.TdsCore;
 
 
@@ -27,7 +28,7 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  * Unit tests for the {@link SharedNamedPipe} class.
  *
  * @author David D. Kilzer
- * @version $Id: NamedPipeUnitTest.java,v 1.7 2005-04-28 14:29:31 alin_sinpalean Exp $
+ * @version $Id: NamedPipeUnitTest.java,v 1.8 2005-09-21 21:50:34 ddkilzer Exp $
  */
 public class NamedPipeUnitTest extends UnitTestBase {
 
@@ -42,7 +43,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
      * sets the buffer size appropriately for TDS 4.2 when the packet
      * size is set to 0.
      */
@@ -53,7 +54,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
      * sets the buffer size appropriately for TDS 5.0 when the packet
      * size is set to 0.
      */
@@ -64,7 +65,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
      * sets the buffer size appropriately for TDS 7.0 when the packet
      * size is set to 0.
      */
@@ -75,7 +76,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
      * sets the buffer size appropriately for TDS 8.0 when the packet
      * size is set to 0.
      */
@@ -86,18 +87,18 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Helper method to invoke {@link SharedNamedPipe#calculateBufferSize(int, int)}
+     * Helper method to invoke {@link Support#calculateNamedPipeBufferSize(int, int)}
      * using reflection.
      *
      * @param tdsVersion The TDS version as an <code>int</code>.
      * @param packetSize The packet size as an <code>int</code>.
-     * @return Result of calling {@link SharedNamedPipe#calculateBufferSize(int, int)}.
+     * @return Result of calling {@link Support#calculateNamedPipeBufferSize(int, int)}.
      */
     private int invoke_calculateBufferSize(int tdsVersion, int packetSize) {
         Class[] classes = new Class[]{int.class, int.class};
         Object[] objects = new Object[]{new Integer(tdsVersion), new Integer(packetSize)};
 
-        return ((Integer) invokeStaticMethod(SharedNamedPipe.class,
-                "calculateBufferSize", classes, objects)).intValue();
+        return ((Integer) invokeStaticMethod(Support.class,
+                "calculateNamedPipeBufferSize", classes, objects)).intValue();
     }
 }

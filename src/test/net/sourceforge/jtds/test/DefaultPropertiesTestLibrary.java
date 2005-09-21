@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.19 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.20 2005-09-21 22:23:40 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -365,7 +365,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     /**
      * Test the <code>useCursors</code> property.
      */
-    public void test_usecursors() {
+    public void test_useCursors() {
         String fieldName = "useCursors";
         String messageKey = Driver.USECURSORS;
         String expectedValue = DefaultProperties.USECURSORS;

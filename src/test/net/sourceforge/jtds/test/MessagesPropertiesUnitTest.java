@@ -25,6 +25,12 @@ import java.util.ResourceBundle;
 
 
 
+/**
+ * Unit tests for the <code>Messages.properties</code> file.
+ *
+ * @author David D. Kilzer
+ * @version $Id: MessagesPropertiesUnitTest.java,v 1.2 2005-09-22 17:26:15 ddkilzer Exp $
+ */
 public class MessagesPropertiesUnitTest extends UnitTestBase {
 
 

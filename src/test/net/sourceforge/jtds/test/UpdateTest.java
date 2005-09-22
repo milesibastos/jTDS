@@ -18,7 +18,8 @@ public class UpdateTest extends TestBase {
         stmt.execute("CREATE TABLE #temp (pk INT PRIMARY KEY, f_string VARCHAR(30), f_float FLOAT)");
 
         // populate in the traditional way
-        for (int i = 0; i < 100; i++) {
+        final int count = 100;
+        for (int i = 0; i < count; i++) {
             stmt.execute(
                 "INSERT INTO #temp "
                 + "VALUES( " + i
@@ -33,8 +34,11 @@ public class UpdateTest extends TestBase {
         ResultSet rs = stmt.executeQuery("SELECT * FROM #temp");
 
         assertTrue(rs.first());
+        assertEquals(1, rs.getRow());
         assertTrue(rs.last());
+        assertEquals(count, rs.getRow());
         assertTrue(rs.first());
+        assertEquals(1, rs.getRow());
 
         rs.close();
         stmt.close();

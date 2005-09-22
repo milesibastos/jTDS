@@ -1,7 +1,11 @@
 Changes from jTDS 1.1
 =====================
 
-09/21/2003 - David Kilzer
+09/22/2005 - David Kilzer
+ o Added MessagesPropertiesUnitTest to ensure every prop.* property has
+   a matching prop.desc.* property and vice-versa.
+
+09/21/2005 - David Kilzer
  o Applied patch for bug [1253127] Improved decimal peformance for MSSQL
    SP4 by Mike Hutchinson.  This patch also fixes bug [1236078] Procedure
    doesn't get called for some BigDecimal values (in Java 1.5).

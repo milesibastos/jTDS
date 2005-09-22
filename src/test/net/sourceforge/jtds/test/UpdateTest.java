@@ -6,7 +6,6 @@ import java.sql.*;
  * @created    March 17, 2001
  * @version    1.0
  */
-
 public class UpdateTest extends TestBase {
 
     public UpdateTest(String name) {
@@ -33,10 +32,11 @@ public class UpdateTest extends TestBase {
         //Navigate around
         ResultSet rs = stmt.executeQuery("SELECT * FROM #temp");
 
-        rs.first();
-        rs.last();
-        rs.first();
+        assertTrue(rs.first());
+        assertTrue(rs.last());
+        assertTrue(rs.first());
 
+        rs.close();
         stmt.close();
     }
 

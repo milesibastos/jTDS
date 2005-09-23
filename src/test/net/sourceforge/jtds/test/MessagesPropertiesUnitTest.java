@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
  * Unit tests for the <code>Messages.properties</code> file.
  *
  * @author David D. Kilzer
- * @version $Id: MessagesPropertiesUnitTest.java,v 1.2 2005-09-22 17:26:15 ddkilzer Exp $
+ * @version $Id: MessagesPropertiesUnitTest.java,v 1.3 2005-09-23 21:44:08 ddkilzer Exp $
  */
 public class MessagesPropertiesUnitTest extends UnitTestBase {
 
@@ -45,10 +45,10 @@ public class MessagesPropertiesUnitTest extends UnitTestBase {
 
         final ResourceBundle messages = (ResourceBundle) invokeStaticMethod(
                 Messages.class, "loadResourceBundle", new Class[]{}, new Object[]{});
-        final Enumeration enum = messages.getKeys();
+        final Enumeration keysEnumeration = messages.getKeys();
 
-        while (enum.hasMoreElements()) {
-            String key = (String) enum.nextElement();
+        while (keysEnumeration.hasMoreElements()) {
+            String key = (String) keysEnumeration.nextElement();
             if (key.startsWith("prop.desc.")) {
                 final String propertyName = key.substring("prop.desc.".length());
                 testSuite.addTest(new TestDescriptionHasProperty(propertyName, messages));

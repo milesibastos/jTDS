@@ -1,6 +1,11 @@
 Changes from jTDS 1.1
 =====================
 
+09/23/2005 - David Kilzer
+ o Fixed compilation on Java 1.5 in MessagesPropertiesUnitTest.  Thanks
+   to Mike Hutchinson for the patch in bug [1299147] Latest change does
+   not compile with java 1.5.
+
 09/22/2005 - David Kilzer
  o Added MessagesPropertiesUnitTest to ensure every prop.* property has
    a matching prop.desc.* property and vice-versa.

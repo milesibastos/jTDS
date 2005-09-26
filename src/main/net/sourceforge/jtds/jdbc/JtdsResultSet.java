@@ -55,7 +55,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.45 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: JtdsResultSet.java,v 1.46 2005-09-26 18:21:09 ddkilzer Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -95,7 +95,7 @@ public class JtdsResultSet implements ResultSet {
     protected int rowPtr;
     /** True if last column retrieved was null. */
     protected boolean wasNull;
-    /** The parent statement or null if this is a dummy result set. */
+    /** The parent statement. */
     protected JtdsStatement statement;
     /** True if this result set is closed. */
     protected boolean closed;
@@ -130,6 +130,9 @@ public class JtdsResultSet implements ResultSet {
                   int concurrency,
                   ColInfo[] columns)
         throws SQLException {
+        if (statement == null) {
+            throw new IllegalArgumentException("Statement parameter must not be null");
+        }
         this.statement = statement;
         this.resultSetType = resultSetType;
         this.concurrency = concurrency;
@@ -407,6 +410,18 @@ public class JtdsResultSet implements ResultSet {
         statement.cacheResults();
     }
 
+    /**
+     * Returns the {@link ConnectionJDBC2} object referenced by the
+     * {@link #statement} instance variable.
+     *
+     * @return {@link ConnectionJDBC2} object.
+     * @throws SQLException on error.
+     */
+    private ConnectionJDBC2 getConnection() throws SQLException {
+        return (ConnectionJDBC2) statement.getConnection();
+    }
+
+
 //
 // -------------------- java.sql.ResultSet methods -------------------
 //
@@ -458,9 +473,7 @@ public class JtdsResultSet implements ResultSet {
     public void clearWarnings() throws SQLException {
         checkOpen();
 
-        if (statement != null) {
-            statement.clearWarnings();
-        }
+        statement.clearWarnings();
     }
 
     public void close() throws SQLException {
@@ -678,14 +691,14 @@ public class JtdsResultSet implements ResultSet {
     public void setFetchSize(int rows) throws SQLException {
         checkOpen();
 
-        if (rows < 0 || (statement != null && statement.getMaxRows() > 0 && rows > statement.getMaxRows())) {
+        if (rows < 0 || (statement.getMaxRows() > 0 && rows > statement.getMaxRows())) {
             throw new SQLException(
                     Messages.get("error.generic.badparam",
                             Integer.toString(rows),
                             "rows"),
                     "HY092");
         }
-        if (rows == 0 && statement != null) {
+        if (rows == 0) {
             rows = statement.getDefaultFetchSize();
         }
         this.fetchSize = rows;
@@ -712,8 +725,8 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public byte[] getBytes(int columnIndex) throws SQLException {
-        String charSet = (statement != null) ? getConnection().getCharset() : null;
-        return (byte[]) Support.convert(this, getColumn(columnIndex), java.sql.Types.BINARY, charSet);
+        checkOpen();
+        return (byte[]) Support.convert(this, getColumn(columnIndex), java.sql.Types.BINARY, getConnection().getCharset());
     }
 
     public void updateByte(int columnIndex, byte x) throws SQLException {
@@ -845,6 +858,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateObject(int columnIndex, Object x) throws SQLException {
+        checkOpen();
         int length = 0;
         int jdbcType = Types.VARCHAR; // Use for NULL values
 
@@ -886,7 +900,7 @@ public class JtdsResultSet implements ResultSet {
     }
 
     public void updateObject(int columnIndex, Object x, int scale) throws SQLException {
-
+        checkOpen();
         if (scale < 0 || scale > getConnection().getMaxPrecision()) {
             throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
         }
@@ -918,10 +932,7 @@ public class JtdsResultSet implements ResultSet {
         if (tmp instanceof String) {
             return (String) tmp;
         }
-
-        String charSet = (statement != null) ? getConnection().getCharset() : null;
-
-        return (String) Support.convert(this, tmp, java.sql.Types.VARCHAR, charSet);
+        return (String) Support.convert(this, tmp, java.sql.Types.VARCHAR, getConnection().getCharset());
     }
 
     public void updateString(int columnIndex, String x) throws SQLException {
@@ -1128,7 +1139,7 @@ public class JtdsResultSet implements ResultSet {
     public SQLWarning getWarnings() throws SQLException {
         checkOpen();
 
-        return (statement != null) ? statement.getWarnings() : null;
+        return statement.getWarnings();
     }
 
     public Statement getStatement() throws SQLException {
@@ -1334,16 +1345,4 @@ public class JtdsResultSet implements ResultSet {
         throws SQLException {
         return getTimestamp(findColumn(columnName), cal);
     }
-
-    /**
-     * Returns the {@link ConnectionJDBC2} object referenced by the
-     * {@link #statement} instance variable.
-     *
-     * @return {@link ConnectionJDBC2} object.
-     * @throws SQLException on error.
-     */
-    private ConnectionJDBC2 getConnection() throws SQLException {
-        return (ConnectionJDBC2) statement.getConnection();
-    }
-
 }

@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.57 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.58 2005-09-26 18:21:09 ddkilzer Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -547,6 +547,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setUnicodeStream(int parameterIndex, InputStream inputStream, int length)
         throws SQLException {
+        checkOpen();
         if (inputStream == null || length < 0) {
             setString(parameterIndex, null);
         } else {
@@ -590,6 +591,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
         throws SQLException {
+        checkOpen();
         if (scale < 0 || scale > connection.getMaxPrecision()) {
             throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
         }

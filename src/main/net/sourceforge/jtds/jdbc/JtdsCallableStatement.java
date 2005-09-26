@@ -46,7 +46,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.17 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.18 2005-09-26 18:21:09 ddkilzer Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -76,6 +76,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      */
     int findParameter(String name, boolean set)
         throws SQLException {
+        checkOpen();
         for (int i = 0; i < parameters.length; i++){
             if (parameters[i].name != null && parameters[i].name.equalsIgnoreCase(name))
                 return i + 1;
@@ -103,6 +104,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      */
     protected Object getOutputValue(int parameterIndex)
             throws SQLException {
+        checkOpen();
         ParamInfo parameter = getParameter(parameterIndex);
         if (!parameter.isOutput) {
             throw new SQLException(
@@ -164,6 +166,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public byte[] getBytes(int parameterIndex) throws SQLException {
+        checkOpen();
         return ((byte[]) Support.convert(this, getOutputValue(parameterIndex), java.sql.Types.VARBINARY, connection.getCharset()));
     }
 
@@ -178,6 +181,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
     public void registerOutParameter(int parameterIndex, int sqlType, int scale)
         throws SQLException {
+        checkOpen();
 
         if (scale < 0 || scale > connection.getMaxPrecision()) {
             throw new SQLException(Messages.get("error.generic.badscale"), "HY092");
@@ -221,6 +225,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public String getString(int parameterIndex) throws SQLException {
+        checkOpen();
         return (String) Support.convert(this, getOutputValue(parameterIndex),
                 java.sql.Types.VARCHAR, connection.getCharset());
     }
@@ -321,6 +326,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public URL getURL(int parameterIndex) throws SQLException {
+        checkOpen();
         String url = (String) Support.convert(this,
                 getOutputValue(parameterIndex), java.sql.Types.VARCHAR,
                 connection.getCharset());

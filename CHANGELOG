@@ -1,6 +1,10 @@
 Changes from jTDS 1.1
 =====================
 
+09/27/2005 - David Kilzer
+ o Added info to the FAQ about the jTDS implementation of
+   javax.naming.spi.ObjectFactory.
+
 09/26/2005 - David Kilzer
  o Applied Mike's patch for bug [1299147] Latest change does not compile
    with java 1.5.  This patch cleans up the use of checkOpen() in a

@@ -25,10 +25,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.sql.ParameterMetaData;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.43 2005-07-04 11:31:09 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.44 2005-10-18 13:53:57 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -977,6 +976,22 @@ public class PreparedStatementTest extends TestBase {
         assertFalse(rs.next());
         rs.close();
         pstmt.close();
+    }
+
+    public void testNegativeScale() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #testNegativeScale (val decimal(28,10))");
+        PreparedStatement pstmt = con.prepareStatement(
+                "INSERT INTO #testNegativeScale VALUES(?)");
+        pstmt.setBigDecimal(1, new BigDecimal("2.9E7"));
+        assertEquals(1, pstmt.executeUpdate());
+        pstmt.close();
+
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #testNegativeScale");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals(29000000, rs.getBigDecimal(1).intValue());
+        stmt.close();
     }
 
     public static void main(String[] args) {

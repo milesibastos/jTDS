@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.51 2005-09-26 18:21:09 ddkilzer Exp $
+ * @version $Id: JtdsStatement.java,v 1.52 2005-10-18 13:53:57 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -894,8 +894,7 @@ public class JtdsStatement implements java.sql.Statement {
 
         if (rows < 0 || (maxRows > 0 && rows > maxRows)) {
             throw new SQLException(
-                Messages.get("error.generic.optltzero", "setFetchSize"),
-                    "HY092");
+                    Messages.get("error.statement.gtmaxrows"), "HY092");
         }
         if (rows == 0) {
             rows = getDefaultFetchSize();

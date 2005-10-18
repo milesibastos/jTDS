@@ -3,6 +3,10 @@ Changes from jTDS 1.1
 
 10/18/2005 - Alin Sinpalean
  o Corrected bug [1327029] setFetchSize give incorrect error message.
+ o Corrected bug [1296482] setAutoCommit() behaviour. According to section 
+   10.1.1 of the JDBC 3.0 spec (which takes precedence over the API
+   documentation) the transaction should only be committed if the auto-commit
+   mode is _changed_ during a transaction.
 
 09/27/2005 - David Kilzer
  o Added info to the FAQ about the jTDS implementation of

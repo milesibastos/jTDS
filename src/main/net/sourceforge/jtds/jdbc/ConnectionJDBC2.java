@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.103 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.104 2005-10-18 14:32:30 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1962,12 +1962,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         if (this.autoCommit == autoCommit) {
             // If we don't need to change the current auto commit mode, don't
-            // submit a request but...
-            if (!this.autoCommit) {
-                // If we're in manual commit mode the spec requires that we commit
-                // the transaction when setAutoCommit() is called
-                commit();
-            }
+            // submit a request and don't commit either. Section 10.1.1 of the
+            // JDBC 3.0 spec states that the transaction should be committed
+            // only "if the value of auto-commit is _changed_ in the middle of
+            // a transaction". This takes precedence over the API docs, which
+            // states that "if this method is called during a transaction, the
+            // transaction is committed".
             return;
         }
 

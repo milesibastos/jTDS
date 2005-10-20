@@ -1,9 +1,14 @@
 Changes from jTDS 1.1
 =====================
 
+10/20/2005 - Alin Sinpalean
+ o Corrected bug [1293415] Charset iso_1 is broken for Sybase. For Sybase the
+   server's iso_1 charset maps to the standard ISO-8859-1, rather than Cp1252
+   as it does for MS SQL Server.
+
 10/18/2005 - Alin Sinpalean
  o Corrected bug [1327029] setFetchSize give incorrect error message.
- o Corrected bug [1296482] setAutoCommit() behaviour. According to section 
+ o Corrected bug [1296482] setAutoCommit() behaviour. According to section
    10.1.1 of the JDBC 3.0 spec (which takes precedence over the API
    documentation) the transaction should only be committed if the auto-commit
    mode is _changed_ during a transaction.

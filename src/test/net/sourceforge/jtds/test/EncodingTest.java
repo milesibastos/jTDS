@@ -18,6 +18,9 @@
 package net.sourceforge.jtds.test;
 
 import java.sql.*;
+import java.util.Arrays;
+
+import net.sourceforge.jtds.jdbc.Messages;
 
 /**
  * @version 1.0
@@ -30,6 +33,7 @@ public class EncodingTest extends TestBase {
 
     /**
      * Test for bug [101956] updateBytes converted to hex in varchar
+     * <p/>
      * NB Test assumes server using iso_1 character set.
      */
     public void testBytesToVarchar() throws Exception {
@@ -72,6 +76,49 @@ public class EncodingTest extends TestBase {
         rs.close();
         stmt.close();
 
+    }
+
+    /**
+     * Test for bug [1293415] Charset iso_1 is broken for Sybase.
+     * <p/>
+     * NB Test assumes server using iso_1 character set.
+     */
+    public void testSybaseISO_1() throws Exception {
+        if (!"2".equals(props.getProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.SERVERTYPE)))) {
+            // Only test for Sybase
+            return;
+        }
+
+        byte[] test = new byte[224];
+        for (int i = 0; i < test.length; i++) {
+            test[i] = (byte) (i + 32);
+        }
+
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #test (id INT PRIMARY KEY, data VARCHAR(255) NULL)");
+        stmt.close();
+
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #test (id, data) VALUES (?, ?)");
+        pstmt.setInt(1, 1);
+        pstmt.setBytes(2, test);
+
+        assertEquals(pstmt.executeUpdate(), 1);
+        pstmt.close();
+
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT id, data FROM #test");
+
+        assertTrue(rs.next());
+        byte[] result = rs.getBytes("data");
+        assertEquals(test.length, result.length);
+        for (int i = 0; i < result.length; i++) {
+            assertEquals(String.valueOf(i), (byte) ((char) (i + 32)), result[i]);
+        }
+        assertTrue(Arrays.equals(test, result));
+        assertFalse(rs.next());
+
+        rs.close();
+        stmt.close();
     }
 
     public static void main(String[] args) {

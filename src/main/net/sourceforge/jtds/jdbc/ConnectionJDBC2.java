@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.104 2005-10-18 14:32:30 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.105 2005-10-20 09:41:45 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1173,6 +1173,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param charset the server character set
      */
     private void loadCharset(String charset) throws SQLException {
+        // MS SQL Server's iso_1 is Cp1252 not ISO-8859-1!
+        if (getServerType() == Driver.SQLSERVER
+                && charset.equalsIgnoreCase("iso_1")) {
+            charset = "Cp1252";
+        }
+
         // Do not default to any charset; if the charset is not found we want
         // to know about it
         CharsetInfo tmp = CharsetInfo.getCharset(charset);

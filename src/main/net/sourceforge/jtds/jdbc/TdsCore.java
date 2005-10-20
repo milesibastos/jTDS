@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.104 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.105 2005-10-20 09:58:18 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2654,48 +2654,46 @@ public class TdsCore {
         int bytesRead = 0;
         int columnIndex = 0;
 
-        // In some cases (e.g. if the user calls 'CREATE CURSOR', the
-        // TDS_TABNAME packet seems to be missing. Weird.
-        if (tables == null) {
-            in.skip(pktLen);
-        } else {
-            while (bytesRead < pktLen) {
-                // Seems like all columns are always returned in the COL_INFO
-                // packet and there might be more than 255 columns, so we'll
-                // just increment a counter instead.
-                // Ignore the column index.
-                in.read();
-                if (columnIndex >= columns.length) {
-                    throw new ProtocolException("Column index " + (columnIndex + 1) +
-                                                     " invalid in TDS_COLINFO packet");
-                }
-                ColInfo col = columns[columnIndex++];
-                int tableIndex = in.read();
-                if (tableIndex > tables.length) {
-                    throw new ProtocolException("Table index " + tableIndex +
-                                                     " invalid in TDS_COLINFO packet");
-                }
-                byte flags = (byte)in.read(); // flags
-                bytesRead += 3;
+        while (bytesRead < pktLen) {
+            // Seems like all columns are always returned in the COL_INFO
+            // packet and there might be more than 255 columns, so we'll
+            // just increment a counter instead.
+            // Ignore the column index.
+            in.read();
+            if (columnIndex >= columns.length) {
+                throw new ProtocolException("Column index " + (columnIndex + 1) +
+                        " invalid in TDS_COLINFO packet");
+            }
+            ColInfo col = columns[columnIndex++];
+            int tableIndex = in.read();
+            // In some cases (e.g. if the user calls 'CREATE CURSOR'), the
+            // TDS_TABNAME packet seems to be missing although the table index
+            // in this packet is > 0. Weird.
+            // If tables are available check for valid table index.
+            if (tables != null && tableIndex > tables.length) {
+                throw new ProtocolException("Table index " + tableIndex +
+                        " invalid in TDS_COLINFO packet");
+            }
+            byte flags = (byte)in.read(); // flags
+            bytesRead += 3;
 
-                if (tableIndex != 0) {
-                    TableMetaData table = tables[tableIndex-1];
-                    col.catalog   = table.catalog;
-                    col.schema    = table.schema;
-                    col.tableName = table.name;
-                }
+            if (tableIndex != 0 && tables != null) {
+                TableMetaData table = tables[tableIndex-1];
+                col.catalog   = table.catalog;
+                col.schema    = table.schema;
+                col.tableName = table.name;
+            }
 
-                col.isKey           = (flags & 0x08) != 0;
-                col.isHidden        = (flags & 0x10) != 0;
+            col.isKey           = (flags & 0x08) != 0;
+            col.isHidden        = (flags & 0x10) != 0;
 
-                // If bit 5 is set, we have a column name
-                if ((flags & 0x20) != 0) {
-                    final int nameLen = in.read();
-                    bytesRead += 1;
-                    final String colName = in.readString(nameLen);
-                    bytesRead += (tdsVersion >= Driver.TDS70) ? nameLen * 2 : nameLen;
-                    col.realName = colName;
-                }
+            // If bit 5 is set, we have a column name
+            if ((flags & 0x20) != 0) {
+                final int nameLen = in.read();
+                bytesRead += 1;
+                final String colName = in.readString(nameLen);
+                bytesRead += (tdsVersion >= Driver.TDS70) ? nameLen * 2 : nameLen;
+                col.realName = colName;
             }
         }
     }

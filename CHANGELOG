@@ -6,6 +6,8 @@ Changes from jTDS 1.1
    server's iso_1 charset maps to the standard ISO-8859-1, rather than Cp1252
    as it does for MS SQL Server.
  o Applied Mike's fix for bug [1330118] SSL fails with SQL 2005 September CTP.
+ o Applied Mike's fix for bug [1329765] Pseudo column ROWSTAT is back with SQL
+   2005 (September CTP).
 
 10/18/2005 - Alin Sinpalean
  o Corrected bug [1327029] setFetchSize give incorrect error message.

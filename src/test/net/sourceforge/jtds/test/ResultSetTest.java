@@ -1627,6 +1627,23 @@ public class ResultSetTest extends DatabaseTestCase {
         stmt.close();
     }
 
+    /**
+     * Test for bug [1329765] Pseudo column ROWSTAT is back with SQL 2005
+     * (September CTP).
+     */
+    public void testRowstat() throws Exception {
+        PreparedStatement stmt = con.prepareStatement("SELECT 'STRING' str",
+                ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        ResultSet rs = stmt.executeQuery();
+
+        assertEquals(1, rs.getMetaData().getColumnCount());
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

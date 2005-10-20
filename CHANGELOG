@@ -5,6 +5,7 @@ Changes from jTDS 1.1
  o Corrected bug [1293415] Charset iso_1 is broken for Sybase. For Sybase the
    server's iso_1 charset maps to the standard ISO-8859-1, rather than Cp1252
    as it does for MS SQL Server.
+ o Applied Mike's fix for bug [1330118] SSL fails with SQL 2005 September CTP.
 
 10/18/2005 - Alin Sinpalean
  o Corrected bug [1327029] setFetchSize give incorrect error message.

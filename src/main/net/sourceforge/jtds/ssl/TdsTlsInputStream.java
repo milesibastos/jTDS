@@ -30,7 +30,7 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsInputStream.java,v 1.4 2005-04-28 14:29:31 alin_sinpalean Exp $
+ * @version $Id: TdsTlsInputStream.java,v 1.5 2005-10-20 09:46:38 alin_sinpalean Exp $
  */
 class TdsTlsInputStream extends FilterInputStream {
 
@@ -99,7 +99,8 @@ class TdsTlsInputStream extends FilterInputStream {
         // TLS packet hdr size = 5 TDS = 8
         readFully(readBuffer, 0, Ssl.TLS_HEADER_SIZE);
         int len;
-        if (readBuffer[0] == TdsCore.REPLY_PKT) {
+        if (readBuffer[0] == TdsCore.REPLY_PKT
+                || readBuffer[0] == TdsCore.PRELOGIN_PKT) {
             len = ((readBuffer[2] & 0xFF) << 8) | (readBuffer[3] & 0xFF);
             // Read rest of header to skip
             readFully(readBuffer, Ssl.TLS_HEADER_SIZE, TdsCore.PKT_HDR_LEN - Ssl.TLS_HEADER_SIZE );

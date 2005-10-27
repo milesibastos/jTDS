@@ -64,10 +64,19 @@
 <td>&nbsp;&nbsp;smallint</td><td>java.lang.Integer</th><td>SMALLINT</td><td>&nbsp;</td>
 </tr>
 <tr>
+<td>&nbsp;&nbsp;unsigned smallint</td><td>java.lang.Integer</th><td>INTEGER</td><td>Sybase only</td>
+</tr>
+<tr>
 <td>&nbsp;&nbsp;int</td><td>java.lang.Integer</th><td>INTEGER</td><td>&nbsp;</td>
 </tr>
 <tr>
-<td>&nbsp;&nbsp;bigint</td><td>java.lang.Long</th><td>BIGINT</td><td>MS only TDS8</td>
+<td>&nbsp;&nbsp;unsigned int</td><td>java.lang.Integer</th><td>BIGINT</td><td>Sybase only</td>
+</tr>
+<tr>
+<td>&nbsp;&nbsp;bigint</td><td>java.lang.Long</th><td>BIGINT</td><td>SQL 2000/Sybase 15+</td>
+</tr>
+<tr>
+<td>&nbsp;&nbsp;unsigned bigint</td><td>java.math.BigDecimal</th><td>DECIMAL</td><td>Sybase only</td>
 </tr>
 <tr>
 <td>&nbsp;&nbsp;numeric</td><td>java.math.BigDecimal</th><td>NUMERIC</td><td>&nbsp;</td>
@@ -119,6 +128,9 @@
 </tr>
 <tr>
 <td>&nbsp;&nbsp;ntext</td><td>java.sql.Clob</th><td>CLOB</td><td>Microsoft only</td>
+</tr>
+<tr>
+<td>&nbsp;&nbsp;unitext</td><td>java.sql.Clob</th><td>CLOB</td><td>Sybase only</td>
 </tr>
 <tr>
 <td colspan="4"><p class="title">Binary types</td>

@@ -319,6 +319,50 @@ public class Tds8Test extends DatabaseTestCase {
         rs.close();
     }
 
+    /**
+     * Test for enhanced database metadata for SQL 2005.
+     * E.g. distinguish between varchar(max) and text.
+     * @throws Exception
+     */
+    public void testSQL2005MetaData() throws Exception
+    {
+        Statement stmt = con.createStatement();
+        int dbVer = Integer.parseInt(con.getMetaData()
+                    .getDatabaseProductVersion().
+                    substring(0,2));
+        if (dbVer <= 8) {
+            // Not SQL 2005
+            return;
+        }
+        stmt.execute("CREATE TABLE #test (" +
+                    "id int primary key, " +
+                    "txt text, ntxt ntext, img image, " +
+                    "vc varchar(max), nvc nvarchar(max), vb varbinary(max))");
+        ResultSet rs = con.getMetaData().getColumns("tempdb", null, "#test", "%");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        // Skip int col
+        assertTrue(rs.next());
+        // Should be text
+        assertEquals("text", rs.getString("TYPE_NAME"));
+        assertTrue(rs.next());
+        // Should be ntext
+        assertEquals("ntext", rs.getString("TYPE_NAME"));
+        assertTrue(rs.next());
+        // Should be image
+        assertEquals("image", rs.getString("TYPE_NAME"));
+        assertTrue(rs.next());
+        // Should be varchar(max)
+        assertEquals("varchar", rs.getString("TYPE_NAME"));
+        assertTrue(rs.next());
+        // Should be nvarchar(max)
+        assertEquals("nvarchar", rs.getString("TYPE_NAME"));
+        assertTrue(rs.next());
+        // Should be varbinary(max)
+        assertEquals("varbinary", rs.getString("TYPE_NAME"));
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(Tds8Test.class);
     }

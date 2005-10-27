@@ -103,6 +103,10 @@
         <li><a href="#lastUpdateCount">
           <code>PreparedStatement.executeUpdate()</code> returns an incorrect
           update count.</a></li>
+        <li><a href="#badrpccall">Why do I get <code>java.sql.SQLException:
+          &quot;Output parameter not allowed
+          as argument list prevents use of RPC.&quot;</code>
+          when calling a stored procedure?</a></li>
       </ul>
       <p class="question">Memory Usage</p>
       <ul>
@@ -247,7 +251,10 @@
           cast the types (as 7.0 does), meaning that if a index column is Unicode
           and the string is submitted using the default character encoding (or
           the other way around) SQLServer will perform an index scan instead of
-          an index seek.</dd>
+          an index seek. For Sybase, determines if strings that cannot be encoded in
+          the server's charset are sent as unicode strings. There is a performance
+          hit for the encoding logic so set this option to false if unitext or univarchar
+          data types are not in use or if charset is utf-8.</dd>
         <dt><code>lastUpdateCount</code> (default - <code>true</code>)</dt>
         <dd>If <code>true</code> only the last update count will be returned by
           <code>executeUpdate()</code>. This is useful in case you are updating
@@ -299,6 +306,12 @@
           attempting to connect to the server.  If <code>namedPipe</code> is
           <code>true</code> and <code>loginTimeout</code> is zero (the default), a
           value of 20 seconds is used for the named pipe retry timeout.</dd>
+        <dt><code>socketTimeout</code> (default - <code>0</code>)</dt>
+        <dd>The amount of time to wait (in seconds) for network activity before timing out.<br/>
+          Use with care! If a non zero value is supplied this must be greater than the maximum
+          time that the server will take to answer any query. Once the timeout value is exceeded
+          the network connection will be closed. This parameter may be useful for detecting dead
+          network connections in a pooled environment.</dd>
         <dt><code>namedPipe</code> (default - <code>false</code>)</dt>
         <dd>When set to <code>true</code>, named pipe communication is used to
           connect to the database instead of TCP/IP sockets. When the
@@ -739,6 +752,26 @@
         <code>true</code> if you want all the update counts, so you will have to
         skip over the irrelevant update counts by calling
         <code>getMoreResults()</code> yourself, when needed.</p>
+      <p><a href="#">^ top ^</a></p>
+
+      <p class="question"><a name="badrpccall"></a>
+        <code>Why do I get java.sql.SQLException: "Output parameter not allowed
+        as argument list prevents use of RPC." when calling a stored procedure?</p>
+      <p>When calling a stored procedure that has output parameters, the driver
+         has to call the procedure using a remote procedure call (RPC). Stored
+         procedures should be invoked using the special JDBC call escape syntax.
+         For example, {call sp_example(?,?)}. In this case the driver will be able
+         to use an RPC succesfully as all the parameters are represented by
+         parameter markers (?). If however parameters are supplied as a
+         mixture of parameter markers and literals, for example {call
+         sp_example('test',?)}, then the driver is unable to use an RPC
+         and therefore cannot return output parameters. In these circumstances the
+         driver raises an exception and execution fails.</p>
+         <p>It is possible to use mixed parameter lists to call stored procedures
+         that do not have output parameters. In this case the driver will substitute
+         the parameters locally and use a normal &quot;execute procedure&quot; SQL
+         call; however, this mode of execution is less efficient than an RPC.
+         </p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Memory Usage</p>

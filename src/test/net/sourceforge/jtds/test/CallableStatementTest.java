@@ -894,6 +894,51 @@ public class CallableStatementTest extends TestBase {
         cstmt.close();
     }
 
+    /**
+     * Test that output result sets, return values and output parameters are
+     * correctly handled for a remote procedure call.
+     * To set up this test you will a local and remote server where the remote
+     * server allows logins from the local test server.
+     * Install the following stored procedure on the remote server:
+     *
+     * create proc jtds_remote @in varchar(16), @out varchar(32) output as
+     * begin
+     *   select 'result set'
+     *   set @out = 'Test ' + @in;
+     *   return 1
+     * end
+     *
+     * Uncomment this test and amend the remoteserver name in the prepareCall
+     * statement below to be the actual name of your remote server.
+     *
+     * The TDS stream for this test will comprise a result set, a dummy return
+     * (0x79) value and then the actual return and output parameter (0xAC) records.
+     *
+     * This call will fail with jtds 1.1 as the dummy return value of 0 in the
+     * TDS stream will preempt the capture of the actual value 1. In addition the
+     * return value will be assigned to the output parameter and the actual output
+     * parameter value will be lost.
+     *
+     *
+    public void testRemoteCallWithResultSet() throws Exception {
+        CallableStatement cstmt = con.prepareCall(
+                "{?=call remoteserver.database.user.jtds_remote(?,?)}");
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.setString(2, "data");
+        cstmt.registerOutParameter(3, Types.VARCHAR);
+        cstmt.execute();
+        ResultSet rs = cstmt.getResultSet();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("result set", rs.getString(1));
+        assertFalse(rs.next());
+        rs.close();
+        assertEquals(1, cstmt.getInt(1));
+        assertEquals("Test data", cstmt.getString(3));
+        cstmt.close();
+    }
+    */
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(CallableStatementTest.class);
     }

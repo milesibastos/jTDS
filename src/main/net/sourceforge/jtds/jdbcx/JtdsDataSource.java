@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.35 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.36 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -77,6 +77,7 @@ public class JtdsDataSource
     protected String wsid;
     protected String xaEmulation;
     protected String logFile;
+    protected String socketTimeout;
     protected String ssl;
     protected String batchSize;
     protected String bufferMaxMemory;
@@ -219,6 +220,9 @@ public class JtdsDataSource
         if (loginTimeout != null) {
             props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
         }
+        if (socketTimeout != null) {
+            props.setProperty(Messages.get(Driver.SOTIMEOUT), socketTimeout);
+        }
         if (lobBuffer != null) {
             props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
         }
@@ -302,6 +306,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.USER), user));
         ref.add(new StringRefAddr(Messages.get(Driver.PASSWORD), password));
         ref.add(new StringRefAddr(Messages.get(Driver.LOGINTIMEOUT), loginTimeout));
+        ref.add(new StringRefAddr(Messages.get(Driver.SOTIMEOUT), socketTimeout));
         ref.add(new StringRefAddr(Messages.get(Driver.LOBBUFFER), lobBuffer));
         ref.add(new StringRefAddr(Messages.get(Driver.MAXSTATEMENTS), maxStatements));
         ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
@@ -371,6 +376,17 @@ public class JtdsDataSource
             return 0;
         }
         return Integer.parseInt(loginTimeout);
+    }
+
+    public void setSocketTimeout(int socketTimeout) throws SQLException {
+        this.socketTimeout = String.valueOf(socketTimeout);
+    }
+
+    public int getSocketTimeout() throws SQLException {
+        if (socketTimeout == null) {
+            return 0;
+        }
+        return Integer.parseInt(socketTimeout);
     }
 
     public void setDatabaseName(String databaseName) {

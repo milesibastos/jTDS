@@ -1,6 +1,34 @@
 Changes from jTDS 1.1
 =====================
 
+10/27/2005 - Mike Hutchinson
+ o Fixed bug "[1305275] Cursor opens fails when cursor threshold <> -1" by
+   amending MSCursorResultSet.
+ o Fixed bugs "[1283472] Unable to cancel statement with cursor resultset" and
+   "[1323363] Deadlock Exception not reported (SQL Server)" by amending
+   JtdsStatement executeSQL() and executeSQLQuery().
+ o Fixed a bug in handling output parameters that occurs when invoking remote
+   stored procedures. The TdsCore.tdsOutputParamToken method was amended.
+ o Implement RFE "[1289687] configurable socket setSoTimeout()". This also
+   offers a solution to bug "[1297306] Network problem can cause jTDS hang-up".
+ o Fixed bug "[1246270] Closing a statement after cancelling it throws an
+   exception" by amending JtdsStatement.close().
+ o [SQL Server 2005] Database meta data has been improved so that getColumns()
+   can distinguish between text and varchar(max), image and varbinary(max) etc.
+   Changes were required to JtdsDatabaseMetaData.getColumns() and a new method
+   getMSTypeName was added to TdsData. A test case has been added to Tds8Test.
+ o [Sybase ASE 15] Added support for new data types unitext, bigint and
+   unsigned smallint, int and bigint. This enhancement required changes to
+   TdsCore, TdsData and ResponseStream. New test cases have been added to
+   Tds5Test.
+ o [Sybase ASE 15] With ASE 15 the default packet size is now 2048 bytes. The
+   ConnectionJDBC and DefaultProperties classes have been amended so that the
+   server default is used when there is no packetSize connection property
+   present.
+ o [Documentation] Modified faq.html to document bug [1260507]
+   CallableStatement Exception and the new soTimeout connection property.
+ o [Documentation] Modified typemap.html to document the new Sybase datatypes.
+
 10/20/2005 - Alin Sinpalean
  o Corrected bug [1293415] Charset iso_1 is broken for Sybase. For Sybase the
    server's iso_1 charset maps to the standard ISO-8859-1, rather than Cp1252

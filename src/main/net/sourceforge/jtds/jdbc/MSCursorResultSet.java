@@ -38,7 +38,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.56 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.57 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -98,6 +98,8 @@ public class MSCursorResultSet extends JtdsResultSet {
     private Object[][] rowCache;
     /** Actual position of the cursor. */
     private int cursorPos;
+    /** The cursor is being built asynchronously. */
+    private boolean asyncCursor;
 
     //
     // Fixed sp_XXX parameters
@@ -150,6 +152,10 @@ public class MSCursorResultSet extends JtdsResultSet {
         rowCache = new Object[fetchSize][];
 
         cursorCreate(sql, procName, procedureParams);
+        if (asyncCursor) {
+            // Obtain a provisional row count for the result set
+            cursorFetch(FETCH_REPEAT, 0);
+        }
     }
 
     /**
@@ -540,9 +546,12 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         // Check the return value
         Integer retVal = tds.getReturnStatus();
-        if ((retVal == null) || (retVal.intValue() != 0)) {
+        if ((retVal == null) || (retVal.intValue() != 0 && retVal.intValue() != 2)) {
             throw new SQLException(Messages.get("error.resultset.openfail"), "24000");
         }
+
+        // Cursor is being built asynchronously so rowsInResult is not set
+        asyncCursor = (retVal.intValue() == 2);
 
         //
         // Retrieve values of output parameters
@@ -715,6 +724,11 @@ public class MSCursorResultSet extends JtdsResultSet {
             pos = cursorPos;
         }
         rowsInResult = ((Integer) PARAM_NUMROWS_OUT.getOutValue()).intValue();
+        if (rowsInResult < 0) {
+            // -1 = Dynamic cursor number of rows cannot be known.
+            // -n = Async cursor = rows loaded so far
+            rowsInResult = 0 - rowsInResult;
+        }
 
         return getCurrentRow() != null;
     }
@@ -1092,7 +1106,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         checkScrollable();
 
         pos = rowsInResult;
-        if (getCurrentRow() == null) {
+        if (asyncCursor || getCurrentRow() == null) {
             if (cursorFetch(FETCH_LAST, 0)) {
                 // Set pos to the last row, as the number of rows can change
                 pos = rowsInResult;

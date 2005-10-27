@@ -19,6 +19,7 @@ package net.sourceforge.jtds.jdbc;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.io.UnsupportedEncodingException;
 import net.sourceforge.jtds.util.*;
 
@@ -33,7 +34,7 @@ import net.sourceforge.jtds.util.*;
  * </ol>
  *
  * @author Mike Hutchinson.
- * @version $Id: ResponseStream.java,v 1.19 2005-04-28 14:29:27 alin_sinpalean Exp $
+ * @version $Id: ResponseStream.java,v 1.20 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class ResponseStream {
     /** The shared network socket. */
@@ -339,6 +340,28 @@ public class ResponseStream {
         long b8 = ((long) read()) << 56;
 
         return b1 | b2 | b3 | b4 | b5 | b6 | b7 | b8;
+    }
+
+    /**
+     * Reads an <code>unsigned long</code> value from the server response stream.
+     *
+     * @return the result as a <code>BigDecimal</code>
+     * @throws IOException if an I/O error occurs
+     */
+    BigDecimal readUnsignedLong() throws IOException {
+        int  b1 = ((int) read() & 0xFF);
+        long b2 = ((long) read());
+        long b3 = ((long) read()) << 8;
+        long b4 = ((long) read()) << 16;
+        long b5 = ((long) read()) << 24;
+        long b6 = ((long) read()) << 32;
+        long b7 = ((long) read()) << 40;
+        long b8 = ((long) read()) << 48;
+        // Convert via String as BigDecimal(long) is actually BigDecimal(double)
+        // on older versions of java
+        return new BigDecimal(Long.toString(b2 | b3 | b4 | b5 | b6 | b7 | b8))
+                        .multiply(new BigDecimal(256))
+                        .add(new BigDecimal(b1));
     }
 
     /**

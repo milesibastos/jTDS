@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.20 2005-09-21 22:23:40 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.21 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -198,6 +198,18 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         }
     }
 
+    /**
+     * Test the <code>socketTimeout</code> property.
+     */
+    public void test_socketTimeout() {
+        String fieldName = "socketTimeout";
+        String messageKey = Driver.SOTIMEOUT;
+        String expectedValue = DefaultProperties.SOCKET_TIMEOUT;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
 
     /**
      * Test the <code>macAddress</code> property.
@@ -237,9 +249,10 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String messageKey = Driver.PACKETSIZE;
 
         if (!isOnlyTds70Tests()) {
-            String expectedValue = DefaultProperties.PACKET_SIZE_42_50;
+            String expectedValue = DefaultProperties.PACKET_SIZE_42;
             assertDefaultPropertyByTdsVersion(
                     URL_SQLSERVER, DefaultProperties.TDS_VERSION_42, messageKey, fieldName, expectedValue);
+            expectedValue = DefaultProperties.PACKET_SIZE_50;
             assertDefaultPropertyByTdsVersion(
                     URL_SYBASE, DefaultProperties.TDS_VERSION_50, messageKey, fieldName, expectedValue);
         }

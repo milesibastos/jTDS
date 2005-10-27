@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.24 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.25 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public final class DefaultProperties {
 
@@ -86,8 +86,10 @@ public final class DefaultProperties {
     public static final String NAMED_PIPE_PATH_SQLSERVER = "/sql/query";
     /** Default <code>namedPipePath</code> property for Sybase. */
     public static final String NAMED_PIPE_PATH_SYBASE = "/sybase/query";
-    /** Default <code>packetSize</code> property for TDS 4.2 and TDS 5.0. */
-    public static final String PACKET_SIZE_42_50 = String.valueOf(TdsCore.MIN_PKT_SIZE);
+    /** Default <code>packetSize</code> property for TDS 4.2. */
+    public static final String PACKET_SIZE_42 = String.valueOf(TdsCore.MIN_PKT_SIZE);
+    /** Default <code>packetSize</code> property for TDS 5.0. */
+    public static final String PACKET_SIZE_50 = "0";
     /** Default <code>packetSize</code> property for TDS 7.0 and TDS 8.0. */
     public static final String PACKET_SIZE_70_80 = "0"; // server sets packet size
     /** Default <code>password</code> property. */
@@ -120,6 +122,8 @@ public final class DefaultProperties {
     public static final String XAEMULATION = "true";
     /** Default <code>logfile</code> property. */
     public static final String LOGFILE = "";
+    /** Default <code>sockeTimeout</code> property. */
+    public static final String SOCKET_TIMEOUT = "0";
 
     /** Default <code>serverType</code> property for SQL Server. */
     public static final String SERVER_TYPE_SQLSERVER = "sqlserver";
@@ -159,8 +163,8 @@ public final class DefaultProperties {
         portNumberDefaults.put(String.valueOf(Driver.SYBASE), PORT_NUMBER_SYBASE);
 
         packetSizeDefaults = new HashMap(4);
-        packetSizeDefaults.put(TDS_VERSION_42, PACKET_SIZE_42_50);
-        packetSizeDefaults.put(TDS_VERSION_50, PACKET_SIZE_42_50);
+        packetSizeDefaults.put(TDS_VERSION_42, PACKET_SIZE_42);
+        packetSizeDefaults.put(TDS_VERSION_50, PACKET_SIZE_50);
         packetSizeDefaults.put(TDS_VERSION_70, PACKET_SIZE_70_80);
         packetSizeDefaults.put(TDS_VERSION_80, PACKET_SIZE_70_80);
 
@@ -208,6 +212,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.LASTUPDATECOUNT, LAST_UPDATE_COUNT);
         addDefaultPropertyIfNotSet(props, Driver.LOBBUFFER, LOB_BUFFER_SIZE);
         addDefaultPropertyIfNotSet(props, Driver.LOGINTIMEOUT, LOGIN_TIMEOUT);
+        addDefaultPropertyIfNotSet(props, Driver.SOTIMEOUT, SOCKET_TIMEOUT);
         addDefaultPropertyIfNotSet(props, Driver.MACADDRESS, MAC_ADDRESS);
         addDefaultPropertyIfNotSet(props, Driver.MAXSTATEMENTS, MAX_STATEMENTS);
         addDefaultPropertyIfNotSet(props, Driver.NAMEDPIPE, NAMED_PIPE);

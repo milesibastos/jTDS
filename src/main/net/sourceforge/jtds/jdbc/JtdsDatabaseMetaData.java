@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.33 2005-09-09 19:02:52 ddkilzer Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.34 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -462,6 +462,12 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     if (i == 5) {
                         int type = TypeInfo.normalizeDataType(rs.getInt(i), connection.getUseLOBs());
                         rsTmp.updateInt(i, type);
+                    } else
+                    if (i == 19) {
+                        // This is the SS_DATA_TYPE column and contains the TDS
+                        // data type constant. We can use this to distinguish
+                        // varchar(max) from text on SQL2005.
+                        rsTmp.updateString(6, TdsData.getMSTypeName(rs.getString(6), rs.getInt(19)));
                     } else {
                         rsTmp.updateObject(i, rs.getObject(i));
                     }
@@ -1440,7 +1446,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     }
                 }
              }
-             if (serverType == Driver.SYBASE 
+             if (serverType == Driver.SYBASE
                  || tdsVersion == Driver.TDS42
                  || tdsVersion == Driver.TDS70) {
                 //

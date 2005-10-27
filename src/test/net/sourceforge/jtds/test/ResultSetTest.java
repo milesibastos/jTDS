@@ -547,6 +547,73 @@ public class ResultSetTest extends DatabaseTestCase {
     }
 
     /**
+     * Test that the cursor fallback logic correctly discriminates between
+     * "real" sql errors and cursor open failures.
+     * <p/>
+     * This illustrates the logic added to fix:
+     * <ol>
+     *   <li>[1323363] Deadlock Exception not reported (SQL Server)</li>
+     *   <li>[1283472] Unable to cancel statement with cursor resultset</li>
+     * </ol>
+     */
+    public void testCursorFallback() throws Exception {
+        Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+                                                ResultSet.CONCUR_READ_ONLY);
+        //
+        // This test should fail on the cursor open but fall back to normal
+        // execution returning two result sets
+        //
+        stmt.execute("CREATE PROC #testcursor as SELECT 'data'  select 'data2'");
+        stmt.execute("exec #testcursor");
+        assertNotNull(stmt.getWarnings());
+        ResultSet rs = stmt.getResultSet();
+        assertNotNull(rs); // First result set OK
+        assertTrue(stmt.getMoreResults());
+        rs = stmt.getResultSet();
+        assertNotNull(rs); // Second result set OK
+        //
+        // This test should fail on the cursor open (because of the for browse)
+        // but fall back to normal execution returning a single result set
+        //
+        rs = stmt.executeQuery("SELECT description FROM master..sysmessages FOR BROWSE");
+        assertNotNull(rs);
+        assertNotNull(rs.getWarnings());
+        rs.close();
+        //
+        // Enable logging to see that this test should just fail without
+        // attempting to fall back on normal execution.
+        //
+        // DriverManager.setLogStream(System.out);
+        try {
+            stmt.executeQuery("select bad from syntax");
+            fail("Expected SQLException");
+        } catch (SQLException e) {
+            assertEquals("42S02", e.getSQLState());
+        }
+        // DriverManager.setLogStream(null);
+        stmt.close();
+    }
+
+    /**
+     * Test for bug [1246270] Closing a statement after canceling it throws an
+     * exception.
+     */
+    public void testCancelResultSet() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (id int primary key, data varchar(255))");
+        for (int i = 1; i < 1000; i++) {
+            stmt.executeUpdate("INSERT INTO #TEST VALUES (" + i +
+                    ", 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" +
+                    "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')");
+        }
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        stmt.cancel();
+        stmt.close();
+    }
+
+    /**
      * Test whether retrieval by name returns the first occurence (that's what
      * the spec requires).
      */

@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author David D. Kilzer
  * @author Alin Sinpalean
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.7 2005-09-22 17:20:13 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.8 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
     /**
@@ -64,6 +64,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         String user = "user";
         String password = "password";
         int loginTimeout = 1;
+        int socketTimeout = 2;
         long lobBuffer = 4096;
         int maxStatements = 12;
         String appName = "appName";
@@ -100,6 +101,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         ds.setProgName(progName);
         ds.setXaEmulation(xaEmulation);
         ds.setLogFile(logFile);
+        ds.setSocketTimeout(socketTimeout);
         ds.setSsl(ssl);
         ds.setBatchSize(batchSize);
         ds.setDescription(description);
@@ -140,6 +142,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertEquals(progName, ds.getProgName());
         assertEquals(xaEmulation, ds.getXaEmulation());
         assertEquals(logFile, ds.getLogFile());
+        assertEquals(socketTimeout, ds.getSocketTimeout());
         assertEquals(ssl, ds.getSsl());
         assertEquals(batchSize, ds.getBatchSize());
         assertEquals(description, ds.getDescription());

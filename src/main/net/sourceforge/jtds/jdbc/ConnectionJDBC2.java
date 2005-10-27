@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.105 2005-10-20 09:41:45 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.106 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -209,6 +209,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean xaEmulation = true;
     /** Mutual exclusion lock to control access to connection. */
     private final Semaphore mutex = new Semaphore(1);
+    /** Socket timeout value in seconds or 0. */
+    private int socketTimeout;
     /** SSL setting. */
     private String ssl;
     /** The maximum size of a batch. */
@@ -890,6 +892,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the socket timeout for this connection.
+     *
+     * @return the socket timeout
+     */
+    int getSocketTimeout() {
+        return this.socketTimeout;
+    }
+
+    /**
      * Retrieves the packet size for this connection.
      *
      * @return the packet size
@@ -998,10 +1009,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             if (tdsVersion >= Driver.TDS70) {
                 // Default of 0 means let the server specify packet size
                 packetSize = (packetSize == 0) ? 0 : TdsCore.DEFAULT_MIN_PKT_SIZE_TDS70;
-            } else {
-                // Sensible minimum for all other versions of TDS
+            } else if (tdsVersion == Driver.TDS42) {
+                // Sensible minimum for older versions of TDS
                 packetSize = TdsCore.MIN_PKT_SIZE;
-            }
+            } // else for TDS 5 can auto negotiate
         }
         if (packetSize > TdsCore.MAX_PKT_SIZE) {
             packetSize = TdsCore.MAX_PKT_SIZE;
@@ -1009,6 +1020,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         packetSize = (packetSize / 512) * 512;
 
         loginTimeout = parseIntegerProperty(info, Driver.LOGINTIMEOUT);
+        socketTimeout = parseIntegerProperty(info, Driver.SOTIMEOUT);
         lobBuffer = parseLongProperty(info, Driver.LOBBUFFER);
 
         maxStatements = parseIntegerProperty(info, Driver.MAXSTATEMENTS);
@@ -1773,7 +1785,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return this.transactionIsolation;
     }
 
-    public void clearWarnings() throws SQLException {
+    synchronized public void clearWarnings() throws SQLException {
         checkOpen();
         messages.clearWarnings();
     }
@@ -2070,7 +2082,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                java.sql.ResultSet.CONCUR_READ_ONLY);
     }
 
-    public Statement createStatement(int type, int concurrency) throws SQLException {
+    synchronized public Statement createStatement(int type, int concurrency)
+            throws SQLException {
         checkOpen();
 
         JtdsStatement stmt = new JtdsStatement(this, type, concurrency);
@@ -2118,7 +2131,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                            java.sql.ResultSet.CONCUR_READ_ONLY);
     }
 
-    public CallableStatement prepareCall(String sql, int type, int concurrency)
+    synchronized public CallableStatement prepareCall(String sql, int type,
+                                                      int concurrency)
             throws SQLException {
         checkOpen();
 
@@ -2182,7 +2196,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return stmt;
     }
 
-    public PreparedStatement prepareStatement(String sql, int type, int concurrency)
+    synchronized public PreparedStatement prepareStatement(String sql,
+                                                           int type,
+                                                           int concurrency)
             throws SQLException {
         checkOpen();
 

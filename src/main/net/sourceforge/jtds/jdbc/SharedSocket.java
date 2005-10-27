@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.36 2005-09-20 23:36:25 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.37 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 class SharedSocket {
     /**
@@ -254,6 +254,7 @@ class SharedSocket {
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(connection.getTcpNoDelay());
+        this.socket.setSoTimeout(connection.getSocketTimeout() * 1000);
     }
 
     /**

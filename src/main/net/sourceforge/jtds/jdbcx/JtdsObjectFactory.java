@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.20 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.21 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -91,6 +91,10 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object loginTimeout = ref.get(Messages.get(Driver.LOGINTIMEOUT)).getContent();
             if (loginTimeout != null) {
                 ds.setLoginTimeout(Integer.parseInt((String) loginTimeout));
+            }
+            final Object socketTimeout = ref.get(Messages.get(Driver.SOTIMEOUT)).getContent();
+            if (socketTimeout != null) {
+                ds.setSocketTimeout(Integer.parseInt((String) socketTimeout));
             }
             ds.setAppName((String) ref.get(Messages.get(Driver.APPNAME)).getContent());
             ds.setProgName((String) ref.get(Messages.get(Driver.PROGNAME)).getContent());

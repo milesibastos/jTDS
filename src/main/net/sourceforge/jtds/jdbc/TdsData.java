@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.53 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: TdsData.java,v 1.54 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -147,13 +147,17 @@ public class TdsData {
     private static final int XSYBNCHAR             = 239;// 0xEF
     private static final int XSYBVARBINARY         = 165;// 0xA5
     private static final int XSYBBINARY            = 173;// 0xAD
+    private static final int SYBUNITEXT            = 174;// 0xAE SYBASE 15
     private static final int SYBLONGBINARY         = 225;// 0xE1 SYBASE 12
     private static final int SYBSINT1              = 64; // 0x40
-    private static final int SYBUINT2              = 65; // 0x41
-    private static final int SYBUINT4              = 66; // 0x42
-    private static final int SYBUINT8              = 67; // 0x43
+    private static final int SYBUINT2              = 65; // 0x41 SYBASE 15
+    private static final int SYBUINT4              = 66; // 0x42 SYBASE 15
+    private static final int SYBUINT8              = 67; // 0x43 SYBASE 15
+    private static final int SYBUINTN              = 68; // 0x44 SYBASE 15
     private static final int SYBUNIQUE             = 36; // 0x24
     private static final int SYBVARIANT            = 98; // 0x62
+    private static final int SYBSINT8              = 191;// 0xBF SYBASE 15
+
     /*
      * Special case for Sybase 12.5+
      * This long data type is used to send text and image
@@ -176,6 +180,7 @@ public class TdsData {
     private static final int UDT_NVARCHAR          = 19; // 0x03
     private static final int UDT_UNICHAR           = 34; // 0x22
     private static final int UDT_UNIVARCHAR        = 35; // 0x23
+    private static final int UDT_UNITEXT           = 36; // 0x24
     // Common to Sybase and SQL Server
     private static final int UDT_TIMESTAMP         = 80; // 0x50
     private static final int UDT_SYSNAME           = 18; // 0x12
@@ -211,6 +216,7 @@ public class TdsData {
         types[SYBBIT]       = new TypeInfo("bit",            1,  1,  1, false, false, java.sql.Types.BIT);
         types[SYBTEXT]      = new TypeInfo("text",          -4, -1, -1, false, true,  java.sql.Types.CLOB);
         types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -1, false, true,  java.sql.Types.CLOB);
+        types[SYBUNITEXT]   = new TypeInfo("unitext",       -4, -1, -1, false, true,  java.sql.Types.CLOB);
         types[SYBIMAGE]     = new TypeInfo("image",         -4, -1, -1, false, false, java.sql.Types.BLOB);
         types[SYBMONEY4]    = new TypeInfo("smallmoney",     4, 10, 12, true,  false, java.sql.Types.DECIMAL);
         types[SYBMONEY]     = new TypeInfo("money",          8, 19, 21, true,  false, java.sql.Types.DECIMAL);
@@ -238,11 +244,13 @@ public class TdsData {
         types[XSYBBINARY]   = new TypeInfo("binary",        -2, -1, -1, false, false, java.sql.Types.BINARY);
         types[SYBLONGBINARY]= new TypeInfo("varbinary",     -5, -1,  2, false, false, java.sql.Types.BINARY);
         types[SYBSINT1]     = new TypeInfo("tinyint",        1,  2,  3, false, false, java.sql.Types.TINYINT);
-        types[SYBUINT2]     = new TypeInfo("smallint",       2,  5,  6, false, false, java.sql.Types.SMALLINT);
-        types[SYBUINT4]     = new TypeInfo("int",            4, 10, 11, false, false, java.sql.Types.INTEGER);
-        types[SYBUINT8]     = new TypeInfo("bigint",         8, 20, 20, false, false, java.sql.Types.BIGINT);
+        types[SYBUINT2]     = new TypeInfo("unsigned smallint", 2,  5,  6, false, false, java.sql.Types.INTEGER);
+        types[SYBUINT4]     = new TypeInfo("unsigned int",   4, 10, 11, false, false, java.sql.Types.BIGINT);
+        types[SYBUINT8]     = new TypeInfo("unsigned bigint",8, 20, 20, false, false, java.sql.Types.DECIMAL);
+        types[SYBUINTN]     = new TypeInfo("unsigned int",  -1, 10, 11, true,  false, java.sql.Types.BIGINT);
         types[SYBUNIQUE]    = new TypeInfo("uniqueidentifier",-1,36,36, false, false, java.sql.Types.CHAR);
         types[SYBVARIANT]   = new TypeInfo("sql_variant",   -5,  0, 8000, false, false, java.sql.Types.VARCHAR);
+        types[SYBSINT8]     = new TypeInfo("bigint",         8, 19, 20, true,  false, java.sql.Types.BIGINT);
     }
 
     /** Default Decimal Scale. */
@@ -446,6 +454,25 @@ public class TdsData {
                     ci.sqlType     = types[SYBINT1].sqlType;
                 }
                 break;
+                // Establish actual size of nullable unsigned int
+            case SYBUINTN:
+                if (ci.bufferSize == 8) {
+                    ci.displaySize = types[SYBUINT8].displaySize;
+                    ci.precision   = types[SYBUINT8].precision;
+                    ci.jdbcType    = types[SYBUINT8].jdbcType;
+                    ci.sqlType     = types[SYBUINT8].sqlType;
+                } else if (ci.bufferSize == 4) {
+                    ci.displaySize = types[SYBUINT4].displaySize;
+                    ci.precision   = types[SYBUINT4].precision;
+                } else if (ci.bufferSize == 2) {
+                    ci.displaySize = types[SYBUINT2].displaySize;
+                    ci.precision   = types[SYBUINT2].precision;
+                    ci.jdbcType    = types[SYBUINT2].jdbcType;
+                    ci.sqlType     = types[SYBUINT2].sqlType;
+                } else {
+                    throw new ProtocolException("unsigned int null (size 1) not supported");
+                }
+                break;
             //
             // Money types have a scale of 4
             //
@@ -497,6 +524,12 @@ public class TdsData {
 
             // SQL Server unicode text can only display half as many chars
             case SYBNTEXT:
+                ci.precision   = Integer.MAX_VALUE / 2;
+                ci.displaySize = Integer.MAX_VALUE / 2;
+                break;
+
+            // ASE 15+ unicode text can only display half as many chars
+            case SYBUNITEXT:
                 ci.precision   = Integer.MAX_VALUE / 2;
                 ci.displaySize = Integer.MAX_VALUE / 2;
                 break;
@@ -623,6 +656,20 @@ public class TdsData {
 
                 break;
 
+            // Sybase ASE 15+ supports unsigned null smallint, int and bigint
+            case SYBUINTN:
+                switch (in.read()) {
+                    case 1:
+                        return new Integer(in.read() & 0xFF);
+                    case 2:
+                        return new Integer((int)in.readShort() & 0xFFFF);
+                    case 4:
+                        return new Long((long)in.readInt() & 0xFFFFFFFFL );
+                    case 8:
+                        return in.readUnsignedLong();
+                }
+                break;
+
             case SYBINT1:
                 return new Integer(in.read() & 0xFF);
 
@@ -632,8 +679,25 @@ public class TdsData {
             case SYBINT4:
                 return new Integer(in.readInt());
 
+            // SQL Server bigint
             case SYBINT8:
                 return new Long(in.readLong());
+
+            // Sybase ASE 15+ bigint
+            case SYBSINT8:
+                return new Long(in.readLong());
+
+            // Sybase ASE 15+ unsigned smallint
+            case SYBUINT2:
+                return new Integer((int)in.readShort() & 0xFFFF);
+
+            // Sybase ASE 15+ unsigned int
+            case SYBUINT4:
+                return new Long((long)in.readInt() & 0xFFFFFFFFL);
+
+            // Sybase ASE 15+ unsigned bigint
+            case SYBUINT8:
+                return in.readUnsignedLong();
 
             case SYBIMAGE:
                 len = in.read();
@@ -739,6 +803,7 @@ public class TdsData {
 
                 break;
 
+            case SYBUNITEXT: // ASE 15+ unicode text type
             case SYBNTEXT:
                 len = in.read();
 
@@ -1174,10 +1239,12 @@ public class TdsData {
                     len = pi.length;
                 }
                 if (connection.getTdsVersion() < Driver.TDS70) {
+                    String charset = connection.getCharset();
                     if (len > 0
-                        && len <= SYB_LONGVAR_MAX / 2
+                        && (len <= SYB_LONGVAR_MAX / 2 || connection.getSybaseInfo(TdsCore.SYB_UNITEXT))
                         && connection.getSybaseInfo(TdsCore.SYB_UNICODE)
-                        && connection.isUseUnicode()) {
+                        && connection.isUseUnicode()
+                        && !charset.equals("UTF-8")) {
                         // Sybase can send values as unicode if conversion to the
                         // server charset fails.
                         // One option to determine if conversion will fail is to use
@@ -1188,14 +1255,24 @@ public class TdsData {
                         // This behaviour can be disabled by setting the connection
                         // property sendParametersAsUnicode=false.
                         // TODO: Find a better way of testing for convertable charset.
+                        // With ASE 15 this code will read a CLOB into memory just to
+                        // check for unicode characters. This is wasteful if no unicode
+                        // data is present and we are targetting a text column. The option
+                        // of always sending unicode does not work as the server will
+                        // complain about image to text conversions unless the target
+                        // column actually is unitext.
                         try {
-                            String charset = connection.getCharset();
-                            String tmp     = pi.getString(charset);
+                            String tmp = pi.getString(charset);
                             if (!canEncode(tmp, charset)) {
                                 // Conversion fails need to send as unicode.
-                                pi.sqlType = "univarchar("+tmp.length()+')';
-                                pi.tdsType = SYBLONGBINARY;
                                 pi.length  = tmp.length();
+                                if (pi.length > SYB_LONGVAR_MAX / 2) {
+                                    pi.sqlType = "unitext";
+                                    pi.tdsType = SYBLONGDATA;
+                                } else {
+                                    pi.sqlType = "univarchar("+pi.length+')';
+                                    pi.tdsType = SYBLONGBINARY;
+                                }
                                 break;
                             }
                         } catch (IOException e) {
@@ -1209,7 +1286,7 @@ public class TdsData {
                     //
                     if (connection.isWideChar() && len <= SYB_LONGVAR_MAX) {
                         try {
-                            byte tmp[] = pi.getBytes(connection.getCharset());
+                            byte tmp[] = pi.getBytes(charset);
                             len = (tmp == null) ? 0 : tmp.length;
                         } catch (IOException e) {
                             throw new SQLException(
@@ -1364,7 +1441,8 @@ public class TdsData {
                 break;
 
             case java.sql.Types.BIGINT:
-                if (connection.getTdsVersion() >= Driver.TDS80) {
+                if (connection.getTdsVersion() >= Driver.TDS80 ||
+                    connection.getSybaseInfo(TdsCore.SYB_BIGINT)) {
                     pi.tdsType = SYBINTN;
                     pi.sqlType = "bigint";
                 } else {
@@ -1491,6 +1569,8 @@ public class TdsData {
         out.write((byte) (pi.isOutput ? 1 : 0)); // Output param
         if (pi.sqlType.startsWith("univarchar")) {
             out.write((int) UDT_UNIVARCHAR);
+        } else if (pi.sqlType.equals("unitext")) {
+            out.write((int) UDT_UNITEXT);
         } else {
             out.write((int) 0); // user type
         }
@@ -1507,7 +1587,7 @@ public class TdsData {
                 break;
             case SYBLONGDATA:
                 // It appears that type 3 = send text data
-                // and type 4 = send image data
+                // and type 4 = send image or unitext data
                 // No idea if there is a type 1/2 or what they are.
                 out.write(pi.sqlType.equals("text") ? (byte) 3 : (byte) 4);
                 out.write((byte)0);
@@ -1519,7 +1599,7 @@ public class TdsData {
             case SYBBIT:
                 break;
             case SYBINTN:
-                out.write((byte) 4);
+                out.write(pi.sqlType.equals("bigint") ? (byte) 8: (byte) 4);
                 break;
             case SYBFLTN:
                 if (pi.value instanceof Float) {
@@ -1556,7 +1636,7 @@ public class TdsData {
                 break;
             default:
                 throw new IllegalStateException(
-                                               "Unsupported output TDS type " + Integer.toHexString(pi.tdsType));
+                        "Unsupported output TDS type " + Integer.toHexString(pi.tdsType));
         }
 
         out.write((byte) 0); // Locale information
@@ -1660,6 +1740,9 @@ public class TdsData {
                 // Write CLOB direct from input Reader
                 //
                 if (pi.value instanceof Reader && !pi.charsetInfo.isWideChars()) {
+                    // For ASE 15+ the getNativeType() routine will already have
+                    // read the data from the reader so this code will not be
+                    // reached unless sendStringParametersAsUnicode=false.
                     char buffer[] = new char[SYB_CHUNK_SIZE];
                     int len = ((Reader) pi.value).read(buffer);
                     while (len > 0) {
@@ -1668,8 +1751,8 @@ public class TdsData {
                         out.write((byte) (len >> 16));
                         out.write((byte) ((len >> 24) | 0x80)); // 0x80 means more to come
                         out.write(Support.encodeString(
-                                    pi.charsetInfo.getCharset(),
-                                            new String(buffer, 0, len)));
+                                pi.charsetInfo.getCharset(),
+                                new String(buffer, 0, len)));
                         len = ((Reader) pi.value).read(buffer);
                     }
                 } else
@@ -1681,18 +1764,37 @@ public class TdsData {
                     // Actual data needs to be written out in chunks of
                     // 8192 bytes.
                     //
-                    byte buf[] = pi.getBytes(pi.charsetInfo.getCharset());
-                    int pos = 0;
-                    while (pos < buf.length) {
-                        int len = (buf.length - pos >= SYB_CHUNK_SIZE)?
-                                            SYB_CHUNK_SIZE: buf.length - pos;
-                        out.write((byte) len);
-                        out.write((byte) (len >> 8));
-                        out.write((byte) (len >> 16));
-                        out.write((byte) ((len >> 24) | 0x80)); // 0x80 means more to come
-                        // Write data
-                        for (int i = 0; i < len; i++) {
-                            out.write(buf[pos++]);
+                    if (pi.sqlType.equals("unitext")) {
+                        // Write out String as unicode bytes
+                        String buf = pi.getString(pi.charsetInfo.getCharset());
+                        int pos = 0;
+                        while (pos < buf.length()) {
+                            int clen = (buf.length() - pos >= SYB_CHUNK_SIZE / 2)?
+                                                SYB_CHUNK_SIZE / 2: buf.length() - pos;
+                            int len = clen * 2;
+                            out.write((byte) len);
+                            out.write((byte) (len >> 8));
+                            out.write((byte) (len >> 16));
+                            out.write((byte) ((len >> 24) | 0x80)); // 0x80 means more to come
+                            // Write data
+                            out.write(buf.substring(pos, pos+clen).toCharArray(), 0, clen);
+                            pos += clen;
+                        }
+                    } else {
+                        // Write text as bytes
+                        byte buf[] = pi.getBytes(pi.charsetInfo.getCharset());
+                        int pos = 0;
+                        while (pos < buf.length) {
+                            int len = (buf.length - pos >= SYB_CHUNK_SIZE)
+                                    ? SYB_CHUNK_SIZE : buf.length - pos;
+                            out.write((byte) len);
+                            out.write((byte) (len >> 8));
+                            out.write((byte) (len >> 16));
+                            out.write((byte) ((len >> 24) | 0x80)); // 0x80 means more to come
+                            // Write data
+                            for (int i = 0; i < len; i++) {
+                                out.write(buf[pos++]);
+                            }
                         }
                     }
                 }
@@ -1701,6 +1803,7 @@ public class TdsData {
                 break;
 
             case SYBLONGBINARY:
+                // Sybase data <= 16284 bytes long
                 if (pi.value == null) {
                     out.write((int) 0);
                 } else {
@@ -1728,8 +1831,13 @@ public class TdsData {
                 if (pi.value == null) {
                     out.write((byte) 0);
                 } else {
-                    out.write((byte) 4);
-                    out.write(((Number) pi.value).intValue());
+                    if (pi.sqlType.equals("bigint")) {
+                        out.write((byte) 8);
+                        out.write((long) ((Number) pi.value).longValue());
+                    } else {
+                        out.write((byte) 4);
+                        out.write((int) ((Number) pi.value).intValue());
+                    }
                 }
 
                 break;
@@ -1799,7 +1907,7 @@ public class TdsData {
 
             default:
                 throw new IllegalStateException(
-                                               "Unsupported output TDS type " + Integer.toHexString(pi.tdsType));
+                        "Unsupported output TDS type " + Integer.toHexString(pi.tdsType));
         }
     }
 
@@ -2500,6 +2608,27 @@ public class TdsData {
 //            // Conversion failed just try toString();
 //            value = value.toString();
 //        }
+    }
+
+    /**
+     * For SQL 2005 This routine will modify the meta data to allow the
+     * caller to distinguish between varchar(max) and text or varbinary(max)
+     * and image or nvarchar(max) and ntext.
+     *
+     * @param typeName the SQL type returned by sp_columns
+     * @param tdsType the TDS type returned by sp_columns
+     * @return the (possibly) modified SQL type name as a <code>String</code>
+     */
+    public static String getMSTypeName(String typeName, int tdsType) {
+        if (typeName.equalsIgnoreCase("text") && tdsType != SYBTEXT) {
+            return "varchar";
+        } else if (typeName.equalsIgnoreCase("ntext") && tdsType != SYBTEXT) {
+            return "nvarchar";
+        } else if (typeName.equalsIgnoreCase("image") && tdsType != SYBIMAGE) {
+            return "varbinary";
+        } else {
+            return typeName;
+        }
     }
 
     /**

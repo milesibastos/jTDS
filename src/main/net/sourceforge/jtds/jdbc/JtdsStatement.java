@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.53 2005-10-19 08:03:31 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.54 2005-10-27 13:22:33 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -222,6 +222,55 @@ public class JtdsStatement implements java.sql.Statement {
     }
 
     /**
+     * Check that the exception is caused by the failure to open a
+     * cursor and not by a more serious SQL error.
+     *
+     * @param e the exception returned by the cursor class
+     * @throws SQLException if exception is not due to a cursor error
+     */
+    protected void checkCursorException(SQLException e) throws SQLException{
+        if (connection == null
+                || connection.isClosed()
+                || "HYT00".equals(e.getSQLState())
+                || "HY008".equals(e.getSQLState())) {
+                // Serious error or timeout so return exception to caller
+                throw e;
+            }
+        if (connection.getServerType() == Driver.SYBASE) {
+            // Allow retry for Sybase
+            return;
+        }
+        //
+        // Check cursor specific errors and ranges for SQL Server
+        //
+        int error = e.getErrorCode();
+        if (error >= 16900 && error <= 16999) {
+            // Errors in this range are all related to the cursor API.
+            // This is true for all versions of SQL Server.
+            return;
+        }
+        if (error == 6819) {
+            // A FOR XML clause was found
+            return;
+        }
+        if (error == 8654) {
+            // A inrow textptr exists
+            return;
+        }
+        if (error == 8162) {
+            // Formal parameter '%.*ls' was defined as OUTPUT but the actual
+            // parameter not declared OUTPUT. This happens when trying to
+            // execute a stored procedure with output parameters via a cursor.
+            return;
+        }
+        //
+        // More serious error we should rethrow the error and
+        // not allow the driver to re-execute sql.
+        //
+        throw e;
+    }
+
+    /**
      * Report that user tried to call a method which has not been implemented.
      *
      * @param method The method name to report in the error message.
@@ -335,11 +384,7 @@ public class JtdsStatement implements java.sql.Statement {
                     return currentResult;
                 }
             } catch (SQLException e) {
-                if (connection == null || connection.isClosed()
-                        || "HYT00".equals(e.getSQLState())) {
-                    // Serious error or timeout so return exception to caller
-                    throw e;
-                }
+                checkCursorException(e);
                 warningMessage = '[' + e.getSQLState() + "] " + e.getMessage();
             }
         }
@@ -421,11 +466,7 @@ public class JtdsStatement implements java.sql.Statement {
 
                 return true;
             } catch (SQLException e) {
-                if (connection == null || connection.isClosed()
-                        || "HYT00".equals(e.getSQLState())) {
-                    // Serious error or timeout so return exception to caller
-                    throw e;
-                }
+                checkCursorException(e);
                 warningMessage = '[' + e.getSQLState() + "] " + e.getMessage();
             }
         }
@@ -737,8 +778,15 @@ public class JtdsStatement implements java.sql.Statement {
 
     public void close() throws SQLException {
         if (!closed) {
+            SQLException closeEx = null;
             try {
                 closeAllResultSets();
+            } catch (SQLException ex) {
+                if (!"HYT00".equals(ex.getSQLState())
+                        && !"HY008".equals(ex.getSQLState())) {
+                    // Only throw exceptions not caused by cancels or timeouts
+                    closeEx = ex;
+                }
             } finally {
                 SQLException releaseEx = null;
                 try {
@@ -750,6 +798,10 @@ public class JtdsStatement implements java.sql.Statement {
                 } catch (SQLException ex) {
                     // Remember any exception thrown
                     releaseEx = ex;
+                    // Queue up any result set close exceptions
+                    if (closeEx != null) {
+                        releaseEx.setNextException(closeEx);
+                    }
                 } finally {
                     // Clean up everything
                     closed = true;
@@ -762,6 +814,10 @@ public class JtdsStatement implements java.sql.Statement {
                         throw releaseEx;
                     }
                 }
+            }
+            // Throw any exception caught during result set close
+            if (closeEx != null) {
+                throw closeEx;
             }
         }
     }

@@ -1,6 +1,10 @@
 Changes from jTDS 1.1
 =====================
 
+10/31/2005 - Alin Sinpalean
+ o Corrected bug in JtdsDatabaseMetaData.getBestRowIdentifier(). Statement was
+   closed, causing errors when using the returned result set.
+
 10/27/2005 - Mike Hutchinson
  o Fixed bug "[1305275] Cursor opens fails when cursor threshold <> -1" by
    amending MSCursorResultSet.

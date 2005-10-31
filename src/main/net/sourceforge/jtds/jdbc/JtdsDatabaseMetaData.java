@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.34 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.35 2005-10-31 12:56:56 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -216,7 +216,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             rsTmp.insertRow();
         }
         rs.close();
-        s.close();
+        // Do not close the statement, rsTmp is also built from it
         rsTmp.moveToCurrentRow();
         rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
         return rsTmp;

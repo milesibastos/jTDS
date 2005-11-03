@@ -6,6 +6,8 @@ Changes from jTDS 1.1
    Sybase.
  o Applied patch [1250393] modify getJdbcType() to handle subclass of basic
    JDBC types, submitted by  Joel Schneider (cognophile).
+ o Corrected a minor DatabaseMetaData error: supportsTransactionIsolationLevel
+   returned true for TRANSACTION_NONE or any invalid value.
 
 10/31/2005 - Alin Sinpalean
  o Corrected bug in JtdsDatabaseMetaData.getBestRowIdentifier(). Statement was

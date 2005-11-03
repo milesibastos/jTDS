@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.15 2005-07-27 11:02:57 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.16 2005-11-03 12:12:18 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -160,7 +160,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         assertTrue("supportsFullOuterJoins", dbmd.supportsFullOuterJoins());
         assertTrue("supportsLikeEscapeClause", dbmd.supportsLikeEscapeClause());
         assertTrue("supportsOpenCursorsAcrossCommit", dbmd.supportsOpenCursorsAcrossCommit());
-        assertTrue("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_NONE));
+        assertFalse("supportsTransactionIsolationLevel", dbmd.supportsTransactionIsolationLevel(Connection.TRANSACTION_NONE));
 
         if (dbmd.getDatabaseProductName().startsWith("Microsoft")) {
             assertTrue("allTablesAreSelectable", dbmd.allTablesAreSelectable());

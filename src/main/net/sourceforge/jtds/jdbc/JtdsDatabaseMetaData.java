@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.35 2005-10-31 12:56:56 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.36 2005-11-03 12:12:18 alin_sinpalean Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -2920,7 +2920,19 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsTransactionIsolationLevel(int level)
     throws SQLException {
-        return true;
+        switch (level) {
+            case Connection.TRANSACTION_READ_UNCOMMITTED:
+            case Connection.TRANSACTION_READ_COMMITTED:
+            case Connection.TRANSACTION_REPEATABLE_READ:
+            case Connection.TRANSACTION_SERIALIZABLE:
+                return true;
+
+            // TRANSACTION_NONE not supported. It means there is no support for
+            // transactions
+            case Connection.TRANSACTION_NONE:
+            default:
+                return false;
+        }
     }
 
     /**

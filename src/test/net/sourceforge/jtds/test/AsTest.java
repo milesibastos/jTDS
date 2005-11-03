@@ -468,6 +468,7 @@ public class AsTest extends DatabaseTestCase {
         PreparedStatement pstmt = con.prepareStatement("insert into #testBigDecimal values (?)");
         pstmt.setObject(1, new BigDecimal("10.200"));
         pstmt.execute();
+        // FIXME With Sybase this should probably throw a DataTruncation, not just a plain SQLException
         pstmt.setObject(1, new BigDecimal(10.200));
         pstmt.execute();
         pstmt.setObject(1, null);

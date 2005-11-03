@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.51 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: Support.java,v 1.52 2005-11-03 11:26:56 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -584,10 +584,25 @@ public class Support {
             return java.sql.Types.NULL;
         }
 
-        Object type = typeMap.get(value.getClass());
+        return getJdbcType(value.getClass());
+    }
+
+    /**
+     * Get the JDBC type constant which matches the supplied <code>Class</code>.
+     *
+     * @param typeClass the <code>Class</code> to analyse
+     * @return          the JDBC type constant as an <code>int</code>
+     */
+    static int getJdbcType(Class typeClass) {
+        if (typeClass == null) {
+            return java.sql.Types.JAVA_OBJECT;
+        }
+
+        Object type = typeMap.get(typeClass);
 
         if (type == null) {
-            return java.sql.Types.JAVA_OBJECT;
+            // not in typeMap - try recursion through superclass hierarchy
+            return getJdbcType(typeClass.getSuperclass());
         }
 
         return ((Integer) type).intValue();

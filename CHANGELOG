@@ -4,6 +4,8 @@ Changes from jTDS 1.1
 11/03/2005 - Alin Sinpalean
  o Applied Mike's fix for bug [1346086] Problem with DATABASE name change on
    Sybase.
+ o Applied patch [1250393] modify getJdbcType() to handle subclass of basic
+   JDBC types, submitted by  Joel Schneider (cognophile).
 
 10/31/2005 - Alin Sinpalean
  o Corrected bug in JtdsDatabaseMetaData.getBestRowIdentifier(). Statement was

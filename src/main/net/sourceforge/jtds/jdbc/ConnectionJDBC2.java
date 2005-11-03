@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.106 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.107 2005-11-03 09:30:46 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -273,6 +273,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         SharedSocket.setMemoryBudget(bufferMaxMemory * 1024);
         SharedSocket.setMinMemPkts(bufferMinPackets);
+        SQLWarning warn;
 
         try {
             Object timer = null;
@@ -345,11 +346,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 TimerThread.getInstance().cancelTimer(timer);
             }
 
+            //
+            // Save any login warnings so that they will not be overwritten by
+            // the internal configuration SQL statements e.g. setCatalog() etc.
+            //
+            warn = messages.warnings;
+
             // Update the tdsVersion with the value in baseTds. baseTds sets
             // the TDS version for the socket and there are no other objects
             // with cached TDS versions at this point.
             tdsVersion = baseTds.getTdsVersion();
-
             if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
                 // Need to select the default database
                 setCatalog(databaseName);
@@ -401,6 +407,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             rs.close();
             stmt.close();
         }
+
+        //
+        // Restore any login warnings so that the user can retrieve them
+        // by calling Connection.getWarnings()
+        //
+        messages.warnings = warn;
     }
 
 

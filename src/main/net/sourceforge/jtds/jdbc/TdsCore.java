@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.106 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.107 2005-11-03 09:30:46 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -2917,6 +2917,32 @@ public class TdsCore {
             messages.addDiagnostic(4002, 0, 14,
                                     "Login failed", "", "", 0);
             currentToken.token = TDS_ERROR_TOKEN;
+        } else {
+            // MJH 2005-11-02
+            // If we get this far we are logged in OK so convert
+            // any exceptions into warnings. Any exceptions are
+            // likely to be caused by problems in accessing the
+            // default database for this login id for SQL 6.5 and
+            // Sybase ASE. SQL 7.0+ will fail to login if there is
+            // no access to the default or specified database.
+            // I am not convinced that this is a good idea but it
+            // appears that other drivers e.g. jConnect do this and
+            // return the exceptions on the connection warning chain.
+            //
+            SQLException ex = messages.exceptions;
+            // Avoid returning useless warnings about language
+            // character set etc.
+            messages.clearWarnings();
+            //
+            // Convert exceptions to warnings
+            //
+            while (ex != null) {
+                messages.addWarning(new SQLWarning(ex.getMessage(),
+                                                 ex.getSQLState(),
+                                                 ex.getErrorCode()));
+                ex = ex.getNextException();
+            }
+            messages.exceptions = null;
         }
     }
 

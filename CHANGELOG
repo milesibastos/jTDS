@@ -1,6 +1,10 @@
 Changes from jTDS 1.1
 =====================
 
+11/03/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1346086] Problem with DATABASE name change on
+   Sybase.
+
 10/31/2005 - Alin Sinpalean
  o Corrected bug in JtdsDatabaseMetaData.getBestRowIdentifier(). Statement was
    closed, causing errors when using the returned result set.

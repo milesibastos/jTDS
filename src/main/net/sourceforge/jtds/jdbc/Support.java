@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.52 2005-11-03 11:26:56 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.53 2005-11-08 12:03:30 alin_sinpalean Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -1119,7 +1119,7 @@ public class Support {
     /**
      * Link the original cause to an <code>Exception</code>.
      * <p>
-     * If running under JVM 1.4+ the {@link Exception#initCause(Throwable)}
+     * If running under JVM 1.4+ the <code>Throwable.initCause(Throwable)</code>
      * method will be invoked to chain the exception, else the exception is
      * logged via the {@link Logger} class.
      * Modeled after the code written by Brian Heineman.

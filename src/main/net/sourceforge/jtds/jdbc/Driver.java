@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.64 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.65 2005-11-08 12:04:28 alin_sinpalean Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -53,7 +53,7 @@ public class Driver implements java.sql.Driver {
     /** Driver major version. */
     static final int MAJOR_VERSION = 1;
     /** Driver minor version. */
-    static final int MINOR_VERSION = 1;
+    static final int MINOR_VERSION = 2;
     /** Driver version miscellanea (e.g "-rc2", ".1" or <code>null</code>). */
     static final String MISC_VERSION = null;
     /** Set if the JDBC specification to implement is 3.0 or greater. */

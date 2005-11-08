@@ -19,7 +19,7 @@
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="1.1"/>
+    <property name="version" value="1.2"/>
   </target>
 
   <target name="clean" depends="init">
@@ -108,7 +108,7 @@
     </copy>
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
+      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*.xml,conf/**/*.tmpl"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
     <delete dir="${dist}/tmp"/>
@@ -116,7 +116,7 @@
     <!-- Binary package -->
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
+      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,conf/**/*.tmpl,html/**/*"/>
       <fileset dir="${build}" includes="*.jar"/>
     </copy>
     <mkdir dir="${dist}/tmp/XA"/>

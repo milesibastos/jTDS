@@ -46,7 +46,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.18 2005-09-26 18:21:09 ddkilzer Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.19 2005-11-09 10:42:35 alin_sinpalean Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -268,15 +268,15 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
     }
 
     public void setByte(String parameterName, byte x) throws SQLException {
-        setByte(findParameter(parameterName, false), x);
+        setByte(findParameter(parameterName, true), x);
     }
 
     public void setDouble(String parameterName, double x) throws SQLException {
-        setDouble(findParameter(parameterName, false), x);
+        setDouble(findParameter(parameterName, true), x);
     }
 
     public void setFloat(String parameterName, float x) throws SQLException {
-        setFloat(findParameter(parameterName, false), x);
+        setFloat(findParameter(parameterName, true), x);
     }
 
     public void registerOutParameter(String parameterName, int sqlType)

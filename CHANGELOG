@@ -1,3 +1,12 @@
+Changes from jTDS 1.2
+=====================
+
+11/09/2005 - Alin Sinpalean
+ o Corrected bug [1351891] Using JtdsCallableStatement.setFloat causes
+   SQLException. findParameter() was called as if to retrieve parameter values
+   from the setByte(), setDouble() and setFloat() methods, which caused the
+   parameter not to be found.
+
 ===============================================================================
 10/08/2005 - jTDS 1.2 released
 ===============================================================================

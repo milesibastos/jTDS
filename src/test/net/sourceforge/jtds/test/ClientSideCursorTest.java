@@ -171,9 +171,12 @@ public class ClientSideCursorTest extends DatabaseTestCase {
                      rs.updateString(2, "TEST UPDATE");
                      try {
                          rs.updateRow();
-                         fail("Expected optimistic update exception");
+                         assertNotNull(rs.getWarnings());
+                         assertEquals("Expected optimistic update exception",
+                                 "24000", rs.getWarnings().getSQLState());
                      } catch (SQLException e) {
-                         ; // Expected exception as row has been modified on disk
+                         // Expected exception as row has been modified on disk
+                         assertEquals("24000", e.getSQLState());
                      }
                  }
              }

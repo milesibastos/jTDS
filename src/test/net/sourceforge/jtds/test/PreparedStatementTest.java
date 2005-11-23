@@ -27,7 +27,7 @@ import java.sql.Statement;
 import java.sql.Types;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.44 2005-10-18 13:53:57 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.45 2005-11-23 16:36:20 alin_sinpalean Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -787,7 +787,8 @@ public class PreparedStatementTest extends TestBase {
             // This won't fail in unprepared mode (prepareSQL == 0)
             // fail("Expecting an exception to be thrown.");
         } catch (SQLException ex) {
-            assertEquals("37000", ex.getSQLState());
+            assertTrue("37000".equals(ex.getSQLState())
+                    || "42000".equals(ex.getSQLState()));
         }
         pstmt.close();
     }

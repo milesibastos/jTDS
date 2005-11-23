@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.59 2005-09-20 20:11:56 ddkilzer Exp $
+ * @version $Id: SAfeTest.java,v 1.60 2005-11-23 16:36:20 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -807,7 +807,7 @@ public class SAfeTest extends DatabaseTestCase {
         assertEquals(1, insStmt.executeUpdate());
         insStmt.close();
 
-        stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY,
+        stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
                                    ResultSet.CONCUR_UPDATABLE);
         ResultSet rs = stmt.executeQuery("SELECT * FROM #SAfe0011 ORDER BY 1");
         assertEquals(null, stmt.getWarnings());

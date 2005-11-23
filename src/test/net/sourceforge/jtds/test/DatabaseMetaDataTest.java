@@ -20,12 +20,10 @@ package net.sourceforge.jtds.test;
 import java.sql.*;
 import java.util.Properties;
 
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
-
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.16 2005-11-03 12:12:18 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.17 2005-11-23 16:36:20 alin_sinpalean Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -657,18 +655,24 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
                     "BEGIN\r\n" +
                     "  SELECT @p2 = @p1\r\n" +
                     "END");
-            DatabaseMetaData dbmd = con.getMetaData();
-            ResultSet rs = dbmd.getProcedureColumns(null, null, "jtds_testparam", "%");
-            assertTrue(rs.next());
-            assertEquals("@RETURN_VALUE", rs.getString("COLUMN_NAME"));
-            assertEquals(DatabaseMetaData.procedureColumnReturn, rs.getInt("COLUMN_TYPE"));
-            assertTrue(rs.next());
-            assertEquals("@p1", rs.getString("COLUMN_NAME"));
-            assertEquals(DatabaseMetaData.procedureColumnIn, rs.getInt("COLUMN_TYPE"));
-            assertTrue(rs.next());
-            assertEquals("@p2", rs.getString("COLUMN_NAME"));
-            assertEquals(DatabaseMetaData.procedureColumnInOut, rs.getInt("COLUMN_TYPE"));
             stmt.close();
+
+            DatabaseMetaData dbmd = con.getMetaData();
+            String[] columnPatterns = new String[] {null, "%"};
+            for (int i = 0; i < columnPatterns.length; i++) {
+                ResultSet rs = dbmd.getProcedureColumns(null, null,
+                        "jtds_testparam", columnPatterns[i]);
+                assertTrue(rs.next());
+                assertEquals("@RETURN_VALUE", rs.getString("COLUMN_NAME"));
+                assertEquals(DatabaseMetaData.procedureColumnReturn, rs.getInt("COLUMN_TYPE"));
+                assertTrue(rs.next());
+                assertEquals("@p1", rs.getString("COLUMN_NAME"));
+                assertEquals(DatabaseMetaData.procedureColumnIn, rs.getInt("COLUMN_TYPE"));
+                assertTrue(rs.next());
+                assertEquals("@p2", rs.getString("COLUMN_NAME"));
+                assertEquals(DatabaseMetaData.procedureColumnInOut, rs.getInt("COLUMN_TYPE"));
+                rs.close();
+            }
         } finally {
             dropProcedure("jtds_testparam");
         }

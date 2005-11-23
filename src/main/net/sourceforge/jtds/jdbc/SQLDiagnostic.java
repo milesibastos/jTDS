@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.9 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.10 2005-11-23 16:36:20 alin_sinpalean Exp $
  */
 class SQLDiagnostic {
     /**
@@ -49,6 +49,7 @@ class SQLDiagnostic {
         // When adding values into this map please ensure that you maintain
         // the ascending order. This is for readability purposes only, but it's
         // still important.
+        mssqlStates.put(new Integer(102), "42000"); // ADDED
         mssqlStates.put(new Integer(105), "37000"); // ADDED
         mssqlStates.put(new Integer(109), "21S01");
         mssqlStates.put(new Integer(110), "21S01");
@@ -212,6 +213,7 @@ class SQLDiagnostic {
         mssqlStates.put(new Integer(16909), "24000"); // ADDED
         mssqlStates.put(new Integer(16911), "24000"); // ADDED
         mssqlStates.put(new Integer(16917), "24000");
+        mssqlStates.put(new Integer(16934), "24000"); // ADDED
         mssqlStates.put(new Integer(16946), "24000");
         mssqlStates.put(new Integer(16950), "24000");
         mssqlStates.put(new Integer(16999), "24000");

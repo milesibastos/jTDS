@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.54 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.55 2005-11-25 08:31:28 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -850,9 +850,10 @@ public class TdsData {
                     String value = in.readNonUnicodeString(len,
                             ci.charsetInfo == null ? connection.getCharsetInfo() : ci.charsetInfo);
 
-                    if (len == 1 && in.getTdsVersion() < Driver.TDS70) {
-                        // In TDS 4/5 zero length strings are stored as a single space
-                        // to distinguish them from nulls.
+                    if (len == 1 && ci.tdsType == SYBVARCHAR &&
+                            in.getTdsVersion() < Driver.TDS70) {
+                        // In TDS 4/5 zero length varchars are stored as a
+                        // single space to distinguish them from nulls.
                         return (value.equals(" ")) ? "" : value;
                     }
 

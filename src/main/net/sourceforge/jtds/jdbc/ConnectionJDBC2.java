@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.107 2005-11-03 09:30:46 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.108 2005-11-25 08:31:28 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1418,9 +1418,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 if (wr != null) {
                     Statement stmt = (Statement) wr.get();
 
-                    if (stmt != null && stmt == statement) {
+                    // Remove the statement if found but also remove all
+                    // statements that have already been garbage collected
+                    if (stmt == null || stmt == statement) {
                         statements.set(i, null);
-                        break;
                     }
                 }
             }

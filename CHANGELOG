@@ -2,6 +2,12 @@ Changes from jTDS 1.2
 =====================
 
 11/25/2005 - Alin Sinpalean
+ o Corrected bug [1358059] Memory leak in add/remove statement. The remove
+   statement logic did not remove the WeakReference if the Statement had been
+   garbage collected.
+ o Corrected an issue in TdsData causing CHAR columns containing single blanks
+   to be returned as zero length strings.
+ o Removed redundand call to checkClosed() in TdsCore.
  o Removed duplicate entries from Charsets.properties.
 
 11/23/2005 - Alin Sinpalean

@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.107 2005-11-03 09:30:46 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.108 2005-11-25 08:31:28 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -943,7 +943,7 @@ public class TdsCore {
             if (connectionLock == null) {
                 connectionLock = connection.getMutex();
             }
-            checkOpen();
+            // Also checks if connection is open
             clearResponseQueue();
             messages.exceptions = null;
 

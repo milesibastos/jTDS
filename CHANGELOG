@@ -1,8 +1,11 @@
 Changes from jTDS 1.2
 =====================
 
+11/25/2005 - Alin Sinpalean
+ o Removed duplicate entries from Charsets.properties.
+
 11/23/2005 - Alin Sinpalean
- o Made a few modifications to the test suite to accomodate changes in SQL 
+ o Made a few modifications to the test suite to accomodate changes in SQL
    Server 2005.
 
 11/09/2005 - Alin Sinpalean

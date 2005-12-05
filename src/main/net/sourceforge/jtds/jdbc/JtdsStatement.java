@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -54,7 +55,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.54 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.55 2005-12-05 13:51:29 alin_sinpalean Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -183,13 +184,14 @@ public class JtdsStatement implements java.sql.Statement {
      * Called when this object goes out of scope to close any
      * <code>ResultSet</code> object and this statement.
      */
-    protected void finalize() {
-       try {
-           close();
-       } catch (SQLException e) {
-           // Ignore errors
-       }
-   }
+    protected void finalize() throws Throwable {
+        super.finalize();
+        try {
+            close();
+        } catch (SQLException e) {
+            // Ignore errors
+        }
+    }
 
     /**
      * Get the Statement's TDS object.
@@ -831,17 +833,12 @@ public class JtdsStatement implements java.sql.Statement {
     /**
      * Execute batch of SQL Statements.
      * <p/>
-     * The JDBC3 standard says that for a server which does not continue
-     * processing a batch once the first error has occurred (e.g. SQL Server),
-     * the returned array will never contain <code>EXECUTE_FAILED</code> in any
-     * of the elements. If a failure has occurred the array length will be less
-     * than the count of statements in the batch. For those servers that do
-     * continue to execute a batch containing an error (e.g. Sybase), elements
-     * may contain <code>EXECUTE_FAILED</code>. Note: even here the array
-     * length may also be shorter than the statement count if a serious error
-     * has prevented the rest of the batch from being executed. In addition,
-     * when executing batched stored procedures, Sybase will also stop after
-     * the first error.
+     * The JDBC3 standard says that the behaviour of this method must be
+     * consistent for any DBMS. As Sybase (and to a lesser extent SQL Server)
+     * will sometimes continue after a batch execution error, the only way to
+     * comply with the standard is to always return an array of update counts
+     * the same size as the batch list. Slots in the array beyond the last
+     * executed statement are set to <code>EXECUTE_FAILED</code>.
      *
      * @return update counts as an <code>int[]</code>
      */
@@ -888,11 +885,21 @@ public class JtdsStatement implements java.sql.Statement {
                 }
             }
             //
+            // Ensure array is the same size as the original statement list
+            //
+            //
             // Copy the update counts into the int array
             //
-            int updateCounts[] = new int[counts.size()];
-            for (int i = 0; i < updateCounts.length; i++) {
+            int updateCounts[] = new int[size];
+            int results = counts.size();
+            for (int i = 0; i < results; i++) {
                 updateCounts[i] = ((Integer) counts.get(i)).intValue();
+            }
+            //
+            // Pad any remaining slots with EXECUTE_FAILED
+            //
+            for (int i = results; i < updateCounts.length; i++) {
+                updateCounts[i] = Statement.EXECUTE_FAILED;
             }
             //
             // See if we should return an exception

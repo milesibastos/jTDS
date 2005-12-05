@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.108 2005-11-25 08:31:28 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.109 2005-12-05 13:51:29 alin_sinpalean Exp $
  */
 public class TdsCore {
     /**
@@ -1413,13 +1413,11 @@ public class TdsCore {
      * Obtain the counts from a batch of SQL updates.
      * <p/>
      * If an error occurs Sybase will continue processing a batch consisting of
-     * TDS_LANGUAGE records whilst SQL Server will stop after the first error.
+     * TDS_LANGUAGE records whilst SQL Server will usually stop after the first
+     * error except when the error is caused by a duplicate key.
      * Sybase will also stop after the first error when executing RPC calls.
-     * For Sybase only therefore, this method returns the JDBC3
-     * <code>EXECUTE_FAILED</code> constant in the counts array when a
-     * statement fails with an error. For Sybase, care is taken to ensure that
-     * <code>SQLException</code>s are chained because there could be several
-     * errors reported in a batch.
+     * Care is taken to ensure that <code>SQLException</code>s are chained
+     * because there could be several errors reported in a batch.
      *
      * @param counts the <code>ArrayList</code> containing the update counts
      * @param sqlEx  any previous <code>SQLException</code>(s) encountered
@@ -1447,10 +1445,7 @@ public class TdsCore {
                     case TDS_DONE_TOKEN:
                         if ((currentToken.status & DONE_ERROR) != 0
                                 || lastCount == JtdsStatement.EXECUTE_FAILED) {
-                            if (connection.getServerType() == Driver.SYBASE) {
-                                // Sybase can continue batch so flag this count
-                                counts.add(JtdsStatement.EXECUTE_FAILED);
-                            }
+                            counts.add(JtdsStatement.EXECUTE_FAILED);
                         } else {
                             if (currentToken.isUpdateCount()) {
                                 counts.add(new Integer(currentToken.updateCount));
@@ -1470,10 +1465,7 @@ public class TdsCore {
                     case TDS_DONEPROC_TOKEN:
                         if ((currentToken.status & DONE_ERROR) != 0
                                 || lastCount == JtdsStatement.EXECUTE_FAILED) {
-                            if (connection.getServerType() == Driver.SYBASE) {
-                                // Sybase can continue batch so flag this count
-                                counts.add(JtdsStatement.EXECUTE_FAILED);
-                            }
+                            counts.add(JtdsStatement.EXECUTE_FAILED);
                         } else {
                             counts.add(lastCount);
                         }
@@ -2808,7 +2800,7 @@ public class TdsCore {
         String name = in.readString(in.read()); // Column Name
         // Next byte indicates if output parameter or return value
         // 1 = normal output param, 2 = function or stored proc return
-        boolean funcReturnVal = (in.read() == 2) ? true : false;
+        boolean funcReturnVal = (in.read() == 2);
         // Next byte is the parameter type that we supplied which
         // may not be the same as the parameter definition
         /* int inputTdsType = */ in.read();
@@ -3651,12 +3643,8 @@ public class TdsCore {
      *   otherwise.
      */
     public static boolean isPreparedProcedureName(final String procName) {
-        if (procName != null && procName.length() > 0
-                && Character.isDigit(procName.charAt(0))) {
-            return true;
-        }
-
-        return false;
+        return procName != null && procName.length() > 0
+                && Character.isDigit(procName.charAt(0));
     }
 
     /**

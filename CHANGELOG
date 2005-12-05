@@ -2,6 +2,9 @@ Changes from jTDS 1.2
 =====================
 
 12/05/2005 - Alin Sinpalean
+ o Applied Mike's fix for bug [1371295] executeBatch returns incorrect counts.
+   Batch updates now always return an array of length equal to the batch size,
+   padded up with EXECUTE_FAILED values if necessary.
  o Applied Mike's fix for a bug related to [1368058] Calling StoredProcedure
    with functions (identifiers containing special characters not parsed).
 

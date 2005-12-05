@@ -26,7 +26,7 @@ import java.sql.ResultSet;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.6 2005-04-11 13:23:55 alin_sinpalean Exp $
+ * @version $Id: BatchTest.java,v 1.7 2005-12-05 13:51:29 alin_sinpalean Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -53,8 +53,10 @@ public class BatchTest extends DatabaseTestCase {
         } catch (BatchUpdateException e) {
             x = e.getUpdateCounts();
         }
-        assertEquals(2, x.length);
+        assertEquals(3, x.length);
+        assertEquals(SUCCESS_NO_INFO, x[0]);
         assertEquals(1, x[1]);
+        assertEquals(EXECUTE_FAILED, x[2]);
     }
 
     /**
@@ -93,9 +95,12 @@ public class BatchTest extends DatabaseTestCase {
             x = e.getUpdateCounts();
         }
         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-            assertEquals(2, x.length);
+            assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
+            assertEquals(EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[3]);
+            assertEquals(EXECUTE_FAILED, x[4]);
         } else {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
@@ -142,9 +147,12 @@ public class BatchTest extends DatabaseTestCase {
             x = e.getUpdateCounts();
         }
         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-            assertEquals(2, x.length);
+            assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
+            assertEquals(EXECUTE_FAILED, x[2]);
+            assertEquals(EXECUTE_FAILED, x[3]);
+            assertEquals(EXECUTE_FAILED, x[4]);
         } else {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
@@ -197,14 +205,19 @@ public class BatchTest extends DatabaseTestCase {
                 x = e.getUpdateCounts();
             }
             if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-                assertEquals(2, x.length);
-                assertEquals(1, x[0]);
-                assertEquals(1, x[1]);
-            } else {
-                assertEquals(3, x.length);
+                assertEquals(5, x.length);
                 assertEquals(1, x[0]);
                 assertEquals(1, x[1]);
                 assertEquals(EXECUTE_FAILED, x[2]);
+                assertEquals(EXECUTE_FAILED, x[3]);
+                assertEquals(EXECUTE_FAILED, x[4]);
+            } else {
+                assertEquals(5, x.length);
+                assertEquals(1, x[0]);
+                assertEquals(1, x[1]);
+                assertEquals(EXECUTE_FAILED, x[2]);
+                assertEquals(EXECUTE_FAILED, x[3]);
+                assertEquals(EXECUTE_FAILED, x[4]);
             }
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
@@ -256,14 +269,19 @@ public class BatchTest extends DatabaseTestCase {
                 x = e.getUpdateCounts();
             }
             if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
-                assertEquals(2, x.length);
-                assertEquals(1, x[0]);
-                assertEquals(1, x[1]);
-            } else {
-                assertEquals(3, x.length);
+                assertEquals(5, x.length);
                 assertEquals(1, x[0]);
                 assertEquals(1, x[1]);
                 assertEquals(EXECUTE_FAILED, x[2]);
+                assertEquals(EXECUTE_FAILED, x[3]);
+                assertEquals(EXECUTE_FAILED, x[4]);
+            } else {
+                assertEquals(5, x.length);
+                assertEquals(1, x[0]);
+                assertEquals(1, x[1]);
+                assertEquals(EXECUTE_FAILED, x[2]);
+                assertEquals(EXECUTE_FAILED, x[3]);
+                assertEquals(EXECUTE_FAILED, x[4]);
             }
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
@@ -306,7 +324,7 @@ public class BatchTest extends DatabaseTestCase {
             pstmt.addBatch();
         }
         int counts[] =pstmt.executeBatch();
-        System.out.println(pstmt.getWarnings());
+//        System.out.println(pstmt.getWarnings());
         assertEquals(n, counts.length);
         for (int i = 0; i < n; i++) {
             assertEquals(1, counts[i]);
@@ -332,6 +350,92 @@ public class BatchTest extends DatabaseTestCase {
         int counts[] = stmt.executeBatch();
         assertEquals(1, counts[0]);
         stmt.close();
+    }
+
+    /**
+     * Test for bug [1371295] SQL Server continues after duplicate key error.
+     */
+    public void testPrepStmtBatchDupKey() throws Exception {
+//        DriverManager.setLogStream(System.out);
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testbatch (id int, data varchar(255), PRIMARY KEY (id))");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #testbatch VALUES (?, ?)");
+        for (int i = 0; i < 5; i++) {
+            if (i == 2) {
+                pstmt.setInt(1, 1); // Will cause duplicate key batch will continue
+            } else {
+                pstmt.setInt(1, i);
+            }
+            pstmt.setString(2, "This is line " + i);
+            pstmt.addBatch();
+        }
+        int x[];
+        try {
+            x = pstmt.executeBatch();
+        } catch (BatchUpdateException e) {
+            x = e.getUpdateCounts();
+        }
+        assertEquals(5, x.length);
+        assertEquals(1, x[0]);
+        assertEquals(1, x[1]);
+        assertEquals(EXECUTE_FAILED, x[2]);
+        assertEquals(1, x[3]);
+        assertEquals(1, x[4]);
+        // Now without errors
+        stmt.execute("TRUNCATE TABLE #testbatch");
+        for (int i = 0; i < 5; i++) {
+            pstmt.setInt(1, i);
+            pstmt.setString(2, "This is line " + i);
+            pstmt.addBatch();
+        }
+        x = pstmt.executeBatch();
+        assertEquals(5, x.length);
+        assertEquals(1, x[0]);
+        assertEquals(1, x[1]);
+        assertEquals(1, x[2]);
+        assertEquals(1, x[3]);
+        assertEquals(1, x[4]);
+    }
+
+    /**
+     * Test for bug [1371295] SQL Server continues after duplicate key error.
+     */
+    public void testBatchDupKey() throws Exception {
+//        DriverManager.setLogStream(System.out);
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testbatch (id int, data varchar(255), PRIMARY KEY (id))");
+        for (int i = 0; i < 5; i++) {
+            if (i == 2) {
+                // This statement will generate an duplicate key error
+                stmt.addBatch("INSERT INTO #testbatch VALUES (1, 'This is line " + i + "')");
+            } else {
+                stmt.addBatch("INSERT INTO #testbatch VALUES (" + i + ", 'This is line " + i + "')");
+            }
+        }
+        int x[];
+        try {
+            x = stmt.executeBatch();
+        } catch (BatchUpdateException e) {
+            x = e.getUpdateCounts();
+        }
+        assertEquals(5, x.length);
+        assertEquals(1, x[0]);
+        assertEquals(1, x[1]);
+        assertEquals(EXECUTE_FAILED, x[2]);
+        assertEquals(1, x[3]);
+        assertEquals(1, x[4]);
+        // Now without errors
+        stmt.execute("TRUNCATE TABLE #testbatch");
+        for (int i = 0; i < 5; i++) {
+            stmt.addBatch("INSERT INTO #testbatch VALUES (" + i + ", 'This is line " + i + "')");
+        }
+        x = stmt.executeBatch();
+        assertEquals(5, x.length);
+        assertEquals(1, x[0]);
+        assertEquals(1, x[1]);
+        assertEquals(1, x[2]);
+        assertEquals(1, x[3]);
+        assertEquals(1, x[4]);
     }
 
     public static void main(String[] args) {

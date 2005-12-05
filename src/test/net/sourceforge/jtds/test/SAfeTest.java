@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.60 2005-11-23 16:36:20 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.61 2005-12-05 10:54:23 alin_sinpalean Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -1540,6 +1540,19 @@ public class SAfeTest extends DatabaseTestCase {
             // 42000 == syntax error or access rule violation
             assertEquals("42000", ex.getSQLState());
         }
+    }
+
+    /**
+     * Test for bug related with [1368058] Calling StoredProcedure with
+     * functions ({fn} escape can't handle special characters, e.g. underscore).
+     */
+    public void testFnEscape() throws Exception {
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT {fn host_id()}");
+        assertTrue(rs.next());
+        assertFalse(rs.next());
+        rs.close();
+        stmt.close();
     }
 
     /**

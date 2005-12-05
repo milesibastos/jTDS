@@ -1,6 +1,10 @@
 Changes from jTDS 1.2
 =====================
 
+12/05/2005 - Alin Sinpalean
+ o Applied Mike's fix for a bug related to [1368058] Calling StoredProcedure
+   with functions (identifiers containing special characters not parsed).
+
 11/25/2005 - Alin Sinpalean
  o Corrected bug [1358059] Memory leak in add/remove statement. The remove
    statement logic did not remove the WeakReference if the Statement had been

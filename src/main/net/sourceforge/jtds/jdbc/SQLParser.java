@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.26 2005-06-23 12:29:40 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.27 2005-12-05 10:37:49 alin_sinpalean Exp $
  */
 class SQLParser {
     /**
@@ -732,7 +732,7 @@ class SQLParser {
         //
         // Capture name
         //
-        while (Character.isLetterOrDigit(in[s])) {
+        while (isIdentifier(in[s])) {
             nameBuf.append(in[s++]);
         }
 

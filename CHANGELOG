@@ -5,6 +5,7 @@ Changes from jTDS 1.2
  o Changed reference to old 'TdsDataSource' class in faq.html to newer
    'JtdsDataSource' class.
  o Alphabetized parameters in faq.html to make them easier to find.
+ o Added missing </code> tag in "badrpc" question in faq.html.
 
 12/19/2005 - Alin Sinpalean
  o Minor optimization in determining the scale for decimal parameters.

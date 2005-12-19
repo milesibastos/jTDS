@@ -161,38 +161,47 @@
         name -- JDBC term: catalog -- (if not specified, the user's default database
         is used). The set of properties supported by jTDS is:</p>
       <dl>
-        <dt><code>user</code> (required)</dt>
-        <dd>User name to use for login. When using <code>getConnection(String
-          url, String user, String password)</code> it's not required to set this
-          property as it is passed as parameter, but you will have to set it when
-          using <code>getConnection(String url, Properties info)</code> or <code>JtdsDataSource</code>.</dd>
-        <dt><code>password</code> (required)</dt>
-        <dd>Password to use for login. When using <code>getConnection(String url,
-          String user, String password)</code> it's not required to set this property
-          as it is passed as parameter, but you will have to set it when using
-          <code>getConnection(String url, Properties info)</code> or <code>JtdsDataSource</code>.</dd>
-        <dt><code>TDS</code> (default - <code>&quot;8.0&quot;</code> for SQL Server;
-          <code>&quot;5.0&quot;</code> for Sybase)</dt>
-        <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol
-          used by Microsoft SQL Server and Sybase to communicate with database
-          clients. jTDS can use TDS 4.2, 5.0, 7.0 and 8.0. Version 4.2 is used by
-          SQL Server 6.5 and Sybase 10.  Version 5.0 is used with Sybase 11 onwards.
-          Version 7.0 is used by SQL Server 7.0; this protocol also works with SQL
-          Server 2000. Version 8.0 is used by SQL Server 2000 and SQL Server 2005.<br>
-          Newer database server versions usually understand older protocol versions.
-          This means that SQL Server 7.0 can be used with TDS 4.2, but the limitations
-          of the protocol apply regardless of the server version (e.g. when using TDS
-          4.2 <code>VARCHAR</code>s are limited to 255 characters). As a conclusion,
-          you must set this property to <code>&quot;4.2&quot;</code> when connecting
-          to SQL Server 6.5 or Sybase.  You should not set this value to
-          <code>&quot;7.0&quot; or &quot;8.0&quot;</code>) when connecting to any
-          version of Sybase as these are SQL Server specific protocols.  Further, you
-          should not set this value to <code>&quot;5.0&quot;</code>) when connecting
-          to any version of SQL Server as this is a Sybase specific protocol.<br/>
-          Currently jTDS automatically falls back from 8.0 to 7.0 (if used with
-          SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying
-          the value for this parameter is only necessary for SQL Server 6.5.</dd>
-        <dt><code>cachemetadata</code> (default - <code>false</code>)</dt>
+        <dt><code>appName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
+        <dd>Application name. No practical use, it's displayed by Enterprise Manager
+          or Profiler associated with the connection.</dd>
+        <dt><code>batchSize</code> (default - <code>0</code> for SQL Server;
+          <code>1000</code> for Sybase)</dt>
+        <dd>Controls how many statements are sent to the server in a batch.
+          The actual batch is broken up into pieces this large that are sent
+          separately. The reason for this is to avoid Sybase "hangs" caused by
+          running out of space with very large batches. The problem doesn't
+          seem to occur with SQL Server, hence the default limit of 0
+          (unlimited) in this case.</dd>
+        <dt><code>bufferMaxMemory</code> (default - <code>1024</code>)</dt>
+        <dd>Controls the global buffer memory limit for all connections (in
+          kilobytes). When the amount of buffered server response packets
+          reaches this limit additional packets are buffered to disk; there is
+          however one exception: each <code>Statement</code> gets to buffer at
+          least <code>&lt;bufferMinPackets&gt;</code> to memory before this
+          limit is enforced. This means that this limit can and will usually be
+          exceeded.<br/>
+          Server responses are buffered to disk only when a request is made on
+          a <code>Statement</code> while another <code>Statement</code>
+          belonging to the same Connection still hasn't processed all its
+          results. These situations can be avoided in most cases by setting the
+          <code>useCursors</code> property, but this will also affect
+          performance.<br/>
+          See also <code>bufferMinPackets</code>.</dd>
+        <dt><code>bufferMinPackets</code> (default - <code>8</code>)</dt>
+        <dd>Controls the minimum number of packets per statement to buffer to
+          memory. Each <code>Statement</code> will buffer at least this many
+          packets before being forced to use a temporary file if the
+          <code>&lt;bufferMaxMemory&gt;</code> is reached, to ensure good
+          performance even when one <code>Statement</code> caches a very large
+          amount of data.<br/>
+          Server responses are buffered to disk only when a request is made on
+          a <code>Statement</code> while another <code>Statement</code>
+          belonging to the same Connection still hasn't processed all its
+          results. These situations can be avoided in most cases by setting the
+          <code>useCursors</code> property, but this will also affect
+          performance.<br/>
+          See also <code>bufferMaxMemory</code>.</dd>
+        <dt><code>cacheMetaData</code> (default - <code>false</code>)</dt>
         <dd>When used with prepareSQL=3, setting this property to
           <code>true</code> will cause the driver to cache column meta data for
           SELECT statements. Caching the meta data will reduce the processing
@@ -228,33 +237,6 @@
           one of these instances is made by using "&lt;host_name&gt;\&lt;instance_name&gt;"
           instead of the usual "&lt;host_name&gt". With jTDS you will have to
           split the two and use the instance name as a property.</dd>
-        <dt><code>appName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
-        <dd>Application name. No practical use, it's displayed by Enterprise Manager
-          or Profiler associated with the connection.</dd>
-        <dt><code>progName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
-        <dd>Client library name. No practical use, it's displayed by Enterprise
-          Manager or Profiler associated with the connection.</dd>
-        <dt><code>wsid</code> (default - the client host name)</dt>
-        <dd>Workstation ID. No practical use, it's displayed by Enterprise
-          Manager or Profiler associated with the connection.</dd>
-        <dt><code>macAddress</code> (default - <code>"000000000000"</code>)</dt>
-        <dd>Network interface card MAC address. It's displayed by Enterprise
-          Manager or Profiler associated with the connection and is needed to
-          resolve some issues regarding the number of clients allowed by the
-          SQL Server license. The MAC address cannot be determined automatically
-          from Java (i.e. without using native code) so you'll have to specify
-          it yourself if you need it.</dd>
-        <dt><code>sendStringParametersAsUnicode</code> (default - <code>true</code>)</dt>
-        <dd>Determines whether string parameters are sent to the SQL Server database
-          in Unicode or in the default character encoding of the database. This
-          seriously affects SQL Server 2000 performance since it does not automatically
-          cast the types (as 7.0 does), meaning that if a index column is Unicode
-          and the string is submitted using the default character encoding (or
-          the other way around) SQLServer will perform an index scan instead of
-          an index seek. For Sybase, determines if strings that cannot be encoded in
-          the server's charset are sent as unicode strings. There is a performance
-          hit for the encoding logic so set this option to false if unitext or univarchar
-          data types are not in use or if charset is utf-8.</dd>
         <dt><code>lastUpdateCount</code> (default - <code>true</code>)</dt>
         <dd>If <code>true</code> only the last update count will be returned by
           <code>executeUpdate()</code>. This is useful in case you are updating
@@ -264,39 +246,10 @@
           is always the last as the triggers execute first. If <code>false</code>
           all update counts are returned; use <code>getMoreResults()</code> to
           loop through them.</dd>
-        <dt><code>prepareSQL</code> (default - <code>3</code> for SQL Server,
-          <code>1</code> for Sybase)</dt>
-        <dd>This parameter specifies the mechanism used for Prepared Statements.
-          <table class="inner" cellpadding="0" cellspacing="0">
-            <thead>
-              <tr><th>Value</th><th>Description</th></tr>
-            </thead>
-            <tbody>
-              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation, literals are inserted in the SQL (slower)</td></tr>
-              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (faster)</td></tr>
-              <tr><td><code>2</code></td><td>sp_executesql is used (fast)</td></tr>
-              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute (faster, SQL Server only)</td></tr>
-            </tbody>
-          </table>
-        </dd>
-        <dt><code>packetSize</code> (default - <code>4096</code> for TDS 7.0/8.0;
-          <code>512</code> for TDS 4.2/5.0)</dt>
-        <dd>The network packet size (a multiple of 512).</dd>
-        <dt><code>tcpNoDelay</code> (default - <code>true</code>)</dt>
-        <dd><code>true</code> to enable TCP_NODELAY on the socket;
-          <code>false</code> to disable it.</dd>
         <dt><code>lobBuffer</code> (default - <code>32768</code>)</dt>
         <dd>The amount of LOB data to buffer in memory before caching to disk. The
           value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>
           data.</dd>
-        <dt><code>maxStatements</code> (default - <code>500</code>)</dt>
-        <dd>The number of statement prepares each connection should cache.
-          A value of <code>0</code> will disable statement caching.
-          A value of <code>Integer.MAX_VALUE</code> (<code>2147483647</code>)
-          will enable fast caching (uses less memory and has no overhead
-          associated with removing statements); the cache will never release
-          any cached statements, so although experience has shown that this is
-          usually not a problem with most applications, use with care.</dd>
         <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
         <dd>The amount of time to wait (in seconds) for a successful connection
           before timing out.<br/>
@@ -305,13 +258,23 @@
           timeout when "All pipe instances are busy" error messages are received while
           attempting to connect to the server.  If <code>namedPipe</code> is
           <code>true</code> and <code>loginTimeout</code> is zero (the default), a
-          value of 20 seconds is used for the named pipe retry timeout.</dd>
-        <dt><code>socketTimeout</code> (default - <code>0</code>)</dt>
-        <dd>The amount of time to wait (in seconds) for network activity before timing out.<br/>
-          Use with care! If a non zero value is supplied this must be greater than the maximum
-          time that the server will take to answer any query. Once the timeout value is exceeded
-          the network connection will be closed. This parameter may be useful for detecting dead
-          network connections in a pooled environment.</dd>
+          value of 20 seconds is used for the named pipe retry timeout.  See also
+          <code>socketTimeout</code>.</dd>
+        <dt><code>macAddress</code> (default - <code>"000000000000"</code>)</dt>
+        <dd>Network interface card MAC address. It's displayed by Enterprise
+          Manager or Profiler associated with the connection and is needed to
+          resolve some issues regarding the number of clients allowed by the
+          SQL Server license. The MAC address cannot be determined automatically
+          from Java (i.e. without using native code) so you'll have to specify
+          it yourself if you need it.</dd>
+        <dt><code>maxStatements</code> (default - <code>500</code>)</dt>
+        <dd>The number of statement prepares each connection should cache.
+          A value of <code>0</code> will disable statement caching.
+          A value of <code>Integer.MAX_VALUE</code> (<code>2147483647</code>)
+          will enable fast caching (uses less memory and has no overhead
+          associated with removing statements); the cache will never release
+          any cached statements, so although experience has shown that this is
+          usually not a problem with most applications, use with care.</dd>
         <dt><code>namedPipe</code> (default - <code>false</code>)</dt>
         <dd>When set to <code>true</code>, named pipe communication is used to
           connect to the database instead of TCP/IP sockets. When the
@@ -328,13 +291,49 @@
           the named pipe URL), but it does not currently support the named pipe at
           a location other than <code>/sql/query</code> on the server. The
           <code>port</code> parameter is ignored if set.</dd>
-        <dt><code>xaEmulation</code> (default - <code>true</code>)</dt>
-        <dd>When set to <code>true</code>, emulate XA distributed transaction
-          support, when set to <code>false</code> use experimental true
-          distributed transaction support. True distributed transaction support
-          is only available for SQL Server 2000 and requires the installation
-          of an external stored procedure in the target server (see the
-          README.XA file in the distribution for details).</dd>
+        <dt><code>packetSize</code> (default - <code>4096</code> for TDS 7.0/8.0;
+          <code>512</code> for TDS 4.2/5.0)</dt>
+        <dd>The network packet size (a multiple of 512).</dd>
+        <dt><code>password</code> (required)</dt>
+        <dd>Password to use for login. When using <code>getConnection(String url,
+          String user, String password)</code> it's not required to set this property
+          as it is passed as parameter, but you will have to set it when using
+          <code>getConnection(String url, Properties info)</code> or <code>JtdsDataSource</code>.</dd>
+        <dt><code>prepareSQL</code> (default - <code>3</code> for SQL Server,
+          <code>1</code> for Sybase)</dt>
+        <dd>This parameter specifies the mechanism used for Prepared Statements.
+          <table class="inner" cellpadding="0" cellspacing="0">
+            <thead>
+              <tr><th>Value</th><th>Description</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>0</code></td><td>SQL is sent to the server each time without any preparation, literals are inserted in the SQL (slower)</td></tr>
+              <tr><td><code>1</code></td><td>Temporary stored procedures are created for each unique SQL statement and parameter combination (faster)</td></tr>
+              <tr><td><code>2</code></td><td>sp_executesql is used (fast)</td></tr>
+              <tr><td><code>3</code></td><td>sp_prepare and sp_cursorprepare are used in conjunction with sp_execute and sp_cursorexecute (faster, SQL Server only)</td></tr>
+            </tbody>
+          </table>
+        </dd>
+        <dt><code>progName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
+        <dd>Client library name. No practical use, it's displayed by Enterprise
+          Manager or Profiler associated with the connection.</dd>
+        <dt><code>sendStringParametersAsUnicode</code> (default - <code>true</code>)</dt>
+        <dd>Determines whether string parameters are sent to the SQL Server database
+          in Unicode or in the default character encoding of the database. This
+          seriously affects SQL Server 2000 performance since it does not automatically
+          cast the types (as 7.0 does), meaning that if a index column is Unicode
+          and the string is submitted using the default character encoding (or
+          the other way around) SQLServer will perform an index scan instead of
+          an index seek. For Sybase, determines if strings that cannot be encoded in
+          the server's charset are sent as unicode strings. There is a performance
+          hit for the encoding logic so set this option to false if unitext or univarchar
+          data types are not in use or if charset is utf-8.</dd>
+        <dt><code>socketTimeout</code> (default - <code>0</code>)</dt>
+        <dd>The amount of time to wait (in seconds) for network activity before timing out.<br/>
+          Use with care! If a non zero value is supplied this must be greater than the maximum
+          time that the server will take to answer any query. Once the timeout value is exceeded
+          the network connection will be closed. This parameter may be useful for detecting dead
+          network connections in a pooled environment.  See also <code>loginTimeout</code>.</dd>
         <dt><code>ssl</code> (default - <code>off</code>)</dt>
         <dd>Specifies if and how to use SSL for secure communication.
           <table class="inner" cellpadding="0" cellspacing="0">
@@ -349,14 +348,30 @@
             </tbody>
           </table>
         </dd>
-        <dt><code>batchSize</code> (default - <code>0</code> for SQL Server;
-          <code>1000</code> for Sybase)</dt>
-        <dd>Controls how many statements are sent to the server in a batch.
-          The actual batch is broken up into pieces this large that are sent
-          separately. The reason for this is to avoid Sybase "hangs" caused by
-          running out of space with very large batches. The problem doesn't
-          seem to occur with SQL Server, hence the default limit of 0
-          (unlimited) in this case.</dd>
+        <dt><code>tcpNoDelay</code> (default - <code>true</code>)</dt>
+        <dd><code>true</code> to enable TCP_NODELAY on the socket;
+          <code>false</code> to disable it.</dd>
+        <dt><code>TDS</code> (default - <code>&quot;8.0&quot;</code> for SQL Server;
+          <code>&quot;5.0&quot;</code> for Sybase)</dt>
+        <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol
+          used by Microsoft SQL Server and Sybase to communicate with database
+          clients. jTDS can use TDS 4.2, 5.0, 7.0 and 8.0. Version 4.2 is used by
+          SQL Server 6.5 and Sybase 10.  Version 5.0 is used with Sybase 11 onwards.
+          Version 7.0 is used by SQL Server 7.0; this protocol also works with SQL
+          Server 2000. Version 8.0 is used by SQL Server 2000 and SQL Server 2005.<br>
+          Newer database server versions usually understand older protocol versions.
+          This means that SQL Server 7.0 can be used with TDS 4.2, but the limitations
+          of the protocol apply regardless of the server version (e.g. when using TDS
+          4.2 <code>VARCHAR</code>s are limited to 255 characters). As a conclusion,
+          you must set this property to <code>&quot;4.2&quot;</code> when connecting
+          to SQL Server 6.5 or Sybase.  You should not set this value to
+          <code>&quot;7.0&quot; or &quot;8.0&quot;</code>) when connecting to any
+          version of Sybase as these are SQL Server specific protocols.  Further, you
+          should not set this value to <code>&quot;5.0&quot;</code>) when connecting
+          to any version of SQL Server as this is a Sybase specific protocol.<br/>
+          Currently jTDS automatically falls back from 8.0 to 7.0 (if used with
+          SQL Server 7.0) and from 5.0 to 4.2 (with Sybase 10) so specifying
+          the value for this parameter is only necessary for SQL Server 6.5.</dd>
         <dt><code>useCursors</code> (default - <code>false</code>)</dt>
         <dd>Instructs jTDS to use server side cursors instead of direct selects
           (AKA firehose cursors) for forward-only read-only result sets (with
@@ -377,35 +392,6 @@
           forward-only cursor</a> will be created when this property is set to
           <code>true</code>. With Sybase a usual forward-only read-only cursor
           is created.</dd>
-        <dt><code>bufferMaxMemory</code> (default - <code>1024</code>)</dt>
-        <dd>Controls the global buffer memory limit for all connections (in
-          kilobytes). When the amount of buffered server response packets
-          reaches this limit additional packets are buffered to disk; there is
-          however one exception: each <code>Statement</code> gets to buffer at
-          least <code>&lt;bufferMinPackets&gt;</code> to memory before this
-          limit is enforced. This means that this limit can and will usually be
-          exceeded.<br/>
-          Server responses are buffered to disk only when a request is made on
-          a <code>Statement</code> while another <code>Statement</code>
-          belonging to the same Connection still hasn't processed all its
-          results. These situations can be avoided in most cases by setting the
-          <code>useCursors</code> property, but this will also affect
-          performance.<br/>
-          See also <code>bufferMinPackets</code>.</dd>
-        <dt><code>bufferMinPackets</code> (default - <code>8</code>)</dt>
-        <dd>Controls the minimum number of packets per statement to buffer to
-          memory. Each <code>Statement</code> will buffer at least this many
-          packets before being forced to use a temporary file if the
-          <code>&lt;bufferMaxMemory&gt;</code> is reached, to ensure good
-          performance even when one <code>Statement</code> caches a very large
-          amount of data.<br/>
-          Server responses are buffered to disk only when a request is made on
-          a <code>Statement</code> while another <code>Statement</code>
-          belonging to the same Connection still hasn't processed all its
-          results. These situations can be avoided in most cases by setting the
-          <code>useCursors</code> property, but this will also affect
-          performance.<br/>
-          See also <code>bufferMaxMemory</code>.</dd>
         <dt><code>useLOBs</code> (default - <code>true</code>)</dt>
         <dd>Controls whether large types (IMAGE and TEXT/NTEXT) should be
           mapped by default (when using <code>getObject()</code>) to LOBs or
@@ -428,6 +414,21 @@
           internally but the values will be materialized to memory when
           <code>getObject()</code> is called, possibly leading to memory
           issues.</dd>
+        <dt><code>user</code> (required)</dt>
+        <dd>User name to use for login. When using <code>getConnection(String
+          url, String user, String password)</code> it's not required to set this
+          property as it is passed as parameter, but you will have to set it when
+          using <code>getConnection(String url, Properties info)</code> or <code>JtdsDataSource</code>.</dd>
+        <dt><code>wsid</code> (default - the client host name)</dt>
+        <dd>Workstation ID. No practical use, it's displayed by Enterprise
+          Manager or Profiler associated with the connection.</dd>
+        <dt><code>xaEmulation</code> (default - <code>true</code>)</dt>
+        <dd>When set to <code>true</code>, emulate XA distributed transaction
+          support, when set to <code>false</code> use experimental true
+          distributed transaction support. True distributed transaction support
+          is only available for SQL Server 2000 and requires the installation
+          of an external stored procedure in the target server (see the
+          README.XA file in the distribution for details).</dd>
       </dl>
       <p>Properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>

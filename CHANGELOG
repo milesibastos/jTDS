@@ -4,6 +4,7 @@ Changes from jTDS 1.2
 12/19/2005 - David Kilzer
  o Changed reference to old 'TdsDataSource' class in faq.html to newer
    'JtdsDataSource' class.
+ o Alphabetized parameters in faq.html to make them easier to find.
 
 12/19/2005 - Alin Sinpalean
  o Minor optimization in determining the scale for decimal parameters.

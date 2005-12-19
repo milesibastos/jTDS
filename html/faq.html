@@ -135,8 +135,8 @@
 
       <p class="title">Getting Started</p>
       <p class="question"><a name="driverImplementation"></a>What are the class names of the <code>Driver</code>,
-          <code>DataSource</code>, <code>ConnectionPoolDataSource</code> and
-          <code>XADataSource</code> implementations?</p>
+          <code>DataSource</code>, <code>ConnectionPoolDataSource</code>, <code>XADataSource</code> and
+          <code>ObjectFactory</code> implementations?</p>
       <table class="inner" cellpadding="0" cellspacing="0">
         <thead>
           <tr><th>Interface</th><th>jTDS Implementation</th></tr>
@@ -250,16 +250,23 @@
         <dd>The amount of LOB data to buffer in memory before caching to disk. The
           value is in bytes for <code>Blob</code> data and chars for <code>Clob</code>
           data.</dd>
-        <dt><code>loginTimeout</code> (default - <code>0</code>)</dt>
+        <dt><code>loginTimeout</code> (default - <code>0</code> for TCP/IP connections
+          or <code>20</code> for named pipe connections)</dt>
         <dd>The amount of time to wait (in seconds) for a successful connection
           before timing out.<br/>
-          If <code>namedPipe</code> is <code>true</code> and <code>loginTimeout</code>
-          is non-zero, the value of <code>loginTimeout</code> is used for the retry
-          timeout when "All pipe instances are busy" error messages are received while
-          attempting to connect to the server.  If <code>namedPipe</code> is
-          <code>true</code> and <code>loginTimeout</code> is zero (the default), a
-          value of 20 seconds is used for the named pipe retry timeout.  See also
-          <code>socketTimeout</code>.</dd>
+          If a TCP/IP connection is used to connect to the database and Java 1.4 or
+          newer is being used, the <code>loginTimeout</code> parameter is used to set
+          the initial connection timeout when initially opening a new socket.  A value
+          of zero (the default) causes the connection to wait indefinitely, e.g.,until
+          a connection is established or an error occurs.  See also
+          <code>socketTimeout</code>.<br/>
+          If a named pipe connection is used (<code>namedPipe</code> is
+          <code>true</code>) and <code>loginTimeout</code> is greater than zero, the
+          value of <code>loginTimeout</code> is used for the length of the retry period
+          when "All pipe instances are busy" error messages are received while
+          attempting to connect to the server.  If <code>loginTimeout</code> is zero
+          (the default), a value of 20 seconds is used for the named pipe retry
+          period.</dd>
         <dt><code>macAddress</code> (default - <code>"000000000000"</code>)</dt>
         <dd>Network interface card MAC address. It's displayed by Enterprise
           Manager or Profiler associated with the connection and is needed to

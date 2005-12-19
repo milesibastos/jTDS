@@ -165,12 +165,12 @@
         <dd>User name to use for login. When using <code>getConnection(String
           url, String user, String password)</code> it's not required to set this
           property as it is passed as parameter, but you will have to set it when
-          using <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
+          using <code>getConnection(String url, Properties info)</code> or <code>JtdsDataSource</code>.</dd>
         <dt><code>password</code> (required)</dt>
         <dd>Password to use for login. When using <code>getConnection(String url,
           String user, String password)</code> it's not required to set this property
           as it is passed as parameter, but you will have to set it when using
-          <code>getConnection(String url, Properties info)</code> or <code>TdsDataSource</code>.</dd>
+          <code>getConnection(String url, Properties info)</code> or <code>JtdsDataSource</code>.</dd>
         <dt><code>TDS</code> (default - <code>&quot;8.0&quot;</code> for SQL Server;
           <code>&quot;5.0&quot;</code> for Sybase)</dt>
         <dd>The version of TDS to be used. TDS (Tabular Data Stream) is the protocol
@@ -431,10 +431,10 @@
       </dl>
       <p>Properties can be passed to jTDS in one of three ways: in the URL, in
         the <code>Properties</code> object passed to <code>getConnection()</code>
-        or by using the <code>TdsDataSource</code>'s setters (if connections are
+        or by using the <code>JtdsDataSource</code>'s setters (if connections are
         obtained through a <code>DataSource</code> rather than using the
         <code>DriverManager</code>). Because there is no URL when using the
-        <code>TdsDataSource</code> there are three other properties (with
+        <code>JtdsDataSource</code> there are three other properties (with
         setters and getters) to take the place of those items that are part of
         the URL's syntax: <code>serverName</code>, <code>portNumber</code> and
         <code>databaseName</code> (their meaning should be quite clear).</p>
@@ -808,8 +808,8 @@
         and it hangs waiting for more data from the server. The solution is to set
         the <code>&quot;TDS&quot;</code> property to <code>&quot;4.2&quot;</code>
         (through the URL or <code>Properties</code> object passed to <code>getConnection()</code>
-        or using the appropriate setter of <code>TdsDataSource</code>, if you
-        are using the <code>TdsDataSource</code>).</p>
+        or using the appropriate setter of <code>JtdsDataSource</code>, if you
+        are using the <code>JtdsDataSource</code>).</p>
       <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
       <p><a href="#">^ top ^</a></p>

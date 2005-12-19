@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.55 2005-11-25 08:31:28 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.56 2005-12-19 13:34:21 alin_sinpalean Exp $
  */
 public class TdsData {
     /**
@@ -2319,17 +2319,17 @@ public class TdsData {
                 int prec = out.getMaxPrecision();
                 int scale;
 
-                if (pi.jdbcType == java.sql.Types.BIGINT) {
-                    scale = 0;
-                } else {
-                    if (pi.scale >= 0 && pi.scale <= prec) {
-                        scale = pi.scale;
+                if (pi.value == null) {
+                    if (pi.jdbcType == java.sql.Types.BIGINT) {
+                        scale = 0;
                     } else {
-                        scale = DEFAULT_SCALE;
+                        if (pi.scale >= 0 && pi.scale <= prec) {
+                            scale = pi.scale;
+                        } else {
+                            scale = DEFAULT_SCALE;
+                        }
                     }
-                }
-
-                if (pi.value != null) {
+                } else {
                     if (pi.value instanceof Long) {
                         value = new BigDecimal(((Long) pi.value).toString());
                         scale = 0;

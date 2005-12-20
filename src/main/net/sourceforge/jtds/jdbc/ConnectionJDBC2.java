@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.108 2005-11-25 08:31:28 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.109 2005-12-20 20:29:35 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -227,6 +227,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean useLOBs;
     /** A cached <code>TdsCore</code> instance to reuse on new statements. */
     private TdsCore cachedTds;
+    /** The local address to bind to when connecting to a database via TCP/IP. */
+    private String bindAddress;
 
     /**
      * Default constructor.
@@ -877,6 +879,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the bind address for this connection.
+     *
+     * @return the bind address
+     */
+    String getBindAddress() {
+        return this.bindAddress;
+    }
+
+    /**
      * Retrieves the domain name for this connection.
      *
      * @return the domain name
@@ -989,6 +1000,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         wsid = info.getProperty(Messages.get(Driver.WSID));
         serverCharset = info.getProperty(Messages.get(Driver.CHARSET));
         language = info.getProperty(Messages.get(Driver.LANGUAGE));
+        bindAddress = info.getProperty(Messages.get(Driver.BINDADDRESS));
         lastUpdateCount = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.LASTUPDATECOUNT)));
         useUnicode = "true".equalsIgnoreCase(

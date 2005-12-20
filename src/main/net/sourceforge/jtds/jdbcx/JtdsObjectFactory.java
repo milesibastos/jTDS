@@ -18,17 +18,20 @@
 package net.sourceforge.jtds.jdbcx;
 
 import java.util.Hashtable;
-import javax.naming.*;
-import javax.naming.spi.*;
-import net.sourceforge.jtds.jdbc.Messages;
+import javax.naming.Context;
+import javax.naming.Name;
+import javax.naming.Reference;
+import javax.naming.spi.ObjectFactory;
+
 import net.sourceforge.jtds.jdbc.Driver;
+import net.sourceforge.jtds.jdbc.Messages;
 
 /**
  * Description
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.21 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.22 2005-12-20 20:29:35 ddkilzer Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -52,6 +55,7 @@ public class JtdsObjectFactory implements ObjectFactory {
             ds.setCharset((String) ref.get(Messages.get(Driver.CHARSET)).getContent());
             ds.setLanguage((String) ref.get(Messages.get(Driver.LANGUAGE)).getContent());
             ds.setTds((String) ref.get(Messages.get(Driver.TDS)).getContent());
+            ds.setBindAddress((String) ref.get(Messages.get(Driver.BINDADDRESS)).getContent());
             final Object serverType = ref.get(Messages.get(Driver.SERVERTYPE)).getContent();
             if (serverType != null) {
                 ds.setServerType(Integer.parseInt((String) serverType));

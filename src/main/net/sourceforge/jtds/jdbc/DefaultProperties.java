@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.25 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: DefaultProperties.java,v 1.26 2005-12-20 20:29:35 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -56,6 +56,8 @@ public final class DefaultProperties {
     public static final String BATCH_SIZE_SQLSERVER = "0";
     /** Default <code>batchSize</code> property for Sybase. */
     public static final String BATCH_SIZE_SYBASE = "1000";
+    /** Default <code>bindAddress</code> property. */
+    public static final String BIND_ADDRESS = "";
     /** Default <code>bufferMaxMemory</code> property. */
     public static final String BUFFER_MAX_MEMORY = "1024";
     /** Default <code>bufferMinPackets</code> property. */
@@ -230,6 +232,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.BUFFERMAXMEMORY, BUFFER_MAX_MEMORY);
         addDefaultPropertyIfNotSet(props, Driver.BUFFERMINPACKETS, BUFFER_MIN_PACKETS);
         addDefaultPropertyIfNotSet(props, Driver.USELOBS, USELOBS);
+        addDefaultPropertyIfNotSet(props, Driver.BINDADDRESS, BIND_ADDRESS);
 
         return props;
     }

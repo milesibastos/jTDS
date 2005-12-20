@@ -25,14 +25,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import net.sourceforge.jtds.ssl.SocketFactories;
 import net.sourceforge.jtds.util.Logger;
@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.37 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: SharedSocket.java,v 1.38 2005-12-20 20:29:35 ddkilzer Exp $
  */
 class SharedSocket {
     /**
@@ -270,18 +270,28 @@ class SharedSocket {
         final String host = connection.getServerName();
         final int port = connection.getPortNumber();
         final int loginTimeout = connection.getLoginTimeout();
+        final String bindAddress = connection.getBindAddress();
         try {
             // Create the Socket
-            Constructor constructor =
+            Constructor socketConstructor =
                     Socket.class.getConstructor(new Class[] {});
             Socket socket =
-                    (Socket) constructor.newInstance(new Object[] {});
+                    (Socket) socketConstructor.newInstance(new Object[] {});
 
             // Create the InetSocketAddress
-            constructor = Class.forName("java.net.InetSocketAddress")
+            Constructor constructor = Class.forName("java.net.InetSocketAddress")
                     .getConstructor(new Class[] {String.class, int.class});
             Object address = constructor.newInstance(
                             new Object[] {host, new Integer(port)});
+
+            // Call Socket.bind(SocketAddress) if bindAddress parameter is set
+            if (bindAddress != null && bindAddress.length() > 0) {
+                Object localBindAddress = constructor.newInstance(
+                        new Object[]{bindAddress, new Integer(0)});
+                Method bind = Socket.class.getMethod(
+                        "bind", new Class[]{Class.forName("java.net.SocketAddress")});
+                bind.invoke(socket, new Object[]{localBindAddress});
+            }
 
             // Call Socket.connect(InetSocketAddress, int)
             Method connect = Socket.class.getMethod("connect", new Class[]
@@ -291,7 +301,7 @@ class SharedSocket {
 
             return socket;
         } catch (InvocationTargetException ite) {
-            // Reflection was OK but invocation of socket.connect()
+            // Reflection was OK but invocation of socket.bind() or socket.connect()
             // has failed. Try to report the underlying reason
             Throwable cause = ite.getTargetException();
             if (cause instanceof IOException) {

@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  *
  * @author David D. Kilzer
  * @author Alin Sinpalean
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.8 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.9 2005-12-20 20:29:36 ddkilzer Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
     /**
@@ -74,6 +74,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         String ssl = "ssl";
         int batchSize = 123;
         String description = "description";
+        String bindAddress = "127.0.0.1";
 
         JtdsDataSource ds = new JtdsDataSource();
         ds.setServerName(serverName);
@@ -105,6 +106,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         ds.setSsl(ssl);
         ds.setBatchSize(batchSize);
         ds.setDescription(description);
+        ds.setBindAddress(bindAddress);
 
         Reference dsRef = ds.getReference();
         assertEquals("net.sourceforge.jtds.jdbcx.JtdsObjectFactory",
@@ -146,6 +148,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertEquals(ssl, ds.getSsl());
         assertEquals(batchSize, ds.getBatchSize());
         assertEquals(description, ds.getDescription());
+        assertEquals(bindAddress, ds.getBindAddress());
     }
 
     /**
@@ -195,5 +198,6 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertNull(ds.getSsl());
         assertEquals(0, ds.getBatchSize());
         assertNull(ds.getDescription());
+        assertNull(ds.getBindAddress());
     }
 }

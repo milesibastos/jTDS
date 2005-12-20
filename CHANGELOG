@@ -1,6 +1,11 @@
 Changes from jTDS 1.2
 =====================
 
+12/20/2005 - David Kilzer
+ o Implemented RFE [1291335] Provide a mechanism for binding to a local
+   IP address.  New "bindAddress" parameter introduced (Java 1.4 and newer
+   only).
+
 12/19/2005 - David Kilzer
  o Changed reference to old 'TdsDataSource' class in faq.html to newer
    'JtdsDataSource' class.

@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.65 2005-11-08 12:04:28 alin_sinpalean Exp $
+ * @version $Id: Driver.java,v 1.66 2005-12-20 20:29:35 ddkilzer Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -79,6 +79,7 @@ public class Driver implements java.sql.Driver {
     //
     public static final String APPNAME       = "prop.appname";
     public static final String BATCHSIZE     = "prop.batchsize";
+    public static final String BINDADDRESS   = "prop.bindaddress";
     public static final String BUFFERMAXMEMORY = "prop.buffermaxmemory";
     public static final String BUFFERMINPACKETS = "prop.bufferminpackets";
     public static final String CACHEMETA     = "prop.cachemetadata";

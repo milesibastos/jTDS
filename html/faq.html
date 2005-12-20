@@ -172,6 +172,14 @@
           running out of space with very large batches. The problem doesn't
           seem to occur with SQL Server, hence the default limit of 0
           (unlimited) in this case.</dd>
+        <dt><code>bindAddress</code> (default - determined by the Java
+          implementation; requires Java 1.4 or later)</dt>
+        <dd>Specifies the local IP address to bind to for outgoing TCP/IP
+          connections to the database.  Useful for multi-homed systems (those with
+          more than one external IP address) where the default IP address picked by
+          Java will not connect to the database.  Currently has no effect when
+          using named pipes to connect to a database (see
+          <code>namedPipe</code>).  Since after jTDS-1.2.</dd>
         <dt><code>bufferMaxMemory</code> (default - <code>1024</code>)</dt>
         <dd>Controls the global buffer memory limit for all connections (in
           kilobytes). When the amount of buffered server response packets

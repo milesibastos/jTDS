@@ -28,10 +28,10 @@ import javax.naming.NamingException;
 import javax.naming.Reference;
 import javax.naming.Referenceable;
 import javax.naming.StringRefAddr;
+import javax.sql.ConnectionPoolDataSource;
 import javax.sql.DataSource;
 import javax.sql.XAConnection;
 import javax.sql.XADataSource;
-import javax.sql.ConnectionPoolDataSource;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.36 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: JtdsDataSource.java,v 1.37 2005-12-20 20:29:35 ddkilzer Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -85,6 +85,7 @@ public class JtdsDataSource
     protected String cacheMetaData;
     protected String useCursors;
     protected String useLOBs;
+    protected String bindAddress;
 
     protected String description;
 
@@ -259,6 +260,9 @@ public class JtdsDataSource
         if (useLOBs != null) {
             props.setProperty(Messages.get(Driver.USELOBS), useLOBs);
         }
+        if (bindAddress != null) {
+            //props.setProperty(Messages.get(Driver.BINDADDRESS), bindAddress);
+        }
 
         String url;
 
@@ -320,6 +324,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.CACHEMETA), cacheMetaData));
         ref.add(new StringRefAddr(Messages.get(Driver.USECURSORS), useCursors));
         ref.add(new StringRefAddr(Messages.get(Driver.USELOBS), useLOBs));
+        ref.add(new StringRefAddr(Messages.get(Driver.BINDADDRESS), bindAddress));
 
         ref.add(new StringRefAddr("description", description));
 
@@ -679,5 +684,13 @@ public class JtdsDataSource
 
     public void setUseLOBs(boolean useLOBs) {
         this.useLOBs = String.valueOf(useLOBs);
+    }
+
+    public String getBindAddress() {
+        return bindAddress;
+    }
+
+    public void setBindAddress(String bindAddress) {
+        this.bindAddress = bindAddress;
     }
 }

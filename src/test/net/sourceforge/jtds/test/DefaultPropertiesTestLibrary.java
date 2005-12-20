@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.21 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.22 2005-12-20 20:29:35 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -150,6 +150,20 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         String fieldName = "appName";
         String messageKey = Driver.APPNAME;
         String expectedValue = DefaultProperties.APP_NAME;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+
+    /**
+     * Test the <code>bindAddress</code> property.
+     */
+    public void test_bindAddress() {
+        String fieldName = "bindAddress";
+        String messageKey = Driver.BINDADDRESS;
+        String expectedValue = DefaultProperties.BIND_ADDRESS;
         assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
         if (!isOnlySqlServerTests()) {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);

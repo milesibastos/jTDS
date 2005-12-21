@@ -17,19 +17,22 @@
 //
 package net.sourceforge.jtds.test;
 
-import junit.framework.Assert;
-import junit.framework.TestCase;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;
+
+import junit.framework.Assert;
+import junit.framework.TestCase;
+
+import net.sourceforge.jtds.jdbc.Support;
 
 
 /**
  * Base class for unit tests which do not connect to a database.
  *
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.9 2005-04-20 16:49:32 alin_sinpalean Exp $
+ * @version $Id: UnitTestBase.java,v 1.10 2005-12-21 00:33:09 ddkilzer Exp $
  */
 public abstract class UnitTestBase extends TestCase {
 
@@ -64,16 +67,24 @@ public abstract class UnitTestBase extends TestCase {
             return constructor.newInstance(objects);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (InstantiationException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getTargetException().getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getTargetException().getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
     }
 
@@ -98,10 +109,14 @@ public abstract class UnitTestBase extends TestCase {
             return field.get(instance);
         }
         catch (NoSuchFieldException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
     }
 
@@ -130,13 +145,19 @@ public abstract class UnitTestBase extends TestCase {
             return method.invoke(instance, objects);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getTargetException().getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getTargetException().getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
     }
 
@@ -165,13 +186,19 @@ public abstract class UnitTestBase extends TestCase {
             return method.invoke(klass, objects);
         }
         catch (NoSuchMethodException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (IllegalAccessException e) {
-            throw new RuntimeException(e.getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
         catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getTargetException().getMessage());
+            RuntimeException runtimeException = new RuntimeException(e.getTargetException().getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
         }
     }
 

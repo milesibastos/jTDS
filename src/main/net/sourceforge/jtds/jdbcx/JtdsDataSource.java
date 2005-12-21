@@ -44,7 +44,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.37 2005-12-20 20:29:35 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.38 2005-12-21 01:11:57 ddkilzer Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -261,7 +261,7 @@ public class JtdsDataSource
             props.setProperty(Messages.get(Driver.USELOBS), useLOBs);
         }
         if (bindAddress != null) {
-            //props.setProperty(Messages.get(Driver.BINDADDRESS), bindAddress);
+            props.setProperty(Messages.get(Driver.BINDADDRESS), bindAddress);
         }
 
         String url;

@@ -35,7 +35,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.18 2005-12-21 01:36:00 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.19 2005-12-21 19:44:01 ddkilzer Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -56,6 +56,9 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         testSuite.addTest(new TestSuite(
                 JtdsDataSourceUnitTest.Test_JtdsDataSource_getReference.class, "test_getReference_DefaultProperties"));
+
+        testSuite.addTest(new TestSuite(
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_addNonNullProperties.class, "test_addNonNullProperties_DefaultProperties"));
 
         testSuite.addTest(new TestSuite(
                 JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.class, "test_getConnection"));
@@ -95,10 +98,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          * so flags are set to make sure only that configuration is tested.
          */
         public Test_JtdsDataSource_fields() {
-
-            setOnlySqlServerTests(true);
-            setOnlyTds70Tests(true);
-
             setTester(
                     new DefaultPropertiesTester() {
 
@@ -148,8 +147,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
          * so flags are set to make sure only that configuration is tested.
          */
         public Test_JtdsDataSource_getReference() {
-            setOnlySqlServerTests(true);
-            setOnlyTds70Tests(true);
             setTester(
                     new DefaultPropertiesTester() {
 
@@ -172,6 +169,48 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
                             catch (NamingException e) {
                                 throw new RuntimeException(e.getMessage());
                             }
+                        }
+                    }
+            );
+        }
+    }
+
+
+    /** Class used to test {@link JtdsDataSource#addNonNullProperties(Properties, String, String)}. */
+    public static class Test_JtdsDataSource_addNonNullProperties
+            extends DefaultPropertiesTestLibrary {
+
+        /**
+         * Default constructor.
+         * <p/>
+         * This class only has one default setup (SQL Server with TDS 7.0),
+         * so flags are set to make sure only that configuration is tested.
+         */
+        public Test_JtdsDataSource_addNonNullProperties() {
+            setTester(
+                    new DefaultPropertiesTester() {
+
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
+
+                            // Hack for JtdsDataSource.cacheMetaData
+                            {
+                                if ("useMetadataCache".equals(fieldName)) {
+                                    fieldName = "cacheMetaData";
+                                }
+                            }
+
+                            JtdsDataSource dataSource = new JtdsDataSource();
+                            dataSource.setServerName("non-null-value");
+                            invokeSetInstanceField(dataSource, fieldName, expected);
+
+                            Properties props = new Properties();
+                            invokeInstanceMethod(dataSource, "addNonNullProperties",
+                                                 new Class[]{Properties.class, String.class, String.class},
+                                                 new Object[]{props, "", ""});
+
+                            assertEquals(message, expected, props.getProperty(Messages.get(key)));
                         }
                     }
             );

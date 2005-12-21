@@ -1,6 +1,17 @@
 Changes from jTDS 1.2
 =====================
 
+12/21/2005 - David Kilzer
+ o Extracted the JtdsDataSource.addNonNullProperties() method from
+   getConnection(String, String) method for easier testing.  Added inner
+   test class Test_JtdsDataSource_addNonNullProperties to
+   JtdsDataSourceUnitTest to test new addNonNullProperties() method.
+   Replaced call to Exception.getStackTrace() in
+   getConnection(String, String) with a call to Support.linkException().
+   Fixed addNonNullProperties() to set the serverType parameter if it is
+   not null.  Note that this does not affect Driver.parseURL() which
+   ends up (re)setting that property from the URL.
+
 12/20/2005 - David Kilzer
  o Implemented RFE [1291335] Provide a mechanism for binding to a local
    IP address.  New "bindAddress" parameter introduced (Java 1.4 and newer

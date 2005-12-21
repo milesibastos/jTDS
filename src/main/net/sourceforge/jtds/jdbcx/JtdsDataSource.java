@@ -36,6 +36,7 @@ import javax.sql.XADataSource;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Messages;
+import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -44,7 +45,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.38 2005-12-21 01:11:57 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.39 2005-12-21 19:44:00 ddkilzer Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -144,7 +145,6 @@ public class JtdsDataSource
      */
     public Connection getConnection(String user, String password)
             throws SQLException {
-        Properties props = new Properties();
 
         if (serverName == null) {
             throw new SQLException(Messages.get("error.connection.nohost"), "08001");
@@ -163,109 +163,10 @@ public class JtdsDataSource
             }
         }
 
-        //
-        // Set the non-null properties
-        //
-        props.setProperty(Messages.get(Driver.SERVERNAME), serverName);
-        if (portNumber != null) {
-            props.setProperty(Messages.get(Driver.PORTNUMBER), portNumber);
-        }
-        if (databaseName != null) {
-            props.setProperty(Messages.get(Driver.DATABASENAME), databaseName);
-        }
-        if (tdsVersion != null) {
-            props.setProperty(Messages.get(Driver.TDS), tdsVersion);
-        }
-        if (charset != null) {
-            props.setProperty(Messages.get(Driver.CHARSET), charset);
-        }
-        if (language != null) {
-            props.setProperty(Messages.get(Driver.LANGUAGE), language);
-        }
-        if (domain != null) {
-            props.setProperty(Messages.get(Driver.DOMAIN), domain);
-        }
-        if (instance != null) {
-            props.setProperty(Messages.get(Driver.INSTANCE), instance);
-        }
-        if (lastUpdateCount != null) {
-            props.setProperty(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount);
-        }
-        if (sendStringParametersAsUnicode != null) {
-            props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode);
-        }
-        if (namedPipe != null) {
-            props.setProperty(Messages.get(Driver.NAMEDPIPE), namedPipe);
-        }
-        if (macAddress != null) {
-            props.setProperty(Messages.get(Driver.MACADDRESS), macAddress);
-        }
-        if (prepareSql != null) {
-            props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
-        }
-        if (packetSize != null) {
-            props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
-        }
-        if (tcpNoDelay != null) {
-            props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
-        }
-        if (xaEmulation != null) {
-            props.setProperty(Messages.get(Driver.XAEMULATION), xaEmulation);
-        }
-        if (user != null) {
-            props.setProperty(Messages.get(Driver.USER), user);
-        }
-        if (password != null) {
-            props.setProperty(Messages.get(Driver.PASSWORD), password);
-        }
-        if (loginTimeout != null) {
-            props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
-        }
-        if (socketTimeout != null) {
-            props.setProperty(Messages.get(Driver.SOTIMEOUT), socketTimeout);
-        }
-        if (lobBuffer != null) {
-            props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
-        }
-        if (maxStatements != null) {
-            props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
-        }
-        if (appName != null) {
-            props.setProperty(Messages.get(Driver.APPNAME), appName);
-        }
-        if (progName != null) {
-            props.setProperty(Messages.get(Driver.PROGNAME), progName);
-        }
-        if (wsid != null) {
-            props.setProperty(Messages.get(Driver.WSID), wsid);
-        }
-        if (ssl != null) {
-            props.setProperty(Messages.get(Driver.SSL), ssl);
-        }
-        if (batchSize != null) {
-            props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
-        }
-        if (bufferMaxMemory != null) {
-            props.setProperty(Messages.get(Driver.BUFFERMAXMEMORY), bufferMaxMemory);
-        }
-        if (bufferMinPackets != null) {
-            props.setProperty(Messages.get(Driver.BUFFERMINPACKETS), bufferMinPackets);
-        }
-        if (cacheMetaData != null) {
-            props.setProperty(Messages.get(Driver.CACHEMETA), cacheMetaData);
-        }
-        if (useCursors != null) {
-            props.setProperty(Messages.get(Driver.USECURSORS), useCursors);
-        }
-        if (useLOBs != null) {
-            props.setProperty(Messages.get(Driver.USELOBS), useLOBs);
-        }
-        if (bindAddress != null) {
-            props.setProperty(Messages.get(Driver.BINDADDRESS), bindAddress);
-        }
+        Properties props = new Properties();
+        addNonNullProperties(props, user, password);
 
         String url;
-
         try {
             // Determine the server type (for the URL stub) or use the default
             int serverTypeDef = (serverType == null) ? 0
@@ -274,10 +175,10 @@ public class JtdsDataSource
                     + DefaultProperties.getServerTypeWithDefault(serverTypeDef)
                     + ':';
         } catch (RuntimeException ex) {
-            ex.printStackTrace();
-            throw new SQLException(
-                    Messages.get("error.connection.servertype", ex.toString()),
-                    "08001");
+            SQLException sqlException = new SQLException(
+                    Messages.get("error.connection.servertype", ex.toString()), "08001");
+            Support.linkException(sqlException, ex);
+            throw sqlException;
         }
 
         // Connect with the URL stub and set properties. The defaults will be
@@ -692,5 +593,108 @@ public class JtdsDataSource
 
     public void setBindAddress(String bindAddress) {
         this.bindAddress = bindAddress;
+    }
+
+    private void addNonNullProperties(Properties props, String user, String password) {
+        props.setProperty(Messages.get(Driver.SERVERNAME), serverName);
+        if (serverType != null) {
+            props.setProperty(Messages.get(Driver.SERVERTYPE), serverType);
+        }
+        if (portNumber != null) {
+            props.setProperty(Messages.get(Driver.PORTNUMBER), portNumber);
+        }
+        if (databaseName != null) {
+            props.setProperty(Messages.get(Driver.DATABASENAME), databaseName);
+        }
+        if (tdsVersion != null) {
+            props.setProperty(Messages.get(Driver.TDS), tdsVersion);
+        }
+        if (charset != null) {
+            props.setProperty(Messages.get(Driver.CHARSET), charset);
+        }
+        if (language != null) {
+            props.setProperty(Messages.get(Driver.LANGUAGE), language);
+        }
+        if (domain != null) {
+            props.setProperty(Messages.get(Driver.DOMAIN), domain);
+        }
+        if (instance != null) {
+            props.setProperty(Messages.get(Driver.INSTANCE), instance);
+        }
+        if (lastUpdateCount != null) {
+            props.setProperty(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount);
+        }
+        if (sendStringParametersAsUnicode != null) {
+            props.setProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode);
+        }
+        if (namedPipe != null) {
+            props.setProperty(Messages.get(Driver.NAMEDPIPE), namedPipe);
+        }
+        if (macAddress != null) {
+            props.setProperty(Messages.get(Driver.MACADDRESS), macAddress);
+        }
+        if (prepareSql != null) {
+            props.setProperty(Messages.get(Driver.PREPARESQL), prepareSql);
+        }
+        if (packetSize != null) {
+            props.setProperty(Messages.get(Driver.PACKETSIZE), packetSize);
+        }
+        if (tcpNoDelay != null) {
+            props.setProperty(Messages.get(Driver.TCPNODELAY), tcpNoDelay);
+        }
+        if (xaEmulation != null) {
+            props.setProperty(Messages.get(Driver.XAEMULATION), xaEmulation);
+        }
+        if (user != null) {
+            props.setProperty(Messages.get(Driver.USER), user);
+        }
+        if (password != null) {
+            props.setProperty(Messages.get(Driver.PASSWORD), password);
+        }
+        if (loginTimeout != null) {
+            props.setProperty(Messages.get(Driver.LOGINTIMEOUT), loginTimeout);
+        }
+        if (socketTimeout != null) {
+            props.setProperty(Messages.get(Driver.SOTIMEOUT), socketTimeout);
+        }
+        if (lobBuffer != null) {
+            props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);
+        }
+        if (maxStatements != null) {
+            props.setProperty(Messages.get(Driver.MAXSTATEMENTS), maxStatements);
+        }
+        if (appName != null) {
+            props.setProperty(Messages.get(Driver.APPNAME), appName);
+        }
+        if (progName != null) {
+            props.setProperty(Messages.get(Driver.PROGNAME), progName);
+        }
+        if (wsid != null) {
+            props.setProperty(Messages.get(Driver.WSID), wsid);
+        }
+        if (ssl != null) {
+            props.setProperty(Messages.get(Driver.SSL), ssl);
+        }
+        if (batchSize != null) {
+            props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
+        }
+        if (bufferMaxMemory != null) {
+            props.setProperty(Messages.get(Driver.BUFFERMAXMEMORY), bufferMaxMemory);
+        }
+        if (bufferMinPackets != null) {
+            props.setProperty(Messages.get(Driver.BUFFERMINPACKETS), bufferMinPackets);
+        }
+        if (cacheMetaData != null) {
+            props.setProperty(Messages.get(Driver.CACHEMETA), cacheMetaData);
+        }
+        if (useCursors != null) {
+            props.setProperty(Messages.get(Driver.USECURSORS), useCursors);
+        }
+        if (useLOBs != null) {
+            props.setProperty(Messages.get(Driver.USELOBS), useLOBs);
+        }
+        if (bindAddress != null) {
+            props.setProperty(Messages.get(Driver.BINDADDRESS), bindAddress);
+        }
     }
 }

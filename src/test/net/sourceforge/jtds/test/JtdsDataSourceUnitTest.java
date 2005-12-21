@@ -17,20 +17,25 @@
 //
 package net.sourceforge.jtds.test;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Properties;
+import javax.naming.NamingException;
+import javax.naming.Reference;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.jdbc.Driver;
 
+
 /**
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.17 2005-09-22 17:17:19 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.18 2005-12-21 01:36:00 ddkilzer Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -44,7 +49,13 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
      */
     public static Test suite() {
 
-        final TestSuite testSuite = new TestSuite(JtdsDataSourceUnitTest.class);
+        TestSuite testSuite = new TestSuite(JtdsDataSourceUnitTest.class);
+
+        testSuite.addTest(new TestSuite(
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_fields.class, "test_fields_DefaultProperties"));
+
+        testSuite.addTest(new TestSuite(
+                JtdsDataSourceUnitTest.Test_JtdsDataSource_getReference.class, "test_getReference_DefaultProperties"));
 
         testSuite.addTest(new TestSuite(
                 JtdsDataSourceUnitTest.Test_JtdsDataSource_getConnection.class, "test_getConnection"));
@@ -71,6 +82,102 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     public void testPublicConstructor() {
         assertNotNull(new JtdsDataSource());
     }
+
+
+    /** Class used to test {@link JtdsDataSource}. */
+    public static class Test_JtdsDataSource_fields
+            extends DefaultPropertiesTestLibrary {
+
+        /**
+         * Default constructor.
+         * <p/>
+         * This class only has one default setup (SQL Server with TDS 7.0),
+         * so flags are set to make sure only that configuration is tested.
+         */
+        public Test_JtdsDataSource_fields() {
+
+            setOnlySqlServerTests(true);
+            setOnlyTds70Tests(true);
+
+            setTester(
+                    new DefaultPropertiesTester() {
+
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
+
+                            // Hack for JtdsDataSource.getCacheMetaData()
+                            {
+                                if ("useMetadataCache".equals(fieldName)) {
+                                    fieldName = "cacheMetaData";
+                                }
+                            }
+
+                            JtdsDataSource dataSource = new JtdsDataSource();
+                            invokeSetInstanceField(dataSource, fieldName, expected);
+
+                            // Hack for JtdsDataSource.getTds()
+                            {
+                                if ("tdsVersion".equals(fieldName)) {
+                                    fieldName = "tds";
+                                }
+                            }
+
+                            String actual =
+                                    String.valueOf(
+                                            invokeInstanceMethod(
+                                                    dataSource,
+                                                    "get" + ucFirst(fieldName),
+                                                    new Class[]{}, new Object[]{}));
+                            assertEquals(message, expected, actual);
+                        }
+                    }
+            );
+        }
+    }
+
+
+    /** Class used to test {@link JtdsDataSource#getReference()}. */
+    public static class Test_JtdsDataSource_getReference
+            extends DefaultPropertiesTestLibrary {
+
+        /**
+         * Default constructor.
+         * <p/>
+         * This class only has one default setup (SQL Server with TDS 7.0),
+         * so flags are set to make sure only that configuration is tested.
+         */
+        public Test_JtdsDataSource_getReference() {
+            setOnlySqlServerTests(true);
+            setOnlyTds70Tests(true);
+            setTester(
+                    new DefaultPropertiesTester() {
+
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
+
+                            try {
+                                // Hack for JtdsDataSource.getCacheMetaData()
+                                {
+                                    if ("useMetadataCache".equals(fieldName)) {
+                                        fieldName = "cacheMetaData";
+                                    }
+                                }
+                                JtdsDataSource dataSource = new JtdsDataSource();
+                                invokeSetInstanceField(dataSource, fieldName, expected);
+                                Reference reference = dataSource.getReference();
+                                assertEquals(message, expected, reference.get(Messages.get(key)).getContent());
+                            }
+                            catch (NamingException e) {
+                                throw new RuntimeException(e.getMessage());
+                            }
+                        }
+                    }
+            );
+        }
+    }
+
 
     public static class Test_JtdsDataSource_getConnection extends UnitTestBase {
         // TODO Specify host name separately in the properties so that testing can be more accurate

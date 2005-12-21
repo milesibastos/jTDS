@@ -32,7 +32,7 @@ import net.sourceforge.jtds.jdbc.Support;
  * Base class for unit tests which do not connect to a database.
  *
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.10 2005-12-21 00:33:09 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.11 2005-12-21 01:36:00 ddkilzer Exp $
  */
 public abstract class UnitTestBase extends TestCase {
 
@@ -107,6 +107,38 @@ public abstract class UnitTestBase extends TestCase {
             }
             field.setAccessible(true);
             return field.get(instance);
+        }
+        catch (NoSuchFieldException e) {
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
+        }
+        catch (IllegalAccessException e) {
+            RuntimeException runtimeException = new RuntimeException(e.getMessage());
+            Support.linkException(runtimeException, e);
+            throw runtimeException;
+        }
+    }
+
+
+    /**
+     * Set the value of an instance field on an object using reflection.
+     *
+     * @param instance The instance of the object.
+     * @param fieldName The name of the field.
+     * @param fieldValue The value to set the field to.
+     */
+    public static void invokeSetInstanceField(final Object instance, final String fieldName, final Object fieldValue) {
+        try {
+            Field field;
+            try {
+                field = instance.getClass().getField(fieldName);
+            }
+            catch (NoSuchFieldException e) {
+                field = instance.getClass().getDeclaredField(fieldName);
+            }
+            field.setAccessible(true);
+            field.set(instance, fieldValue);
         }
         catch (NoSuchFieldException e) {
             RuntimeException runtimeException = new RuntimeException(e.getMessage());

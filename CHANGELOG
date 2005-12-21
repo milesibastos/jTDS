@@ -5,6 +5,14 @@ Changes from jTDS 1.2
  o Implemented RFE [1291335] Provide a mechanism for binding to a local
    IP address.  New "bindAddress" parameter introduced (Java 1.4 and newer
    only).
+ o Updated UnitTestBase.invoke*() methods to link original exceptions to
+   RuntimeExceptions.  Added new UnitTestBase.invokeSetInstanceField()
+   method.  Added back suite tests to JtdsDataSourceUnitTest that test
+   default values on the JtdsDataSource class and its getReference()
+   method by setting the default values through reflection before testing.
+   This allows one new test method to be added to the
+   DefaultPropertiesTestLibrary class and for tests to fail everywhere a
+   developer hasn't implemented a new driver property yet.
 
 12/19/2005 - David Kilzer
  o Changed reference to old 'TdsDataSource' class in faq.html to newer

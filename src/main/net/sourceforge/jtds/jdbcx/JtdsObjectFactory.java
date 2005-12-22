@@ -31,7 +31,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.22 2005-12-20 20:29:35 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.23 2005-12-22 17:06:58 ddkilzer Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -132,6 +132,10 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object useCursors = ref.get(Messages.get(Driver.USECURSORS)).getContent();
             if (useCursors != null) {
                 ds.setUseCursors("true".equals(useCursors));
+            }
+            final Object useJCIFS = ref.get(Messages.get(Driver.USEJCIFS)).getContent();
+            if (useJCIFS != null) {
+                ds.setUseJCIFS("true".equals(useJCIFS));
             }
             final Object useLOBs = ref.get(Messages.get(Driver.USELOBS)).getContent();
             if (useLOBs != null) {

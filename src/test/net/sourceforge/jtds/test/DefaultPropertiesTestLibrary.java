@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.22 2005-12-20 20:29:35 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.23 2005-12-22 17:06:58 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -401,6 +401,20 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
         }
     }
+
+    /**
+     * Test the <code>useJCIFS</code> property.
+     */
+    public void test_useJCIFS() {
+        String fieldName = "useJCIFS";
+        String messageKey = Driver.USEJCIFS;
+        String expectedValue = DefaultProperties.USEJCIFS;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
 
     /**
      * Test the <code>useLOBs</code> property.

@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.109 2005-12-20 20:29:35 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.110 2005-12-22 17:06:33 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -229,6 +229,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private TdsCore cachedTds;
     /** The local address to bind to when connecting to a database via TCP/IP. */
     private String bindAddress;
+    /** Force use of jCIFS library on Windows when connecting via named pipes. */
+    private boolean useJCIFS;
 
     /**
      * Default constructor.
@@ -421,7 +423,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /**
      * Creates a {@link SharedSocket} object representing a connection to a named
      * pipe.  If the <code>os.name</code> system property starts with "Windows"
-     * (case-insensitive), a {@link SharedLocalNamedPipe} object is created.
+     * (case-insensitive) and the <code>useJCIFS</code> parameter is
+     * <code>false</code>, a {@link SharedLocalNamedPipe} object is created.
      * Else a {@link SharedNamedPipe} is created which uses
      * <a href="http://jcifs.samba.org/">jCIFS</a> to provide a pure-Java
      * implementation of Windows named pipes.
@@ -451,13 +454,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         do {
             try {
-                // TODO Use namedPipe parameter to select implementation type
-                if (isWindowsOS) {
-                    // If the OS is Windows, use a local named pipe
+                if (isWindowsOS && !connection.getUseJCIFS()) {
                     socket = new SharedLocalNamedPipe(connection);
                 }
                 else {
-                    // Otherwise use a named pipe over TCP/IP (jCIFS)
                     socket = new SharedNamedPipe(connection);
                 }
             }
@@ -969,6 +969,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the useJCIFS setting for this connection.
+     *
+     * @return the useJCIFS setting
+     */
+    boolean getUseJCIFS() {
+        return this.useJCIFS;
+    }
+
+    /**
      * Retrieves the user for this connection.
      *
      * @return the user
@@ -1018,6 +1027,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 info.getProperty(Messages.get(Driver.CACHEMETA)));
         xaEmulation = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.XAEMULATION)));
+        useJCIFS = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.USEJCIFS)));
         charsetSpecified = serverCharset.length() > 0;
 
         Integer parsedTdsVersion =

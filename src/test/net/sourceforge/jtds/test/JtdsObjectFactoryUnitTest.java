@@ -35,7 +35,7 @@ import net.sourceforge.jtds.jdbcx.JtdsObjectFactory;
  *
  * @author David D. Kilzer
  * @author Alin Sinpalean
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.10 2005-12-22 15:35:32 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.11 2005-12-22 17:06:58 ddkilzer Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
 
@@ -116,6 +116,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertEquals(0, ds.getBatchSize());
         assertNull(ds.getDescription());
         assertNull(ds.getBindAddress());
+        assertEquals(false, ds.getUseJCIFS());
     }
 
 

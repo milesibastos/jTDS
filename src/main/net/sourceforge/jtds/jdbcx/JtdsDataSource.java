@@ -45,7 +45,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.39 2005-12-21 19:44:00 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.40 2005-12-22 17:06:58 ddkilzer Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -87,6 +87,7 @@ public class JtdsDataSource
     protected String useCursors;
     protected String useLOBs;
     protected String bindAddress;
+    protected String useJCIFS;
 
     protected String description;
 
@@ -226,6 +227,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.USECURSORS), useCursors));
         ref.add(new StringRefAddr(Messages.get(Driver.USELOBS), useLOBs));
         ref.add(new StringRefAddr(Messages.get(Driver.BINDADDRESS), bindAddress));
+        ref.add(new StringRefAddr(Messages.get(Driver.USEJCIFS), useJCIFS));
 
         ref.add(new StringRefAddr("description", description));
 
@@ -595,6 +597,14 @@ public class JtdsDataSource
         this.bindAddress = bindAddress;
     }
 
+    public boolean getUseJCIFS() {
+        return Boolean.valueOf(useJCIFS).booleanValue();
+    }
+
+    public void setUseJCIFS(boolean useJCIFS) {
+        this.useJCIFS = String.valueOf(useJCIFS);
+    }
+
     private void addNonNullProperties(Properties props, String user, String password) {
         props.setProperty(Messages.get(Driver.SERVERNAME), serverName);
         if (serverType != null) {
@@ -695,6 +705,9 @@ public class JtdsDataSource
         }
         if (bindAddress != null) {
             props.setProperty(Messages.get(Driver.BINDADDRESS), bindAddress);
+        }
+        if (useJCIFS != null) {
+            props.setProperty(Messages.get(Driver.USEJCIFS), useJCIFS);
         }
     }
 }

@@ -407,6 +407,14 @@
           forward-only cursor</a> will be created when this property is set to
           <code>true</code>. With Sybase a usual forward-only read-only cursor
           is created.</dd>
+        <dt><code>useJCIFS</code> (default - <code>false</code>)</dt>
+        <dd>Controls whether the <a href="http://jcifs.samba.org/">jCIFS</a>
+          library will be used instead of the local file system with named pipe
+          connections on the Windows operating system.  (The jCIFS library will
+          always be used with named pipes when the operating system is not
+          Windows.)  Useful when connecting via named pipes to a server that is
+          located in a different domain than the client.  See also
+          <code>namedPipe</code>.  Since after jTDS-1.2.</dd>
         <dt><code>useLOBs</code> (default - <code>true</code>)</dt>
         <dd>Controls whether large types (IMAGE and TEXT/NTEXT) should be
           mapped by default (when using <code>getObject()</code>) to LOBs or

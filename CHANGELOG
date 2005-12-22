@@ -6,6 +6,9 @@ Changes from jTDS 1.2
    inner class that extends DefaultPropertiesTestLibrary to make this
    test class fail automatically when a new property is added to the
    library class.  Removed stale comments in JtdsDataSourceUnitTest.
+ o Fixed Bug [1386615] Connecting across domains with named pipes fails
+   on Windows.  New 'useJCIFS' boolean parameter added that will force
+   use of the jCIFS library on Windows for named pipe connections.
 
 12/21/2005 - David Kilzer
  o Extracted the JtdsDataSource.addNonNullProperties() method from

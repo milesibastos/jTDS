@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.26 2005-12-20 20:29:35 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.27 2005-12-22 17:06:33 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -114,6 +114,8 @@ public final class DefaultProperties {
     public static final String USE_UNICODE = "true";
     /** Default <code>useCursors</code> property. */
     public static final String USECURSORS = "false";
+    /** Default <code>useJCIFS</code> property. */
+    public static final String USEJCIFS = "false";
     /** Default <code>useLOBs</code> property. */
     public static final String USELOBS = "true";
     /** Default <code>user</code> property. */
@@ -233,6 +235,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.BUFFERMINPACKETS, BUFFER_MIN_PACKETS);
         addDefaultPropertyIfNotSet(props, Driver.USELOBS, USELOBS);
         addDefaultPropertyIfNotSet(props, Driver.BINDADDRESS, BIND_ADDRESS);
+        addDefaultPropertyIfNotSet(props, Driver.USEJCIFS, USEJCIFS);
 
         return props;
     }

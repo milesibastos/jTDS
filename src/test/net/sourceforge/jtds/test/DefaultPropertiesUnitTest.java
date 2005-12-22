@@ -30,7 +30,7 @@ import java.util.HashMap;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.7 2004-11-15 13:29:11 alin_sinpalean Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.8 2005-12-22 20:48:52 ddkilzer Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
@@ -232,6 +232,40 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
                 "Tds version for TDS 8.0 did not map correctly",
                 new Integer(Driver.TDS80),
                 DefaultProperties.getTdsVersion(DefaultProperties.TDS_VERSION_80));
+    }
+
+
+    public void test_getNamedPipePath_DEFAULT() {
+        assertEquals(
+                "Default named pipe path for default (0) did not map correctly",
+                DefaultProperties.NAMED_PIPE_PATH_SQLSERVER,
+                DefaultProperties.getNamedPipePath(0));
+    }
+
+
+    public void test_getNamedPipePath_INVALID() {
+        try {
+            DefaultProperties.getNamedPipePath(3);
+            fail("IllegalArgumentException was expected to be thrown");
+        }
+        catch (IllegalArgumentException expected) {
+        }
+    }
+
+
+    public void test_getNamedPipePath_SQLSERVER() {
+        assertEquals(
+                "Default named pipe path for SQL Server did not map correctly",
+                DefaultProperties.NAMED_PIPE_PATH_SQLSERVER,
+                DefaultProperties.getNamedPipePath(DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SQLSERVER).intValue()));
+    }
+
+
+    public void test_getNamedPipePath_SYBASE() {
+        assertEquals(
+                "Default named pipe path for Sybase did not map correctly",
+                DefaultProperties.NAMED_PIPE_PATH_SYBASE,
+                DefaultProperties.getNamedPipePath(DefaultProperties.getServerType(DefaultProperties.SERVER_TYPE_SYBASE).intValue()));
     }
 
 }

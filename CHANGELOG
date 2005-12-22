@@ -17,6 +17,9 @@ Changes from jTDS 1.2
    ConnectionJDBC2 class that returned boolean values to use "get" instead
    of "is":  getLastUpdateCount(), getUseUnicode().  Moved
    DefaultPropertiesTestLibrary.ucFirst() to UnitTestBase class.
+ o Fixed default path for named pipes on Sybase.  (Previous behavior
+   would always default to the SQL Server path!)  Added
+   DefaultProperties.getNamedPipePath() method with unit tests.
 
 12/21/2005 - David Kilzer
  o Extracted the JtdsDataSource.addNonNullProperties() method from

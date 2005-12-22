@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.27 2005-12-22 17:06:33 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.28 2005-12-22 20:48:52 ddkilzer Exp $
  */
 public final class DefaultProperties {
 
@@ -285,6 +285,23 @@ public final class DefaultProperties {
                 props.setProperty(messageKey, String.valueOf(defaultValue));
             }
         }
+    }
+
+    /**
+     * Returns the default path for the named pipe for a given serverType.
+     *
+     * @param serverType {@link Driver#SQLSERVER} or {@link Driver#SYBASE} or <code>0</code> (default)
+     * @return default named pipe path
+     * @throws IllegalArgumentException if an invalid serverType is given
+     */
+    public static String getNamedPipePath(int serverType) {
+        if (serverType == 0 || serverType == Driver.SQLSERVER) {
+            return NAMED_PIPE_PATH_SQLSERVER;
+        }
+        else if (serverType == Driver.SYBASE) {
+            return NAMED_PIPE_PATH_SYBASE;
+        }
+        throw new IllegalArgumentException("Unknown serverType: " + serverType);
     }
 
     /**

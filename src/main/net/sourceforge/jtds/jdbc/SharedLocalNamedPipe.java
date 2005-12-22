@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.10 2005-09-21 01:22:26 ddkilzer Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.11 2005-12-22 20:48:52 ddkilzer Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -55,7 +55,8 @@ public class SharedLocalNamedPipe extends SharedSocket {
         if (instanceName != null && instanceName.length() != 0) {
             pipeName.append("\\MSSQL$").append(instanceName);
         }
-        pipeName.append(DefaultProperties.NAMED_PIPE_PATH_SQLSERVER.replace('/', '\\'));
+        String namedPipePath = DefaultProperties.getNamedPipePath(connection.getServerType());
+        pipeName.append(namedPipePath.replace('/', '\\'));
 
         this.pipe = new RandomAccessFile(pipeName.toString(), "rw");
 

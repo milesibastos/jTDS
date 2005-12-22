@@ -17,20 +17,48 @@
 //
 package net.sourceforge.jtds.test;
 
+import java.util.Hashtable;
+import java.util.Properties;
+import javax.naming.Context;
 import javax.naming.Reference;
+import javax.naming.Name;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import net.sourceforge.jtds.jdbc.Support;
 import net.sourceforge.jtds.jdbcx.JtdsDataSource;
 import net.sourceforge.jtds.jdbcx.JtdsObjectFactory;
-import net.sourceforge.jtds.jdbc.Driver;
 
 /**
  * Unit tests for the {@link JtdsObjectFactory} class.
  *
  * @author David D. Kilzer
  * @author Alin Sinpalean
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.9 2005-12-20 20:29:36 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.10 2005-12-22 15:35:32 ddkilzer Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
+
+    /**
+     * Construct a test suite for this class.
+     * <p/>
+     * The test suite includes the tests in this class, and adds tests from
+     * {@link DefaultPropertiesTestLibrary} after creating an anonymous
+     * {@link DefaultPropertiesTester} object.
+     *
+     * @return The test suite to run.
+     */
+    public static Test suite() {
+
+        TestSuite testSuite = new TestSuite(JtdsObjectFactoryUnitTest.class);
+
+        testSuite.addTest(new TestSuite(
+                JtdsObjectFactoryUnitTest.Test_JtdsObjectFactory_getObjectInstance_DefaultValues.class,
+                "test_getObjectInstance_DefaultValues"));
+
+        return testSuite;
+    }
+
     /**
      * Constructor.
      *
@@ -38,117 +66,6 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
      */
     public JtdsObjectFactoryUnitTest(String name) {
         super(name);
-    }
-
-    /**
-     * Tests that the factory can correctly rebuild a DataSource with all
-     * properties set.
-     */
-    public void testAllProperties() throws Exception {
-        String serverName = "serverName";
-        int serverType = Driver.SYBASE;
-        int portNumber = 2197;
-        String databaseName = "databaseName";
-        String tds = "7.0";
-        String charset = "charset";
-        String language = "language";
-        String domain = "domain";
-        String instance = "instance";
-        boolean lastUpdateCount = false;
-        boolean sendStringParametersAsUnicode = false;
-        boolean namedPipe = true;
-        String macAddress = "macAddress";
-        int prepareSql = 4;
-        int packetSize = 2048;
-        boolean tcpNoDelay = true;
-        String user = "user";
-        String password = "password";
-        int loginTimeout = 1;
-        int socketTimeout = 2;
-        long lobBuffer = 4096;
-        int maxStatements = 12;
-        String appName = "appName";
-        String progName = "progName";
-        boolean xaEmulation = false;
-        String logFile = "logFile";
-        String ssl = "ssl";
-        int batchSize = 123;
-        String description = "description";
-        String bindAddress = "127.0.0.1";
-
-        JtdsDataSource ds = new JtdsDataSource();
-        ds.setServerName(serverName);
-        ds.setServerType(serverType);
-        ds.setDatabaseName(databaseName);
-        ds.setPortNumber(portNumber);
-        ds.setTds(tds);
-        ds.setCharset(charset);
-        ds.setLanguage(language);
-        ds.setDomain(domain);
-        ds.setInstance(instance);
-        ds.setLastUpdateCount(lastUpdateCount);
-        ds.setSendStringParametersAsUnicode(sendStringParametersAsUnicode);
-        ds.setNamedPipe(namedPipe);
-        ds.setMacAddress(macAddress);
-        ds.setPrepareSql(prepareSql);
-        ds.setPacketSize(packetSize);
-        ds.setTcpNoDelay(tcpNoDelay);
-        ds.setUser(user);
-        ds.setPassword(password);
-        ds.setLoginTimeout(loginTimeout);
-        ds.setLobBuffer(lobBuffer);
-        ds.setMaxStatements(maxStatements);
-        ds.setAppName(appName);
-        ds.setProgName(progName);
-        ds.setXaEmulation(xaEmulation);
-        ds.setLogFile(logFile);
-        ds.setSocketTimeout(socketTimeout);
-        ds.setSsl(ssl);
-        ds.setBatchSize(batchSize);
-        ds.setDescription(description);
-        ds.setBindAddress(bindAddress);
-
-        Reference dsRef = ds.getReference();
-        assertEquals("net.sourceforge.jtds.jdbcx.JtdsObjectFactory",
-                dsRef.getFactoryClassName());
-        assertEquals("net.sourceforge.jtds.jdbcx.JtdsDataSource",
-                dsRef.getClassName());
-
-        ds = (JtdsDataSource) new JtdsObjectFactory()
-                .getObjectInstance(dsRef, null, null, null);
-
-        assertEquals(serverName, ds.getServerName());
-        assertEquals(serverType, ds.getServerType());
-        assertEquals(portNumber, ds.getPortNumber());
-        assertEquals(databaseName, ds.getDatabaseName());
-        assertEquals(portNumber, ds.getPortNumber());
-        assertEquals(tds, ds.getTds());
-        assertEquals(charset, ds.getCharset());
-        assertEquals(language, ds.getLanguage());
-        assertEquals(domain, ds.getDomain());
-        assertEquals(instance, ds.getInstance());
-        assertEquals(lastUpdateCount, ds.getLastUpdateCount());
-        assertEquals(sendStringParametersAsUnicode,
-                ds.getSendStringParametersAsUnicode());
-        assertEquals(namedPipe, ds.getNamedPipe());
-        assertEquals(macAddress, ds.getMacAddress());
-        assertEquals(prepareSql, ds.getPrepareSql());
-        assertEquals(packetSize, ds.getPacketSize());
-        assertEquals(tcpNoDelay, ds.getTcpNoDelay());
-        assertEquals(user, ds.getUser());
-        assertEquals(password, ds.getPassword());
-        assertEquals(loginTimeout, ds.getLoginTimeout());
-        assertEquals(lobBuffer, ds.getLobBuffer());
-        assertEquals(maxStatements, ds.getMaxStatements());
-        assertEquals(appName, ds.getAppName());
-        assertEquals(progName, ds.getProgName());
-        assertEquals(xaEmulation, ds.getXaEmulation());
-        assertEquals(logFile, ds.getLogFile());
-        assertEquals(socketTimeout, ds.getSocketTimeout());
-        assertEquals(ssl, ds.getSsl());
-        assertEquals(batchSize, ds.getBatchSize());
-        assertEquals(description, ds.getDescription());
-        assertEquals(bindAddress, ds.getBindAddress());
     }
 
     /**
@@ -161,9 +78,9 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
 
         Reference dsRef = ds.getReference();
         assertEquals("net.sourceforge.jtds.jdbcx.JtdsObjectFactory",
-                dsRef.getFactoryClassName());
+                     dsRef.getFactoryClassName());
         assertEquals("net.sourceforge.jtds.jdbcx.JtdsDataSource",
-                dsRef.getClassName());
+                     dsRef.getClassName());
 
         ds = (JtdsDataSource) new JtdsObjectFactory()
                 .getObjectInstance(dsRef, null, null, null);
@@ -200,4 +117,62 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
         assertNull(ds.getDescription());
         assertNull(ds.getBindAddress());
     }
+
+
+    /** Class used to test {@link JtdsObjectFactory#getObjectInstance(Object, Name, Context, Hashtable)}. */
+    public static class Test_JtdsObjectFactory_getObjectInstance_DefaultValues
+            extends DefaultPropertiesTestLibrary {
+
+        /**
+         * Default constructor.
+         */
+        public Test_JtdsObjectFactory_getObjectInstance_DefaultValues() {
+            setTester(
+                    new DefaultPropertiesTester() {
+
+                        public void assertDefaultProperty(
+                                String message, String url, Properties properties, String fieldName,
+                                String key, String expected) {
+
+                            try {
+                                // Hack for JtdsDataSource.cacheMetaData
+                                {
+                                    if ("useMetadataCache".equals(fieldName)) {
+                                        fieldName = "cacheMetaData";
+                                    }
+                                }
+
+                                JtdsDataSource referenceDataSource = new JtdsDataSource();
+                                invokeSetInstanceField(referenceDataSource, fieldName, expected);
+                                Reference reference = referenceDataSource.getReference();
+                                JtdsObjectFactory jtdsObjectFactory = new JtdsObjectFactory();
+                                JtdsDataSource dataSource =
+                                        (JtdsDataSource) jtdsObjectFactory.getObjectInstance(reference, null, null, null);
+
+                                // Hack for JtdsDataSource.getTds()
+                                {
+                                    if ("tdsVersion".equals(fieldName)) {
+                                        fieldName = "tds";
+                                    }
+                                }
+                                String actual =
+                                        String.valueOf(
+                                                invokeInstanceMethod(
+                                                        dataSource,
+                                                        "get" + ucFirst(fieldName),
+                                                        new Class[]{}, new Object[]{}));
+
+                                assertEquals(message, expected, actual);
+                            }
+                            catch (Exception e) {
+                                RuntimeException runtimeException = new RuntimeException(e);
+                                Support.linkException(runtimeException, e);
+                                throw runtimeException;
+                            }
+                        }
+                    }
+            );
+        }
+    }
+
 }

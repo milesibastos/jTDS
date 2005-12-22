@@ -35,7 +35,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.19 2005-12-21 19:44:01 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.20 2005-12-22 15:35:32 ddkilzer Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -93,9 +93,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         /**
          * Default constructor.
-         * <p/>
-         * This class only has one default setup (SQL Server with TDS 7.0),
-         * so flags are set to make sure only that configuration is tested.
          */
         public Test_JtdsDataSource_fields() {
             setTester(
@@ -142,9 +139,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         /**
          * Default constructor.
-         * <p/>
-         * This class only has one default setup (SQL Server with TDS 7.0),
-         * so flags are set to make sure only that configuration is tested.
          */
         public Test_JtdsDataSource_getReference() {
             setTester(
@@ -182,9 +176,6 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
 
         /**
          * Default constructor.
-         * <p/>
-         * This class only has one default setup (SQL Server with TDS 7.0),
-         * so flags are set to make sure only that configuration is tested.
          */
         public Test_JtdsDataSource_addNonNullProperties() {
             setTester(

@@ -32,7 +32,7 @@ import net.sourceforge.jtds.jdbc.Support;
  * Base class for unit tests which do not connect to a database.
  *
  * @author David D. Kilzer
- * @version $Id: UnitTestBase.java,v 1.11 2005-12-21 01:36:00 ddkilzer Exp $
+ * @version $Id: UnitTestBase.java,v 1.12 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public abstract class UnitTestBase extends TestCase {
 
@@ -302,6 +302,22 @@ public abstract class UnitTestBase extends TestCase {
             buf.append('}');
         }
         return buf.toString();
+    }
+
+
+    /**
+     * Changes the first character of a string to uppercase.
+     *
+     * @param s The string to be processed.
+     * @return The value of <code>s</code> if it is <code>null</code> or zero length,
+     *         else the string with the first character changed to uppercase.
+     */
+    protected static String ucFirst(String s) {
+        if (s == null || s.length() == 0) return s;
+        if (s.length() == 1) {
+            return s.toUpperCase();
+        }
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
 }

@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.56 2005-12-19 13:34:21 alin_sinpalean Exp $
+ * @version $Id: TdsData.java,v 1.57 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public class TdsData {
     /**
@@ -1244,7 +1244,7 @@ public class TdsData {
                     if (len > 0
                         && (len <= SYB_LONGVAR_MAX / 2 || connection.getSybaseInfo(TdsCore.SYB_UNITEXT))
                         && connection.getSybaseInfo(TdsCore.SYB_UNICODE)
-                        && connection.isUseUnicode()
+                        && connection.getUseUnicode()
                         && !charset.equals("UTF-8")) {
                         // Sybase can send values as unicode if conversion to the
                         // server charset fails.

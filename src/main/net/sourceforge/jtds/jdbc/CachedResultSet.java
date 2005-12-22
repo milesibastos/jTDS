@@ -56,7 +56,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.24 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: CachedResultSet.java,v 1.25 2005-12-22 17:24:07 ddkilzer Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -871,7 +871,7 @@ public class CachedResultSet extends JtdsResultSet {
                             sql.append("=?");
                             count++;
                             params.add(buildParameter(sql.length() - 1, columns[i],
-                                    currentRow[i], connection.isUseUnicode()));
+                                    currentRow[i], connection.getUseUnicode()));
                         }
                     } else {
                         // Include all available 'searchable' columns in updates/deletes to protect
@@ -887,7 +887,7 @@ public class CachedResultSet extends JtdsResultSet {
                             sql.append("=?");
                             count++;
                             params.add(buildParameter(sql.length() - 1, columns[i],
-                                    currentRow[i], connection.isUseUnicode()));
+                                    currentRow[i], connection.getUseUnicode()));
                         }
                     }
                 }

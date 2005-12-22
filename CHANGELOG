@@ -9,6 +9,14 @@ Changes from jTDS 1.2
  o Fixed Bug [1386615] Connecting across domains with named pipes fails
    on Windows.  New 'useJCIFS' boolean parameter added that will force
    use of the jCIFS library on Windows for named pipe connections.
+ o Updated ConnectionJDBC2UnitTest class to check for both an instance
+   field and a getter for all properties.  Added "missing" getters to
+   ConnecionJDBC2 class:  getAppName(), getBufferMaxMemory(),
+   getBufferMinPackets(), getDatabaseName(), getMacAddress(), getNamedPipe(),
+   getProgName(), getWsid().  Renamed package-private getters in
+   ConnectionJDBC2 class that returned boolean values to use "get" instead
+   of "is":  getLastUpdateCount(), getUseUnicode().  Moved
+   DefaultPropertiesTestLibrary.ucFirst() to UnitTestBase class.
 
 12/21/2005 - David Kilzer
  o Extracted the JtdsDataSource.addNonNullProperties() method from

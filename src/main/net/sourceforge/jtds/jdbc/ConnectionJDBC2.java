@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.110 2005-12-22 17:06:33 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.111 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -805,7 +805,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *
      * @return the lastUpdateCount flag as a <code>boolean</code>
      */
-    boolean isLastUpdateCount() {
+    boolean getLastUpdateCount() {
         return this.lastUpdateCount;
     }
 
@@ -879,12 +879,48 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the application name for this connection.
+     *
+     * @return the application name
+     */
+    String getAppName() {
+        return this.appName;
+    }
+
+    /**
      * Retrieves the bind address for this connection.
      *
      * @return the bind address
      */
     String getBindAddress() {
         return this.bindAddress;
+    }
+
+    /**
+     * Retrieves the maximum amount of memory in Kb to buffer for <em>all</em> connections.
+     *
+     * @return the maximum amount of memory in Kb to buffer for <em>all</em> connections
+     */
+    int getBufferMaxMemory() {
+        return this.bufferMaxMemory;
+    }
+
+    /**
+     * Retrieves the minimum number of packets to buffer per {@link Statement} for this connection.
+     *
+     * @return the minimum number of packets to buffer per {@link Statement}
+     */
+    int getBufferMinPackets() {
+        return this.bufferMinPackets;
+    }
+
+    /**
+     * Retrieves the database name for this connection.
+     *
+     * @return the database name
+     */
+    String getDatabaseName() {
+        return this.databaseName;
     }
 
     /**
@@ -924,6 +960,24 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves the MAC (ethernet) address for this connection.
+     *
+     * @return the MAC (ethernet) address
+     */
+    String getMacAddress() {
+        return this.macAddress;
+    }
+
+    /**
+     * Retrieves the named pipe setting for this connection.
+     *
+     * @return the named pipe setting
+     */
+    boolean getNamedPipe() {
+        return this.namedPipe;
+    }
+
+    /**
      * Retrieves the packet size for this connection.
      *
      * @return the packet size
@@ -948,6 +1002,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     int getPortNumber() {
         return this.portNumber;
+    }
+
+    /**
+     * Retrieves the program name for this connection.
+     *
+     * @return the program name
+     */
+    String getProgName() {
+        return this.progName;
     }
 
     /**
@@ -984,6 +1047,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     String getUser() {
         return this.user;
+    }
+
+    /**
+     * Retrieves the workstation ID (WSID) for this connection.
+     *
+     * @return the workstation ID (WSID)
+     */
+    String getWsid() {
+        return this.wsid;
     }
 
     /**
@@ -1169,7 +1241,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      *
      * @return <code>boolean</code> true if parameters should be sent as unicode.
      */
-    protected boolean isUseUnicode() {
+    protected boolean getUseUnicode() {
         return this.useUnicode;
     }
 

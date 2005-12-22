@@ -17,11 +17,12 @@
 //
 package net.sourceforge.jtds.test;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import java.sql.*;
 import java.util.Properties;
 import java.util.Enumeration;
-import java.sql.*;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
 import net.sourceforge.jtds.jdbc.Driver;
@@ -34,7 +35,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author David Kilzer
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2UnitTest.java,v 1.9 2005-10-18 14:32:30 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2UnitTest.java,v 1.10 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
@@ -163,6 +164,9 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                 if ("sendStringParametersAsUnicode".equals(fieldName)) {
                                     fieldName = "useUnicode";
                                 }
+                                else if ("cacheMetaData".equals(fieldName)) {
+                                    fieldName = "useMetadataCache";
+                                }
                             }
 
                             Properties parsedProperties =
@@ -182,8 +186,10 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                     instance, "unpackProperties",
                                     new Class[]{Properties.class},
                                     new Object[]{parsedProperties});
-                            String actual =
-                                    String.valueOf(invokeGetInstanceField(instance, fieldName));
+
+                            String actual = String.valueOf(
+                                    invokeInstanceMethod(instance, "get" + ucFirst(fieldName),
+                                                         new Class[]{}, new Object[]{}));
 
                             // FIXME: Another hack for ConnectionJDBC2
                             {

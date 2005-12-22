@@ -55,7 +55,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.55 2005-12-05 13:51:29 alin_sinpalean Exp $
+ * @version $Id: JtdsStatement.java,v 1.56 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -526,7 +526,7 @@ public class JtdsStatement implements java.sql.Statement {
         while (!tds.isEndOfResponse()) {
             if (!tds.getMoreResults()) {
                 if (tds.isUpdateCount()) {
-                    if (update && connection.isLastUpdateCount()) {
+                    if (update && connection.getLastUpdateCount()) {
                         resultQueue.clear();
                     }
                     resultQueue.addLast(new Integer(tds.getUpdateCount()));

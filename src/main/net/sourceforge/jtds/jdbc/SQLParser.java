@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.27 2005-12-05 10:37:49 alin_sinpalean Exp $
+ * @version $Id: SQLParser.java,v 1.28 2005-12-22 17:24:07 ddkilzer Exp $
  */
 class SQLParser {
     /**
@@ -259,7 +259,7 @@ class SQLParser {
                             "2A000");
                 }
                 // param marker embedded in escape
-                ParamInfo pi = new ParamInfo(d, connection.isUseUnicode());
+                ParamInfo pi = new ParamInfo(d, connection.getUseUnicode());
                 params.add(pi);
             }
 
@@ -318,7 +318,7 @@ class SQLParser {
                     "2A000");
         }
 
-        ParamInfo pi = new ParamInfo(pos, connection.isUseUnicode());
+        ParamInfo pi = new ParamInfo(pos, connection.getUseUnicode());
         pi.name = name;
 
         if (pos >= 0) {

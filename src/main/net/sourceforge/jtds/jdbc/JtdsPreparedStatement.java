@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.58 2005-09-26 18:21:09 ddkilzer Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.59 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -364,7 +364,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         pi.value = x;
         pi.jdbcType = targetSqlType;
         pi.isSet = true;
-        pi.isUnicode = connection.isUseUnicode();
+        pi.isUnicode = connection.getUseUnicode();
     }
 
     /**

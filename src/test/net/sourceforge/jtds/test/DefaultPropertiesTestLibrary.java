@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.23 2005-12-22 17:06:58 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.24 2005-12-22 17:24:07 ddkilzer Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -533,22 +533,6 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      */
     protected void setOnlyTds70Tests(boolean onlyTds70Tests) {
         this.onlyTds70Tests = onlyTds70Tests;
-    }
-
-
-    /**
-     * Changes the first character of a string to uppercase.
-     *
-     * @param s The string to be processed.
-     * @return The value of <code>s</code> if it is <code>null</code> or zero length,
-     *         else the string with the first character changed to uppercase.
-     */
-    protected String ucFirst(String s) {
-        if (s == null || s.length() == 0) return s;
-        if (s.length() == 1) {
-            return s.toUpperCase();
-        }
-        return s.substring(0, 1).toUpperCase() + s.substring(1);
     }
 
 }

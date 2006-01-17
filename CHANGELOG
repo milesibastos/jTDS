@@ -1,6 +1,12 @@
 Changes from jTDS 1.2
 =====================
 
+01/12/2006 - David Kilzer
+ o Applied Mike Hutchinson's fix for Bug [1403067] ProtocolException:
+   Invalid table TAB_NAME_TOKEN.  TdsCore.tdsTableNameToken() now handles
+   tables referenced using server.database.owner.table syntax.  Also
+   modified exception code to include the unknown TAB_NAME_TOKEN value.
+
 12/22/2005 - David Kilzer
  o Replaced JtdsObjectFactoryUnitTest.testAllProperties() method with an
    inner class that extends DefaultPropertiesTestLibrary to make this

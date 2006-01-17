@@ -51,7 +51,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.109 2005-12-05 13:51:29 alin_sinpalean Exp $
+ * @version $Id: TdsCore.java,v 1.110 2006-01-17 17:36:57 ddkilzer Exp $
  */
 public class TdsCore {
     /**
@@ -2594,13 +2594,17 @@ public class TdsCore {
             String tabName;
             TableMetaData table;
             if (tdsVersion >= Driver.TDS81) {
-                // TDS8.1 supplies the database.owner.table as three separate
-                // components which allows us to have names with embedded
-                // periods.
-                // Can't think why anyone would want that!
+                // TDS8.1 supplies the server.database.owner.table as up to
+                // four separate components which allows us to have names
+                // with embedded periods.
                 table = new TableMetaData();
                 bytesRead++;
-                switch (in.read()) {
+                int tableNameToken = in.read();
+                switch (tableNameToken) {
+                    case 4: nameLen = in.readShort();
+                            bytesRead += nameLen * 2 + 2;
+                            // Read and discard server name; see Bug 1403067
+                            in.readUnicodeString(nameLen);
                     case 3: nameLen = in.readShort();
                             bytesRead += nameLen * 2 + 2;
                             table.catalog = in.readUnicodeString(nameLen);
@@ -2612,7 +2616,8 @@ public class TdsCore {
                             table.name = in.readUnicodeString(nameLen);
                     case 0: break;
                     default:
-                        throw new ProtocolException("Invalid table TAB_NAME_TOKEN");
+                        throw new ProtocolException("Invalid table TAB_NAME_TOKEN: "
+                                                    + tableNameToken);
                 }
             } else {
                 if (tdsVersion >= Driver.TDS70) {

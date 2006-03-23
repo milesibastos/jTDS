@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.111 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.112 2006-03-23 18:21:35 matt_brinkley Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -231,6 +231,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private String bindAddress;
     /** Force use of jCIFS library on Windows when connecting via named pipes. */
     private boolean useJCIFS;
+    /** When doing NTLM authentication, send NTLMv2 response rather than regular response */
+    private boolean useNTLMv2 = false;
+
 
     /**
      * Default constructor.
@@ -879,6 +882,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Indicates whether, when doing Windows authentication to an MS SQL server,
+     * NTLMv2 should be used. When this is set to "false", LM and NTLM responses
+     * are sent to the server, which should work fine in most cases. However,
+     * some servers are configured to require LMv2 and NTLMv2. In these rare
+     * cases, this property should be set to "true".
+     */
+    boolean getUseNTLMv2() {
+        return this.useNTLMv2;
+    }
+
+    /**
      * Retrieves the application name for this connection.
      *
      * @return the application name
@@ -1102,6 +1116,13 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         useJCIFS = "true".equalsIgnoreCase(
                 info.getProperty(Messages.get(Driver.USEJCIFS)));
         charsetSpecified = serverCharset.length() > 0;
+        useNTLMv2 = "true".equalsIgnoreCase(
+                info.getProperty(Messages.get(Driver.USENTLMV2)));
+
+        //note:mdb in certain cases (e.g. NTLMv2) the domain name must be
+        //  all upper case for things to work.
+        if( domainName != null )
+            domainName = domainName.toUpperCase();
 
         Integer parsedTdsVersion =
                 DefaultProperties.getTdsVersion(info.getProperty(Messages.get(Driver.TDS)));

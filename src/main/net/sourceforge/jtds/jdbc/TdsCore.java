@@ -22,6 +22,7 @@ import java.sql.*;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import net.sourceforge.jtds.ssl.*;
 import net.sourceforge.jtds.util.*;
@@ -51,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.110 2006-01-17 17:36:57 ddkilzer Exp $
+ * @version $Id: TdsCore.java,v 1.111 2006-03-23 18:21:35 matt_brinkley Exp $
  */
 public class TdsCore {
     /**
@@ -70,6 +71,8 @@ public class TdsCore {
         byte[] nonce;
         /** NTLM authentication message. */
         byte[] ntlmMessage;
+        /** target info for NTLM message TODO: I don't need to store these!!! */
+        byte[] ntlmTarget;
         /** The dynamic parameters from the last TDS_DYNAMIC token. */
         ColInfo[] dynamParamInfo;
         /** The dynamic parameter data from the last TDS_DYNAMIC token. */
@@ -2039,7 +2042,18 @@ public class TdsCore {
                 final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
                 out.write(header); //header is ascii "NTLMSSP\0"
                 out.write((int)1);          //sequence number = 1
-                out.write((int)0xb201);     //flags (???)
+                if(connection.getUseNTLMv2())
+                    out.write((int)0xb205);  //flags (same as below, only with Request Target set)
+                else
+                    out.write((int)0xb201);     //flags (see below)
+
+                // NOTE: flag reference:
+                //  0x8000 = negotiate always sign
+                //  0x2000 = client is sending workstation name
+                //  0x1000 = client is sending domain name
+                //  0x0200 = negotiate NTLM
+                //  0x0004 - Request Target, which requests that server send target
+                //  0x0001 = negotiate Unicode
 
                 //domain info
                 out.write((short) domainBytes.length);
@@ -2069,9 +2083,9 @@ public class TdsCore {
      * @throws java.io.IOException
      */
     private void sendNtlmChallengeResponse(final byte[] nonce,
-                                           final String user,
+                                           String user,
                                            final String password,
-                                           final String domain)
+                                           String domain)
             throws java.io.IOException {
         out.setPacketType(NTLMAUTH_PKT);
 
@@ -2091,6 +2105,28 @@ public class TdsCore {
             //byte[] domainBytes = domain.getBytes("UTF8");
             //byte[] user        = user.getBytes("UTF8");
 
+
+            byte[] lmAnswer, ntAnswer;
+            //the response to the challenge...
+
+            if(connection.getUseNTLMv2())
+            {
+                //TODO: does this need to be random?
+                //byte[] clientNonce = new byte[] { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+                byte[] clientNonce = new byte[8];
+                (new Random()).nextBytes(clientNonce);
+
+                lmAnswer = NtlmAuth.answerLmv2Challenge(domain, user, password, nonce, clientNonce);
+                ntAnswer = NtlmAuth.answerNtlmv2Challenge(
+                        domain, user, password, nonce, currentToken.ntlmTarget, clientNonce);
+            }
+            else
+            {
+                //LM/NTLM (v1)
+                lmAnswer = NtlmAuth.answerLmChallenge(password, nonce);
+                ntAnswer = NtlmAuth.answerNtChallenge(password, nonce);
+            }
+
             final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
             out.write(header); //header is ascii "NTLMSSP\0"
             out.write((int)3); //sequence number = 3
@@ -2100,13 +2136,13 @@ public class TdsCore {
             final int hostLenInBytes = 0; //localhostname.length()*2;
             int pos = 64 + domainLenInBytes + userLenInBytes + hostLenInBytes;
             // lan man response: length and offset
-            out.write((short)24);
-            out.write((short)24);
+            out.write((short)lmAnswer.length);
+            out.write((short)lmAnswer.length);
             out.write((int)pos);
-            pos += 24;
+            pos += lmAnswer.length;
             // nt response: length and offset
-            out.write((short)24);
-            out.write((short)24);
+            out.write((short)ntAnswer.length);
+            out.write((short)ntAnswer.length);
             out.write((int)pos);
             pos = 64;
             //domain
@@ -2138,8 +2174,6 @@ public class TdsCore {
             //comm.appendChars(localhostname);
 
             //the response to the challenge...
-            final byte[] lmAnswer = NtlmAuth.answerLmChallenge(password, nonce);
-            final byte[] ntAnswer = NtlmAuth.answerNtChallenge(password, nonce);
             out.write(lmAnswer);
             out.write(ntAnswer);
         }
@@ -3331,20 +3365,49 @@ public class TdsCore {
 
         byte[] ntlmMessage = new byte[pktLen];
         in.read(ntlmMessage);
-        int b1 = ((int) ntlmMessage[8] & 0xff);
-        int b2 = ((int) ntlmMessage[9] & 0xff) << 8;
-        int b3 = ((int) ntlmMessage[10] & 0xff) << 16;
-        int b4 = ((int) ntlmMessage[11] & 0xff) << 24;
-        final int seq =b4 | b3 | b2 | b1;
 
+        final int seq = getIntFromBuffer(ntlmMessage, 8);
         if (seq != 2)
             throw new ProtocolException("NTLM challenge: got unexpected sequence number:" + seq);
+
+        final int flags = getIntFromBuffer( ntlmMessage, 20 );
+        //NOTE: the context is always included; if not local, then it is just
+        //      set to all zeros.
+        //boolean hasContext = ((flags &   0x4000) != 0);
+        final boolean hasContext = true;
+        final boolean hasTarget  = ((flags & 0x800000) != 0);
+
+        //extract the target, if present. This will be used for ntlmv2 auth.
+        if(hasTarget)
+        {
+            final int headerOffset = hasContext ? 40 : 32; // (context is 8 bytes)
+            //header has: 2 byte lenght, 2 byte allocated space, and four-byte offset.
+            int size = getShortFromBuffer( ntlmMessage, headerOffset);
+            int offset = getIntFromBuffer( ntlmMessage, headerOffset + 4);
+            currentToken.ntlmTarget = new byte[size];
+            System.arraycopy(ntlmMessage, offset, currentToken.ntlmTarget, 0, size);
+        }
 
         currentToken.nonce = new byte[8];
         currentToken.ntlmMessage = ntlmMessage;
         System.arraycopy(ntlmMessage, 24, currentToken.nonce, 0, 8);
     }
 
+    private static int getIntFromBuffer(byte[] buf, int offset)
+    {
+        int b1 = ((int) buf[offset] & 0xff);
+        int b2 = ((int) buf[offset+1] & 0xff) << 8;
+        int b3 = ((int) buf[offset+2] & 0xff) << 16;
+        int b4 = ((int) buf[offset+3] & 0xff) << 24;
+        return b4 | b3 | b2 | b1;
+    }
+
+    private static int getShortFromBuffer(byte[] buf, int offset)
+    {
+        int b1 = ((int) buf[offset] & 0xff);
+        int b2 = ((int) buf[offset+1] & 0xff) << 8;
+        return b2 | b1;
+    }
     /**
      * Process a TDS 5.0 result set packet.
      *

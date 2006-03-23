@@ -13,6 +13,16 @@ public class NtlmAuthTest extends TestBase {
         super(name);
     }
 
+    public static byte[] hexToBytes(String hex)
+    {
+        byte[] rtn = new byte[hex.length() / 2];
+        for(int i=0; i < rtn.length; i++)
+        {
+            rtn[i] = (byte)Integer.parseInt(hex.substring(i*2,(i+1)*2),16);
+        }
+        return rtn;
+    }
+
     /**
      * Tests the NT challenge/response against a known-good value. This was captured
      * from a successful login to one of my (mdb's) test computers.
@@ -41,5 +51,142 @@ public class NtlmAuthTest extends TestBase {
         assertTrue(Arrays.equals(ntResp, ntExpected));
         assertTrue(Arrays.equals(lmResp, lmExpected));
     }
+
+
+    //--------------------------------------------------------------------------
+    // these tests came from the web page:
+    //    http://davenport.sourceforge.net/ntlm.html
+    //--------------------------------------------------------------------------
+
+    public void testLMv2() throws Exception
+    {
+        byte[] answer =
+            NtlmAuth.answerLmv2Challenge( "DOMAIN", "user", "SecREt01",
+                hexToBytes("0123456789abcdef"),
+                hexToBytes("ffffff0011223344"));
+
+        byte[] expected = hexToBytes( "d6e6152ea25d03b7c6ba6629c2d6aaf0ffffff0011223344");
+
+        assertTrue(Arrays.equals(answer, expected));
+    }
+
+    public void testNTLMv2() throws Exception
+    {
+        byte[] answer =
+            NtlmAuth.answerNtlmv2Challenge( "DOMAIN", "user", "SecREt01",
+                hexToBytes("0123456789abcdef"), //nonce
+                //target info:
+                hexToBytes("02000c0044004f004d00410049004e0001000c005300450052" +
+                           "005600450052000400140064006f006d00610069006e002e00" +
+                           "63006f006d00030022007300650072007600650072002e0064" +
+                           "006f006d00610069006e002e0063006f006d0000000000"),
+                hexToBytes("ffffff0011223344"),//client nonce
+                1055844000000L); //timestamp
+
+
+        byte[] expected = hexToBytes(
+                "cbabbca713eb795d04c97abc01ee4983" +
+                "01010000000000000090d336b734c301" +
+                "ffffff00112233440000000002000c00" +
+                "44004f004d00410049004e0001000c00" +
+                "53004500520056004500520004001400" +
+                "64006f006d00610069006e002e006300" +
+                "6f006d00030022007300650072007600" +
+                "650072002e0064006f006d0061006900" +
+                "6e002e0063006f006d00000000000000" +
+                "0000");
+
+        assertTrue(Arrays.equals(answer, expected));
+    }
+
+    public void testTimestampConversion() throws Exception
+    {
+        long time = 1055844000000L;
+        byte[] ts =
+            NtlmAuth.createTimestamp(time);
+
+        byte[] expected = hexToBytes("0090d336b734c301");
+        assertTrue(Arrays.equals(ts, expected));
+    }
+
+
+    //--------------------------------------------------------------------------
+    // these came from tests with real data:
+    //--------------------------------------------------------------------------
+
+    public void testLMv2CapturedData() throws Exception
+    {
+        byte[] answer =
+            NtlmAuth.answerLmv2Challenge( "MDB-PADRE", "dog", "bark",
+                hexToBytes("73f35b0fe01a5a31"),
+                hexToBytes("2c66391a0a1b7881"));
+
+        byte[] expected = hexToBytes( "4dc364696984b6e07df1a659313f277a2c66391a0a1b7881");
+
+        assertTrue(Arrays.equals(answer, expected));
+    }
+
+    public void testNTLMv2CapturedData() throws Exception
+    {
+        byte[] targetInfo = hexToBytes(
+        "02000c004200450041004500" +
+        "4e004700010014004d00440042002d00" +
+        "42005200450057004500520004002200" +
+        "62006500610065006e0067002e006d00" +
+        "6600650065006e0067002e006f007200" +
+        "6700030038006d00640062002d006200" +
+        "720065007700650072002e0062006500" +
+        "610065006e0067002e006d0066006500" +
+        "65006e0067002e006f00720067000500" +
+        "14006d006600650065006e0067002e00" +
+        "6f007200670000000000");
+
+        byte[] answer =
+            NtlmAuth.answerNtlmv2Challenge( "MDB-PADRE", "dog", "bark",
+                hexToBytes("73f35b0fe01a5a31"),
+                targetInfo,
+                hexToBytes("2c66391a0a1b7881"),
+                hexToBytes("06198e3a444dc601"));
+
+        byte[] expected = hexToBytes(
+        "5416e7ef86091320" +
+        "5b652f7b3002fc7f0101000000000000" +
+        "06198e3a444dc6012c66391a0a1b7881" +
+        "0000000002000c004200450041004500" +
+        "4e004700010014004d00440042002d00" +
+        "42005200450057004500520004002200" +
+        "62006500610065006e0067002e006d00" +
+        "6600650065006e0067002e006f007200" +
+        "6700030038006d00640062002d006200" +
+        "720065007700650072002e0062006500" +
+        "610065006e0067002e006d0066006500" +
+        "65006e0067002e006f00720067000500" +
+        "14006d006600650065006e0067002e00" +
+        "6f00720067000000000000000000");
+
+        //debug...
+        /*
+        //debug
+        public static void dump(byte[] bytes, String fileName)
+        {
+            try
+            {
+                FileOutputStream out = new FileOutputStream(fileName);
+                out.write( bytes );
+                out.close();
+            }
+            catch(Exception e)
+            {
+                //don't worry about it
+            }
+        }
+
+        dump(expected, "/home/brinkley/tmp/ntlm2-expected" );
+        dump(answer,   "/home/brinkley/tmp/ntlm2-answer" );
+        */
+
+        assertTrue(Arrays.equals(answer, expected));
+    }
+
 }
 

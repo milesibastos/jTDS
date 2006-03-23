@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.67 2005-12-22 17:06:33 ddkilzer Exp $
+ * @version $Id: Driver.java,v 1.68 2006-03-23 18:21:35 matt_brinkley Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -108,6 +108,7 @@ public class Driver implements java.sql.Driver {
     public static final String TDS           = "prop.tds";
     public static final String USECURSORS    = "prop.usecursors";
     public static final String USEJCIFS      = "prop.usejcifs";
+    public static final String USENTLMV2     = "prop.usentlmv2";
     public static final String USELOBS       = "prop.uselobs";
     public static final String USER          = "prop.user";
     public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";

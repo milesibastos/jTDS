@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.111 2006-03-23 18:21:35 matt_brinkley Exp $
+ * @version $Id: TdsCore.java,v 1.112 2006-04-05 15:56:20 matt_brinkley Exp $
  */
 public class TdsCore {
     /**
@@ -3374,19 +3374,17 @@ public class TdsCore {
         //NOTE: the context is always included; if not local, then it is just
         //      set to all zeros.
         //boolean hasContext = ((flags &   0x4000) != 0);
-        final boolean hasContext = true;
-        final boolean hasTarget  = ((flags & 0x800000) != 0);
+        //final boolean hasContext = true;
+        //NOTE: even if target is omitted, the length will be zero.
+        //final boolean hasTarget  = ((flags & 0x800000) != 0);
 
         //extract the target, if present. This will be used for ntlmv2 auth.
-        if(hasTarget)
-        {
-            final int headerOffset = hasContext ? 40 : 32; // (context is 8 bytes)
-            //header has: 2 byte lenght, 2 byte allocated space, and four-byte offset.
-            int size = getShortFromBuffer( ntlmMessage, headerOffset);
-            int offset = getIntFromBuffer( ntlmMessage, headerOffset + 4);
-            currentToken.ntlmTarget = new byte[size];
-            System.arraycopy(ntlmMessage, offset, currentToken.ntlmTarget, 0, size);
-        }
+        final int headerOffset = 40; // The assumes the context is always there, which appears to be the case.
+        //header has: 2 byte lenght, 2 byte allocated space, and four-byte offset.
+        int size = getShortFromBuffer( ntlmMessage, headerOffset);
+        int offset = getIntFromBuffer( ntlmMessage, headerOffset + 4);
+        currentToken.ntlmTarget = new byte[size];
+        System.arraycopy(ntlmMessage, offset, currentToken.ntlmTarget, 0, size);
 
         currentToken.nonce = new byte[8];
         currentToken.ntlmMessage = ntlmMessage;

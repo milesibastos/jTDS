@@ -1,6 +1,10 @@
 Changes from jTDS 1.2
 =====================
 
+05/18/2006 - Alin Sinpalean
+ o Added support for SNAPSHOT transaction isolation, in the same way as the
+   new MS driver -- using setTransactionIsolation(4096).
+
 01/12/2006 - David Kilzer
  o Applied Mike Hutchinson's fix for Bug [1403067] ProtocolException:
    Invalid table TAB_NAME_TOKEN.  TdsCore.tdsTableNameToken() now handles

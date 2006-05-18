@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.112 2006-03-23 18:21:35 matt_brinkley Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.113 2006-05-18 17:47:37 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -82,19 +82,24 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             + " where config=1123 and id = value)";
 
     /** Sybase initial connection string. */
-    private String SYBASE_INITIAL_SQL     = "SET TRANSACTION ISOLATION LEVEL 1\r\n" +
-                                            "SET CHAINED OFF\r\n" +
-                                            "SET QUOTED_IDENTIFIER ON\r\n"+
-                                            "SET TEXTSIZE 2147483647";
+    private static final String SYBASE_INITIAL_SQL =     "SET TRANSACTION ISOLATION LEVEL 1\r\n" +
+                                                         "SET CHAINED OFF\r\n" +
+                                                         "SET QUOTED_IDENTIFIER ON\r\n"+
+                                                         "SET TEXTSIZE 2147483647";
     /**
      * SQL Server initial connection string. Also contains a <code>SELECT
      * @@MAX_PRECISION</code> query to retrieve the maximum precision for
      * DECIMAL/NUMERIC data. */
-    private String SQL_SERVER_INITIAL_SQL = "SELECT @@MAX_PRECISION\r\n" +
-                                            "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
-                                            "SET IMPLICIT_TRANSACTIONS OFF\r\n" +
-                                            "SET QUOTED_IDENTIFIER ON\r\n"+
-                                            "SET TEXTSIZE 2147483647";
+    private static final String SQL_SERVER_INITIAL_SQL = "SELECT @@MAX_PRECISION\r\n" +
+                                                         "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
+                                                         "SET IMPLICIT_TRANSACTIONS OFF\r\n" +
+                                                         "SET QUOTED_IDENTIFIER ON\r\n"+
+                                                         "SET TEXTSIZE 2147483647";
+    /**
+     * SQL Server custom transaction isolation level.
+     */
+    public static final int TRANSACTION_SNAPSHOT = 4096;
+
     /*
      * Conection attributes
      */
@@ -2084,6 +2089,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 break;
             case java.sql.Connection.TRANSACTION_SERIALIZABLE:
                 sql += (sybase) ? "3" : "SERIALIZABLE";
+                break;
+            case TRANSACTION_SNAPSHOT:
+                if (sybase) {
+                    throw new SQLException(
+                            Messages.get("error.generic.optvalue",
+                                         "TRANSACTION_SNAPSHOT",
+                                         "setTransactionIsolation"),
+                            "HY024");
+                } else {
+                    sql += "SERIALIZABLE";
+                }
                 break;
             case java.sql.Connection.TRANSACTION_NONE:
                 throw new SQLException(

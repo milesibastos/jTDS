@@ -1,6 +1,9 @@
 Changes from jTDS 1.2
 =====================
 
+05/19/2006 - Alin Sinpalean
+ o Fix the previous changelist. Copy-paste didn't really help there.
+
 05/18/2006 - Alin Sinpalean
  o Added support for SNAPSHOT transaction isolation, in the same way as the
    new MS driver -- using setTransactionIsolation(4096).

@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.113 2006-05-18 17:47:37 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.114 2006-05-19 12:57:32 alin_sinpalean Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2098,7 +2098,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                          "setTransactionIsolation"),
                             "HY024");
                 } else {
-                    sql += "SERIALIZABLE";
+                    sql += "SNAPSHOT";
                 }
                 break;
             case java.sql.Connection.TRANSACTION_NONE:

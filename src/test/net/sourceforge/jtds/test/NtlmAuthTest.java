@@ -4,13 +4,11 @@ import net.sourceforge.jtds.jdbc.NtlmAuth;
 
 import java.util.Arrays;
 
-import junit.framework.TestCase;
-
 /**
  * Unit test for NTLM challenge/response calculation
  * Written by mdb.
  */
-public class NtlmAuthTest extends TestCase {
+public class NtlmAuthTest extends TestBase {
     public NtlmAuthTest(String name) {
         super(name);
     }
@@ -64,8 +62,8 @@ public class NtlmAuthTest extends TestCase {
     {
         byte[] answer =
             NtlmAuth.answerLmv2Challenge( "DOMAIN", "user", "SecREt01",
-                                          hexToBytes("0123456789abcdef"),
-                                          hexToBytes("ffffff0011223344"));
+                hexToBytes("0123456789abcdef"),
+                hexToBytes("ffffff0011223344"));
 
         byte[] expected = hexToBytes( "d6e6152ea25d03b7c6ba6629c2d6aaf0ffffff0011223344");
 
@@ -76,14 +74,14 @@ public class NtlmAuthTest extends TestCase {
     {
         byte[] answer =
             NtlmAuth.answerNtlmv2Challenge( "DOMAIN", "user", "SecREt01",
-                                            hexToBytes("0123456789abcdef"), //nonce
-                                            //target info:
-                                            hexToBytes("02000c0044004f004d00410049004e0001000c005300450052" +
-                                                       "005600450052000400140064006f006d00610069006e002e00" +
-                                                       "63006f006d00030022007300650072007600650072002e0064" +
-                                                       "006f006d00610069006e002e0063006f006d0000000000"),
-                                            hexToBytes("ffffff0011223344"),//client nonce
-                                            1055844000000L); //timestamp
+                hexToBytes("0123456789abcdef"), //nonce
+                //target info:
+                hexToBytes("02000c0044004f004d00410049004e0001000c005300450052" +
+                           "005600450052000400140064006f006d00610069006e002e00" +
+                           "63006f006d00030022007300650072007600650072002e0064" +
+                           "006f006d00610069006e002e0063006f006d0000000000"),
+                hexToBytes("ffffff0011223344"),//client nonce
+                1055844000000L); //timestamp
 
 
         byte[] expected = hexToBytes(
@@ -111,17 +109,6 @@ public class NtlmAuthTest extends TestCase {
         assertTrue(Arrays.equals(ts, expected));
     }
 
-    public void testNtlmSessionResponse() throws Exception
-    {
-
-        byte[] result = NtlmAuth.getNTLM2SessionResponse(
-                "SecREt01",
-                hexToBytes("0123456789abcdef"),
-                hexToBytes("ffffff0011223344"));
-
-        byte[] expected = hexToBytes( "10d550832d12b2ccb79d5ad1f4eed3df82aca4c3681dd455");
-        assertTrue(Arrays.equals(result, expected));
-    }
 
     //--------------------------------------------------------------------------
     // these came from tests with real data:
@@ -131,8 +118,8 @@ public class NtlmAuthTest extends TestCase {
     {
         byte[] answer =
             NtlmAuth.answerLmv2Challenge( "MDB-PADRE", "dog", "bark",
-                                          hexToBytes("73f35b0fe01a5a31"),
-                                          hexToBytes("2c66391a0a1b7881"));
+                hexToBytes("73f35b0fe01a5a31"),
+                hexToBytes("2c66391a0a1b7881"));
 
         byte[] expected = hexToBytes( "4dc364696984b6e07df1a659313f277a2c66391a0a1b7881");
 
@@ -156,10 +143,10 @@ public class NtlmAuthTest extends TestCase {
 
         byte[] answer =
             NtlmAuth.answerNtlmv2Challenge( "MDB-PADRE", "dog", "bark",
-                                            hexToBytes("73f35b0fe01a5a31"),
-                                            targetInfo,
-                                            hexToBytes("2c66391a0a1b7881"),
-                                            hexToBytes("06198e3a444dc601"));
+                hexToBytes("73f35b0fe01a5a31"),
+                targetInfo,
+                hexToBytes("2c66391a0a1b7881"),
+                hexToBytes("06198e3a444dc601"));
 
         byte[] expected = hexToBytes(
         "5416e7ef86091320" +

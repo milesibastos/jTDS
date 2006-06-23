@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.113 2006-06-23 17:49:51 matt_brinkley Exp $
+ * @version $Id: TdsCore.java,v 1.114 2006-06-23 18:00:56 matt_brinkley Exp $
  */
 public class TdsCore {
     /**
@@ -1864,15 +1864,6 @@ public class TdsCore {
         boolean ntlmAuth = false;
         byte[] ntlmMessage = null;
 
-        //mdb:xxx ... change some of these values
-        //progName = "ODBC";
-        //appName = "SQL Query Analyzer";
-        //wsid = "";
-
-//        final byte[] garbage = {0x05, 0x01, 0x28, 0x0a, 0x00, 0x00, 0x00, 0x0f};
-        final byte[] garbage = new byte[0];
-
-
         if (user == null || user.length() == 0) {
             // See if executing on a Windows platform and if so try and
             // use the single sign on native library.
@@ -1913,11 +1904,7 @@ public class TdsCore {
             if (ntlmAuthSSO && ntlmMessage != null) {
                 authLen = (short) ntlmMessage.length;
             } else {
-                //mdb:xxx - not sending domain
-                //authLen = (short) (32 + domain.length());
-                //mdb:xxx - adding some garbage bytes that match query analyzer
-                //authLen = (short) (32 /*+ domain.length()*/);
-                authLen = (short)(32 + garbage.length);
+                authLen = (short) (32 + domain.length());
             }
             packSize += authLen;
         } else {
@@ -1937,7 +1924,7 @@ public class TdsCore {
         // Network Packet size requested by client
         out.write((int)netPacketSize);
         // Program version?
-        out.write((int)0x07000000);
+        out.write((int)7);
         // Process ID
         out.write((int)123);
         // Connection ID
@@ -2056,14 +2043,7 @@ public class TdsCore {
                 out.write(header); //header is ascii "NTLMSSP\0"
                 out.write((int)1);          //sequence number = 1
                 if(connection.getUseNTLMv2())
-                    //out.write((int)0xb205);  //flags (same as below, only with Request Target set)
-
-                    //mdb:xxx other tries
-                    out.write((int)0x8b205);
-
-                    //out.write((int)0xa2898205);
-                    //out.write((int)0xa2088207);
-
+                    out.write((int)0x8b205);  //flags (same as below, only with Request Target and NTLM2 set)
                 else
                     out.write((int)0xb201);     //flags (see below)
 
@@ -2077,28 +2057,18 @@ public class TdsCore {
                 //  0x00001 = negotiate Unicode
 
                 //domain info
-                //mdb:xxx - not sending domain
-                /*
                 out.write((short) domainBytes.length);
                 out.write((short) domainBytes.length);
                 out.write((int)32); //offset, relative to start of auth block.
-                */
-                out.write((short) 0);
-                out.write((short) 0);
-                out.write((int)0); //offset, relative to start of auth block.
 
                 //host info
                 //NOTE(mdb): not sending host info; hope this is ok!
                 out.write((short) 0);
                 out.write((short) 0);
-                out.write((int)0); //offset, relative to start of auth block.
+                out.write((int)32); //offset, relative to start of auth block.
 
                 // add the variable length data at the end...
-                //mdb:xxx - not sending domain
-                //out.write(domainBytes);
-
-                //mdb:xxx - write out the garbage
-                out.write(garbage);
+                out.write(domainBytes);
             }
         }
         out.flush(); // Send the packet
@@ -2119,9 +2089,6 @@ public class TdsCore {
                                            String domain)
             throws java.io.IOException {
         out.setPacketType(NTLMAUTH_PKT);
-
-        //mdb:xxx - we need to pass in the local host name!
-        final String localHostName = "MDB-PADRE";
 
         // Prepare and Set NTLM Type 2 message appropriately
         // Author: mahi@aztec.soft.net
@@ -2153,13 +2120,6 @@ public class TdsCore {
                 lmAnswer = NtlmAuth.answerLmv2Challenge(domain, user, password, nonce, clientNonce);
                 ntAnswer = NtlmAuth.answerNtlmv2Challenge(
                         domain, user, password, nonce, currentToken.ntlmTarget, clientNonce);
-
-                //mdb:xxx - NTLM session security!
-                /*
-                lmAnswer = new byte[24];
-                System.arraycopy( clientNonce, 0, lmAnswer, 0, 8);
-                ntAnswer = NtlmAuth.getNTLM2SessionResponse( password, nonce, clientNonce);
-                */
             }
             else
             {
@@ -2174,7 +2134,7 @@ public class TdsCore {
             final int domainLenInBytes = domain.length() * 2;
             final int userLenInBytes = user.length() * 2;
             //mdb: not sending hostname; I hope this is ok!
-            final int hostLenInBytes = localHostName.length()*2;
+            final int hostLenInBytes = 0; //localhostname.length()*2;
             int pos = 64 + domainLenInBytes + userLenInBytes + hostLenInBytes;
             // lan man response: length and offset
             out.write((short)lmAnswer.length);
@@ -2207,27 +2167,15 @@ public class TdsCore {
             out.write((short) 0);
             out.write((int)pos);
             //flags
-            //out.write((int)0x8201);     //flags (???)
-            //mdb:xxx - try different flags!
-            //Yea! these flags work!!!
-            out.write((int)0x88201);     //flags (???)
-/*
-            out.write((int)0xa2888205);     //flags (???)
-
-                    //mdb:xxx other tries
-                    out.write((int)0x8b205);
-
-                    //out.write((int)0xa2898205);
-                    //out.write((int)0xa2088207);
-
- */
-
-            //mdb:xxx - TODO: try writing out 8 bytes of garbage here, like QA does!
-
+            if(connection.getUseNTLMv2())
+                out.write((int)0x88201);
+            else
+                out.write((int)0x8201);
             //variable length stuff...
             out.write(domain);
             out.write(user);
-            out.write(localHostName);
+            //Not sending hostname...I hope this is OK!
+            //comm.appendChars(localhostname);
 
             //the response to the challenge...
             out.write(lmAnswer);

@@ -32,7 +32,7 @@ import java.util.Arrays;
  *     http://davenport.sourceforge.net/ntlm.html
  *
  * @author Matt Brinkley
- * @version $Id: NtlmAuth.java,v 1.5 2006-03-23 18:21:35 matt_brinkley Exp $
+ * @version $Id: NtlmAuth.java,v 1.6 2006-06-23 17:49:51 matt_brinkley Exp $
  */
 public class NtlmAuth {
 
@@ -103,6 +103,50 @@ public class NtlmAuth {
         return lmv2Response(hash, clientNonce, nonce);
     }
 
+
+    //-------------------------------------------------------------------------
+    // NTLM2 session security response
+    //-------------------------------------------------------------------------
+
+    /**
+     * Calculates the NTLM2 Session Response for the given challenge, using the
+     * specified password and client challenge.
+     *
+     * @param password The user's password.
+     * @param challenge The Type 2 challenge from the server.
+     * @param clientChallenge The random 8-byte client challenge.
+     *
+     * @return The NTLM2 Session Response.  This is placed in the NTLM
+     * response field of the Type 3 message; the LM response field contains
+     * the client challenge, null-padded to 24 bytes.
+     */
+    public static byte[] getNTLM2SessionResponse(String password,
+            byte[] nonce, byte[] clientNonce) throws UnsupportedEncodingException
+    {
+
+        //md5 the two nonces...
+        MD5Digest md5 = new MD5Digest();
+        md5.update(nonce,       0, nonce.length);
+        md5.update(clientNonce, 0, clientNonce.length);
+        byte[] hash = new byte[16];
+        md5.doFinal(hash, 0);
+        //truncate to 8 bytes
+        byte[] sessionHash = new byte[8];
+        System.arraycopy(hash, 0, sessionHash, 0, 8);
+
+        //get the NT hash of the password...
+        byte[] ntHash = ntHash( password );
+        return encryptNonce( ntHash, sessionHash );
+        /*
+        byte[] ntlmHash = ntlmHash(password);
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        md5.update(challenge);
+        md5.update(clientChallenge);
+        byte[] sessionHash = new byte[8];
+        System.arraycopy(md5.digest(), 0, sessionHash, 0, 8);
+        return lmResponse(ntlmHash, sessionHash);
+        */
+    }
 
     //-------------------------------------------------------------------------
     // LMv2/NTLMv2 impl helpers

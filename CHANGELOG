@@ -1,6 +1,10 @@
 Changes from jTDS 1.2
 =====================
 
+07/07/2007 - Brian Heineman
+ o [1571660] Changed reference from Statement.EXECUTE_FAILED (which was
+   added in Java 1.4) to JtdsStatement.EXECUTE_FAILED.
+ 
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.
 

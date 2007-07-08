@@ -55,7 +55,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.56 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: JtdsStatement.java,v 1.57 2007-07-08 15:35:05 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -899,7 +899,7 @@ public class JtdsStatement implements java.sql.Statement {
             // Pad any remaining slots with EXECUTE_FAILED
             //
             for (int i = results; i < updateCounts.length; i++) {
-                updateCounts[i] = Statement.EXECUTE_FAILED;
+                updateCounts[i] = EXECUTE_FAILED;
             }
             //
             // See if we should return an exception

@@ -373,14 +373,238 @@ public class Tds5Test extends TestBase {
         assertEquals(Types.DECIMAL, rsmd.getColumnType(2));
     }
 
+    /**
+     * Test that resultset meta data is correct for long varchar/varbinary types.
+     * @throws Exception
+     */
+    public void testResultSetMetaData2() throws Exception {
+        if (!isVersion12orHigher()) {
+            return;
+        }
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #temp (" +
+                "c varchar(310) not null, c2 varchar(320) null, " + 
+                "c3 char(330) not null, c4 char(340) null," + 
+                "c5 nvarchar(350) not null, c6 nvarchar(360) null, " + 
+                "c7 nchar(370) not null, c8 nchar(380) null," +
+                "c9 univarchar(390) not null, c10 univarchar(400) null," +
+                "c11 unichar(410) not null, c12 unichar(420) null," +
+                "c13 varbinary(430) not null, c14 varbinary(440) null," + 
+                "c15 binary(450) not null, c16 binary(460) null" + 
+                ")");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #temp");
+        ResultSetMetaData rsmd = rs.getMetaData();
+        assertEquals("varchar", rsmd.getColumnTypeName(1));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(1));
+        assertEquals(310, rsmd.getColumnDisplaySize(1));
+        
+        assertEquals("varchar", rsmd.getColumnTypeName(2));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(2));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(2));
+        assertEquals(320, rsmd.getColumnDisplaySize(2));
+        
+        assertEquals("char", rsmd.getColumnTypeName(3));
+        assertEquals(Types.CHAR, rsmd.getColumnType(3));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(3));
+        assertEquals(330, rsmd.getColumnDisplaySize(3));
+
+        assertEquals("char", rsmd.getColumnTypeName(4));
+        assertEquals(Types.CHAR, rsmd.getColumnType(4));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(4));
+        assertEquals(340, rsmd.getColumnDisplaySize(4));
+        
+        assertEquals("nvarchar", rsmd.getColumnTypeName(5));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(5));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(5));
+        assertEquals(350, rsmd.getColumnDisplaySize(5));
+        
+        assertEquals("nvarchar", rsmd.getColumnTypeName(6));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(6));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(6));
+        assertEquals(360, rsmd.getColumnDisplaySize(6));
+        
+        assertEquals("nchar", rsmd.getColumnTypeName(7));
+        assertEquals(Types.CHAR, rsmd.getColumnType(7));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(7));
+        assertEquals(370, rsmd.getColumnDisplaySize(7));
+        
+        assertEquals("nchar", rsmd.getColumnTypeName(8));
+        assertEquals(Types.CHAR, rsmd.getColumnType(8));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(8));
+        assertEquals(380, rsmd.getColumnDisplaySize(8));
+        
+        assertEquals("univarchar", rsmd.getColumnTypeName(9));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(9));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(9));
+        assertEquals(390, rsmd.getColumnDisplaySize(9));
+        
+        assertEquals("univarchar", rsmd.getColumnTypeName(10));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(10));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(10));
+        assertEquals(400, rsmd.getColumnDisplaySize(10));
+        
+        assertEquals("unichar", rsmd.getColumnTypeName(11));
+        assertEquals(Types.CHAR, rsmd.getColumnType(11));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(11));
+        assertEquals(410, rsmd.getColumnDisplaySize(11));
+        
+        assertEquals("unichar", rsmd.getColumnTypeName(12));
+        assertEquals(Types.CHAR, rsmd.getColumnType(12));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(12));
+        assertEquals(420, rsmd.getColumnDisplaySize(12));
+        
+        assertEquals("varbinary", rsmd.getColumnTypeName(13));
+        assertEquals(Types.VARBINARY, rsmd.getColumnType(13));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(13));
+        assertEquals(860, rsmd.getColumnDisplaySize(13));
+        
+        assertEquals("varbinary", rsmd.getColumnTypeName(14));
+        assertEquals(Types.VARBINARY, rsmd.getColumnType(14));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(14));
+        assertEquals(880, rsmd.getColumnDisplaySize(14));
+        
+        assertEquals("binary", rsmd.getColumnTypeName(15));
+        assertEquals(Types.BINARY, rsmd.getColumnType(15));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(15));
+        assertEquals(900, rsmd.getColumnDisplaySize(15));
+        
+        assertEquals("binary", rsmd.getColumnTypeName(16));
+        assertEquals(Types.BINARY, rsmd.getColumnType(16));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(16));
+        assertEquals(920, rsmd.getColumnDisplaySize(16));
+    }
+
+    /**
+     * Test that resultset meta data is correct for short varchar/varbinary types.
+     * Demonstrate fix to bug [1453552].
+     * @throws Exception
+     */
+    public void testResultSetMetaData() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #temp (" +
+                "c varchar(10) not null, c2 varchar(20) null, " + 
+                "c3 char(30) not null, c4 char(40) null," + 
+                "c5 nvarchar(50) not null, c6 nvarchar(60) null, " + 
+                "c7 nchar(70) not null, c8 nchar(80) null," + 
+                "c9 varbinary(90) not null, c10 varbinary(100) null, " + 
+                "c11 binary(110) not null, c12 binary(120) null," + 
+                ")");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #temp");
+        ResultSetMetaData rsmd = rs.getMetaData();
+        assertEquals("varchar", rsmd.getColumnTypeName(1));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(1));
+        assertEquals(10, rsmd.getColumnDisplaySize(1));
+        
+        assertEquals("varchar", rsmd.getColumnTypeName(2));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(2));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(2));
+        assertEquals(20, rsmd.getColumnDisplaySize(2));
+        
+        assertEquals("char", rsmd.getColumnTypeName(3));
+        assertEquals(Types.CHAR, rsmd.getColumnType(3));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(3));
+        assertEquals(30, rsmd.getColumnDisplaySize(3));
+
+        assertEquals("char", rsmd.getColumnTypeName(4));
+        assertEquals(Types.CHAR, rsmd.getColumnType(4));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(4));
+        assertEquals(40, rsmd.getColumnDisplaySize(4));
+
+        assertEquals("nvarchar", rsmd.getColumnTypeName(5));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(5));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(5));
+        assertEquals(50, rsmd.getColumnDisplaySize(5));
+        
+        assertEquals("nvarchar", rsmd.getColumnTypeName(6));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(6));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(6));
+        assertEquals(60, rsmd.getColumnDisplaySize(6));
+        
+        assertEquals("nchar", rsmd.getColumnTypeName(7));
+        assertEquals(Types.CHAR, rsmd.getColumnType(7));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(7));
+        assertEquals(70, rsmd.getColumnDisplaySize(7));
+        
+        assertEquals("nchar", rsmd.getColumnTypeName(8));
+        assertEquals(Types.CHAR, rsmd.getColumnType(8));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(8));
+        assertEquals(80, rsmd.getColumnDisplaySize(8));
+        
+        assertEquals("varbinary", rsmd.getColumnTypeName(9));
+        assertEquals(Types.VARBINARY, rsmd.getColumnType(9));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(9));
+        assertEquals(180, rsmd.getColumnDisplaySize(9));
+        
+        assertEquals("varbinary", rsmd.getColumnTypeName(10));
+        assertEquals(Types.VARBINARY, rsmd.getColumnType(10));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(10));
+        assertEquals(200, rsmd.getColumnDisplaySize(10));
+        
+        assertEquals("binary", rsmd.getColumnTypeName(11));
+        assertEquals(Types.BINARY, rsmd.getColumnType(11));
+        assertEquals(ResultSetMetaData.columnNoNulls, rsmd.isNullable(11));
+        assertEquals(220, rsmd.getColumnDisplaySize(11));
+        
+        assertEquals("binary", rsmd.getColumnTypeName(12));
+        assertEquals(Types.BINARY, rsmd.getColumnType(12));
+        assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(12));
+        assertEquals(240, rsmd.getColumnDisplaySize(12));
+    }
+
+    /**
+     * Test Sybase ASE misc data type metadata.
+     * @throws Exception
+     */
+    public void testResultSetMetaData3() throws Exception {
+        if (!isVersion15orHigher()) {
+            return;
+        }
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (ts timestamp, s sysname)");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        ResultSetMetaData rsmd = rs.getMetaData();
+        assertEquals("timestamp", rsmd.getColumnTypeName(1));
+        assertEquals(Types.VARBINARY, rsmd.getColumnType(1));
+        assertEquals("sysname", rsmd.getColumnTypeName(2));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(2));
+    }
+
+    /**
+     * Test Sybase ASE 15+ misc data type metadata.
+     * @throws Exception
+     */
+    public void testResultSetMetaData4() throws Exception {
+        if (!isVersion15orHigher()) {
+            return;
+        }
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (s longsysname)");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        ResultSetMetaData rsmd = rs.getMetaData();
+        assertEquals("longsysname", rsmd.getColumnTypeName(1));
+        assertEquals(Types.VARCHAR, rsmd.getColumnType(1));
+    }
+
     private boolean isVersion12orHigher() throws Exception
     {
+        if (con.getMetaData().
+                getDatabaseProductVersion().startsWith("1.")) {
+            // 11.03 or 10.0
+            return false;
+        }
         return Integer.parseInt(con.getMetaData().
                 getDatabaseProductVersion().substring(0,2)) >= 12;
     }
 
     private boolean isVersion15orHigher() throws Exception
     {
+        if (con.getMetaData().
+                getDatabaseProductVersion().startsWith("1.")) {
+            // 11.03 or 10.0
+            return false;
+        }
         return Integer.parseInt(con.getMetaData().
                 getDatabaseProductVersion().substring(0,2)) >= 15;
     }

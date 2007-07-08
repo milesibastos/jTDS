@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.58 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.59 2007-07-08 19:07:01 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -172,18 +172,20 @@ public class TdsData {
      * Constants for Sybase User Defined data types used to
      * qualify the new longchar and longbinary types.
      */
+    // Common to Sybase and SQL Server
     private static final int UDT_CHAR              =  1; // 0x01
     private static final int UDT_VARCHAR           =  2; // 0x02
     private static final int UDT_BINARY            =  3; // 0x03
     private static final int UDT_VARBINARY         =  4; // 0x04
-    private static final int UDT_NCHAR             = 18; // 0x03
-    private static final int UDT_NVARCHAR          = 19; // 0x03
+    private static final int UDT_SYSNAME           = 18; // 0x12
+    // Sybase only
+    private static final int UDT_NCHAR             = 24; // 0x18
+    private static final int UDT_NVARCHAR          = 25; // 0x19
     private static final int UDT_UNICHAR           = 34; // 0x22
     private static final int UDT_UNIVARCHAR        = 35; // 0x23
     private static final int UDT_UNITEXT           = 36; // 0x24
-    // Common to Sybase and SQL Server
+    private static final int UDT_LONGSYSNAME       = 42; // 0x2A
     private static final int UDT_TIMESTAMP         = 80; // 0x50
-    private static final int UDT_SYSNAME           = 18; // 0x12
     // SQL Server 7+
     private static final int UDT_NEWSYSNAME        =256; // 0x100
 
@@ -341,8 +343,11 @@ public class TdsData {
      */
     static int readType(ResponseStream in, ColInfo ci)
             throws IOException, ProtocolException {
-        boolean isTds8 = in.getTdsVersion() >= Driver.TDS80;
-        boolean isTds5 = in.getTdsVersion() == Driver.TDS50;
+        int tdsVersion = in.getTdsVersion();
+        boolean isTds8 = tdsVersion >= Driver.TDS80;
+        boolean isTds7 = tdsVersion >= Driver.TDS70;
+        boolean isTds5 = tdsVersion == Driver.TDS50;
+        boolean isTds42 = tdsVersion == Driver.TDS42;
         int bytesRead = 1;
         // Get the TDS data type code
         int type = in.read();
@@ -516,10 +521,6 @@ public class TdsData {
             case XSYBVARBINARY:
                 ci.precision   = ci.bufferSize;
                 ci.displaySize = ci.precision * 2;
-                if (ci.userType == UDT_TIMESTAMP) {
-                    // Look for system defined timestamp type
-                    ci.sqlType = "timestamp";
-                }
                 break;
 
             // SQL Server unicode text can only display half as many chars
@@ -539,11 +540,8 @@ public class TdsData {
             case XSYBNVARCHAR:
                 ci.displaySize = ci.bufferSize / 2;
                 ci.precision   = ci.displaySize;
-                if (ci.userType == UDT_NEWSYSNAME) {
-                    // Look for SQL Server 7+ version of sysname
-                    ci.sqlType = "sysname";
-                }
                 break;
+
             // Normal characters display size = precision = buffer size.
             case SYBTEXT:
             case SYBCHAR:
@@ -553,10 +551,6 @@ public class TdsData {
             case SYBNVARCHAR:
                 ci.precision = ci.bufferSize;
                 ci.displaySize = ci.precision;
-                if (ci.userType == UDT_SYSNAME) {
-                    // Look for SQL 6.5 or Sybase version of sysname
-                    ci.sqlType = "sysname";
-                }
                 break;
         }
 
@@ -564,60 +558,89 @@ public class TdsData {
         if (ci.isIdentity) {
             ci.sqlType += " identity";
         }
-
-        // Fine tune Sybase data types
-        if (isTds5) {
-            if (ci.tdsType == SYBLONGBINARY) {
-                switch (ci.userType) {
-                    case  UDT_BINARY:
-                        ci.sqlType     = "binary";
-                        ci.displaySize = ci.bufferSize * 2;
-                        ci.jdbcType    = java.sql.Types.BINARY;
-                        break;
-                    case  UDT_VARBINARY:
-                        ci.sqlType     = "varbinary";
-                        ci.displaySize = ci.bufferSize * 2;
-                        ci.jdbcType    = java.sql.Types.VARBINARY;
-                        break;
-                    case UDT_UNICHAR:
-                        ci.sqlType     = "unichar";
-                        ci.displaySize = ci.bufferSize / 2;
-                        ci.precision   = ci.displaySize;
-                        ci.jdbcType    = java.sql.Types.CHAR;
-                        break;
-                    case UDT_UNIVARCHAR:
-                        ci.sqlType     = "univarchar";
-                        ci.displaySize = ci.bufferSize / 2;
-                        ci.precision   = ci.displaySize;
-                        ci.jdbcType    = java.sql.Types.VARCHAR;
-                        break;
-                }
-            } else
-            if (ci.tdsType == XSYBCHAR) {
-                switch (ci.userType) {
-                    case  UDT_CHAR:
-                       ci.sqlType      = "char";
-                        ci.displaySize = ci.bufferSize;
-                        ci.jdbcType    = java.sql.Types.CHAR;
-                        break;
-                    case  UDT_VARCHAR:
-                        ci.sqlType     = "varchar";
-                        ci.displaySize = ci.bufferSize;
-                        ci.jdbcType    = java.sql.Types.VARCHAR;
-                        break;
-                    case UDT_NCHAR:
-                        ci.sqlType     = "nchar";
-                        ci.displaySize = ci.bufferSize;
-                        ci.jdbcType    = java.sql.Types.CHAR;
-                        break;
-                    case UDT_NVARCHAR:
-                        ci.sqlType     = "nvarchar";
-                        ci.displaySize = ci.bufferSize;
-                        ci.jdbcType    = java.sql.Types.VARCHAR;
-                        break;
-                }
+        
+        // Fine tune Sybase or SQL 6.5 data types
+        if (isTds42 || isTds5) {
+            switch (ci.userType) {
+                case  UDT_CHAR:
+                    ci.sqlType      = "char";
+                    ci.displaySize = ci.bufferSize;
+                    ci.jdbcType    = java.sql.Types.CHAR;
+                    break;
+                case  UDT_VARCHAR:
+                    ci.sqlType     = "varchar";
+                    ci.displaySize = ci.bufferSize;
+                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    break;
+                case  UDT_BINARY:
+                    ci.sqlType     = "binary";
+                    ci.displaySize = ci.bufferSize * 2;
+                    ci.jdbcType    = java.sql.Types.BINARY;
+                    break;
+                case  UDT_VARBINARY:
+                    ci.sqlType     = "varbinary";
+                    ci.displaySize = ci.bufferSize * 2;
+                    ci.jdbcType    = java.sql.Types.VARBINARY;
+                    break;
+                case UDT_SYSNAME:
+                    ci.sqlType = "sysname";
+                    ci.displaySize = ci.bufferSize;
+                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    break;
+                case UDT_TIMESTAMP:
+                    ci.sqlType = "timestamp";
+                    ci.displaySize = ci.bufferSize * 2;
+                    ci.jdbcType    = java.sql.Types.VARBINARY;
+                    break;
             }
         }
+        
+        // Fine tune Sybase data types
+        if (isTds5) {
+            switch (ci.userType) {
+                case UDT_NCHAR:
+                    ci.sqlType     = "nchar";
+                    ci.displaySize = ci.bufferSize;
+                    ci.jdbcType    = java.sql.Types.CHAR;
+                    break;
+                case UDT_NVARCHAR:
+                    ci.sqlType     = "nvarchar";
+                    ci.displaySize = ci.bufferSize;
+                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    break;
+                case UDT_UNICHAR:
+                    ci.sqlType     = "unichar";
+                    ci.displaySize = ci.bufferSize / 2;
+                    ci.precision   = ci.displaySize;
+                    ci.jdbcType    = java.sql.Types.CHAR;
+                    break;
+                case UDT_UNIVARCHAR:
+                    ci.sqlType     = "univarchar";
+                    ci.displaySize = ci.bufferSize / 2;
+                    ci.precision   = ci.displaySize;
+                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    break;            
+                case UDT_LONGSYSNAME:
+                    ci.sqlType = "longsysname";
+                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    ci.displaySize = ci.bufferSize;
+                    break;
+            }
+        }
+        // Fine tune SQL Server 7+ datatypes
+        if (isTds7) {
+            switch (ci.userType) {
+                case UDT_TIMESTAMP:
+                    ci.sqlType = "timestamp";
+                    ci.jdbcType    = java.sql.Types.BINARY;
+                    break;
+                case UDT_NEWSYSNAME:
+                    ci.sqlType = "sysname";
+                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    break;
+            }
+        }
+        
 
         return bytesRead;
     }

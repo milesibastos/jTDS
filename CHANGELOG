@@ -4,14 +4,17 @@ Changes from jTDS 1.2
 07/08/2007 - Brian Heineman
  o Corrected bug [1571660] Changed reference from Statement.EXECUTE_FAILED
    (which was added in Java 1.4) to JtdsStatement.EXECUTE_FAILED.
- o Applied patch [1567127] Corrected Eclipse javadoc warnings.
+ o Applied patch [1567127] Eclipse javadoc warnings.
  o Applied patch [1567332] Updated build file to work with or without
    backslashes on Windows.  This also fixes the problem of having spaces
    in the JAVA_HOME path.
  o Applied patch [1567151] HTML validation patches.
  o Applied patch [1567994] Updated equality checks.
  o Corrected bug [1623668] Lost apostrophes in statement parameter
-   values (prepareSQL=0); added test to ensure that there are no regressions.
+   values (prepareSQL=0) by applying the patch in mentioned in the issue;
+   added test to ensure that there are no regressions.
+ o Corrected bug [1437845] milliseconds are lost under JRE 1.3 by applying
+   the patch attached to the issue.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

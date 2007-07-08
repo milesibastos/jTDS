@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.55 2007-07-08 18:26:26 bheineman Exp $
+ * @version $Id: Support.java,v 1.56 2007-07-08 18:42:14 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -738,9 +738,10 @@ public class Support {
         }
 
         if (value instanceof DateTime) {
-            value =((DateTime) value).toObject();
-        }
-
+            buf.append('\'');
+            buf.append(value);
+            buf.append('\'');
+        } else
         if (value instanceof byte[]) {
             byte[] bytes = (byte[]) value;
 
@@ -781,64 +782,20 @@ public class Support {
 
             buf.append('\'');
         } else if (value instanceof java.sql.Date) {
-            synchronized (cal) {
-                cal.setTime((java.sql.Date) value);
-                int year = cal.get(Calendar.YEAR);
-                if (year < 1753 || year > 9999) {
-                    throw new SQLException(Messages.get("error.datetime.range"), "22003");
-                }
-                buf.append('\'');
-                long dt = year * 10000L;
-                dt += (cal.get(Calendar.MONTH) + 1) * 100;
-                dt += cal.get(Calendar.DAY_OF_MONTH);
-                buf.append(dt);
-                buf.append('\'');
-            }
-        } else
-            if (value instanceof java.sql.Time) {
-            synchronized (cal) {
-                cal.setTime((java.sql.Time) value);
-                buf.append('\'');
-                int t = cal.get(Calendar.HOUR_OF_DAY);
-                buf.append((t < 10) ? "0" + t + ':' : t + ":");
-                t = cal.get(Calendar.MINUTE);
-                buf.append((t < 10) ? "0" + t + ':' : t + ":");
-                t = cal.get(Calendar.SECOND);
-                buf.append((t < 10) ? "0" + t + '\'' : t + "'");
-            }
-        } else
-            if (value instanceof java.sql.Timestamp) {
-            synchronized (cal) {
-                cal.setTime((java.sql.Timestamp) value);
-                int year = cal.get(Calendar.YEAR);
-                if (year < 1753 || year > 9999) {
-                    throw new SQLException(Messages.get("error.datetime.range"), "22003");
-                }
-                buf.append('\'');
-                long dt = year * 10000L;
-                dt += (cal.get(Calendar.MONTH) + 1) * 100;
-                dt += cal.get(Calendar.DAY_OF_MONTH);
-                buf.append(dt);
-                buf.append(' ');
-                int t = cal.get(Calendar.HOUR_OF_DAY);
-                buf.append((t < 10) ? "0" + t + ':' : t + ":");
-                t = cal.get(Calendar.MINUTE);
-                buf.append((t < 10) ? "0" + t + ':' : t + ":");
-                t = cal.get(Calendar.SECOND);
-                buf.append((t < 10) ? "0" + t + '.' : t + ".");
-                t = (int)(cal.getTime().getTime() % 1000L);
-
-                if (t < 100) {
-                    buf.append('0');
-                }
-
-                if (t < 10) {
-                    buf.append('0');
-                }
-
-                buf.append(t);
-                buf.append('\'');
-            }
+            DateTime dt = new DateTime((java.sql.Date)value);
+            buf.append('\'');
+            buf.append(dt);
+            buf.append('\'');
+        } else if (value instanceof java.sql.Time) {
+            DateTime dt = new DateTime((java.sql.Time)value);
+            buf.append('\'');
+            buf.append(dt);
+            buf.append('\'');
+        } else if (value instanceof java.sql.Timestamp) {
+            DateTime dt = new DateTime((java.sql.Timestamp)value);
+            buf.append('\'');
+            buf.append(dt);
+            buf.append('\'');
         } else if (value instanceof Boolean) {
             buf.append(((Boolean) value).booleanValue() ? '1' : '0');
         } else if (value instanceof BigDecimal) {

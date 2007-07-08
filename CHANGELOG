@@ -25,6 +25,8 @@ Changes from jTDS 1.2
    attached to the issue.
  o Applied patch [1460207] Connection.setCatalog() has invalid check
  o Implemented feature [1749962] Temporary directory should be configurable
+ o Corrected bug [1596743] executeQuery absorbs thread interrupt status  by
+   applying the patch mentioned in the issue.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

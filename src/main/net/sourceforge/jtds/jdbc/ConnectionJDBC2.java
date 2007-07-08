@@ -62,7 +62,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.118 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119 2007-07-08 21:43:02 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1869,25 +1869,23 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @return the mutex object as a <code>Semaphore</code>
      */
     Semaphore getMutex() {
-        //
-        // If the current thread has been interrupted but the thread
-        // has caught the InterruptedException and continued to execute,
-        // we need to clear the Interrupted status now to ensure that
-        // we don't fail trying to obtain the connection mutex.
-        // The c3p0 connection pool software seems to start threads
-        // in an interrupted state under some circumstances.
-        //
-        if (Thread.interrupted()) {
-            // Thread.interrupted() will clear the interrupt status
-            Logger.println("Thread status of Interrupted found and cleared");
-        }
+        // Thread.interrupted() will clear the interrupt status
+        boolean interrupted = Thread.interrupted();
+        
         try {
             this.mutex.acquire();
         } catch (InterruptedException e) {
             throw new IllegalStateException("Thread execution interrupted");
         }
+        
+        if (interrupted) {
+            // Bug [1596743] do not absorb interrupt status
+            Thread.currentThread().interrupt();
+        }
+        
         return this.mutex;
     }
+
 
     /**
      * Releases (either closes or caches) a <code>TdsCore</code>.

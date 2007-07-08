@@ -19,7 +19,7 @@ import java.util.Vector;
 
 /**
  * @author  Alin Sinpalean
- * @version $Id: SAfeTest.java,v 1.61 2005-12-05 10:54:23 alin_sinpalean Exp $
+ * @version $Id: SAfeTest.java,v 1.62 2007-07-08 21:43:02 bheineman Exp $
  * @since   0.4
  */
 public class SAfeTest extends DatabaseTestCase {
@@ -1804,5 +1804,17 @@ public class SAfeTest extends DatabaseTestCase {
             assertEquals("07000", ex.getSQLState());
         }
         stmt.close();
+    }
+    
+    /**
+     * Test for bug [1596743] executeQuery absorbs thread interrupt status
+     */
+    public void testThreadInterrupt() throws Exception {
+        Thread.currentThread().interrupt();
+        Statement stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT 1");
+        rs.close();
+        stmt.close();
+        assertTrue(Thread.currentThread().isInterrupted());
     }
 }

@@ -35,10 +35,10 @@ import net.sourceforge.jtds.ssl.Ssl;
  *     properties to <code>Messages.properties</code>.</li>
  * <li>Add a <code>static final</code> default field to {@link DefaultProperties}.</li>
  * <li>Update {@link #addDefaultProperties(java.util.Properties)} to set the default.</li>
- * <li>Update {@link Driver#createChoicesMap()} and
+ * <li>Update <code>Driver.createChoicesMap()</code> and
  *     <code>DriverUnitTest.test_getPropertyInfo_Choices()</code> if the property
  *     has a specific set of inputs, e.g., "true" and "false", or "1" and "2".</li>
- * <li>Update {@link Driver#createRequiredTrueMap()} and
+ * <li>Update <code>Driver.createRequiredTrueMap()</code> and
  *     <code>DriverUnitTest.test_getPropertyInfo_Required()</code> if the property
  *     is required.</li>
  * <li>Add a new test to <code>DefaultPropertiesTestLibrary</code> for the new
@@ -46,7 +46,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.28 2005-12-22 20:48:52 ddkilzer Exp $
+ * @version $Id: DefaultProperties.java,v 1.29 2007-07-08 16:44:29 bheineman Exp $
  */
 public final class DefaultProperties {
 

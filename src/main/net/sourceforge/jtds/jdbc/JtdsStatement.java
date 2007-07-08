@@ -50,11 +50,11 @@ import java.util.LinkedList;
  * forgotten to explicitly close the statement before it goes out of scope.
  *
  * @see java.sql.Statement
- * @see java.sql.Connection#createStatement
+ * @see java.sql.Connection#createStatement()
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.58 2007-07-08 16:39:24 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.59 2007-07-08 16:44:29 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*

@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.114 2006-05-19 12:57:32 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.115 2007-07-08 16:44:29 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -87,9 +87,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                                                          "SET QUOTED_IDENTIFIER ON\r\n"+
                                                          "SET TEXTSIZE 2147483647";
     /**
-     * SQL Server initial connection string. Also contains a <code>SELECT
-     * @@MAX_PRECISION</code> query to retrieve the maximum precision for
-     * DECIMAL/NUMERIC data. */
+     * SQL Server initial connection string. Also contains a
+     * <code>SELECT @@MAX_PRECISION</code> query to retrieve
+     * the maximum precision for DECIMAL/NUMERIC data. */
     private static final String SQL_SERVER_INITIAL_SQL = "SELECT @@MAX_PRECISION\r\n" +
                                                          "SET TRANSACTION ISOLATION LEVEL READ COMMITTED\r\n" +
                                                          "SET IMPLICIT_TRANSACTIONS OFF\r\n" +
@@ -1894,7 +1894,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Retrieves the cached <code>TdsCore</code> or <code>null</code> if
      * nothing is cached and resets the cache (sets it to <code>null</code>).
      *
-     * @return the value of {@see cachedTds}
+     * @return the value of {@link #cachedTds}
      * @todo Should probably synchronize on another object
      */
     synchronized TdsCore getCachedTds() {

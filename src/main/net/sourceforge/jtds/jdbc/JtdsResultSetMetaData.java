@@ -31,7 +31,7 @@ import java.sql.SQLException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSetMetaData.java,v 1.8 2005-06-16 09:32:27 alin_sinpalean Exp $
+ * @version $Id: JtdsResultSetMetaData.java,v 1.9 2007-07-08 18:53:30 bheineman Exp $
  */
 public class JtdsResultSetMetaData implements ResultSetMetaData {
     private final ColInfo[] columns;
@@ -138,7 +138,19 @@ public class JtdsResultSetMetaData implements ResultSetMetaData {
     }
 
     public String getColumnClassName(int column) throws SQLException {
-        return Support.getClassName(getColumnType(column));
+        String c = Support.getClassName(getColumnType(column));
+        
+        if (!useLOBs) {
+            if ("java.sql.Clob".equals(c)) {
+                return "java.lang.String";
+            }
+            
+            if ("java.sql.Blob".equals(c)) {
+                return "[B";
+            }
+        }
+        
+        return c;
     }
 
     public String getColumnLabel(int column) throws SQLException {

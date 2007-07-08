@@ -11,10 +11,12 @@ Changes from jTDS 1.2
  o Applied patch [1567151] HTML validation patches.
  o Applied patch [1567994] Updated equality checks.
  o Corrected bug [1623668] Lost apostrophes in statement parameter
-   values (prepareSQL=0) by applying the patch in mentioned in the issue;
+   values (prepareSQL=0) by applying the patch mentioned in the issue;
    added test to ensure that there are no regressions.
  o Corrected bug [1437845] milliseconds are lost under JRE 1.3 by applying
    the patch attached to the issue.
+ o Corrected bug [1696767] incorrect ResultSetMetaData when useLOBS=false by
+   applying the patch mentioned in the issue.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

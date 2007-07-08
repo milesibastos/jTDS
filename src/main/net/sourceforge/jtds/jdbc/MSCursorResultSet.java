@@ -38,7 +38,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.57 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.58 2007-07-08 17:28:23 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -213,9 +213,9 @@ public class MSCursorResultSet extends JtdsResultSet {
             pi.length    = length;
             pi.isSet     = true;
             pi.jdbcType  = jdbcType;
-            pi.isUnicode = ci.sqlType.equals("ntext")
-                    || ci.sqlType.equals("nchar")
-                    || ci.sqlType.equals("nvarchar");
+            pi.isUnicode = "ntext".equals(ci.sqlType)
+                    || "nchar".equals(ci.sqlType)
+                    || "nvarchar".equals(ci.sqlType);
             if (pi.value instanceof BigDecimal) {
                 pi.scale = ((BigDecimal)pi.value).scale();
             } else {

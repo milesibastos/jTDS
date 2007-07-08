@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.59 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.60 2007-07-08 17:28:23 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -115,7 +115,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
         sqlWord = parsedSql[2];
 
-        if (returnKeys && sqlWord.equals("insert")) {
+        if (returnKeys && "insert".equals(sqlWord)) {
             if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
                 this.sql = parsedSql[0] + " SELECT SCOPE_IDENTITY() AS ID";
@@ -325,7 +325,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         throws SQLException {
         ParamInfo pi = getParameter(parameterIndex);
 
-        if (Support.getJdbcTypeName(targetSqlType).equals("ERROR")) {
+        if ("ERROR".equals(Support.getJdbcTypeName(targetSqlType))) {
             throw new SQLException(Messages.get("error.generic.badtype",
                                 Integer.toString(targetSqlType)), "HY092");
         }
@@ -714,7 +714,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 // For Microsoft set all parameters to null and execute the query.
                 // SET FMTONLY ON asks the server just to return meta data.
                 // This only works for select statements
-                if (!sqlWord.equals("select")) {
+                if (!"select".equals(sqlWord)) {
                     return null;
                 }
 

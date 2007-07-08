@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.53 2005-11-08 12:03:30 alin_sinpalean Exp $
+ * @version $Id: Support.java,v 1.54 2007-07-08 17:28:23 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -325,7 +325,7 @@ public class Support {
                     } else if (x instanceof String) {
                         String tmp = ((String) x).trim();
 
-                        return (tmp.equals("1") || tmp.equalsIgnoreCase("true")) ? Boolean.TRUE : Boolean.FALSE;
+                        return ("1".equals(tmp) || "true".equalsIgnoreCase(tmp)) ? Boolean.TRUE : Boolean.FALSE;
                     }
 
                     break;

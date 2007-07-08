@@ -48,7 +48,7 @@ import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.28 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: SQLParser.java,v 1.29 2007-07-08 17:28:23 bheineman Exp $
  */
 class SQLParser {
     /**
@@ -763,9 +763,9 @@ class SQLParser {
                     if (arg2Start == 0) {
                         arg2Start = d - argStart;
                     }
-                    if (name.equals("concat")) {
+                    if ("concat".equals(name)) {
                         out[d++] = '+'; s++;
-                    } else if (name.equals("mod")) {
+                    } else if ("mod".equals(name)) {
                         out[d++] = '%'; s++;
                     } else {
                         out[d++] = c; s++;
@@ -797,7 +797,7 @@ class SQLParser {
         // Arguments need to be reversed and the data type
         // argument converted to an SQL server type
         //
-        if (name.equals("convert") && arg2Start < args.length() - 1) {
+        if ("convert".equals(name) && arg2Start < args.length() - 1) {
             String arg2 = args.substring(arg2Start + 1).trim().toLowerCase();
             String dataType = (String) cvMap.get(arg2);
 
@@ -904,7 +904,7 @@ class SQLParser {
             skipWhiteSpace();
             String esc = escBuf.toString();
 
-            if (esc.equals("call")) {
+            if ("call".equals(esc)) {
                 callEscape();
             } else {
                 throw new SQLException(
@@ -921,9 +921,9 @@ class SQLParser {
             skipWhiteSpace();
             String esc = escBuf.toString();
 
-            if (esc.equals("call")) {
+            if ("call".equals(esc)) {
                 callEscape();
-            } else if (esc.equals("t")) {
+            } else if ("t".equals(esc)) {
                 if (!getDateTimeField(timeMask)) {
                     throw new SQLException(
                             Messages.get("error.parsesql.syntax",
@@ -931,7 +931,7 @@ class SQLParser {
                                          String.valueOf(s)),
                             "22019");
                 }
-            } else if (esc.equals("d")) {
+            } else if ("d".equals(esc)) {
                 if (!getDateTimeField(dateMask)) {
                     throw new SQLException(
                             Messages.get("error.parsesql.syntax",
@@ -939,7 +939,7 @@ class SQLParser {
                                          String.valueOf(s)),
                             "22019");
                 }
-            } else if (esc.equals("ts")) {
+            } else if ("ts".equals(esc)) {
                 if (!getDateTimeField(timestampMask)) {
                     throw new SQLException(
                             Messages.get("error.parsesql.syntax",
@@ -947,11 +947,11 @@ class SQLParser {
                                          String.valueOf(s)),
                             "22019");
                 }
-            } else if (esc.equals("oj")) {
+            } else if ("oj".equals(esc)) {
                 outerJoinEscape();
-            } else if (esc.equals("fn")) {
+            } else if ("fn".equals(esc)) {
                 functionEscape();
-            } else if (esc.equals("escape")) {
+            } else if ("escape".equals(esc)) {
                 likeEscape();
             } else {
                 throw new SQLException(
@@ -1089,7 +1089,7 @@ class SQLParser {
                         if (isSlowScan && Character.isLetter(c)) {
                             if (keyWord == null) {
                                 keyWord = copyKeyWord();
-                                if (keyWord.equals("select")) {
+                                if ("select".equals(keyWord)) {
                                     isSelect = true;
                                 }
                                 isSlowScan = extractTable && isSelect;
@@ -1097,7 +1097,7 @@ class SQLParser {
                             }
                             if (extractTable && isSelect) {
                                 String sqlWord = copyKeyWord();
-                                if (sqlWord.equals("from")) {
+                                if ("from".equals(sqlWord)) {
                                     // Ensure only first 'from' is processed
                                     isSlowScan = false;
                                     tableName = getTableName();

@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.36 2005-11-03 12:12:18 alin_sinpalean Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.37 2007-07-08 17:28:23 bheineman Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1408,7 +1408,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     // column_type column is missing!
                     // Set the output value to 0 and shift the rest along by one.
                     String colName = rs.getString(4);
-                    if (colName != null && colName.equals("RETURN_VALUE")) {
+                    if ("RETURN_VALUE".equals(colName)) {
                         rsTmp.updateInt(i, DatabaseMetaData.procedureColumnReturn);
                     } else {
                         rsTmp.updateInt(i, DatabaseMetaData.procedureColumnUnknown);
@@ -1454,7 +1454,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                 // @RETURN_VALUE for Sybase and SQL < 2000
                 //
                 String colName = rs.getString(4);
-                if (colName != null && colName.equals("RETURN_VALUE")) {
+                if ("RETURN_VALUE".equals(colName)) {
                     rsTmp.updateString(4, "@RETURN_VALUE");
                 }
             }

@@ -46,7 +46,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.19 2005-11-09 10:42:35 alin_sinpalean Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.20 2007-07-08 17:28:23 bheineman Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -191,7 +191,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
         pi.isOutput = true;
 
-        if (Support.getJdbcTypeName(sqlType).equals("ERROR")) {
+        if ("ERROR".equals(Support.getJdbcTypeName(sqlType))) {
             throw new SQLException(Messages.get("error.generic.badtype",
                     Integer.toString(sqlType)), "HY092");
         }

@@ -56,7 +56,7 @@ import java.util.HashSet;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: CachedResultSet.java,v 1.25 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: CachedResultSet.java,v 1.26 2007-07-08 17:28:23 bheineman Exp $
  * @todo Should add a "close statement" flag to the constructors
  */
 public class CachedResultSet extends JtdsResultSet {
@@ -528,7 +528,7 @@ public class CachedResultSet extends JtdsResultSet {
             if (ci.isKey) {
                 // If a table lacks a key Sybase flags all columns except timestamps as keys.
                 // This does not make much sense in the case of text or image fields!
-                if (ci.sqlType.equals("text") || ci.sqlType.equals("image")) {
+                if ("text".equals(ci.sqlType) || "image".equals(ci.sqlType)) {
                     ci.isKey = false;
                 } else {
                     isKeyed = true;
@@ -605,10 +605,10 @@ public class CachedResultSet extends JtdsResultSet {
         if (!isKeyed) {
             for (int i = 0; i < columns.length; i++) {
                 String type = columns[i].sqlType;
-                if (!type.equals("ntext") &&
-                        !type.equals("text") &&
-                        !type.equals("image") &&
-                        !type.equals("timestamp") &&
+                if (!"ntext".equals(type) &&
+                        !"text".equals(type) &&
+                        !"image".equals(type) &&
+                        !"timestamp".equals(type) &&
                         columns[i].tableName != null) {
                     columns[i].isKey = true;
                     isKeyed = true;
@@ -750,9 +750,9 @@ public class CachedResultSet extends JtdsResultSet {
             length  = (int)clob.length();
         }
         ParamInfo param = new ParamInfo(info, null, value, length);
-        param.isUnicode = info.sqlType.equals("nvarchar") ||
-                          info.sqlType.equals("nchar") ||
-                          info.sqlType.equals("ntext") ||
+        param.isUnicode = "nvarchar".equals(info.sqlType) ||
+				          "nchar".equals(info.sqlType) ||
+				          "ntext".equals(info.sqlType) ||
                           isUnicode;
         param.markerPos = pos;
 
@@ -850,9 +850,9 @@ public class CachedResultSet extends JtdsResultSet {
             int count = 0;
             for (int i = 0; i < columns.length; i++) {
                 if (currentRow[i] == null) {
-                    if (!columns[i].sqlType.equals("text")
-                            && !columns[i].sqlType.equals("ntext")
-                            && !columns[i].sqlType.equals("image")
+                    if (!"text".equals(columns[i].sqlType)
+                            && !"ntext".equals(columns[i].sqlType)
+                            && !"image".equals(columns[i].sqlType)
                             && columns[i].tableName != null) {
                         if (count > 0) {
                             sql.append(" AND ");
@@ -876,9 +876,9 @@ public class CachedResultSet extends JtdsResultSet {
                     } else {
                         // Include all available 'searchable' columns in updates/deletes to protect
                         // against lost updates.
-                        if (!columns[i].sqlType.equals("text")
-                                && !columns[i].sqlType.equals("ntext")
-                                && !columns[i].sqlType.equals("image")
+                        if (!"text".equals(columns[i].sqlType)
+                                && !"ntext".equals(columns[i].sqlType)
+                                && !"image".equals(columns[i].sqlType)
                                 && columns[i].tableName != null) {
                             if (count > 0) {
                                 sql.append(" AND ");

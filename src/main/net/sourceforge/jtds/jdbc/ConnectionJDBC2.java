@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.115 2007-07-08 16:44:29 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.116 2007-07-08 17:28:23 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -617,8 +617,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             TdsData.getNativeType(this, params[i]);
 
             if (serverType == Driver.SYBASE) {
-                if (params[i].sqlType.equals("text")
-                    || params[i].sqlType.equals("image")) {
+                if ("text".equals(params[i].sqlType)
+                    || "image".equals(params[i].sqlType)) {
                     return null; // Sybase does not support text/image params
                 }
             }

@@ -40,7 +40,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: SocketFactories.java,v 1.7 2005-04-28 14:29:30 alin_sinpalean Exp $
+ * @version $Id: SocketFactories.java,v 1.8 2007-07-08 17:28:24 bheineman Exp $
  */
 public class SocketFactories {
     /**
@@ -148,7 +148,7 @@ public class SocketFactories {
          */
         private SSLSocketFactory getFactory() throws IOException {
             try {
-                if (ssl.equals(Ssl.SSL_AUTHENTICATE)) {
+                if (Ssl.SSL_AUTHENTICATE.equals(ssl)) {
                     // the default factory will produce a socket that authenticates
                     // the server using its certificate chain.
                     return (SSLSocketFactory) SSLSocketFactory.getDefault();

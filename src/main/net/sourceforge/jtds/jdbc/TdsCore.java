@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.114 2006-06-23 18:00:56 matt_brinkley Exp $
+ * @version $Id: TdsCore.java,v 1.115 2007-07-08 17:28:23 bheineman Exp $
  */
 public class TdsCore {
     /**
@@ -1243,9 +1243,9 @@ public class TdsCore {
         // TODO Check if output parameters are handled ok
         // Check no text/image parameters
         for (int i = 0; i < params.length; i++) {
-            if (params[i].sqlType.equals("text")
-                || params[i].sqlType.equals("unitext")
-                || params[i].sqlType.equals("image")) {
+            if ("text".equals(params[i].sqlType)
+                || "unitext".equals(params[i].sqlType)
+                || "image".equals(params[i].sqlType)) {
                 return null; // Sadly no way
             }
         }
@@ -3597,13 +3597,13 @@ public class TdsCore {
         // we just give up and embed all text/image data in the SQL statement.
         //
         for (int i = 0; haveParams && i < parameters.length; i++) {
-            if (parameters[i].sqlType.equals("text")
-                || parameters[i].sqlType.equals("image")
-                || parameters[i].sqlType.equals("unitext")) {
+            if ("text".equals(parameters[i].sqlType)
+                || "image".equals(parameters[i].sqlType)
+                || "unitext".equals(parameters[i].sqlType)) {
                 if (procName != null && procName.length() > 0) {
                     // Call to store proc nothing we can do
-                    if (parameters[i].sqlType.equals("text")
-                        || parameters[i].sqlType.equals("unitext")) {
+                    if ("text".equals(parameters[i].sqlType)
+                        || "unitext".equals(parameters[i].sqlType)) {
                         throw new SQLException(
                                         Messages.get("error.chartoolong"), "HY000");
                     }

@@ -9,6 +9,7 @@ Changes from jTDS 1.2
    Windows.  This also fixes the problem of having spaces in the JAVA_HOME
    path.
  o [1567151] Applied HTML patches.
+ o [1567994] Updated equality checks.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

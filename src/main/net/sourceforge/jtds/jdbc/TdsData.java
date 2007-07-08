@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.57 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: TdsData.java,v 1.58 2007-07-08 17:28:23 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -854,7 +854,7 @@ public class TdsData {
                             in.getTdsVersion() < Driver.TDS70) {
                         // In TDS 4/5 zero length varchars are stored as a
                         // single space to distinguish them from nulls.
-                        return (value.equals(" ")) ? "" : value;
+                        return (" ".equals(value)) ? "" : value;
                     }
 
                     return value;
@@ -878,7 +878,7 @@ public class TdsData {
                     len = in.readInt();
                     if (len > 0) {
                         String tmp = in.readNonUnicodeString(len);
-                        if (tmp.equals(" ") && !ci.sqlType.equals("char")) {
+                        if (" ".equals(tmp) && !"char".equals(ci.sqlType)) {
                             tmp = "";
                         }
                         return tmp;
@@ -935,8 +935,8 @@ public class TdsData {
             case SYBLONGBINARY:
                 len = in.readInt();
                 if (len != 0) {
-                    if (ci.sqlType.equals("unichar") ||
-                        ci.sqlType.equals("univarchar")) {
+                    if ("unichar".equals(ci.sqlType) ||
+                    		"univarchar".equals(ci.sqlType)) {
                         char[] buf = new char[len / 2];
                         in.read(buf);
                         if ((len & 1) != 0) {
@@ -1245,7 +1245,7 @@ public class TdsData {
                         && (len <= SYB_LONGVAR_MAX / 2 || connection.getSybaseInfo(TdsCore.SYB_UNITEXT))
                         && connection.getSybaseInfo(TdsCore.SYB_UNICODE)
                         && connection.getUseUnicode()
-                        && !charset.equals("UTF-8")) {
+                        && !"UTF-8".equals(charset)) {
                         // Sybase can send values as unicode if conversion to the
                         // server charset fails.
                         // One option to determine if conversion will fail is to use
@@ -1570,7 +1570,7 @@ public class TdsData {
         out.write((byte) (pi.isOutput ? 1 : 0)); // Output param
         if (pi.sqlType.startsWith("univarchar")) {
             out.write((int) UDT_UNIVARCHAR);
-        } else if (pi.sqlType.equals("unitext")) {
+        } else if ("unitext".equals(pi.sqlType)) {
             out.write((int) UDT_UNITEXT);
         } else {
             out.write((int) 0); // user type
@@ -1590,7 +1590,7 @@ public class TdsData {
                 // It appears that type 3 = send text data
                 // and type 4 = send image or unitext data
                 // No idea if there is a type 1/2 or what they are.
-                out.write(pi.sqlType.equals("text") ? (byte) 3 : (byte) 4);
+                out.write("text".equals(pi.sqlType) ? (byte) 3 : (byte) 4);
                 out.write((byte)0);
                 out.write((byte)0);
                 break;
@@ -1600,7 +1600,7 @@ public class TdsData {
             case SYBBIT:
                 break;
             case SYBINTN:
-                out.write(pi.sqlType.equals("bigint") ? (byte) 8: (byte) 4);
+                out.write("bigint".equals(pi.sqlType) ? (byte) 8: (byte) 4);
                 break;
             case SYBFLTN:
                 if (pi.value instanceof Float) {
@@ -1765,7 +1765,7 @@ public class TdsData {
                     // Actual data needs to be written out in chunks of
                     // 8192 bytes.
                     //
-                    if (pi.sqlType.equals("unitext")) {
+                    if ("unitext".equals(pi.sqlType)) {
                         // Write out String as unicode bytes
                         String buf = pi.getString(pi.charsetInfo.getCharset());
                         int pos = 0;
@@ -1832,7 +1832,7 @@ public class TdsData {
                 if (pi.value == null) {
                     out.write((byte) 0);
                 } else {
-                    if (pi.sqlType.equals("bigint")) {
+                    if ("bigint".equals(pi.sqlType)) {
                         out.write((byte) 8);
                         out.write((long) ((Number) pi.value).longValue());
                     } else {
@@ -2248,10 +2248,10 @@ public class TdsData {
                 out.write((byte) pi.tdsType);
 
                 if (pi.value == null) {
-                    out.write((pi.sqlType.equals("bigint"))? (byte)8: (byte)4);
+                    out.write(("bigint".equals(pi.sqlType))? (byte)8: (byte)4);
                     out.write((byte) 0);
                 } else {
-                    if (pi.sqlType.equals("bigint")) {
+                    if ("bigint".equals(pi.sqlType)) {
                         out.write((byte) 8);
                         out.write((byte) 8);
                         out.write((long) ((Number) pi.value).longValue());
@@ -2666,11 +2666,11 @@ public class TdsData {
         if (value == null) {
             return true;
         }
-        if (charset.equals("UTF-8")) {
+        if ("UTF-8".equals(charset)) {
             // Should be no problem with UTF-8
             return true;
         }
-        if (charset.equals("ISO-8859-1")) {
+        if ("ISO-8859-1".equals(charset)) {
             // ISO_1 = lower byte of unicode
             for (int i = value.length() - 1; i >= 0; i--) {
                 if (value.charAt(i) > 255) {
@@ -2679,7 +2679,7 @@ public class TdsData {
             }
             return true;
         }
-        if (charset.equals("ISO-8859-15") || charset.equals("Cp1252")) {
+        if ("ISO-8859-15".equals(charset) || "Cp1252".equals(charset)) {
             // These will accept euro symbol
             for (int i = value.length() - 1; i >= 0; i--) {
                 // FIXME This is not correct! Cp1252 also contains other characters.
@@ -2693,7 +2693,7 @@ public class TdsData {
             }
             return true;
         }
-        if (charset.equals("US-ASCII")) {
+        if ("US-ASCII".equals(charset)) {
             for (int i = value.length() - 1; i >= 0; i--) {
                 if (value.charAt(i) > 127) {
                     return false; // Outside range

@@ -37,7 +37,7 @@ import net.sourceforge.jtds.util.Logger;
  * of the <code>get</code> methods.
  *
  * @author Alin Sinpalean
- * @version $Id: CharsetInfo.java,v 1.4 2005-04-20 16:49:14 alin_sinpalean Exp $
+ * @version $Id: CharsetInfo.java,v 1.5 2007-07-08 17:28:23 bheineman Exp $
  */
 public final class CharsetInfo {
     //
@@ -213,7 +213,7 @@ public final class CharsetInfo {
      * @param descriptor the charset descriptor
      */
     public CharsetInfo(String descriptor) {
-        wideChars = !descriptor.substring(0, 1).equals("1");
+        wideChars = !"1".equals(descriptor.substring(0, 1));
         charset = descriptor.substring(2);
     }
 

@@ -36,7 +36,7 @@ import java.util.Properties;
  * Unit tests for the {@link Driver} class.
  *
  * @author David D. Kilzer
- * @version $Id: DriverUnitTest.java,v 1.19 2005-09-09 22:12:39 ddkilzer Exp $
+ * @version $Id: DriverUnitTest.java,v 1.20 2007-07-08 18:08:54 bheineman Exp $
  */
 public class DriverUnitTest extends UnitTestBase {
 
@@ -252,7 +252,7 @@ public class DriverUnitTest extends UnitTestBase {
 
 
     /**
-     * Class used to test {@link Driver#setupConnectProperties(String, java.util.Properties)}.
+     * Class used to test <code>Driver.setupConnectProperties(String, java.util.Properties)</code>.
      */
     public static class Test_Driver_setupConnectProperties extends DefaultPropertiesTestLibrary {
 

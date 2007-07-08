@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbc.TdsCore;
  * Unit tests for the {@link SharedNamedPipe} class.
  *
  * @author David D. Kilzer
- * @version $Id: NamedPipeUnitTest.java,v 1.8 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: NamedPipeUnitTest.java,v 1.9 2007-07-08 18:08:54 bheineman Exp $
  */
 public class NamedPipeUnitTest extends UnitTestBase {
 
@@ -43,7 +43,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
+     * Test that <code>Support.calculateNamedPipeBufferSize(int, int)</code>
      * sets the buffer size appropriately for TDS 4.2 when the packet
      * size is set to 0.
      */
@@ -54,7 +54,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
+     * Test that <code>Support.calculateNamedPipeBufferSize(int, int)</code>
      * sets the buffer size appropriately for TDS 5.0 when the packet
      * size is set to 0.
      */
@@ -65,7 +65,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
+     * Test that <code>Support.calculateNamedPipeBufferSize(int, int)</code>
      * sets the buffer size appropriately for TDS 7.0 when the packet
      * size is set to 0.
      */
@@ -76,7 +76,7 @@ public class NamedPipeUnitTest extends UnitTestBase {
 
 
     /**
-     * Test that {@link Support#calculateNamedPipeBufferSize(int, int)}
+     * Test that <code>Support.calculateNamedPipeBufferSize(int, int)</code>
      * sets the buffer size appropriately for TDS 8.0 when the packet
      * size is set to 0.
      */

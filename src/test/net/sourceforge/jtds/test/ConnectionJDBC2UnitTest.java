@@ -35,7 +35,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author David Kilzer
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2UnitTest.java,v 1.10 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: ConnectionJDBC2UnitTest.java,v 1.11 2007-07-08 18:08:54 bheineman Exp $
  */
 public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
@@ -131,7 +131,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
 
     /**
-     * Class used to test {@link net.sourceforge.jtds.jdbc.ConnectionJDBC2#unpackProperties(Properties)}.
+     * Class used to test <code>net.sourceforge.jtds.jdbc.ConnectionJDBC2.unpackProperties(Properties)</code>.
      */
     public static class Test_ConnectionJDBC2_unpackProperties
             extends DefaultPropertiesTestLibrary {

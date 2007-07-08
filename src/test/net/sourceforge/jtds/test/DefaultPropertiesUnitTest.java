@@ -30,7 +30,7 @@ import java.util.HashMap;
  * Unit tests for the {@link net.sourceforge.jtds.jdbc.DefaultProperties} class.
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesUnitTest.java,v 1.8 2005-12-22 20:48:52 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesUnitTest.java,v 1.9 2007-07-08 18:08:54 bheineman Exp $
  */
 public class DefaultPropertiesUnitTest extends UnitTestBase {
 
@@ -46,7 +46,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
 
     /**
      * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String)}
+     * <code>DefaultProperties.addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String)</code>
      * sets a default property if the property is not already set.
      */
     public void test_addDefaultPropertyIfNotSet_PropertyNotSet() {
@@ -63,7 +63,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
 
     /**
      * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String)}
+     * <code>DefaultProperties.addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String)</code>
      * does <em>not</em> set a default property if the property is already set.
      */
     public void test_addDefaultPropertyIfNotSet_PropertyAlreadySet() {
@@ -81,7 +81,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
 
     /**
      * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
+     * <code>DefaultProperties.addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)</code>
      * does <em>not</em> set a default property if the <code>defaultKey</code> is not set.
      */
     public void test_addDefaultPropertyIfNotSet_DefaultKeyNotSet() {
@@ -98,7 +98,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
 
     /**
      * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
+     * <code>DefaultProperties.addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)</code>
      * sets a default property if the property is not already set.
      */
     public void test_addDefaultPropertyIfNotSet_DefaultKeySet_PropertyNotSet() {
@@ -119,7 +119,7 @@ public class DefaultPropertiesUnitTest extends UnitTestBase {
 
     /**
      * Tests that
-     * {@link DefaultProperties#addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)}
+     * <code>DefaultProperties.addDefaultPropertyIfNotSet(java.util.Properties, java.lang.String, java.lang.String, java.util.Map)</code>
      * does <em>not</em> set a default property if the property is already set.
      */
     public void test_addDefaultPropertyIfNotSet_DefaultKeySet_PropertyAlreadySet() {

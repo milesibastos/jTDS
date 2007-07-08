@@ -35,7 +35,7 @@ import net.sourceforge.jtds.jdbc.Driver;
  * Unit tests for the {@link JtdsDataSource} class.
  *
  * @author David D. Kilzer
- * @version $Id: JtdsDataSourceUnitTest.java,v 1.20 2005-12-22 15:35:32 ddkilzer Exp $
+ * @version $Id: JtdsDataSourceUnitTest.java,v 1.21 2007-07-08 18:08:54 bheineman Exp $
  */
 public class JtdsDataSourceUnitTest extends UnitTestBase {
 
@@ -170,7 +170,7 @@ public class JtdsDataSourceUnitTest extends UnitTestBase {
     }
 
 
-    /** Class used to test {@link JtdsDataSource#addNonNullProperties(Properties, String, String)}. */
+    /** Class used to test <code>JtdsDataSource.addNonNullProperties(Properties, String, String)</code>. */
     public static class Test_JtdsDataSource_addNonNullProperties
             extends DefaultPropertiesTestLibrary {
 

@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -55,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.57 2007-07-08 15:35:05 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.58 2007-07-08 16:39:24 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*

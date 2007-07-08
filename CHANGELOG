@@ -10,6 +10,8 @@ Changes from jTDS 1.2
    in the JAVA_HOME path.
  o Applied patch [1567151] HTML validation patches.
  o Applied patch [1567994] Updated equality checks.
+ o Corrected bug [1623668] Lost apostrophes in statement parameter
+   values (prepareSQL=0); added test to ensure that there are no regressions.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

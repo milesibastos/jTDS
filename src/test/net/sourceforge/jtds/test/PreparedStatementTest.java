@@ -18,16 +18,11 @@
 package net.sourceforge.jtds.test;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Types;
+import java.sql.*;
+import java.util.*;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.45 2005-11-23 16:36:20 alin_sinpalean Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.46 2007-07-08 18:26:26 bheineman Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -994,7 +989,57 @@ public class PreparedStatementTest extends TestBase {
         assertEquals(29000000, rs.getBigDecimal(1).intValue());
         stmt.close();
     }
+    
+    /**
+     * Test for bug [1623668] Lost apostrophes in statement parameter values(prepareSQL=0)
+     */
+    public void testPrepareSQL0() throws Exception {
+        Properties props = new Properties();
+        props.setProperty("prepareSQL", "0");
+        Connection con = getConnection(props);
 
+        try {
+            Statement stmt = con.createStatement();
+            stmt.execute("CREATE TABLE #prepareSQL0 (position int, data varchar(32))");
+            stmt.close();
+            
+        	PreparedStatement ps = con.prepareStatement("INSERT INTO #prepareSQL0 (position, data) VALUES (?, ?)");
+        	
+        	String data1 = "foo'foo";
+        	String data2 = "foo''foo";
+        	String data3 = "foo'''foo";
+        	
+        	ps.setInt(1, 1);
+        	ps.setString(2, data1);
+        	ps.executeUpdate();
+        	
+        	ps.setInt(1, 2);
+        	ps.setString(2, data2);
+        	ps.executeUpdate();
+
+        	ps.setInt(1, 3);
+        	ps.setString(2, data3);
+        	ps.executeUpdate();
+        	
+        	ps.close();
+        	ps = con.prepareStatement("SELECT data FROM #prepareSQL0 ORDER BY position");
+        	ResultSet rs = ps.executeQuery();
+        	
+        	rs.next();
+        	assertEquals(data1, rs.getString(1));
+        	
+        	rs.next();
+        	assertEquals(data2, rs.getString(1));
+
+        	rs.next();
+        	assertEquals(data3, rs.getString(1));
+        	
+        	rs.close();
+        } finally {
+            con.close();
+        }
+    }
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

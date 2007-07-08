@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.54 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: Support.java,v 1.55 2007-07-08 18:26:26 bheineman Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -774,12 +774,6 @@ public class Support {
 
                 if (c == '\'') {
                     buf.append('\'');
-
-                    if (i + 1 < len) {
-                        if (tmp.charAt(i + 1) == '\'') {
-                            i++;
-                        }
-                    }
                 }
 
                 buf.append(c);

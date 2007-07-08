@@ -26,7 +26,7 @@ import java.sql.ResultSet;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.7 2005-12-05 13:51:29 alin_sinpalean Exp $
+ * @version $Id: BatchTest.java,v 1.8 2007-07-08 19:26:57 bheineman Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -77,7 +77,6 @@ public class BatchTest extends DatabaseTestCase {
      * Test batched statements.
      */
     public void testBatch() throws Exception {
-//        DriverManager.setLogStream(System.out);
         Statement stmt = con.createStatement();
         stmt.execute("create table #testbatch (id int, data varchar(255))");
         for (int i = 0; i < 5; i++) {
@@ -102,12 +101,14 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(EXECUTE_FAILED, x[3]);
             assertEquals(EXECUTE_FAILED, x[4]);
         } else {
+            // Sybase - Entire batch fails due to data conversion error 
+            // detected in statement 3
             assertEquals(5, x.length);
-            assertEquals(1, x[0]);
-            assertEquals(1, x[1]);
+            assertEquals(EXECUTE_FAILED, x[0]);
+            assertEquals(EXECUTE_FAILED, x[1]);
             assertEquals(EXECUTE_FAILED, x[2]);
-            assertEquals(1, x[3]);
-            assertEquals(1, x[4]);
+            assertEquals(EXECUTE_FAILED, x[3]);
+            assertEquals(EXECUTE_FAILED, x[4]);
         }
         // Now without errors
         stmt.execute("TRUNCATE TABLE #testbatch");
@@ -127,7 +128,6 @@ public class BatchTest extends DatabaseTestCase {
      * Test batched prepared statements.
      */
     public void testPrepStmtBatch() throws Exception {
-//        DriverManager.setLogStream(System.out);
         Statement stmt = con.createStatement();
         stmt.execute("create table #testbatch (id int, data varchar(255))");
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #testbatch VALUES (?, ?)");
@@ -154,12 +154,14 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(EXECUTE_FAILED, x[3]);
             assertEquals(EXECUTE_FAILED, x[4]);
         } else {
+            // Sybase - Entire batch fails due to data conversion error 
+            // detected in statement 3
             assertEquals(5, x.length);
-            assertEquals(1, x[0]);
-            assertEquals(1, x[1]);
+            assertEquals(EXECUTE_FAILED, x[0]);
+            assertEquals(EXECUTE_FAILED, x[1]);
             assertEquals(EXECUTE_FAILED, x[2]);
-            assertEquals(1, x[3]);
-            assertEquals(1, x[4]);
+            assertEquals(EXECUTE_FAILED, x[3]);
+            assertEquals(EXECUTE_FAILED, x[4]);
         }
         // Now without errors
         stmt.execute("TRUNCATE TABLE #testbatch");
@@ -181,7 +183,6 @@ public class BatchTest extends DatabaseTestCase {
      * Test batched callable statements.
      */
     public void testCallStmtBatch() throws Exception {
-//        DriverManager.setLogStream(System.out);
         dropProcedure("jTDS_PROC");
         try {
             Statement stmt = con.createStatement();
@@ -216,8 +217,8 @@ public class BatchTest extends DatabaseTestCase {
                 assertEquals(1, x[0]);
                 assertEquals(1, x[1]);
                 assertEquals(EXECUTE_FAILED, x[2]);
-                assertEquals(EXECUTE_FAILED, x[3]);
-                assertEquals(EXECUTE_FAILED, x[4]);
+                assertEquals(1, x[3]);
+                assertEquals(1, x[4]);
             }
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
@@ -246,7 +247,6 @@ public class BatchTest extends DatabaseTestCase {
      * Test batched callable statements where the call includes literal parameters which prevent the use of RPC calls.
      */
     public void testCallStmtBatch2() throws Exception {
-//        DriverManager.setLogStream(System.out);
         dropProcedure("jTDS_PROC");
         try {
             Statement stmt = con.createStatement();
@@ -280,8 +280,8 @@ public class BatchTest extends DatabaseTestCase {
                 assertEquals(1, x[0]);
                 assertEquals(1, x[1]);
                 assertEquals(EXECUTE_FAILED, x[2]);
-                assertEquals(EXECUTE_FAILED, x[3]);
-                assertEquals(EXECUTE_FAILED, x[4]);
+                assertEquals(1, x[3]);
+                assertEquals(1, x[4]);
             }
             // Now without errors
             stmt.execute("TRUNCATE TABLE #testbatch");
@@ -356,7 +356,6 @@ public class BatchTest extends DatabaseTestCase {
      * Test for bug [1371295] SQL Server continues after duplicate key error.
      */
     public void testPrepStmtBatchDupKey() throws Exception {
-//        DriverManager.setLogStream(System.out);
         Statement stmt = con.createStatement();
         stmt.execute("create table #testbatch (id int, data varchar(255), PRIMARY KEY (id))");
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #testbatch VALUES (?, ?)");
@@ -401,7 +400,6 @@ public class BatchTest extends DatabaseTestCase {
      * Test for bug [1371295] SQL Server continues after duplicate key error.
      */
     public void testBatchDupKey() throws Exception {
-//        DriverManager.setLogStream(System.out);
         Statement stmt = con.createStatement();
         stmt.execute("create table #testbatch (id int, data varchar(255), PRIMARY KEY (id))");
         for (int i = 0; i < 5; i++) {

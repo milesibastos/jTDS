@@ -31,6 +31,7 @@ import java.sql.Ref;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Map;
 
@@ -46,7 +47,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.20 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.21 2007-07-08 19:26:57 bheineman Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -128,6 +129,43 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
                     Messages.get("error.generic.closed", "CallableStatement"), "HY010");
         }
     }
+    
+    /**
+     * Execute the SQL batch on a Sybase server.
+     * <p/>For the rare case of CallableStatement batches each statement
+     * is executed individually. This ensures that problems with the server
+     * reading into the middle of a statement are avoided.
+     * See bug report [1374518] for more details.
+     * @param size the total size of the batch.
+     * @param executeSize the maximum number of statements to send in one request 
+     *  (ignored for this version of the method as only one statement will be sent
+     *  at a time).
+     * @param counts the returned update counts.
+     * @return Chained exceptions linked to a <code>SQLException</code>.
+     * @throws SQLException
+     */
+    protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts)
+    throws SQLException
+    {
+        SQLException sqlEx = null;
+        
+        for (int i = 0; i < size;) {
+            Object value = batchValues.get(i);
+            ++i;
+            tds.executeSQL(sql, procName, (ParamInfo[])value, true, 0, -1, -1, true);
+
+            // If the batch has been sent, process the results
+            sqlEx = tds.getBatchCounts(counts, sqlEx);
+ 
+            // If a serious error then we stop execution now as count 
+            // is too small.
+            if (sqlEx != null && counts.size() != i) {
+                break;
+            }
+        }
+        return sqlEx;
+    }
+
 
 // ---------- java.sql.CallableStatement methods follow ----------
 

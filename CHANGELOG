@@ -1,7 +1,7 @@
 Changes from jTDS 1.2
 =====================
 
-07/07/2007 - Brian Heineman
+07/08/2007 - Brian Heineman
  o [1571660] Changed reference from Statement.EXECUTE_FAILED (which was
    added in Java 1.4) to JtdsStatement.EXECUTE_FAILED.
  o [1567127] Corrected Eclipse javadoc warnings.

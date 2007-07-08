@@ -23,6 +23,7 @@ Changes from jTDS 1.2
    attached to the issue.
  o Corrected bug [1460746] Batching of Prepare Statements by applying the patch
    attached to the issue.
+ o Applied patch [1460207] Connection.setCatalog() has invalid check
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

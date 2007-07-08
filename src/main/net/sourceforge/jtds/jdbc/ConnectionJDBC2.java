@@ -63,7 +63,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.116 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.117 2007-07-08 19:55:22 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2177,8 +2177,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (currentDatabase != null && currentDatabase.equals(catalog)) {
             return;
         }
-
-        if (catalog.length() > 32 || catalog.length() < 1) {
+        
+        int maxlength = tdsVersion >= Driver.TDS70 ? 128 : 30;
+        
+        if (catalog.length() > maxlength || catalog.length() < 1) {
             throw new SQLException(
                     Messages.get("error.generic.badparam",
                             catalog,

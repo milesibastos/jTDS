@@ -21,6 +21,8 @@ Changes from jTDS 1.2
    by applying the patch attached to the issue.
  o Corrected bug [1374518] rollback fails on Sybase 12.5 by applying the patch
    attached to the issue.
+ o Corrected bug [1460746] Batching of Prepare Statements by applying the patch
+   attached to the issue.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

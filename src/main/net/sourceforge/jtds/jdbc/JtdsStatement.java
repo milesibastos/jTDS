@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.61 2007-07-08 19:26:57 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.62 2007-07-08 19:40:48 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -343,7 +343,7 @@ public class JtdsStatement implements java.sql.Statement {
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
-            tds.executeSQL((String)value, null, null, true, 0, -1, -1, executeNow);
+            tds.executeSQL((String)value, null, null, false, 0, -1, -1, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
@@ -383,7 +383,7 @@ public class JtdsStatement implements java.sql.Statement {
             sql.append((String)value).append(' ');
             
             if (executeNow) {
-                tds.executeSQL(sql.toString(), null, null, true, 0, -1, -1, true);
+                tds.executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
                 sql.setLength(0);
                 // If the batch has been sent, process the results
                 sqlEx = tds.getBatchCounts(counts, sqlEx);

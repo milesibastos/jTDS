@@ -26,7 +26,7 @@ import java.sql.ResultSet;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.8 2007-07-08 19:26:57 bheineman Exp $
+ * @version $Id: BatchTest.java,v 1.9 2007-07-08 19:40:48 bheineman Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -93,7 +93,8 @@ public class BatchTest extends DatabaseTestCase {
         } catch (BatchUpdateException e) {
             x = e.getUpdateCounts();
         }
-        if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")) {
+        if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")
+            && con.getMetaData().getDatabaseMajorVersion() > 6 ) {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);
@@ -101,7 +102,7 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(EXECUTE_FAILED, x[3]);
             assertEquals(EXECUTE_FAILED, x[4]);
         } else {
-            // Sybase - Entire batch fails due to data conversion error 
+            // Sybase or SQL Server 6.5 - Entire batch fails due to data conversion error 
             // detected in statement 3
             assertEquals(5, x.length);
             assertEquals(EXECUTE_FAILED, x[0]);
@@ -191,6 +192,25 @@ public class BatchTest extends DatabaseTestCase {
                     "INSERT INTO #testbatch VALUES (convert(int, @p1), @p2)");
             CallableStatement cstmt = con.prepareCall("{call jTDS_PROC (?, ?)}");
             for (int i = 0; i < 5; i++) {
+                cstmt.setString(1, Integer.toString(i));
+                cstmt.setString(2, "This is line " + i);
+                cstmt.addBatch();
+            }
+            int x[];
+            try {
+                x = cstmt.executeBatch();
+            } catch (BatchUpdateException e) {
+                x = e.getUpdateCounts();
+            }
+            assertEquals(5, x.length);
+            assertEquals(1, x[0]);
+            assertEquals(1, x[1]);
+            assertEquals(1, x[2]);
+            assertEquals(1, x[3]);
+            assertEquals(1, x[4]);
+            // Now with errors
+            stmt.execute("TRUNCATE TABLE #testbatch");
+            for (int i = 0; i < 5; i++) {
                 if (i == 2) {
                     cstmt.setString(1, "XXX");
                 } else {
@@ -199,7 +219,6 @@ public class BatchTest extends DatabaseTestCase {
                 cstmt.setString(2, "This is line " + i);
                 cstmt.addBatch();
             }
-            int x[];
             try {
                 x = cstmt.executeBatch();
             } catch (BatchUpdateException e) {
@@ -220,24 +239,6 @@ public class BatchTest extends DatabaseTestCase {
                 assertEquals(1, x[3]);
                 assertEquals(1, x[4]);
             }
-            // Now without errors
-            stmt.execute("TRUNCATE TABLE #testbatch");
-            for (int i = 0; i < 5; i++) {
-                cstmt.setString(1, Integer.toString(i));
-                cstmt.setString(2, "This is line " + i);
-                cstmt.addBatch();
-            }
-            try {
-                x = cstmt.executeBatch();
-            } catch (BatchUpdateException e) {
-                x = e.getUpdateCounts();
-            }
-            assertEquals(5, x.length);
-            assertEquals(1, x[0]);
-            assertEquals(1, x[1]);
-            assertEquals(1, x[2]);
-            assertEquals(1, x[3]);
-            assertEquals(1, x[4]);
         } finally {
             dropProcedure("jTDS_PROC");
         }
@@ -434,6 +435,100 @@ public class BatchTest extends DatabaseTestCase {
         assertEquals(1, x[2]);
         assertEquals(1, x[3]);
         assertEquals(1, x[4]);
+    }
+    
+    /**
+     * Test for PreparedStatement batch with no parameters.
+     */
+    public void testPrepStmtNoParams() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testbatch (id numeric(10) identity, data varchar(255), PRIMARY KEY (id))");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #testbatch (data) VALUES ('Same each time')");
+        for (int i = 0; i < 5; i++) {
+            pstmt.addBatch();
+        }
+        int x[];
+        try {
+            x = pstmt.executeBatch();
+        } catch (BatchUpdateException e) {
+            x = e.getUpdateCounts();
+        }
+        assertEquals(5, x.length);
+        assertEquals(1, x[0]);
+        assertEquals(1, x[1]);
+        assertEquals(1, x[2]);
+        assertEquals(1, x[3]);
+        assertEquals(1, x[4]);
+    }
+
+    /**
+     * Test for PreparedStatement batch with variable parameter types.
+     */
+    public void testPrepStmtVariableParams() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #testbatch (id int, data int, PRIMARY KEY (id))");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #testbatch VALUES (?, convert(int, ?))");
+        for (int i = 0; i < 5; i++) {
+            pstmt.setInt(1, i);
+            if (i == 2) {
+                // This statement will require a string param instead of an int
+                pstmt.setString(2, "123");
+            } else {
+                pstmt.setInt(2, 123);
+            }
+            pstmt.addBatch();
+        }
+        int x[];
+        try {
+            x = pstmt.executeBatch();
+        } catch (BatchUpdateException e) {
+            x = e.getUpdateCounts();
+        }
+        assertEquals(5, x.length);
+        assertEquals(1, x[0]);
+        assertEquals(1, x[1]);
+        assertEquals(1, x[2]);
+        assertEquals(1, x[3]);
+        assertEquals(1, x[4]);
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #testbatch");
+        assertNotNull(rs);
+        int i = 0;
+        while (rs.next()) {
+            assertEquals(123, rs.getInt(2));
+            i++;
+        }
+        assertEquals(5, i);
+    }
+    
+    /**
+     * Test batched callable statements where the call has no parameters.
+     */
+    public void testCallStmtNoParams() throws Exception {
+        dropProcedure("jTDS_PROC");
+        try {
+            Statement stmt = con.createStatement();
+            stmt.execute("create table #testbatch (id numeric(10) identity, data varchar(255))");
+            stmt.execute("create proc jTDS_PROC  as " +
+                    "INSERT INTO #testbatch (data) VALUES ('same each time')");
+            CallableStatement cstmt = con.prepareCall("{call jTDS_PROC}");
+            for (int i = 0; i < 5; i++) {
+                cstmt.addBatch();
+            }
+            int x[];
+            try {
+                x = cstmt.executeBatch();
+            } catch (BatchUpdateException e) {
+                x = e.getUpdateCounts();
+            }
+            assertEquals(5, x.length);
+            assertEquals(1, x[0]);
+            assertEquals(1, x[1]);
+            assertEquals(1, x[2]);
+            assertEquals(1, x[3]);
+            assertEquals(1, x[4]);
+        } finally {
+            dropProcedure("jTDS_PROC");
+        }
     }
 
     public static void main(String[] args) {

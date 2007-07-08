@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.61 2007-07-08 19:26:57 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.62 2007-07-08 19:40:48 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -201,6 +201,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     
     /**
      * Execute the SQL batch on a MS server.
+     * <p/>When running with prepareSQL = 1 or 3, the driver will first prepare
+     * temporary stored procedures or statements for each parameter combination
+     * found in the batch. The handles to these pre-preared statements will then
+     * be used to execute the actual batch statements. 
      * @param size the total size of the batch.
      * @param executeSize the maximum number of statements to send in one request.
      * @param counts the returned update counts.
@@ -208,18 +212,37 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException
      */
     protected SQLException executeMSBatch(int size, int executeSize, ArrayList counts)
-    throws SQLException
-    {
+    throws SQLException {
+        if (parameters.length == 0) {
+            // There are no parameters each SQL call is the same so
+            // execute as a simple batch
+            return super.executeMSBatch(size, executeSize, counts);
+        }
         SQLException sqlEx = null;
+        String procHandle[] = null;
+        //
+        // Prepare any statements before executing the batch
+        //
+        if (connection.getPrepareSql() == TdsCore.TEMPORARY_STORED_PROCEDURES
+             || connection.getPrepareSql() == TdsCore.PREPARE) {
+            procHandle = new String[size];
+            for (int i = 0; i < size; i++) {
+                // Prepare the statement
+                procHandle[i] = connection.prepareSQL(this, sql, (ParamInfo[])batchValues.get(i), false, false);
+            }
+        }
+        
         tds.startBatch();
+        
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
+            if (procHandle != null) {
+                procName = procHandle[i];
+            }
             ++i;
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
-            // procName will contain the procedure name for CallableStatements
-            // and null for PreparedStatements
             tds.executeSQL(sql, procName, (ParamInfo[])value, false, 0, -1, -1, executeNow);
 
             // If the batch has been sent, process the results
@@ -248,9 +271,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException
      */
     protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts)
-    throws SQLException
-    {
-        
+    throws SQLException {
+        if (parameters.length == 0) {
+            // There are no parameters each SQL call is the same so
+            // execute as a simple batch
+            return super.executeSybaseBatch(size, executeSize, counts);
+        }        
         // Revise the executeSize down if too many parameters will be required.
         // Be conservative the actual maximums are 256 for older servers and 2048.
         int maxParams = 

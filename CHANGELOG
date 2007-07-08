@@ -8,7 +8,7 @@ Changes from jTDS 1.2
  o Applied patch [1567332] Updated build file to work with or without
    backslashes on Windows.  This also fixes the problem of having spaces
    in the JAVA_HOME path.
- o Applied patch [1567151] Applied HTML patches.
+ o Applied patch [1567151] HTML validation patches.
  o Applied patch [1567994] Updated equality checks.
  
 06/23/2006 - Matt Brinkley

@@ -5,6 +5,9 @@ Changes from jTDS 1.2
  o [1571660] Changed reference from Statement.EXECUTE_FAILED (which was
    added in Java 1.4) to JtdsStatement.EXECUTE_FAILED.
  o [1567127] Corrected Eclipse javadoc warnings.
+ o [1567332] Updated build file to work with or without backslashes on
+   Windows.  This also fixes the problem of having spaces in the JAVA_HOME
+   path.
  
 06/23/2006 - Matt Brinkley
  o Oops...checked in some test code.  I backed out those changes.

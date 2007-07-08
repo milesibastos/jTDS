@@ -131,7 +131,7 @@ the stored procedure has output parameters).</p>
   <td class="length">X</td>
   <td class="value">XX XX XX...</td>
   <td class="description">Column size (variable size data only): 4 bytes for TEXT, NTEXT and IMAGE
-   data, 2 bytes for large data (type & 0x80 != 0), 1 byte for other data
+   data, 2 bytes for large data (type &amp; 0x80 != 0), 1 byte for other data
   </td>
  </tr>
  <tr>
@@ -351,13 +351,13 @@ packet. Returned by SELECT .. FOR BROWSE queries.</p>
   <td class="offset repeat">XX</td>
   <td class="length">1</td>
   <td class="value">XX</td>
-  <td class="description">Column name length (only present if flags & 0x20 != 0)</td>
+  <td class="description">Column name length (only present if flags &amp; 0x20 != 0)</td>
  </tr>
  <tr>
   <td class="offset repeat">XX</td>
   <td class="length">X</td>
   <td class="value">XX XX XX ...</td>
-  <td class="description">Column name (only present if flags & 0x20 != 0, the TDS_COLMETADATA contains the label/alias)</td>
+  <td class="description">Column name (only present if flags &amp; 0x20 != 0, the TDS_COLMETADATA contains the label/alias)</td>
  </tr>
 </table>
 <p>Marked fields are repeated for each column coming from some table (watch packet size for end).</p>
@@ -533,7 +533,7 @@ VARCHAR).</p>
   <td class="length">X</td>
   <td class="value">XX ...</td>
   <td class="description">Maximum size (only variable size types): 2 bytes for large types (type
-   & 0x80 != 0), 1 byte for all other types (TEXT, NTEXT and IMAGE cannot be parameters)
+   &amp; 0x80 != 0), 1 byte for all other types (TEXT, NTEXT and IMAGE cannot be parameters)
   </td>
  </tr>
  <tr>
@@ -552,7 +552,7 @@ VARCHAR).</p>
   <td class="offset">XX</td>
   <td class="length">X</td>
   <td class="value">XX ...</td>
-  <td class="description">Actual size (only variable size types): 2 bytes for large types (type &
+  <td class="description">Actual size (only variable size types): 2 bytes for large types (type &amp;
    0x80 != 0), 1 byte for all other types (TEXT, NTEXT and IMAGE cannot be parameters)
   </td>
  </tr>

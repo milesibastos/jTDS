@@ -24,7 +24,7 @@ import java.io.*;
  * server using local named pipes (will only work on Windows).
  *
  * @author  Adam Etheredge
- * @version $Id: SharedLocalNamedPipe.java,v 1.11 2005-12-22 20:48:52 ddkilzer Exp $
+ * @version $Id: SharedLocalNamedPipe.java,v 1.12 2007-07-08 21:38:13 bheineman Exp $
  */
 public class SharedLocalNamedPipe extends SharedSocket {
     /**
@@ -39,7 +39,7 @@ public class SharedLocalNamedPipe extends SharedSocket {
      * @throws IOException if an I/O error occurs
      */
     public SharedLocalNamedPipe(ConnectionJDBC2 connection) throws IOException {
-        super(connection.getTdsVersion(), connection.getServerType());
+        super(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
 
         final String serverName = connection.getServerName();
         final String instanceName = connection.getInstanceName();

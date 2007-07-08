@@ -180,6 +180,9 @@
           Java will not connect to the database.  Currently has no effect when
           using named pipes to connect to a database (see
           <code>namedPipe</code>).  Since after jTDS-1.2.</dd>
+        <dt><code>bufferDir</code> (default - <code>System.getProperty("java.io.tmpdir")</code>)</dt>
+        <dd>Controls the destination where data is buffered to disk.<br/>
+          See also <code>bufferMaxMemory</code> and <code>bufferMinPackets</code>.</dd>
         <dt><code>bufferMaxMemory</code> (default - <code>1024</code>)</dt>
         <dd>Controls the global buffer memory limit for all connections (in
           kilobytes). When the amount of buffered server response packets

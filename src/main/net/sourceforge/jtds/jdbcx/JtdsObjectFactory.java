@@ -31,7 +31,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.23 2005-12-22 17:06:58 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.24 2007-07-08 21:38:13 bheineman Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -116,6 +116,10 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object batchSize = ref.get(Messages.get(Driver.BATCHSIZE)).getContent();
             if (batchSize != null) {
                 ds.setBatchSize(Integer.parseInt((String) batchSize));
+            }
+            final Object bufferDir = ref.get(Messages.get(Driver.BUFFERDIR)).getContent();
+            if (bufferDir != null) {
+                ds.setBufferDir((String) bufferDir);
             }
             final Object bufferMaxMemory = ref.get(Messages.get(Driver.BUFFERMAXMEMORY)).getContent();
             if (bufferMaxMemory != null) {

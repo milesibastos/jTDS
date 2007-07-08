@@ -17,10 +17,7 @@
 //
 package net.sourceforge.jtds.jdbcx;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
@@ -45,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.40 2005-12-22 17:06:58 ddkilzer Exp $
+ * @version $Id: JtdsDataSource.java,v 1.41 2007-07-08 21:38:13 bheineman Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -81,6 +78,7 @@ public class JtdsDataSource
     protected String socketTimeout;
     protected String ssl;
     protected String batchSize;
+    protected String bufferDir;
     protected String bufferMaxMemory;
     protected String bufferMinPackets;
     protected String cacheMetaData;
@@ -221,6 +219,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.LOGFILE), logFile));
         ref.add(new StringRefAddr(Messages.get(Driver.SSL), ssl));
         ref.add(new StringRefAddr(Messages.get(Driver.BATCHSIZE), batchSize));
+        ref.add(new StringRefAddr(Messages.get(Driver.BUFFERDIR), bufferDir));
         ref.add(new StringRefAddr(Messages.get(Driver.BUFFERMAXMEMORY), bufferMaxMemory));
         ref.add(new StringRefAddr(Messages.get(Driver.BUFFERMINPACKETS), bufferMinPackets));
         ref.add(new StringRefAddr(Messages.get(Driver.CACHEMETA), cacheMetaData));
@@ -543,6 +542,18 @@ public class JtdsDataSource
         return Integer.parseInt(batchSize);
     }
 
+    public String getBufferDir() {
+        if (bufferDir == null) {
+            return System.getProperty("java.io.tmpdir");
+        }
+        
+        return bufferDir;
+    }
+
+    public void setBufferDir(String bufferDir) {
+        this.bufferDir = bufferDir;
+    }
+    
     public int getBufferMaxMemory() {
         if (bufferMaxMemory == null) {
             return 0;
@@ -687,6 +698,9 @@ public class JtdsDataSource
         }
         if (batchSize != null) {
             props.setProperty(Messages.get(Driver.BATCHSIZE), batchSize);
+        }
+        if (bufferDir != null) {
+            props.setProperty(Messages.get(Driver.BUFFERDIR), bufferDir);
         }
         if (bufferMaxMemory != null) {
             props.setProperty(Messages.get(Driver.BUFFERMAXMEMORY), bufferMaxMemory);

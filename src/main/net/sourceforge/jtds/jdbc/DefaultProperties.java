@@ -17,6 +17,7 @@
 //
 package net.sourceforge.jtds.jdbc;
 
+import java.io.*;
 import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;
@@ -46,7 +47,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.29 2007-07-08 16:44:29 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.30 2007-07-08 21:38:13 bheineman Exp $
  */
 public final class DefaultProperties {
 
@@ -110,6 +111,8 @@ public final class DefaultProperties {
     public static final String PROG_NAME = "jTDS";
     /** Default <code>tcpNoDelay</code> property. */
     public static final String TCP_NODELAY = "true";
+    /** Default <code>tmpDir</code> property. */
+    public static final String BUFFER_DIR = new File(System.getProperty("java.io.tmpdir")).toString();
     /** Default <code>sendStringParametersAsUnicode</code> property. */
     public static final String USE_UNICODE = "true";
     /** Default <code>useCursors</code> property. */
@@ -236,6 +239,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.USELOBS, USELOBS);
         addDefaultPropertyIfNotSet(props, Driver.BINDADDRESS, BIND_ADDRESS);
         addDefaultPropertyIfNotSet(props, Driver.USEJCIFS, USEJCIFS);
+        addDefaultPropertyIfNotSet(props, Driver.BUFFERDIR, BUFFER_DIR);
 
         return props;
     }

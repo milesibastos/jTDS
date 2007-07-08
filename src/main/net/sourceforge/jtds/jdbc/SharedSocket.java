@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.38 2005-12-20 20:29:35 ddkilzer Exp $
+ * @version $Id: SharedSocket.java,v 1.39 2007-07-08 21:38:13 bheineman Exp $
  */
 class SharedSocket {
     /**
@@ -153,6 +153,10 @@ class SharedSocket {
      */
     private final byte hdrBuf[] = new byte[TDS_HDR_LEN];
     /**
+     * The directory to buffer data to.
+     */
+    private final File bufferDir;
+    /**
      * Total memory usage in all instances of the driver
      * NB. Access to this field should probably be synchronized
      * but in practice lost updates will not matter much and I think
@@ -230,7 +234,8 @@ class SharedSocket {
      */
     private static final int TDS_HDR_LEN   = 8;
 
-    protected SharedSocket(int tdsVersion, int serverType) {
+    protected SharedSocket(File bufferDir, int tdsVersion, int serverType) {
+    	this.bufferDir = bufferDir;
         this.tdsVersion = tdsVersion;
         this.serverType = serverType;
     }
@@ -243,7 +248,7 @@ class SharedSocket {
      * @throws IOException if socket open fails
      */
     SharedSocket(ConnectionJDBC2 connection) throws IOException, UnknownHostException {
-        this(connection.getTdsVersion(), connection.getServerType());
+        this(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
         this.host = connection.getServerName();
         this.port = connection.getPortNumber();
         if (Driver.JDBC3) {
@@ -736,7 +741,7 @@ class SharedSocket {
                 vsock.diskQueue == null) {
             // Try to create a disk file for the queue
             try {
-                vsock.queueFile = File.createTempFile("jtds", ".tmp");
+                vsock.queueFile = File.createTempFile("jtds", ".tmp", bufferDir);
                 vsock.queueFile.deleteOnExit();
                 vsock.diskQueue = new RandomAccessFile(vsock.queueFile, "rw");
 

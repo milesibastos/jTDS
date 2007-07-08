@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.35 2005-04-17 18:41:24 alin_sinpalean Exp $
+ * @version $Id: ClobImpl.java,v 1.36 2007-07-08 21:38:13 bheineman Exp $
  */
 
 public class ClobImpl implements Clob {
@@ -78,7 +78,7 @@ public class ClobImpl implements Clob {
         if (str == null) {
             throw new IllegalArgumentException("str cannot be null");
         }
-        blobBuffer = new BlobBuffer(connection.getLobBuffer());
+        blobBuffer = new BlobBuffer(connection.getBufferDir(), connection.getLobBuffer());
         try {
             byte[] data = str.getBytes("UTF-16LE");
             blobBuffer.setBuffer(data, false);

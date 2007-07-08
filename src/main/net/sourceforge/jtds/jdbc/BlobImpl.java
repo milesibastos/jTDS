@@ -29,7 +29,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.30 2005-04-28 14:29:25 alin_sinpalean Exp $
+ * @version $Id: BlobImpl.java,v 1.31 2007-07-08 21:38:13 bheineman Exp $
  */
 public class BlobImpl implements Blob {
     /**
@@ -61,7 +61,7 @@ public class BlobImpl implements Blob {
             throw new IllegalArgumentException("bytes cannot be null");
         }
 
-        blobBuffer = new BlobBuffer(connection.getLobBuffer());
+        blobBuffer = new BlobBuffer(connection.getBufferDir(), connection.getLobBuffer());
         blobBuffer.setBuffer(bytes, false);
     }
 

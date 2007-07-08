@@ -54,7 +54,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: BlobBuffer.java,v 1.3 2005-04-28 14:29:31 alin_sinpalean Exp $
+ * @version $Id: BlobBuffer.java,v 1.4 2007-07-08 21:38:14 bheineman Exp $
  */
 public class BlobBuffer {
 
@@ -116,6 +116,10 @@ public class BlobBuffer {
      */
     private boolean isMemOnly;
     /**
+     * The directory to buffer data to.
+     */
+    private final File bufferDir;
+    /**
      * The maximum size of an in memory buffer.
      */
     private final int maxMemSize;
@@ -123,9 +127,11 @@ public class BlobBuffer {
     /**
      * Creates a blob buffer.
      *
+     * @param bufferDir
      * @param maxMemSize the maximum size of the in memory buffer
      */
-    public BlobBuffer(long maxMemSize) {
+    public BlobBuffer(File bufferDir, long maxMemSize) {
+    	this.bufferDir = bufferDir;
         this.maxMemSize = (int) maxMemSize;
         buffer = EMPTY_BUFFER;
     }
@@ -156,7 +162,7 @@ public class BlobBuffer {
      */
     public void createBlobFile() {
         try {
-            blobFile = File.createTempFile("jtds", ".tmp");
+            blobFile = File.createTempFile("jtds", ".tmp", bufferDir);
             blobFile.deleteOnExit();
             raFile = new RandomAccessFile(blobFile, "rw");
             if (length > 0) {

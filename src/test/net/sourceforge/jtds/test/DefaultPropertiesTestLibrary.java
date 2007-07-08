@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.24 2005-12-22 17:24:07 ddkilzer Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.25 2007-07-08 21:38:14 bheineman Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -337,6 +337,20 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         }
     }
 
+    /**
+     * Test the <code>bufferDir</code> property.
+     */
+    public void test_bufferDir() {
+        String fieldName = "bufferDir";
+        String messageKey = Driver.BUFFERDIR;
+        String expectedValue = DefaultProperties.BUFFER_DIR;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+    
     /**
      * Test the <code>bufferMaxMemory</code> property.
      */

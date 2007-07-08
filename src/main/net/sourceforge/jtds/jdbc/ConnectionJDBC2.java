@@ -28,8 +28,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.sql.ResultSet;
 import java.net.UnknownHostException;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,7 +62,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.117 2007-07-08 19:55:22 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.118 2007-07-08 21:38:13 bheineman Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -224,6 +223,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private boolean useMetadataCache;
     /** Use fast forward cursors for forward only result sets. */
     private boolean useCursors;
+    /** The directory to buffer data to */
+    private File bufferDir;
     /** The global buffer memory limit for all connections (in kilobytes). */
     private int bufferMaxMemory;
     /** The minimum number of packets per statement to buffer to memory. */
@@ -916,6 +917,15 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Returns the directory where data should be buffered to.
+     *
+     * @return the directory where data should be buffered to.
+     */
+    File getBufferDir() {
+        return this.bufferDir;
+    }
+
+    /**
      * Retrieves the maximum amount of memory in Kb to buffer for <em>all</em> connections.
      *
      * @return the maximum amount of memory in Kb to buffer for <em>all</em> connections
@@ -1180,6 +1190,14 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         if (batchSize < 0) {
             throw new SQLException(Messages.get("error.connection.badprop",
                     Messages.get(Driver.BATCHSIZE)), "08001");
+        }
+        
+        bufferDir = new File(info.getProperty(Messages.get(Driver.BUFFERDIR)));
+        if (!bufferDir.isDirectory()) {
+        	if (!bufferDir.mkdirs()) {
+                throw new SQLException(Messages.get("error.connection.badprop",
+                        Messages.get(Driver.BUFFERDIR)), "08001");
+        	}
         }
 
         bufferMaxMemory = parseIntegerProperty(info, Driver.BUFFERMAXMEMORY);

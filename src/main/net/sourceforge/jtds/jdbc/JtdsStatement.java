@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.62 2007-07-08 19:40:48 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.63 2007-07-11 19:47:22 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -914,20 +914,24 @@ public class JtdsStatement implements java.sql.Statement {
         ArrayList counts = new ArrayList(size);
 
         try {
+            // Lock the connection, making sure the batch executes atomically. This is especially important in the
+            // case of prepared statement batches (where we don't want the prepares rolled back before being executed)
+            // but should also provide some level of sanity in the general case.
             if (connection.getServerType() == Driver.SYBASE
                 && connection.getTdsVersion() == Driver.TDS50) {
                 sqlEx = executeSybaseBatch(size, executeSize, counts);
             } else {
                 sqlEx = executeMSBatch(size, executeSize, counts);
             }
+
             //
             // Ensure array is the same size as the original statement list
             //
+            int updateCounts[] = new int[size];
+            int results = counts.size();
             //
             // Copy the update counts into the int array
             //
-            int updateCounts[] = new int[size];
-            int results = counts.size();
             for (int i = 0; i < results; i++) {
                 updateCounts[i] = ((Integer) counts.get(i)).intValue();
             }

@@ -38,7 +38,7 @@ import java.sql.ResultSet;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: MSCursorResultSet.java,v 1.58 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: MSCursorResultSet.java,v 1.59 2007-07-11 20:02:45 bheineman Exp $
  */
 public class MSCursorResultSet extends JtdsResultSet {
     /*
@@ -907,6 +907,10 @@ public class MSCursorResultSet extends JtdsResultSet {
 
         statement.clearWarnings();
 
+        // Consume rest of output and remember any exceptions
+        tds.clearResponseQueue();
+        SQLException ex = statement.getMessages().exceptions;
+
         ParamInfo param[] = new ParamInfo[1];
 
         // Setup cursor handle param
@@ -915,7 +919,13 @@ public class MSCursorResultSet extends JtdsResultSet {
         tds.executeSQL(null, "sp_cursorclose", param, false,
                 statement.getQueryTimeout(), -1, -1, true);
         tds.clearResponseQueue();
-        statement.getMessages().checkErrors();
+        
+        if (ex != null) {
+            ex.setNextException(statement.getMessages().exceptions);
+            throw ex;
+        } else {
+            statement.getMessages().checkErrors();
+        }
     }
 
     /**

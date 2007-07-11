@@ -1566,17 +1566,20 @@ public class ResultSetTest extends DatabaseTestCase {
     public void testPessimisticConcurrency() throws Exception {
         dropTable("pessimisticConcurrency");
         Connection con2 = getConnection();
+        Statement stmt = null;
+        ResultSet rs = null;
         try {
-            Statement stmt = con.createStatement(
-                    ResultSet.TYPE_SCROLL_SENSITIVE,
-                    ResultSet.CONCUR_UPDATABLE + 1);
+            // Create statement using pessimistic locking.
+            stmt = con.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE + 1);
             stmt.execute("CREATE TABLE pessimisticConcurrency (id int primary key, data varchar(255))");
             for (int i = 0; i < 4; i++) {
                 stmt.executeUpdate("INSERT INTO pessimisticConcurrency VALUES("+i+", 'Table A line "+i+"')");
             }
 
+            // Fetch one row at a time, making sure we know exactly which row is locked
+            stmt.setFetchSize(1);
             // Open cursor
-            ResultSet rs = stmt.executeQuery("SELECT id, data FROM pessimisticConcurrency");
+            rs = stmt.executeQuery("SELECT id, data FROM pessimisticConcurrency ORDER BY id");
             assertNull(rs.getWarnings());
             assertEquals(ResultSet.TYPE_SCROLL_SENSITIVE, rs.getType());
             assertEquals(ResultSet.CONCUR_UPDATABLE + 1, rs.getConcurrency());
@@ -1586,10 +1589,18 @@ public class ResultSetTest extends DatabaseTestCase {
                 stmt.close();
                 return;
             }
+            // Scroll to and lock row 3
+            for (int i = 0; i < 3; ++i) {
+                rs.next();
+            }
 
-            final Statement stmt2 = con2.createStatement();
+            // Create a second statement
+            final Statement stmt2 = con2.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                                                         ResultSet.CONCUR_UPDATABLE + 1);
+
             // No better idea to store exceptions
             final ArrayList container = new ArrayList();
+            // Launch a thread that will cancel the second statement if it hangs.
             new Thread() {
                 public void run() {
                     try {
@@ -1601,25 +1612,32 @@ public class ResultSetTest extends DatabaseTestCase {
                 }
             }.start();
 
-            while (rs.next()) {
-                if (rs.getInt(1) == 1) {
-                    try {
-                        stmt2.executeUpdate(
-                                "UPDATE pessimisticConcurrency SET data = 'NEW VALUE' WHERE id = 1");
-                        fail("Expected locking to occur");
-                    } catch (SQLException e) {
-                        // Expected cancel exception
-                        assertEquals("HY008", e.getSQLState());
-                    }
+            // Open second cursor
+            ResultSet rs2 = stmt2.executeQuery("SELECT id, data FROM pessimisticConcurrency WHERE id = 2");
+            assertNull(rs2.getWarnings());
+            assertEquals(ResultSet.TYPE_SCROLL_SENSITIVE, rs2.getType());
+            assertEquals(ResultSet.CONCUR_UPDATABLE + 1, rs2.getConcurrency());
+            try {
+                System.out.println(rs2.next());
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                System.out.println(ex.getNextException());
+                if ("HY010".equals(ex.getSQLState())) {
+                    stmt2.getMoreResults();
+                }
+                if (!"HY008".equals(ex.getSQLState()) && !"HY010".equals(ex.getSQLState())) {
+                    fail("Expecting cancel exception.");
                 }
             }
+            rs.close();
+            stmt.close();
+            rs2.close();
+            stmt2.close();
+
             // Check for exceptions thrown in the cancel thread
             if (container.size() != 0) {
                 throw (SQLException) container.get(0);
             }
-            rs.close();
-            stmt.close();
-            stmt2.close();
         } finally {
             dropTable("pessimisticConcurrency");
             if (con2 != null) {

@@ -34,9 +34,9 @@ import java.util.Collection;
  *     types; this key uniquely identifies a server-side preparation of the
  *     statement and is used to retrieve the handle of the statement when it
  *     needs to be executed</dd>
- *   <dd>temporary procedure name or <code>sp_prepare</code> or
- *     <code>sp_cursorprepare</code> handle on the server; one
- *     <code>PreparedStatement</code> can map to multiple handles, depending on
+ *   <dt>temporary procedure name or <code>sp_prepare</code> or
+ *     <code>sp_cursorprepare</code> handle on the server</dt>
+ *   <dd>One <code>PreparedStatement</code> can map to multiple handles, depending on
  *     the types of the parameters it is called with (hence the need to be able
  *     to map both keys and SQL strings to handles)</dd>
  * </dl>
@@ -54,7 +54,7 @@ import java.util.Collection;
  * </ul>
  *
  * @author Brian Heineman
- * @version $Id: StatementCache.java,v 1.5 2005-04-20 16:49:13 alin_sinpalean Exp $
+ * @version $Id: StatementCache.java,v 1.6 2007-07-11 19:57:06 bheineman Exp $
  */
 public interface StatementCache {
 	/**

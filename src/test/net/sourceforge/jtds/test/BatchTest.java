@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.*;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.10 2007-07-12 21:03:24 bheineman Exp $
+ * @version $Id: BatchTest.java,v 1.11 2007-07-12 21:21:27 bheineman Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -93,7 +93,7 @@ public class BatchTest extends DatabaseTestCase {
             x = e.getUpdateCounts();
         }
         if (con.getMetaData().getDatabaseProductName().toLowerCase().startsWith("microsoft")
-            && con.getMetaData().getDatabaseMajorVersion() > 6 ) {
+            && ((JtdsDatabaseMetaData) con.getMetaData()).getDatabaseMajorVersion() > 6 ) {
             assertEquals(5, x.length);
             assertEquals(1, x[0]);
             assertEquals(1, x[1]);

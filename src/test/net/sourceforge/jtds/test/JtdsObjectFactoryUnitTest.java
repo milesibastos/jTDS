@@ -35,7 +35,7 @@ import net.sourceforge.jtds.jdbcx.JtdsObjectFactory;
  *
  * @author David D. Kilzer
  * @author Alin Sinpalean
- * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.11 2005-12-22 17:06:58 ddkilzer Exp $
+ * @version $Id: JtdsObjectFactoryUnitTest.java,v 1.12 2007-07-12 21:20:03 bheineman Exp $
  */
 public class JtdsObjectFactoryUnitTest extends UnitTestBase {
 
@@ -166,7 +166,7 @@ public class JtdsObjectFactoryUnitTest extends UnitTestBase {
                                 assertEquals(message, expected, actual);
                             }
                             catch (Exception e) {
-                                RuntimeException runtimeException = new RuntimeException(e);
+                                RuntimeException runtimeException = new RuntimeException(e.getMessage());
                                 Support.linkException(runtimeException, e);
                                 throw runtimeException;
                             }

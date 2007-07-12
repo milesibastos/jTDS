@@ -47,7 +47,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.22 2007-07-08 19:40:47 bheineman Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.23 2007-07-12 21:03:23 bheineman Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -145,20 +145,20 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
             return super.executeMSBatch(size, executeSize, counts);
         }
         SQLException sqlEx = null;
-        tds.startBatch();
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
             ++i;
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
-            tds.executeSQL(sql, procName, (ParamInfo[])value, false, 0, -1, -1, executeNow);
+            tds.startBatch();
+            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, -1, -1, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
                 sqlEx = tds.getBatchCounts(counts, sqlEx);
 
-                // If a serious error then we stop execution now as count 
+                // If a serious error then we stop execution now as count
                 // is too small.
                 if (sqlEx != null && counts.size() != i) {
                     break;
@@ -170,36 +170,37 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
 
     /**
      * Execute the SQL batch on a Sybase server.
-     * <p/>For the rare case of CallableStatement batches each statement
-     * is executed individually. This ensures that problems with the server
-     * reading into the middle of a statement are avoided.
-     * See bug report [1374518] for more details.
-     * @param size the total size of the batch.
-     * @param executeSize the maximum number of statements to send in one request 
-     *  (ignored for this version of the method as only one statement will be sent
-     *  at a time).
-     * @param counts the returned update counts.
-     * @return Chained exceptions linked to a <code>SQLException</code>.
-     * @throws SQLException
+     * <p/>
+     * For the rare case of CallableStatement batches each statement is executed individually. This ensures that
+     * problems with the server reading into the middle of a statement are avoided. See bug report [1374518] for more
+     * details.
+     *
+     * @param size        the total size of the batch
+     * @param executeSize the maximum number of statements to send in one request (ignored for this version of the
+     *                    method as only one statement will be sent at a time)
+     * @param counts the returned update counts
+     * @return chained exceptions linked to a <code>SQLException</code>
+     * @throws SQLException if a serious error occurs during execution
      */
     protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts)
-    throws SQLException {
+    throws SQLException
+    {
         if (parameters.length == 0) {
             // No parameters so we can execute as a simple batch
             return super.executeSybaseBatch(size, executeSize, counts);
         }
-        
+
         SQLException sqlEx = null;
-        
+
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
             ++i;
-            tds.executeSQL(sql, procName, (ParamInfo[])value, true, 0, -1, -1, true);
+            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, -1, -1, true);
 
             // If the batch has been sent, process the results
             sqlEx = tds.getBatchCounts(counts, sqlEx);
- 
-            // If a serious error then we stop execution now as count 
+
+            // If a serious error then we stop execution now as count
             // is too small.
             if (sqlEx != null && counts.size() != i) {
                 break;

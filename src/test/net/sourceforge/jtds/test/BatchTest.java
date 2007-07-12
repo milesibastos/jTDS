@@ -1,32 +1,31 @@
-//jTDS JDBC Driver for Microsoft SQL Server and Sybase
-//Copyright (C) 2004 The jTDS Project
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
+// Copyright (C) 2004 The jTDS Project
 //
-//This library is free software; you can redistribute it and/or
-//modify it under the terms of the GNU Lesser General Public
-//License as published by the Free Software Foundation; either
-//version 2.1 of the License, or (at your option) any later version.
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
 //
-//This library is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//Lesser General Public License for more details.
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
 //
-//You should have received a copy of the GNU Lesser General Public
-//License along with this library; if not, write to the Free Software
-//Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 package net.sourceforge.jtds.test;
 
-import java.sql.BatchUpdateException;
-import java.sql.CallableStatement;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.sql.ResultSet;
+import java.sql.*;
+import java.util.*;
+
+import net.sourceforge.jtds.jdbc.*;
 
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.9 2007-07-08 19:40:48 bheineman Exp $
+ * @version $Id: BatchTest.java,v 1.10 2007-07-12 21:03:24 bheineman Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -528,6 +527,100 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(1, x[4]);
         } finally {
             dropProcedure("jTDS_PROC");
+        }
+    }
+
+
+    /**
+     * Helper thread used by <code>testConcurrentBatching()</code> to execute a batch within a transaction that is
+     * then rolled back. Starting a couple of these threads concurrently should show whether there are any race
+     * conditions WRT preparation and execution in the batching implementation.
+     */
+    private class ConcurrentBatchingHelper extends Thread {
+        /** Connection on which to do the work. */
+        private Connection con;
+        /** Container to store any exceptions into. */
+        private Vector exceptions;
+
+        ConcurrentBatchingHelper(Connection con, Vector exceptions) {
+            this.con = con;
+            this.exceptions = exceptions;
+        }
+
+        public void run() {
+            try {
+                PreparedStatement pstmt = con.prepareStatement(
+                        "insert into #testConcurrentBatch (v1, v2, v3, v4, v5, v6) values (?, ?, ?, ?, ?, ?)");
+                for (int i = 0; i < 64; ++i) {
+                    // Make sure we end up with 64 different prepares, use the binary representation of i to set each
+                    // of the 6 parameters to either an int or a string.
+                    int mask = i;
+                    for (int j = 1; j <= 6; ++j, mask >>= 1) {
+                        if ((mask & 1) != 0) {
+                            pstmt.setInt(j, i);
+                        } else {
+                            pstmt.setString(j, String.valueOf(i));
+                        }
+                    }
+                    pstmt.addBatch();
+                }
+                int x[];
+                try {
+                    x = pstmt.executeBatch();
+                } catch (BatchUpdateException e) {
+                    e.printStackTrace();
+                    x = e.getUpdateCounts();
+                }
+                if (x.length != 64) {
+                    throw new SQLException("Expected 64 update counts, got " + x.length);
+                }
+                for (int i = 0; i < x.length; ++i) {
+                    if (x[i] != 1) {
+                        throw new SQLException("Error at position " + i + ", got " + x[i] + " instead of 1");
+                    }
+                }
+                // Rollback the transaction, exposing any race conditions.
+                con.rollback();
+                pstmt.close();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                exceptions.add(ex);
+            }
+        }
+    }
+
+    /**
+     * Test batched prepared statement concurrency. Batch prepares must not disappear between the moment when they
+     * were created and when they are executed.
+     */
+    public void testConcurrentBatching() throws Exception {
+        // Create a connection with a batch size of 1. This should cause prepares and actual batch execution to become
+        // interspersed (if correct synchronization is not in place) and greatly increase the chance of prepares
+        // being rolled back before getting executed.
+        Properties props = new Properties();
+        props.setProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.BATCHSIZE), "1");
+        props.setProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.PREPARESQL),
+                          String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES));
+        Connection con = getConnection(props);
+        
+        try {
+            Statement stmt = con.createStatement();
+            stmt.execute("create table #testConcurrentBatch (v1 int, v2 int, v3 int, v4 int, v5 int, v6 int)");
+            stmt.close();
+
+            Vector exceptions = new Vector();
+            con.setAutoCommit(false);
+
+            Thread t1 = new ConcurrentBatchingHelper(con, exceptions);
+            Thread t2 = new ConcurrentBatchingHelper(con, exceptions);
+            t1.start();
+            t2.start();
+            t1.join();
+            t2.join();
+
+            assertEquals(0, exceptions.size());
+        } finally {
+            con.close();
         }
     }
 

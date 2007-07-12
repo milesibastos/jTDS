@@ -57,7 +57,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.62 2007-07-08 19:40:48 bheineman Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.63 2007-07-12 21:03:23 bheineman Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -73,7 +73,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     /** The cached parameter meta data. */
     protected ParamInfo[] paramMetaData;
     /** Used to format numeric values when scale is specified. */
-    private static NumberFormat f = NumberFormat.getInstance();
+    private final static NumberFormat f = NumberFormat.getInstance();
     /** Collection of handles used by this statement */
     Collection handles;
 
@@ -201,39 +201,36 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     
     /**
      * Execute the SQL batch on a MS server.
-     * <p/>When running with prepareSQL = 1 or 3, the driver will first prepare
-     * temporary stored procedures or statements for each parameter combination
-     * found in the batch. The handles to these pre-preared statements will then
-     * be used to execute the actual batch statements. 
-     * @param size the total size of the batch.
-     * @param executeSize the maximum number of statements to send in one request.
-     * @param counts the returned update counts.
-     * @return Chained exceptions linked to a <code>SQLException</code>.
-     * @throws SQLException
+     * <p/>
+     * When running with <code>prepareSQL=1</code> or <code>3</code>, the driver will first prepare temporary stored
+     * procedures or statements for each parameter combination found in the batch. The handles to these pre-preared
+     * statements will then be used to execute the actual batch statements.
+     *
+     * @param size        the total size of the batch
+     * @param executeSize the maximum number of statements to send in one request
+     * @param counts      the returned update counts
+     * @return chained exceptions linked to a <code>SQLException</code>
+     * @throws SQLException if a serious error occurs during execution
      */
     protected SQLException executeMSBatch(int size, int executeSize, ArrayList counts)
     throws SQLException {
         if (parameters.length == 0) {
-            // There are no parameters each SQL call is the same so
-            // execute as a simple batch
+            // There are no parameters, each SQL call is the same so execute as a simple batch
             return super.executeMSBatch(size, executeSize, counts);
         }
         SQLException sqlEx = null;
         String procHandle[] = null;
-        //
+
         // Prepare any statements before executing the batch
-        //
-        if (connection.getPrepareSql() == TdsCore.TEMPORARY_STORED_PROCEDURES
-             || connection.getPrepareSql() == TdsCore.PREPARE) {
+        if (connection.getPrepareSql() == TdsCore.TEMPORARY_STORED_PROCEDURES ||
+                connection.getPrepareSql() == TdsCore.PREPARE) {
             procHandle = new String[size];
             for (int i = 0; i < size; i++) {
                 // Prepare the statement
-                procHandle[i] = connection.prepareSQL(this, sql, (ParamInfo[])batchValues.get(i), false, false);
+                procHandle[i] = connection.prepareSQL(this, sql, (ParamInfo[]) batchValues.get(i), false, false);
             }
         }
-        
-        tds.startBatch();
-        
+
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
             if (procHandle != null) {
@@ -243,13 +240,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
-            tds.executeSQL(sql, procName, (ParamInfo[])value, false, 0, -1, -1, executeNow);
+            tds.startBatch();
+            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, -1, -1, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
                 sqlEx = tds.getBatchCounts(counts, sqlEx);
 
-                // If a serious error then we stop execution now as count 
+                // If a serious error then we stop execution now as count
                 // is too small.
                 if (sqlEx != null && counts.size() != i) {
                     break;
@@ -258,36 +256,35 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
         return sqlEx;
     }
-    
+
     /**
      * Execute the SQL batch on a Sybase server.
-     * <p/>Sybase needs to have the SQL concatenated into one TDS language
-     * packet followed by up to 1000 parameters. This method will be overriden for 
-     * CallableStatements.
-     * @param size the total size of the batch.
-     * @param executeSize the maximum number of statements to send in one request.
-     * @param counts the returned update counts.
-     * @return Chained exceptions linked to a <code>SQLException</code>.
-     * @throws SQLException
+     * <p/>
+     * Sybase needs to have the SQL concatenated into one TDS language packet followed by up to 1000 parameters. This
+     * method will be overriden for <code>CallableStatements</code>.
+     *
+     * @param size the total size of the batch
+     * @param executeSize the maximum number of statements to send in one request
+     * @param counts the returned update counts
+     * @return chained exceptions linked to a <code>SQLException</code>
+     * @throws SQLException if a serious error occurs during execution
      */
-    protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts)
-    throws SQLException {
+    protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts) throws SQLException {
         if (parameters.length == 0) {
             // There are no parameters each SQL call is the same so
             // execute as a simple batch
             return super.executeSybaseBatch(size, executeSize, counts);
-        }        
+        }
         // Revise the executeSize down if too many parameters will be required.
         // Be conservative the actual maximums are 256 for older servers and 2048.
-        int maxParams = 
-            (connection.getDatabaseMajorVersion() < 12 ||
-             (connection.getDatabaseMajorVersion() == 12 &&
-              connection.getDatabaseMinorVersion() < 50))? 200: 1000;
+        int maxParams = (connection.getDatabaseMajorVersion() < 12 ||
+                (connection.getDatabaseMajorVersion() == 12 && connection.getDatabaseMinorVersion() < 50)) ?
+                200 : 1000;
         StringBuffer sqlBuf = new StringBuffer(size * 32);
         SQLException sqlEx = null;
         if (parameters.length * executeSize > maxParams) {
             executeSize = maxParams / parameters.length;
-            if (executeSize < 0) {
+            if (executeSize == 0) {
                 executeSize = 1;
             }
         }
@@ -301,15 +298,15 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             int offset = sqlBuf.length();
             sqlBuf.append(sql).append(' ');
             for (int n = 0; n < parameters.length; n++) {
-                ParamInfo p = ((ParamInfo[])value)[n];
+                ParamInfo p = ((ParamInfo[]) value)[n];
                 // Allow for the position of the '?' marker in the buffer
                 p.markerPos += offset;
                 paramList.add(p);
             }
             if (executeNow) {
                 ParamInfo args[];
-                args = (ParamInfo[])paramList.toArray(new ParamInfo[paramList.size()]);
-                tds.executeSQL(sqlBuf.toString(), null, args, true, 0, -1, -1, true);
+                args = (ParamInfo[]) paramList.toArray(new ParamInfo[paramList.size()]);
+                tds.executeSQL(sqlBuf.toString(), null, args, false, 0, -1, -1, true);
                 sqlBuf.setLength(0);
                 paramList.clear();
                 // If the batch has been sent, process the results
@@ -346,9 +343,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                                                       "07009");
         }
 
-        ParamInfo pi = parameters[parameterIndex - 1];
-
-        return pi;
+        return parameters[parameterIndex - 1];
     }
 
     /**

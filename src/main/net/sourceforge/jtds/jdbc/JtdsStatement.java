@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.63 2007-07-11 19:47:22 bheineman Exp $
+ * @version $Id: JtdsStatement.java,v 1.64 2007-07-12 21:03:23 bheineman Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -327,29 +327,29 @@ public class JtdsStatement implements java.sql.Statement {
 
     /**
      * Execute the SQL batch on a MS server.
-     * @param size the total size of the batch.
-     * @param executeSize the maximum number of statements to send in one request.
-     * @param counts the returned update counts.
-     * @return Chained exceptions linked to a <code>SQLException</code>.
-     * @throws SQLException
+     *
+     * @param size the total size of the batch
+     * @param executeSize the maximum number of statements to send in one request
+     * @param counts the returned update counts
+     * @return chained exceptions linked to a <code>SQLException</code>
+     * @throws SQLException if a serious error occurs during execution
      */
-    protected SQLException executeMSBatch(int size, int executeSize, ArrayList counts)
-    throws SQLException {
+    protected SQLException executeMSBatch(int size, int executeSize, ArrayList counts) throws SQLException {
         SQLException sqlEx = null;
-        tds.startBatch();
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
             ++i;
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
-            tds.executeSQL((String)value, null, null, false, 0, -1, -1, executeNow);
+            tds.startBatch();
+            tds.executeSQL((String) value, null, null, false, 0, -1, -1, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
                 sqlEx = tds.getBatchCounts(counts, sqlEx);
 
-                // If a serious error then we stop execution now as count 
+                // If a serious error then we stop execution now as count
                 // is too small.
                 if (sqlEx != null && counts.size() != i) {
                     break;
@@ -358,19 +358,20 @@ public class JtdsStatement implements java.sql.Statement {
         }
         return sqlEx;
     }
-    
+
     /**
      * Execute the SQL batch on a Sybase server.
-     * <p/>Sybase needs to have the SQL concatenated into one TDS language
-     * packet. This method will be overriden for PreparedStatements.
-     * @param size the total size of the batch.
-     * @param executeSize the maximum number of statements to send in one request.
-     * @param counts the returned update counts.
-     * @return Chained exceptions linked to a <code>SQLException</code>.
-     * @throws SQLException
+     * <p/>
+     * Sybase needs to have the SQL concatenated into one TDS language packet. This method will be overriden for
+     * <code>PreparedStatements</code>.
+     *
+     * @param size the total size of the batch
+     * @param executeSize the maximum number of statements to send in one request
+     * @param counts the returned update counts
+     * @return chained exceptions linked to a <code>SQLException</code>
+     * @throws SQLException if a serious error occurs during execution
      */
-    protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts)
-    throws SQLException {
+    protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts) throws SQLException {
         StringBuffer sql = new StringBuffer(size * 32); // Make buffer reasonable size
         SQLException sqlEx = null;
 
@@ -380,8 +381,8 @@ public class JtdsStatement implements java.sql.Statement {
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
-            sql.append((String)value).append(' ');
-            
+            sql.append((String) value).append(' ');
+
             if (executeNow) {
                 tds.executeSQL(sql.toString(), null, null, false, 0, -1, -1, true);
                 sql.setLength(0);
@@ -910,40 +911,35 @@ public class JtdsStatement implements java.sql.Statement {
         int size = batchValues.size();
         int executeSize = connection.getBatchSize();
         executeSize = (executeSize == 0) ? Integer.MAX_VALUE : executeSize;
-        SQLException sqlEx = null;
+        SQLException sqlEx;
         ArrayList counts = new ArrayList(size);
 
         try {
             // Lock the connection, making sure the batch executes atomically. This is especially important in the
             // case of prepared statement batches (where we don't want the prepares rolled back before being executed)
             // but should also provide some level of sanity in the general case.
-            if (connection.getServerType() == Driver.SYBASE
-                && connection.getTdsVersion() == Driver.TDS50) {
-                sqlEx = executeSybaseBatch(size, executeSize, counts);
-            } else {
-                sqlEx = executeMSBatch(size, executeSize, counts);
+            synchronized (connection) {
+                if (connection.getServerType() == Driver.SYBASE
+                    && connection.getTdsVersion() == Driver.TDS50) {
+                    sqlEx = executeSybaseBatch(size, executeSize, counts);
+                } else {
+                    sqlEx = executeMSBatch(size, executeSize, counts);
+                }
             }
 
-            //
             // Ensure array is the same size as the original statement list
-            //
             int updateCounts[] = new int[size];
-            int results = counts.size();
-            //
             // Copy the update counts into the int array
-            //
+            int results = counts.size();
             for (int i = 0; i < results; i++) {
                 updateCounts[i] = ((Integer) counts.get(i)).intValue();
             }
-            //
             // Pad any remaining slots with EXECUTE_FAILED
-            //
             for (int i = results; i < updateCounts.length; i++) {
-                updateCounts[i] = EXECUTE_FAILED;
+                updateCounts[i] = EXECUTE_FAILED.intValue();
             }
-            //
+
             // See if we should return an exception
-            //
             if (sqlEx != null) {
                 BatchUpdateException batchEx =
                         new BatchUpdateException(sqlEx.getMessage(),

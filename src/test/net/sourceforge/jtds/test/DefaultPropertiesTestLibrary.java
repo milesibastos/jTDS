@@ -34,7 +34,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * <p/>
  * To extend this class, the programmer must implement the following items:
  * <ol>
- * <li>Set the {@link #tester} field in a <code>public</code> default
+ * <li>Set the <code>#tester</code> field in a <code>public</code> default
  *     constructor that takes no arguments.</li>
  * <li>A <code>public static Test suite()</code> method that takes one or more
  *     arguments.  (The {@link #suite()} method in this class should
@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.25 2007-07-08 21:38:14 bheineman Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.26 2007-07-12 20:34:47 bheineman Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -75,7 +75,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
     /**
      * Default constructor.
      * <p/>
-     * The extender of this class is required to set the {@link #tester}
+     * The extender of this class is required to set the <code>#tester</code>
      * field in a <code>public</code> default constructor.
      */
     public DefaultPropertiesTestLibrary() {
@@ -501,9 +501,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
 
     /**
-     * Setter for {@link #tester}.
+     * Setter for <code>#tester</code>.
      *
-     * @param tester The value to set {@link #tester} to.
+     * @param tester The value to set <code>#tester</code> to.
      */
     public void setTester(DefaultPropertiesTester tester) {
         this.tester = tester;
@@ -511,9 +511,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
 
     /**
-     * Getter for {@link #onlySqlServerTests}.
+     * Getter for <code>#onlySqlServerTests</code>.
      *
-     * @return Value of {@link #onlySqlServerTests}.
+     * @return Value of <code>#onlySqlServerTests</code>.
      */
     public boolean isOnlySqlServerTests() {
         return onlySqlServerTests;
@@ -531,9 +531,9 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
 
     /**
-     * Getter for {@link #onlyTds70Tests}.
+     * Getter for <code>#onlyTds70Tests</code>.
      *
-     * @return Value of {@link #onlyTds70Tests}.
+     * @return Value of <code>#onlyTds70Tests</code>.
      */
     public boolean isOnlyTds70Tests() {
         return onlyTds70Tests;

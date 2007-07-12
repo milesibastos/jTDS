@@ -96,7 +96,7 @@ public class SSPIJNIClient {
     }
 
     /**
-     * Calls {@link #initialize()} if the SSPI client is not already inited.
+     * Calls <code>#initialize()</code> if the SSPI client is not already inited.
      */
     public void invokeInitialize() {
         if (!initialized) {
@@ -106,7 +106,7 @@ public class SSPIJNIClient {
     }
 
     /**
-     * Calls {@link #unInitialize()} if the SSPI client is inited.
+     * Calls <code>#unInitialize()</code> if the SSPI client is inited.
      */
     public void invokeUnInitialize() {
         if (initialized) {
@@ -116,7 +116,7 @@ public class SSPIJNIClient {
     }
 
     /**
-     * Calls {@link #prepareSSORequest()} to prepare the NTLM TYPE-1 message.
+     * Calls <code>#prepareSSORequest()</code> to prepare the NTLM TYPE-1 message.
      *
      * @throws Exception if an error occurs during the call or the SSPI client
      *                   is uninitialized
@@ -129,7 +129,7 @@ public class SSPIJNIClient {
     }
 
     /**
-     * Calls {@link #prepareSSOSubmit(byte[], long)} to prepare the NTLM TYPE-3
+     * Calls <code>#prepareSSOSubmit(byte[], long)</code> to prepare the NTLM TYPE-3
      * message.
      *
      * @throws Exception if an error occurs during the call or the SSPI client

@@ -30,11 +30,11 @@ import jcifs.smb.SmbNamedPipe;
  * This class implements inter-process communication (IPC) to the
  * database server using named pipes.
  *
- * @todo Extract abstract base class SharedIpc from {@link SharedSocket} and this class.
+ * @todo Extract abstract base class SharedIpc from <code>SharedSocket</code> and this class.
  * @todo Implement connection timeouts for named pipes.
  *
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.18 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.19 2007-07-12 20:34:47 bheineman Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
     /**

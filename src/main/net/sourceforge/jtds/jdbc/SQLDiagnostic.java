@@ -28,7 +28,7 @@ import java.util.HashMap;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: SQLDiagnostic.java,v 1.11 2007-08-05 19:41:54 bheineman Exp $
+ * @version $Id: SQLDiagnostic.java,v 1.12 2007-08-05 20:17:54 bheineman Exp $
  */
 class SQLDiagnostic {
     /**
@@ -62,7 +62,7 @@ class SQLDiagnostic {
         mssqlStates.put(new Integer(201), "37000");
         mssqlStates.put(new Integer(206), "22005"); // ADDED
         mssqlStates.put(new Integer(207), "42S22"); // (i-net is 42000)
-        mssqlStates.put(new Integer(208), "42S02"); // (i-net is 42000)
+        mssqlStates.put(new Integer(208), "S0002"); // MODIFIED: was 42S02 (i-net is 42000) (Microsoft is S0002)
         mssqlStates.put(new Integer(210), "22007"); // ? (i-net is 22008)
         mssqlStates.put(new Integer(211), "22008"); // ADDED
         mssqlStates.put(new Integer(213), "42000"); // MODIFIED: was 21S01
@@ -141,7 +141,7 @@ class SQLDiagnostic {
         mssqlStates.put(new Integer(2625), "40001"); // ADDED
         mssqlStates.put(new Integer(2626), "23000"); // ADDED
         mssqlStates.put(new Integer(2627), "23000");
-        mssqlStates.put(new Integer(2714), "42S01");
+        mssqlStates.put(new Integer(2714), "S0001"); // MODIFIED: was 42S01 (Microsoft is S0001)
         mssqlStates.put(new Integer(2760), "42000");
         mssqlStates.put(new Integer(2812), "37000");
         mssqlStates.put(new Integer(3110), "42000");

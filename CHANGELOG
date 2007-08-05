@@ -7,6 +7,8 @@ Changes from jTDS 1.2.1
  o Applied patch [1504761] Itanium and AMD64/EM64T 64 bit support for SSO
  o Implemented feature [1491811] sqlState code for snapshot conflict.
  o Updated SQL Server sqlState codes.
+ o Updated default property of loginTimeout to 60 seconds instead of waiting
+   indefinitely; address bug [1744375] Incorrect port configuration causes hang
 
 08/02/2007 - Brian Heineman
  o Corrected bug [1765905] Driver version miscellanea is incorrect;

@@ -119,15 +119,27 @@
       <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,conf/**/*.tmpl,html/**/*"/>
       <fileset dir="${build}" includes="*.jar"/>
     </copy>
-    <mkdir dir="${dist}/tmp/XA"/>
-    <copy todir="${dist}/tmp/XA">
-      <fileset dir="lib" includes="JtdsXA.dll"/>
+
+    <mkdir dir="${dist}/tmp/x86/XA"/>
+    <copy todir="${dist}/tmp/x86/XA">
+      <fileset dir="lib/x86/XA" includes="JtdsXA.dll"/>
       <fileset dir="src/XA" includes="*.sql"/>
     </copy>
-    <mkdir dir="${dist}/tmp/SSO"/>
-    <copy todir="${dist}/tmp/SSO">
-      <fileset dir="lib" includes="ntlmauth.dll"/>
+    <mkdir dir="${dist}/tmp/x86/SSO"/>
+    <copy todir="${dist}/tmp/x86/SSO">
+      <fileset dir="lib/x86/SSO" includes="ntlmauth.dll"/>
     </copy>
+
+    <mkdir dir="${dist}/tmp/x64/SSO"/>
+    <copy todir="${dist}/tmp/x64/SSO">
+      <fileset dir="lib/x64/SSO" includes="ntlmauth.dll"/>
+    </copy>
+
+    <mkdir dir="${dist}/tmp/IA64/SSO"/>
+    <copy todir="${dist}/tmp/IA64/SSO">
+      <fileset dir="lib/IA64/SSO" includes="ntlmauth.dll"/>
+    </copy>
+
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-dist.zip"/>
     <delete dir="${dist}/tmp"/>
   </target>

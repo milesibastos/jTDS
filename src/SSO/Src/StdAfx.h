@@ -24,7 +24,7 @@
 #endif
 
 #include <stdio.h>
-#include <string>
+#include <string.h>
 #include <tchar.h>
 #include <windows.h>
 #include <sspi.h>

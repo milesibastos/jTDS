@@ -3,6 +3,8 @@ Changes from jTDS 1.2.1
 
 08/05/2007 - Brian Heineman
  o Applied patch [1592113] NTLMv2 properties on datasource.
+ o Applied patch [1236417] 64-bit support for Single Sign On (SSO)
+ o Applied patch [1504761] Itanium and AMD64/EM64T 64 bit support for SSO
 
 08/02/2007 - Brian Heineman
  o Corrected bug [1765905] Driver version miscellanea is incorrect;

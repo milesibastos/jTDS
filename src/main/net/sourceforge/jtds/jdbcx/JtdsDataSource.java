@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.41 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: JtdsDataSource.java,v 1.42 2007-08-05 17:50:39 bheineman Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -57,6 +57,7 @@ public class JtdsDataSource
     protected String charset;
     protected String language;
     protected String domain;
+    protected String useNTLMV2;
     protected String instance;
     protected String lastUpdateCount;
     protected String sendStringParametersAsUnicode;
@@ -198,6 +199,7 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.CHARSET), charset));
         ref.add(new StringRefAddr(Messages.get(Driver.LANGUAGE), language));
         ref.add(new StringRefAddr(Messages.get(Driver.DOMAIN), domain));
+        ref.add(new StringRefAddr(Messages.get(Driver.USENTLMV2), useNTLMV2));
         ref.add(new StringRefAddr(Messages.get(Driver.INSTANCE), instance));
         ref.add(new StringRefAddr(Messages.get(Driver.LASTUPDATECOUNT), lastUpdateCount));
         ref.add(new StringRefAddr(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE), sendStringParametersAsUnicode));
@@ -375,6 +377,13 @@ public class JtdsDataSource
         this.domain = domain;
     }
 
+	public String getUseNTLMV2() {
+		return useNTLMV2;
+	}
+
+	public void setUseNTLMV2(String usentlmv2) {
+		this.useNTLMV2 = usentlmv2;
+	}
     public String getInstance() {
         return instance;
     }
@@ -638,6 +647,9 @@ public class JtdsDataSource
         }
         if (domain != null) {
             props.setProperty(Messages.get(Driver.DOMAIN), domain);
+        }
+        if(useNTLMV2 != null) {
+        	props.setProperty(Messages.get(Driver.USENTLMV2), useNTLMV2);
         }
         if (instance != null) {
             props.setProperty(Messages.get(Driver.INSTANCE), instance);

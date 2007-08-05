@@ -31,7 +31,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.24 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.25 2007-08-05 17:50:39 bheineman Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -61,6 +61,7 @@ public class JtdsObjectFactory implements ObjectFactory {
                 ds.setServerType(Integer.parseInt((String) serverType));
             }
             ds.setDomain((String) ref.get(Messages.get(Driver.DOMAIN)).getContent());
+            ds.setUseNTLMV2((String) ref.get(Messages.get(Driver.USENTLMV2)).getContent());
             ds.setInstance((String) ref.get(Messages.get(Driver.INSTANCE)).getContent());
             final Object lastUpdateCount = ref.get(Messages.get(Driver.LASTUPDATECOUNT)).getContent();
             if (lastUpdateCount != null) {

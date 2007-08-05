@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.1
 =======================
 
+08/05/2007 - Brian Heineman
+ o Applied patch [1592113] NTLMv2 properties on datasource.
+
 08/02/2007 - Brian Heineman
  o Corrected bug [1765905] Driver version miscellanea is incorrect;
    updated to 1.2.2.

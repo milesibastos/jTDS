@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.59 2007-07-08 19:07:01 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.60 2007-08-19 02:25:28 bheineman Exp $
  */
 public class TdsData {
     /**
@@ -726,9 +726,14 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    BlobImpl blob;
                     in.skip(24); // Skip textptr and timestamp
                     int dataLen = in.readInt();
+                    BlobImpl blob;
+                    if (dataLen == 0 && in.getTdsVersion() <= Driver.TDS50) {
+                        // Length of zero may indicate an initialized image 
+                        // column that has been updated to null.
+                        break;
+                    }
                     if (dataLen <= connection.getLobBuffer()) {
                         //
                         // OK Small enough to load into memory
@@ -764,8 +769,6 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    ClobImpl clob = new ClobImpl(connection);
-                    BlobBuffer blobBuffer = clob.getBlobBuffer();
                     String charset;
                     if (ci.charsetInfo != null) {
                         charset = ci.charsetInfo.getCharset();
@@ -774,6 +777,13 @@ public class TdsData {
                     }
                     in.skip(24); // Skip textptr and timestamp
                     int dataLen = in.readInt();
+                    if (dataLen == 0 && in.getTdsVersion() <= Driver.TDS50) {
+                        // Length of zero may indicate an initialized text 
+                        // column that has been updated to null.
+                        break;
+                    }
+                    ClobImpl clob = new ClobImpl(connection);
+                    BlobBuffer blobBuffer = clob.getBlobBuffer();
                     if (dataLen <= connection.getLobBuffer()) {
                         //
                         // OK Small enough to load into memory
@@ -831,10 +841,15 @@ public class TdsData {
                 len = in.read();
 
                 if (len > 0) {
-                    ClobImpl clob = new ClobImpl(connection);
-                    BlobBuffer blobBuffer = clob.getBlobBuffer();
                     in.skip(24); // Skip textptr and timestamp
                     int dataLen = in.readInt();
+                    if (dataLen == 0 && in.getTdsVersion() <= Driver.TDS50) {
+                        // Length of zero may indicate an initialized unitext 
+                        // column that has been updated to null.
+                        break;
+                    }
+                    ClobImpl clob = new ClobImpl(connection);
+                    BlobBuffer blobBuffer = clob.getBlobBuffer();
                     if (dataLen <= connection.getLobBuffer()) {
                         //
                         // OK Small enough to load into memory
@@ -842,6 +857,14 @@ public class TdsData {
                         byte[] data = new byte[dataLen];
                         in.read(data);
                         blobBuffer.setBuffer(data, false);
+                        if (dataLen == 2 && data[0] == 0x20 && data[1] == 0
+                                && in.getTdsVersion() == Driver.TDS50) {
+                                // Single space with Sybase equates to empty string
+                                dataLen = 0;
+                            }
+                            // Explicitly set length as multi byte character sets
+                            // may not fill array completely.
+                            blobBuffer.setLength(dataLen);
                     } else {
                         // Too big, need to write straight to disk
                         try {

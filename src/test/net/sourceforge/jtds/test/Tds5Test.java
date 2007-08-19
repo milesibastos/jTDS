@@ -273,6 +273,32 @@ public class Tds5Test extends TestBase {
         stmt.close();
     }
 
+    /*
+     * Check that unitext fields that have once been set to a non
+     * null value return null when updated to null.
+     * Fix bug [1774322] Sybase nulled text fields return not null.
+     */
+    public void testNullUniText() throws Exception {
+        if (!isVersion15orHigher()) {
+            return;
+        }
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (id int primary key not null, txt unitext null)");
+        stmt.executeUpdate("INSERT INTO #TEST VALUES (1, null)");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getString(2) == null);
+        stmt.executeUpdate("UPDATE #TEST SET txt = ' ' WHERE id = 1");
+        rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getString(2) != null);
+        stmt.executeUpdate("UPDATE #TEST SET txt = null WHERE id = 1");
+        rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getString(2) == null);
+        stmt.close();      
+    }
+
     /**
      * Test Sybase ASE 15+ bigint data type.
      * @throws Exception

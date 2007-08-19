@@ -162,6 +162,52 @@ public class SanityTest extends TestBase {
         stmt.close();
     }
 
+    /*
+     * Check that image fields that have once been set to a non
+     * null value return null when updated to null.
+     * Fix bug [1774322] Sybase nulled text fields return not null.
+     */
+    public void testNullImage() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (id int primary key not null, img image null)");
+        stmt.executeUpdate("INSERT INTO #TEST VALUES (1, null)");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getBytes(2) == null);
+        stmt.executeUpdate("UPDATE #TEST SET img = '0x0123' WHERE id = 1");
+        rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getBytes(2) != null);
+        stmt.executeUpdate("UPDATE #TEST SET img = null WHERE id = 1");
+        rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getBytes(2) == null);
+        stmt.close();      
+    }
+
+    /*
+     * Check that text fields that have once been set to a non
+     * null value return null when updated to null.
+     * Fix bug [1774322] Sybase nulled text fields return not null.
+     */
+    public void testNullText() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #TEST (id int primary key not null, txt text null)");
+        stmt.executeUpdate("INSERT INTO #TEST VALUES (1, null)");
+        ResultSet rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getString(2) == null);
+        stmt.executeUpdate("UPDATE #TEST SET txt = ' ' WHERE id = 1");
+        rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getString(2) != null);
+        stmt.executeUpdate("UPDATE #TEST SET txt = null WHERE id = 1");
+        rs = stmt.executeQuery("SELECT * FROM #TEST");
+        rs.next();
+        assertTrue(rs.getString(2) == null);
+        stmt.close();      
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(SanityTest.class);
     }

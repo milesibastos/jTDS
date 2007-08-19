@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.1
 =======================
 
+08/18/2007 - Brian Heineman
+ o Applied Mike Hutchinson's fix for bug
+   [1774322] Sybase nulled text fields return not null
+ 
 08/05/2007 - Brian Heineman
  o Applied patch [1592113] NTLMv2 properties on datasource.
  o Applied patch [1236417] 64-bit support for Single Sign On (SSO)

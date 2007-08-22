@@ -588,7 +588,7 @@ public class ResultSetTest extends DatabaseTestCase {
             stmt.executeQuery("select bad from syntax");
             fail("Expected SQLException");
         } catch (SQLException e) {
-            assertEquals("42S02", e.getSQLState());
+            assertEquals("S0002", e.getSQLState());
         }
         // DriverManager.setLogStream(null);
         stmt.close();

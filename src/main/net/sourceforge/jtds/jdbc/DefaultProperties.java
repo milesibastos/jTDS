@@ -47,7 +47,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.31 2007-08-05 21:24:29 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.32 2007-08-22 18:22:04 bheineman Exp $
  */
 public final class DefaultProperties {
 
@@ -78,7 +78,7 @@ public final class DefaultProperties {
     /** Default <code>lobBufferSize</code> property. */
     public static final String LOB_BUFFER_SIZE = "32768";
     /** Default <code>loginTimeout</code> property. */
-    public static final String LOGIN_TIMEOUT = "60"; // Non-zero value to address bug [1744375] Incorrect port configuration causes hang
+    public static final String LOGIN_TIMEOUT = "0";
     /** Default <code>macAddress</code> property. */
     public static final String MAC_ADDRESS = "000000000000";
     /** Default <code>maxStatements</code> property. */

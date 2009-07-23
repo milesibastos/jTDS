@@ -28,10 +28,9 @@ import java.security.cert.X509Certificate;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import com.sun.net.ssl.SSLContext;
-import com.sun.net.ssl.TrustManager;
-import com.sun.net.ssl.X509TrustManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import net.sourceforge.jtds.util.Logger;
 
@@ -40,7 +39,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: SocketFactories.java,v 1.8 2007-07-08 17:28:24 bheineman Exp $
+ * @version $Id: SocketFactories.java,v 1.8.2.1 2009-07-23 15:32:51 ickzon Exp $
  */
 public class SocketFactories {
     /**
@@ -184,13 +183,14 @@ public class SocketFactories {
                     return new X509Certificate[0];
                 }
 
-                public boolean isClientTrusted(X509Certificate[] chain) {
-                    return true;
+                public void checkServerTrusted(X509Certificate[] chain, String x) {
+                    // Dummy method
                 }
 
-                public boolean isServerTrusted(X509Certificate[] chain) {
-                    return true;
+                public void checkClientTrusted(X509Certificate[] chain, String x) {
+                    // Dummy method
                 }
+
             };
 
             return new X509TrustManager[]{tm};

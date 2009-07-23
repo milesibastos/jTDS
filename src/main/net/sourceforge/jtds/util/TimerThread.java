@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.5 2005-04-28 14:29:31 alin_sinpalean Exp $
+ * @version $Id: TimerThread.java,v 1.5.2.1 2009-07-23 16:18:51 ickzon Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -108,19 +108,22 @@ public class TimerThread extends Thread {
         synchronized (timerList) {
             while (true) {
                 try {
-                    try {
+                    if (nextTimeout == 0) {
                         // If nextTimeout == 0 (i.e. there are no more requests
                         // in the queue) wait indefinitely -- wait(0)
-                        timerList.wait(nextTimeout == 0 ? 0
-                                : nextTimeout - System.currentTimeMillis());
-                    } catch (IllegalArgumentException ex) {
-                        // Timeout was negative, fire timeout
+                        timerList.wait(0);
+                    } else {
+                        long ms = nextTimeout - System.currentTimeMillis();
+                        if (ms > 0) {
+                            // positive timeout, wait appropriately
+                            timerList.wait(ms);
+                        }
                     }
 
                     // Fire expired timeout requests
                     long time = System.currentTimeMillis();
                     while (!timerList.isEmpty()) {
-                        // Examime the head of the list and see
+                        // Examine the head of the list and see
                         // if the timer has expired.
                         TimerRequest t = (TimerRequest) timerList.getFirst();
                         if (t.time > time) {
@@ -179,7 +182,7 @@ public class TimerThread extends Thread {
                 }
             }
 
-            // If this request is now the first in the list, interupt timer
+            // If this request is now the first in the list, interrupt timer
             if (timerList.getFirst() == t) {
                 nextTimeout = t.time;
                 this.interrupt();

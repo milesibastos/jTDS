@@ -27,6 +27,9 @@ public class SavepointTest extends TestBase {
         super(name);
     }
 
+    /**
+     * tests if rolling back to a savepoint restores the correct DB state
+     */
     public void testSavepoint1() throws Exception {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #savepoint1 (data int)");
@@ -79,6 +82,9 @@ public class SavepointTest extends TestBase {
         con.setAutoCommit(true);
     }
 
+    /**
+     * rollback zu einem savepoint, dann test, ob weiter mit dem safepoint-objekt gearbeitet werden kann
+     */
     public void testSavepoint2() throws Exception {
         String savepointName = "SAVEPOINT_1";
 
@@ -351,6 +357,144 @@ public class SavepointTest extends TestBase {
         con.setSavepoint();
         con.rollback();
         con.setAutoCommit(true);
+    }
+
+    /**
+     * test for bug [2818256]
+     * 
+     * ensure a savepoint is still valid after rollback
+     */
+    public void testSavepoint6() throws Exception {
+       Statement stmt = con.createStatement();
+       stmt.execute("CREATE TABLE #savepoint6 (data int)");
+       stmt.close();
+
+       con.setAutoCommit(false);
+
+       PreparedStatement pstmt = con.prepareStatement("INSERT INTO #savepoint6 (data) VALUES (?)");
+
+       pstmt.setInt(1, 1);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+       Savepoint savepoint1 = con.setSavepoint();
+
+       assertNotNull(savepoint1);
+       assertTrue(savepoint1.getSavepointId() == 1);
+
+       pstmt.setInt(1, 2);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+       stmt = con.createStatement();
+       ResultSet rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint6");
+
+       assertTrue(rs.next());
+       assertTrue(rs.getInt(1) == 3);
+       assertTrue(!rs.next());
+       stmt.close();
+       rs.close();
+
+       con.rollback(savepoint1);
+
+       stmt = con.createStatement();
+       rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint6");
+
+       assertTrue(rs.next());
+       assertTrue(rs.getInt(1) == 1);
+       assertTrue(!rs.next());
+       stmt.close();
+       rs.close();
+       
+       pstmt.setInt(1, 2);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+
+       con.rollback(savepoint1);
+
+       stmt = con.createStatement();
+       rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint6");
+
+       assertTrue(rs.next());
+       assertTrue(rs.getInt(1) == 1);
+       assertTrue(!rs.next());
+       stmt.close();
+       rs.close();
+
+       con.setAutoCommit(true);
+    }
+
+    /**
+     * roll back to one savepoint and ensure earlier savepoints are still valid
+     */
+    public void testSavepoint7() throws Exception {
+       Statement stmt = con.createStatement();
+       stmt.execute("CREATE TABLE #savepoint7 (data int)");
+       stmt.close();
+
+       con.setAutoCommit(false);
+
+       PreparedStatement pstmt = con.prepareStatement("INSERT INTO #savepoint7 (data) VALUES (?)");
+
+       pstmt.setInt(1, 1);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+       Savepoint savepoint1 = con.setSavepoint();
+
+       assertNotNull(savepoint1);
+       assertTrue(savepoint1.getSavepointId() == 1);
+
+       pstmt.setInt(1, 2);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+       Savepoint savepoint2 = con.setSavepoint();
+
+       assertNotNull(savepoint2);
+       assertTrue(savepoint2.getSavepointId() == 2);
+
+       pstmt.setInt(1, 3);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+       Savepoint savepoint3 = con.setSavepoint();
+
+       assertNotNull(savepoint3);
+       assertTrue(savepoint3.getSavepointId() == 3);
+
+       pstmt.setInt(1, 4);
+       assertTrue(pstmt.executeUpdate() == 1);
+
+       pstmt.close();
+
+       stmt = con.createStatement();
+       ResultSet rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint7");
+
+       assertTrue(rs.next());
+       assertTrue(rs.getInt(1) == 10);
+       assertTrue(!rs.next());
+       stmt.close();
+       rs.close();
+
+       con.rollback(savepoint3);
+
+       stmt = con.createStatement();
+       rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint7");
+
+       assertTrue(rs.next());
+       assertTrue(rs.getInt(1) == 6);
+       assertTrue(!rs.next());
+       stmt.close();
+       rs.close();
+
+       con.rollback(savepoint1);
+
+       stmt = con.createStatement();
+       rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint7");
+
+       assertTrue(rs.next());
+       assertTrue(rs.getInt(1) == 1);
+       assertTrue(!rs.next());
+       stmt.close();
+       rs.close();
+
+       con.setAutoCommit(true);
     }
 
     public static void main(String[] args) {

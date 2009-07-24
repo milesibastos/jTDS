@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/24/2009 - Holger Rehn
+ o Corrected bug [2818256] a savepoint is invalid after rollback.
+
 07/23/2009 - Holger Rehn
  o Corrected bug [1883905] unintentional infinite wait.
 

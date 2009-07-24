@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @created March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.15 2005-10-27 13:22:33 alin_sinpalean Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.15.2.1 2009-07-24 13:26:34 ickzon Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -192,6 +192,9 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
                 removeCachedProcedure(key);
             }
         }
+
+        // recreate savepoint
+        setSavepoint((SavepointImpl) savepoint);
     }
 
     synchronized public Savepoint setSavepoint() throws SQLException {

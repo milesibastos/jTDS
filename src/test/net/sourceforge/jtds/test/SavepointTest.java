@@ -497,6 +497,19 @@ public class SavepointTest extends TestBase {
        con.setAutoCommit(true);
     }
 
+    /**
+     * Test to ensure savepoints cannot be created in auto-commit mode
+     * (Bug [2021839]).
+     */
+    public void testSavepoint8() {
+    	try {
+            con.setSavepoint();
+            assertTrue(false);
+	    } catch (SQLException e) {
+	        // Ignore, we should get this exception
+	    }
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(SavepointTest.class);
     }

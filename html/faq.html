@@ -121,6 +121,8 @@
           long, get chopped off at 30 characters?</a></li>
         <li><a href="#imageData4k">jTDS fetches only the first 4Kb of <code>IMAGE</code>
           data.</a></li>
+        <li><a href="#connectOmnibus">What do i have to do to connect to Netcool Omnibus 
+          (or any derived Product).</a></li>
       </ul>
       <p class="question">Technical Support</p>
       <ul>
@@ -870,6 +872,15 @@
         setting.</p>
       <p>For more information about URL format and the properties that may be
         passed to jTDS have a look at the <a href="#urlFormat">jTDS URL format</a>.</p>
+      <p class="question"><a name="connectOmnibus"></a>What do i have to do to connect 
+        to Netcool Omnibus (or any derived Product).</p>
+      <p>You are required to use TDS 5.0 to communicate with the Omnibus Server and
+        set a default charset to avoid SQL errors, so your URL will look like: 
+        <code>jdbc:jtds:sybase://NCO:4100;TDS=5.0;charset=iso_1</code>.
+		Since the Omnibus Server understands only a limited subset of SQL, you cannot
+		use prepared Statements.
+		</p>
+        
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Technical support</p>

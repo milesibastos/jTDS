@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.39 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: SharedSocket.java,v 1.39.2.1 2009-07-25 14:13:19 ickzon Exp $
  */
 class SharedSocket {
     /**
@@ -847,6 +847,7 @@ class SharedSocket {
 
         if (packetType != TdsCore.LOGIN_PKT
                 && packetType != TdsCore.QUERY_PKT
+                && packetType != TdsCore.SYBQUERY_PKT // required to connect IBM/Netcool Omnibus, see patch [1844846]
                 && packetType != TdsCore.REPLY_PKT) {
             throw new IOException("Unknown packet type 0x" +
                                     Integer.toHexString(packetType & 0xFF));

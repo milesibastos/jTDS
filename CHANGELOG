@@ -2,6 +2,9 @@ Changes from jTDS 1.2.2
 =======================
 
 07/25/2009 - Holger Rehn
+ o Applied patch [1844846] jTDS cannot connect IBM/Netcool Omnibus.
+
+07/25/2009 - Holger Rehn
  o Added JDBC 4 method stubs, feature request [2021848].
 
 07/24/2009 - Holger Rehn

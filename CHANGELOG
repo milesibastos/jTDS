@@ -2,6 +2,9 @@ Changes from jTDS 1.2.2
 =======================
 
 07/25/2009 - Holger Rehn
+ o Corrected bug [1843801] infinite loop if DB connection dies during a batch.
+
+07/25/2009 - Holger Rehn
  o Applied patch [1844846] jTDS cannot connect IBM/Netcool Omnibus.
 
 07/25/2009 - Holger Rehn

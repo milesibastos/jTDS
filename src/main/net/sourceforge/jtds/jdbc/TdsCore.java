@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.115 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: TdsCore.java,v 1.115.2.1 2009-07-25 14:31:37 ickzon Exp $
  */
 public class TdsCore {
     /**
@@ -445,6 +445,7 @@ public class TdsCore {
      * Check that the connection is still open.
      *
      * @throws SQLException
+     *     if the connection is closed
      */
     private void checkOpen() throws SQLException {
         if (connection.isClosed()) {
@@ -1425,9 +1426,11 @@ public class TdsCore {
      * @param counts the <code>ArrayList</code> containing the update counts
      * @param sqlEx  any previous <code>SQLException</code>(s) encountered
      * @return updated <code>SQLException</code> or <code>null</code> if no
-     *         error has yet occured
+     *         error has yet occurred
+     * @throws SQLException
+     *         if the connection is closed 
      */
-    SQLException getBatchCounts(ArrayList counts, SQLException sqlEx) {
+    SQLException getBatchCounts(ArrayList counts, SQLException sqlEx) throws SQLException {
         Integer lastCount = JtdsStatement.SUCCESS_NO_INFO;
 
         try {
@@ -1492,6 +1495,7 @@ public class TdsCore {
             }
         } finally {
             while (!endOfResponse) {
+                checkOpen(); // fix for bug [1843801]
                 // Flush rest of response
                 try {
                     nextToken();

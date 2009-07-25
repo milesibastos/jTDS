@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.115.2.1 2009-07-25 14:31:37 ickzon Exp $
+ * @version $Id: TdsCore.java,v 1.115.2.2 2009-07-25 15:01:02 ickzon Exp $
  */
 public class TdsCore {
     /**
@@ -1495,11 +1495,11 @@ public class TdsCore {
             }
         } finally {
             while (!endOfResponse) {
-                checkOpen(); // fix for bug [1843801]
                 // Flush rest of response
                 try {
                     nextToken();
                 } catch (SQLException ex) {
+                    checkOpen(); // fix for bug [1843801]
                     // Chain any exceptions to the BatchUpdateException
                     if (sqlEx != null) {
                         sqlEx.setNextException(ex);

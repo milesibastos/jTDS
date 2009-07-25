@@ -21,13 +21,14 @@ import java.sql.*;
 import java.util.*;
 
 import javax.sql.*;
+
 import net.sourceforge.jtds.jdbc.*;
 import net.sourceforge.jtds.jdbcx.proxy.*;
 
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.11 2005-02-01 23:52:50 alin_sinpalean Exp $
+ * @version $Id: PooledConnection.java,v 1.11.6.1 2009-07-25 12:57:37 ickzon Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private ArrayList listeners = new ArrayList();
@@ -129,4 +130,21 @@ public class PooledConnection implements javax.sql.PooledConnection {
         // Now remove the listener from the new, cloned list
         listeners.remove(listener);
     }
+
+    /* (non-Javadoc)
+     * @see javax.sql.PooledConnection#addStatementEventListener(javax.sql.StatementEventListener)
+     */
+    public void addStatementEventListener(StatementEventListener listener) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see javax.sql.PooledConnection#removeStatementEventListener(javax.sql.StatementEventListener)
+     */
+    public void removeStatementEventListener(StatementEventListener listener) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

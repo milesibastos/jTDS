@@ -19,6 +19,7 @@ package net.sourceforge.jtds.jdbcx.proxy;
 
 import java.sql.*;
 import java.util.Map;
+import java.util.Properties;
 
 import net.sourceforge.jtds.jdbc.*;
 import net.sourceforge.jtds.jdbcx.*;
@@ -29,7 +30,7 @@ import net.sourceforge.jtds.jdbcx.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.7 2005-04-20 16:49:30 alin_sinpalean Exp $
+ * @version $Id: ConnectionProxy.java,v 1.7.2.1 2009-07-25 12:57:36 ickzon Exp $
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;
@@ -692,5 +693,113 @@ public class ConnectionProxy implements Connection {
     protected void finalize() {
         close();
     }
-}
 
+    /* (non-Javadoc)
+     * @see java.sql.Connection#createArrayOf(java.lang.String, java.lang.Object[])
+     */
+    public Array createArrayOf(String typeName, Object[] elements)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#createBlob()
+     */
+    public Blob createBlob() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#createClob()
+     */
+    public Clob createClob() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#createNClob()
+     */
+    public NClob createNClob() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#createSQLXML()
+     */
+    public SQLXML createSQLXML() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#createStruct(java.lang.String, java.lang.Object[])
+     */
+    public Struct createStruct(String typeName, Object[] attributes)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#getClientInfo()
+     */
+    public Properties getClientInfo() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#getClientInfo(java.lang.String)
+     */
+    public String getClientInfo(String name) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#isValid(int)
+     */
+    public boolean isValid(int timeout) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#setClientInfo(java.util.Properties)
+     */
+    public void setClientInfo(Properties properties)
+            throws SQLClientInfoException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Connection#setClientInfo(java.lang.String, java.lang.String)
+     */
+    public void setClientInfo(String name, String value)
+            throws SQLClientInfoException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
+     */
+    public boolean isWrapperFor(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#unwrap(java.lang.Class)
+     */
+    public Object unwrap(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+}

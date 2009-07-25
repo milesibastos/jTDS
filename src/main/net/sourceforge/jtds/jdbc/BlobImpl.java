@@ -29,7 +29,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: BlobImpl.java,v 1.31 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: BlobImpl.java,v 1.31.2.1 2009-07-25 12:57:37 ickzon Exp $
  */
 public class BlobImpl implements Blob {
     /**
@@ -116,5 +116,16 @@ public class BlobImpl implements Blob {
 
     public void truncate(long len) throws SQLException {
         blobBuffer.truncate(len);
+    }
+
+    public void free() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    public InputStream getBinaryStream(long pos, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
     }
 }

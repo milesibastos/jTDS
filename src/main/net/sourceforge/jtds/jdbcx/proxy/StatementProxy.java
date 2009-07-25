@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a statement with minimal overhead.
  *
- * @version $Id: StatementProxy.java,v 1.4 2004-08-24 17:45:08 bheineman Exp $
+ * @version $Id: StatementProxy.java,v 1.4.4.1 2009-07-25 12:57:36 ickzon Exp $
  */
 public class StatementProxy implements Statement {
     private ConnectionProxy _connection;
@@ -697,4 +697,45 @@ public class StatementProxy implements Statement {
 
         throw sqlException;
     }
+
+    /* (non-Javadoc)
+     * @see java.sql.Statement#isClosed()
+     */
+    public boolean isClosed() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Statement#isPoolable()
+     */
+    public boolean isPoolable() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Statement#setPoolable(boolean)
+     */
+    public void setPoolable(boolean poolable) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
+     */
+    public boolean isWrapperFor(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#unwrap(java.lang.Class)
+     */
+    public Object unwrap(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

@@ -18,13 +18,20 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.lang.ref.WeakReference;
+import java.sql.Array;
+import java.sql.Blob;
 import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.DatabaseMetaData;
+import java.sql.NClob;
 import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.sql.Types;
 import java.sql.ResultSet;
 import java.net.UnknownHostException;
@@ -62,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119 2007-07-08 21:43:02 bheineman Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.1 2009-07-25 12:57:37 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2430,4 +2437,113 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     void clearSavepoints() {
     }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#createArrayOf(java.lang.String, java.lang.Object[])
+     */
+    public Array createArrayOf(String typeName, Object[] elements)
+            throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#createBlob()
+     */
+    public Blob createBlob() throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#createClob()
+     */
+    public Clob createClob() throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#createNClob()
+     */
+    public NClob createNClob() throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#createSQLXML()
+     */
+    public SQLXML createSQLXML() throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#createStruct(java.lang.String, java.lang.Object[])
+     */
+    public Struct createStruct(String typeName, Object[] attributes)
+            throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#getClientInfo()
+     */
+    public Properties getClientInfo() throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#getClientInfo(java.lang.String)
+     */
+    public String getClientInfo(String name) throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#isValid(int)
+     */
+    public boolean isValid(int timeout) throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#setClientInfo(java.util.Properties)
+     */
+    public void setClientInfo(Properties properties)
+            throws SQLClientInfoException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Connection#setClientInfo(java.lang.String, java.lang.String)
+     */
+    public void setClientInfo(String name, String value)
+            throws SQLClientInfoException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
+     */
+    public boolean isWrapperFor(Class arg0) throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+	/* (non-Javadoc)
+     * @see java.sql.Wrapper#unwrap(java.lang.Class)
+     */
+    public Object unwrap(Class arg0) throws SQLException {
+	    // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

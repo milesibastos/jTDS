@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.37 2007-07-08 17:28:23 bheineman Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.1 2009-07-25 12:57:37 ickzon Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -3519,4 +3519,81 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return types;
     }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#autoCommitFailureClosesAllResultSets()
+     */
+    public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#getClientInfoProperties()
+     */
+    public ResultSet getClientInfoProperties() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#getFunctionColumns(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+     */
+    public ResultSet getFunctionColumns(String catalog, String schemaPattern,
+            String functionNamePattern, String columnNamePattern)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#getFunctions(java.lang.String, java.lang.String, java.lang.String)
+     */
+    public ResultSet getFunctions(String catalog, String schemaPattern,
+            String functionNamePattern) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#getRowIdLifetime()
+     */
+    public RowIdLifetime getRowIdLifetime() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#getSchemas(java.lang.String, java.lang.String)
+     */
+    public ResultSet getSchemas(String catalog, String schemaPattern)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.DatabaseMetaData#supportsStoredFunctionsUsingCallSyntax()
+     */
+    public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
+     */
+    public boolean isWrapperFor(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#unwrap(java.lang.Class)
+     */
+    public Object unwrap(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

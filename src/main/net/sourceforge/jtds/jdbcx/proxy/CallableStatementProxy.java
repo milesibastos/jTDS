@@ -17,6 +17,8 @@
 //
 package net.sourceforge.jtds.jdbcx.proxy;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Calendar;
@@ -29,7 +31,7 @@ import net.sourceforge.jtds.jdbc.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a callable statement with minimal overhead.
  *
- * @version $Id: CallableStatementProxy.java,v 1.3 2004-08-24 17:45:08 bheineman Exp $
+ * @version $Id: CallableStatementProxy.java,v 1.3.4.1 2009-07-25 12:57:36 ickzon Exp $
  */
 public class CallableStatementProxy
 extends PreparedStatementProxy
@@ -1480,4 +1482,475 @@ implements CallableStatement {
         
         return null;
     }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getCharacterStream(int)
+     */
+    public Reader getCharacterStream(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+   }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getCharacterStream(java.lang.String)
+     */
+    public Reader getCharacterStream(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getNCharacterStream(int)
+     */
+    public Reader getNCharacterStream(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getNCharacterStream(java.lang.String)
+     */
+    public Reader getNCharacterStream(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getNClob(int)
+     */
+    public NClob getNClob(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getNClob(java.lang.String)
+     */
+    public NClob getNClob(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getNString(int)
+     */
+    public String getNString(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getNString(java.lang.String)
+     */
+    public String getNString(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getRowId(int)
+     */
+    public RowId getRowId(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getRowId(java.lang.String)
+     */
+    public RowId getRowId(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getSQLXML(int)
+     */
+    public SQLXML getSQLXML(int parameterIndex) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#getSQLXML(java.lang.String)
+     */
+    public SQLXML getSQLXML(String parameterName) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setAsciiStream(java.lang.String, java.io.InputStream)
+     */
+    public void setAsciiStream(String parameterName, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setAsciiStream(java.lang.String, java.io.InputStream, long)
+     */
+    public void setAsciiStream(String parameterName, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setBinaryStream(java.lang.String, java.io.InputStream)
+     */
+    public void setBinaryStream(String parameterName, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setBinaryStream(java.lang.String, java.io.InputStream, long)
+     */
+    public void setBinaryStream(String parameterName, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setBlob(java.lang.String, java.sql.Blob)
+     */
+    public void setBlob(String parameterName, Blob x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setBlob(java.lang.String, java.io.InputStream)
+     */
+    public void setBlob(String parameterName, InputStream inputStream)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setBlob(java.lang.String, java.io.InputStream, long)
+     */
+    public void setBlob(String parameterName, InputStream inputStream,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setCharacterStream(java.lang.String, java.io.Reader)
+     */
+    public void setCharacterStream(String parameterName, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setCharacterStream(java.lang.String, java.io.Reader, long)
+     */
+    public void setCharacterStream(String parameterName, Reader reader,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setClob(java.lang.String, java.sql.Clob)
+     */
+    public void setClob(String parameterName, Clob x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setClob(java.lang.String, java.io.Reader)
+     */
+    public void setClob(String parameterName, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setClob(java.lang.String, java.io.Reader, long)
+     */
+    public void setClob(String parameterName, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setNCharacterStream(java.lang.String, java.io.Reader)
+     */
+    public void setNCharacterStream(String parameterName, Reader value)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setNCharacterStream(java.lang.String, java.io.Reader, long)
+     */
+    public void setNCharacterStream(String parameterName, Reader value,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setNClob(java.lang.String, java.sql.NClob)
+     */
+    public void setNClob(String parameterName, NClob value) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setNClob(java.lang.String, java.io.Reader)
+     */
+    public void setNClob(String parameterName, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setNClob(java.lang.String, java.io.Reader, long)
+     */
+    public void setNClob(String parameterName, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setNString(java.lang.String, java.lang.String)
+     */
+    public void setNString(String parameterName, String value)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setRowId(java.lang.String, java.sql.RowId)
+     */
+    public void setRowId(String parameterName, RowId x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.CallableStatement#setSQLXML(java.lang.String, java.sql.SQLXML)
+     */
+    public void setSQLXML(String parameterName, SQLXML xmlObject)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream)
+     */
+    public void setAsciiStream(int parameterIndex, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream, long)
+     */
+    public void setAsciiStream(int parameterIndex, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream)
+     */
+    public void setBinaryStream(int parameterIndex, InputStream x)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream, long)
+     */
+    public void setBinaryStream(int parameterIndex, InputStream x, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setBlob(int, java.io.InputStream)
+     */
+    public void setBlob(int parameterIndex, InputStream inputStream)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setBlob(int, java.io.InputStream, long)
+     */
+    public void setBlob(int parameterIndex, InputStream inputStream, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader)
+     */
+    public void setCharacterStream(int parameterIndex, Reader reader)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader, long)
+     */
+    public void setCharacterStream(int parameterIndex, Reader reader,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setClob(int, java.io.Reader)
+     */
+    public void setClob(int parameterIndex, Reader reader) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setClob(int, java.io.Reader, long)
+     */
+    public void setClob(int parameterIndex, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader)
+     */
+    public void setNCharacterStream(int parameterIndex, Reader value)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader, long)
+     */
+    public void setNCharacterStream(int parameterIndex, Reader value,
+            long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setNClob(int, java.sql.NClob)
+     */
+    public void setNClob(int parameterIndex, NClob value) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setNClob(int, java.io.Reader)
+     */
+    public void setNClob(int parameterIndex, Reader reader) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setNClob(int, java.io.Reader, long)
+     */
+    public void setNClob(int parameterIndex, Reader reader, long length)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setNString(int, java.lang.String)
+     */
+    public void setNString(int parameterIndex, String value)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setRowId(int, java.sql.RowId)
+     */
+    public void setRowId(int parameterIndex, RowId x) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.PreparedStatement#setSQLXML(int, java.sql.SQLXML)
+     */
+    public void setSQLXML(int parameterIndex, SQLXML xmlObject)
+            throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Statement#isClosed()
+     */
+    public boolean isClosed() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Statement#isPoolable()
+     */
+    public boolean isPoolable() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Statement#setPoolable(boolean)
+     */
+    public void setPoolable(boolean poolable) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
+     */
+    public boolean isWrapperFor(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#unwrap(java.lang.Class)
+     */
+    public Object unwrap(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

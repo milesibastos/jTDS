@@ -28,7 +28,7 @@ import java.sql.*;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ParameterMetaDataImpl.java,v 1.7 2005-09-21 21:50:34 ddkilzer Exp $
+ * @version $Id: ParameterMetaDataImpl.java,v 1.7.2.1 2009-07-25 12:57:37 ickzon Exp $
  */
 public class ParameterMetaDataImpl implements ParameterMetaData {
     private final ParamInfo[] parameterList;
@@ -119,4 +119,21 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
 
         return parameterList[param - 1];
     }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
+     */
+    public boolean isWrapperFor(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    /* (non-Javadoc)
+     * @see java.sql.Wrapper#unwrap(java.lang.Class)
+     */
+    public Object unwrap(Class arg0) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

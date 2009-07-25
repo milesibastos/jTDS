@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.36 2007-07-08 21:38:13 bheineman Exp $
+ * @version $Id: ClobImpl.java,v 1.36.2.1 2009-07-25 12:57:37 ickzon Exp $
  */
 
 public class ClobImpl implements Clob {
@@ -211,4 +211,15 @@ public class ClobImpl implements Clob {
     public void truncate(long len) throws SQLException {
         blobBuffer.truncate(len * 2);
     }
+
+    public void free() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
+    public Reader getCharacterStream(long pos, long length) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException();
+    }
+
 }

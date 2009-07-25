@@ -29,7 +29,7 @@ import java.util.*;
 // Changed get / set UnicodeStream tests to align with standard.
 //
 /**
- * @version $Id: LOBTest.java,v 1.27 2005-04-17 18:41:29 alin_sinpalean Exp $
+ * @version $Id: LOBTest.java,v 1.27.2.1 2009-07-25 12:57:37 ickzon Exp $
  */
 public class LOBTest extends TestBase {
     private static final int LOB_LENGTH = 8000;
@@ -787,7 +787,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #blobsetnull2 (data) VALUES (?)");
 
         // Test PreparedStatement.setBlob()
-        pstmt.setBlob(1, null);
+        pstmt.setBlob(1, (Blob)null);
         assertEquals(pstmt.executeUpdate(), 1);
 
         pstmt.close();
@@ -1034,7 +1034,7 @@ public class LOBTest extends TestBase {
         rs.moveToInsertRow();
 
         // Test ResultSet.updateBlob()
-        rs.updateBlob(2, null);
+        rs.updateBlob(2, (Blob)null);
 
         rs.insertRow();
 
@@ -2229,7 +2229,7 @@ public class LOBTest extends TestBase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #clobsetnull3 (data) VALUES (?)");
 
         // Test PreparedStatement.setClob()
-        pstmt.setClob(1, null);
+        pstmt.setClob(1, (Clob)null);
         assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
@@ -2621,7 +2621,7 @@ public class LOBTest extends TestBase {
         rs.moveToInsertRow();
 
         // Test ResultSet.updateClob()
-        rs.updateClob(2, null);
+        rs.updateClob(2, (Clob)null);
 
         rs.insertRow();
 

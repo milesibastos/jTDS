@@ -29,7 +29,7 @@ import java.sql.*;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @created March 30, 2004
- * @version $Id: ConnectionJDBC3.java,v 1.15.2.1 2009-07-24 13:26:34 ickzon Exp $
+ * @version $Id: ConnectionJDBC3.java,v 1.15.2.2 2009-07-26 17:15:05 ickzon Exp $
  */
 public class ConnectionJDBC3 extends ConnectionJDBC2 {
     /** The list of savepoints. */
@@ -61,8 +61,10 @@ public class ConnectionJDBC3 extends ConnectionJDBC2 {
 
         try {
             statement = createStatement();
-            statement.execute("IF @@TRANCOUNT=0 BEGIN TRAN SAVE TRAN jtds"
-                    + savepoint.getId());
+            statement.execute("IF @@TRANCOUNT=0 BEGIN "
+                    + "SET IMPLICIT_TRANSACTIONS OFF; " + "BEGIN TRAN; " // Fix for bug []Patch: in SET IMPLICIT_TRANSACTIONS ON
+                    + "SET IMPLICIT_TRANSACTIONS ON; " + "END "          // mode BEGIN TRAN actually starts two transactions!
+                    + "SAVE TRAN jtds" + savepoint.getId());
         } finally {
             if (statement != null) {
                 statement.close();

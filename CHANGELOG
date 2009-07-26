@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/26/2009 - Holger Rehn
+ o Corrected bug [2021839] savepoint starts 2 transactions if it's the first operation.
+
 07/25/2009 - Holger Rehn
  o Corrected bug [1843801] infinite loop if DB connection dies during a batch.
 

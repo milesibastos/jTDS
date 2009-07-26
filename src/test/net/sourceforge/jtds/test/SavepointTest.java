@@ -133,12 +133,7 @@ public class SavepointTest extends TestBase {
             // Ignore, we should get this exception
         }
 
-        try {
-            con.rollback(savepoint);
-            assertTrue(false);
-        } catch (SQLException e) {
-            // Ignore, we should get this exception
-        }
+        con.rollback(savepoint);
 
         try {
             con.releaseSavepoint(null);
@@ -147,12 +142,7 @@ public class SavepointTest extends TestBase {
             // Ignore, we should get this exception
         }
 
-        try {
-            con.releaseSavepoint(savepoint);
-            assertTrue(false);
-        } catch (SQLException e) {
-            // Ignore, we should get this exception
-        }
+        con.releaseSavepoint(savepoint);
 
         con.commit();
 
@@ -247,19 +237,9 @@ public class SavepointTest extends TestBase {
 
         con.rollback(savepoint2);
 
-        try {
-            con.rollback(savepoint2);
-            assertTrue(false);
-        } catch (SQLException e) {
-            // Ignore, we should get this exception
-        }
+        con.rollback(savepoint2);
 
-        try {
-            con.releaseSavepoint(savepoint2);
-            assertTrue(false);
-        } catch (SQLException e) {
-            // Ignore, we should get this exception
-        }
+        con.releaseSavepoint(savepoint2);
 
         try {
             con.rollback(savepoint3);
@@ -545,7 +525,7 @@ public class SavepointTest extends TestBase {
         rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint9");
 
         assertTrue(rs.next());
-        assertTrue(rs.getInt(1) == 1);
+        assertTrue("bug [2021839]",rs.getInt(1) == 1);
         assertTrue(!rs.next());
         stmt.close();
         rs.close();

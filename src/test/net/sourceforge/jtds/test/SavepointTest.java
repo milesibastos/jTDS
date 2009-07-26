@@ -502,12 +502,55 @@ public class SavepointTest extends TestBase {
      * (Bug [2021839]).
      */
     public void testSavepoint8() {
-    	try {
+        try {
             con.setSavepoint();
             assertTrue(false);
-	    } catch (SQLException e) {
-	        // Ignore, we should get this exception
-	    }
+        } catch (SQLException e) {
+            // Ignore, we should get this exception
+        }
+    }
+
+    /**
+     * Test for bug [2021839], connection is rolled back instead of being
+     * committed if setSavepoint is the first operation.
+     */
+    public void testSavepoint9() throws Exception {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #savepoint9 (data int)");
+        stmt.close();
+
+        con.setAutoCommit(false);
+
+        Savepoint sp = con.setSavepoint();
+        
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #savepoint9 (data) VALUES (?)");
+
+        pstmt.setInt(1, 1);
+        assertTrue(pstmt.executeUpdate() == 1);
+        pstmt.close();
+
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint9");
+
+        assertTrue(rs.next());
+        assertTrue(rs.getInt(1) == 1);
+        assertTrue(!rs.next());
+        stmt.close();
+        rs.close();
+
+        con.commit();
+        con.rollback(); // this discovers bug [2021839] 
+
+        stmt = con.createStatement();
+        rs = stmt.executeQuery("SELECT SUM(data) FROM #savepoint9");
+
+        assertTrue(rs.next());
+        assertTrue(rs.getInt(1) == 1);
+        assertTrue(!rs.next());
+        stmt.close();
+        rs.close();
+
+        con.setAutoCommit(true);
     }
 
     public static void main(String[] args) {

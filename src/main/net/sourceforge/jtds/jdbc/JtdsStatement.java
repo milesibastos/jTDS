@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.64.2.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: JtdsStatement.java,v 1.64.2.2 2009-07-27 16:49:41 ickzon Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -890,12 +890,15 @@ public class JtdsStatement implements java.sql.Statement {
     /**
      * Execute batch of SQL Statements.
      * <p/>
-     * The JDBC3 standard says that the behaviour of this method must be
+     * The JDBC3 standard says that the behavior of this method must be
      * consistent for any DBMS. As Sybase (and to a lesser extent SQL Server)
      * will sometimes continue after a batch execution error, the only way to
      * comply with the standard is to always return an array of update counts
      * the same size as the batch list. Slots in the array beyond the last
-     * executed statement are set to <code>EXECUTE_FAILED</code>.
+     * executed statement are set to <code>EXECUTE_FAILED</code>. <p/>
+     *
+     * There is a problem with certain statements, returning more update counts
+     * than there are batch operations. (see bug [])
      *
      * @return update counts as an <code>int[]</code>
      */
@@ -931,7 +934,7 @@ public class JtdsStatement implements java.sql.Statement {
             int updateCounts[] = new int[size];
             // Copy the update counts into the int array
             int results = counts.size();
-            for (int i = 0; i < results; i++) {
+            for (int i = 0; i < results && i < size; i++) {
                 updateCounts[i] = ((Integer) counts.get(i)).intValue();
             }
             // Pad any remaining slots with EXECUTE_FAILED

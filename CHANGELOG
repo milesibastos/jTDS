@@ -3,6 +3,7 @@ Changes from jTDS 1.2.2
 
 07/27/2009 - Holger Rehn
  o Corrected data truncation problem described in bug [2021839].
+ o Corrected bug [1811383] ArrayIndexOutOfBounds on executeBatch.
 
 07/26/2009 - Holger Rehn
  o Corrected bug [2021839] savepoint starts 2 transactions if it's the first

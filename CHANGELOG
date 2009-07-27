@@ -2,6 +2,7 @@ Changes from jTDS 1.2.2
 =======================
 
 07/27/2009 - Holger Rehn
+ o Corrected bug [1869156] memory leak of WeakReferences.
  o Corrected data truncation problem described in bug [2021839].
  o Corrected bug [1811383] ArrayIndexOutOfBounds on executeBatch.
 

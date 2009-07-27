@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.2 2009-07-27 17:24:34 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1621,7 +1621,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             for (int i = 0; i < statements.size(); i++) {
                 WeakReference wr = (WeakReference) statements.get(i);
 
-                if (wr == null) {
+                // FIXME: entries from statements should be dropped immediately
+                // on GC, instead of being kept until overwritten or connection
+                // being closed  
+
+                if (wr == null || wr.get() == null) {
                     statements.set(i, new WeakReference(statement));
                     return;
                 }

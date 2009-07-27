@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.*;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.11 2007-07-12 21:21:27 bheineman Exp $
+ * @version $Id: BatchTest.java,v 1.11.2.1 2009-07-27 13:11:22 ickzon Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -624,7 +624,77 @@ public class BatchTest extends DatabaseTestCase {
         }
     }
 
+    /**
+     * this is a test for the data truncation problem described in bug [2731952]
+     */
+    public void testDataTruncation() throws SQLException {
+        Statement stmt = con.createStatement();
+        stmt.execute("CREATE TABLE #DATATRUNC (id int, data text)");
+        stmt.close();
+
+        // create 2 different strings
+        StringBuilder sb1 = new StringBuilder(10000);
+        StringBuilder sb2 = new StringBuilder(100);
+
+        for (int i=1; i<=1000; i++) {
+            sb1.append(" +++ ").append("    ".substring(String.valueOf(i).length())).append(i).append("\n");
+        }
+
+        for (int i=1; i<=10; i++) {
+            sb2.append(" --- ").append("    ".substring(String.valueOf(i).length())).append(i).append("\n");
+        }
+
+        String string1 = sb1.toString();
+        String string2 = sb2.toString();
+
+        PreparedStatement pstmt = con.prepareStatement("insert into #DATATRUNC (id, data) values (?, ?)");
+
+        // insert both values into DB in batch mode
+        pstmt.setInt(1, 1);
+        pstmt.setString(2, string1);
+        pstmt.addBatch();
+
+        pstmt.setInt(1, 2);
+        pstmt.setString(2, string2);
+        pstmt.addBatch();
+
+        assertTrue(Arrays.equals(new int[] {1, 1},pstmt.executeBatch()));
+
+        // insert first string again, no batch
+        pstmt.setInt(1, 3);
+        pstmt.setString(2, string1);
+
+        assertEquals(1,pstmt.executeUpdate());
+        pstmt.close();
+
+        // ensure all 3 entries are still intact
+        stmt = con.createStatement();
+        ResultSet rs = stmt.executeQuery("select data from #DATATRUNC order by id asc");
+
+        // 1st value, should be string1
+        assertTrue(rs.next());
+        String value = rs.getString(1);
+        assertEquals(string1.length(), value.length());
+        assertEquals(string1, value);
+
+        // 2nd value, should be string2
+        assertTrue(rs.next());
+        value = rs.getString(1);
+        assertEquals(string2.length(), value.length());
+        assertEquals(string2, value);
+
+        // 3rd value, should be string1
+        assertTrue(rs.next());
+        value = rs.getString(1);
+        assertEquals(string1.length(), value.length());
+        assertEquals(string1, value);
+
+        rs.close();
+        stmt.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(BatchTest.class);
     }
+
 }

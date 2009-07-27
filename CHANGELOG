@@ -1,16 +1,16 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/27/2009 - Holger Rehn
+ o Corrected data truncation problem described in bug [2021839].
+
 07/26/2009 - Holger Rehn
- o Corrected bug [2021839] savepoint starts 2 transactions if it's the first operation.
+ o Corrected bug [2021839] savepoint starts 2 transactions if it's the first
+   operation.
 
 07/25/2009 - Holger Rehn
  o Corrected bug [1843801] infinite loop if DB connection dies during a batch.
-
-07/25/2009 - Holger Rehn
  o Applied patch [1844846] jTDS cannot connect IBM/Netcool Omnibus.
-
-07/25/2009 - Holger Rehn
  o Added JDBC 4 method stubs, feature request [2021848].
 
 07/24/2009 - Holger Rehn
@@ -18,8 +18,6 @@ Changes from jTDS 1.2.2
 
 07/23/2009 - Holger Rehn
  o Corrected bug [1883905] unintentional infinite wait.
-
-07/23/2009 - Holger Rehn
  o Applied patch [1714497] to avoid using Sun's SSL implementation.
 
 ===============================================================================

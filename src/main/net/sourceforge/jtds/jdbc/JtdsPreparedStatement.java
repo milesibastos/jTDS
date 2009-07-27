@@ -60,7 +60,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.63.2.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.63.2.2 2009-07-27 13:11:22 ickzon Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -236,15 +236,13 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         for (int i = 0; i < size;) {
             Object value = batchValues.get(i);
-            if (procHandle != null) {
-                procName = procHandle[i];
-            }
+            String proc = (procHandle == null) ? procName : procHandle[i];
             ++i;
             // Execute batch now if max size reached or end of batch
             boolean executeNow = (i % executeSize == 0) || i == size;
 
             tds.startBatch();
-            tds.executeSQL(sql, procName, (ParamInfo[]) value, false, 0, -1, -1, executeNow);
+            tds.executeSQL(sql, proc, (ParamInfo[]) value, false, 0, -1, -1, executeNow);
 
             // If the batch has been sent, process the results
             if (executeNow) {
@@ -264,7 +262,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * Execute the SQL batch on a Sybase server.
      * <p/>
      * Sybase needs to have the SQL concatenated into one TDS language packet followed by up to 1000 parameters. This
-     * method will be overriden for <code>CallableStatements</code>.
+     * method will be overridden for <code>CallableStatements</code>.
      *
      * @param size the total size of the batch
      * @param executeSize the maximum number of statements to send in one request

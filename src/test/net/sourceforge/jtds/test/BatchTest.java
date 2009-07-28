@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.*;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.11.2.2 2009-07-27 16:47:48 ickzon Exp $
+ * @version $Id: BatchTest.java,v 1.11.2.3 2009-07-28 12:35:01 ickzon Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -694,17 +694,10 @@ public class BatchTest extends DatabaseTestCase {
     }
 
     /**
-     * this is a test for bug [1811383]
-     */
-    public void testXY() throws SQLException {
-        Statement statement = con.createStatement();
-        statement.addBatch("IF sessionproperty('ARITHABORT') = 0 SET ARITHABORT ON");
-        assertEquals(1, statement.executeBatch().length);
-        statement.close();
-    }
-
-    /**
-     * this is a test for bug [2827931]
+     * test for bug [2827931] that implicitly also tests for bug [1811383]
+     *
+     * example for statement that produces multiple update counts unexpectedly:
+     * IF sessionproperty('ARITHABORT') = 0 SET ARITHABORT ON
      */
     public void testBatchUpdateCounts() throws SQLException {
         Statement statement = con.createStatement();
@@ -712,7 +705,7 @@ public class BatchTest extends DatabaseTestCase {
         statement.addBatch("insert into #BATCHUC values (1)");
         statement.addBatch("insert into #BATCHUC values (2);insert into #BATCHUC values (3)");
         statement.addBatch("insert into #BATCHUC values (4);insert into #BATCHUC values (5);insert into #BATCHUC values (6)");
-        // below: create identifiable update counts to show if/how far they have been shifted due to the bug
+        // below: create identifiable update counts to show if/how far they have been shifted due to bug [2827931]
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC");
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");

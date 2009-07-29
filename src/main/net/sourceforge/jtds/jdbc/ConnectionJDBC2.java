@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.2 2009-07-27 17:24:34 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.3 2009-07-29 12:21:23 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1940,7 +1940,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return JtdsResultSet.HOLD_CURSORS_OVER_COMMIT;
     }
 
-    public int getTransactionIsolation() throws SQLException {
+    synchronized public int getTransactionIsolation() throws SQLException {
         checkOpen();
 
         return this.transactionIsolation;
@@ -2057,7 +2057,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         clearSavepoints();
     }
 
-    public boolean getAutoCommit() throws SQLException {
+    synchronized public boolean getAutoCommit() throws SQLException {
         checkOpen();
 
         return this.autoCommit;
@@ -2192,7 +2192,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         this.readOnly = readOnly;
     }
 
-    public String getCatalog() throws SQLException {
+    synchronized public String getCatalog() throws SQLException {
         checkOpen();
 
         return this.currentDatabase;

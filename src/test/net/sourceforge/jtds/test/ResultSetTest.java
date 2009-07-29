@@ -21,6 +21,8 @@ import java.sql.*;
 import java.math.BigDecimal;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @version 1.0
@@ -1729,6 +1731,68 @@ public class ResultSetTest extends DatabaseTestCase {
         stmt.close();
     }
 
+    /**
+     * Test for bug [2051585], TDS Protocol error when 2 ResultSets on the
+     * same connection are being iterated at the same time.
+     */
+    public void testConcurrentResultSets() throws Exception {
+        con.setAutoCommit(false);
+
+        final int rows    = 10000;
+        final int threads = 10;
+
+        // prepare test data
+        Statement stmt = con.createStatement();
+        stmt.execute("create table #conrs (id int,data varchar(20))");
+        for (int r=0; r < rows; r++) {
+            assertEquals(1, stmt.executeUpdate("insert into #conrs values(" + r + ",'test" + r + "')"));
+        }
+        stmt.close();
+
+        final Thread[] workers = new Thread[threads];
+        final List     errors  = new ArrayList();
+
+        for (int i=0; i < threads; i++) {
+            workers[i] = new Thread("thread " + i) {
+                public void run() {
+                    try {
+                        Statement st = con.createStatement();
+                        ResultSet rs = st.executeQuery("select * from #conrs order by id asc");
+
+                        for (int i=0; i < rows; i++) {
+                            assertTrue(rs.next());
+                            assertEquals(i, rs.getInt(1));
+                            assertEquals("test" + i, rs.getString(2));
+                            Thread.sleep(1); // ensure thread doesn't finish before next one is started
+                        }
+
+                        rs.close();
+                        st.close();
+                    }
+                    catch (Throwable t) {
+                        synchronized (errors) {
+                            errors.add(new Exception(this.getName() + ": " + t.getMessage(),t));
+                        }
+                    }
+                }
+            };
+        }
+
+        // start all threads
+        for (int i=0; i < threads; i++) {
+            workers[i].start();
+        }
+
+        // wait for the threads to finish
+        for (int i=0; i < threads; i++) {
+            workers[i].join();
+        }
+
+        assertEquals("[]", Arrays.toString(errors.toArray()));
+
+        con.setAutoCommit(true);
+    }
+    
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

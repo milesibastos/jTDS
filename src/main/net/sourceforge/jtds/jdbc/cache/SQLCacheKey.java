@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
  *
  * @author Brett Wooldridge
  * @author Alin Sinpalean
- * @version $Id: SQLCacheKey.java,v 1.2 2005-05-25 09:24:02 alin_sinpalean Exp $
+ * @version $Id: SQLCacheKey.java,v 1.2.2.1 2009-07-29 12:10:42 ickzon Exp $
  */
 public class SQLCacheKey {
     private final String sql;
@@ -58,6 +58,8 @@ public class SQLCacheKey {
                     && this.serverType == key.serverType
                     && this.sql.equals(key.sql);
         } catch (ClassCastException e) {
+            return false;
+        } catch (NullPointerException e) {
             return false;
         }
     }

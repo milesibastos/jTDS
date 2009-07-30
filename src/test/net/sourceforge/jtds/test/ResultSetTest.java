@@ -1738,8 +1738,8 @@ public class ResultSetTest extends DatabaseTestCase {
     public void testConcurrentResultSets() throws Exception {
         con.setAutoCommit(false);
 
-        final int rows    = 10000;
-        final int threads = 10;
+        final int rows    = 100;
+        final int threads = 100;
 
         // prepare test data
         Statement stmt = con.createStatement();
@@ -1755,15 +1755,20 @@ public class ResultSetTest extends DatabaseTestCase {
         for (int i=0; i < threads; i++) {
             workers[i] = new Thread("thread " + i) {
                 public void run() {
+                    int i=0;
                     try {
                         Statement st = con.createStatement();
                         ResultSet rs = st.executeQuery("select * from #conrs order by id asc");
 
-                        for (int i=0; i < rows; i++) {
-                            assertTrue(rs.next());
-                            assertEquals(i, rs.getInt(1));
-                            assertEquals("test" + i, rs.getString(2));
-                            Thread.sleep(1); // ensure thread doesn't finish before next one is started
+                        for ( ; i < rows; i++) {
+                            assertTrue("premature end of result, only " + i + "of " + rows + " rows present", rs.next());
+                            assertEquals("resultset contains wrong row:", i, rs.getInt(1));
+                            assertEquals("resultset contains wrong column value:", "test" + i, rs.getString(2));
+
+                            // random delays should ensure that threads are not executed one after another
+                            if (Math.random() < 0.01) {
+                               Thread.sleep(1);
+                            }
                         }
 
                         rs.close();
@@ -1771,7 +1776,7 @@ public class ResultSetTest extends DatabaseTestCase {
                     }
                     catch (Throwable t) {
                         synchronized (errors) {
-                            errors.add(new Exception(this.getName() + ": " + t.getMessage(),t));
+                            errors.add(new Exception(this.getName() + " at row " + i + ": " + t.getMessage(),t));
                         }
                     }
                 }

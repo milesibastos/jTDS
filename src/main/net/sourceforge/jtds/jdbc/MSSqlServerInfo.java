@@ -48,7 +48,7 @@ import net.sourceforge.jtds.util.Logger;
  * </pre>
  *
  * @author Matt Brinkley
- * @version $Id: MSSqlServerInfo.java,v 1.8 2005-04-20 16:49:22 alin_sinpalean Exp $
+ * @version $Id: MSSqlServerInfo.java,v 1.8.2.1 2009-07-30 10:50:05 ickzon Exp $
  */
 public class MSSqlServerInfo {
     private int numRetries = 3;
@@ -56,9 +56,10 @@ public class MSSqlServerInfo {
     private String[] serverInfoStrings;
 
     public MSSqlServerInfo(String host) throws SQLException {
+        DatagramSocket socket = null;
         try {
             InetAddress addr = InetAddress.getByName(host);
-            DatagramSocket socket = new DatagramSocket();
+            socket = new DatagramSocket();
             byte[] msg = new byte[] {0x02};
             DatagramPacket p = new DatagramPacket(msg, msg.length, addr, 1434);
 
@@ -86,7 +87,12 @@ public class MSSqlServerInfo {
             if (Logger.isActive()) {
                 Logger.logException(e);
             }
+        } finally {
+            if (socket != null) {
+                socket.close();   
+            }
         }
+        
 
         throw new SQLException(
                               Messages.get("error.msinfo.badinfo", host), "HY000");

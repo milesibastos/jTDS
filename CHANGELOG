@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/30/2009 - Holger Rehn
+ o Corrected bug [2796385], running out of UDP sockets.
+
 07/27/2009 - Holger Rehn
  o Corrected bug [1869156] memory leak of WeakReferences.
  o Corrected data truncation problem described in bug [2021839].

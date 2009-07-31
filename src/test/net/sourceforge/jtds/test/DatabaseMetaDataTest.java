@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.17 2005-11-23 16:36:20 alin_sinpalean Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.1 2009-07-31 11:38:05 ickzon Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -641,6 +641,107 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
             }
         } finally {
             dropTable("jTDSTYPETEST");
+        }
+    }
+
+    /**
+     * Test for bug [1833720], invalid table names for large result sets.
+     */
+    public void testResultSetMetadate() throws Exception {
+        final int rows    = 1;
+        final int tables  = 10;
+        final int columns = 100;
+
+        Statement st = con.createStatement();
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            // create tables
+            for (int t=0; t < tables; t++) {
+                sb.setLength(0);
+                sb.append("create table #TABLE");
+                sb.append(t);
+                sb.append("(ID int primary key");
+                for (int c=0; c < columns; c++) {
+                    sb.append(",COLUMN");
+                    sb.append(c);
+                    sb.append(" int");
+                }
+                sb.append(")");
+                st.execute(sb.toString());
+            }
+
+            // insert data
+            for (int t=0; t < tables; t++) {
+                sb.setLength(0);
+                sb.append("insert into #TABLE");
+                sb.append(t);
+                sb.append(" values(?");
+                for (int c=0; c < columns; c++) {
+                    sb.append(",?");
+                }
+                sb.append(")");
+
+                PreparedStatement pst = con.prepareStatement(sb.toString());
+                for (int r = 0; r < rows; r++) {
+                    for (int c=0; c <= columns; c++) {
+                        pst.setInt(c + 1, r);
+                    }
+                    pst.addBatch();
+                }
+                assertEquals(rows, pst.executeBatch().length);
+            }
+
+            // create select
+            sb.setLength(0);
+            sb.append("select * from ");
+            for (int t=0; t < tables; t++) {
+                sb.append(t > 0 ? "," : "");
+                sb.append("#TABLE");
+                sb.append(t);
+            }
+            if (tables > 1) {
+                sb.append(" where ");
+                for (int t=1; t < tables; t++) {
+                    sb.append(t > 1 ? " and " : "");
+                    sb.append("#TABLE");
+                    sb.append(t);
+                    sb.append(".id=");
+                    sb.append("#TABLE");
+                    sb.append(t-1);
+                    sb.append(".id");
+                }
+            }
+    
+            // get result
+            ResultSet rs = st.executeQuery(sb.toString());
+            ResultSetMetaData rsmd = rs.getMetaData();
+
+            int toalColumns = rsmd.getColumnCount();
+            assertEquals(tables * (columns + 1), toalColumns);
+
+            for (int r=0; r < rows; r++) {
+                assertTrue(rs.next());
+            }
+
+            int index = 0;
+            for (int t=0; t < tables; t++) {
+                for (int c = 1; c <= columns + 1; c++) {
+                    index ++;
+
+                    // FIXME: column names are transformed to upper case by jTDS, think that's an error
+                    assertEquals(c > 1 ? ("COLUMN" + (c - 2)) : "ID", rsmd.getColumnName(index));
+
+                    assertEquals(Types.INTEGER, rsmd.getColumnType(index));
+
+                    // test for bug [1833720]
+                    assertEquals("#TABLE" + t, rsmd.getTableName(index));
+                }
+            }
+        } finally {
+            for (int t=0; t < tables; t++) {
+                dropTable("#TABLE" + t);
+            }
         }
     }
 

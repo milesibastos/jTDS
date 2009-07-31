@@ -2445,4 +2445,40 @@ public class TimestampTest extends DatabaseTestCase {
         }
         return ms;
     }
+    
+    
+    /**
+     * Test for bug [2508201], date field is changed by 3 milliseconds. 
+     */
+    public void testDateTimeDegeneration() throws Exception {
+       Timestamp ts1 = Timestamp.valueOf("2009-09-09 00:00:00.000");
+       
+       // create table and insert initial value
+       Statement stmt = con.createStatement();
+       stmt.execute("create table #dtd (id int,data datetime)");
+       stmt.execute("insert into #dtd values (0,'" + ts1.toString() + "')");
+       stmt.close();
+
+       PreparedStatement ps1 = con.prepareStatement("update #dtd set data=? where id=0");
+       PreparedStatement ps2 = con.prepareStatement("select data from #dtd");
+
+       for (int i = 0; i < 1000; i++) {
+           // read previous value
+           ResultSet rs = ps2.executeQuery();
+           rs.next();
+           Timestamp ts2 = rs.getTimestamp(1);
+
+           // compare current value to initial value 
+           assertEquals(ts1.toString(), ts2.toString());
+           rs.close();
+
+           // update DB with current value
+           ps1.setTimestamp(1, ts2);
+           ps1.executeUpdate();
+       }
+
+       ps1.close();
+       ps2.close();
+    }
+
 }

@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+07/31/2009 - Holger Rehn
+ o Corrected bug [2508201], date field is changed by 3 milliseconds.
+
 07/30/2009 - Holger Rehn
  o Corrected bug [2796385], running out of UDP sockets.
 

@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.60 2007-08-19 02:25:28 bheineman Exp $
+ * @version $Id: TdsData.java,v 1.60.2.1 2009-07-31 12:54:16 ickzon Exp $
  */
 public class TdsData {
     /**
@@ -1016,7 +1016,7 @@ public class TdsData {
             case SYBDATE:
                 len = (ci.tdsType == SYBDATEN)? in.read(): 4;
                 if (len == 4) {
-                    return new DateTime(in.readInt(), -1);
+                    return new DateTime(in.readInt(), DateTime.TIME_NOT_USED);
                 } else {
                     // Invalid length or 0 for null
                     in.skip(len);
@@ -1027,7 +1027,7 @@ public class TdsData {
             case SYBTIME:
                 len = (ci.tdsType == SYBTIMEN)? in.read(): 4;
                 if (len == 4) {
-                    return new DateTime(-1, in.readInt());
+                    return new DateTime(DateTime.DATE_NOT_USED, in.readInt());
                 } else {
                     // Invalid length or 0 for null
                     in.skip(len);

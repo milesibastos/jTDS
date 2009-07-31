@@ -2446,39 +2446,44 @@ public class TimestampTest extends DatabaseTestCase {
         return ms;
     }
     
-    
     /**
-     * Test for bug [2508201], date field is changed by 3 milliseconds. 
+     * Test for bug [2508201], date field is changed by 3 milliseconds.
+     *
+     * Note: This test will fail for some server types due to "DATE" and "TIME"
+     * data types not being available.
      */
     public void testDateTimeDegeneration() throws Exception {
-       Timestamp ts1 = Timestamp.valueOf("2009-09-09 00:00:00.000");
-       
-       // create table and insert initial value
-       Statement stmt = con.createStatement();
-       stmt.execute("create table #dtd (id int,data datetime)");
-       stmt.execute("insert into #dtd values (0,'" + ts1.toString() + "')");
-       stmt.close();
+       Timestamp ts1 = Timestamp.valueOf("1970-01-01 00:00:00.000");
 
-       PreparedStatement ps1 = con.prepareStatement("update #dtd set data=? where id=0");
-       PreparedStatement ps2 = con.prepareStatement("select data from #dtd");
+       String[] types = new String[] {"datetime","date","time"};
 
-       for (int i = 0; i < 1000; i++) {
-           // read previous value
-           ResultSet rs = ps2.executeQuery();
-           rs.next();
-           Timestamp ts2 = rs.getTimestamp(1);
+       for (int t = 0; t < types.length; t++) {
+           String type = types[t];
+           // create table and insert initial value
+           Statement stmt = con.createStatement();
+           stmt.execute("create table #t_" + type + " (id int,data " + type + ")");
+           stmt.execute("insert into #t_" + type + " values (0,'" + ts1.toString() + "')");
 
-           // compare current value to initial value 
-           assertEquals(ts1.toString(), ts2.toString());
-           rs.close();
+           PreparedStatement ps1 = con.prepareStatement("update #t_" + type + " set data=? where id=0");
+           PreparedStatement ps2 = con.prepareStatement("select data from #t_" + type);
+   
+            // read previous value
+            ResultSet rs = ps2.executeQuery();
+            rs.next();
+            Timestamp ts2 = rs.getTimestamp(1);
 
-           // update DB with current value
-           ps1.setTimestamp(1, ts2);
-           ps1.executeUpdate();
-       }
+            // compare current value to initial value 
+            assertEquals(type + " value degenerated: ", ts1.toString(), ts2.toString());
+            rs.close();
 
-       ps1.close();
-       ps2.close();
+            // update DB with current value
+            ps1.setTimestamp(1, ts2);
+            ps1.executeUpdate();
+   
+            ps1.close();
+            ps2.close();
+            stmt.close();
+        }
     }
 
 }

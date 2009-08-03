@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.39.2.1 2009-07-25 14:13:19 ickzon Exp $
+ * @version $Id: SharedSocket.java,v 1.39.2.2 2009-08-03 12:31:00 ickzon Exp $
  */
 class SharedSocket {
     /**
@@ -742,7 +742,7 @@ class SharedSocket {
             // Try to create a disk file for the queue
             try {
                 vsock.queueFile = File.createTempFile("jtds", ".tmp", bufferDir);
-                vsock.queueFile.deleteOnExit();
+                // vsock.queueFile.deleteOnExit(); memory leak, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6664633
                 vsock.diskQueue = new RandomAccessFile(vsock.queueFile, "rw");
 
                 // Write current cache contents to disk and free memory
@@ -1040,4 +1040,13 @@ class SharedSocket {
     protected int getPort() {
         return this.port;
     }
+
+    /**
+     * Finalize this object by releasing its resources.
+     */
+    protected void finalize() throws Throwable {
+        close();
+        super.finalize();
+    }
+
 }

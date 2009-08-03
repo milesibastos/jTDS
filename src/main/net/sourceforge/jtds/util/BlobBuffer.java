@@ -54,7 +54,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: BlobBuffer.java,v 1.4 2007-07-08 21:38:14 bheineman Exp $
+ * @version $Id: BlobBuffer.java,v 1.4.2.1 2009-08-03 12:31:00 ickzon Exp $
  */
 public class BlobBuffer {
 
@@ -163,7 +163,7 @@ public class BlobBuffer {
     public void createBlobFile() {
         try {
             blobFile = File.createTempFile("jtds", ".tmp", bufferDir);
-            blobFile.deleteOnExit();
+            // blobFile.deleteOnExit(); memory leak, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6664633
             raFile = new RandomAccessFile(blobFile, "rw");
             if (length > 0) {
                 raFile.write(buffer, 0, (int) length);

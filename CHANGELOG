@@ -4,6 +4,9 @@ Changes from jTDS 1.2.2
 08/03/2009 - Holger Rehn
  o Corrected bug [1802986], incorrect charset mapping between 'MAC'
    and 'ISO-8859-1'.
+ o Resolved problem [1957748], Java VM is leaking memory in
+   File.deleteOnExit().
+   See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6664633.
 
 07/31/2009 - Holger Rehn
  o Corrected bug [2508201], date field is changed by 3 milliseconds.

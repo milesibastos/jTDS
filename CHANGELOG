@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/04/2009 - Holger Rehn
+ o Corrected bug [1845477], Added missing license info. 
+
 08/03/2009 - Holger Rehn
  o Corrected bug [1802986], incorrect charset mapping between 'MAC'
    and 'ISO-8859-1'.

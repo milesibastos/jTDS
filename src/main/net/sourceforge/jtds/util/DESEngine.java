@@ -1,29 +1,31 @@
-/*******************************************************************************
- * Class:   : DESEngine
- * Author   : mbrinkley
- * Creation : Nov 11, 2003 2:59:23 PM
- * $Header: /home/momo/Desktop/jtds/jtds-cvsbackup/jtds/src/main/net/sourceforge/jtds/util/DESEngine.java,v 1.3 2004-09-16 20:40:51 matt_brinkley Exp $
- *
- * Version: $Id: DESEngine.java,v 1.3 2004-09-16 20:40:51 matt_brinkley Exp $
- ******************************************************************************/
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
+// Copyright (C) 2004 The jTDS Project
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
 
 package net.sourceforge.jtds.util;
-
-/*
-import org.bouncycastle.crypto.BlockCipher;
-import org.bouncycastle.crypto.CipherParameters;
-import org.bouncycastle.crypto.DataLengthException;
-import org.bouncycastle.crypto.params.KeyParameter;
-*/
 
 /**
  * a class that provides a basic DES engine.
  * Modified by Matt Brinkley (mdb) ... mainly just removed depends on external classes.
  *
- * @version $Id: DESEngine.java,v 1.3 2004-09-16 20:40:51 matt_brinkley Exp $
+ * @author Matt Brinkley
+ * @version $Id: DESEngine.java,v 1.3.6.1 2009-08-04 10:33:54 ickzon Exp $
  */
 public class DESEngine
-//    implements BlockCipher  //mdb
 {
     protected static final int  BLOCK_SIZE = 8;
 
@@ -52,23 +54,9 @@ public class DESEngine
      * @exception IllegalArgumentException if the params argument is
      * inappropriate.
      */
-    public void init(
-        boolean encrypting,
-        byte[]  key) //mdb: changed parameter from CipherParameters to byte[]
+    public void init(boolean encrypting, byte[] key)
     {
         workingKey = generateWorkingKey(encrypting, key);
-
-        //mdb: original:
-        /*
-        if (params instanceof KeyParameter)
-        {
-            workingKey = generateWorkingKey(encrypting,
-                                  ((KeyParameter)params).getKey());
-
-            return;
-        }
-        throw new IllegalArgumentException("invalid parameter passed to DES init - " + params.getClass().getName());
-        */
     }
 
     public String getAlgorithmName()
@@ -514,4 +502,5 @@ public class DESEngine
         out[outOff + 6] = (byte)((left >>>  8) & 0xff);
         out[outOff + 7] = (byte)( left         & 0xff);
     }
+
 }

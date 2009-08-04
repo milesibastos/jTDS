@@ -1,3 +1,21 @@
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
+// Copyright (C) 2004 The jTDS Project
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+
 package net.sourceforge.jtds.test;
 
 import java.sql.Statement;
@@ -11,7 +29,8 @@ import java.math.BigDecimal;
 /**
  * Test for miscellaneous JDBC 3.0 features.
  *
- * @version $Id: JDBC3Test.java,v 1.3 2005-07-04 11:31:09 alin_sinpalean Exp $
+ * @author Alin Sinpalean
+ * @version $Id: JDBC3Test.java,v 1.3.2.1 2009-08-04 10:33:54 ickzon Exp $
  */
 public class JDBC3Test extends TestBase {
     public JDBC3Test(String name) {

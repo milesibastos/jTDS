@@ -1,3 +1,21 @@
+// jTDS JDBC Driver for Microsoft SQL Server and Sybase
+// Copyright (C) 2004 The jTDS Project
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+
 package net.sourceforge.jtds.test;
 
 import java.math.BigDecimal;
@@ -13,6 +31,9 @@ import junit.framework.TestSuite;
 
 /**
  * test getting timestamps from the database.
+ *
+ * @author Alin Sinpalean
+ * @version $Id: TimestampTest.java,v 1.32.2.3 2009-08-04 10:33:54 ickzon Exp $
  */
 public class TimestampTest extends DatabaseTestCase {
     public TimestampTest(String name) {
@@ -2484,6 +2505,18 @@ public class TimestampTest extends DatabaseTestCase {
             ps2.close();
             stmt.close();
         }
+    }
+
+    public void testEscaping() throws SQLException {
+        Statement st = con.createStatement();
+        ResultSet rs = st.executeQuery("SELECT 'a',{ts '2007-10-19 10:20:30.000'}");
+
+        assertTrue(rs.next());
+        assertEquals("2007-10-19 10:20:30.000", rs.getString(2).toString());
+        assertEquals("2007-10-19 10:20:30.000", rs.getTimestamp(2).toString());
+
+        rs.close();
+        st.close();
     }
 
 }

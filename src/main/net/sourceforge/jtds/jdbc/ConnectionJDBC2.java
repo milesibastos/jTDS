@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.3 2009-07-29 12:21:23 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.4 2009-08-04 16:45:49 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -295,144 +295,146 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         SharedSocket.setMinMemPkts(bufferMinPackets);
         SQLWarning warn;
 
+        Object timer = null;
         try {
-            Object timer = null;
-            if (loginTimeout > 0) {
-                // Start a login timer
-                timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
-                        new TimerThread.TimerListener() {
-                            public void timerExpired() {
-                                if (socket != null) {
-                                    socket.forceClose();
+            try {
+                if (loginTimeout > 0) {
+                    // Start a login timer
+                    timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
+                            new TimerThread.TimerListener() {
+                                public void timerExpired() {
+                                    if (socket != null) {
+                                        socket.forceClose();
+                                    }
                                 }
-                            }
-                        });
+                            });
+                }
+
+                if (namedPipe) {
+                    // Use named pipe
+                    socket = createNamedPipe(this);
+                } else {
+                    // Use plain TCP/IP socket
+                    socket = new SharedSocket(this);
+                }
+
+                if (timer != null && TimerThread.getInstance().hasExpired(timer)) {
+                    // If the timer has expired during the connection phase, close
+                    // the socket and throw an exception
+                    socket.forceClose();
+                    throw new IOException("Login timed out");
+                }
+
+                if ( charsetSpecified ) {
+                    loadCharset(serverCharset);
+                } else {
+                    // Need a default charset to process login packets for TDS 4.2/5.0
+                    // Will discover the actual serverCharset later
+                    loadCharset("iso_1");
+                    serverCharset = ""; // But don't send charset name to server!
+                }
+
+                //
+                // Create TDS protocol object
+                //
+                baseTds = new TdsCore(this, messages);
+
+                //
+                // Negotiate SSL connection if required
+                //
+                if (tdsVersion >= Driver.TDS80 && !namedPipe) {
+                    baseTds.negotiateSSL(instanceName, ssl);
+                }
+
+                //
+                // Now try to login
+                //
+                baseTds.login(serverName,
+                              databaseName,
+                              user,
+                              password,
+                              domainName,
+                              serverCharset,
+                              appName,
+                              progName,
+                              wsid,
+                              language,
+                              macAddress,
+                              packetSize);
+
+                //
+                // Save any login warnings so that they will not be overwritten by
+                // the internal configuration SQL statements e.g. setCatalog() etc.
+                //
+                warn = messages.warnings;
+
+                // Update the tdsVersion with the value in baseTds. baseTds sets
+                // the TDS version for the socket and there are no other objects
+                // with cached TDS versions at this point.
+                tdsVersion = baseTds.getTdsVersion();
+                if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
+                    // Need to select the default database
+                    setCatalog(databaseName);
+                }
+            } catch (UnknownHostException e) {
+                throw Support.linkException(
+                        new SQLException(Messages.get("error.connection.badhost",
+                                e.getMessage()), "08S03"), e);
+            } catch (IOException e) {
+                if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
+                    throw Support.linkException(
+                            new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
+                }
+                throw Support.linkException(
+                        new SQLException(Messages.get("error.connection.ioerror",
+                                e.getMessage()), "08S01"), e);
+            } catch (SQLException e) {
+                if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
+                    throw Support.linkException(
+                            new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
+                }
+
+                throw e;
             }
 
-            if (namedPipe) {
-                // Use named pipe
-                socket = createNamedPipe(this);
+            // If charset is still unknown and the collation is not set either,
+            // determine the charset by querying (we're using Sybase or SQL Server
+            // 6.5)
+            if ((serverCharset == null || serverCharset.length() == 0)
+                    && collation == null) {
+                loadCharset(determineServerCharset());
+            }
+
+            // Initial database settings.
+            // Sets: auto commit mode  = true
+            //       transaction isolation = read committed.
+            if (serverType == Driver.SYBASE) {
+                baseTds.submitSQL(SYBASE_INITIAL_SQL);
             } else {
-                // Use plain TCP/IP socket
-                socket = new SharedSocket(this);
-            }
+                // Also discover the maximum decimal precision:  28 (default)
+                // or 38 for MS SQL Server 6.5/7, or 38 for 2000 and later.
+                Statement stmt = this.createStatement();
+                ResultSet rs = stmt.executeQuery(SQL_SERVER_INITIAL_SQL);
 
-            if (timer != null && TimerThread.getInstance().hasExpired(timer)) {
-                // If the timer has expired during the connection phase, close
-                // the socket and throw an exception
-                socket.forceClose();
-                throw new IOException("Login timed out");
-            }
+                if (rs.next()) {
+                    maxPrecision = rs.getByte(1);
+                }
 
-            if ( charsetSpecified ) {
-                loadCharset(serverCharset);
-            } else {
-                // Need a default charset to process login packets for TDS 4.2/5.0
-                // Will discover the actual serverCharset later
-                loadCharset("iso_1");
-                serverCharset = ""; // But don't send charset name to server!
+                rs.close();
+                stmt.close();
             }
 
             //
-            // Create TDS protocol object
+            // Restore any login warnings so that the user can retrieve them
+            // by calling Connection.getWarnings()
             //
-            baseTds = new TdsCore(this, messages);
-
-            //
-            // Negotiate SSL connection if required
-            //
-            if (tdsVersion >= Driver.TDS80 && !namedPipe) {
-                baseTds.negotiateSSL(instanceName, ssl);
-            }
-
-            //
-            // Now try to login
-            //
-            baseTds.login(serverName,
-                          databaseName,
-                          user,
-                          password,
-                          domainName,
-                          serverCharset,
-                          appName,
-                          progName,
-                          wsid,
-                          language,
-                          macAddress,
-                          packetSize);
-
+            messages.warnings = warn;
+        } finally {
             if (timer != null) {
                 // Cancel loginTimer
                 TimerThread.getInstance().cancelTimer(timer);
             }
-
-            //
-            // Save any login warnings so that they will not be overwritten by
-            // the internal configuration SQL statements e.g. setCatalog() etc.
-            //
-            warn = messages.warnings;
-
-            // Update the tdsVersion with the value in baseTds. baseTds sets
-            // the TDS version for the socket and there are no other objects
-            // with cached TDS versions at this point.
-            tdsVersion = baseTds.getTdsVersion();
-            if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
-                // Need to select the default database
-                setCatalog(databaseName);
-            }
-        } catch (UnknownHostException e) {
-            throw Support.linkException(
-                    new SQLException(Messages.get("error.connection.badhost",
-                            e.getMessage()), "08S03"), e);
-        } catch (IOException e) {
-            if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
-                throw Support.linkException(
-                        new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
-            }
-            throw Support.linkException(
-                    new SQLException(Messages.get("error.connection.ioerror",
-                            e.getMessage()), "08S01"), e);
-        } catch (SQLException e) {
-            if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
-                throw Support.linkException(
-                        new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
-            }
-
-            throw e;
         }
-
-        // If charset is still unknown and the collation is not set either,
-        // determine the charset by querying (we're using Sybase or SQL Server
-        // 6.5)
-        if ((serverCharset == null || serverCharset.length() == 0)
-                && collation == null) {
-            loadCharset(determineServerCharset());
-        }
-
-        // Initial database settings.
-        // Sets: auto commit mode  = true
-        //       transaction isolation = read committed.
-        if (serverType == Driver.SYBASE) {
-            baseTds.submitSQL(SYBASE_INITIAL_SQL);
-        } else {
-            // Also discover the maximum decimal precision:  28 (default)
-            // or 38 for MS SQL Server 6.5/7, or 38 for 2000 and later.
-            Statement stmt = this.createStatement();
-            ResultSet rs = stmt.executeQuery(SQL_SERVER_INITIAL_SQL);
-
-            if (rs.next()) {
-                maxPrecision = rs.getByte(1);
-            }
-
-            rs.close();
-            stmt.close();
-        }
-
-        //
-        // Restore any login warnings so that the user can retrieve them
-        // by calling Connection.getWarnings()
-        //
-        messages.warnings = warn;
     }
 
 

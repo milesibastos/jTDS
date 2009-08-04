@@ -4,7 +4,8 @@ Changes from jTDS 1.2.2
 08/04/2009 - Holger Rehn
  o Corrected bug [1845477], Added missing license info.
  o Resolved issue [1955499], Performance problems with timestamps in
-   multi-threaded applications. 
+   multi-threaded applications.
+ o Corrected bug [1793584], Login timeout canceled too early. 
 
 08/03/2009 - Holger Rehn
  o Corrected bug [1802986], incorrect charset mapping between 'MAC'

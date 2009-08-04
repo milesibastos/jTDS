@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.56 2007-07-08 18:42:14 bheineman Exp $
+ * @version $Id: Support.java,v 1.56.2.1 2009-08-04 16:03:41 ickzon Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -95,9 +95,13 @@ public class Support {
     };
 
     /**
-     * Static utility Calendar object.
+     * Thread-bound utility Calendar object.
      */
-    private static final GregorianCalendar cal = new GregorianCalendar();
+    private static final ThreadLocal<GregorianCalendar> calendar = new ThreadLocal<GregorianCalendar>() {
+                                                                       protected GregorianCalendar initialValue() {
+                                                                           return new GregorianCalendar();
+                                                                       }
+                                                                   };
 
     /**
      * Convert a byte[] object to a hex string.
@@ -399,15 +403,14 @@ public class Support {
                     } else if (x instanceof java.sql.Time) {
                         return DATE_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
-                        synchronized (cal) {
-                            cal.setTime((java.util.Date) x);
-                            cal.set(Calendar.HOUR_OF_DAY, 0);
-                            cal.set(Calendar.MINUTE, 0);
-                            cal.set(Calendar.SECOND, 0);
-                            cal.set(Calendar.MILLISECOND, 0);
+                        GregorianCalendar cal = calendar.get();
+                        cal.setTime((java.util.Date) x);
+                        cal.set(Calendar.HOUR_OF_DAY, 0);
+                        cal.set(Calendar.MINUTE, 0);
+                        cal.set(Calendar.SECOND, 0);
+                        cal.set(Calendar.MILLISECOND, 0);
 // VM1.4+ only              return new java.sql.Date(cal.getTimeInMillis());
-                            return new java.sql.Date(cal.getTime().getTime());
-                        }
+                        return new java.sql.Date(cal.getTime().getTime());
                     } else if (x instanceof java.lang.String) {
                         return java.sql.Date.valueOf(((String) x).trim());
                     }
@@ -424,15 +427,14 @@ public class Support {
                     } else if (x instanceof java.sql.Date) {
                         return TIME_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
-                        synchronized (cal) {
+                        GregorianCalendar cal = calendar.get();
 // VM 1.4+ only             cal.setTimeInMillis(((java.sql.Timestamp)x).getTime());
-                            cal.setTime((java.util.Date)x);
-                            cal.set(Calendar.YEAR, 1970);
-                            cal.set(Calendar.MONTH, 0);
-                            cal.set(Calendar.DAY_OF_MONTH,1);
+                        cal.setTime((java.util.Date)x);
+                        cal.set(Calendar.YEAR, 1970);
+                        cal.set(Calendar.MONTH, 0);
+                        cal.set(Calendar.DAY_OF_MONTH,1);
 // VM 1.4+ only             return new java.sql.Time(cal.getTimeInMillis());*/
-                            return new java.sql.Time(cal.getTime().getTime());
-                        }
+                        return new java.sql.Time(cal.getTime().getTime());
                     } else if (x instanceof java.lang.String) {
                         return java.sql.Time.valueOf(((String) x).trim());
                     }
@@ -1108,27 +1110,26 @@ public class Support {
      * @return the new timestamp value as a <code>long</code>
      */
     public static long timeToZone(java.util.Date value, Calendar target) {
-        synchronized (cal) {
-            java.util.Date tmp = target.getTime();
-            try {
-                cal.setTime(value);
-                if (!Driver.JDBC3 && value instanceof Timestamp) {
-                    // Not Running under 1.4 so need to add milliseconds
-                    cal.set(Calendar.MILLISECOND,
-                            ((Timestamp)value).getNanos() / 1000000);
-                }
-                target.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY));
-                target.set(Calendar.MINUTE, cal.get(Calendar.MINUTE));
-                target.set(Calendar.SECOND, cal.get(Calendar.SECOND));
-                target.set(Calendar.MILLISECOND, cal.get(Calendar.MILLISECOND));
-                target.set(Calendar.YEAR, cal.get(Calendar.YEAR));
-                target.set(Calendar.MONTH, cal.get(Calendar.MONTH));
-                target.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH));
-                return target.getTime().getTime();
+        java.util.Date tmp = target.getTime();
+        try {
+            GregorianCalendar cal = calendar.get();
+            cal.setTime(value);
+            if (!Driver.JDBC3 && value instanceof Timestamp) {
+                // Not Running under 1.4 so need to add milliseconds
+                cal.set(Calendar.MILLISECOND,
+                        ((Timestamp)value).getNanos() / 1000000);
             }
-            finally {
-                target.setTime(tmp);
-            }
+            target.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY));
+            target.set(Calendar.MINUTE, cal.get(Calendar.MINUTE));
+            target.set(Calendar.SECOND, cal.get(Calendar.SECOND));
+            target.set(Calendar.MILLISECOND, cal.get(Calendar.MILLISECOND));
+            target.set(Calendar.YEAR, cal.get(Calendar.YEAR));
+            target.set(Calendar.MONTH, cal.get(Calendar.MONTH));
+            target.set(Calendar.DAY_OF_MONTH, cal.get(Calendar.DAY_OF_MONTH));
+            return target.getTime().getTime();
+        }
+        finally {
+            target.setTime(tmp);
         }
     }
 
@@ -1139,27 +1140,26 @@ public class Support {
      * @return The new timestamp value as a <code>long</code>.
      */
     public static long timeFromZone(java.util.Date value , Calendar target) {
-        synchronized (cal) {
-            java.util.Date tmp = target.getTime();
-            try {
-                target.setTime(value);
-                if (!Driver.JDBC3 && value instanceof Timestamp) {
-                    // Not Running under 1.4 so need to add milliseconds
-                    target.set(Calendar.MILLISECOND,
-                            ((Timestamp)value).getNanos() / 1000000);
-                }
-                cal.set(Calendar.HOUR_OF_DAY, target.get(Calendar.HOUR_OF_DAY));
-                cal.set(Calendar.MINUTE, target.get(Calendar.MINUTE));
-                cal.set(Calendar.SECOND, target.get(Calendar.SECOND));
-                cal.set(Calendar.MILLISECOND, target.get(Calendar.MILLISECOND));
-                cal.set(Calendar.YEAR, target.get(Calendar.YEAR));
-                cal.set(Calendar.MONTH, target.get(Calendar.MONTH));
-                cal.set(Calendar.DAY_OF_MONTH, target.get(Calendar.DAY_OF_MONTH));
-                return cal.getTime().getTime();
+        java.util.Date tmp = target.getTime();
+        try {
+            GregorianCalendar cal = calendar.get();
+            target.setTime(value);
+            if (!Driver.JDBC3 && value instanceof Timestamp) {
+                // Not Running under 1.4 so need to add milliseconds
+                target.set(Calendar.MILLISECOND,
+                        ((Timestamp)value).getNanos() / 1000000);
             }
-            finally {
-                target.setTime(tmp);
-            }
+            cal.set(Calendar.HOUR_OF_DAY, target.get(Calendar.HOUR_OF_DAY));
+            cal.set(Calendar.MINUTE, target.get(Calendar.MINUTE));
+            cal.set(Calendar.SECOND, target.get(Calendar.SECOND));
+            cal.set(Calendar.MILLISECOND, target.get(Calendar.MILLISECOND));
+            cal.set(Calendar.YEAR, target.get(Calendar.YEAR));
+            cal.set(Calendar.MONTH, target.get(Calendar.MONTH));
+            cal.set(Calendar.DAY_OF_MONTH, target.get(Calendar.DAY_OF_MONTH));
+            return cal.getTime().getTime();
+        }
+        finally {
+            target.setTime(tmp);
         }
     }
 

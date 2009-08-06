@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.56.2.1 2009-08-04 16:03:41 ickzon Exp $
+ * @version $Id: Support.java,v 1.56.2.2 2009-08-06 18:08:39 ickzon Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -97,11 +97,11 @@ public class Support {
     /**
      * Thread-bound utility Calendar object.
      */
-    private static final ThreadLocal<GregorianCalendar> calendar = new ThreadLocal<GregorianCalendar>() {
-                                                                       protected GregorianCalendar initialValue() {
-                                                                           return new GregorianCalendar();
-                                                                       }
-                                                                   };
+    private static final ThreadLocal calendar = new ThreadLocal() {
+        protected Object initialValue() {
+            return new GregorianCalendar();
+            }
+        };
 
     /**
      * Convert a byte[] object to a hex string.
@@ -403,7 +403,7 @@ public class Support {
                     } else if (x instanceof java.sql.Time) {
                         return DATE_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
-                        GregorianCalendar cal = calendar.get();
+                        GregorianCalendar cal = (GregorianCalendar) calendar.get();
                         cal.setTime((java.util.Date) x);
                         cal.set(Calendar.HOUR_OF_DAY, 0);
                         cal.set(Calendar.MINUTE, 0);
@@ -427,7 +427,7 @@ public class Support {
                     } else if (x instanceof java.sql.Date) {
                         return TIME_ZERO;
                     } else if (x instanceof java.sql.Timestamp) {
-                        GregorianCalendar cal = calendar.get();
+                        GregorianCalendar cal = (GregorianCalendar) calendar.get();
 // VM 1.4+ only             cal.setTimeInMillis(((java.sql.Timestamp)x).getTime());
                         cal.setTime((java.util.Date)x);
                         cal.set(Calendar.YEAR, 1970);
@@ -1112,7 +1112,7 @@ public class Support {
     public static long timeToZone(java.util.Date value, Calendar target) {
         java.util.Date tmp = target.getTime();
         try {
-            GregorianCalendar cal = calendar.get();
+            GregorianCalendar cal = (GregorianCalendar) calendar.get();
             cal.setTime(value);
             if (!Driver.JDBC3 && value instanceof Timestamp) {
                 // Not Running under 1.4 so need to add milliseconds
@@ -1142,7 +1142,7 @@ public class Support {
     public static long timeFromZone(java.util.Date value , Calendar target) {
         java.util.Date tmp = target.getTime();
         try {
-            GregorianCalendar cal = calendar.get();
+            GregorianCalendar cal = (GregorianCalendar) calendar.get();
             target.setTime(value);
             if (!Driver.JDBC3 && value instanceof Timestamp) {
                 // Not Running under 1.4 so need to add milliseconds

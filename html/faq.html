@@ -337,6 +337,9 @@
         <dt><code>progName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
         <dd>Client library name. No practical use, it's displayed by Enterprise
           Manager or Profiler associated with the connection.</dd>
+        <dt><code>processId</code> (default - <code>123</code>)</dt>
+        <dd>The client process ID associated with the connection. Must be an integer
+        value or the string "compute" to let jTDS choose a process ID.</dd>
         <dt><code>sendStringParametersAsUnicode</code> (default - <code>true</code>)</dt>
         <dd>Determines whether string parameters are sent to the SQL Server database
           in Unicode or in the default character encoding of the database. This
@@ -354,6 +357,8 @@
           time that the server will take to answer any query. Once the timeout value is exceeded
           the network connection will be closed. This parameter may be useful for detecting dead
           network connections in a pooled environment.  See also <code>loginTimeout</code>.</dd>
+        <dt><code>socketKeepAlive</code> (default - <code>false</code>)</dt>
+        <dd>true to enable TCP/IP keep-alive messages</dd>
         <dt><code>ssl</code> (default - <code>off</code>)</dt>
         <dd>Specifies if and how to use SSL for secure communication.
           <table class="inner" cellpadding="0" cellspacing="0">

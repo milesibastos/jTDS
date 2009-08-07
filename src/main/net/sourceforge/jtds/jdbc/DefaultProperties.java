@@ -47,7 +47,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultProperties.java,v 1.32 2007-08-22 18:22:04 bheineman Exp $
+ * @version $Id: DefaultProperties.java,v 1.32.2.1 2009-08-07 14:02:09 ickzon Exp $
  */
 public final class DefaultProperties {
 
@@ -131,6 +131,10 @@ public final class DefaultProperties {
     public static final String LOGFILE = "";
     /** Default <code>sockeTimeout</code> property. */
     public static final String SOCKET_TIMEOUT = "0";
+    /** Default <code>socketKeepAlive</code> property. */
+    public static final String SOCKET_KEEPALIVE = "false";
+    /** Default <code>processId</code> property. */
+    public static final String PROCESS_ID = "123";
 
     /** Default <code>serverType</code> property for SQL Server. */
     public static final String SERVER_TYPE_SQLSERVER = "sqlserver";
@@ -220,6 +224,8 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.LOBBUFFER, LOB_BUFFER_SIZE);
         addDefaultPropertyIfNotSet(props, Driver.LOGINTIMEOUT, LOGIN_TIMEOUT);
         addDefaultPropertyIfNotSet(props, Driver.SOTIMEOUT, SOCKET_TIMEOUT);
+        addDefaultPropertyIfNotSet(props, Driver.SOKEEPALIVE, SOCKET_KEEPALIVE);
+        addDefaultPropertyIfNotSet(props, Driver.PROCESSID, PROCESS_ID);
         addDefaultPropertyIfNotSet(props, Driver.MACADDRESS, MAC_ADDRESS);
         addDefaultPropertyIfNotSet(props, Driver.MAXSTATEMENTS, MAX_STATEMENTS);
         addDefaultPropertyIfNotSet(props, Driver.NAMEDPIPE, NAMED_PIPE);

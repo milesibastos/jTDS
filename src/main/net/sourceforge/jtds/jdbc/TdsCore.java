@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.115.2.2 2009-07-25 15:01:02 ickzon Exp $
+ * @version $Id: TdsCore.java,v 1.115.2.3 2009-08-07 14:02:10 ickzon Exp $
  */
 public class TdsCore {
     /**
@@ -1652,7 +1652,7 @@ public class TdsCore {
         putLoginString(wsid, 30);           // Host name
         putLoginString(user, 30);           // user name
         putLoginString(password, 30);       // password
-        putLoginString("00000123", 30);     // hostproc (offset 93 0x5d)
+        putLoginString(String.valueOf(connection.getProcessId()), 30);     // hostproc (offset 93 0x5d)
 
         out.write((byte) 3); // type of int2
         out.write((byte) 1); // type of int4
@@ -1740,7 +1740,7 @@ public class TdsCore {
         putLoginString(wsid, 30);           // Host name
         putLoginString(user, 30);           // user name
         putLoginString(password, 30);       // password
-        putLoginString("00000123", 30);     // hostproc (offset 93 0x5d)
+        putLoginString(String.valueOf(connection.getProcessId()), 30);     // hostproc (offset 93 0x5d)
 
         out.write((byte) 3); // type of int2
         out.write((byte) 1); // type of int4
@@ -1930,7 +1930,7 @@ public class TdsCore {
         // Program version?
         out.write((int)7);
         // Process ID
-        out.write((int)123);
+        out.write(connection.getProcessId());
         // Connection ID
         out.write((int)0);
         // 0x20: enable warning messages if USE <database> issued

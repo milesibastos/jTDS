@@ -33,7 +33,7 @@ import java.io.IOException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.11 2005-04-20 16:49:31 alin_sinpalean Exp $
+ * @version $Id: Logger.java,v 1.11.2.1 2009-08-07 14:02:11 ickzon Exp $
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
@@ -203,7 +203,7 @@ public class Logger {
     }
 
     //
-    // Backward compatbility method
+    // Backward compatibility method
     //
     /**
      * Turn the logging on or off.

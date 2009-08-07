@@ -28,7 +28,7 @@ import java.net.SocketException;
  *
  * @author Rob Worsnop
  * @author Mike Hutchinson
- * @version $Id: TdsTlsSocket.java,v 1.3 2005-04-28 14:29:31 alin_sinpalean Exp $
+ * @version $Id: TdsTlsSocket.java,v 1.3.2.1 2009-08-07 14:02:11 ickzon Exp $
  */
 class TdsTlsSocket extends Socket {
     private final Socket delegate;
@@ -89,6 +89,15 @@ class TdsTlsSocket extends Socket {
      */
     public synchronized void setSoTimeout(int timeout) throws SocketException {
         delegate.setSoTimeout(timeout);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.net.Socket#setKeepAlive(boolean)
+     */
+    public synchronized void setKeepAlive(boolean keepAlive) throws SocketException {
+        delegate.setKeepAlive(keepAlive);
     }
 
     /*

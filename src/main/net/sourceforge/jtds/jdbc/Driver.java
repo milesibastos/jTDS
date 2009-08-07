@@ -45,7 +45,7 @@ import net.sourceforge.jtds.ssl.Ssl;
  * @author Brian Heineman
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: Driver.java,v 1.70 2007-08-02 22:35:27 bheineman Exp $
+ * @version $Id: Driver.java,v 1.70.2.1 2009-08-07 14:02:10 ickzon Exp $
  */
 public class Driver implements java.sql.Driver {
     /** URL prefix used by the driver (i.e <code>jdbc:jtds:</code>). */
@@ -104,6 +104,8 @@ public class Driver implements java.sql.Driver {
     public static final String SERVERNAME    = "prop.servername";
     public static final String SERVERTYPE    = "prop.servertype";
     public static final String SOTIMEOUT     = "prop.sotimeout";
+    public static final String SOKEEPALIVE   = "prop.sokeepalive";
+    public static final String PROCESSID     = "prop.processid";
     public static final String SSL           = "prop.ssl";
     public static final String TCPNODELAY    = "prop.tcpnodelay";
     public static final String TDS           = "prop.tds";

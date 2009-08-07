@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.4 2009-08-04 16:45:49 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.5 2009-08-07 14:02:10 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -222,6 +222,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     private final Semaphore mutex = new Semaphore(1);
     /** Socket timeout value in seconds or 0. */
     private int socketTimeout;
+    /** True to enable socket keep alive. */
+    private boolean socketKeepAlive;
+    /** The process ID to report to a server when connecting. */
+    private static Integer processId;
     /** SSL setting. */
     private String ssl;
     /** The maximum size of a batch. */
@@ -998,6 +1002,25 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Retrieves whether to enable socket keep alive.
+     *
+     * @return <code>true</code> if the socket keep alive is enabled
+     */
+    boolean getSocketKeepAlive() {
+        return this.socketKeepAlive;
+    }
+
+    /**
+     * Retrieves the process ID to send to a server when a connection is
+     * established.
+     *
+     * @return the process ID
+     */
+    int getProcessId() {
+        return this.processId.intValue();
+    }
+
+    /**
      * Retrieves the MAC (ethernet) address for this connection.
      *
      * @return the MAC (ethernet) address
@@ -1120,28 +1143,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         serverCharset = info.getProperty(Messages.get(Driver.CHARSET));
         language = info.getProperty(Messages.get(Driver.LANGUAGE));
         bindAddress = info.getProperty(Messages.get(Driver.BINDADDRESS));
-        lastUpdateCount = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.LASTUPDATECOUNT)));
-        useUnicode = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.SENDSTRINGPARAMETERSASUNICODE)));
-        namedPipe = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.NAMEDPIPE)));
-        tcpNoDelay = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.TCPNODELAY)));
-        useCursors = (serverType == Driver.SQLSERVER)
-                && "true".equalsIgnoreCase(
-                        info.getProperty(Messages.get(Driver.USECURSORS)));
-        useLOBs = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.USELOBS)));
-        useMetadataCache = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.CACHEMETA)));
-        xaEmulation = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.XAEMULATION)));
-        useJCIFS = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.USEJCIFS)));
+        lastUpdateCount = parseBooleanProperty(info,Driver.LASTUPDATECOUNT);
+        useUnicode = parseBooleanProperty(info,Driver.SENDSTRINGPARAMETERSASUNICODE);
+        namedPipe = parseBooleanProperty(info,Driver.NAMEDPIPE);
+        tcpNoDelay = parseBooleanProperty(info,Driver.TCPNODELAY);
+        useCursors = (serverType == Driver.SQLSERVER) && parseBooleanProperty(info,Driver.USECURSORS);
+        useLOBs = parseBooleanProperty(info,Driver.USELOBS);
+        useMetadataCache = parseBooleanProperty(info,Driver.CACHEMETA);
+        xaEmulation = parseBooleanProperty(info,Driver.XAEMULATION);
+        useJCIFS = parseBooleanProperty(info,Driver.USEJCIFS);
         charsetSpecified = serverCharset.length() > 0;
-        useNTLMv2 = "true".equalsIgnoreCase(
-                info.getProperty(Messages.get(Driver.USENTLMV2)));
+        useNTLMv2 = parseBooleanProperty(info,Driver.USENTLMV2);
 
         //note:mdb in certain cases (e.g. NTLMv2) the domain name must be
         //  all upper case for things to work.
@@ -1173,6 +1185,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         loginTimeout = parseIntegerProperty(info, Driver.LOGINTIMEOUT);
         socketTimeout = parseIntegerProperty(info, Driver.SOTIMEOUT);
+        socketKeepAlive = parseBooleanProperty(info,Driver.SOKEEPALIVE);
+
+        String pid = info.getProperty(Messages.get(Driver.PROCESSID));
+        if ("compute".equals(pid)) {
+            // only determine a single PID for the VM's (or classloader's) life time
+            if (processId == null) {
+                // random number until the real process ID can be determined
+                processId = Integer.valueOf(new Random(System.currentTimeMillis()).nextInt(32768));
+            }
+        } else if (pid.length() > 0) {
+            processId = Integer.valueOf(parseIntegerProperty(info, Driver.PROCESSID));
+        }
+
         lobBuffer = parseLongProperty(info, Driver.LOBBUFFER);
 
         maxStatements = parseIntegerProperty(info, Driver.MAXSTATEMENTS);
@@ -1220,6 +1245,24 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             throw new SQLException(Messages.get("error.connection.badprop",
                     Messages.get(Driver.BUFFERMINPACKETS)), "08001");
         }
+    }
+
+    /**
+     * Parse a string property value into an boolean value.
+     *
+     * @param info The connection properties object.
+     * @param key The message key used to retrieve the property name.
+     * @return The boolean value of the string property value.
+     * @throws SQLException If the property value can't be parsed.
+     */
+    private static boolean parseBooleanProperty(final Properties info, final String key)
+            throws SQLException {
+        final String propertyName = Messages.get(key);
+        String prop = info.getProperty(propertyName);
+        if (! (prop == null || "true".equalsIgnoreCase(prop) || "false".equalsIgnoreCase(prop)))
+                throw new SQLException( Messages.get("error.connection.badprop", propertyName), "08001");
+
+        return "true".equalsIgnoreCase(prop);
     }
 
     /**
@@ -1733,14 +1776,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Forces the closed status on the statement if an I/O error has occurred.
      */
     void setClosed() {
-        closed = true;
+        if (!closed) {
+            closed = true;
 
-        // Make sure we release the socket and all data buffered at the socket
-        // level
-        try {
-            socket.close();
-        } catch (IOException e) {
-            // Ignore; shouldn't happen anyway
+            // Make sure we release the socket and all data buffered at the socket
+            // level
+            try {
+                socket.close();
+            } catch (IOException e) {
+                // Ignore; shouldn't happen anyway
+            }
         }
     }
 

@@ -31,7 +31,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  *
  * @author Alin Sinplean
  * @since 0.3
- * @version $Id: JtdsObjectFactory.java,v 1.25 2007-08-05 17:50:39 bheineman Exp $
+ * @version $Id: JtdsObjectFactory.java,v 1.25.2.1 2009-08-07 14:02:11 ickzon Exp $
  */
 public class JtdsObjectFactory implements ObjectFactory {
     public Object getObjectInstance(Object refObj,
@@ -100,6 +100,14 @@ public class JtdsObjectFactory implements ObjectFactory {
             final Object socketTimeout = ref.get(Messages.get(Driver.SOTIMEOUT)).getContent();
             if (socketTimeout != null) {
                 ds.setSocketTimeout(Integer.parseInt((String) socketTimeout));
+            }
+            final Object socketKeepAlive = ref.get(Messages.get(Driver.SOKEEPALIVE)).getContent();
+            if (socketKeepAlive != null) {
+                ds.setSocketKeepAlive("true".equalsIgnoreCase((String) socketKeepAlive));
+            }
+            final Object processId = ref.get(Messages.get(Driver.PROCESSID)).getContent();
+            if (processId != null) {
+                ds.setProcessId((String) processId);
             }
             ds.setAppName((String) ref.get(Messages.get(Driver.APPNAME)).getContent());
             ds.setProgName((String) ref.get(Messages.get(Driver.PROGNAME)).getContent());

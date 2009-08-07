@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.42.2.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: JtdsDataSource.java,v 1.42.2.2 2009-08-07 14:02:11 ickzon Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -77,6 +77,8 @@ public class JtdsDataSource
     protected String xaEmulation;
     protected String logFile;
     protected String socketTimeout;
+    protected String socketKeepAlive;
+    protected String processId;
     protected String ssl;
     protected String batchSize;
     protected String bufferDir;
@@ -213,6 +215,8 @@ public class JtdsDataSource
         ref.add(new StringRefAddr(Messages.get(Driver.PASSWORD), password));
         ref.add(new StringRefAddr(Messages.get(Driver.LOGINTIMEOUT), loginTimeout));
         ref.add(new StringRefAddr(Messages.get(Driver.SOTIMEOUT), socketTimeout));
+        ref.add(new StringRefAddr(Messages.get(Driver.SOKEEPALIVE), socketKeepAlive));
+        ref.add(new StringRefAddr(Messages.get(Driver.PROCESSID), processId));
         ref.add(new StringRefAddr(Messages.get(Driver.LOBBUFFER), lobBuffer));
         ref.add(new StringRefAddr(Messages.get(Driver.MAXSTATEMENTS), maxStatements));
         ref.add(new StringRefAddr(Messages.get(Driver.APPNAME), appName));
@@ -291,11 +295,26 @@ public class JtdsDataSource
         this.socketTimeout = String.valueOf(socketTimeout);
     }
 
+    public void setSocketKeepAlive(boolean socketKeepAlive) throws SQLException {
+        this.socketKeepAlive = String.valueOf(socketKeepAlive);
+    }
+    public void setProcessId(String processId) throws SQLException {
+        this.processId = String.valueOf(processId);
+    }
+    
     public int getSocketTimeout() throws SQLException {
         if (socketTimeout == null) {
             return 0;
         }
         return Integer.parseInt(socketTimeout);
+    }
+
+    public boolean getSocketKeepAlive() throws SQLException {
+        return Boolean.valueOf(socketKeepAlive).booleanValue();
+    }
+
+    public String getProcessId() throws SQLException {
+        return processId;
     }
 
     public void setDatabaseName(String databaseName) {
@@ -689,6 +708,12 @@ public class JtdsDataSource
         }
         if (socketTimeout != null) {
             props.setProperty(Messages.get(Driver.SOTIMEOUT), socketTimeout);
+        }
+        if (socketKeepAlive != null) {
+            props.setProperty(Messages.get(Driver.SOKEEPALIVE), socketKeepAlive);
+        }
+        if (processId != null) {
+            props.setProperty(Messages.get(Driver.PROCESSID), processId);
         }
         if (lobBuffer != null) {
             props.setProperty(Messages.get(Driver.LOBBUFFER), lobBuffer);

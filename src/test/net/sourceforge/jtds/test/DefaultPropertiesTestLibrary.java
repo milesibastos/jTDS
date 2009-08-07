@@ -42,7 +42,7 @@ import net.sourceforge.jtds.jdbc.Messages;
  * </ol>
  *
  * @author David D. Kilzer
- * @version $Id: DefaultPropertiesTestLibrary.java,v 1.26 2007-07-12 20:34:47 bheineman Exp $
+ * @version $Id: DefaultPropertiesTestLibrary.java,v 1.26.2.1 2009-08-07 14:02:11 ickzon Exp $
  */
 public abstract class DefaultPropertiesTestLibrary extends TestCase {
 
@@ -224,11 +224,36 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
         }
     }
+    
+    /**
+     * Test the <code>socketKeepAlive</code> property.
+     */
+    public void test_socketKeepAlive() {
+        String fieldName = "socketKeepAlive";
+        String messageKey = Driver.SOKEEPALIVE;
+        String expectedValue = DefaultProperties.SOCKET_KEEPALIVE;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
+
+    /**
+     * Test the <code>processId</code> property.
+     */
+    public void test_processId() {
+        String fieldName = "processId";
+        String messageKey = Driver.PROCESSID;
+        String expectedValue = DefaultProperties.PROCESS_ID;
+        assertDefaultPropertyByServerType(URL_SQLSERVER, messageKey, fieldName, expectedValue);
+        if (!isOnlySqlServerTests()) {
+            assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
+        }
+    }
 
     /**
      * Test the <code>macAddress</code> property.
      */
-
     public void test_macAddress() {
         String fieldName = "macAddress";
         String messageKey = Driver.MACADDRESS;

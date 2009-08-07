@@ -65,7 +65,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.39.2.2 2009-08-03 12:31:00 ickzon Exp $
+ * @version $Id: SharedSocket.java,v 1.39.2.3 2009-08-07 14:02:10 ickzon Exp $
  */
 class SharedSocket {
     /**
@@ -260,6 +260,7 @@ class SharedSocket {
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(connection.getTcpNoDelay());
         this.socket.setSoTimeout(connection.getSocketTimeout() * 1000);
+        this.socket.setKeepAlive(connection.getSocketKeepAlive());
     }
 
     /**
@@ -985,6 +986,15 @@ class SharedSocket {
      */
     protected void setTimeout(int timeout) throws SocketException {
         socket.setSoTimeout(timeout);
+    }
+
+    /**
+     * Set the socket keep alive.
+     *
+     * @param keepAlive <code>true</code> to turn on socket keep alive
+     */
+    protected void setKeepAlive(boolean keepAlive) throws SocketException {
+        socket.setKeepAlive(keepAlive);
     }
 
     /**

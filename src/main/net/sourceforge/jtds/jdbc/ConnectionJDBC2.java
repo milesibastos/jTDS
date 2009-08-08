@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.5 2009-08-07 14:02:10 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.6 2009-08-08 14:37:55 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -301,6 +301,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
         Object timer = null;
         try {
+            boolean loginError = false;
             try {
                 if (loginTimeout > 0) {
                     // Start a login timer
@@ -381,10 +382,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     setCatalog(databaseName);
                 }
             } catch (UnknownHostException e) {
+                loginError = true;
                 throw Support.linkException(
                         new SQLException(Messages.get("error.connection.badhost",
                                 e.getMessage()), "08S03"), e);
             } catch (IOException e) {
+                loginError = true;
                 if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
                     throw Support.linkException(
                             new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
@@ -393,12 +396,21 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                         new SQLException(Messages.get("error.connection.ioerror",
                                 e.getMessage()), "08S01"), e);
             } catch (SQLException e) {
+                loginError = true;
                 if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
                     throw Support.linkException(
                             new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
                 }
 
                 throw e;
+            } catch (RuntimeException e) {
+                loginError = true;
+                throw e;
+            }
+            finally {
+                // fix for bug [1755448], socket not closed after login error
+                if (loginError)
+                    close();
             }
 
             // If charset is still unknown and the collation is not set either,
@@ -441,6 +453,17 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         }
     }
 
+    /**
+     * Ensure all resources are released.
+     */
+    protected void finalize() throws Throwable {
+        super.finalize();
+        try {
+            close();   
+        } catch (Exception e) {
+            // ignore any error
+        }
+    }
 
     /**
      * Creates a {@link SharedSocket} object representing a connection to a named

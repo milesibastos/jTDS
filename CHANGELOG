@@ -1,6 +1,11 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/08/2009 - Holger Rehn
+ o Corrected bug [1755448], login failure leaves unclosed sockets.
+ o Added missing finalizer in connection class to ensure resources are released
+   if an application fails to close a connection.
+
 08/07/2009 - Holger Rehn
  o Corrected bug [2340241] by adding a new connection property 'processId'.
  o Addressed feature request [1778933] by adding a new connection property

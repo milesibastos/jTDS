@@ -1803,30 +1803,37 @@ public class ResultSetTest extends DatabaseTestCase {
      */
     public void testNumericTruncation() throws SQLException {
         Statement st = con.createStatement();
-        st.execute("create table #test(data numeric)");
-        assertEquals(1, st.executeUpdate("insert into #test values (5000000000)"));
+        st.execute("create table #test(data numeric(20,0))");
+        assertEquals(1, st.executeUpdate("insert into #test values (10000000000000000000)"));
 
         ResultSet rs = st.executeQuery("select * from #test");
         
         assertTrue(rs.next());
 
         try {
+            short s = rs.getByte(1);
+            assertTrue("expected numeric overflow error, got " + s, false);
+        } catch (SQLException e) {
+            // TODO: check exception type
+        }
+
+        try {
             short s = rs.getShort(1);
-            assertTrue("expected truncation error, got " + s, false);
+            assertTrue("expected numeric overflow error, got " + s, false);
         } catch (SQLException e) {
             // TODO: check exception type
         }
 
         try {
             int i = rs.getInt(1);
-            assertTrue("expected truncation error, got " + i, false);
+            assertTrue("expected numeric overflow error, got " + i, false);
         } catch (SQLException e) {
             // TODO: check exception type
         }
 
         try {
             long l = rs.getLong(1);
-            assertTrue("expected truncation error, got " + l, false);
+            assertTrue("expected numeric overflow error, got " + l, false);
         } catch (SQLException e) {
             // TODO: check exception type
         }

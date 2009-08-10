@@ -17,7 +17,6 @@
 //
 package net.sourceforge.jtds.test;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
@@ -27,7 +26,7 @@ import java.sql.Savepoint;
  * JDBC 3.0-only tests for Connection.
  *
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC3Test.java,v 1.1.2.1 2009-08-08 14:37:55 ickzon Exp $
+ * @version $Id: ConnectionJDBC3Test.java,v 1.1.2.2 2009-08-10 15:48:38 ickzon Exp $
  */
 public class ConnectionJDBC3Test extends DatabaseTestCase {
 
@@ -61,21 +60,22 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
         con.close();
     }
     
-    public void testUnclosedSocket() throws SQLException {
+    /**
+     * Test for bug [1755448], login failure leaves unclosed sockets.
+     */
+    public void testUnclosedSocket() {
         final int count = 100000;
 
-        Connection conn = null;
-        String url = "jdbc:jtds:sqlserver://localhost;loginTimeout=0";
+        String url = props.getProperty("url") + ";loginTimeout=600";
 
         for (int i = 0; i < count; i ++) {
             try {
-                conn = DriverManager.getConnection(url, "sa", "invalid_password");
+                DriverManager.getConnection(url, "sa", "invalid_password");
                 assertTrue(false);
             } catch (SQLException e) {
-                assertEquals(e.getErrorCode(),18456);
+                assertEquals(18456, e.getErrorCode());
             }
         }
-        
     }
 
 }

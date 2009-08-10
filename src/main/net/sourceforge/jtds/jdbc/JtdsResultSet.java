@@ -58,7 +58,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.46.2.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: JtdsResultSet.java,v 1.46.2.2 2009-08-10 17:38:02 ickzon Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -648,12 +648,8 @@ public class JtdsResultSet implements ResultSet {
         return ((Integer) Support.convert(this, getColumn(columnIndex), java.sql.Types.TINYINT, null)).byteValue();
     }
 
-    public double getDouble(int columnIndex) throws SQLException {
-        return ((Double) Support.convert(this, getColumn(columnIndex), java.sql.Types.DOUBLE, null)).doubleValue();
-    }
-
-    public float getFloat(int columnIndex) throws SQLException {
-        return ((Float) Support.convert(this, getColumn(columnIndex), java.sql.Types.REAL, null)).floatValue();
+    public short getShort(int columnIndex) throws SQLException {
+        return ((Integer) Support.convert(this, getColumn(columnIndex), java.sql.Types.SMALLINT, null)).shortValue();
     }
 
     public int getInt(int columnIndex) throws SQLException {
@@ -664,8 +660,12 @@ public class JtdsResultSet implements ResultSet {
         return ((Long) Support.convert(this, getColumn(columnIndex), java.sql.Types.BIGINT, null)).longValue();
     }
 
-    public short getShort(int columnIndex) throws SQLException {
-        return ((Integer) Support.convert(this, getColumn(columnIndex), java.sql.Types.SMALLINT, null)).shortValue();
+    public float getFloat(int columnIndex) throws SQLException {
+        return ((Float) Support.convert(this, getColumn(columnIndex), java.sql.Types.REAL, null)).floatValue();
+    }
+
+    public double getDouble(int columnIndex) throws SQLException {
+        return ((Double) Support.convert(this, getColumn(columnIndex), java.sql.Types.DOUBLE, null)).doubleValue();
     }
 
     public void setFetchDirection(int direction) throws SQLException {

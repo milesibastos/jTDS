@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.56.2.2 2009-08-06 18:08:39 ickzon Exp $
+ * @version $Id: Support.java,v 1.56.2.3 2009-08-10 17:38:02 ickzon Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -59,6 +59,10 @@ public class Support {
     private static final BigDecimal BIG_DECIMAL_ONE = new BigDecimal(1.0);
     private static final java.sql.Date DATE_ZERO = new java.sql.Date(0);
     private static final java.sql.Time TIME_ZERO = new java.sql.Time(0);
+    private static final BigInteger MIN_VALUE_LONG_BI = new BigInteger(String.valueOf(Long.MIN_VALUE));
+    private static final BigInteger MAX_VALUE_LONG_BI = new BigInteger(String.valueOf(Long.MAX_VALUE));
+    private static final BigDecimal MIN_VALUE_LONG_BD = new BigDecimal(String.valueOf(Long.MIN_VALUE));
+    private static final BigDecimal MAX_VALUE_LONG_BD = new BigDecimal(String.valueOf(Long.MAX_VALUE));
     private static final BigInteger MAX_VALUE_28 = new BigInteger("9999999999999999999999999999");
     private static final BigInteger MAX_VALUE_38 = new BigInteger("99999999999999999999999999999999999999");
 
@@ -178,6 +182,14 @@ public class Support {
         return value;
     }
 
+    static Object castNumeric(Object orig, int sourceType, int targetType) {
+
+        
+        
+        return null;
+    }
+    
+
     /**
      * Convert an existing data object to the specified JDBC type.
      *
@@ -192,47 +204,142 @@ public class Support {
      */
     static Object convert(Object callerReference, Object x, int jdbcType, String charSet)
             throws SQLException {
-        try {
+        // handle null value
+        if (x == null) {
             switch (jdbcType) {
+                case java.sql.Types.BIT:
+                case JtdsStatement.BOOLEAN:
+                    return Boolean.FALSE;
+    
                 case java.sql.Types.TINYINT:
                 case java.sql.Types.SMALLINT:
                 case java.sql.Types.INTEGER:
-                    if (x == null) {
-                        return INTEGER_ZERO;
-                    } else if (x instanceof Integer) {
-                        return x;
-                    } else if (x instanceof Byte) {
-                        return new Integer(((Byte)x).byteValue() & 0xFF);
-                    } else if (x instanceof Number) {
-                        return new Integer(((Number) x).intValue());
-                    } else if (x instanceof String) {
-                        return new Integer(((String) x).trim());
+                    return INTEGER_ZERO;
+    
+                case java.sql.Types.BIGINT:
+                    return LONG_ZERO;
+    
+                case java.sql.Types.REAL:
+                    return FLOAT_ZERO;
+    
+                case java.sql.Types.FLOAT:
+                case java.sql.Types.DOUBLE:
+                    return DOUBLE_ZERO;
+
+                default:
+                    return null;
+            }
+        }
+
+        try {
+            switch (jdbcType) {
+                case java.sql.Types.TINYINT:
+                    if (x instanceof Integer) {
+                        if ((((Number)x).intValue() & 0xFFFFFF00) != 0) {
+                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
+                        } else {
+                            return new Integer(((Number)x).byteValue());
+                        }
                     } else if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
+                    } else if (x instanceof Byte) {
+                        return new Integer(((Byte)x).byteValue() & 0xFF);
+                    } else  {
+                        long val;
+                        if (x instanceof Number) {
+                            val = ((Number)x).longValue();
+                        } else if (x instanceof String) {
+                            val = new Long(((String) x).trim()).longValue();
+                        } else {
+                            break;
+                        }
+                        if (val < Byte.MIN_VALUE || val > Byte.MAX_VALUE) {
+                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
+                        } else {
+                            return new Integer(new Long(val).intValue());
+                        }
                     }
-                    break;
+
+                case java.sql.Types.SMALLINT:
+                    if (x instanceof Boolean) {
+                        return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
+                    } else if (x instanceof Short) {
+                        return new Integer(((Short)x).shortValue());
+                    } else if (x instanceof Byte) {
+                        return new Integer(((Byte)x).byteValue() & 0xFF);
+                    } else  {
+                        long val;
+                        if (x instanceof Number) {
+                            val = ((Number)x).longValue();
+                        } else if (x instanceof String) {
+                            val = new Long(((String) x).trim()).longValue();
+                        } else {
+                            break;
+                        }
+                        if (val < Short.MIN_VALUE || val > Short.MAX_VALUE) {
+                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
+                        } else {
+                            return new Integer(new Long(val).intValue());
+                        }
+                    }
+
+                case java.sql.Types.INTEGER:
+                    if (x instanceof Integer) {
+                        return x;
+                    }
+                    else if (x instanceof Boolean) {
+                        return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
+                    } else if (x instanceof Short) {
+                        return new Integer(((Short)x).shortValue());
+                    } else if (x instanceof Byte) {
+                        return new Integer(((Byte)x).byteValue() & 0xFF);
+                    } else  {
+                        long val;
+                        if (x instanceof Number) {
+                            val = ((Number)x).longValue();
+                        } else if (x instanceof String) {
+                            val = new Long(((String) x).trim()).longValue();
+                        } else {
+                            break;
+                        }
+                        if (val < Integer.MIN_VALUE || val > Integer.MAX_VALUE) {
+                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
+                        } else {
+                            return new Integer(new Long(val).intValue());
+                        }
+                    }
 
                 case java.sql.Types.BIGINT:
-                    if (x == null) {
-                        return LONG_ZERO;
+                    if (x instanceof BigDecimal ) {
+                        BigDecimal val = (BigDecimal) x;
+                        if (val.compareTo(MIN_VALUE_LONG_BD) < 0 || val.compareTo(MAX_VALUE_LONG_BD) > 0) {
+                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
+                        } else {
+                            return new Long(val.longValue());
+                        }
                     } else if (x instanceof Long) {
                         return x;
+                    } else if (x instanceof Boolean) {
+                        return ((Boolean) x).booleanValue() ? LONG_ONE : LONG_ZERO;
                     } else if (x instanceof Byte) {
                         return new Long(((Byte)x).byteValue() & 0xFF);
+                    } else if (x instanceof BigInteger) {
+                        BigInteger val = (BigInteger) x;
+                        if (val.compareTo(MIN_VALUE_LONG_BI) < 0 || val.compareTo(MIN_VALUE_LONG_BI) > 0) {
+                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
+                        } else {
+                            return new Long(val.longValue());
+                        }
                     } else if (x instanceof Number) {
                         return new Long(((Number) x).longValue());
                     } else if (x instanceof String) {
                         return new Long(((String) x).trim());
-                    } else if (x instanceof Boolean) {
-                        return ((Boolean) x).booleanValue() ? LONG_ONE : LONG_ZERO;
+                    } else {
+                        break;
                     }
 
-                    break;
-
                 case java.sql.Types.REAL:
-                    if (x == null) {
-                        return FLOAT_ZERO;
-                    } else if (x instanceof Float) {
+                    if (x instanceof Float) {
                         return x;
                     } else if (x instanceof Byte) {
                         return new Float(((Byte)x).byteValue() & 0xFF);
@@ -248,9 +355,7 @@ public class Support {
 
                 case java.sql.Types.FLOAT:
                 case java.sql.Types.DOUBLE:
-                    if (x == null) {
-                        return DOUBLE_ZERO;
-                    } else if (x instanceof Double) {
+                    if (x instanceof Double) {
                         return x;
                     } else if (x instanceof Byte) {
                         return new Double(((Byte)x).byteValue() & 0xFF);
@@ -266,9 +371,7 @@ public class Support {
 
                 case java.sql.Types.NUMERIC:
                 case java.sql.Types.DECIMAL:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof BigDecimal) {
+                    if (x instanceof BigDecimal) {
                         return x;
                     } else if (x instanceof Number) {
                         return new BigDecimal(x.toString());
@@ -282,9 +385,7 @@ public class Support {
 
                 case java.sql.Types.VARCHAR:
                 case java.sql.Types.CHAR:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof String) {
+                    if (x instanceof String) {
                         return x;
                     } else if (x instanceof Number) {
                         return x.toString();
@@ -320,9 +421,7 @@ public class Support {
 
                 case java.sql.Types.BIT:
                 case JtdsStatement.BOOLEAN:
-                    if (x == null) {
-                        return Boolean.FALSE;
-                    } else if (x instanceof Boolean) {
+                    if (x instanceof Boolean) {
                         return x;
                     } else if (x instanceof Number) {
                         return(((Number) x).intValue() == 0) ? Boolean.FALSE : Boolean.TRUE;
@@ -336,9 +435,7 @@ public class Support {
 
                 case java.sql.Types.VARBINARY:
                 case java.sql.Types.BINARY:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof byte[]) {
+                    if (x instanceof byte[]) {
                         return x;
                     } else if (x instanceof Blob) {
                         Blob blob = (Blob) x;
@@ -377,9 +474,7 @@ public class Support {
                     break;
 
                 case java.sql.Types.TIMESTAMP:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof DateTime) {
+                    if (x instanceof DateTime) {
                         return ((DateTime) x).toTimestamp();
                     } else if (x instanceof java.sql.Timestamp) {
                         return x;
@@ -394,9 +489,7 @@ public class Support {
                     break;
 
                 case java.sql.Types.DATE:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof DateTime) {
+                    if (x instanceof DateTime) {
                         return ((DateTime) x).toDate();
                     } else if (x instanceof java.sql.Date) {
                         return x;
@@ -418,9 +511,7 @@ public class Support {
                     break;
 
                 case java.sql.Types.TIME:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof DateTime) {
+                    if (x instanceof DateTime) {
                         return ((DateTime) x).toTime();
                     } else if (x instanceof java.sql.Time) {
                         return x;
@@ -452,9 +543,7 @@ public class Support {
 
                 case java.sql.Types.LONGVARBINARY:
                 case java.sql.Types.BLOB:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof Blob) {
+                    if (x instanceof Blob) {
                         return x;
                     } else if (x instanceof byte[]) {
                         return new BlobImpl(getConnection(callerReference), (byte[]) x);
@@ -514,9 +603,7 @@ public class Support {
 
                 case java.sql.Types.LONGVARCHAR:
                 case java.sql.Types.CLOB:
-                    if (x == null) {
-                        return null;
-                    } else if (x instanceof Clob) {
+                    if (x instanceof Clob) {
                         return x;
                     } else if (x instanceof Blob) {
                         //
@@ -529,7 +616,7 @@ public class Support {
                             Writer out = clob.setCharacterStream(1);
                             // TODO Use a buffer to improve performance
                             int b;
-                            // These reads/writes are buffered by the undelying blob buffers
+                            // These reads/writes are buffered by the underlying blob buffers
                             while ((b = is.read()) >= 0) {
                                 out.write(hex[b >> 4]);
                                 out.write(hex[b & 0x0F]);
@@ -716,7 +803,7 @@ public class Support {
     /**
      * Embed the data object as a string literal in the buffer supplied.
      *
-     * @param buf The buffer in which the data will be embeded.
+     * @param buf The buffer in which the data will be embedded.
      * @param value The data object.
      * @param isUnicode Set to <code>true</code> if Unicode strings should be used, else <code>false</code>.
      * @param connection The {@link ConnectionJDBC2} object.
@@ -829,7 +916,7 @@ public class Support {
     /**
      * Generates a unique statement key for a given SQL statement.
      *
-     * @param sql        the sql statment to generate the key for
+     * @param sql        the sql statement to generate the key for
      * @param params     the statement parameters
      * @param serverType the type of server to generate the key for
      * @param catalog    the catalog is required for uniqueness on Microsoft
@@ -913,7 +1000,7 @@ public class Support {
      */
     static String substituteParamMarkers(String sql, ParamInfo[] list) {
         // A parameter can have at most 8 characters: " @P" plus at most 4
-        // digits plus " ". We substract the "?" placeholder, that's at most
+        // digits plus " ". We subtract the "?" placeholder, that's at most
         // 7 extra characters needed for each parameter.
         char[] buf = new char[sql.length() + list.length * 7];
         int bufferPtr = 0; // Output buffer pointer

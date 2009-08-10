@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+10/08/2009 - Holger Rehn
+ o Corrected bug [1855125], jTDS silently ignores integer overflows in
+   ResultSet's getter methods.
+
 08/08/2009 - Holger Rehn
  o Corrected bug [1755448], login failure leaves unclosed sockets.
  o Added missing finalizer in connection class to ensure resources are released

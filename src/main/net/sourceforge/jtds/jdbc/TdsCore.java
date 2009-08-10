@@ -52,7 +52,7 @@ import net.sourceforge.jtds.util.*;
  * @author Matt Brinkley
  * @author Alin Sinpalean
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.115.2.3 2009-08-07 14:02:10 ickzon Exp $
+ * @version $Id: TdsCore.java,v 1.115.2.4 2009-08-10 17:38:02 ickzon Exp $
  */
 public class TdsCore {
     /**
@@ -1196,7 +1196,7 @@ public class TdsCore {
                 if (prepareHandle != null) {
                     return prepareHandle.toString();
                 }
-                // Probably an exception occured, check for it
+                // Probably an exception occurred, check for it
                 messages.checkErrors();
             } catch (SQLException e) {
                 if ("08S01".equals(e.getSQLState())) {

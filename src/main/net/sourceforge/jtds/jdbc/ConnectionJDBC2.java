@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.6 2009-08-08 14:37:55 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.7 2009-08-10 17:31:16 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2067,10 +2067,11 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 }
 
                 try {
-                    // Tell the server the session is ending
-                    baseTds.closeConnection();
-                    // Close network connection
-                    baseTds.close();
+                    // Tell the server the session is ending, close network connection
+                    if (baseTds != null) {
+                        baseTds.closeConnection();
+                        baseTds.close();
+                    }
                     // Close cached TdsCore
                     if (cachedTds != null) {
                         cachedTds.close();
@@ -2080,7 +2081,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                     // Ignore
                 }
 
-                socket.close();
+                if (socket != null) {
+                    socket.close();
+                }
             } catch (IOException e) {
                 // Ignore
             } finally {

@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/11/2009 - Holger Rehn
+ o Corrected bug by packporting patch [2675463], getSchemas() now returns
+   schemas, not database users for MSSQL 2005 and later.
+
 10/08/2009 - Holger Rehn
  o Corrected bug [1855125], jTDS silently ignores integer overflows in
    ResultSet's getter methods.

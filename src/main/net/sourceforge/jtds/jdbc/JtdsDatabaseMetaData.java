@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.2 2009-08-11 06:53:11 ickzon Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -1579,23 +1579,31 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *   <LI> <B>TABLE_CATALOG</B> String => catalog name (may be <code>null</code>, JDBC 3.0)
      * </OL>
      *
-     * @return a <code>ResultSet</code> object in which each row is a schema decription
+     * @return a <code>ResultSet</code> object in which each row is a schema description
      * @throws SQLException if a database access error occurs
      */
     public java.sql.ResultSet getSchemas() throws SQLException {
         java.sql.Statement statement = connection.createStatement();
 
-        String sql = Driver.JDBC3
+        String sql;
+
+        if (connection.getServerType() == Driver.SQLSERVER && connection.getDatabaseMajorVersion() >= 9) {
+            sql = Driver.JDBC3
+                ? "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM sys.schemas"
+                : "SELECT name AS TABLE_SCHEM FROM sys.schemas";
+        } else {
+            sql = Driver.JDBC3
                 ? "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers"
                 : "SELECT name AS TABLE_SCHEM FROM dbo.sysusers";
 
-        //
-        // MJH - isLogin column only in MSSQL >= 7.0
-        //
-        if (tdsVersion >= Driver.TDS70) {
-            sql += " WHERE islogin=1";
-        } else {
-            sql += " WHERE uid>0";
+            //
+            // MJH - isLogin column only in MSSQL >= 7.0
+            //
+            if (tdsVersion >= Driver.TDS70) {
+                sql += " WHERE islogin=1";
+            } else {
+                sql += " WHERE uid>0";
+            }
         }
 
         sql += " ORDER BY TABLE_SCHEM";

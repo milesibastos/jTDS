@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/14/2009 - Holger Rehn
+ o Corrected bug [2181003], attempt to set a BC date invalidates
+   driver state. 
+
 08/11/2009 - Holger Rehn
  o Corrected bug by packporting patch [2675463], getSchemas() now returns
    schemas, not database users for MSSQL 2005 and later.

@@ -1,9 +1,12 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/20/2009 - Holger Rehn
+ o Corrected bug [2349058], DateTime allows invalid dates through
+
 08/14/2009 - Holger Rehn
  o Corrected bug [2181003], attempt to set a BC date invalidates
-   driver state. 
+   driver state.
 
 08/11/2009 - Holger Rehn
  o Corrected bug by packporting patch [2675463], getSchemas() now returns

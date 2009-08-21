@@ -22,7 +22,7 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.46.2.1 2009-08-21 12:21:57 ickzon Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.46.2.2 2009-08-21 15:42:17 ickzon Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -1090,6 +1090,48 @@ public class PreparedStatementTest extends TestBase {
 
         ps1.close();
         ps2.close();
+    }
+
+    /**
+     * Test for bug [1374127], Arithmetic overflow at sql_variant.
+     */
+    public void testArithmeticOverflow() throws Exception {
+        Statement st = con.createStatement();
+        st.execute("create table #testArithemicOverflow (id int primary key, data sql_variant)");
+        st.execute("insert into #testArithemicOverflow values (1,1)");
+        st.close();
+
+        long seed = System.currentTimeMillis();
+        Random r = new Random(seed);
+
+        Float value = 0.000803f;
+
+        PreparedStatement ps1 = con.prepareStatement("update #testArithemicOverflow set data = ? where id = ?");
+        PreparedStatement ps2 = con.prepareStatement("select data from #testArithemicOverflow where id = ?");
+
+        try {
+            for (int i = 0; i < 1000; i++) {
+                if (i > 0) {
+                    value = r.nextFloat() * Float.MAX_VALUE * (r.nextBoolean() ? 1 : -1);
+                }
+
+                ps1.setFloat(1, value);
+                ps1.setInt(2, 1);
+                assertEquals(1, ps1.executeUpdate());
+
+                ps2.setInt(1, 1);
+                ResultSet rs = ps2.executeQuery();
+                assertTrue(rs.next());
+                assertEquals(value, rs.getFloat(1));
+                rs.close();
+            }
+        } catch (Throwable t) {
+            System.out.println("seed " + seed + ", value " + value);
+            fail(t.getMessage());
+        } finally {
+            ps1.close();
+            ps2.close();
+        }
     }
 
     public static void main(String[] args) {

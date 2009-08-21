@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.2
 =======================
 
+08/21/2009 - Holger Rehn
+ o Corrected bug [2814376], varchar-type is truncated in non-unicode
+   environment.
+
 08/20/2009 - Holger Rehn
  o Corrected bug [2349058], DateTime allows invalid dates through
 

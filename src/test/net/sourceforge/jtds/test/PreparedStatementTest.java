@@ -22,7 +22,7 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.46 2007-07-08 18:26:26 bheineman Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.46.2.1 2009-08-21 12:21:57 ickzon Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -1039,7 +1039,59 @@ public class PreparedStatementTest extends TestBase {
             con.close();
         }
     }
-    
+
+    /**
+     * Test for bug [2814376] varchar-type is truncated in non-unicode
+     * environment.
+     */
+    public void testMultiByteCharTruncation() throws Exception {
+        String encoding = "SJIS";
+        final int chars = 8000;
+        final String ch = new String("\u3042");
+
+        // create string with bytecount > charcount
+        StringBuffer sb = new StringBuffer();
+        for(int i = 0; i < chars; i++)
+            sb.append(ch);
+
+        final String text = sb.toString();
+        final int ID = 1;
+        final int length = text.getBytes(encoding).length;
+
+        // ensure string contains multi-byte chars
+        assertTrue(text.getBytes(encoding).length > chars);
+
+        // create connection with charset/sendStringParametersAsUnicode properties set
+        Properties newProps = new Properties(props);
+        newProps.put("charset", encoding);
+        newProps.put("sendStringParametersAsUnicode", "false");
+        Connection con = DriverManager.getConnection(newProps.getProperty("url"), newProps);
+
+        // create temporary table
+        Statement st = con.createStatement();
+        st.execute("create table #testUnicodeTrunc (id int primary key, data text)");
+        st.close();
+
+        // insert test date into table
+        PreparedStatement ps1 = con.prepareStatement("insert into #testUnicodeTrunc values(?,?)");
+        ps1.setInt(1, ID);
+        ps1.setString(2, text);
+        assertEquals(1, ps1.executeUpdate());
+
+        // read back test data
+        PreparedStatement ps2 = con.prepareStatement("select data from #testUnicodeTrunc where id = " + ID);
+        ResultSet rs = ps2.executeQuery();
+
+        // ensure the value is read back from DB without data loss
+        assertTrue(rs.next());
+        int rl = rs.getString(1).getBytes(encoding).length;
+        assertEquals("data truncated", length, rl);
+        assertEquals("data corrupted",text, rs.getString(1));
+
+        ps1.close();
+        ps2.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(PreparedStatementTest.class);
     }

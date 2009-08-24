@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.1 2009-07-31 11:38:05 ickzon Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.2 2009-08-24 08:45:27 ickzon Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -815,7 +815,84 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
 
     }
 
+    /**
+     * Test for bug [1825743], default value not returned for column with
+     * default value.
+     */
+    public void testDefaultValue() throws SQLException {
+        Statement st = con.createStatement();
+
+        // try dropping test table
+        try {
+            st.execute("drop TABLE testDefaultValue");
+        } catch (SQLException e) {
+            // ignored
+        }
+
+        String[] columns = new String[] {
+                "tinyint",              "1",
+                "smallint",             "2",
+                "int",                  "3",
+                "bigint",               "4",
+                "float",                "5.0",
+                "real",                 "6.0",
+                "decimal(28,10)",       "0.1234567890",
+                "numeric(28,10)",       "0.1234567890",
+                "smallmoney",           "123.4567",
+                "money",                "12345.6789",
+                "bit",                  "false",
+                "smalldatetime",        "1900-01-01 00:00:00.0",
+                "datetime",             "1900-01-01 00:00:00.0",
+                "char(10)",             "AaBbCcDdEe",
+                "varchar(10)",          "FfGgHhIiJj",
+                "nchar(10)",            "KkLlMmNnOo",
+                "nvarchar(10)",         "PpQqRrSsTt",
+//                "text",                 "CLOB",
+//                "ntext",                "CLOB",
+//                "image",                "BLOB",
+//                "binary(10)",           "",
+//                "varbinary(10)",        ""
+        };
+
+        // build and execute CREATE TABLE statement
+        StringBuilder sb = new StringBuilder();
+        sb.append("CREATE TABLE testDefaultValue (");
+        for (int i = 0; i < columns.length/2; i++) {
+            sb.append(i == 0 ? "" : ",");
+            sb.append("col");
+            sb.append(i);
+            sb.append(" ");
+            sb.append(columns[i*2]);
+            sb.append(" default ");
+            sb.append(i > 9 ? "'" : "");
+            sb.append(columns[i*2+1]);
+            sb.append(i > 9 ? "'" : "");
+        }
+        sb.append(")");
+        st.execute(sb.toString());
+
+        // check if meta data reports correct defaults
+        ResultSet rs = con.getMetaData().getColumns(null, null, "testDefaultValue", "col%");
+        for (int i = 0; i < columns.length/2; i++) {
+            assertTrue(rs.next());
+            assertTrue(rs.getString("COLUMN_DEF").contains(columns[i*2+1]));
+        }
+        rs.close();
+
+        // test if the default values are being used
+        assertEquals(1, st.executeUpdate("insert into testDefaultValue (col0) values (" + columns[1] + ")"));
+        rs = st.executeQuery("select * from testDefaultValue");
+        assertTrue(rs.next());
+        for (int i = 0; i < columns.length/2; i++) {
+            assertEquals(columns[i*2+1], rs.getObject(i+1).toString());
+        }
+        rs.close();
+
+        st.close();
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(DatabaseMetaDataTest.class);
     }
+
 }

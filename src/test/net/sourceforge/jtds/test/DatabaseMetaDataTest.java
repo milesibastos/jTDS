@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.2 2009-08-24 08:45:27 ickzon Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.3 2009-08-24 08:51:28 ickzon Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -875,6 +875,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         ResultSet rs = con.getMetaData().getColumns(null, null, "testDefaultValue", "col%");
         for (int i = 0; i < columns.length/2; i++) {
             assertTrue(rs.next());
+            assertNotNull(rs.getString("COLUMN_DEF"));
             assertTrue(rs.getString("COLUMN_DEF").contains(columns[i*2+1]));
         }
         rs.close();

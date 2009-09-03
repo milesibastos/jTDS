@@ -1842,6 +1842,57 @@ public class ResultSetTest extends DatabaseTestCase {
         st.close();
     }
 
+    /**
+     * Test for bug [1840116], Select statement very slow with date parameter.
+     */
+    public void testDatePerformance() throws SQLException {
+        Statement st = con.createStatement();
+        st.execute("create table #test(data datetime)");
+        st.close();
+
+        PreparedStatement ps = con.prepareStatement("insert into #test values(?)");
+
+        final int iterations = 10000;
+        final String dateString = "2009-09-03";
+
+        // test date value
+        Date date = Date.valueOf(dateString);
+
+        System.gc();
+        long start = System.currentTimeMillis();
+
+        // insert test data using prepared statement
+        for (int i = 0; i < iterations; i ++) {
+            ps.setDate(1, date);
+            ps.executeUpdate();
+        }
+
+        long prep = System.currentTimeMillis() - start; 
+        System.out.println("prepared: " + prep + " ms");
+        ps.close();
+
+        // delete test data
+        st = con.createStatement();
+        assertEquals(iterations, st.executeUpdate("delete from #test"));
+        st.close();
+
+        st = con.createStatement();
+        System.gc();
+        start = System.currentTimeMillis();
+
+        // insert test data using prepared statement
+        for (int i = 0; i < iterations; i ++) {
+            st.executeUpdate("insert into #test values(" + dateString + ")");
+        }
+
+        long unprep = System.currentTimeMillis() - start; 
+        System.out.println("inlined : " + unprep + " ms");
+        st.close();
+
+        // prepared statement should be faster
+        assertTrue(prep < unprep);
+    }
+
     public static void main(String[] args) {
         junit.textui.TestRunner.run(ResultSetTest.class);
     }

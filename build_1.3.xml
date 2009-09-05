@@ -13,7 +13,7 @@
 
     <property name="build.compiler" value="modern"/>
     <property name="javac.debug" value="on"/>
-    <property name="javac.optimize" value="off"/>
+    <property name="javac.optimize" value="on"/>
 
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
@@ -53,14 +53,14 @@
   </target>
 
   <target name="compile" depends="init,prepare">
-    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" />
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" source="1.3" target="1.3" encoding="latin1"/>
   </target>
 
   <target name="javadoc" depends="prepare">
     <mkdir dir="${build}/doc"/>
     <javadoc sourcepath="${build}/src" destdir="${build}/doc" packagenames="net.sourceforge.jtds.*" Author="true"
              Doctitle="jTDS API Documentation" Use="true" Version="true" bottom="Generated on ${TODAY}"
-             Windowtitle="jTDS API" Private="true" classpathref="libs">
+             Windowtitle="jTDS API" Private="true" classpathref="libs" encoding="latin1">
       <tag name="todo" description="To do:"/>
       <tag name="created" description="Created:"/>
     </javadoc>

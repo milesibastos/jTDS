@@ -19,7 +19,7 @@
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="1.2.3"/>
+    <property name="version" value="1.2.4"/>
   </target>
 
   <target name="clean" depends="init">

@@ -1843,6 +1843,49 @@ public class ResultSetTest extends DatabaseTestCase {
     }
 
     /**
+     * Test for bug [2860742], getByte() causes overflow error for negative
+     * values.
+     */
+    public void testNegativeOverflow() throws SQLException
+    {
+        Statement st = con.createStatement();
+        st.execute("create table #test(data int)");
+        assertEquals(1, st.executeUpdate("insert into #test values (-1)"));
+        assertEquals(1, st.executeUpdate("insert into #test values (-128)"));
+        assertEquals(1, st.executeUpdate("insert into #test values (-129)"));
+
+        ResultSet rs = st.executeQuery("select * from #test order by data desc");
+
+        assertTrue(rs.next());
+
+        try {
+            byte b = rs.getByte(1);
+        } catch (SQLException e) {
+            assertTrue("unexpected numeric overflow", false);
+        }
+
+        assertTrue(rs.next());
+
+        try {
+            byte b = rs.getByte(1);
+        } catch (SQLException e) {
+            assertTrue("unexpected numeric overflow", false);
+        }
+
+        assertTrue(rs.next());
+
+        try {
+            byte b = rs.getByte(1);
+            assertTrue("expected numeric overflow error, got " + b, false);
+        } catch (SQLException e) {
+            assertEquals(e.getSQLState(), "22003");
+        }
+
+        rs.close();
+        st.close();
+    }
+
+    /**
      * Test for bug [1840116], Select statement very slow with date parameter.
      */
     public void testDatePerformance() throws SQLException {

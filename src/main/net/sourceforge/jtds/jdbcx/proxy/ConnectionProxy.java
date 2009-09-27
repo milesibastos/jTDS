@@ -30,7 +30,7 @@ import net.sourceforge.jtds.jdbcx.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to the connection with minimal overhead.
  *
- * @version $Id: ConnectionProxy.java,v 1.7.2.1 2009-07-25 12:57:36 ickzon Exp $
+ * @version $Id: ConnectionProxy.java,v 1.7.2.2 2009-09-27 12:59:17 ickzon Exp $
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;
@@ -700,7 +700,7 @@ public class ConnectionProxy implements Connection {
     public Array createArrayOf(String typeName, Object[] elements)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -708,7 +708,7 @@ public class ConnectionProxy implements Connection {
      */
     public Blob createBlob() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -716,7 +716,7 @@ public class ConnectionProxy implements Connection {
      */
     public Clob createClob() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -724,7 +724,7 @@ public class ConnectionProxy implements Connection {
      */
     public NClob createNClob() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -732,7 +732,7 @@ public class ConnectionProxy implements Connection {
      */
     public SQLXML createSQLXML() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -741,7 +741,7 @@ public class ConnectionProxy implements Connection {
     public Struct createStruct(String typeName, Object[] attributes)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -749,7 +749,7 @@ public class ConnectionProxy implements Connection {
      */
     public Properties getClientInfo() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -757,7 +757,7 @@ public class ConnectionProxy implements Connection {
      */
     public String getClientInfo(String name) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -765,7 +765,7 @@ public class ConnectionProxy implements Connection {
      */
     public boolean isValid(int timeout) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -774,7 +774,7 @@ public class ConnectionProxy implements Connection {
     public void setClientInfo(Properties properties)
             throws SQLClientInfoException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -783,7 +783,7 @@ public class ConnectionProxy implements Connection {
     public void setClientInfo(String name, String value)
             throws SQLClientInfoException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -791,7 +791,7 @@ public class ConnectionProxy implements Connection {
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -799,7 +799,7 @@ public class ConnectionProxy implements Connection {
      */
     public Object unwrap(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

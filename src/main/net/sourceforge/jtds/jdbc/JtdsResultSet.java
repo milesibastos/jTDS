@@ -58,7 +58,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.46.2.2 2009-08-10 17:38:02 ickzon Exp $
+ * @version $Id: JtdsResultSet.java,v 1.46.2.3 2009-09-27 12:59:17 ickzon Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -1354,7 +1354,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public int getHoldability() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1362,7 +1362,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1370,7 +1370,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public Reader getNCharacterStream(String columnLabel) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1378,7 +1378,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public NClob getNClob(int columnIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1386,7 +1386,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public NClob getNClob(String columnLabel) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1394,7 +1394,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public String getNString(int columnIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1402,7 +1402,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public String getNString(String columnLabel) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1410,7 +1410,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public RowId getRowId(int columnIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1418,7 +1418,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public RowId getRowId(String columnLabel) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1426,7 +1426,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public SQLXML getSQLXML(int columnIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1434,7 +1434,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public SQLXML getSQLXML(String columnLabel) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1442,7 +1442,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1451,7 +1451,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateAsciiStream(int columnIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1460,7 +1460,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateAsciiStream(String columnLabel, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1469,7 +1469,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateAsciiStream(int columnIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1478,7 +1478,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateAsciiStream(String columnLabel, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1487,7 +1487,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBinaryStream(int columnIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1496,7 +1496,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBinaryStream(String columnLabel, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1505,7 +1505,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBinaryStream(int columnIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1514,7 +1514,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBinaryStream(String columnLabel, InputStream x,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1523,7 +1523,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBlob(int columnIndex, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1532,7 +1532,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBlob(String columnLabel, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1541,7 +1541,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBlob(int columnIndex, InputStream inputStream, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1550,7 +1550,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateBlob(String columnLabel, InputStream inputStream,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1559,7 +1559,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateCharacterStream(int columnIndex, Reader x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1568,7 +1568,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateCharacterStream(String columnLabel, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1577,7 +1577,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateCharacterStream(int columnIndex, Reader x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1586,7 +1586,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateCharacterStream(String columnLabel, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1594,7 +1594,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public void updateClob(int columnIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1603,7 +1603,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateClob(String columnLabel, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1612,7 +1612,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateClob(int columnIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1621,7 +1621,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateClob(String columnLabel, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1630,7 +1630,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNCharacterStream(int columnIndex, Reader x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1639,7 +1639,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNCharacterStream(String columnLabel, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1648,7 +1648,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNCharacterStream(int columnIndex, Reader x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1657,7 +1657,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNCharacterStream(String columnLabel, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1665,7 +1665,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public void updateNClob(int columnIndex, NClob clob) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1673,7 +1673,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public void updateNClob(String columnLabel, NClob clob) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1681,7 +1681,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public void updateNClob(int columnIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1690,7 +1690,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNClob(String columnLabel, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1699,7 +1699,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNClob(int columnIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1708,7 +1708,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNClob(String columnLabel, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1717,7 +1717,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNString(int columnIndex, String string)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1726,7 +1726,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateNString(String columnLabel, String string)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1734,7 +1734,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public void updateRowId(int columnIndex, RowId x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1742,7 +1742,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public void updateRowId(String columnLabel, RowId x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1751,7 +1751,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateSQLXML(int columnIndex, SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1760,7 +1760,7 @@ public class JtdsResultSet implements ResultSet {
     public void updateSQLXML(String columnLabel, SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1768,7 +1768,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1776,7 +1776,7 @@ public class JtdsResultSet implements ResultSet {
      */
     public Object unwrap(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

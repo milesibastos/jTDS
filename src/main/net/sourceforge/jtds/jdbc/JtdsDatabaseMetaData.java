@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.2 2009-08-11 06:53:11 ickzon Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.3 2009-09-27 12:59:17 ickzon Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -3533,7 +3533,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3541,7 +3541,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public ResultSet getClientInfoProperties() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3551,7 +3551,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
             String functionNamePattern, String columnNamePattern)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3560,7 +3560,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public ResultSet getFunctions(String catalog, String schemaPattern,
             String functionNamePattern) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3568,7 +3568,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public RowIdLifetime getRowIdLifetime() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3577,7 +3577,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     public ResultSet getSchemas(String catalog, String schemaPattern)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3585,7 +3585,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3593,7 +3593,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -3601,7 +3601,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     public Object unwrap(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

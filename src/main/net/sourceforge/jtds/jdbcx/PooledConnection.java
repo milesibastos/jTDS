@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.11.6.1 2009-07-25 12:57:37 ickzon Exp $
+ * @version $Id: PooledConnection.java,v 1.11.6.2 2009-09-27 12:59:17 ickzon Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private ArrayList listeners = new ArrayList();
@@ -136,7 +136,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
      */
     public void addStatementEventListener(StatementEventListener listener) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -144,7 +144,7 @@ public class PooledConnection implements javax.sql.PooledConnection {
      */
     public void removeStatementEventListener(StatementEventListener listener) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

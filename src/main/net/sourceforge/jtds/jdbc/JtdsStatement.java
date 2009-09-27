@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.64.2.2 2009-07-27 16:49:41 ickzon Exp $
+ * @version $Id: JtdsStatement.java,v 1.64.2.3 2009-09-27 12:59:17 ickzon Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -1309,7 +1309,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1317,7 +1317,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     public boolean isPoolable() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1325,7 +1325,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     public void setPoolable(boolean poolable) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1333,7 +1333,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1341,7 +1341,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     public Object unwrap(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

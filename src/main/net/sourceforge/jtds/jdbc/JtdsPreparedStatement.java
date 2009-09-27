@@ -60,7 +60,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.63.2.2 2009-07-27 13:11:22 ickzon Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.63.2.3 2009-09-27 12:59:17 ickzon Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -927,7 +927,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setAsciiStream(int parameterIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -936,7 +936,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setAsciiStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -945,7 +945,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setBinaryStream(int parameterIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -954,7 +954,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setBinaryStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -963,7 +963,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setBlob(int parameterIndex, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -972,7 +972,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setBlob(int parameterIndex, InputStream inputStream, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -981,7 +981,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setCharacterStream(int parameterIndex, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -990,7 +990,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setCharacterStream(int parameterIndex, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -998,7 +998,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1007,7 +1007,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1016,7 +1016,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setNCharacterStream(int parameterIndex, Reader value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1025,7 +1025,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setNCharacterStream(int parameterIndex, Reader value,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1033,7 +1033,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1041,7 +1041,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1050,7 +1050,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setNClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1059,7 +1059,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setNString(int parameterIndex, String value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1067,7 +1067,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1076,7 +1076,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     public void setSQLXML(int parameterIndex, SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1084,7 +1084,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1092,7 +1092,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public boolean isPoolable() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1100,7 +1100,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setPoolable(boolean poolable) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1108,7 +1108,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1116,7 +1116,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public Object unwrap(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

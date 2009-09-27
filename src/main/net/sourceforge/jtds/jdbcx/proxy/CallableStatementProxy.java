@@ -31,7 +31,7 @@ import net.sourceforge.jtds.jdbc.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a callable statement with minimal overhead.
  *
- * @version $Id: CallableStatementProxy.java,v 1.3.4.1 2009-07-25 12:57:36 ickzon Exp $
+ * @version $Id: CallableStatementProxy.java,v 1.3.4.2 2009-09-27 12:59:17 ickzon Exp $
  */
 public class CallableStatementProxy
 extends PreparedStatementProxy
@@ -1488,7 +1488,7 @@ implements CallableStatement {
      */
     public Reader getCharacterStream(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
    }
 
     /* (non-Javadoc)
@@ -1496,7 +1496,7 @@ implements CallableStatement {
      */
     public Reader getCharacterStream(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1504,7 +1504,7 @@ implements CallableStatement {
      */
     public Reader getNCharacterStream(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1512,7 +1512,7 @@ implements CallableStatement {
      */
     public Reader getNCharacterStream(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1520,7 +1520,7 @@ implements CallableStatement {
      */
     public NClob getNClob(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1528,7 +1528,7 @@ implements CallableStatement {
      */
     public NClob getNClob(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1536,7 +1536,7 @@ implements CallableStatement {
      */
     public String getNString(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1544,7 +1544,7 @@ implements CallableStatement {
      */
     public String getNString(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1552,7 +1552,7 @@ implements CallableStatement {
      */
     public RowId getRowId(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1560,7 +1560,7 @@ implements CallableStatement {
      */
     public RowId getRowId(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1568,7 +1568,7 @@ implements CallableStatement {
      */
     public SQLXML getSQLXML(int parameterIndex) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1576,7 +1576,7 @@ implements CallableStatement {
      */
     public SQLXML getSQLXML(String parameterName) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1585,7 +1585,7 @@ implements CallableStatement {
     public void setAsciiStream(String parameterName, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1594,7 +1594,7 @@ implements CallableStatement {
     public void setAsciiStream(String parameterName, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1603,7 +1603,7 @@ implements CallableStatement {
     public void setBinaryStream(String parameterName, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1612,7 +1612,7 @@ implements CallableStatement {
     public void setBinaryStream(String parameterName, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1620,7 +1620,7 @@ implements CallableStatement {
      */
     public void setBlob(String parameterName, Blob x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1629,7 +1629,7 @@ implements CallableStatement {
     public void setBlob(String parameterName, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1638,7 +1638,7 @@ implements CallableStatement {
     public void setBlob(String parameterName, InputStream inputStream,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1647,7 +1647,7 @@ implements CallableStatement {
     public void setCharacterStream(String parameterName, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1656,7 +1656,7 @@ implements CallableStatement {
     public void setCharacterStream(String parameterName, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1664,7 +1664,7 @@ implements CallableStatement {
      */
     public void setClob(String parameterName, Clob x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1673,7 +1673,7 @@ implements CallableStatement {
     public void setClob(String parameterName, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1682,7 +1682,7 @@ implements CallableStatement {
     public void setClob(String parameterName, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1691,7 +1691,7 @@ implements CallableStatement {
     public void setNCharacterStream(String parameterName, Reader value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1700,7 +1700,7 @@ implements CallableStatement {
     public void setNCharacterStream(String parameterName, Reader value,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1708,7 +1708,7 @@ implements CallableStatement {
      */
     public void setNClob(String parameterName, NClob value) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1717,7 +1717,7 @@ implements CallableStatement {
     public void setNClob(String parameterName, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1726,7 +1726,7 @@ implements CallableStatement {
     public void setNClob(String parameterName, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1735,7 +1735,7 @@ implements CallableStatement {
     public void setNString(String parameterName, String value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1743,7 +1743,7 @@ implements CallableStatement {
      */
     public void setRowId(String parameterName, RowId x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1752,7 +1752,7 @@ implements CallableStatement {
     public void setSQLXML(String parameterName, SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1761,7 +1761,7 @@ implements CallableStatement {
     public void setAsciiStream(int parameterIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1770,7 +1770,7 @@ implements CallableStatement {
     public void setAsciiStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1779,7 +1779,7 @@ implements CallableStatement {
     public void setBinaryStream(int parameterIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1788,7 +1788,7 @@ implements CallableStatement {
     public void setBinaryStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1797,7 +1797,7 @@ implements CallableStatement {
     public void setBlob(int parameterIndex, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1806,7 +1806,7 @@ implements CallableStatement {
     public void setBlob(int parameterIndex, InputStream inputStream, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1815,7 +1815,7 @@ implements CallableStatement {
     public void setCharacterStream(int parameterIndex, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1824,7 +1824,7 @@ implements CallableStatement {
     public void setCharacterStream(int parameterIndex, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1832,7 +1832,7 @@ implements CallableStatement {
      */
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1841,7 +1841,7 @@ implements CallableStatement {
     public void setClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1850,7 +1850,7 @@ implements CallableStatement {
     public void setNCharacterStream(int parameterIndex, Reader value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1859,7 +1859,7 @@ implements CallableStatement {
     public void setNCharacterStream(int parameterIndex, Reader value,
             long length) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1867,7 +1867,7 @@ implements CallableStatement {
      */
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1875,7 +1875,7 @@ implements CallableStatement {
      */
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1884,7 +1884,7 @@ implements CallableStatement {
     public void setNClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1893,7 +1893,7 @@ implements CallableStatement {
     public void setNString(int parameterIndex, String value)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1901,7 +1901,7 @@ implements CallableStatement {
      */
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1910,7 +1910,7 @@ implements CallableStatement {
     public void setSQLXML(int parameterIndex, SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1918,7 +1918,7 @@ implements CallableStatement {
      */
     public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1926,7 +1926,7 @@ implements CallableStatement {
      */
     public boolean isPoolable() throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1934,7 +1934,7 @@ implements CallableStatement {
      */
     public void setPoolable(boolean poolable) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1942,7 +1942,7 @@ implements CallableStatement {
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
     /* (non-Javadoc)
@@ -1950,7 +1950,7 @@ implements CallableStatement {
      */
     public Object unwrap(Class arg0) throws SQLException {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

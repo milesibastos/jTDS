@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.7 2009-08-10 17:31:16 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.8 2009-09-27 12:59:17 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2521,7 +2521,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     public Array createArrayOf(String typeName, Object[] elements)
             throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2529,7 +2529,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public Blob createBlob() throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2537,7 +2537,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public Clob createClob() throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2545,7 +2545,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public NClob createNClob() throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2553,7 +2553,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public SQLXML createSQLXML() throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2562,7 +2562,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     public Struct createStruct(String typeName, Object[] attributes)
             throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2570,7 +2570,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public Properties getClientInfo() throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2578,7 +2578,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public String getClientInfo(String name) throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2586,7 +2586,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public boolean isValid(int timeout) throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2595,7 +2595,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     public void setClientInfo(Properties properties)
             throws SQLClientInfoException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2604,7 +2604,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     public void setClientInfo(String name, String value)
             throws SQLClientInfoException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2612,7 +2612,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 	/* (non-Javadoc)
@@ -2620,7 +2620,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public Object unwrap(Class arg0) throws SQLException {
 	    // TODO Auto-generated method stub
-        throw new UnsupportedOperationException();
+        throw new AbstractMethodError();
     }
 
 }

@@ -97,8 +97,8 @@ public class ResultSetTest extends DatabaseTestCase {
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #getObject2 (data, minval, maxval) VALUES (?, ?, ?)");
 
         pstmt.setByte(1, data);
-        pstmt.setByte(2, Byte.MIN_VALUE);
-        pstmt.setByte(3, Byte.MAX_VALUE);
+        pstmt.setByte(2, (byte)0);
+        pstmt.setShort(3, (short)255);
         assertEquals(1, pstmt.executeUpdate());
 
         pstmt.close();
@@ -128,8 +128,8 @@ public class ResultSetTest extends DatabaseTestCase {
         assertNotNull(resultSetMetaData);
         assertEquals(Types.TINYINT, resultSetMetaData.getColumnType(1));
 
-        assertEquals(rs.getByte(2), Byte.MIN_VALUE);
-        assertEquals(rs.getByte(3), Byte.MAX_VALUE);
+        assertEquals(rs.getByte(2), 0);
+        assertEquals(rs.getShort(3), 255);
 
         assertFalse(rs.next());
         stmt2.close();
@@ -1849,36 +1849,25 @@ public class ResultSetTest extends DatabaseTestCase {
     public void testNegativeOverflow() throws SQLException
     {
         Statement st = con.createStatement();
-        st.execute("create table #test(data int)");
-        assertEquals(1, st.executeUpdate("insert into #test values (-1)"));
-        assertEquals(1, st.executeUpdate("insert into #test values (-128)"));
-        assertEquals(1, st.executeUpdate("insert into #test values (-129)"));
+        st.execute("create table #testNegativeOverflow(data int)");
 
-        ResultSet rs = st.executeQuery("select * from #test order by data desc");
+        int    [] values   = new int    [] {   -1,  -128, -129,   127,  128};
+        boolean[] overflow = new boolean[] {false, false, true, false, true};
 
-        assertTrue(rs.next());
-
-        try {
-            byte b = rs.getByte(1);
-        } catch (SQLException e) {
-            assertTrue("unexpected numeric overflow", false);
+        for (int i = 0; i < values.length; i++) {
+            assertEquals(1, st.executeUpdate("insert into #testNegativeOverflow values (" + values[i] + ")"));
         }
 
-        assertTrue(rs.next());
+        ResultSet rs = st.executeQuery("select * from #testNegativeOverflow");
 
-        try {
-            byte b = rs.getByte(1);
-        } catch (SQLException e) {
-            assertTrue("unexpected numeric overflow", false);
-        }
-
-        assertTrue(rs.next());
-
-        try {
-            byte b = rs.getByte(1);
-            assertTrue("expected numeric overflow error, got " + b, false);
-        } catch (SQLException e) {
-            assertEquals(e.getSQLState(), "22003");
+        for (int i = 0; i < values.length; i++) {
+            assertTrue(rs.next());
+            try {
+                byte b = rs.getByte(1);
+                assertFalse("expected numeric overflow error for value " + values[i] + ", got " + b, overflow[i]);
+            } catch (SQLException e) {
+                assertTrue("unexpected numeric overflow for value " + values[i], overflow[i]);
+            }
         }
 
         rs.close();

@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.56.2.3 2009-08-10 17:38:02 ickzon Exp $
+ * @version $Id: Support.java,v 1.56.2.4 2009-09-28 12:43:51 ickzon Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -234,13 +234,7 @@ public class Support {
         try {
             switch (jdbcType) {
                 case java.sql.Types.TINYINT:
-                    if (x instanceof Integer) {
-                        if ((((Number)x).intValue() & 0xFFFFFF00) != 0) {
-                            throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
-                        } else {
-                            return new Integer(((Number)x).byteValue());
-                        }
-                    } else if (x instanceof Boolean) {
+                    if (x instanceof Boolean) {
                         return ((Boolean) x).booleanValue() ? INTEGER_ONE : INTEGER_ZERO;
                     } else if (x instanceof Byte) {
                         return new Integer(((Byte)x).byteValue() & 0xFF);

@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.3
 =======================
 
+09/28/2009 - Holger Rehn
+ o Corrected bug [2860742], getByte() causes overflow error for negative
+   values.
+
 09/27/2009 - Holger Rehn
  o Workaround for bug [2856350], JDBC4 method stubs make jTDS unusable.
 

@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.8 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.9 2009-10-17 13:21:27 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -251,6 +251,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /** When doing NTLM authentication, send NTLMv2 response rather than regular response */
     private boolean useNTLMv2 = false;
 
+    /** the number of currently open connections */
+    private static int connections;
 
     /**
      * Default constructor.
@@ -258,6 +260,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * Used for testing.
      */
     private ConnectionJDBC2() {
+        connections++;
         url = null;
         socket = null;
         baseTds = null;
@@ -273,6 +276,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     ConnectionJDBC2(String url, Properties info)
             throws SQLException {
+        connections++;
         this.url = url;
         //
         // Extract properties into instance variables
@@ -300,119 +304,87 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         SQLWarning warn;
 
         Object timer = null;
+        boolean loginError = false;
         try {
-            boolean loginError = false;
-            try {
-                if (loginTimeout > 0) {
-                    // Start a login timer
-                    timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
-                            new TimerThread.TimerListener() {
-                                public void timerExpired() {
-                                    if (socket != null) {
-                                        socket.forceClose();
-                                    }
+            if (loginTimeout > 0) {
+                // Start a login timer
+                timer = TimerThread.getInstance().setTimer(loginTimeout * 1000,
+                        new TimerThread.TimerListener() {
+                            public void timerExpired() {
+                                if (socket != null) {
+                                    socket.forceClose();
                                 }
-                            });
-                }
-
-                if (namedPipe) {
-                    // Use named pipe
-                    socket = createNamedPipe(this);
-                } else {
-                    // Use plain TCP/IP socket
-                    socket = new SharedSocket(this);
-                }
-
-                if (timer != null && TimerThread.getInstance().hasExpired(timer)) {
-                    // If the timer has expired during the connection phase, close
-                    // the socket and throw an exception
-                    socket.forceClose();
-                    throw new IOException("Login timed out");
-                }
-
-                if ( charsetSpecified ) {
-                    loadCharset(serverCharset);
-                } else {
-                    // Need a default charset to process login packets for TDS 4.2/5.0
-                    // Will discover the actual serverCharset later
-                    loadCharset("iso_1");
-                    serverCharset = ""; // But don't send charset name to server!
-                }
-
-                //
-                // Create TDS protocol object
-                //
-                baseTds = new TdsCore(this, messages);
-
-                //
-                // Negotiate SSL connection if required
-                //
-                if (tdsVersion >= Driver.TDS80 && !namedPipe) {
-                    baseTds.negotiateSSL(instanceName, ssl);
-                }
-
-                //
-                // Now try to login
-                //
-                baseTds.login(serverName,
-                              databaseName,
-                              user,
-                              password,
-                              domainName,
-                              serverCharset,
-                              appName,
-                              progName,
-                              wsid,
-                              language,
-                              macAddress,
-                              packetSize);
-
-                //
-                // Save any login warnings so that they will not be overwritten by
-                // the internal configuration SQL statements e.g. setCatalog() etc.
-                //
-                warn = messages.warnings;
-
-                // Update the tdsVersion with the value in baseTds. baseTds sets
-                // the TDS version for the socket and there are no other objects
-                // with cached TDS versions at this point.
-                tdsVersion = baseTds.getTdsVersion();
-                if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
-                    // Need to select the default database
-                    setCatalog(databaseName);
-                }
-            } catch (UnknownHostException e) {
-                loginError = true;
-                throw Support.linkException(
-                        new SQLException(Messages.get("error.connection.badhost",
-                                e.getMessage()), "08S03"), e);
-            } catch (IOException e) {
-                loginError = true;
-                if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
-                    throw Support.linkException(
-                            new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
-                }
-                throw Support.linkException(
-                        new SQLException(Messages.get("error.connection.ioerror",
-                                e.getMessage()), "08S01"), e);
-            } catch (SQLException e) {
-                loginError = true;
-                if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
-                    throw Support.linkException(
-                            new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
-                }
-
-                throw e;
-            } catch (RuntimeException e) {
-                loginError = true;
-                throw e;
-            }
-            finally {
-                // fix for bug [1755448], socket not closed after login error
-                if (loginError)
-                    close();
+                            }
+                        });
             }
 
+            if (namedPipe) {
+                // Use named pipe
+                socket = createNamedPipe(this);
+            } else {
+                // Use plain TCP/IP socket
+                socket = new SharedSocket(this);
+            }
+
+            if (timer != null && TimerThread.getInstance().hasExpired(timer)) {
+                // If the timer has expired during the connection phase, close
+                // the socket and throw an exception
+                socket.forceClose();
+                throw new IOException("Login timed out");
+            }
+
+            if ( charsetSpecified ) {
+                loadCharset(serverCharset);
+            } else {
+                // Need a default charset to process login packets for TDS 4.2/5.0
+                // Will discover the actual serverCharset later
+                loadCharset("iso_1");
+                serverCharset = ""; // But don't send charset name to server!
+            }
+
+            //
+            // Create TDS protocol object
+            //
+            baseTds = new TdsCore(this, messages);
+
+            //
+            // Negotiate SSL connection if required
+            //
+            if (tdsVersion >= Driver.TDS80 && !namedPipe) {
+                baseTds.negotiateSSL(instanceName, ssl);
+            }
+
+            //
+            // Now try to login
+            //
+            baseTds.login(serverName,
+                          databaseName,
+                          user,
+                          password,
+                          domainName,
+                          serverCharset,
+                          appName,
+                          progName,
+                          wsid,
+                          language,
+                          macAddress,
+                          packetSize);
+
+            //
+            // Save any login warnings so that they will not be overwritten by
+            // the internal configuration SQL statements e.g. setCatalog() etc.
+            //
+            warn = messages.warnings;
+
+            // Update the tdsVersion with the value in baseTds. baseTds sets
+            // the TDS version for the socket and there are no other objects
+            // with cached TDS versions at this point.
+            tdsVersion = baseTds.getTdsVersion();
+            if (tdsVersion < Driver.TDS70 && databaseName.length() > 0) {
+                // Need to select the default database
+                setCatalog(databaseName);
+            }
+             
             // If charset is still unknown and the collation is not set either,
             // determine the charset by querying (we're using Sybase or SQL Server
             // 6.5)
@@ -439,29 +411,58 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 rs.close();
                 stmt.close();
             }
-
-            //
-            // Restore any login warnings so that the user can retrieve them
-            // by calling Connection.getWarnings()
-            //
-            messages.warnings = warn;
-        } finally {
-            if (timer != null) {
+        } catch (UnknownHostException e) {
+            loginError = true;
+            throw Support.linkException(
+                    new SQLException(Messages.get("error.connection.badhost",
+                            e.getMessage()), "08S03"), e);
+        } catch (IOException e) {
+            loginError = true;
+            if (loginTimeout > 0 && e.getMessage().indexOf("timed out") >= 0) {
+                throw Support.linkException(
+                        new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
+            }
+            throw Support.linkException(
+                    new SQLException(Messages.get("error.connection.ioerror",
+                            e.getMessage()), "08S01"), e);
+        } catch (SQLException e) {
+            loginError = true;
+            if (loginTimeout > 0 && e.getMessage().indexOf("socket closed") >= 0) {
+                throw Support.linkException(
+                        new SQLException(Messages.get("error.connection.timeout"), "HYT01"), e);
+            }
+            throw e;
+        } catch (RuntimeException e) {
+            loginError = true;
+            throw e;
+        }
+        finally {
+            // fix for bug [1755448], socket not closed after login error
+            if (loginError) {
+                 close();
+            } else if (timer != null) {
                 // Cancel loginTimer
                 TimerThread.getInstance().cancelTimer(timer);
             }
         }
+
+        //
+        // Restore any login warnings so that the user can retrieve them
+        // by calling Connection.getWarnings()
+        //
+        messages.warnings = warn;
     }
 
     /**
      * Ensure all resources are released.
      */
     protected void finalize() throws Throwable {
-        super.finalize();
         try {
-            close();   
+            close();
         } catch (Exception e) {
             // ignore any error
+        } finally {
+            super.finalize();
         }
     }
 
@@ -2088,6 +2089,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 // Ignore
             } finally {
                 closed = true;
+                if (--connections == 0) {
+                    TimerThread.getInstance().stopTimer();
+                }
             }
         }
     }

@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.5.2.1 2009-07-23 16:18:51 ickzon Exp $
+ * @version $Id: TimerThread.java,v 1.5.2.2 2009-10-17 13:21:27 ickzon Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -106,18 +106,13 @@ public class TimerThread extends Thread {
      */
     public void run() {
         synchronized (timerList) {
-            while (true) {
+            boolean run = true;
+            while (run) {
                 try {
-                    if (nextTimeout == 0) {
-                        // If nextTimeout == 0 (i.e. there are no more requests
-                        // in the queue) wait indefinitely -- wait(0)
-                        timerList.wait(0);
-                    } else {
-                        long ms = nextTimeout - System.currentTimeMillis();
-                        if (ms > 0) {
-                            // positive timeout, wait appropriately
-                            timerList.wait(ms);
-                        }
+                    long ms;
+                    while ((ms = nextTimeout - System.currentTimeMillis()) > 0 || nextTimeout == 0) {
+                        // positive timeout, wait appropriately
+                        timerList.wait(nextTimeout==0 ? 0 : ms);
                     }
 
                     // Fire expired timeout requests
@@ -138,7 +133,9 @@ public class TimerThread extends Thread {
                     // Determine next timeout
                     updateNextTimeout();
                 } catch (InterruptedException e) {
-                    // nop
+                    // stopThread() called, or thread interrupted externally
+                    run = false;
+                    timerList.clear();
                 }
             }
         }
@@ -185,7 +182,7 @@ public class TimerThread extends Thread {
             // If this request is now the first in the list, interrupt timer
             if (timerList.getFirst() == t) {
                 nextTimeout = t.time;
-                this.interrupt();
+                timerList.notifyAll();
             }
         }
 
@@ -210,6 +207,16 @@ public class TimerThread extends Thread {
             }
             return result;
         }
+    }
+
+    /**
+     * Completely stops the timer and its underlying Java thread, discarding all
+     * pending timeouts. Any subsequent invocation of {@link #getInstance()}
+     * will restart the timer. 
+     */
+    public synchronized void stopTimer() {
+         interrupt();
+         instance = null;
     }
 
     /**

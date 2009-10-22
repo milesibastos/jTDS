@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.4
 =======================
 
+10/22/2009 - Holger Rehn
+ o Corrected bug [2883066], Numeric overflow in conversion BigInteger/BIGINT.
+
 10/17/2009 - Holger Rehn
  o Corrected bug [2871274], no soft kill for TimerThread.
  o Improved performance by not using Exceptions for controlling the timer,

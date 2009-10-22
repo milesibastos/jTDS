@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.56.2.4 2009-09-28 12:43:51 ickzon Exp $
+ * @version $Id: Support.java,v 1.56.2.5 2009-10-22 07:28:23 ickzon Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -319,7 +319,7 @@ public class Support {
                         return new Long(((Byte)x).byteValue() & 0xFF);
                     } else if (x instanceof BigInteger) {
                         BigInteger val = (BigInteger) x;
-                        if (val.compareTo(MIN_VALUE_LONG_BI) < 0 || val.compareTo(MIN_VALUE_LONG_BI) > 0) {
+                        if (val.compareTo(MIN_VALUE_LONG_BI) < 0 || val.compareTo(MAX_VALUE_LONG_BI) > 0) {
                             throw new SQLException(Messages.get("error.convert.numericoverflow", x, getJdbcTypeName(jdbcType)), "22003");
                         } else {
                             return new Long(val.longValue());

@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.4
 =======================
 
+11/04/2009 - Holger Rehn 
+ o Corrected bug [2891775], fix for [2340241] has broken Java 1.3 compatibility.
+
 10/22/2009 - Holger Rehn
  o Corrected bug [2883066], Numeric overflow in conversion BigInteger/BIGINT.
 

@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.9 2009-10-17 13:21:27 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.10 2009-11-04 09:32:35 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -1216,10 +1216,10 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             // only determine a single PID for the VM's (or classloader's) life time
             if (processId == null) {
                 // random number until the real process ID can be determined
-                processId = Integer.valueOf(new Random(System.currentTimeMillis()).nextInt(32768));
+                processId = new Integer(new Random(System.currentTimeMillis()).nextInt(32768));
             }
         } else if (pid.length() > 0) {
-            processId = Integer.valueOf(parseIntegerProperty(info, Driver.PROCESSID));
+            processId = new Integer(parseIntegerProperty(info, Driver.PROCESSID));
         }
 
         lobBuffer = parseLongProperty(info, Driver.LOBBUFFER);

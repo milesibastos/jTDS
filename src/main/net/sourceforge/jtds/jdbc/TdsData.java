@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  * @author Mike Hutchinson
  * @author Alin Sinpalean
  * @author freeTDS project
- * @version $Id: TdsData.java,v 1.60.2.2 2009-08-21 12:21:57 ickzon Exp $
+ * @version $Id: TdsData.java,v 1.60.2.3 2009-11-05 10:42:18 ickzon Exp $
  */
 public class TdsData {
     /**
@@ -1369,7 +1369,7 @@ public class TdsData {
                     } else if (!pi.isUnicode && len <= MS_LONGVAR_MAX) {
                         CharsetInfo csi = connection.getCharsetInfo();
                         try {
-                            if (csi.isWideChars() && pi.getBytes(csi.getCharset()).length > MS_LONGVAR_MAX) {
+                            if (len > 0 && csi.isWideChars() && pi.getBytes(csi.getCharset()).length > MS_LONGVAR_MAX) {
                                 pi.tdsType = SYBTEXT;
                                 pi.sqlType = "text";
                             } else {

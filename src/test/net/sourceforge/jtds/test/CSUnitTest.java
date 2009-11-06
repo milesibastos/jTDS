@@ -28,7 +28,7 @@ import net.sourceforge.jtds.util.Logger;
 /**
  *
  * @author Alin Sinpalean
- * @version $Id: CSUnitTest.java,v 1.12.6.1 2009-08-04 10:33:54 ickzon Exp $
+ * @version $Id: CSUnitTest.java,v 1.12.6.2 2009-11-06 08:24:24 ickzon Exp $
  */
 public class CSUnitTest extends DatabaseTestCase {
     public CSUnitTest(String name) {
@@ -583,7 +583,7 @@ public class CSUnitTest extends DatabaseTestCase {
         output.println("myreal is " + rs.getDouble("myreal"));
         output.println("myint is " + rs.getInt("myint"));
         output.println("mysmallint is " + rs.getShort("mysmallint"));
-        output.println("mytinyint is " + rs.getByte("mytinyint"));
+        output.println("mytinyint is " + rs.getShort("mytinyint"));
         output.println("mymoney is " + rs.getObject("mymoney"));
         output.println("mysmallmoney is " + rs.getObject("mysmallmoney"));
         output.println("mybit is " + rs.getObject("mybit"));

@@ -60,11 +60,13 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.63.2.3 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.63.2.4 2009-12-06 14:04:59 ickzon Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
     protected final String sql;
+    /** The original SQL statement provided at construction time. */
+    private final String originalSql;
     /** The first SQL keyword in the SQL string.*/
     protected String sqlWord;
     /** The procedure name for CallableStatements. */
@@ -97,6 +99,9 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                           boolean returnKeys)
         throws SQLException {
         super(connection, resultSetType, concurrency);
+
+        // returned by toString()
+        originalSql = sql;
 
         // Parse the SQL looking for escapes and parameters
         if (this instanceof JtdsCallableStatement) {
@@ -132,6 +137,13 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
 
         parameters = (ParamInfo[]) params.toArray(new ParamInfo[params.size()]);
+    }
+
+    /**
+     * Returns the SQL command provided at construction time.
+     */
+    public String toString() {
+        return originalSql;
     }
 
     /**

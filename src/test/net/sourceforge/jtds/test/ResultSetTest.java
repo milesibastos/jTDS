@@ -1257,7 +1257,8 @@ public class ResultSetTest extends DatabaseTestCase {
     }
 
     /**
-     * Check whether <code>Statement.setMaxRows()</code> works okay.
+     * Check whether <code>Statement.setMaxRows()</code> works okay, bug
+     * [1812686].
      */
     public void testMaxRows() throws Exception {
         Statement stmt = con.createStatement();

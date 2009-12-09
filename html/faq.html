@@ -352,11 +352,13 @@
           hit for the encoding logic so set this option to false if unitext or univarchar
           data types are not in use or if charset is utf-8.</dd>
         <dt><code>socketTimeout</code> (default - <code>0</code>)</dt>
-        <dd>The amount of time to wait (in seconds) for network activity before timing out.<br/>
+        <dd>The amount of time to wait (in seconds) for a server response before timing out.<br/>
           Use with care! If a non zero value is supplied this must be greater than the maximum
           time that the server will take to answer any query. Once the timeout value is exceeded
-          the network connection will be closed. This parameter may be useful for detecting dead
-          network connections in a pooled environment.  See also <code>loginTimeout</code>.</dd>
+          the network or named pipe connection will be closed. This parameter may be useful for
+          detecting dead network connections in a pooled environment.  See also
+          <code>loginTimeout</code>. If using named pipes via JCIFS the timeout cannot be
+          disabled completely. A timeout of about 25 days (2^31 ms) is applied instead.</dd>
         <dt><code>socketKeepAlive</code> (default - <code>false</code>)</dt>
         <dd>true to enable TCP/IP keep-alive messages</dd>
         <dt><code>ssl</code> (default - <code>off</code>)</dt>

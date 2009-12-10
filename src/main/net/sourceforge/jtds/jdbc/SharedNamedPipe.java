@@ -35,7 +35,7 @@ import jcifs.smb.SmbNamedPipe;
  * @todo Implement connection timeouts for named pipes.
  *
  * @author David D. Kilzer
- * @version $Id: SharedNamedPipe.java,v 1.19.2.1 2009-12-09 09:04:17 ickzon Exp $
+ * @version $Id: SharedNamedPipe.java,v 1.19.2.2 2009-12-10 09:54:04 ickzon Exp $
  */
 public class SharedNamedPipe extends SharedSocket {
     /**
@@ -56,7 +56,9 @@ public class SharedNamedPipe extends SharedSocket {
 
         // apply socketTimeout as responseTimeout
         int timeout = connection.getSocketTimeout() * 1000;
-        Config.setProperty("jcifs.smb.client.responseTimeout", String.valueOf(timeout > 0 ? timeout : Integer.MAX_VALUE));
+        String val = String.valueOf(timeout > 0 ? timeout : Integer.MAX_VALUE);
+        Config.setProperty("jcifs.smb.client.responseTimeout", val);
+        Config.setProperty("jcifs.smb.client.soTimeout", val);
 
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(
                 connection.getDomainName(), connection.getUser(), connection.getPassword());

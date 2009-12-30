@@ -23,7 +23,7 @@ import java.util.Properties;
 /**
  * Test <code>DatabaseMetaData</code>.
  *
- * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.3 2009-08-24 08:51:28 ickzon Exp $
+ * @version $Id: DatabaseMetaDataTest.java,v 1.17.2.4 2009-12-30 12:20:24 ickzon Exp $
  */
 public class DatabaseMetaDataTest extends MetaDataTestCase {
 
@@ -653,7 +653,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         final int columns = 100;
 
         Statement st = con.createStatement();
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
 
         try {
             // create tables
@@ -855,7 +855,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         };
 
         // build and execute CREATE TABLE statement
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         sb.append("CREATE TABLE testDefaultValue (");
         for (int i = 0; i < columns.length/2; i++) {
             sb.append(i == 0 ? "" : ",");

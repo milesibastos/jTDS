@@ -37,7 +37,7 @@ import java.util.Properties;
  * JDBC 3.0-only tests for Connection.
  *
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC3Test.java,v 1.1.2.3 2009-10-17 13:21:27 ickzon Exp $
+ * @version $Id: ConnectionJDBC3Test.java,v 1.1.2.4 2009-12-30 13:25:54 ickzon Exp $
  */
 public class ConnectionJDBC3Test extends DatabaseTestCase {
 
@@ -116,11 +116,11 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
 
                 // load the actual test class
                 Class clazz = cloader.loadClass(testTimerStopHelper.class.getName());
-                Constructor constructor = clazz.getDeclaredConstructor();
+                Constructor constructor = clazz.getDeclaredConstructor((Class[]) null);
 
                 // start the test by 
                 try {
-                    constructor.newInstance();
+                    constructor.newInstance((Object[]) null);
                 } catch (InvocationTargetException e) {
                     // extract target exception
                     throw e.getTargetException();
@@ -181,7 +181,7 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
             Enumeration e = DriverManager.getDrivers();
             while (e.hasMoreElements()) {
                 Driver d = (Driver) e.nextElement();
-                if (d.getClass().getCanonicalName().equals("net.sourceforge.jtds.jdbc.Driver")) {
+                if (d.getClass().getName().equals("net.sourceforge.jtds.jdbc.Driver")) {
                     DriverManager.deregisterDriver(d);
                     break;
                 }

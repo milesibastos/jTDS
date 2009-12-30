@@ -33,11 +33,15 @@
     <mkdir dir="${build}/src"/>
 
   	 <copy todir="${build}/src">
-      <fileset dir="${src}/main" includes="**/*.java"/>
-  	 	<!-- cut off JDBC 4 stuff -->
-  	 	<filterchain>
- 		   <replaceregex byline="off" flags="s" pattern=" *//* JDBC4.*" replace="}"/>
-  	   </filterchain>
+      <fileset dir="${src}/main" includes="**/*.java">
+         <exclude name="**/SocketFactories.java"/>
+      </fileset>
+      <filterchain>
+         <!-- only SUN SSL implementation available -->
+         <replaceregex byline="on" pattern="SocketFactories.getSocketFactory" replace="SocketFactoriesSUN.getSocketFactory"/>
+         <!-- cut off JDBC 4 stuff -->
+         <replaceregex byline="off" flags="s" pattern=" *//* JDBC4.*" replace="}"/>
+      </filterchain>
     </copy>
     <copy todir="${build}/src">
       <fileset dir="${src}/test" includes="**/*.java">

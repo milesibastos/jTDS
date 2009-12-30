@@ -34,7 +34,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import net.sourceforge.jtds.ssl.SocketFactories;
+import javax.net.SocketFactory;
+
+import net.sourceforge.jtds.ssl.*;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -65,7 +67,7 @@ import net.sourceforge.jtds.util.Logger;
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
  * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.39.2.3 2009-08-07 14:02:10 ickzon Exp $
+ * @version $Id: SharedSocket.java,v 1.39.2.4 2009-12-30 14:37:00 ickzon Exp $
  */
 class SharedSocket {
     /**
@@ -334,8 +336,10 @@ class SharedSocket {
      */
     void enableEncryption(String ssl) throws IOException {
         Logger.println("Enabling TLS encryption");
-        sslSocket = SocketFactories.getSocketFactory(ssl, socket)
-                .createSocket(getHost(), getPort());
+        SocketFactory sf = Driver.JDBC3 ? 
+                 SocketFactories.getSocketFactory(ssl, socket)
+               : SocketFactoriesSUN.getSocketFactory(ssl, socket);
+        sslSocket = sf.createSocket(getHost(), getPort());
         setOut(new DataOutputStream(sslSocket.getOutputStream()));
         setIn(new DataInputStream(sslSocket.getInputStream()));
     }

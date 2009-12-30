@@ -22,7 +22,7 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * @version $Id: PreparedStatementTest.java,v 1.46.2.3 2009-08-23 10:50:43 ickzon Exp $
+ * @version $Id: PreparedStatementTest.java,v 1.46.2.4 2009-12-30 12:15:49 ickzon Exp $
  */
 public class PreparedStatementTest extends TestBase {
 
@@ -1104,7 +1104,7 @@ public class PreparedStatementTest extends TestBase {
         long seed = System.currentTimeMillis();
         Random r = new Random(seed);
 
-        Float value = Float.valueOf(0.000803f);
+        Float value = new Float(0.000803f);
 
         PreparedStatement ps1 = con.prepareStatement("update #testArithemicOverflow set data = ? where id = ?");
         PreparedStatement ps2 = con.prepareStatement("select data from #testArithemicOverflow where id = ?");
@@ -1112,7 +1112,7 @@ public class PreparedStatementTest extends TestBase {
         try {
             for (int i = 0; i < 1000; i++) {
                 if (i > 0) {
-                    value = Float.valueOf(r.nextFloat() * Float.MAX_VALUE * (r.nextBoolean() ? 1 : -1));
+                    value = new Float(r.nextFloat() * Float.MAX_VALUE * (r.nextBoolean() ? 1 : -1));
                 }
 
                 ps1.setFloat(1, value.floatValue());
@@ -1122,7 +1122,7 @@ public class PreparedStatementTest extends TestBase {
                 ps2.setInt(1, 1);
                 ResultSet rs = ps2.executeQuery();
                 assertTrue(rs.next());
-                assertEquals(value, Float.valueOf(rs.getFloat(1)));
+                assertEquals(value, new Float(rs.getFloat(1)));
                 rs.close();
             }
         } catch (Throwable t) {

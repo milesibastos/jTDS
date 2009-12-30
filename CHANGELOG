@@ -1,5 +1,14 @@
+===============================================================================
+12/30/2009 - jTDS 1.2.5 released
+===============================================================================
+
 Changes from jTDS 1.2.4
 =======================
+
+12/30/2009 - Holger Rehn
+ o Corrected bug [2900139], NoClassDefFoundError with C3P0.
+ o Corrected bugs [2856350], [2898905], problems with JDBC4 stubs in GlassFish. 
+ o Modified build process to remove JDBC4 stubs, feature request [2905814].
 
 12/09/2009 - Holger Rehn
  o Updated JCIFS to version 1.3.12

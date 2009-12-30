@@ -18,22 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.lang.ref.WeakReference;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.DatabaseMetaData;
-import java.sql.NClob;
-import java.sql.PreparedStatement;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Struct;
-import java.sql.Types;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.net.UnknownHostException;
 import java.io.*;
 import java.util.ArrayList;
@@ -69,7 +54,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.11 2009-12-30 08:45:34 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.12 2009-12-30 11:37:21 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**

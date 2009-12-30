@@ -22,22 +22,7 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.MalformedURLException;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +43,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.46.2.4 2009-12-30 08:45:34 ickzon Exp $
+ * @version $Id: JtdsResultSet.java,v 1.46.2.5 2009-12-30 11:37:21 ickzon Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*

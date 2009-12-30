@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.*;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.11.2.3 2009-07-28 12:35:01 ickzon Exp $
+ * @version $Id: BatchTest.java,v 1.11.2.4 2009-12-30 12:14:02 ickzon Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -633,8 +633,8 @@ public class BatchTest extends DatabaseTestCase {
         stmt.close();
 
         // create 2 different strings
-        StringBuilder sb1 = new StringBuilder(10000);
-        StringBuilder sb2 = new StringBuilder(100);
+        StringBuffer sb1 = new StringBuffer(10000);
+        StringBuffer sb2 = new StringBuffer(100);
 
         for (int i=1; i<=1000; i++) {
             sb1.append(" +++ ").append("    ".substring(String.valueOf(i).length())).append(i).append("\n");

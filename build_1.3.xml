@@ -57,7 +57,7 @@
   </target>
 
   <target name="compile" depends="init,prepare">
-    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" source="1.3" target="1.3" encoding="latin1"/>
+    <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" encoding="latin1"/>
   </target>
 
   <target name="javadoc" depends="prepare">

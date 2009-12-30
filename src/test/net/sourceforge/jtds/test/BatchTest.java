@@ -25,7 +25,7 @@ import net.sourceforge.jtds.jdbc.*;
 /**
  * Simple test suite to exercise batch execution.
  *
- * @version $Id: BatchTest.java,v 1.11.2.5 2009-12-30 13:26:35 ickzon Exp $
+ * @version $Id: BatchTest.java,v 1.11.2.6 2009-12-30 13:33:24 ickzon Exp $
  */
 public class BatchTest extends DatabaseTestCase {
     // Constants to use instead of the JDBC 3.0-only Statement constants
@@ -711,8 +711,25 @@ public class BatchTest extends DatabaseTestCase {
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");
-        assertEquals(new int[]{1,2,3,6,0,0,0,0,0,0},statement.executeBatch());
+        assertEquals(array2String(new int[]{1,2,3,6,0,0,0,0,0,0}),array2String(statement.executeBatch()));
         statement.close();
+    }
+
+    private static String array2String(int[] a) {
+        if (a == null)
+            return "null";
+        int iMax = a.length - 1;
+        if (iMax == -1)
+            return "[]";
+
+        StringBuffer b = new StringBuffer();
+        b.append('[');
+        for (int i = 0; ; i++) {
+            b.append(a[i]);
+            if (i == iMax)
+                return b.append(']').toString();
+            b.append(", ");
+        }
     }
 
     public static void main(String[] args) {

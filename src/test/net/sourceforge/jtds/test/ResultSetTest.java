@@ -1811,7 +1811,7 @@ public class ResultSetTest extends DatabaseTestCase {
                     }
                     catch (Throwable t) {
                         synchronized (errors) {
-                            errors.add(new Exception(this.getName() + " at row " + i + ": " + t.getMessage(),t));
+                            errors.add(new Exception(this.getName() + " at row " + i + ": " + t.getMessage()));
                         }
                     }
                 }

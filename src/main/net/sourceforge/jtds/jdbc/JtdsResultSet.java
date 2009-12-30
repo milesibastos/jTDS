@@ -58,7 +58,7 @@ import java.io.InputStreamReader;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSet.java,v 1.46.2.3 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsResultSet.java,v 1.46.2.4 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsResultSet implements ResultSet {
     /*
@@ -1348,6 +1348,8 @@ public class JtdsResultSet implements ResultSet {
         throws SQLException {
         return getTimestamp(findColumn(columnName), cal);
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.ResultSet#getHoldability()

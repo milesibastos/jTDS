@@ -28,7 +28,7 @@ import net.sourceforge.jtds.jdbcx.proxy.*;
 /**
  * jTDS implementation of the <code>PooledConnection</code> interface.
  *
- * @version $Id: PooledConnection.java,v 1.11.6.2 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: PooledConnection.java,v 1.11.6.3 2009-12-30 08:45:34 ickzon Exp $
  */
 public class PooledConnection implements javax.sql.PooledConnection {
     private ArrayList listeners = new ArrayList();
@@ -130,6 +130,8 @@ public class PooledConnection implements javax.sql.PooledConnection {
         // Now remove the listener from the new, cloned list
         listeners.remove(listener);
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see javax.sql.PooledConnection#addStatementEventListener(javax.sql.StatementEventListener)

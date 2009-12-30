@@ -60,7 +60,7 @@ import java.text.NumberFormat;
  *
  * @author Mike Hutchinson
  * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.63.2.4 2009-12-06 14:04:59 ickzon Exp $
+ * @version $Id: JtdsPreparedStatement.java,v 1.63.2.5 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -932,6 +932,8 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         notSupported("executeQuery(String)");
         return null;
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream)

@@ -31,7 +31,7 @@ import java.sql.SQLException;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsResultSetMetaData.java,v 1.9.2.2 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsResultSetMetaData.java,v 1.9.2.3 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsResultSetMetaData implements ResultSetMetaData {
     private final ColInfo[] columns;
@@ -176,6 +176,8 @@ public class JtdsResultSetMetaData implements ResultSetMetaData {
 
         return (col.tableName == null) ? "" : col.tableName;
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)

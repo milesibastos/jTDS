@@ -46,7 +46,7 @@ import net.sourceforge.jtds.util.BlobBuffer;
  *
  * @author Brian Heineman
  * @author Mike Hutchinson
- * @version $Id: ClobImpl.java,v 1.36.2.2 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: ClobImpl.java,v 1.36.2.3 2009-12-30 08:45:34 ickzon Exp $
  */
 
 public class ClobImpl implements Clob {
@@ -211,6 +211,8 @@ public class ClobImpl implements Clob {
     public void truncate(long len) throws SQLException {
         blobBuffer.truncate(len * 2);
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     public void free() throws SQLException {
         // TODO Auto-generated method stub

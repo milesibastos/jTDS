@@ -27,7 +27,7 @@ import net.sourceforge.jtds.jdbc.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a statement with minimal overhead.
  *
- * @version $Id: StatementProxy.java,v 1.4.4.2 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: StatementProxy.java,v 1.4.4.3 2009-12-30 08:45:34 ickzon Exp $
  */
 public class StatementProxy implements Statement {
     private ConnectionProxy _connection;
@@ -697,6 +697,8 @@ public class StatementProxy implements Statement {
 
         throw sqlException;
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.Statement#isClosed()

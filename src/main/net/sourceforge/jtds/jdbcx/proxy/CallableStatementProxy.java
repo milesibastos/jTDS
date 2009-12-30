@@ -31,7 +31,7 @@ import net.sourceforge.jtds.jdbc.*;
  * Since the driver still needs to be compatible with 1.2 and 1.3 this class is used
  * to delegate the calls to a callable statement with minimal overhead.
  *
- * @version $Id: CallableStatementProxy.java,v 1.3.4.2 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: CallableStatementProxy.java,v 1.3.4.3 2009-12-30 08:45:34 ickzon Exp $
  */
 public class CallableStatementProxy
 extends PreparedStatementProxy
@@ -1482,6 +1482,8 @@ implements CallableStatement {
         
         return null;
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.CallableStatement#getCharacterStream(int)

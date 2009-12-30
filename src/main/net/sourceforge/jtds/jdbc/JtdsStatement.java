@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.64.2.3 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsStatement.java,v 1.64.2.4 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -1303,6 +1303,8 @@ public class JtdsStatement implements java.sql.Statement {
 
         return this.executeSQLQuery(sql, null, null, useCursor(false, null));
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.Statement#isClosed()

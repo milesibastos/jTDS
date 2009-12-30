@@ -42,7 +42,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Alin Sinplean
  * @since  jTDS 0.3
- * @version $Id: JtdsDataSource.java,v 1.42.2.3 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsDataSource.java,v 1.42.2.4 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsDataSource
         implements DataSource, ConnectionPoolDataSource, XADataSource, Referenceable, Serializable {
@@ -761,6 +761,8 @@ public class JtdsDataSource
             props.setProperty(Messages.get(Driver.USEJCIFS), useJCIFS);
         }
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)

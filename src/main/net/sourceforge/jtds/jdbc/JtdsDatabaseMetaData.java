@@ -43,7 +43,7 @@ import java.util.List;
  * @author   The FreeTDS project
  * @author   Alin Sinpalean
  *  created  17 March 2001
- * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.3 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsDatabaseMetaData.java,v 1.37.2.4 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     static final int sqlStateXOpen = 1;
@@ -3527,6 +3527,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
 
         return types;
     }
+
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 
     /* (non-Javadoc)
      * @see java.sql.DatabaseMetaData#autoCommitFailureClosesAllResultSets()

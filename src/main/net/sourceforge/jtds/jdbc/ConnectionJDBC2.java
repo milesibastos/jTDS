@@ -69,7 +69,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.10 2009-11-04 09:32:35 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.11 2009-12-30 08:45:34 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2519,7 +2519,9 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     void clearSavepoints() {
     }
 
-	/* (non-Javadoc)
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
+
+    /* (non-Javadoc)
      * @see java.sql.Connection#createArrayOf(java.lang.String, java.lang.Object[])
      */
     public Array createArrayOf(String typeName, Object[] elements)
@@ -2528,7 +2530,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#createBlob()
      */
     public Blob createBlob() throws SQLException {
@@ -2536,7 +2538,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#createClob()
      */
     public Clob createClob() throws SQLException {
@@ -2544,7 +2546,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#createNClob()
      */
     public NClob createNClob() throws SQLException {
@@ -2552,7 +2554,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#createSQLXML()
      */
     public SQLXML createSQLXML() throws SQLException {
@@ -2560,7 +2562,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#createStruct(java.lang.String, java.lang.Object[])
      */
     public Struct createStruct(String typeName, Object[] attributes)
@@ -2569,7 +2571,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#getClientInfo()
      */
     public Properties getClientInfo() throws SQLException {
@@ -2577,7 +2579,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#getClientInfo(java.lang.String)
      */
     public String getClientInfo(String name) throws SQLException {
@@ -2585,7 +2587,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#isValid(int)
      */
     public boolean isValid(int timeout) throws SQLException {
@@ -2593,7 +2595,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#setClientInfo(java.util.Properties)
      */
     public void setClientInfo(Properties properties)
@@ -2602,7 +2604,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Connection#setClientInfo(java.lang.String, java.lang.String)
      */
     public void setClientInfo(String name, String value)
@@ -2611,7 +2613,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Wrapper#isWrapperFor(java.lang.Class)
      */
     public boolean isWrapperFor(Class arg0) throws SQLException {
@@ -2619,7 +2621,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         throw new AbstractMethodError();
     }
 
-	/* (non-Javadoc)
+    /* (non-Javadoc)
      * @see java.sql.Wrapper#unwrap(java.lang.Class)
      */
     public Object unwrap(Class arg0) throws SQLException {

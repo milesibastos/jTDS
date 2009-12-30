@@ -50,7 +50,7 @@ import java.util.Map;
  * </ol>
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsCallableStatement.java,v 1.23.2.2 2009-09-27 12:59:17 ickzon Exp $
+ * @version $Id: JtdsCallableStatement.java,v 1.23.2.3 2009-12-30 08:45:34 ickzon Exp $
  */
 public class JtdsCallableStatement extends JtdsPreparedStatement implements CallableStatement {
     /** Last parameter retrieved was null. */
@@ -641,6 +641,8 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         setTimestamp(findParameter(parameterName, true), x, cal);
     }
     
+    /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
+
     /* (non-Javadoc)
      * @see java.sql.CallableStatement#getCharacterStream(int)
      */

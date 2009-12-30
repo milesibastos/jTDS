@@ -13,7 +13,7 @@
 
     <property name="build.compiler" value="modern"/>
     <property name="javac.debug" value="on"/>
-    <property name="javac.optimize" value="off"/>
+    <property name="javac.optimize" value="on"/>
 
     <property name="src" value="src"/>
     <property name="dist" value="dist"/>
@@ -99,7 +99,7 @@
     </copy>
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*"/>
+      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,*.bat,*.sh,*.xml,src/**/*,lib/**/*,html/**/*,conf/**/*.xml,conf/**/*.tmpl"/>
     </copy>
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
     <delete dir="${dist}/tmp"/>
@@ -107,7 +107,7 @@
     <!-- Binary package -->
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
-      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,html/**/*"/>
+      <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,conf/**/*.tmpl,html/**/*"/>
       <fileset dir="${build}" includes="*.jar"/>
     </copy>
 

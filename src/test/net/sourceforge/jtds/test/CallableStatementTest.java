@@ -895,6 +895,49 @@ public class CallableStatementTest extends TestBase {
     }
 
     /**
+     * Test retrieving multiple resultsets, the return value and an additional
+     * output parameter from a single procedure call.
+     */
+    public void testCallWithResultSet() throws Exception {
+        Statement st = con.createStatement();
+        st.execute("create proc #testCallWithResultSet @in varchar(16), @out varchar(32) output as" +
+        		       " begin" +
+        		       "  select 'result set' as ret" +
+        		       "  set @out = 'Test ' + @in;" +
+                   "  select 'result set 2' as ret2" +
+        		       "  return 1" +
+        		       " end");
+        st.close();
+
+        CallableStatement cstmt = con.prepareCall("{?=call #testCallWithResultSet(?,?)}");
+        cstmt.registerOutParameter(1, Types.INTEGER);
+        cstmt.setString(2, "data");
+        cstmt.registerOutParameter(3, Types.VARCHAR);
+        cstmt.execute();
+
+        // resultset 1
+        ResultSet rs = cstmt.getResultSet();
+        assertNotNull(rs);
+        assertTrue(rs.next());
+        assertEquals("result set", rs.getString(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        // resultset 2
+        assertTrue(cstmt.getMoreResults());
+        rs = cstmt.getResultSet();
+        assertTrue(rs.next());
+        assertEquals("result set 2", rs.getString(1));
+        assertFalse(rs.next());
+        rs.close();
+
+        // return value and output parameter
+        assertEquals(1, cstmt.getInt(1));
+        assertEquals("Test data", cstmt.getString(3));
+        cstmt.close();
+    }
+
+    /**
      * Test that output result sets, return values and output parameters are
      * correctly handled for a remote procedure call.
      * To set up this test you will a local and remote server where the remote

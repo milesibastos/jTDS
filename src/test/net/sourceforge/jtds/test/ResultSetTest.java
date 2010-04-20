@@ -496,6 +496,7 @@ public class ResultSetTest extends DatabaseTestCase {
      * <li>isSigned returns true in error for TINYINT columns.
      * <li>Type names for numeric / decimal have (prec,scale) appended in error.
      * <li>Type names for auto increment columns do not have "identity" appended.
+     * <li>table names are empty when not using cursors, bug [1833720]</li>
      * </ol>
      * NB: This test assumes getColumnName has been fixed to work as per the suggestion
      * in bug report [1009233].
@@ -503,7 +504,8 @@ public class ResultSetTest extends DatabaseTestCase {
      * @throws Exception
      */
     public void testResultSetMetaData() throws Exception {
-        Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        // Statement stmt = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #TRSMD (id INT IDENTITY NOT NULL, byte TINYINT NOT NULL, num DECIMAL(28,10) NULL)");
         ResultSetMetaData rsmd = stmt.executeQuery("SELECT id as idx, byte, num FROM #TRSMD").getMetaData();
         assertNotNull(rsmd);
@@ -527,6 +529,7 @@ public class ResultSetTest extends DatabaseTestCase {
         assertEquals(ResultSetMetaData.columnNullable, rsmd.isNullable(3));
         assertEquals("decimal", rsmd.getColumnTypeName(3));
         assertEquals(Types.DECIMAL, rsmd.getColumnType(3));
+        assertEquals("#TRSMD", rsmd.getTableName(1));
         stmt.close();
     }
 

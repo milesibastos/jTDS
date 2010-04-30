@@ -16,13 +16,13 @@
     </license>
   </licenses>
 
-  <description>TDS is an open source 100% pure Java (type 4) JDBC 3.0 driver 
+  <description>jTDS is an open source 100% pure Java (type 4) JDBC 3.0 driver 
     for Microsoft SQL Server (6.5, 7, 2000,2005, and 2008) and Sybase (10, 11, 12, 15).
     jTDS is based on FreeTDS and is currently the fastest production-ready JDBC 
     driver for SQL Server and Sybase. jTDS is 100% JDBC 3.0 compatible, supporting
     forward-only and scrollable/updateable ResultSets, concurrent (completely 
     independent) Statements and implementing all the DatabaseMetaData and 
-    ResultSetMetaData  methods. 
+    ResultSetMetaData methods. 
   </description>
 
   <scm>
@@ -33,7 +33,7 @@
 
     <!-- ========================================================================== -->
     <!-- Use this profile to create maven upload bundle                             -->
-    <!-- Require jtds-${version}-src.zip, jtds=${vesion}.jar under ${basedir}       -->
+    <!-- Require jtds-${version}-src.zip, jtds=${version}.jar under ${basedir}      -->
     <!-- ========================================================================== -->
     <profile>
       <id>build-maven-upload-bundle</id>

@@ -54,7 +54,7 @@ import java.util.LinkedList;
  * @see java.sql.ResultSet
  *
  * @author Mike Hutchinson
- * @version $Id: JtdsStatement.java,v 1.64.2.4 2009-12-30 08:45:34 ickzon Exp $
+ * @version $Id: JtdsStatement.java,v 1.64.2.5 2010-05-17 10:48:27 ickzon Exp $
  */
 public class JtdsStatement implements java.sql.Statement {
     /*
@@ -865,8 +865,10 @@ public class JtdsStatement implements java.sql.Statement {
                     // Clean up everything
                     closed = true;
                     tds = null;
-                    connection.removeStatement(this);
-                    connection = null;
+                    if (connection != null) {
+                       connection.removeStatement(this);
+                       connection = null;
+                    }
 
                     // Re-throw any caught exception
                     if (releaseEx != null) {

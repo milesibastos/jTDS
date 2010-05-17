@@ -2,6 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 05/17/2010 - Holger Rehn
+ o Corrected bug [2931326], NPE if Statement.close() is called by multiple
+   threads concurrently.
  o Applied fix for bug [3002431] by Rainer Schwarze, improved handling of port
    discovery errors.
  o Improved error messages if a value cannot be converted to a given SQL type.

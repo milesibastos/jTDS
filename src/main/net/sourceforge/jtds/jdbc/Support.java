@@ -43,7 +43,7 @@ import net.sourceforge.jtds.util.Logger;
  *
  * @author Mike Hutchinson
  * @author jTDS project
- * @version $Id: Support.java,v 1.56.2.5 2009-10-22 07:28:23 ickzon Exp $
+ * @version $Id: Support.java,v 1.56.2.6 2010-05-17 09:36:57 ickzon Exp $
  */
 public class Support {
     // Constants used in datatype conversions to avoid object allocations.
@@ -641,7 +641,7 @@ public class Support {
 
                 default:
                     throw new SQLException(
-                            Messages.get("error.convert.badtypeconst",
+                            Messages.get("error.convert.badtypeconst", String.valueOf(x),
                                     getJdbcTypeName(jdbcType)), "HY004");
             }
 
@@ -651,7 +651,7 @@ public class Support {
                             getJdbcTypeName(jdbcType)), "22005");
         } catch (NumberFormatException nfe) {
             throw new SQLException(
-                    Messages.get("error.convert.badnumber",
+                    Messages.get("error.convert.badnumber", String.valueOf(x),
                             getJdbcTypeName(jdbcType)), "22000");
         }
     }

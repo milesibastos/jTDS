@@ -1,3 +1,10 @@
+Changes from jTDS 1.2.5
+=======================
+
+05/17/2010 - Holger Rehn
+ o Corrected bug [3000472], TimerThread started when closing last connection.
+ o Fixed method synchronization in TimerThread.
+
 ===============================================================================
 12/30/2009 - jTDS 1.2.5 released
 ===============================================================================

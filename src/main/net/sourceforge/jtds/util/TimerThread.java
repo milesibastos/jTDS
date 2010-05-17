@@ -31,7 +31,7 @@ import java.util.ListIterator;
  *
  * @author Alin Sinpalean
  * @author Mike Hutchinson
- * @version $Id: TimerThread.java,v 1.5.2.2 2009-10-17 13:21:27 ickzon Exp $
+ * @version $Id: TimerThread.java,v 1.5.2.3 2010-05-17 09:16:06 ickzon Exp $
  */
 public class TimerThread extends Thread {
     /**
@@ -214,9 +214,11 @@ public class TimerThread extends Thread {
      * pending timeouts. Any subsequent invocation of {@link #getInstance()}
      * will restart the timer. 
      */
-    public synchronized void stopTimer() {
-         interrupt();
-         instance = null;
+    public static synchronized void stopTimer() {
+        if (instance != null) {
+            instance.interrupt();
+            instance = null;
+        }
     }
 
     /**

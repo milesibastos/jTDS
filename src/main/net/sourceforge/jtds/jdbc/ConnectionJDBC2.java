@@ -54,7 +54,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.12 2009-12-30 11:37:21 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.13 2010-05-17 09:16:06 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -2075,7 +2075,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
             } finally {
                 closed = true;
                 if (--connections == 0) {
-                    TimerThread.getInstance().stopTimer();
+                    TimerThread.stopTimer();
                 }
             }
         }

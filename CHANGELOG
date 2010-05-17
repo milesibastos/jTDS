@@ -2,7 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 05/17/2010 - Holger Rehn
- o Applied patch [3002428] by Rainer Schwarze to get more stable test results.
+ o Applied fix for bug [3002431] by Rainer Schwarze, improved handling of port
+   discovery errors.
  o Improved error messages if a value cannot be converted to a given SQL type.
  o Corrected bug [3000472], TimerThread started when closing last connection.
  o Fixed method synchronization in TimerThread.

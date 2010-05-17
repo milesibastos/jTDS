@@ -54,7 +54,7 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.13 2010-05-17 09:16:06 ickzon Exp $
+ * @version $Id: ConnectionJDBC2.java,v 1.119.2.14 2010-05-17 10:27:00 ickzon Exp $
  */
 public class ConnectionJDBC2 implements java.sql.Connection {
     /**
@@ -273,9 +273,16 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         // Named pipes use instance names differently.
         //
         if (instanceName.length() > 0 && !namedPipe) {
-            final MSSqlServerInfo msInfo = new MSSqlServerInfo(serverName);
+            try {
+                final MSSqlServerInfo msInfo = new MSSqlServerInfo(serverName);
 
-            portNumber = msInfo.getPortForInstance(instanceName);
+                portNumber = msInfo.getPortForInstance(instanceName);
+            } catch (SQLException e) {
+               // may already have a valid portNumber but Microsoft SQL Server Browser disabled
+               if (portNumber <= 0) {
+                  throw e;
+               }
+            }
 
             if (portNumber == -1) {
                 throw new SQLException(

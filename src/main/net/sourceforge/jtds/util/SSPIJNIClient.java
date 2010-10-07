@@ -82,7 +82,7 @@ public class SSPIJNIClient {
      *
      * @throws SQLException if an error occurs during initialization
      */
-    public static SSPIJNIClient getInstance() throws Exception {
+    public static synchronized SSPIJNIClient getInstance() throws Exception {
 
         if (thisInstance == null) {
             if (!libraryLoaded) {

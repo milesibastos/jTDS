@@ -328,22 +328,26 @@ class SQLDiagnostic {
     private final int serverType;
 
     SQLException exceptions;
+    SQLException lastException;
     SQLWarning warnings;
+    SQLWarning lastWarning;
 
     void addWarning(SQLWarning w) {
         if (warnings == null) {
             warnings = w;
         } else {
-            warnings.setNextWarning(w);
+            lastWarning.setNextWarning(w);
         }
+        lastWarning = w;
     }
 
     void addException(SQLException e) {
         if (exceptions == null) {
             exceptions = e;
         } else {
-            exceptions.setNextException(e);
+            lastException.setNextException(e);
         }
+        lastException = e;
     }
 
     /**

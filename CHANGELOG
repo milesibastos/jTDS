@@ -2,6 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 10/07/2010 - Holger Rehn
+ o Corrected bug [3078236], exception chaining time grows exponentially with
+   number of exceptions in chain.
  o Corrected bug [3081749], SSPIJNIClient.getInstance() isn't thread-safe.
  o Corrected a bug in JtdsStatement.close(), any RuntimeException would have
    masked a prior SQLException.

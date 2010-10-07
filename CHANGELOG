@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.5
 =======================
 
+10/07/2010 - Holger Rehn
+ o Improved fix for bug [2931326], Statement.close() cannot throw NPE anymore.
+
 05/17/2010 - Holger Rehn
  o Corrected bug [2931326], NPE if Statement.close() is called by multiple
    threads concurrently.

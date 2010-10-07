@@ -837,48 +837,52 @@ public class JtdsStatement implements java.sql.Statement {
 
     public void close() throws SQLException {
         if (!closed) {
+            closed = true;
+
             SQLException closeEx = null;
             try {
-                closeAllResultSets();
-            } catch (SQLException ex) {
-                if (!"HYT00".equals(ex.getSQLState())
-                        && !"HY008".equals(ex.getSQLState())) {
-                    // Only throw exceptions not caused by cancels or timeouts
-                    closeEx = ex;
-                }
-            } finally {
-                SQLException releaseEx = null;
                 try {
-                    if (!connection.isClosed()) {
-                        connection.releaseTds(tds);
-                    }
-                    // Check for server side errors
-                    tds.getMessages().checkErrors();
+                    closeAllResultSets();
                 } catch (SQLException ex) {
-                    // Remember any exception thrown
-                    releaseEx = ex;
-                    // Queue up any result set close exceptions
-                    if (closeEx != null) {
-                        releaseEx.setNextException(closeEx);
+                    if (!"HYT00".equals(ex.getSQLState())
+                            && !"HY008".equals(ex.getSQLState())) {
+                        // Only throw exceptions not caused by cancels or timeouts
+                        closeEx = ex;
                     }
                 } finally {
-                    // Clean up everything
-                    closed = true;
-                    tds = null;
-                    if (connection != null) {
-                       connection.removeStatement(this);
-                       connection = null;
-                    }
+                    SQLException releaseEx = null;
+                    try {
+                        if (!connection.isClosed()) {
+                            connection.releaseTds(tds);
+                        }
+                        // Check for server side errors
+                        tds.getMessages().checkErrors();
+                    } catch (SQLException ex) {
+                        // Remember any exception thrown
+                        releaseEx = ex;
+                        // Queue up any result set close exceptions
+                        if (closeEx != null) {
+                            releaseEx.setNextException(closeEx);
+                        }
+                    } finally {
+                        // Clean up everything
+                        tds = null;
 
-                    // Re-throw any caught exception
-                    if (releaseEx != null) {
-                        throw releaseEx;
+                        connection.removeStatement(this);
+                        connection = null;
+
+                        // Re-throw any caught exception
+                        if (releaseEx != null) {
+                            throw releaseEx;
+                        }
                     }
                 }
-            }
-            // Throw any exception caught during result set close
-            if (closeEx != null) {
-                throw closeEx;
+                // Throw any exception caught during result set close
+                if (closeEx != null) {
+                    throw closeEx;
+                }
+            } catch (NullPointerException npe) {
+               // openResultSets/connection/tds have been nullified concurrently
             }
         }
     }

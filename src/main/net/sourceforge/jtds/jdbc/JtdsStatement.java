@@ -840,6 +840,8 @@ public class JtdsStatement implements java.sql.Statement {
             closed = true;
 
             SQLException closeEx = null;
+            SQLException releaseEx = null;
+
             try {
                 try {
                     closeAllResultSets();
@@ -850,7 +852,6 @@ public class JtdsStatement implements java.sql.Statement {
                         closeEx = ex;
                     }
                 } finally {
-                    SQLException releaseEx = null;
                     try {
                         if (!connection.isClosed()) {
                             connection.releaseTds(tds);
@@ -860,29 +861,28 @@ public class JtdsStatement implements java.sql.Statement {
                     } catch (SQLException ex) {
                         // Remember any exception thrown
                         releaseEx = ex;
-                        // Queue up any result set close exceptions
-                        if (closeEx != null) {
-                            releaseEx.setNextException(closeEx);
-                        }
                     } finally {
                         // Clean up everything
                         tds = null;
-
                         connection.removeStatement(this);
                         connection = null;
-
-                        // Re-throw any caught exception
-                        if (releaseEx != null) {
-                            throw releaseEx;
-                        }
                     }
+                }
+            } catch (NullPointerException npe) {
+               // openResultSets/connection/tds have been nullified concurrently
+            } finally {
+                // re-throw statement close exception
+                if (releaseEx != null) {
+                   // queue up any result set close exceptions first
+                    if (closeEx != null) {
+                        releaseEx.setNextException(closeEx);
+                    }
+                    throw releaseEx;
                 }
                 // Throw any exception caught during result set close
                 if (closeEx != null) {
                     throw closeEx;
                 }
-            } catch (NullPointerException npe) {
-               // openResultSets/connection/tds have been nullified concurrently
             }
         }
     }

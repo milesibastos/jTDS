@@ -2,6 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 10/07/2010 - Holger Rehn
+ o Corrected a bug in JtdsStatement.close(), any RuntimeException would have
+   masked a prior SQLException.
  o Improved fix for bug [2931326], Statement.close() cannot throw NPE anymore.
 
 05/17/2010 - Holger Rehn

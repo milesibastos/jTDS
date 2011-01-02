@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.5
 =======================
 
+01/02/2011 - Holger Rehn
+ o Corrected bug [3141458], NPE if ResultSet.next() and ResultSet.close() are
+   called by multiple threads concurrently.
+
 10/07/2010 - Holger Rehn
  o Corrected bug [3078236], exception chaining time grows exponentially with
    number of exceptions in chain.

@@ -561,36 +561,41 @@ public class JtdsResultSet implements ResultSet {
             return false;
         }
 
-        if (rowData != null) {
-            // The rest of the result rows have been cached so
-            // return the next row from the buffer.
-            if (rowPtr < rowData.size()) {
-                currentRow = (Object[])rowData.get(rowPtr);
-                // This is a forward only result set so null out the buffer ref
-                // to allow for garbage collection (we can never access the row
-                // again once we have moved on).
-                rowData.set(rowPtr++, null);
-                pos++;
-                rowsInResult = pos;
+        try {
+            if (rowData != null) {
+                // The rest of the result rows have been cached so
+                // return the next row from the buffer.
+                if (rowPtr < rowData.size()) {
+                    currentRow = (Object[])rowData.get(rowPtr);
+                    // This is a forward only result set so null out the buffer ref
+                    // to allow for garbage collection (we can never access the row
+                    // again once we have moved on).
+                    rowData.set(rowPtr++, null);
+                    pos++;
+                    rowsInResult = pos;
+                } else {
+                    pos = POS_AFTER_LAST;
+                    currentRow = null;
+                }
             } else {
-                pos = POS_AFTER_LAST;
-                currentRow = null;
+                // Need to read from server response
+                if (!statement.getTds().getNextRow()) {
+                    statement.cacheResults();
+                    pos = POS_AFTER_LAST;
+                    currentRow = null;
+                } else {
+                    currentRow = statement.getTds().getRowData();
+                    pos++;
+                    rowsInResult = pos;
+                }
             }
-        } else {
-            // Need to read from server response
-            if (!statement.getTds().getNextRow()) {
-                statement.cacheResults();
-                pos = POS_AFTER_LAST;
-                currentRow = null;
-            } else {
-                currentRow = statement.getTds().getRowData();
-                pos++;
-                rowsInResult = pos;
-            }
+            // Check for server side errors
+            statement.getMessages().checkErrors();
+        } catch (NullPointerException npe) {
+            // ResultSet has been closed concurrently
+            throw new SQLException(Messages.get("error.generic.closed", "ResultSet"),
+            "HY010");
         }
-
-        // Check for server side errors
-        statement.getMessages().checkErrors();
 
         return currentRow != null;
     }

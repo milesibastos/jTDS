@@ -2,6 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 09/04/2011 - Holger Rehn
+ o Applied patch [3290370] by Maarten van der Zwaart, re-send UDP recovery
+   packet when connecting an SQL Server by instance name.
  o Applied patch [3224480] by Shane StClair, adding support for spatial types
    geometry/geography for TDS versions greater than 7.0.
  o Applied patch [3307731] by Rainer Schwarze, ResultSet cancellation may cause

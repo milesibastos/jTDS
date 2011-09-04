@@ -61,19 +61,19 @@ public class MSSqlServerInfo {
             InetAddress addr = InetAddress.getByName(host);
             socket = new DatagramSocket();
             byte[] msg = new byte[] {0x02};
-            DatagramPacket p = new DatagramPacket(msg, msg.length, addr, 1434);
-
-            socket.send(p);
+            DatagramPacket requestp = new DatagramPacket(msg, msg.length, addr, 1434);
 
             byte[] buf = new byte[4096];
 
-            p = new DatagramPacket(buf, buf.length);
+            DatagramPacket responsep = new DatagramPacket(buf, buf.length);
             socket.setSoTimeout(timeout);
 
             for (int i = 0; i < numRetries; i++) {
                 try {
-                    socket.receive(p);
-                    String infoString = extractString(buf, p.getLength());
+                    socket.send(requestp);
+
+                    socket.receive(responsep);
+                    String infoString = extractString(buf, responsep.getLength());
                     serverInfoStrings = split(infoString, ';');
 
                     return;

@@ -2,6 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 09/04/2011 - Holger Rehn
+ o Applied patch [3224480] by Shane StClair, adding support for spatial types
+   geometry/geography for TDS versions greater than 7.0.
  o Applied patch [3307731] by Rainer Schwarze, ResultSet cancellation may cause
    connection to be closed.
  o Applied backport of IPv6 support from 2.0 branch provided by George Dimitrov

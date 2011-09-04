@@ -1492,7 +1492,7 @@ public class TdsData {
                         }
 
                         pi.tdsType = SYBIMAGE;
-                        pi.sqlType = "image";
+                        pi.sqlType = "varbinary(max)";
                     }
                 }
 

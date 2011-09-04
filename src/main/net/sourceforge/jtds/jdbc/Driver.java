@@ -438,22 +438,34 @@ public class Driver implements java.sql.Driver {
      */
     private static int nextToken(String url, int pos, StringBuffer token) {
         token.setLength(0);
-
+        boolean inQuote = false;
         while (pos < url.length()) {
             char ch = url.charAt(pos++);
 
-            if (ch == ':' || ch == ';') {
-                break;
-            }
-
-            if (ch == '/') {
-                if (pos < url.length() && url.charAt(pos) == '/') {
-                    pos++;
+            if (!inQuote) {
+                if (ch == ':' || ch == ';') {
+                    break;
                 }
 
-                break;
-            }
+                if (ch == '/') {
+                    if (pos < url.length() && url.charAt(pos) == '/') {
+                        pos++;
+                    }
 
+                    break;
+                }
+            }
+            
+            if (ch == '[') {
+                inQuote = true;
+                continue;
+            }
+            
+            if (ch == ']') {
+                inQuote = false;
+                continue;
+            }
+            
             token.append(ch);
         }
 

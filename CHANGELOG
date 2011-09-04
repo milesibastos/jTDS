@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.5
 =======================
 
+09/04/2011 - Holger Rehn
+ o Applied backport of IPv6 support from 2.0 branch provided by George Dimitrov
+   and his unit test for the URL parser (patch [3402583])
+
 01/02/2011 - Holger Rehn
  o Corrected bug [3141458], NPE if ResultSet.next() and ResultSet.close() are
    called by multiple threads concurrently.

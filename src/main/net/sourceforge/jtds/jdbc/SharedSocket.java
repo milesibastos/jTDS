@@ -224,6 +224,10 @@ class SharedSocket {
      */
     private byte doneBuffer[] = new byte[TDS_DONE_LEN];
     /**
+     * How much of the doneBuffer has been filled with data, <TDS_DONE_LEN IFF partial packet read.
+     */
+    private int doneBufferFrag = 0;
+    /**
      * TDS done token.
      */
     private static final int TDS_DONE_TOKEN = 253;
@@ -520,6 +524,7 @@ class SharedSocket {
                     // Send a cancel packet.
                     //
                     cancelPending = true;
+                    doneBufferFrag = 0;
                     byte[] cancel = new byte[TDS_HDR_LEN];
                     cancel[0] = TdsCore.CANCEL_PKT;
                     cancel[1] = 1;
@@ -904,18 +909,18 @@ class SharedSocket {
             if (cancelPending) {
                 //
                 // Move what we assume to be the TDS_DONE packet into doneBuffer
+                // Reassembly might be required if packet is too short and TDS_DONE record was split
+                // over multiple packets.
                 //
-                if (len >= TDS_DONE_LEN + TDS_HDR_LEN) {
-                    System.arraycopy(buffer, len - TDS_DONE_LEN, doneBuffer, 0,
-                            TDS_DONE_LEN);
-                } else {
-                    // Packet too short so TDS_DONE record was split over
-                    // two packets. Need to reassemble.
-                    int frag = len - TDS_HDR_LEN;
-                    System.arraycopy(doneBuffer, frag, doneBuffer, 0,
-                            TDS_DONE_LEN - frag);
-                    System.arraycopy(buffer, TDS_HDR_LEN, doneBuffer,
-                            TDS_DONE_LEN - frag, frag);
+                int frag = Math.min(TDS_DONE_LEN, len - TDS_HDR_LEN);
+                int keep = TDS_DONE_LEN - frag;
+                System.arraycopy(doneBuffer, frag, doneBuffer, 0, keep); // original portion to keep
+                System.arraycopy(buffer, len - frag, doneBuffer, keep, frag); // new fragment tail
+                doneBufferFrag = Math.min(TDS_DONE_LEN, doneBufferFrag + frag);
+                //
+                // If doneBuffer has not yet been fully filled then this cannot be the last packet.
+                if (doneBufferFrag < TDS_DONE_LEN) {
+                   buffer[1] = 0;
                 }
                 //
                 // If this is the last packet and there is a cancel pending see

@@ -521,7 +521,7 @@ public class Support {
 // VM 1.4+ only             return new java.sql.Time(cal.getTimeInMillis());*/
                         return new java.sql.Time(cal.getTime().getTime());
                     } else if (x instanceof java.lang.String) {
-                        return java.sql.Time.valueOf(((String) x).trim());
+                        return java.sql.Time.valueOf(((String) x).trim().split("\\.")[0]);
                     }
 
                     break;

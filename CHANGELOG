@@ -2,6 +2,8 @@ Changes from jTDS 1.2.5
 =======================
 
 03/22/2012 - Holger Rehn
+ o Applied patch [3476715] for bug [3260570] provided by Apaali, parsing
+   time values containing fractions of seconds may fail.
  o Applied fix [3436324] suggested by Shane StClair, JtdsStatement.close()
    failed due to invalid state.
 

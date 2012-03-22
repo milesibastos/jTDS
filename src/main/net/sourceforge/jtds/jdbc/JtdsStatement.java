@@ -837,8 +837,6 @@ public class JtdsStatement implements java.sql.Statement {
 
     public void close() throws SQLException {
         if (!closed) {
-            closed = true;
-
             SQLException closeEx = null;
             SQLException releaseEx = null;
 
@@ -869,8 +867,11 @@ public class JtdsStatement implements java.sql.Statement {
                     }
                 }
             } catch (NullPointerException npe) {
-               // openResultSets/connection/tds have been nullified concurrently
+                // openResultSets/connection/tds have been nullified concurrently
             } finally {
+                // set closed flag, closeAllResultSets() still required statement to be 'open'
+                closed = true;
+
                 // re-throw statement close exception
                 if (releaseEx != null) {
                    // queue up any result set close exceptions first

@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.5
 =======================
 
+03/22/2012 - Holger Rehn
+ o Applied fix [3436324] suggested by Shane StClair, JtdsStatement.close()
+   failed due to invalid state.
+
 09/04/2011 - Holger Rehn
  o Applied patch [3290370] by Maarten van der Zwaart, re-send UDP recovery
    packet when connecting an SQL Server by instance name.

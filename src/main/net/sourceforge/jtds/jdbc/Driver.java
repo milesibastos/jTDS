@@ -475,4 +475,12 @@ public class Driver implements java.sql.Driver {
     public static void main(String[] args) {
         System.out.println("jTDS " + getVersion());
     }
+
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
+    @Override
+    public java.util.logging.Logger getParentLogger() throws java.sql.SQLFeatureNotSupportedException {
+        // TODO Auto-generated method stub
+       throw new AbstractMethodError();
+    }
 }

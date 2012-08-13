@@ -740,4 +740,17 @@ public class StatementProxy implements Statement {
         throw new AbstractMethodError();
     }
 
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
+    @Override
+    public void closeOnCompletion() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public boolean isCloseOnCompletion() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
 }

@@ -1771,4 +1771,17 @@ public class JtdsResultSet implements ResultSet {
         throw new AbstractMethodError();
     }
 
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
+    @Override
+    public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
 }

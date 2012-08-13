@@ -2516,9 +2516,8 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     /* (non-Javadoc)
      * @see java.sql.Connection#createArrayOf(java.lang.String, java.lang.Object[])
      */
-    public Array createArrayOf(String typeName, Object[] elements)
-            throws SQLException {
-	    // TODO Auto-generated method stub
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+	     // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
 
@@ -2526,7 +2525,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @see java.sql.Connection#createBlob()
      */
     public Blob createBlob() throws SQLException {
-	    // TODO Auto-generated method stub
+	     // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
 
@@ -2542,7 +2541,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @see java.sql.Connection#createNClob()
      */
     public NClob createNClob() throws SQLException {
-	    // TODO Auto-generated method stub
+	     // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
 
@@ -2550,7 +2549,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @see java.sql.Connection#createSQLXML()
      */
     public SQLXML createSQLXML() throws SQLException {
-	    // TODO Auto-generated method stub
+	     // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
 
@@ -2559,7 +2558,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      */
     public Struct createStruct(String typeName, Object[] attributes)
             throws SQLException {
-	    // TODO Auto-generated method stub
+	     // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
 
@@ -2617,8 +2616,39 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @see java.sql.Wrapper#unwrap(java.lang.Class)
      */
     public Object unwrap(Class arg0) throws SQLException {
-	    // TODO Auto-generated method stub
+	     // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
 
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
+    @Override
+    public void setSchema(String schema) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public String getSchema() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void abort(java.util.concurrent.Executor executor) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void setNetworkTimeout(java.util.concurrent.Executor executor, int milliseconds) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getNetworkTimeout() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
 }

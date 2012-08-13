@@ -804,4 +804,35 @@ public class ConnectionProxy implements Connection {
         throw new AbstractMethodError();
     }
 
+    //// JDBC4.1 demarcation, do NOT put any JDBC3/4.0 code below this line ////
+
+    @Override
+    public void setSchema(String schema) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public String getSchema() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public void abort(java.util.concurrent.Executor executor) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();  
+    }
+
+    @Override
+    public void setNetworkTimeout(java.util.concurrent.Executor executor, int milliseconds) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
+
+    @Override
+    public int getNetworkTimeout() throws SQLException {
+        // TODO Auto-generated method stub
+        throw new AbstractMethodError();
+    }
 }

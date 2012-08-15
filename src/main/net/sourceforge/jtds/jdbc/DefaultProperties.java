@@ -53,6 +53,8 @@ public final class DefaultProperties {
 
     /** Default <code>appName</code> property. */
     public static final String APP_NAME = "jTDS";
+    /** Default <code>autoCommit</code> property. */
+    public static final String AUTO_COMMIT = "true";
     /** Default <code>batchSize</code> property for SQL Server. */
     public static final String BATCH_SIZE_SQLSERVER = "0";
     /** Default <code>batchSize</code> property for Sybase. */
@@ -217,6 +219,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.INSTANCE, INSTANCE);
         addDefaultPropertyIfNotSet(props, Driver.DOMAIN, DOMAIN);
         addDefaultPropertyIfNotSet(props, Driver.APPNAME, APP_NAME);
+        addDefaultPropertyIfNotSet(props, Driver.AUTOCOMMIT, AUTO_COMMIT);
         addDefaultPropertyIfNotSet(props, Driver.PROGNAME, PROG_NAME);
         addDefaultPropertyIfNotSet(props, Driver.WSID, WSID);
         addDefaultPropertyIfNotSet(props, Driver.BATCHSIZE, Driver.SERVERTYPE, batchSizeDefaults);

@@ -166,6 +166,9 @@
         <dt><code>appName</code> (default - <code>&quot;jTDS&quot;</code>)</dt>
         <dd>Application name. No practical use, it's displayed by Enterprise Manager
           or Profiler associated with the connection.</dd>
+        <dt><code>autoCommit</code> (default - <code>&quot;true&quot;</code>)</dt>
+        <dd>Auto Commit. The jTDS driver enables auto commit by default. Use this option to 
+        	disable auto commit for newly created connections.</dd>
         <dt><code>batchSize</code> (default - <code>0</code> for SQL Server;
           <code>1000</code> for Sybase)</dt>
         <dd>Controls how many statements are sent to the server in a batch.

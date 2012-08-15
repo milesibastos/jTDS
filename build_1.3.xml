@@ -19,7 +19,7 @@
     <property name="dist" value="dist"/>
     <property name="test" value="test"/>
 
-    <property name="version" value="1.2.5"/>
+    <property name="version" value="1.2.6"/>
   </target>
 
   <target name="clean" depends="init">
@@ -96,7 +96,7 @@
     <mkdir dir="${dist}"/>
     <!-- Runtime jar -->
     <jar basedir="${build}/classes"
-         excludes="net/sourceforge/jtds/test/*.class"
+         excludes="**/*Test*/**"
          includes="**/*"
          jarfile="${build}/${ant.project.name}-${version}.jar">
         <manifest>

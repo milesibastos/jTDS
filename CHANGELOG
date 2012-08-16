@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 08/16/2012 - Holger Rehn
+ o Fixed typos in Messages.properties (Bug #608).
  o Removed build scripts for older Java versions.
  o Re-included tests not compatible with older Java versions.
  o Updated project web site.
@@ -18,7 +19,7 @@ Changes from jTDS 1.2.6
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 ||                                                                           ||
 ||                      SourceForge Project Upgrade                          ||
-||																			 ||
+||                                                                           ||
 || The previous tracker item IDs have been replaced by individual bug/patch  ||
 || IDs and are no longer valid.                                              ||
 ||                                                                           ||

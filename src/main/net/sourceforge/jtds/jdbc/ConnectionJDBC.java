@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.HashSet;
@@ -54,9 +55,9 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC2.java,v 1.119.2.14 2010-05-17 10:27:00 ickzon Exp $
+ * @version $Id: ConnectionJDBC.java,v 1.119.2.14 2010-05-17 10:27:00 ickzon Exp $
  */
-public class ConnectionJDBC2 implements java.sql.Connection {
+public class ConnectionJDBC implements java.sql.Connection {
     /**
      * SQL query to determine the server charset on Sybase.
      */
@@ -238,13 +239,19 @@ public class ConnectionJDBC2 implements java.sql.Connection {
 
     /** the number of currently open connections */
     private static int connections;
+    /** The list of savepoints. */
+    private ArrayList savepoints;
+    /** Maps each savepoint to a list of tmep procedures created since the savepoint */
+    private Map savepointProcInTran;
+    /** Counter for generating unique savepoint identifiers */
+    private int savepointId;
 
     /**
      * Default constructor.
      * <p/>
      * Used for testing.
      */
-    private ConnectionJDBC2() {
+    private ConnectionJDBC() {
         connections++;
         url = null;
         socket = null;
@@ -259,7 +266,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * @param info The additional connection properties.
      * @throws SQLException
      */
-    ConnectionJDBC2(String url, Properties info)
+    ConnectionJDBC(String url, Properties info)
             throws SQLException {
         connections++;
         this.url = url;
@@ -478,7 +485,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
      * a message stating "All pipe instances are busy", then the method timed out
      * after <code>loginTimeout</code> milliseconds attempting to create a named pipe.
      */
-    private SharedSocket createNamedPipe(ConnectionJDBC2 connection) throws IOException {
+    private SharedSocket createNamedPipe(ConnectionJDBC connection) throws IOException {
 
         final long loginTimeout = connection.getLoginTimeout();
         final long retryTimeout = (loginTimeout > 0 ? loginTimeout : 20) * 1000;
@@ -747,6 +754,12 @@ public class ConnectionJDBC2 implements java.sql.Connection {
                 && serverType == Driver.SQLSERVER) {
             procInTran.add(key);
         }
+
+        if (getServerType() == Driver.SQLSERVER
+                 && proc.getType() == ProcEntry.PROCEDURE) {
+             // Only need to track SQL Server temp stored procs
+             addCachedProcedure(key);
+         }
     }
 
     /**
@@ -2302,23 +2315,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return messages.getWarnings();
     }
 
-    public Savepoint setSavepoint() throws SQLException {
-        checkOpen();
-        notImplemented("Connection.setSavepoint()");
-
-        return null;
-    }
-
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        checkOpen();
-        notImplemented("Connection.releaseSavepoint(Savepoint)");
-    }
-
-    public void rollback(Savepoint savepoint) throws SQLException {
-        checkOpen();
-        notImplemented("Connection.rollback(Savepoint)");
-    }
-
     public Statement createStatement() throws SQLException {
         checkOpen();
 
@@ -2485,13 +2481,6 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         return prepareStatement(sql, JtdsStatement.RETURN_GENERATED_KEYS);
     }
 
-    public Savepoint setSavepoint(String name) throws SQLException {
-        checkOpen();
-        notImplemented("Connection.setSavepoint(String)");
-
-        return null;
-    }
-
     public PreparedStatement prepareStatement(String sql, String[] columnNames)
             throws SQLException {
         if (columnNames == null) {
@@ -2506,11 +2495,225 @@ public class ConnectionJDBC2 implements java.sql.Connection {
     }
 
     /**
+     * Add a savepoint to the list maintained by this connection.
+     *
+     * @param savepoint The savepoint object to add.
+     * @throws SQLException
+     */
+    private void setSavepoint(SavepointImpl savepoint) throws SQLException {
+        Statement statement = null;
+
+        try {
+            statement = createStatement();
+            statement.execute("IF @@TRANCOUNT=0 BEGIN "
+                    + "SET IMPLICIT_TRANSACTIONS OFF; " + "BEGIN TRAN; " // Fix for bug []Patch: in SET IMPLICIT_TRANSACTIONS ON
+                    + "SET IMPLICIT_TRANSACTIONS ON; " + "END "          // mode BEGIN TRAN actually starts two transactions!
+                    + "SAVE TRAN jtds" + savepoint.getId());
+        } finally {
+            if (statement != null) {
+                statement.close();
+            }
+        }
+
+        synchronized (this) {
+            if (savepoints == null) {
+                savepoints = new ArrayList();
+            }
+
+            savepoints.add(savepoint);
+        }
+    }
+
+    /**
      * Releases all savepoints. Used internally when committing or rolling back
      * a transaction.
      */
-    void clearSavepoints() {
+    private synchronized void clearSavepoints() {
+        if (savepoints != null) {
+            savepoints.clear();
+        }
+
+        if (savepointProcInTran != null) {
+            savepointProcInTran.clear();
+        }
+
+        savepointId = 0;
     }
+
+    // JDBC 3
+
+    public synchronized void releaseSavepoint(Savepoint savepoint)
+             throws SQLException {
+         checkOpen();
+
+         if (savepoints == null) {
+             throw new SQLException(
+                 Messages.get("error.connection.badsavep"), "25000");
+         }
+
+         int index = savepoints.indexOf(savepoint);
+
+         if (index == -1) {
+             throw new SQLException(
+                 Messages.get("error.connection.badsavep"), "25000");
+         }
+
+         Object tmpSavepoint = savepoints.remove(index);
+
+         if (savepointProcInTran != null) {
+             if (index != 0) {
+                 // If this wasn't the outermost savepoint, move all procedures
+                 // to the "wrapping" savepoint's list; when and if that
+                 // savepoint will be rolled back it will clear these procedures
+                 // too
+                 List keys = (List) savepointProcInTran.get(savepoint);
+
+                 if (keys != null) {
+                     Savepoint wrapping = (Savepoint) savepoints.get(index - 1);
+                     List wrappingKeys =
+                             (List) savepointProcInTran.get(wrapping);
+                     if (wrappingKeys == null) {
+                         wrappingKeys = new ArrayList();
+                     }
+                     wrappingKeys.addAll(keys);
+                     savepointProcInTran.put(wrapping, wrappingKeys);
+                 }
+             }
+
+             // If this was the outermost savepoint, just drop references to
+             // all procedures; they will be managed by the connection
+             savepointProcInTran.remove(tmpSavepoint);
+         }
+     }
+
+     public synchronized void rollback(Savepoint savepoint) throws SQLException {
+         checkOpen();
+         checkLocal("rollback");
+
+         if (savepoints == null) {
+             throw new SQLException(
+                 Messages.get("error.connection.badsavep"), "25000");
+         }
+
+         int index = savepoints.indexOf(savepoint);
+
+         if (index == -1) {
+             throw new SQLException(
+                 Messages.get("error.connection.badsavep"), "25000");
+         } else if (getAutoCommit()) {
+             throw new SQLException(
+                 Messages.get("error.connection.savenorollback"), "25000");
+         }
+
+         Statement statement = null;
+
+         try {
+             statement = createStatement();
+             statement.execute("ROLLBACK TRAN jtds" + ((SavepointImpl) savepoint).getId());
+         } finally {
+             if (statement != null) {
+                 statement.close();
+             }
+         }
+
+         int size = savepoints.size();
+
+         for (int i = size - 1; i >= index; i--) {
+             Object tmpSavepoint = savepoints.remove(i);
+
+             if (savepointProcInTran == null) {
+                 continue;
+             }
+
+             List keys = (List) savepointProcInTran.get(tmpSavepoint);
+
+             if (keys == null) {
+                 continue;
+             }
+
+             for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
+                 String key = (String) iterator.next();
+
+                 removeCachedProcedure(key);
+             }
+         }
+
+         // recreate savepoint
+         setSavepoint((SavepointImpl) savepoint);
+     }
+
+     synchronized public Savepoint setSavepoint() throws SQLException {
+         checkOpen();
+         checkLocal("setSavepoint");
+
+         if (getAutoCommit()) {
+             throw new SQLException(
+                 Messages.get("error.connection.savenoset"), "25000");
+         }
+
+         SavepointImpl savepoint = new SavepointImpl(getNextSavepointId());
+
+         setSavepoint(savepoint);
+
+         return savepoint;
+     }
+
+     synchronized public Savepoint setSavepoint(String name) throws SQLException {
+         checkOpen();
+         checkLocal("setSavepoint");
+
+         if (getAutoCommit()) {
+             throw new SQLException(
+                 Messages.get("error.connection.savenoset"), "25000");
+         } else if (name == null) {
+             throw new SQLException(
+                 Messages.get("error.connection.savenullname", "savepoint"),
+                 "25000");
+         }
+
+         SavepointImpl savepoint = new SavepointImpl(getNextSavepointId(), name);
+
+         setSavepoint(savepoint);
+
+         return savepoint;
+     }
+
+     /**
+      * Returns the next savepoint identifier.
+      *
+      * @return the next savepoint identifier
+      */
+     private int getNextSavepointId() {
+         return ++savepointId;
+     }
+
+     /**
+      * Add a stored procedure to the savepoint cache.
+      *
+      * @param key The signature of the procedure to cache.
+      */
+     synchronized void addCachedProcedure(String key) {
+         if (savepoints == null || savepoints.size() == 0) {
+             return;
+         }
+
+         if (savepointProcInTran == null) {
+             savepointProcInTran = new HashMap();
+         }
+
+         // Retrieve the current savepoint
+         Object savepoint = savepoints.get(savepoints.size() - 1);
+
+         List keys = (List) savepointProcInTran.get(savepoint);
+
+         if (keys == null) {
+             keys = new ArrayList();
+         }
+
+         keys.add(key);
+
+         savepointProcInTran.put(savepoint, keys);
+     }
 
     /////// JDBC4 demarcation, do NOT put any JDBC3 code below this line ///////
 

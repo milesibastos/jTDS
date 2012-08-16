@@ -399,14 +399,14 @@ public class JtdsResultSet implements ResultSet {
     }
 
     /**
-     * Returns the {@link ConnectionJDBC2} object referenced by the
+     * Returns the {@link ConnectionJDBC} object referenced by the
      * {@link #statement} instance variable.
      *
-     * @return {@link ConnectionJDBC2} object.
+     * @return {@link ConnectionJDBC} object.
      * @throws SQLException on error.
      */
-    private ConnectionJDBC2 getConnection() throws SQLException {
-        return (ConnectionJDBC2) statement.getConnection();
+    private ConnectionJDBC getConnection() throws SQLException {
+        return (ConnectionJDBC) statement.getConnection();
     }
 
 
@@ -1122,7 +1122,7 @@ public class JtdsResultSet implements ResultSet {
 
         // If this is a DatabaseMetaData built result set, avoid getting an
         // exception because the statement is closed and assume no LOBs
-        boolean useLOBs = this instanceof CachedResultSet && statement.closed
+        boolean useLOBs = this instanceof CachedResultSet && statement.isClosed()
                 ? false
                 : getConnection().getUseLOBs();
         return new JtdsResultSetMetaData(this.columns, this.columnCount,

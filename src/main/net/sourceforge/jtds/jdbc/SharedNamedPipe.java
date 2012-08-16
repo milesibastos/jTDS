@@ -51,7 +51,7 @@ public class SharedNamedPipe extends SharedSocket {
      *                     not open
      * @throws UnknownHostException if host cannot be found for the named pipe
      */
-    public SharedNamedPipe(ConnectionJDBC2 connection) throws IOException {
+    public SharedNamedPipe(ConnectionJDBC connection) throws IOException {
         super(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
 
         // apply socketTimeout as responseTimeout

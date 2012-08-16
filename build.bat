@@ -11,9 +11,7 @@ echo ----------------
 IF NOT %JAVA_HOME:~-1% == \ set JAVA_HOME=%JAVA_HOME%\
 
 set LOCALCLASSPATH=%JAVA_HOME%lib\tools.jar
-REM set LOCALCLASSPATH=%LOCALCLASSPATH%;%ANT_HOME%\lib\ant.jar
-REM set LOCALCLASSPATH=%LOCALCLASSPATH%;%ANT_HOME%\lib\optional.jar
-for %%i in (lib\*.jar) do call lcp.bat %%i
+for %%i in (lib\*.jar) do call :cp "%%i"
 
 echo.
 echo Building with classpath %LOCALCLASSPATH%
@@ -37,3 +35,8 @@ echo "location of the Java Virtual Machine you want to use."
 set LOCALCLASSPATH=
 set ANT_HOME=
 set JAVA_HOME=%_javatemp%
+goto:EOF
+
+:cp
+set LOCALCLASSPATH=%LOCALCLASSPATH%;%1
+goto:EOF

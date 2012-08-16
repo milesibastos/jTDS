@@ -24,14 +24,14 @@ import java.util.Enumeration;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
+import net.sourceforge.jtds.jdbc.ConnectionJDBC;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Messages;
 
 
 /**
- * Unit test for the {@link ConnectionJDBC2} class.
+ * Unit test for the {@link ConnectionJDBC} class.
  *
  * @author David Kilzer
  * @author Alin Sinpalean
@@ -86,7 +86,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
     /**
      * Assert that an SQLException is thrown when
-     * {@link ConnectionJDBC2#unpackProperties(Properties)} is called
+     * {@link ConnectionJDBC#unpackProperties(Properties)} is called
      * with an invalid integer (or long) string set on a property.
      * <p/>
      * Note that because Java 1.3 is still supported, the
@@ -97,9 +97,9 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
      */
     private void assertSQLExceptionForBadWholeNumberProperty(final String key) {
 
-        final ConnectionJDBC2 instance =
-                (ConnectionJDBC2) invokeConstructor(
-                        ConnectionJDBC2.class, new Class[]{}, new Object[]{});
+        final ConnectionJDBC instance =
+                (ConnectionJDBC) invokeConstructor(
+                        ConnectionJDBC.class, new Class[]{}, new Object[]{});
 
         Properties properties =
                 (Properties) invokeStaticMethod(
@@ -131,7 +131,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
 
 
     /**
-     * Class used to test <code>net.sourceforge.jtds.jdbc.ConnectionJDBC2.unpackProperties(Properties)</code>.
+     * Class used to test <code>net.sourceforge.jtds.jdbc.ConnectionJDBC.unpackProperties(Properties)</code>.
      */
     public static class Test_ConnectionJDBC2_unpackProperties
             extends DefaultPropertiesTestLibrary {
@@ -159,7 +159,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {
 
-                            // FIXME: Hack for ConnectionJDBC2
+                            // FIXME: Hack for ConnectionJDBC
                             {
                                 if ("sendStringParametersAsUnicode".equals(fieldName)) {
                                     fieldName = "useUnicode";
@@ -179,9 +179,9 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                             DefaultProperties.class, "addDefaultProperties",
                                             new Class[]{ Properties.class},
                                             new Object[]{ parsedProperties});
-                            ConnectionJDBC2 instance =
-                                    (ConnectionJDBC2) invokeConstructor(
-                                            ConnectionJDBC2.class, new Class[]{}, new Object[]{});
+                            ConnectionJDBC instance =
+                                    (ConnectionJDBC) invokeConstructor(
+                                            ConnectionJDBC.class, new Class[]{}, new Object[]{});
                             invokeInstanceMethod(
                                     instance, "unpackProperties",
                                     new Class[]{Properties.class},
@@ -191,7 +191,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
                                     invokeInstanceMethod(instance, "get" + ucFirst(fieldName),
                                                          new Class[]{}, new Object[]{}));
 
-                            // FIXME: Another hack for ConnectionJDBC2
+                            // FIXME: Another hack for ConnectionJDBC
                             {
                                 if ("tdsVersion".equals(fieldName)) {
                                     expected = String.valueOf(DefaultProperties.getTdsVersion(expected));
@@ -297,7 +297,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
     /**
      * Test for bug [1296482] setAutoCommit() behaviour.
      * <p/>
-     * The behaviour of setAutoCommit() on ConnectionJDBC2 is inconsistent with
+     * The behaviour of setAutoCommit() on ConnectionJDBC is inconsistent with
      * the Sun JDBC 3.0 Specification. JDBC 3.0 Specification, section 10.1.1:
      * <blockquote>"If the value of auto-commit is changed in the middle of a
      * transaction, the current transaction is committed."</blockquote>

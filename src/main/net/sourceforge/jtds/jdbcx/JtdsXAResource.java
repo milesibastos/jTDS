@@ -22,7 +22,7 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
+import net.sourceforge.jtds.jdbc.ConnectionJDBC;
 import net.sourceforge.jtds.jdbc.XASupport;
 import net.sourceforge.jtds.util.Logger;
 
@@ -39,7 +39,7 @@ public class JtdsXAResource implements XAResource {
     public JtdsXAResource(JtdsXAConnection xaConnection, Connection connection) {
         this.xaConnection = xaConnection;
         this.connection = connection;
-        rmHost = ((ConnectionJDBC2) connection).getRmHost();
+        rmHost = ((ConnectionJDBC) connection).getRmHost();
         Logger.println("JtdsXAResource created");
     }
 

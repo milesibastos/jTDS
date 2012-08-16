@@ -71,7 +71,7 @@ public class XASupport {
     public static int xa_open(Connection connection)
             throws SQLException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_open method
@@ -90,8 +90,8 @@ public class XASupport {
         //
         // Check that we are using SQL Server 2000+
         //
-        if (((ConnectionJDBC2) connection).getServerType() != Driver.SQLSERVER
-                || ((ConnectionJDBC2) connection).getTdsVersion() < Driver.TDS80) {
+        if (((ConnectionJDBC) connection).getServerType() != Driver.SQLSERVER
+                || ((ConnectionJDBC) connection).getTdsVersion() < Driver.TDS80) {
             throw new SQLException(Messages.get("error.xasupport.nodist"), "HY000");
         }
         Logger.println("xa_open: Using SQL2000 MSDTC to support distributed transactions");
@@ -104,7 +104,7 @@ public class XASupport {
         args[3] = XA_RMID;
         args[4] = XAResource.TMNOFLAGS;
         byte[][] id;
-        id = ((ConnectionJDBC2) connection).sendXaPacket(args, TM_ID.getBytes());
+        id = ((ConnectionJDBC) connection).sendXaPacket(args, TM_ID.getBytes());
         if (args[0] != XAResource.XA_OK
                 || id == null
                 || id[0] == null
@@ -127,7 +127,7 @@ public class XASupport {
     public static void xa_close(Connection connection, int xaConId)
             throws SQLException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_close method
@@ -159,7 +159,7 @@ public class XASupport {
         args[2] = xaConId;
         args[3] = XA_RMID;
         args[4] = XAResource.TMNOFLAGS;
-        ((ConnectionJDBC2) connection).sendXaPacket(args, TM_ID.getBytes());
+        ((ConnectionJDBC) connection).sendXaPacket(args, TM_ID.getBytes());
     }
 
     /**
@@ -175,7 +175,7 @@ public class XASupport {
     public static void xa_start(Connection connection, int xaConId, Xid xid, int flags)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_start method
@@ -216,9 +216,9 @@ public class XASupport {
         args[4] = flags;
         byte[][] cookie;
         try {
-            cookie = ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
+            cookie = ((ConnectionJDBC) connection).sendXaPacket(args, toBytesXid(xid));
             if (args[0] == XAResource.XA_OK && cookie != null) {
-                ((ConnectionJDBC2) connection).enlistConnection(cookie[0]);
+                ((ConnectionJDBC) connection).enlistConnection(cookie[0]);
             }
         } catch (SQLException e) {
             raiseXAException(e);
@@ -241,7 +241,7 @@ public class XASupport {
     public static void xa_end(Connection connection, int xaConId, Xid xid, int flags)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_end method
@@ -272,8 +272,8 @@ public class XASupport {
         args[3] = XA_RMID;
         args[4] = flags;
         try {
-            ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
-            ((ConnectionJDBC2) connection).enlistConnection(null);
+            ((ConnectionJDBC) connection).sendXaPacket(args, toBytesXid(xid));
+            ((ConnectionJDBC) connection).enlistConnection(null);
         } catch (SQLException e) {
             raiseXAException(e);
         }
@@ -295,7 +295,7 @@ public class XASupport {
     public static int xa_prepare(Connection connection, int xaConId, Xid xid)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_prepare method
@@ -324,7 +324,7 @@ public class XASupport {
         args[3] = XA_RMID;
         args[4] = XAResource.TMNOFLAGS;
         try {
-            ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
+            ((ConnectionJDBC) connection).sendXaPacket(args, toBytesXid(xid));
         } catch (SQLException e) {
             raiseXAException(e);
         }
@@ -347,7 +347,7 @@ public class XASupport {
     public static void xa_commit(Connection connection, int xaConId, Xid xid, boolean onePhase)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_commit method
@@ -386,7 +386,7 @@ public class XASupport {
         args[3] = XA_RMID;
         args[4] = (onePhase) ? XAResource.TMONEPHASE : XAResource.TMNOFLAGS;
         try {
-            ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
+            ((ConnectionJDBC) connection).sendXaPacket(args, toBytesXid(xid));
         } catch (SQLException e) {
             raiseXAException(e);
         }
@@ -407,7 +407,7 @@ public class XASupport {
     public static void xa_rollback(Connection connection, int xaConId, Xid xid)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_rollback method
@@ -445,7 +445,7 @@ public class XASupport {
         args[3] = XA_RMID;
         args[4] = XAResource.TMNOFLAGS;
         try {
-            ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
+            ((ConnectionJDBC) connection).sendXaPacket(args, toBytesXid(xid));
         } catch (SQLException e) {
             raiseXAException(e);
         }
@@ -469,7 +469,7 @@ public class XASupport {
     public static Xid[] xa_recover(Connection connection, int xaConId, int flags)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_recover method
@@ -498,7 +498,7 @@ public class XASupport {
         }
 
         try {
-            byte[][] buffer = ((ConnectionJDBC2) connection).sendXaPacket(args, null);
+            byte[][] buffer = ((ConnectionJDBC) connection).sendXaPacket(args, null);
             if (args[0] >= 0) {
                 int n = buffer.length;
                 list = new JtdsXid[n];
@@ -530,7 +530,7 @@ public class XASupport {
     public static void xa_forget(Connection connection, int xaConId, Xid xid)
             throws XAException {
 
-        ConnectionJDBC2 con = (ConnectionJDBC2)connection;
+        ConnectionJDBC con = (ConnectionJDBC)connection;
         if (con.isXaEmulation()) {
             //
             // Emulate xa_forget method
@@ -568,7 +568,7 @@ public class XASupport {
         args[3] = XA_RMID;
         args[4] = XAResource.TMNOFLAGS;
         try {
-            ((ConnectionJDBC2) connection).sendXaPacket(args, toBytesXid(xid));
+            ((ConnectionJDBC) connection).sendXaPacket(args, toBytesXid(xid));
         } catch (SQLException e) {
             raiseXAException(e);
         }

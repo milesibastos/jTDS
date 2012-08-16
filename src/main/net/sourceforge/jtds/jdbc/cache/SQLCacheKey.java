@@ -17,7 +17,7 @@
 //
 package net.sourceforge.jtds.jdbc.cache;
 
-import net.sourceforge.jtds.jdbc.ConnectionJDBC2;
+import net.sourceforge.jtds.jdbc.ConnectionJDBC;
 
 /**
  * Cache key for an SQL query, consisting of the query and server type, major
@@ -34,7 +34,7 @@ public class SQLCacheKey {
     private final int minorVersion;
     private final int hashCode;
 
-    public SQLCacheKey(String sql, ConnectionJDBC2 connection) {
+    public SQLCacheKey(String sql, ConnectionJDBC connection) {
         this.sql = sql;
         this.serverType = connection.getServerType();
         this.majorVersion = connection.getDatabaseMajorVersion();

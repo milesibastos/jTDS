@@ -61,7 +61,7 @@ public class DriverUnitTest extends UnitTestBase {
         testSuite.addTest(
                 Test_Driver_getPropertyInfo.suite("test_getPropertyInfo_DefaultProperties"));
 
-//        addParseURLCorrectTests(testSuite);
+        addParseURLCorrectTests(testSuite);
 
         return testSuite;
     }
@@ -348,132 +348,132 @@ public class DriverUnitTest extends UnitTestBase {
     }
 
 
-//    /**
-//     * Creates tests for passing all variants of correct URLs.
-//     * {@link Driver#parseURL(String, Properties)}
-//     */
-//    public static void addParseURLCorrectTests(TestSuite suite) {
-//
-//        final String[] SERVERTYPES = new String[] {
-//                "sqlserver", "sybase"
-//        };
-//
-//        final String[] HOSTS = new String[] {
-//           "local", "local.com.aa", "100.2.3.400", "fc00::36A", "::ffff:192.168.0.1"
-//        };
-//
-//        final String[] PORTS = new String[] {
-//                   null, "1433", "2332"
-//        };
-//
-//        final String[] DATABASES = new String[] {
-//                  null, "instance", "my_name"
-//         };
-//
-//        final String[][][] PROPERTIES = new String[][][] {
-//                   null,
-//                   { { "key", "value" } },
-//                   { { "key1", "value" } , { "ke_y2", "valu.e_|22" } },
-//                   { { "keyn", null } }
-//          };
-//
-//        Map<String, Properties> urls = generateAllURLVariants(SERVERTYPES, HOSTS, PORTS, DATABASES, PROPERTIES);
-//        Properties prop = new Properties();
-//
-//        for (Map.Entry<String, Properties> e : urls.entrySet()) {
-//            String url = e.getKey();
-//            Properties expectedProp = e.getValue();
-//
-//            suite.addTest(new ParseURLTest(url, expectedProp));
-//        }
-//    }
+    /**
+     * Creates tests for passing all variants of correct URLs.
+     * {@link Driver#parseURL(String, Properties)}
+     */
+    public static void addParseURLCorrectTests(TestSuite suite) {
 
-//    public static class ParseURLTest extends TestCase {
-//        private String url;
-//        private Properties expectedProp;
-//
-//        public ParseURLTest(String url, Properties expectedProp) {
-//            super("testParseUrl \"" + url + "\"");
-//            this.url = url;
-//            this.expectedProp = expectedProp;
-//        }
-//
-//        public void runTest() {
-//            testParseUrl();
-//        }
-//
-//        public void testParseUrl() {
-//            Properties parsedProp = invokeDriverParseURL(url, new Properties());
-//
-//            assertNotNull("URL '" + url + "' cannot be parsed", parsedProp);
-//            if (!expectedProp.equals(parsedProp)) {
-//                assertEquals("Result from URL '" + url + "' from Driver is not what expected", expectedProp, parsedProp);
-//            }
-//        }
-//    }
+        final String[] SERVERTYPES = new String[] {
+                "sqlserver", "sybase"
+        };
 
-//    private static Map<String, Properties> generateAllURLVariants(String[] serverTypes,
-//                String[] hosts, String[] ports, String[] databases,
-//                String[][][] properties)
-//    {
-//        Map<String, Properties> res = new HashMap<String, Properties>();
-//
-//        for (int is = 0; is < serverTypes.length; is++) {
-//            String serverType = serverTypes[is];
-//            for (int ih = 0; ih < hosts.length; ih++) {
-//                String host = hosts[ih];
-//                for (int ip = 0; ip < ports.length; ip++) {
-//                    String port = ports[ip];
-//                    for (int id = 0; id < databases.length; id++) {
-//                        String database = databases[id];
-//                        for (int ir = 0; ir < properties.length; ir++) {
-//                            String[][] property = properties[ir];
-//
-//                            StringBuilder url = new StringBuilder();
-//                            url.append("jdbc:jtds:").append(serverType);
-//                            url.append("://");
-//                            if (host.indexOf(':') >= 0) {
-//                                url.append('[').append(host).append(']');
-//                            } else {
-//                                url.append(host);
-//                            }
-//
-//                            
-//                            if (port != null) {
-//                                url.append(':').append(port);
-//                            }
-//                            if (database != null) {
-//                                url.append('/').append(database);
-//                            }
-//
-//                            Properties p = new Properties();
-//                            p.put("SERVERTYPE", String.valueOf(DefaultProperties.getServerType(serverType)));
-//                            p.put("SERVERNAME", host);
-//                            if (port != null) {
-//                                p.put("PORTNUMBER", String.valueOf(Integer.parseInt(port)));
-//                            }
-//                            if (database != null) {
-//                                p.put("DATABASENAME", database);
-//                            }
-//
-//                            for (int j = 0, n = (property == null ? 0 : property.length); j < n; j++) {
-//                                url.append(';').append(property[j][0]);
-//                                if (property[j][1] != null) {
-//                                    url.append('=').append(property[j][1]);
-//                                }
-//
-//                                p.put(property[j][0].toUpperCase(), (property[j][1] == null ? "" : property[j][1]));
-//                            }
-//
-//                            res.put(url.toString(), p);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        return res;
-//    }
+        final String[] HOSTS = new String[] {
+           "local", "local.com.aa", "100.2.3.400", "fc00::36A", "::ffff:192.168.0.1"
+        };
+
+        final String[] PORTS = new String[] {
+                   null, "1433", "2332"
+        };
+
+        final String[] DATABASES = new String[] {
+                  null, "instance", "my_name"
+         };
+
+        final String[][][] PROPERTIES = new String[][][] {
+                   null,
+                   { { "key", "value" } },
+                   { { "key1", "value" } , { "ke_y2", "valu.e_|22" } },
+                   { { "keyn", null } }
+          };
+
+        Map<String, Properties> urls = generateAllURLVariants(SERVERTYPES, HOSTS, PORTS, DATABASES, PROPERTIES);
+        Properties prop = new Properties();
+
+        for (Map.Entry<String, Properties> e : urls.entrySet()) {
+            String url = e.getKey();
+            Properties expectedProp = e.getValue();
+
+            suite.addTest(new ParseURLTest(url, expectedProp));
+        }
+    }
+
+    public static class ParseURLTest extends TestCase {
+        private String url;
+        private Properties expectedProp;
+
+        public ParseURLTest(String url, Properties expectedProp) {
+            super("testParseUrl \"" + url + "\"");
+            this.url = url;
+            this.expectedProp = expectedProp;
+        }
+
+        public void runTest() {
+            testParseUrl();
+        }
+
+        public void testParseUrl() {
+            Properties parsedProp = invokeDriverParseURL(url, new Properties());
+
+            assertNotNull("URL '" + url + "' cannot be parsed", parsedProp);
+            if (!expectedProp.equals(parsedProp)) {
+                assertEquals("Result from URL '" + url + "' from Driver is not what expected", expectedProp, parsedProp);
+            }
+        }
+    }
+
+    private static Map<String, Properties> generateAllURLVariants(String[] serverTypes,
+                String[] hosts, String[] ports, String[] databases,
+                String[][][] properties)
+    {
+        Map<String, Properties> res = new HashMap<String, Properties>();
+
+        for (int is = 0; is < serverTypes.length; is++) {
+            String serverType = serverTypes[is];
+            for (int ih = 0; ih < hosts.length; ih++) {
+                String host = hosts[ih];
+                for (int ip = 0; ip < ports.length; ip++) {
+                    String port = ports[ip];
+                    for (int id = 0; id < databases.length; id++) {
+                        String database = databases[id];
+                        for (int ir = 0; ir < properties.length; ir++) {
+                            String[][] property = properties[ir];
+
+                            StringBuilder url = new StringBuilder();
+                            url.append("jdbc:jtds:").append(serverType);
+                            url.append("://");
+                            if (host.indexOf(':') >= 0) {
+                                url.append('[').append(host).append(']');
+                            } else {
+                                url.append(host);
+                            }
+
+                            
+                            if (port != null) {
+                                url.append(':').append(port);
+                            }
+                            if (database != null) {
+                                url.append('/').append(database);
+                            }
+
+                            Properties p = new Properties();
+                            p.put("SERVERTYPE", String.valueOf(DefaultProperties.getServerType(serverType)));
+                            p.put("SERVERNAME", host);
+                            if (port != null) {
+                                p.put("PORTNUMBER", String.valueOf(Integer.parseInt(port)));
+                            }
+                            if (database != null) {
+                                p.put("DATABASENAME", database);
+                            }
+
+                            for (int j = 0, n = (property == null ? 0 : property.length); j < n; j++) {
+                                url.append(';').append(property[j][0]);
+                                if (property[j][1] != null) {
+                                    url.append('=').append(property[j][1]);
+                                }
+
+                                p.put(property[j][0].toUpperCase(), (property[j][1] == null ? "" : property[j][1]));
+                            }
+
+                            res.put(url.toString(), p);
+                        }
+                    }
+                }
+            }
+        }
+
+        return res;
+    }
 
     private static Properties invokeDriverParseURL(String url, Properties prop) {
         return (Properties) invokeStaticMethod(

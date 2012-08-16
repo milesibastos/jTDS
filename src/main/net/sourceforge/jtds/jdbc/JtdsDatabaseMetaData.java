@@ -51,7 +51,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     // Internal data needed by this implemention.
     private final int tdsVersion;
     private final int serverType;
-    private final ConnectionJDBC2 connection;
+    private final ConnectionJDBC connection;
 
     /**
      * Length of a sysname object (table name, catalog name etc.) -- 128 for
@@ -66,7 +66,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     Boolean caseSensitive;
 
-    public JtdsDatabaseMetaData(ConnectionJDBC2 connection) {
+    public JtdsDatabaseMetaData(ConnectionJDBC connection) {
         this.connection = connection;
         tdsVersion = connection.getTdsVersion();
         serverType = connection.getServerType();
@@ -1588,13 +1588,9 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         String sql;
 
         if (connection.getServerType() == Driver.SQLSERVER && connection.getDatabaseMajorVersion() >= 9) {
-            sql = Driver.JDBC3
-                ? "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM sys.schemas"
-                : "SELECT name AS TABLE_SCHEM FROM sys.schemas";
+            sql = "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM sys.schemas";
         } else {
-            sql = Driver.JDBC3
-                ? "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers"
-                : "SELECT name AS TABLE_SCHEM FROM dbo.sysusers";
+            sql = "SELECT name AS TABLE_SCHEM, NULL as TABLE_CATALOG FROM dbo.sysusers";
 
             //
             // MJH - isLogin column only in MSSQL >= 7.0

@@ -46,7 +46,7 @@ public class BlobImpl implements Blob {
      *
      * @param connection a reference to the parent connection object
      */
-    BlobImpl(ConnectionJDBC2 connection) {
+    BlobImpl(ConnectionJDBC connection) {
         this(connection, EMPTY_BLOB);
     }
 
@@ -56,7 +56,7 @@ public class BlobImpl implements Blob {
      * @param connection a reference to the parent connection object
      * @param bytes      the blob object to encapsulate
      */
-    BlobImpl(ConnectionJDBC2 connection, byte[] bytes) {
+    BlobImpl(ConnectionJDBC connection, byte[] bytes) {
         if (bytes == null) {
             throw new IllegalArgumentException("bytes cannot be null");
         }

@@ -120,7 +120,7 @@ class SQLParser {
     /** First table name in from clause */
     private String tableName;
     /** Connection object for server specific parsing. */
-    private final ConnectionJDBC2 connection;
+    private final ConnectionJDBC connection;
 
     /**
      * Parse the SQL statement processing JDBC escapes and parameter markers.
@@ -133,7 +133,7 @@ class SQLParser {
      * @throws SQLException if a parse error occurs
      */
     static String[] parse(String sql, ArrayList paramList,
-                          ConnectionJDBC2 connection, boolean extractTable)
+                          ConnectionJDBC connection, boolean extractTable)
             throws SQLException {
     	// Don't cache extract table parse requests, just process it
     	if (extractTable) {
@@ -178,7 +178,7 @@ class SQLParser {
      *
      * @return the cache as a <code>SimpleLRUCache</code>
      */
-    private synchronized static SimpleLRUCache getCache(ConnectionJDBC2 connection) {
+    private synchronized static SimpleLRUCache getCache(ConnectionJDBC connection) {
         if (cache == null) {
             int maxStatements = connection.getMaxStatements();
             maxStatements = Math.max(0, maxStatements);
@@ -229,7 +229,7 @@ class SQLParser {
      *                  <code>null</code> if no parameters are expected
      * @param connection the parent Connection object
      */
-    private SQLParser(String sqlIn, ArrayList paramList, ConnectionJDBC2 connection) {
+    private SQLParser(String sqlIn, ArrayList paramList, ConnectionJDBC connection) {
         sql = sqlIn;
         in  = sql.toCharArray();
         len = in.length;

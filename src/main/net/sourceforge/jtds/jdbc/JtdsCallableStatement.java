@@ -54,7 +54,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @param concurrency   The result set concurrency eg READ_ONLY.
      * @throws SQLException
      */
-    JtdsCallableStatement(ConnectionJDBC2 connection, String sql, int resultSetType, int concurrency)
+    JtdsCallableStatement(ConnectionJDBC connection, String sql, int resultSetType, int concurrency)
         throws SQLException {
         super(connection, sql, resultSetType, concurrency, false);
     }
@@ -116,12 +116,12 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
-        if (closed) {
+        if (isClosed()) {
             throw new SQLException(
                     Messages.get("error.generic.closed", "CallableStatement"), "HY010");
         }
     }
-    
+
     /**
      * Execute the SQL batch on a MS server.
      * @param size the total size of the batch.
@@ -1031,14 +1031,6 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      */
     public void setSQLXML(int parameterIndex, SQLXML xmlObject)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.Statement#isClosed()
-     */
-    public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }

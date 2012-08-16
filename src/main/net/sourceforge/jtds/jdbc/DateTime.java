@@ -111,11 +111,6 @@ public class DateTime {
             throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
         }
 
-        if (!Driver.JDBC3) {
-            // Not Running under 1.4 so need to add milliseconds
-            cal.set(Calendar.MILLISECOND,
-                    ((Timestamp)ts).getNanos() / 1000000);
-        }
         this.year   = (short)cal.get(Calendar.YEAR);
         this.month  = (short)(cal.get(Calendar.MONTH) + 1);
         this.day    = (short)cal.get(Calendar.DAY_OF_MONTH);

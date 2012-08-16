@@ -715,30 +715,30 @@ public class BatchTest extends DatabaseTestCase {
         statement.close();
     }
 
-//    /**
-//     * low-level test for critical performance issue described in bug [3078236]
-//     */
-//    public void testExceptionChaining() throws SQLException {
-//        for (boolean warn : new boolean[]{false, true}) {
-//            long base = 0;
-//            for (int size : new int[] {10, 25, 50, 100, 500}) {
-//                SQLDiagnostic diag = new SQLDiagnostic(0);
-//                System.gc();
-//                long start = System.nanoTime();
-//                for (int c = 0; c < size * 1000; c++) {
-//                    if (warn) {
-//                        diag.addWarning(new SQLWarning());
-//                    } else {
-//                        diag.addException(new SQLException());
-//                    }
-//                }
-//                long avg = (System.nanoTime() - start) / size; // nanoseconds per 1000 exceptions
-//                // ensure time grows linear (allows factor 2 deviation, but not exponential effects)
-//                assertTrue("chaining " + size * 1000 + (warn ? " warnings" : " exceptions") + " slowed down too much ("+ base / 1000000 + " ms -> " + avg / 1000000 +" ms per 1000)", base == 0 || avg < base * 2);
-//                base = base == 0 ? avg : base;
-//            }
-//        }
-//    }
+    /**
+     * low-level test for critical performance issue described in bug [3078236]
+     */
+    public void testExceptionChaining() throws SQLException {
+        for (boolean warn : new boolean[]{false, true}) {
+            long base = 0;
+            for (int size : new int[] {10, 25, 50, 100, 500}) {
+                SQLDiagnostic diag = new SQLDiagnostic(0);
+                System.gc();
+                long start = System.nanoTime();
+                for (int c = 0; c < size * 1000; c++) {
+                    if (warn) {
+                        diag.addWarning(new SQLWarning());
+                    } else {
+                        diag.addException(new SQLException());
+                    }
+                }
+                long avg = (System.nanoTime() - start) / size; // nanoseconds per 1000 exceptions
+                // ensure time grows linear (allows factor 2 deviation, but not exponential effects)
+                assertTrue("chaining " + size * 1000 + (warn ? " warnings" : " exceptions") + " slowed down too much ("+ base / 1000000 + " ms -> " + avg / 1000000 +" ms per 1000)", base == 0 || avg < base * 2);
+                base = base == 0 ? avg : base;
+            }
+        }
+    }
 
     private static String array2String(int[] a) {
         if (a == null)

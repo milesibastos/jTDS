@@ -178,13 +178,13 @@
           seem to occur with SQL Server, hence the default limit of 0
           (unlimited) in this case.</dd>
         <dt><code>bindAddress</code> (default - determined by the Java
-          implementation; requires Java 1.4 or later)</dt>
+          implementation)</dt>
         <dd>Specifies the local IP address to bind to for outgoing TCP/IP
           connections to the database.  Useful for multi-homed systems (those with
           more than one external IP address) where the default IP address picked by
           Java will not connect to the database.  Currently has no effect when
           using named pipes to connect to a database (see
-          <code>namedPipe</code>).  Since after jTDS-1.2.</dd>
+          <code>namedPipe</code>).</dd>
         <dt><code>bufferDir</code> (default - <code>System.getProperty("java.io.tmpdir")</code>)</dt>
         <dd>Controls the destination where data is buffered to disk.<br/>
           See also <code>bufferMaxMemory</code> and <code>bufferMinPackets</code>.</dd>
@@ -270,8 +270,7 @@
           or <code>20</code> for named pipe connections)</dt>
         <dd>The amount of time to wait (in seconds) for a successful connection
           before timing out.<br/>
-          If a TCP/IP connection is used to connect to the database and Java 1.4 or
-          newer is being used, the <code>loginTimeout</code> parameter is used to set
+          If a TCP/IP connection is used to connect to the database, the <code>loginTimeout</code> parameter is used to set
           the initial connection timeout when initially opening a new socket.  A value
           of zero (the default) causes the connection to wait indefinitely, e.g.,until
           a connection is established or an error occurs.  See also
@@ -429,7 +428,7 @@
           always be used with named pipes when the operating system is not
           Windows.)  Useful when connecting via named pipes to a server that is
           located in a different domain than the client.  See also
-          <code>namedPipe</code>.  Since after jTDS-1.2.</dd>
+          <code>namedPipe</code>.</dd>
         <dt><code>useLOBs</code> (default - <code>true</code>)</dt>
         <dd>Controls whether large types (IMAGE and TEXT/NTEXT) should be
           mapped by default (when using <code>getObject()</code>) to LOBs or
@@ -836,8 +835,6 @@
       <p>The number of statements that are kept open simultaneously can be
         controlled with the <code>maxStatements</code> parameter; see the
         <a href="#urlFormat">jTDS URL format</a> for more information.</p>
-      <p>Future versions of jTDS will allow the type of cache (LRU, FIFO, etc)
-        to be selected.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">TDS Protocol Version</p>
@@ -896,17 +893,9 @@
       <p class="title">Technical support</p>
       <p class="question"><a name="techSupport"></a>Is there any commercial
         technical support available for jTDS?</p>
-      <p>For the moment you can get official technical support from individual
-        developers of jTDS; contact any of us and we'll be happy to provide you
-        with our tech support terms and conditions. Of course, we will keep
-        offering support on our SourceForge forums just as we did until now; we
-        are only trying to encourage adoption of jTDS, not make a fortune out
-        of it.</p>
-      <p>As for where the technical support money will go, part of them will be
-        retained by the developer and part of them will go back into jTDS.
-        Currently the aim is to raise US $2000, to pay for JDBC certification.
-        We're 100% sure jTDS will pass the certification test suite, we just
-        need the money for it. To this end, we also accept donations.</p>
+      <p>For the moment you can get technical support from individual
+        developers of jTDS. Of course, we will keep
+        offering support on our SourceForge forums just as we did until now.</p>
       <p><a href="#">^ top ^</a></p>
 
       <p class="title">Other</p>
@@ -915,7 +904,7 @@
       <p>If you need help with any other jTDS-related issue, search the
         <a href="http://sourceforge.net/forum/forum.php?forum_id=104389">Help
         forum</a> first and if you still don't find anything, post a question.
-        It will usually get answered within 24 hours. One thing, though: please
+        One thing, though: please
         register as a SourceForge member and log in if you haven't done so yet,
         so you can be automatically notified of updates to the questions you
         post.</p>
@@ -947,14 +936,7 @@
             Project hosted by<br><br>
             <A href="http://sourceforge.net/projects/jtds" target="_top"><IMG src="http://sourceforge.net/sflogo.php?group_id=33291&amp;type=2" border="0" alt="SourceForge Logo" class="otherLogo"></A><br>
           </td>
-          <td class="copyright" width="500">WebRing member<br><br>
-            <script language=javascript src="http://ss.webring.com/navbar?f=j;y=alin_sinpalean;u=10063174"></script>
-            <noscript><center><table bgcolor=gray cellspacing=0 border=2 bordercolor=red>
-            <tr><td><table cellpadding=2 cellspacing=0 border=0><tr><td align=center>
-            <font face=arial size=-1>This site is a member of WebRing.
-            To browse visit <a href="http://ss.webring.com/navbar?f=l;y=alin_sinpalean;u=10063174">
-            here</a>.</font></td></tr></table></td></tr></table></center></noscript>
-          </td>
+          <td width="500"/>
           <td class="copyright" width="150">
             Web Design<br><br>
             <a href="http://anca13.go.ro" class="outer">Anca Sinpalean</a>

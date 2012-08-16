@@ -375,7 +375,7 @@ public class TdsCore {
     // Instance variables
     //
     /** The Connection object that created this object. */
-    private final ConnectionJDBC2 connection;
+    private final ConnectionJDBC connection;
     /** The TDS version being supported by this connection. */
     private int tdsVersion;
     /** The make of SQL Server (Sybase/Microsoft). */
@@ -431,7 +431,7 @@ public class TdsCore {
      * @param connection The connection which owns this object.
      * @param messages The SQLDiagnostic messages chain.
      */
-    TdsCore(ConnectionJDBC2 connection, SQLDiagnostic messages) {
+    TdsCore(ConnectionJDBC connection, SQLDiagnostic messages) {
         this.connection = connection;
         this.socket = connection.getSocket();
         this.messages = messages;

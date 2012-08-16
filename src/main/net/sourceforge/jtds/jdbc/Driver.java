@@ -56,9 +56,6 @@ public class Driver implements java.sql.Driver {
     static final int MINOR_VERSION = 2;
     /** Driver version miscellanea (e.g "-rc2", ".1" or <code>null</code>). */
     static final String MISC_VERSION = ".5";
-    /** Set if the JDBC specification to implement is 3.0 or greater. */
-    public static final boolean JDBC3 =
-            "1.4".compareTo(System.getProperty("java.specification.version")) <= 0;
     /** TDS 4.2 protocol (SQL Server 6.5 and later and Sybase 9 and later). */
     public static final int TDS42 = 1;
     /** TDS 5.0 protocol (Sybase 10 and later). */
@@ -181,11 +178,7 @@ public class Driver implements java.sql.Driver {
 
         Properties props = setupConnectProperties(url, info);
 
-        if (JDBC3) {
-            return new ConnectionJDBC3(url, props);
-        }
-
-        return new ConnectionJDBC2(url, props);
+        return new ConnectionJDBC(url, props);
     }
 
     public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties props)

@@ -800,9 +800,9 @@ public class Support {
      * @param buf The buffer in which the data will be embedded.
      * @param value The data object.
      * @param isUnicode Set to <code>true</code> if Unicode strings should be used, else <code>false</code>.
-     * @param connection The {@link ConnectionJDBC2} object.
+     * @param connection The {@link ConnectionJDBC} object.
      */
-    static void embedData(StringBuffer buf, Object value, boolean isUnicode, ConnectionJDBC2 connection)
+    static void embedData(StringBuffer buf, Object value, boolean isUnicode, ConnectionJDBC connection)
             throws SQLException {
         buf.append(' ');
         if (value == null) {
@@ -1044,7 +1044,7 @@ public class Support {
      * @param connection The current connection.
      * @return The modified SQL statement.
      */
-    static String substituteParameters(String sql, ParamInfo[] list, ConnectionJDBC2 connection)
+    static String substituteParameters(String sql, ParamInfo[] list, ConnectionJDBC connection)
             throws SQLException {
         int len = sql.length();
 
@@ -1195,11 +1195,6 @@ public class Support {
         try {
             GregorianCalendar cal = (GregorianCalendar) calendar.get();
             cal.setTime(value);
-            if (!Driver.JDBC3 && value instanceof Timestamp) {
-                // Not Running under 1.4 so need to add milliseconds
-                cal.set(Calendar.MILLISECOND,
-                        ((Timestamp)value).getNanos() / 1000000);
-            }
             target.set(Calendar.HOUR_OF_DAY, cal.get(Calendar.HOUR_OF_DAY));
             target.set(Calendar.MINUTE, cal.get(Calendar.MINUTE));
             target.set(Calendar.SECOND, cal.get(Calendar.SECOND));
@@ -1225,11 +1220,6 @@ public class Support {
         try {
             GregorianCalendar cal = (GregorianCalendar) calendar.get();
             target.setTime(value);
-            if (!Driver.JDBC3 && value instanceof Timestamp) {
-                // Not Running under 1.4 so need to add milliseconds
-                target.set(Calendar.MILLISECOND,
-                        ((Timestamp)value).getNanos() / 1000000);
-            }
             cal.set(Calendar.HOUR_OF_DAY, target.get(Calendar.HOUR_OF_DAY));
             cal.set(Calendar.MINUTE, target.get(Calendar.MINUTE));
             cal.set(Calendar.SECOND, target.get(Calendar.SECOND));
@@ -1314,7 +1304,7 @@ public class Support {
      *        <code>ResultSet</code>
      * @return a connection
      */
-    private static ConnectionJDBC2 getConnection(Object callerReference) {
+    private static ConnectionJDBC getConnection(Object callerReference) {
         if (callerReference == null) {
             throw new IllegalArgumentException("callerReference cannot be null.");
         }
@@ -1335,7 +1325,7 @@ public class Support {
             throw new IllegalStateException(e.getMessage());
         }
 
-        return (ConnectionJDBC2) connection;
+        return (ConnectionJDBC) connection;
     }
 
     private Support() {

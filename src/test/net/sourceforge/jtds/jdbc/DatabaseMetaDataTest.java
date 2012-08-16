@@ -349,11 +349,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
             assertEquals("jtds_spmeta", rs.getString(3));
             //
             rs = dbmd.getSchemas();
-            if (net.sourceforge.jtds.jdbc.Driver.JDBC3) {
-                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
-            } else {
-                assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM"}));
-            }
+            assertTrue(checkColumnNames(rs, new String[]{"TABLE_SCHEM","TABLE_CATALOG"}));
             assertTrue(rs.next());
             //
             rs = dbmd.getTablePrivileges(null, null, "jTDS_META");

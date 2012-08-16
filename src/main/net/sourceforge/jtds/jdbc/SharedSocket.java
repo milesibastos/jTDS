@@ -253,15 +253,11 @@ class SharedSocket {
      * @param connection the connection object
      * @throws IOException if socket open fails
      */
-    SharedSocket(ConnectionJDBC2 connection) throws IOException, UnknownHostException {
+    SharedSocket(ConnectionJDBC connection) throws IOException, UnknownHostException {
         this(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
         this.host = connection.getServerName();
         this.port = connection.getPortNumber();
-        if (Driver.JDBC3) {
-            this.socket = createSocketForJDBC3(connection);
-        } else {
-            this.socket = new Socket(this.host, this.port);
-        }
+        this.socket = createSocketForJDBC3(connection);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
         this.socket.setTcpNoDelay(connection.getTcpNoDelay());
@@ -278,7 +274,7 @@ class SharedSocket {
      * @return a socket open to the host and port with the given timeout
      * @throws IOException if socket open fails
      */
-    private Socket createSocketForJDBC3(ConnectionJDBC2 connection) throws IOException {
+    private Socket createSocketForJDBC3(ConnectionJDBC connection) throws IOException {
         final String host = connection.getServerName();
         final int port = connection.getPortNumber();
         final int loginTimeout = connection.getLoginTimeout();
@@ -340,9 +336,7 @@ class SharedSocket {
      */
     void enableEncryption(String ssl) throws IOException {
         Logger.println("Enabling TLS encryption");
-        SocketFactory sf = Driver.JDBC3 ? 
-                 SocketFactories.getSocketFactory(ssl, socket)
-               : SocketFactoriesSUN.getSocketFactory(ssl, socket);
+        SocketFactory sf = SocketFactories.getSocketFactory(ssl, socket);
         sslSocket = sf.createSocket(getHost(), getPort());
         setOut(new DataOutputStream(sslSocket.getOutputStream()));
         setIn(new DataInputStream(sslSocket.getInputStream()));

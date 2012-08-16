@@ -78,7 +78,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @param returnKeys True if generated keys should be returned.
      * @throws SQLException
      */
-    JtdsPreparedStatement(ConnectionJDBC2 connection,
+    JtdsPreparedStatement(ConnectionJDBC connection,
                           String sql,
                           int resultSetType,
                           int concurrency,
@@ -183,7 +183,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException if statement closed.
      */
     protected void checkOpen() throws SQLException {
-        if (closed) {
+        if (isClosed()) {
             throw new SQLException(
                     Messages.get("error.generic.closed", "PreparedStatement"), "HY010");
         }
@@ -485,7 +485,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             super.close();
         } finally {
             // Null these fields to reduce memory usage while
-            // wating for Statement.finalize() to execute.
+            // waiting for Statement.finalize() to execute.
             this.handles = null;
             this.parameters = null;
         }
@@ -746,7 +746,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         try {
             Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
-            Class[] parameterTypes = new Class[] {ParamInfo[].class, ConnectionJDBC2.class};
+            Class[] parameterTypes = new Class[] {ParamInfo[].class, ConnectionJDBC.class};
             Object[] arguments = new Object[] {parameters, connection};
             Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
 
@@ -1075,14 +1075,6 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      */
     public void setSQLXML(int parameterIndex, SQLXML xmlObject)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.Statement#isClosed()
-     */
-    public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }

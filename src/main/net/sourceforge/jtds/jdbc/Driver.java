@@ -78,6 +78,7 @@ public class Driver implements java.sql.Driver {
     // Property name keys
     //
     public static final String APPNAME       = "prop.appname";
+    public static final String AUTOCOMMIT    = "prop.autocommit";
     public static final String BATCHSIZE     = "prop.batchsize";
     public static final String BINDADDRESS   = "prop.bindaddress";
     public static final String BUFFERDIR     = "prop.bufferdir";

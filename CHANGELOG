@@ -1,5 +1,16 @@
+===============================================================================
+08/15/2012 - jTDS 1.2.6 released
+===============================================================================
+
 Changes from jTDS 1.2.5
 =======================
+
+08/15/2012 - Holger Rehn
+ o Applied patch [3048203] by amallon, adding a new 'autoCommit' connection
+   property to override the auto commit default for newly created connections.
+ o Commented out tests not compatible with Java 1.4, that have been added since
+   the jTDS 1.2.5 release.
+ o Adopted build scripts to exclude test classes from distro.
 
 03/22/2012 - Holger Rehn
  o Applied patch [3476715] for bug [3260570] provided by Apaali, parsing

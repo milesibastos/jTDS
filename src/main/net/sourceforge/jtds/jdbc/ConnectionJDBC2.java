@@ -1202,6 +1202,7 @@ public class ConnectionJDBC2 implements java.sql.Connection {
         loginTimeout = parseIntegerProperty(info, Driver.LOGINTIMEOUT);
         socketTimeout = parseIntegerProperty(info, Driver.SOTIMEOUT);
         socketKeepAlive = parseBooleanProperty(info,Driver.SOKEEPALIVE);
+        autoCommit = parseBooleanProperty(info,Driver.AUTOCOMMIT);
 
         String pid = info.getProperty(Messages.get(Driver.PROCESSID));
         if ("compute".equals(pid)) {

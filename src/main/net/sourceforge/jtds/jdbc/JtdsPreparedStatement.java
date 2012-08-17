@@ -78,7 +78,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @param returnKeys True if generated keys should be returned.
      * @throws SQLException
      */
-    JtdsPreparedStatement(ConnectionJDBC connection,
+    JtdsPreparedStatement(JtdsConnection connection,
                           String sql,
                           int resultSetType,
                           int concurrency,
@@ -746,7 +746,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
         try {
             Class pmdClass = Class.forName("net.sourceforge.jtds.jdbc.ParameterMetaDataImpl");
-            Class[] parameterTypes = new Class[] {ParamInfo[].class, ConnectionJDBC.class};
+            Class[] parameterTypes = new Class[] {ParamInfo[].class, JtdsConnection.class};
             Object[] arguments = new Object[] {parameters, connection};
             Constructor pmdConstructor = pmdClass.getConstructor(parameterTypes);
 

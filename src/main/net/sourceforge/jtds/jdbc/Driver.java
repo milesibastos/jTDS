@@ -178,7 +178,7 @@ public class Driver implements java.sql.Driver {
 
         Properties props = setupConnectProperties(url, info);
 
-        return new ConnectionJDBC(url, props);
+        return new JtdsConnection(url, props);
     }
 
     public DriverPropertyInfo[] getPropertyInfo(final String url, final Properties props)

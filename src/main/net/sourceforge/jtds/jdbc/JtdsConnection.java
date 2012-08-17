@@ -55,9 +55,9 @@ import net.sourceforge.jtds.util.*;
  *
  * @author Mike Hutchinson
  * @author Alin Sinpalean
- * @version $Id: ConnectionJDBC.java,v 1.119.2.14 2010-05-17 10:27:00 ickzon Exp $
+ * @version $Id: JtdsConnection.java,v 1.119.2.14 2010-05-17 10:27:00 ickzon Exp $
  */
-public class ConnectionJDBC implements java.sql.Connection {
+public class JtdsConnection implements java.sql.Connection {
     /**
      * SQL query to determine the server charset on Sybase.
      */
@@ -238,7 +238,7 @@ public class ConnectionJDBC implements java.sql.Connection {
     private boolean useNTLMv2 = false;
 
     /** the number of currently open connections */
-    private static int connections;
+    private static int[] connections = new int[1];
     /** The list of savepoints. */
     private ArrayList savepoints;
     /** Maps each savepoint to a list of tmep procedures created since the savepoint */
@@ -251,8 +251,10 @@ public class ConnectionJDBC implements java.sql.Connection {
      * <p/>
      * Used for testing.
      */
-    private ConnectionJDBC() {
-        connections++;
+    private JtdsConnection() {
+        synchronized( connections ) {
+            connections[0] ++;
+        }
         url = null;
         socket = null;
         baseTds = null;
@@ -266,9 +268,11 @@ public class ConnectionJDBC implements java.sql.Connection {
      * @param info The additional connection properties.
      * @throws SQLException
      */
-    ConnectionJDBC(String url, Properties info)
+    JtdsConnection(String url, Properties info)
             throws SQLException {
-        connections++;
+        synchronized( connections ) {
+            connections[0] ++;
+        }
         this.url = url;
         //
         // Extract properties into instance variables
@@ -485,7 +489,7 @@ public class ConnectionJDBC implements java.sql.Connection {
      * a message stating "All pipe instances are busy", then the method timed out
      * after <code>loginTimeout</code> milliseconds attempting to create a named pipe.
      */
-    private SharedSocket createNamedPipe(ConnectionJDBC connection) throws IOException {
+    private SharedSocket createNamedPipe(JtdsConnection connection) throws IOException {
 
         final long loginTimeout = connection.getLoginTimeout();
         final long retryTimeout = (loginTimeout > 0 ? loginTimeout : 20) * 1000;
@@ -2095,8 +2099,10 @@ public class ConnectionJDBC implements java.sql.Connection {
                 // Ignore
             } finally {
                 closed = true;
-                if (--connections == 0) {
-                    TimerThread.stopTimer();
+                synchronized( connections ) {
+                    if (--connections[0] == 0) {
+                        TimerThread.stopTimer();
+                    }
                 }
             }
         }

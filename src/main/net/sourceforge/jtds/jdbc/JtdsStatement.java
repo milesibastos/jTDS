@@ -72,7 +72,7 @@ public class JtdsStatement implements java.sql.Statement {
     static final int DEFAULT_FETCH_SIZE = 100;
 
     /** The connection owning this statement object. */
-    protected ConnectionJDBC connection;
+    protected JtdsConnection connection;
     /** The TDS object used for server access. */
     protected TdsCore tds;
     /** The read query timeout in seconds */
@@ -125,7 +125,7 @@ public class JtdsStatement implements java.sql.Statement {
      * @param resultSetType The result set type for example TYPE_FORWARD_ONLY.
      * @param resultSetConcurrency The concurrency for example CONCUR_READ_ONLY.
      */
-    JtdsStatement(ConnectionJDBC connection,
+    JtdsStatement(JtdsConnection connection,
                   int resultSetType,
                   int resultSetConcurrency) throws SQLException {
         //

@@ -34,7 +34,7 @@ import net.sourceforge.jtds.jdbcx.*;
  */
 public class ConnectionProxy implements Connection {
     private PooledConnection _pooledConnection;
-    private ConnectionJDBC _connection;
+    private JtdsConnection _connection;
     private boolean _closed;
 
     /**
@@ -43,7 +43,7 @@ public class ConnectionProxy implements Connection {
     public ConnectionProxy(PooledConnection pooledConnection,
                            Connection connection) {
         _pooledConnection = pooledConnection;
-        _connection = (ConnectionJDBC) connection;
+        _connection = (JtdsConnection) connection;
     }
 
     /**

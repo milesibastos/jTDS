@@ -51,7 +51,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
     // Internal data needed by this implemention.
     private final int tdsVersion;
     private final int serverType;
-    private final ConnectionJDBC connection;
+    private final JtdsConnection connection;
 
     /**
      * Length of a sysname object (table name, catalog name etc.) -- 128 for
@@ -66,7 +66,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      */
     Boolean caseSensitive;
 
-    public JtdsDatabaseMetaData(ConnectionJDBC connection) {
+    public JtdsDatabaseMetaData(JtdsConnection connection) {
         this.connection = connection;
         tdsVersion = connection.getTdsVersion();
         serverType = connection.getServerType();

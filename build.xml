@@ -78,6 +78,10 @@
   <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}"/>
     <!-- Runtime jar -->
+    <copy todir="${build}/classes/META-INF">
+      <fileset dir="${src}/META-INF" includes="**/*"/>
+    </copy>
+
     <jar basedir="${build}/classes"
          excludes="**/*Test*/**"
          includes="**/*"
@@ -88,7 +92,6 @@
             <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
             <attribute name="Specification-Title" value="JDBC"/>
             <attribute name="Specification-Version" value="3.0"/>
-            <attribute name="Class-Path" value="jcifs.jar"/>
             <attribute name="Main-Class" value="net.sourceforge.jtds.jdbc.Driver"/>
         </manifest>
     </jar>

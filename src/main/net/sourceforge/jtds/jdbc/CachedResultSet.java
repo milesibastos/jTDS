@@ -95,7 +95,7 @@ public class CachedResultSet extends JtdsResultSet {
     /** First table name in select. */
     protected String tableName;
     /** The parent connection object */
-    protected ConnectionJDBC connection;
+    protected JtdsConnection connection;
 
     /**
      * Constructs a new cached result set.
@@ -119,7 +119,7 @@ public class CachedResultSet extends JtdsResultSet {
             int resultSetType,
             int concurrency) throws SQLException {
         super(statement, resultSetType, concurrency, null);
-        this.connection = (ConnectionJDBC) statement.getConnection();
+        this.connection = (JtdsConnection) statement.getConnection();
         this.cursorTds = statement.getTds();
         this.sql = sql;
         this.procName = procName;
@@ -315,7 +315,7 @@ public class CachedResultSet extends JtdsResultSet {
             // this to work. Reparse the SQL now and check.
             //
             String tmp[] = SQLParser.parse(sql, new ArrayList(),
-                    (ConnectionJDBC) statement.getConnection(), true);
+                    (JtdsConnection) statement.getConnection(), true);
 
             if ("select".equals(tmp[2])) {
                 isSelect = true;
@@ -1166,7 +1166,7 @@ public class CachedResultSet extends JtdsResultSet {
              //
              // Now insert copy of row into result set buffer
              //
-             ConnectionJDBC con = (ConnectionJDBC)statement.getConnection();
+             JtdsConnection con = (JtdsConnection)statement.getConnection();
              Object row[] = newRow();
              for (int i = 0; i < insertRow.length; i++) {
                  if (insertRow[i] != null) {
@@ -1321,7 +1321,7 @@ public class CachedResultSet extends JtdsResultSet {
          if (resultSetType != ResultSet.TYPE_SCROLL_INSENSITIVE) {
              // Make in memory copy reflect database update
              // Could use refreshRow but this is much faster.
-             ConnectionJDBC con = (ConnectionJDBC)statement.getConnection();
+             JtdsConnection con = (JtdsConnection)statement.getConnection();
              for (int i = 0; i < updateRow.length; i++) {
                  if (updateRow[i] != null) {
                      if (updateRow[i].value instanceof byte[]

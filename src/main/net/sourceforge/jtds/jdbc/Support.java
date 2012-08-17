@@ -800,9 +800,9 @@ public class Support {
      * @param buf The buffer in which the data will be embedded.
      * @param value The data object.
      * @param isUnicode Set to <code>true</code> if Unicode strings should be used, else <code>false</code>.
-     * @param connection The {@link ConnectionJDBC} object.
+     * @param connection The {@link JtdsConnection} object.
      */
-    static void embedData(StringBuffer buf, Object value, boolean isUnicode, ConnectionJDBC connection)
+    static void embedData(StringBuffer buf, Object value, boolean isUnicode, JtdsConnection connection)
             throws SQLException {
         buf.append(' ');
         if (value == null) {
@@ -1044,7 +1044,7 @@ public class Support {
      * @param connection The current connection.
      * @return The modified SQL statement.
      */
-    static String substituteParameters(String sql, ParamInfo[] list, ConnectionJDBC connection)
+    static String substituteParameters(String sql, ParamInfo[] list, JtdsConnection connection)
             throws SQLException {
         int len = sql.length();
 
@@ -1304,7 +1304,7 @@ public class Support {
      *        <code>ResultSet</code>
      * @return a connection
      */
-    private static ConnectionJDBC getConnection(Object callerReference) {
+    private static JtdsConnection getConnection(Object callerReference) {
         if (callerReference == null) {
             throw new IllegalArgumentException("callerReference cannot be null.");
         }
@@ -1325,7 +1325,7 @@ public class Support {
             throw new IllegalStateException(e.getMessage());
         }
 
-        return (ConnectionJDBC) connection;
+        return (JtdsConnection) connection;
     }
 
     private Support() {

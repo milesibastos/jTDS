@@ -294,7 +294,7 @@ public class TdsData {
      * @throws SQLException if a <code>CharsetInfo</code> is not found for this
      *                      particular column collation
      */
-    static void setColumnCharset(ColInfo ci, ConnectionJDBC connection)
+    static void setColumnCharset(ColInfo ci, JtdsConnection connection)
             throws SQLException {
         if (connection.isCharsetSpecified()) {
             // If a charset was requested on connection creation, ignore the
@@ -660,7 +660,7 @@ public class TdsData {
      * @throws IOException
      * @throws ProtocolException
      */
-    static Object readData(ConnectionJDBC connection, ResponseStream in, ColInfo ci)
+    static Object readData(JtdsConnection connection, ResponseStream in, ColInfo ci)
             throws IOException, ProtocolException {
         int len;
 
@@ -1266,7 +1266,7 @@ public class TdsData {
      * @param connection the connectionJDBC object
      * @param pi         the parameter descriptor
      */
-    static void getNativeType(ConnectionJDBC connection, ParamInfo pi)
+    static void getNativeType(JtdsConnection connection, ParamInfo pi)
             throws SQLException {
         int len;
         int jdbcType = pi.jdbcType;
@@ -2549,7 +2549,7 @@ public class TdsData {
      * @param in         the server response stream
      * @return the SQL_VARIANT data
      */
-    private static Object getVariant(ConnectionJDBC connection,
+    private static Object getVariant(JtdsConnection connection,
                                      ResponseStream in)
             throws IOException, ProtocolException {
         byte[] bytes;

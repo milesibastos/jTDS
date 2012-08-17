@@ -38,7 +38,7 @@ public class SharedLocalNamedPipe extends SharedSocket {
      * @param connection the connection object
      * @throws IOException if an I/O error occurs
      */
-    public SharedLocalNamedPipe(ConnectionJDBC connection) throws IOException {
+    public SharedLocalNamedPipe(JtdsConnection connection) throws IOException {
         super(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
 
         final String serverName = connection.getServerName();

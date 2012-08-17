@@ -54,7 +54,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @param concurrency   The result set concurrency eg READ_ONLY.
      * @throws SQLException
      */
-    JtdsCallableStatement(ConnectionJDBC connection, String sql, int resultSetType, int concurrency)
+    JtdsCallableStatement(JtdsConnection connection, String sql, int resultSetType, int concurrency)
         throws SQLException {
         super(connection, sql, resultSetType, concurrency, false);
     }

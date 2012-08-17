@@ -399,14 +399,14 @@ public class JtdsResultSet implements ResultSet {
     }
 
     /**
-     * Returns the {@link ConnectionJDBC} object referenced by the
+     * Returns the {@link JtdsConnection} object referenced by the
      * {@link #statement} instance variable.
      *
-     * @return {@link ConnectionJDBC} object.
+     * @return {@link JtdsConnection} object.
      * @throws SQLException on error.
      */
-    private ConnectionJDBC getConnection() throws SQLException {
-        return (ConnectionJDBC) statement.getConnection();
+    private JtdsConnection getConnection() throws SQLException {
+        return (JtdsConnection) statement.getConnection();
     }
 
 

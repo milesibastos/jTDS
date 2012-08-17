@@ -253,7 +253,7 @@ class SharedSocket {
      * @param connection the connection object
      * @throws IOException if socket open fails
      */
-    SharedSocket(ConnectionJDBC connection) throws IOException, UnknownHostException {
+    SharedSocket(JtdsConnection connection) throws IOException, UnknownHostException {
         this(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
         this.host = connection.getServerName();
         this.port = connection.getPortNumber();
@@ -274,7 +274,7 @@ class SharedSocket {
      * @return a socket open to the host and port with the given timeout
      * @throws IOException if socket open fails
      */
-    private Socket createSocketForJDBC3(ConnectionJDBC connection) throws IOException {
+    private Socket createSocketForJDBC3(JtdsConnection connection) throws IOException {
         final String host = connection.getServerName();
         final int port = connection.getPortNumber();
         final int loginTimeout = connection.getLoginTimeout();

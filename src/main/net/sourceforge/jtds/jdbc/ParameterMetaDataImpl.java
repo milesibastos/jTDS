@@ -36,7 +36,7 @@ public class ParameterMetaDataImpl implements ParameterMetaData {
     private final boolean useLOBs;
 
 
-    public ParameterMetaDataImpl(ParamInfo[] parameterList, ConnectionJDBC connection) {
+    public ParameterMetaDataImpl(ParamInfo[] parameterList, JtdsConnection connection) {
         if (parameterList == null) {
             parameterList = new ParamInfo[0];
         }

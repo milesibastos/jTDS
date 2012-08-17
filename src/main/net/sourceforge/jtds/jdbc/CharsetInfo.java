@@ -59,8 +59,8 @@ public final class CharsetInfo {
 
     static {
         // Load character set mappings
+        InputStream stream = null;
         try {
-            InputStream stream = null;
             // getContextClassLoader needed to ensure driver
             // works with Tomcat class loading rules.
             ClassLoader classLoader =
@@ -128,6 +128,14 @@ public final class CharsetInfo {
         } catch (IOException e) {
             // Can't load properties file for some reason
             Logger.logException(e);
+        } finally {
+            if (stream!=null) {
+                try {
+                    stream.close();
+                } catch (Exception e) {
+                 // errors can be ignored
+                }
+            }
         }
     }
 

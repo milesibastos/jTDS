@@ -64,7 +64,7 @@ public class ClobImpl implements Clob {
      *
      * @param connection a reference to the parent connection object
      */
-    ClobImpl(ConnectionJDBC connection) {
+    ClobImpl(JtdsConnection connection) {
         this(connection, EMPTY_CLOB);
     }
 
@@ -74,7 +74,7 @@ public class ClobImpl implements Clob {
      * @param connection a reference to the parent connection object
      * @param str        the <code>String</code> object to encapsulate
      */
-    ClobImpl(ConnectionJDBC connection, String str) {
+    ClobImpl(JtdsConnection connection, String str) {
         if (str == null) {
             throw new IllegalArgumentException("str cannot be null");
         }

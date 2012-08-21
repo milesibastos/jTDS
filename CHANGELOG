@@ -2,8 +2,10 @@ Changes from jTDS 1.2.6
 =======================
 
 08/21/2012 - Holger Rehn
- o Applied build system changes proposed by Rainer Schwarze in patch 122.
+ o Applied build system changes proposed by Rainer Schwarze in patch #105.
  o Added compiler settings missing in some build files.
+ o Applied patch #122 provided by Rainer Schwarze to use the Java build-in
+   DES and MD5 routines instead of our own implementations.
 
 08/17/2012 - Holger Rehn
  o Added service provider configuration file for JDBC driver class (Bug #659).

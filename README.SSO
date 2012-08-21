@@ -10,6 +10,12 @@ Introduction
     This document describes the design of the Single Sign On implementation in
     the jTDS JDBC driver.
 
+    (Note: This feature requires DES and MD5 implementations. The JCA/JCE 
+    is used to access such implementations. The algorithms were previously 
+    implemented directly in jTDS' sources, but to eliminate export control 
+    restrictions, they were removed and the code now uses the JCA/JCE. Note
+    that MD4 is still implemented directly in jTDS.)
+
     Releases 0.9.1 and earlier of jTDS driver support Windows authentication by
     means of the NTLM protocol. That is, clients using the JDBC Driver passes
     a valid Windows-Domain-Name, a Windows User and Windows Password; the JDBC
@@ -126,10 +132,10 @@ SSPIJNIClient.java
     ----------
 
             ntlmAuthSSO = (user == null || user.length() == 0);
-        	if (ntlmAuthSSO) {
-        		sspiJNIClient = SSPIJNIClient.getInstance();
-        		ntlm1 = sspiJNIClient.invokePrepareSSORequest();
-        	}
+            if (ntlmAuthSSO) {
+                sspiJNIClient = SSPIJNIClient.getInstance();
+                ntlm1 = sspiJNIClient.invokePrepareSSORequest();
+            }
 
             // 1.ntlm1 contains Type-1 message now
             // 2.Send Type-1 Message to the server
@@ -137,7 +143,7 @@ SSPIJNIClient.java
             // 3.MS SQL Server replies back with Type-2 message
             // 4.Read Type-2 Message in (say) ntlm2
 
-       		ntlm3 = sspiJNIClient.invokePrepareSSOSubmit(ntlm2);
+               ntlm3 = sspiJNIClient.invokePrepareSSOSubmit(ntlm2);
 
             //1.now, ntlm3 contains Type-3 message
             //2.Send, Type-3 message to the Server.
@@ -154,9 +160,9 @@ Modifications to jTDS Classes
 
             ntlmAuthSSO = (user == null || user.length() == 0);
 
-	        Note: The user must leave the user name (and password) unset or set
-	              them to null or a blank string to instructthe driver to use
-	              Windows Single Sign On.
+            Note: The user must leave the user name (and password) unset or set
+                  them to null or a blank string to instructthe driver to use
+                  Windows Single Sign On.
 
         2. Member Variable: sspiJNIClient
             A reference to the single-ton object of SSPIJNIClient.class

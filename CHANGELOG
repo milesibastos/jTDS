@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+08/22/2012 - Holger Rehn
+ o Updated feature matrix for SQL Server 2008 compatibility (Bug #643).
+
 08/21/2012 - Holger Rehn
  o Applied build system changes proposed by Rainer Schwarze in patch #105.
  o Added compiler settings missing in some build files.

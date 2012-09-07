@@ -53,9 +53,9 @@ public class Driver implements java.sql.Driver {
     /** Driver major version. */
     static final int MAJOR_VERSION = 1;
     /** Driver minor version. */
-    static final int MINOR_VERSION = 2;
+    static final int MINOR_VERSION = 3;
     /** Driver version miscellanea (e.g "-rc2", ".1" or <code>null</code>). */
-    static final String MISC_VERSION = ".5";
+    static final String MISC_VERSION = null; // ".1";
     /** TDS 4.2 protocol (SQL Server 6.5 and later and Sybase 9 and later). */
     public static final int TDS42 = 1;
     /** TDS 5.0 protocol (Sybase 10 and later). */

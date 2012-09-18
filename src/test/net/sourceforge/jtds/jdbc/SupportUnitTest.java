@@ -43,13 +43,13 @@ public class SupportUnitTest extends UnitTestBase {
     }
 
 
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
         this.osName = System.getProperty(SYSTEM_PROPRETY_OS_NAME);
     }
 
 
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         System.setProperty(SYSTEM_PROPRETY_OS_NAME, this.osName);
         super.tearDown();
     }

@@ -34,7 +34,8 @@ import java.util.GregorianCalendar;
 public class DateTime {
     /** Per thread instance of Calendar used for conversions. */
     private static ThreadLocal calendar = new ThreadLocal() {
-        protected synchronized Object initialValue() {
+        @Override
+      protected synchronized Object initialValue() {
             return new GregorianCalendar();
         }
     };
@@ -91,8 +92,8 @@ public class DateTime {
      * @param time server time field
      */
     DateTime(short date, short time) {
-        this.date = (int) date & 0xFFFF;
-        this.time = (int) time * 60 * 300;
+        this.date = date & 0xFFFF;
+        this.time = time * 60 * 300;
     }
 
     /**
@@ -132,25 +133,25 @@ public class DateTime {
     DateTime(Time t) throws SQLException {
         timeValue = t;
         GregorianCalendar cal = (GregorianCalendar)calendar.get();
-        cal.setTime((java.util.Date) t);
+        cal.setTime(t);
 
         if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
             cal.set(Calendar.ERA, GregorianCalendar.AD);
-            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
+            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
         }
 
-        this.date   = DATE_NOT_USED;
-        this.year   = 1900;
-        this.month  = 1;
-        this.day    = 1;
-        this.hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
-        this.minute = (short)cal.get(Calendar.MINUTE);
-        this.second = (short)cal.get(Calendar.SECOND);
-        this.millis = (short)cal.get(Calendar.MILLISECOND);
+        date   = DATE_NOT_USED;
+        year   = 1900;
+        month  = 1;
+        day    = 1;
+        hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
+        minute = (short)cal.get(Calendar.MINUTE);
+        second = (short)cal.get(Calendar.SECOND);
+        millis = (short)cal.get(Calendar.MILLISECOND);
         packTime();
-        this.year  = 1970;
-        this.month = 1;
-        this.day   = 1;
+        year  = 1970;
+        month = 1;
+        day   = 1;
         unpacked   = true;
     }
 
@@ -163,22 +164,22 @@ public class DateTime {
     DateTime(Date d) throws SQLException {
         dateValue = d;
         GregorianCalendar cal = (GregorianCalendar)calendar.get();
-        cal.setTime((java.util.Date) d);
+        cal.setTime(d);
 
         if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
             cal.set(Calendar.ERA, GregorianCalendar.AD);
-            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
+            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
         }
 
-        this.year   = (short)cal.get(Calendar.YEAR);
-        this.month  = (short)(cal.get(Calendar.MONTH) + 1);
-        this.day    = (short)cal.get(Calendar.DAY_OF_MONTH);
-        this.hour   = 0;
-        this.minute = 0;
-        this.second = 0;
-        this.millis = 0;
+        year   = (short)cal.get(Calendar.YEAR);
+        month  = (short)(cal.get(Calendar.MONTH) + 1);
+        day    = (short)cal.get(Calendar.DAY_OF_MONTH);
+        hour   = 0;
+        minute = 0;
+        second = 0;
+        millis = 0;
         packDate();
-        this.time = TIME_NOT_USED;
+        time = TIME_NOT_USED;
         unpacked  = true;
     }
 
@@ -234,17 +235,17 @@ public class DateTime {
      * </pre>
      */
     private void unpackDateTime() {
-        if (this.date == DATE_NOT_USED) {
-            this.year  = 1970;
-            this.month = 1;
-            this.day   = 1;
+        if (date == DATE_NOT_USED) {
+            year  = 1970;
+            month = 1;
+            day   = 1;
         } else {
             if (date == 0) {
                 // Optimize common case of 1900-01-01 which is used as
                 // the default date for datetimes where only the time is set.
-                this.year  = 1900;
-                this.month = 1;
-                this.day   = 1;
+                year  = 1900;
+                month = 1;
+                day   = 1;
             } else {
                 int l = date + 68569 + 2415021;
                 int n = 4 * l / 146097;
@@ -256,15 +257,15 @@ public class DateTime {
                 l = j / 11;
                 j = j + 2 - 12 * l;
                 i = 100 * (n - 49) + i + l;
-                this.year  = (short)i;
-                this.month = (short)j;
-                this.day   = (short)k;
+                year  = (short)i;
+                month = (short)j;
+                day   = (short)k;
             }
         }
         if (time == TIME_NOT_USED) {
-            this.hour   = 0;
-            this.minute = 0;
-            this.second = 0;
+            hour   = 0;
+            minute = 0;
+            second = 0;
         } else {
             int hours = time / 1080000;
             time = time - hours * 1080000;
@@ -272,11 +273,11 @@ public class DateTime {
             time = time - (minutes * 18000);
             int seconds = time / 300;
             time = time - seconds * 300;
-            time = (int) Math.round(time * 1000 / 300f);
-            this.hour = (short)hours;
-            this.minute = (short)minutes;
-            this.second = (short)seconds;
-            this.millis = (short)time;
+            time = Math.round(time * 1000 / 300f);
+            hour = (short)hours;
+            minute = (short)minutes;
+            second = (short)seconds;
+            millis = (short)time;
         }
         unpacked = true;
     }
@@ -335,9 +336,9 @@ public class DateTime {
             millis = 0;
             if (date != DATE_NOT_USED) {
                 GregorianCalendar cal = (GregorianCalendar)calendar.get();
-                cal.set(Calendar.YEAR, this.year);
-                cal.set(Calendar.MONTH, this.month - 1);
-                cal.set(Calendar.DAY_OF_MONTH, this.day);
+                cal.set(Calendar.YEAR, year);
+                cal.set(Calendar.MONTH, month - 1);
+                cal.set(Calendar.DAY_OF_MONTH, day);
                 cal.add(Calendar.DATE, 1);
                 year   = (short)cal.get(Calendar.YEAR);
                 month  = (short)(cal.get(Calendar.MONTH) + 1);
@@ -358,13 +359,13 @@ public class DateTime {
                 unpackDateTime();
             }
             GregorianCalendar cal = (GregorianCalendar)calendar.get();
-            cal.set(Calendar.YEAR, this.year);
-            cal.set(Calendar.MONTH, this.month - 1);
-            cal.set(Calendar.DAY_OF_MONTH, this.day);
-            cal.set(Calendar.HOUR_OF_DAY, this.hour);
-            cal.set(Calendar.MINUTE, this.minute);
-            cal.set(Calendar.SECOND, this.second);
-            cal.set(Calendar.MILLISECOND, this.millis);
+            cal.set(Calendar.YEAR, year);
+            cal.set(Calendar.MONTH, month - 1);
+            cal.set(Calendar.DAY_OF_MONTH, day);
+            cal.set(Calendar.HOUR_OF_DAY, hour);
+            cal.set(Calendar.MINUTE, minute);
+            cal.set(Calendar.SECOND, second);
+            cal.set(Calendar.MILLISECOND, millis);
             tsValue = new Timestamp(cal.getTime().getTime());
         }
         return tsValue;
@@ -381,9 +382,9 @@ public class DateTime {
                 unpackDateTime();
             }
             GregorianCalendar cal = (GregorianCalendar)calendar.get();
-            cal.set(Calendar.YEAR, this.year);
-            cal.set(Calendar.MONTH, this.month - 1);
-            cal.set(Calendar.DAY_OF_MONTH, this.day);
+            cal.set(Calendar.YEAR, year);
+            cal.set(Calendar.MONTH, month - 1);
+            cal.set(Calendar.DAY_OF_MONTH, day);
             cal.set(Calendar.HOUR_OF_DAY, 0);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
@@ -407,10 +408,10 @@ public class DateTime {
             cal.set(Calendar.YEAR, 1970);
             cal.set(Calendar.MONTH, 0);
             cal.set(Calendar.DAY_OF_MONTH, 1);
-            cal.set(Calendar.HOUR_OF_DAY, this.hour);
-            cal.set(Calendar.MINUTE, this.minute);
-            cal.set(Calendar.SECOND, this.second);
-            cal.set(Calendar.MILLISECOND, this.millis);
+            cal.set(Calendar.HOUR_OF_DAY, hour);
+            cal.set(Calendar.MINUTE, minute);
+            cal.set(Calendar.SECOND, second);
+            cal.set(Calendar.MILLISECOND, millis);
             timeValue = new Time(cal.getTime().getTime());
         }
         return timeValue;
@@ -436,6 +437,7 @@ public class DateTime {
      *
      * @return the current datetime value as a <code>String</code>
      */
+    @Override
     public String toString() {
         if (stringValue == null) {
             if (!unpacked) {

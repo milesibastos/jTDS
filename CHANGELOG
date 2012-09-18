@@ -1,6 +1,11 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/11/2012 - Holger Rehn
+ o Fixed buffer overflow in SQL parser (bug #673).
+ o Added missing description for 'autoCommit' property added in revision [1123].
+ o Corrected a number of JUnit tests.
+
 09/07/2012 - Holger Rehn
  o Fixed jTDS version reported by the driver.
 

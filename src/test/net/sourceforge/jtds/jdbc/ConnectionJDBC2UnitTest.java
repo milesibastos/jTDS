@@ -155,6 +155,7 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
             setTester(
                     new DefaultPropertiesTester() {
 
+                        @Override
                         public void assertDefaultProperty(
                                 String message, String url, Properties properties, String fieldName,
                                 String key, String expected) {
@@ -341,5 +342,15 @@ public class ConnectionJDBC2UnitTest extends UnitTestBase {
         } finally {
             con.close();
         }
+    }
+
+    /**
+     * Regression test for bug #673, function expansion causes buffer overflow.
+     */
+    public void testBug673() throws Exception {
+        Connection con = getConnection();
+        Statement stmt = con.createStatement();
+
+        stmt.execute( "SELECT {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}, {fn curdate()}" );
     }
 }

@@ -17,12 +17,6 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import net.sourceforge.jtds.jdbc.DefaultProperties;
-import net.sourceforge.jtds.jdbc.Messages;
-import net.sourceforge.jtds.jdbc.Driver;
-
 import java.math.BigDecimal;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
@@ -31,6 +25,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.Types;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
 /**
  * Test case to illustrate use of TDS 8 support
  *
@@ -38,16 +35,18 @@ import java.sql.Types;
  */
 public class Tds8Test extends DatabaseTestCase {
 
-    public static Test suite() {
+   public static Test suite()
+   {
 
-        if (!DefaultProperties.TDS_VERSION_80.equals(
-                props.getProperty(Messages.get(Driver.TDS)))) {
+      String tds = props.getProperty( Messages.get( Driver.TDS ) );
 
-            return new TestSuite();
-        }
+      if( tds == null || Double.valueOf( tds ) >= Double.valueOf( DefaultProperties.TDS_VERSION_80 ) )
+      {
+         return new TestSuite( Tds8Test.class );
+      }
 
-        return new TestSuite(Tds8Test.class);
-    }
+      return new TestSuite();
+   }
 
     public Tds8Test(String name) {
         super(name);

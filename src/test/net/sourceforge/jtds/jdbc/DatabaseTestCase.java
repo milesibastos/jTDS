@@ -18,9 +18,10 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
-import java.util.Map;
 import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
 
 /**
  * @author Alin Sinpalean
@@ -47,31 +48,6 @@ public abstract class DatabaseTestCase extends TestBase {
         stmt.executeUpdate(
                           "if exists (select * from " + sobName + " where name like '" + tableLike + "' and type = 'U') "
                           + "drop table " + tableName);
-        stmt.close();
-    }
-
-    protected void dropProcedure(String procname) throws SQLException {
-        Statement stmt = con.createStatement();
-        dropProcedure(stmt, procname);
-        stmt.close();
-    }
-
-    protected void dropProcedure(Statement stmt, String procname) throws SQLException {
-        String sobName = "sysobjects";
-        if (procname.startsWith("#")) {
-            sobName = "tempdb.dbo.sysobjects";
-        }
-        stmt.executeUpdate(
-                          "if exists (select * from " + sobName + " where name like '" + procname + "%' and type = 'P') "
-                          + "drop procedure " + procname);
-    }
-
-    protected void dropFunction(String procname) throws SQLException {
-        String sobName = "sysobjects";
-        Statement stmt = con.createStatement();
-        stmt.executeUpdate(
-                          "if exists (select * from " + sobName + " where name like '" + procname + "%' and type = 'FN') "
-                          + "drop function " + procname);
         stmt.close();
     }
 

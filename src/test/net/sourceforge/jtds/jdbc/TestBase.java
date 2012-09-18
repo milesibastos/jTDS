@@ -18,10 +18,21 @@
 
 package net.sourceforge.jtds.jdbc;
 
-import java.io.*;
-import java.sql.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Iterator;
+import java.util.Properties;
 
-import java.util.*;
 import junit.framework.TestCase;
 
 /**
@@ -38,12 +49,14 @@ public abstract class TestBase extends TestCase {
         super(name);
     }
 
-    public void setUp() throws Exception {
+    @Override
+   public void setUp() throws Exception {
         super.setUp();
         connect();
     }
 
-    public void tearDown() throws Exception {
+    @Override
+   public void tearDown() throws Exception {
         disconnect();
         super.tearDown();
     }
@@ -281,4 +294,62 @@ public abstract class TestBase extends TestCase {
             }
         }
     }
+
+   public void dropFunction( String name )
+      throws SQLException
+   {
+      Statement stm = con.createStatement();
+
+      try
+      {
+         stm.executeUpdate( "if exists (select * from sysobjects where name like '" + name + "%' and type = 'FN') drop function " + name );
+      }
+      catch( SQLException sqle )
+      {
+         // assume the procedure didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
+
+    public void dropProcedure( String name )
+       throws SQLException
+    {
+       Statement stm = con.createStatement();
+
+       try
+       {
+          stm.executeUpdate( "if exists (select * from " + ( name.startsWith( "#" ) ? "tempdb.dbo.sysobjects" : "sysobjects" ) + " where name like '" + name + "%' and type = 'P') drop procedure " + name );
+       }
+       catch( SQLException sqle )
+       {
+         // assume the procedure didn't exist
+       }
+       finally
+       {
+          stm.close();
+       }
+    }
+
+    public void dropType( String name )
+       throws Exception
+    {
+       CallableStatement stm = con.prepareCall( "{call sp_droptype '" + name + "'}" );
+
+       try
+       {
+          stm.executeUpdate();
+       }
+       catch( SQLException sqle )
+       {
+          // assume the type didn't exist
+       }
+       finally
+       {
+          stm.close();
+       }
+    }
+
 }

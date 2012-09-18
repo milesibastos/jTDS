@@ -17,11 +17,13 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import junit.framework.TestSuite;
-
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -48,8 +50,8 @@ public class AsTest extends DatabaseTestCase {
 
     public void testProc1() throws Exception {
         Statement stmt = con.createStatement();
-        dropProcedure(stmt, "#spTestExec");
-        dropProcedure(stmt, "#spTestExec2");
+        dropProcedure("#spTestExec");
+        dropProcedure("#spTestExec2");
 
         stmt.executeUpdate(" create procedure #spTestExec2 as " +
                            "select 'Did it work?' as Result");
@@ -107,8 +109,8 @@ public class AsTest extends DatabaseTestCase {
         "  insert into #multi1nocountt VALUES ('a') " +
         "  select 'a' " +
         "  select 'b' ";
-        dropProcedure(stmt, "#multi1withcount");
-        dropProcedure(stmt, "#multi1nocount");
+        dropProcedure("#multi1withcount");
+        dropProcedure("#multi1nocount");
         stmt.executeUpdate(sqlwithcount);
         stmt.executeUpdate(sqlnocount);
         stmt.close();
@@ -323,7 +325,7 @@ public class AsTest extends DatabaseTestCase {
                 + "testCombined_testBoolean,testCombined_testByte,testCombined_testDouble,testCombined_testLong"
                 + ",testCombined_testDate,ICEtestContainedArrays,updateCount ) "
                 + "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        istmt.setLong(1, (long) 650002);
+        istmt.setLong(1, 650002);
         istmt.setInt(2, -1461101755);
         istmt.setNull(3, java.sql.Types.INTEGER);
         istmt.setNull(4, java.sql.Types.REAL);

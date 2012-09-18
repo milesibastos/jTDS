@@ -21,8 +21,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.sourceforge.jtds.jdbc.cache.SimpleLRUCache;
 import net.sourceforge.jtds.jdbc.cache.SQLCacheKey;
+import net.sourceforge.jtds.jdbc.cache.SimpleLRUCache;
 
 /**
  * Process JDBC escape strings and parameter markers in the SQL string.
@@ -103,7 +103,7 @@ class SQLParser {
     /** Length of input buffer. */
     private final int len;
     /** Output buffer to contain parsed SQL. */
-    private final char[] out;
+    private char[] out;
     /** Current position in output buffer. */
     private int d;
     /**
@@ -233,7 +233,7 @@ class SQLParser {
         sql = sqlIn;
         in  = sql.toCharArray();
         len = in.length;
-        out = new char[len + 256]; // Allow extra for curdate/curtime
+        out = new char[len];
         params = paramList;
         procName = "";
 
@@ -263,7 +263,7 @@ class SQLParser {
                 params.add(pi);
             }
 
-            out[d++] = c;
+            append(c);
         }
     }
 
@@ -280,13 +280,13 @@ class SQLParser {
 
         terminator = tc;
 
-        out[d++] = in[s++];
+        append(in[s++]);
 
         while (in[s] != tc) {
-            out[d++] = in[s++];
+           append(in[s++]);
         }
 
-        out[d++] = in[s++];
+        append(in[s++]);
 
         terminator = saveTc;
     }
@@ -298,7 +298,7 @@ class SQLParser {
         int start = d;
 
         while (s < len && isIdentifier(in[s])) {
-            out[d++] = in[s++];
+           append(in[s++]);
         }
 
         return String.valueOf(out, start, d - start).toLowerCase();
@@ -322,7 +322,7 @@ class SQLParser {
         pi.name = name;
 
         if (pos >= 0) {
-            out[d++] = in[s++];
+           append(in[s++]);
         } else {
             pi.isRetVal = true;
             s++;
@@ -346,7 +346,7 @@ class SQLParser {
                 char c = in[s++];
 
                 while (isIdentifier(c) || c == ';') {
-                    out[d++] = c;
+                    append(c);
                     c = in[s++];
                 }
 
@@ -355,7 +355,7 @@ class SQLParser {
 
             if (in[s] == '.') {
                 while (in[s] == '.') {
-                    out[d++] = in[s++];
+                    append(in[s++]);
                 }
             } else {
                 break;
@@ -384,7 +384,7 @@ class SQLParser {
         char c = in[s++];
 
         while (isIdentifier(c)) {
-            out[d++] = c;
+            append(c);
             c = in[s++];
         }
 
@@ -398,7 +398,7 @@ class SQLParser {
      */
     private void copyWhiteSpace() {
         while (s < in.length && Character.isWhitespace(in[s])) {
-            out[d++] = in[s++];
+            append(in[s++]);
         }
     }
 
@@ -420,7 +420,7 @@ class SQLParser {
         }
 
         if (copy) {
-            out[d++] = in[s++];
+            append(in[s++]);
         } else {
             s++;
         }
@@ -441,7 +441,7 @@ class SQLParser {
     private void skipSingleComments() {
         while (s < len && in[s] != '\n' && in[s] != '\r') {
             // comments should be passed on to the server
-            out[d++] = in[s++];
+            append(in[s++]);
         }
     }
 
@@ -459,14 +459,14 @@ class SQLParser {
                     block--;
                 }
                 // comments should be passed on to the server
-                out[d++] = in[s++];
+                append(in[s++]);
             } else {
                 throw new SQLException(
                         Messages.get("error.parsesql.missing", "*/"),
                         "22025");
             }
         } while (block > 0);
-        out[d++] = in[s++];
+        append(in[s++]);
     }
 
     /**
@@ -490,7 +490,7 @@ class SQLParser {
             terminator = '}';
         }
 
-        out[d++] = ' ';
+        append(' ');
 
         // Process any parameters
         while (in[s] != terminator) {
@@ -523,12 +523,12 @@ class SQLParser {
                 } else if (in[s] == '\'' || in[s] == '[' || in[s] == '"') {
                     copyString();
                 } else {
-                    out[d++] = in[s++];
+                    append(in[s++]);
                 }
             }
 
             if (in[s] == ',') {
-                out[d++] = in[s++];
+                append(in[s++]);
             }
 
             skipWhiteSpace();
@@ -556,7 +556,7 @@ class SQLParser {
             skipWhiteSpace();
             return in[s] == terminator;
         }
-        out[d++] = '\'';
+        append('\'');
         terminator = (in[s] == '\'' || in[s] == '"') ? in[s++] : '}';
         skipWhiteSpace();
         int ptr = 0;
@@ -576,7 +576,7 @@ class SQLParser {
             }
 
             if (c != '-') {
-                out[d++] = c;
+                append(c);
             }
 
             ptr++;
@@ -586,22 +586,22 @@ class SQLParser {
             int digits = 0;
 
             if (in[s] == '.') {
-                out[d++] = in[s++];
+                append(in[s++]);
 
                 while (Character.isDigit(in[s])) {
                     if (digits < 3) {
-                        out[d++] = in[s++];
+                        append(in[s++]);
                         digits++;
                     } else {
                         s++;
                     }
                 }
             } else {
-                out[d++] = '.';
+                append('.');
             }
 
             for (; digits < 3; digits++) {
-                out[d++] = '0';
+                append('0');
             }
         }
 
@@ -616,7 +616,7 @@ class SQLParser {
         }
 
         skipWhiteSpace();
-        out[d++] = '\'';
+        append('\'');
 
         return true;
     }
@@ -661,7 +661,7 @@ class SQLParser {
                     copyParam(null, d);
                     break;
                 default:
-                    out[d++] = c;
+                    append(c);
                     s++;
                     break;
             }
@@ -764,23 +764,23 @@ class SQLParser {
                         arg2Start = d - argStart;
                     }
                     if ("concat".equals(name)) {
-                        out[d++] = '+'; s++;
+                        append('+'); s++;
                     } else if ("mod".equals(name)) {
-                        out[d++] = '%'; s++;
+                        append('%'); s++;
                     } else {
-                        out[d++] = c; s++;
+                        append(c); s++;
                     }
                     break;
                 case '(':
                     parenCnt++;
-                    out[d++] = c; s++;
+                    append(c); s++;
                     break;
                 case ')':
                     parenCnt--;
-                    out[d++] = c; s++;
+                    append(c); s++;
                     break;
                 default:
-                    out[d++] = c; s++;
+                    append(c); s++;
                     break;
             }
         }
@@ -808,9 +808,9 @@ class SQLParser {
 
             copyLiteral("convert(");
             copyLiteral(dataType);
-            out[d++] = ',';
+            append(',');
             copyLiteral(args.substring(0, arg2Start));
-            out[d++] = ')';
+            append(')');
 
             return;
         }
@@ -830,9 +830,9 @@ class SQLParser {
         if (fn == null) {
             // Not mapped so assume simple case
             copyLiteral(name);
-            out[d++] = '(';
+            append('(');
             copyLiteral(args);
-            out[d++] = ')';
+            append(')');
             return;
         }
         //
@@ -856,7 +856,7 @@ class SQLParser {
                 // Substitute arguments
                 copyLiteral(args);
             } else {
-                out[d++] = c;
+                append(c);
             }
         }
     }
@@ -1022,7 +1022,7 @@ class SQLParser {
                 while ((isIdentifier(c))
                        && c != '.'
                        && c != ',') {
-                    out[d++] = c;
+                    append(c);
                     c = (s < len) ? in[s++] : ' ';
                 }
                 name.append(String.valueOf(out, start, d - start));
@@ -1034,12 +1034,35 @@ class SQLParser {
                 break;
             }
             name.append(c);
-            out[d++] = c; s++;
+            append(c); s++;
             copyWhiteSpace();
             c = (s < len) ? in[s] : ' ';
         }
         return name.toString();
     }
+
+   /**
+    * <p> Adds the given character to {@link #out}, incrementing {@link #d} by
+    * {@code 1} and expanding {@link #out} by a fixed number of characters if
+    * necessary. </p>
+    */
+   private final void append( char character )
+   {
+      try
+      {
+         out[d ++] = character;
+      }
+      catch( ArrayIndexOutOfBoundsException e )
+      {
+         // expand output array by a fixed amount
+         char[] expanded = new char[out.length + 256];
+         System.arraycopy( out, 0, expanded, 0, out.length );
+
+         //
+         out = expanded;
+         out[d - 1] = character;
+      }
+   }
 
     /**
      * Parses the SQL statement processing JDBC escapes and parameter markers.
@@ -1075,14 +1098,14 @@ class SQLParser {
                         if (s+1 < len && in[s+1] == '*') {
                             skipMultiComments();
                         } else {
-                            out[d++] = c; s++;
+                            append(c); s++;
                         }
                         break;
                     case '-':
                         if (s+1 < len && in[s+1] == '-') {
                             skipSingleComments();
                         } else {
-                            out[d++] = c; s++;
+                            append(c); s++;
                         }
                         break;
                     default:
@@ -1106,7 +1129,7 @@ class SQLParser {
                             }
                         }
 
-                        out[d++] = c; s++;
+                        append(c); s++;
                         break;
                 }
             }

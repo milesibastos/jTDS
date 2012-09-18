@@ -19,7 +19,6 @@ package net.sourceforge.jtds.jdbc;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -27,8 +26,8 @@ import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Enumeration;
 import java.util.Properties;
@@ -70,7 +69,7 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
         stmt.close();
         con.close();
     }
-    
+
     /**
      * Test for bug [1755448], login failure leaves unclosed sockets.
      */
@@ -108,7 +107,8 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
 
                 // create new classloader for loading the actual test
                 ClassLoader cloader = new URLClassLoader(new URL[]{new File("bin").toURI().toURL()},null) {
-                    protected void finalize() throws Throwable {
+                  @Override
+                  protected void finalize() throws Throwable {
                         counter[0] ++;
                         super.finalize();
                     }
@@ -118,7 +118,7 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
                 Class clazz = cloader.loadClass(testTimerStopHelper.class.getName());
                 Constructor constructor = clazz.getDeclaredConstructor((Class[]) null);
 
-                // start the test by 
+                // start the test by
                 try {
                     constructor.newInstance((Object[]) null);
                 } catch (InvocationTargetException e) {
@@ -149,7 +149,7 @@ public class ConnectionJDBC3Test extends DatabaseTestCase {
     public static class testTimerStopHelper
     {
         /**
-         * Constructor for helper class, simply starts method {@link #test()}. 
+         * Constructor for helper class, simply starts method {@link #test()}.
          */
         public testTimerStopHelper() throws Throwable {
             test();

@@ -17,8 +17,14 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.sql.*;
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.sql.Types;
 //
 // MJH - Changes for new jTDS version
 // Added registerOutParameter to testCallableStatementParsing2
@@ -434,50 +440,52 @@ public class CallableStatementTest extends TestBase {
         cstmt.close();
     }
 
-    /**
-     * Test for bug [983432] Prepared call doesn't work with jTDS 0.8
-     */
-    public void testCallableRegisterOutParameter4() throws Exception {
-        CallableStatement cstmt = con.prepareCall("{call sp_addtype T_INTEGER, int, 'NULL'}");
-        Statement stmt = con.createStatement();
+   /**
+    * Test for bug [983432] Prepared call doesn't work with jTDS 0.8
+    */
+   public void testCallableRegisterOutParameter4()
+      throws Exception
+   {
+      // cleanup remains from last run
+      dropProcedure( "rop4" );
+      dropType( "T_INTEGER" );
 
-        try {
-            cstmt.execute();
-            cstmt.close();
+      CallableStatement cstmt = con.prepareCall( "{call sp_addtype T_INTEGER, int, 'NULL'}" );
+      Statement stmt = con.createStatement();
 
-            stmt.execute("create procedure rop4 @data T_INTEGER OUTPUT as\r\n "
-                         + "begin\r\n"
-                         + "set @data = 1\r\n"
-                         + "end");
-            stmt.close();
+      try
+      {
+         cstmt.execute();
+         cstmt.close();
 
-            cstmt = con.prepareCall("{call rop4(?)}");
+         stmt.execute( "create procedure rop4 @data T_INTEGER OUTPUT as\r\n " + "begin\r\n" + "set @data = 1\r\n" + "end" );
+         stmt.close();
 
-            cstmt.registerOutParameter(1, Types.VARCHAR);
-            cstmt.execute();
+         cstmt = con.prepareCall( "{call rop4(?)}" );
 
-            assertEquals(cstmt.getInt(1), 1);
-            assertTrue(!cstmt.wasNull());
-            cstmt.close();
+         cstmt.registerOutParameter( 1, Types.VARCHAR );
+         cstmt.execute();
 
-            cstmt = con.prepareCall("rop4 ?");
+         assertEquals( cstmt.getInt( 1 ), 1 );
+         assertTrue( !cstmt.wasNull() );
+         cstmt.close();
 
-            cstmt.registerOutParameter(1, Types.VARCHAR);
-            cstmt.execute();
+         cstmt = con.prepareCall( "rop4 ?" );
 
-            assertEquals(cstmt.getInt(1), 1);
-            assertTrue(!cstmt.wasNull());
-            cstmt.close();
-        } finally {
-            stmt = con.createStatement();
-            stmt.execute("drop procedure rop4");
-            stmt.close();
+         cstmt.registerOutParameter( 1, Types.VARCHAR );
+         cstmt.execute();
 
-            cstmt = con.prepareCall("{call sp_droptype 'T_INTEGER'}");
-            cstmt.execute();
-            cstmt.close();
-        }
-    }
+         assertEquals( cstmt.getInt( 1 ), 1 );
+         assertTrue( !cstmt.wasNull() );
+         cstmt.close();
+      }
+      finally
+      {
+         // cleanup
+         dropProcedure( "rop4" );
+         dropType( "T_INTEGER" );
+      }
+   }
 
     /**
      * Test for bug [991640] java.sql.Date error and RAISERROR problem

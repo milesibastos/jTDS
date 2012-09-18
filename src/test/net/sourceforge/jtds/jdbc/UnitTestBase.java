@@ -18,15 +18,11 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Field;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
-
-import net.sourceforge.jtds.jdbc.Support;
-
 
 /**
  * Base class for unit tests which do not connect to a database.
@@ -34,7 +30,7 @@ import net.sourceforge.jtds.jdbc.Support;
  * @author David D. Kilzer
  * @version $Id: UnitTestBase.java,v 1.12 2005-12-22 17:24:07 ddkilzer Exp $
  */
-public abstract class UnitTestBase extends TestCase {
+public abstract class UnitTestBase extends DatabaseTestCase {
 
     /**
      * Constructor.

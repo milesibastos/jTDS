@@ -21,6 +21,8 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
+import junit.framework.Assert;
+
 /**
  * @version $Id: PreparedStatementTest.java,v 1.46.2.4 2009-12-30 12:15:49 ickzon Exp $
  */
@@ -29,6 +31,32 @@ public class PreparedStatementTest extends TestBase {
     public PreparedStatementTest(String name) {
         super(name);
     }
+
+   public void testBug657()
+      throws Exception
+   {
+      // prepare test data
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE #Bug657 (A int)" );
+
+      for( int i = 0; i < 100; i++ )
+      {
+         stmt.executeUpdate( "INSERT INTO #Bug657(A) VALUES("+ i +")" );
+      }
+
+      stmt.close();
+
+      // select limited data subset using TOP
+      PreparedStatement pstmt = con.prepareStatement( "SELECT * from #Bug657 Bug657X WHERE (Bug657X.A IN (SELECT TOP 50 A FROM #Bug657))" );
+      ResultSet rs = pstmt.executeQuery();
+
+      // ensure the correct number of rows is returned
+      for( int i = 0; i < 50; i ++ )
+      {
+         Assert.assertTrue( rs.next() );
+      }
+      Assert.assertFalse( rs.next() );
+   }
 
     public void testPreparedStatement() throws Exception {
         PreparedStatement pstmt = con.prepareStatement("SELECT * FROM #test");

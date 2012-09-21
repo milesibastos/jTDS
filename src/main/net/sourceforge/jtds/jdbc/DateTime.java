@@ -32,13 +32,6 @@ import java.util.GregorianCalendar;
  * @version $Id: DateTime.java,v 1.4.2.2 2009-08-20 19:44:04 ickzon Exp $
  */
 public class DateTime {
-    /** Per thread instance of Calendar used for conversions. */
-    private static ThreadLocal calendar = new ThreadLocal() {
-        @Override
-      protected synchronized Object initialValue() {
-            return new GregorianCalendar();
-        }
-    };
     /** Indicates date value not used. */
     static final int DATE_NOT_USED = Integer.MIN_VALUE;
     /** Indicates time value not used. */
@@ -104,21 +97,19 @@ public class DateTime {
      */
     DateTime(Timestamp ts) throws SQLException {
         tsValue = ts;
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
-        cal.setTime((java.util.Date) ts);
+        GregorianCalendar cal = new GregorianCalendar();
+        cal.setTime(ts);
 
-        if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
-            cal.set(Calendar.ERA, GregorianCalendar.AD);
-            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");   
-        }
+        if (cal.get(Calendar.ERA) != GregorianCalendar.AD)
+            throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
 
-        this.year   = (short)cal.get(Calendar.YEAR);
-        this.month  = (short)(cal.get(Calendar.MONTH) + 1);
-        this.day    = (short)cal.get(Calendar.DAY_OF_MONTH);
-        this.hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
-        this.minute = (short)cal.get(Calendar.MINUTE);
-        this.second = (short)cal.get(Calendar.SECOND);
-        this.millis = (short)cal.get(Calendar.MILLISECOND);
+        year   = (short)cal.get(Calendar.YEAR);
+        month  = (short)(cal.get(Calendar.MONTH) + 1);
+        day    = (short)cal.get(Calendar.DAY_OF_MONTH);
+        hour   = (short)cal.get(Calendar.HOUR_OF_DAY);
+        minute = (short)cal.get(Calendar.MINUTE);
+        second = (short)cal.get(Calendar.SECOND);
+        millis = (short)cal.get(Calendar.MILLISECOND);
         packDate();
         packTime();
         unpacked = true;
@@ -132,13 +123,11 @@ public class DateTime {
      */
     DateTime(Time t) throws SQLException {
         timeValue = t;
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
+        GregorianCalendar cal = new GregorianCalendar();
         cal.setTime(t);
 
-        if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
-            cal.set(Calendar.ERA, GregorianCalendar.AD);
+        if (cal.get(Calendar.ERA) != GregorianCalendar.AD)
             throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
-        }
 
         date   = DATE_NOT_USED;
         year   = 1900;
@@ -163,13 +152,11 @@ public class DateTime {
      */
     DateTime(Date d) throws SQLException {
         dateValue = d;
-        GregorianCalendar cal = (GregorianCalendar)calendar.get();
+        GregorianCalendar cal = new GregorianCalendar();
         cal.setTime(d);
 
-        if (cal.get(Calendar.ERA) != GregorianCalendar.AD) {
-            cal.set(Calendar.ERA, GregorianCalendar.AD);
+        if (cal.get(Calendar.ERA) != GregorianCalendar.AD)
             throw new SQLException(Messages.get("error.datetime.range.era"), "22007");
-        }
 
         year   = (short)cal.get(Calendar.YEAR);
         month  = (short)(cal.get(Calendar.MONTH) + 1);
@@ -335,7 +322,7 @@ public class DateTime {
             second = 0;
             millis = 0;
             if (date != DATE_NOT_USED) {
-                GregorianCalendar cal = (GregorianCalendar)calendar.get();
+                GregorianCalendar cal = new GregorianCalendar();
                 cal.set(Calendar.YEAR, year);
                 cal.set(Calendar.MONTH, month - 1);
                 cal.set(Calendar.DAY_OF_MONTH, day);
@@ -358,7 +345,7 @@ public class DateTime {
             if (!unpacked) {
                 unpackDateTime();
             }
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month - 1);
             cal.set(Calendar.DAY_OF_MONTH, day);
@@ -381,7 +368,7 @@ public class DateTime {
             if (!unpacked) {
                 unpackDateTime();
             }
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month - 1);
             cal.set(Calendar.DAY_OF_MONTH, day);
@@ -404,7 +391,7 @@ public class DateTime {
             if (!unpacked) {
                 unpackDateTime();
             }
-            GregorianCalendar cal = (GregorianCalendar)calendar.get();
+            GregorianCalendar cal = new GregorianCalendar();
             cal.set(Calendar.YEAR, 1970);
             cal.set(Calendar.MONTH, 0);
             cal.set(Calendar.DAY_OF_MONTH, 1);

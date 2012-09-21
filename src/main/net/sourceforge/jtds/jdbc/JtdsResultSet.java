@@ -14,22 +14,37 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+
 package net.sourceforge.jtds.jdbc;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.net.URL;
 import java.net.MalformedURLException;
-import java.sql.*;
+import java.net.URL;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayList;
-import java.text.NumberFormat;
-import java.io.UnsupportedEncodingException;
-import java.io.InputStreamReader;
 
 /**
  * jTDS Implementation of the java.sql.ResultSet interface supporting forward read
@@ -50,7 +65,7 @@ public class JtdsResultSet implements ResultSet {
      * Constants for backwards compatibility with JDK 1.3
      */
     static final int HOLD_CURSORS_OVER_COMMIT = 1;
-    static final int CLOSE_CURSORS_AT_COMMIT = 2;
+    static final int CLOSE_CURSORS_AT_COMMIT  = 2;
 
     protected static final int POS_BEFORE_FIRST = 0;
     protected static final int POS_AFTER_LAST = -1;
@@ -125,9 +140,9 @@ public class JtdsResultSet implements ResultSet {
         this.resultSetType = resultSetType;
         this.concurrency = concurrency;
         this.columns = columns;
-        this.fetchSize = statement.fetchSize;
-        this.fetchDirection = statement.fetchDirection;
-        this.cursorName  = statement.cursorName;
+        fetchSize = statement.fetchSize;
+        fetchDirection = statement.fetchDirection;
+        cursorName  = statement.cursorName;
 
         if (columns != null) {
             columnCount  = getColumnCount(columns);
@@ -154,7 +169,7 @@ public class JtdsResultSet implements ResultSet {
      * @return The column descriptors as a <code>ColInfo[]</code>.
      */
     protected ColInfo[] getColumns() {
-        return this.columns;
+        return columns;
     }
 
     /**
@@ -371,7 +386,7 @@ public class JtdsResultSet implements ResultSet {
      */
     protected Object[] getCurrentRow()
     {
-        return this.currentRow;
+        return currentRow;
     }
 
     /**
@@ -416,13 +431,13 @@ public class JtdsResultSet implements ResultSet {
     public int getConcurrency() throws SQLException {
         checkOpen();
 
-        return this.concurrency;
+        return concurrency;
     }
 
     public int getFetchDirection() throws SQLException {
         checkOpen();
 
-        return this.fetchDirection;
+        return fetchDirection;
     }
 
     public int getFetchSize() throws SQLException {
@@ -464,6 +479,20 @@ public class JtdsResultSet implements ResultSet {
         statement.clearWarnings();
     }
 
+   /**
+    * Retrieves whether this <code>ResultSet</code> object has been closed. A
+    * <code>ResultSet</code> is closed if the method close has been called on
+    * it, or if it is automatically closed.
+    *
+    * @return
+    *    true if this <code>ResultSet</code> object is closed; false if it is
+    *    still open
+    */
+   public boolean isClosed()
+   {
+      return closed;
+   }
+    
     public void close() throws SQLException {
         if (!closed) {
             try {
@@ -663,13 +692,13 @@ public class JtdsResultSet implements ResultSet {
         switch (direction) {
         case FETCH_UNKNOWN:
         case FETCH_REVERSE:
-            if (this.resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
+            if (resultSetType == ResultSet.TYPE_FORWARD_ONLY) {
                 throw new SQLException(Messages.get("error.resultset.fwdonly"), "24000");
             }
             // Fall through
 
         case FETCH_FORWARD:
-            this.fetchDirection = direction;
+            fetchDirection = direction;
             break;
 
         default:
@@ -694,7 +723,7 @@ public class JtdsResultSet implements ResultSet {
         if (rows == 0) {
             rows = statement.getDefaultFetchSize();
         }
-        this.fetchSize = rows;
+        fetchSize = rows;
     }
 
     public void updateNull(int columnIndex) throws SQLException {
@@ -914,7 +943,7 @@ public class JtdsResultSet implements ResultSet {
     public String getCursorName() throws SQLException {
         checkOpen();
         if (cursorName != null) {
-            return this.cursorName;
+            return cursorName;
         }
         throw new SQLException(Messages.get("error.resultset.noposupdate"), "24000");
     }
@@ -1125,7 +1154,7 @@ public class JtdsResultSet implements ResultSet {
         boolean useLOBs = this instanceof CachedResultSet && statement.isClosed()
                 ? false
                 : getConnection().getUseLOBs();
-        return new JtdsResultSetMetaData(this.columns, this.columnCount,
+        return new JtdsResultSetMetaData(columns, columnCount,
                 useLOBs);
     }
 
@@ -1138,7 +1167,7 @@ public class JtdsResultSet implements ResultSet {
     public Statement getStatement() throws SQLException {
         checkOpen();
 
-        return this.statement;
+        return statement;
     }
 
     public Time getTime(int columnIndex) throws SQLException {
@@ -1425,14 +1454,6 @@ public class JtdsResultSet implements ResultSet {
      * @see java.sql.ResultSet#getSQLXML(java.lang.String)
      */
     public SQLXML getSQLXML(String columnLabel) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
-    }
-
-    /* (non-Javadoc)
-     * @see java.sql.ResultSet#isClosed()
-     */
-    public boolean isClosed() throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }

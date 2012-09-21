@@ -1,6 +1,12 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/21/2012 - Holger Rehn
+ o Fixed memory pollution caused by ThreadLocal Calendar instances (bug #661).
+ o Improved fix for bug #561 and bug #619 by not re-using GregorianCalendar
+   instances anymore.
+ o Implemented ResultSet.isClosed() method defined in JDBC 4.0 (bug #665).
+
 09/20/2012 - Holger Rehn
  o Added test for bug #657.
 
@@ -13,7 +19,7 @@ Changes from jTDS 1.2.6
  o Fixed jTDS version reported by the driver.
 
 08/22/2012 - Holger Rehn
- o Updated feature matrix for SQL Server 2008 compatibility (Bug #643).
+ o Updated feature matrix for SQL Server 2008 compatibility (bug #643).
 
 08/21/2012 - Holger Rehn
  o Applied build system changes proposed by Rainer Schwarze in patch #105.
@@ -22,15 +28,15 @@ Changes from jTDS 1.2.6
    DES and MD5 routines instead of our own implementations.
 
 08/17/2012 - Holger Rehn
- o Added service provider configuration file for JDBC driver class (Bug #659).
+ o Added service provider configuration file for JDBC driver class (bug #659).
  o Applied patch provided by Rainer Schwarze to reduce log pollution during
-   emulated XA recovery (Bug #656).
+   emulated XA recovery (bug #656).
  o Fixed spurious login timeouts that could occur in case multiple connections
-   are established concurrently (Bug #667).
+   are established concurrently (bug #667).
  o Corrected bug, a stream hasn't been closed in CharsetInfo (Bug #642).
 
 08/16/2012 - Holger Rehn
- o Fixed typos in Messages.properties (Bug #608).
+ o Fixed typos in Messages.properties (bug #608).
  o Removed build scripts for older Java versions.
  o Re-included tests not compatible with older Java versions.
  o Updated project web site.
@@ -39,7 +45,7 @@ Changes from jTDS 1.2.6
  o Upgraded JUnit to version 4.10.
  o Upgraded jCIFS to version 1.3.17
  o Removed Java 1.3/JDBC 2 compatibility code.
- o Removed WebRing code from the project web site (Bug #660).
+ o Removed WebRing code from the project web site (bug #660).
  o Fixed a race condition when closing a JtdsStatement in multiple threads
    concurrently (Patch #121, #118).
 

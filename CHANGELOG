@@ -2,6 +2,13 @@ Changes from jTDS 1.2.6
 =======================
 
 09/21/2012 - Holger Rehn
+ o Fixed possible NPEs in JtdsObjectFactory (bug #633).
+ o Added missing getter/setter methods for connection property "autoCommit" in
+   class JtdsDataSource.
+ o Corrected data types for connection properties "autoCommit" and "useNTLMv2".
+ o Added missing properties to JtdsObjectFactoryUnitTest.testNoProperties().
+ o Added missing default for connection property "useNTLMv2".
+ o Corrected and simplified JtdsObjectFactoryTest and JtdsDataSourceTest.
  o Fixed memory pollution caused by ThreadLocal Calendar instances (bug #661).
  o Improved fix for bug #561 and bug #619 by not re-using GregorianCalendar
    instances anymore.

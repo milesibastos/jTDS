@@ -123,6 +123,8 @@ public final class DefaultProperties {
     public static final String USEJCIFS = "false";
     /** Default <code>useLOBs</code> property. */
     public static final String USELOBS = "true";
+    /** Default <code>useNTLMv2</code> property. */
+    public static final String USENTLMV2 = "false";
     /** Default <code>user</code> property. */
     public static final String USER = "";
     /** Default <code>wsid</code> property. */
@@ -243,6 +245,7 @@ public final class DefaultProperties {
         addDefaultPropertyIfNotSet(props, Driver.LOGFILE, LOGFILE);
         addDefaultPropertyIfNotSet(props, Driver.SSL, SSL);
         addDefaultPropertyIfNotSet(props, Driver.USECURSORS, USECURSORS);
+        addDefaultPropertyIfNotSet(props, Driver.USENTLMV2, USENTLMV2);
         addDefaultPropertyIfNotSet(props, Driver.BUFFERMAXMEMORY, BUFFER_MAX_MEMORY);
         addDefaultPropertyIfNotSet(props, Driver.BUFFERMINPACKETS, BUFFER_MIN_PACKETS);
         addDefaultPropertyIfNotSet(props, Driver.USELOBS, USELOBS);

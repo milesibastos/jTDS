@@ -1,6 +1,13 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/22/2012 - Holger Rehn
+ o Fixed a number of incorrect error messages.
+ o An attempt to execute a standard SQL statement using a CallableStatement now
+   throws an appropriate SQLException on preparation instead of spurious errors
+   when setting parameter values (bug #637).
+ o Test for bug #637.
+
 09/21/2012 - Holger Rehn
  o Fixed possible NPEs in JtdsObjectFactory (bug #633).
  o Added missing getter/setter methods for connection property "autoCommit" in

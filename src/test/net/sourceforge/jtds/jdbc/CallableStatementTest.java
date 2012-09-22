@@ -945,6 +945,41 @@ public class CallableStatementTest extends TestBase {
         cstmt.close();
     }
 
+   /**
+    *
+    */
+   public void testBug637()
+      throws Exception
+   {
+      Statement stm = con.createStatement();
+      stm.executeUpdate( "create table #testBug637( a int, b int )" );
+
+      CallableStatement stmt = null;
+
+      try
+      {
+         // prepareCall() should fail, this is no procedure call
+         stmt = con.prepareCall( "INSERT INTO #testBug637( a, b ) VALUES( ?, ? )" );
+         stmt.setInt( 1, 1 );
+         // this failed prior to SVN revision 1146
+         stmt.setInt( 2, 2 );
+
+         fail();
+      }
+      catch( SQLException sqle )
+      {
+         assertEquals( "07000", sqle.getSQLState() );
+      }
+      finally
+      {
+         if( stmt != null )
+         {
+            stmt.close();
+         }
+      }
+      stm.close();
+   }
+
     /**
      * Test that output result sets, return values and output parameters are
      * correctly handled for a remote procedure call.

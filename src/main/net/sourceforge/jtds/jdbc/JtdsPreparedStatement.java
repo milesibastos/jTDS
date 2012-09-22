@@ -161,8 +161,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      *
      * @param sql the SQL statement to process
      * @return the SQL, possibly in original form
+     *
+     * @throws SQLException
+     *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
+     *    DELETE statement instead of a procedure call
      */
-    protected static String normalizeCall(String sql) {
+    protected static String normalizeCall(String sql)
+       throws SQLException
+    {
         String original = sql;
         sql = sql.trim();
 
@@ -187,6 +193,14 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 
             // OK now reconstruct as JDBC escaped call
             return "{?=call " + sql + '}';
+        }
+
+        if( sql.length() > 6 )
+        {
+           String sub = sql.substring( 0, 6 );
+           // check for a more or less common mistake to execute a normal statement via CallableStatement
+           if( sub.equalsIgnoreCase( "insert" ) || sub.equalsIgnoreCase( "update" ) || sub.equalsIgnoreCase( "delete" ) )
+              throw new SQLException( Messages.get( "error.parsesql.noprocedurecall" ), "07000" );
         }
 
         return "{call " + sql + '}';

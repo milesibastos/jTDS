@@ -21,7 +21,10 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 
 import jcifs.Config;
 import jcifs.smb.NtlmPasswordAuthentication;
@@ -87,6 +90,49 @@ public class SharedNamedPipe extends SharedSocket {
         setIn(new DataInputStream(
                 new BufferedInputStream(
                         getPipe().getNamedPipeInputStream(), bufferSize)));
+    }
+
+    String getMAC()
+    {
+       try
+       {
+          Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
+
+          while( nics.hasMoreElements() )
+          {
+             NetworkInterface nic = nics.nextElement();
+             try
+             {
+                if( ! nic.isLoopback() && ! nic.isVirtual() )
+                {
+                   byte[] address = nic.getHardwareAddress();
+
+                   if( address != null )
+                   {
+                      String mac = "";
+
+                      for( int k = 0; k < address.length; k ++ )
+                      {
+                         String macValue = String.format("%02X", address[k] );
+                         mac += macValue;
+                      }
+
+                      return mac;
+                   }
+                }
+             }
+             catch( SocketException e )
+             {
+                // ignore errors for single NICs
+             }
+          }
+       }
+       catch( SocketException e )
+       {
+          // error getting network interfaces, return null
+       }
+
+       return null;
     }
 
     /**

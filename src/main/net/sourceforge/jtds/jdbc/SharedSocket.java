@@ -28,6 +28,7 @@ import java.io.RandomAccessFile;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -83,14 +84,6 @@ class SharedSocket {
          */
         final LinkedList pktQueue;
         /**
-         * True to discard network data.
-         */
-        boolean flushInput;
-        /**
-         * True if output is complete TDS packet.
-         */
-        boolean complete;
-        /**
          * File object for disk packet queue.
          */
         File queueFile;
@@ -111,14 +104,12 @@ class SharedSocket {
          * @param streamId the Response/Request stream id.
          */
         VirtualSocket(int streamId) {
-            this.owner = streamId;
-            this.pktQueue = new LinkedList();
-            this.flushInput = false;
-            this.complete = false;
-            this.queueFile = null;
-            this.diskQueue = null;
-            this.pktsOnDisk = 0;
-            this.inputPkts = 0;
+            owner = streamId;
+            pktQueue = new LinkedList();
+            queueFile = null;
+            diskQueue = null;
+            pktsOnDisk = 0;
+            inputPkts = 0;
         }
     }
 
@@ -218,11 +209,11 @@ class SharedSocket {
      * Synchronization monitor for {@link #cancelPending} and
      * {@link #responseOwner}.
      */
-    private Object cancelMonitor = new Object();
+    private final Object cancelMonitor = new Object();
     /**
      * Buffer for TDS_DONE packets
      */
-    private byte doneBuffer[] = new byte[TDS_DONE_LEN];
+    private final byte doneBuffer[] = new byte[TDS_DONE_LEN];
     /**
      * How much of the doneBuffer has been filled with data, <TDS_DONE_LEN IFF partial packet read.
      */
@@ -255,14 +246,14 @@ class SharedSocket {
      */
     SharedSocket(JtdsConnection connection) throws IOException, UnknownHostException {
         this(connection.getBufferDir(), connection.getTdsVersion(), connection.getServerType());
-        this.host = connection.getServerName();
-        this.port = connection.getPortNumber();
-        this.socket = createSocketForJDBC3(connection);
+        host = connection.getServerName();
+        port = connection.getPortNumber();
+        socket = createSocketForJDBC3(connection);
         setOut(new DataOutputStream(socket.getOutputStream()));
         setIn(new DataInputStream(socket.getInputStream()));
-        this.socket.setTcpNoDelay(connection.getTcpNoDelay());
-        this.socket.setSoTimeout(connection.getSocketTimeout() * 1000);
-        this.socket.setKeepAlive(connection.getSocketKeepAlive());
+        socket.setTcpNoDelay(connection.getTcpNoDelay());
+        socket.setSoTimeout(connection.getSocketTimeout() * 1000);
+        socket.setKeepAlive(connection.getSocketKeepAlive());
     }
 
     /**
@@ -326,6 +317,34 @@ class SharedSocket {
             return new Socket(host, port);
         }
     }
+
+   String getMAC()
+   {
+      try
+      {
+         NetworkInterface nic = NetworkInterface.getByInetAddress( socket.getLocalAddress() );
+         byte[] address = nic == null ? null : nic.getHardwareAddress();
+
+         if( address != null )
+         {
+            String mac = "";
+
+            for( int k = 0; k < address.length; k ++ )
+            {
+               String macValue = String.format("%02X", address[k] );
+               mac += macValue;
+            }
+
+            return mac;
+         }
+      }
+      catch( SocketException e )
+      {
+         // error getting network interfaces, return null
+      }
+
+      return null;
+   }
 
     /**
      * Enable TLS encryption by creating a TLS socket over the
@@ -489,7 +508,7 @@ class SharedSocket {
      * @return <code>true</code> if the underlying socket is connected
      */
     boolean isConnected() {
-        return this.socket != null;
+        return socket != null;
     }
 
     /**
@@ -507,7 +526,7 @@ class SharedSocket {
         synchronized (cancelMonitor) {
             //
             // Only send if response pending for the caller.
-            // Caller must have aquired connection mutex first.
+            // Caller must have acquired connection mutex first.
             // NB. This method will not work with local named pipes
             // as this thread will be blocked in the write until the
             // reading thread has returned from the read.
@@ -976,8 +995,8 @@ class SharedSocket {
      * @return the 16 bit unsigned value as an <code>int</code>
      */
     static int getPktLen(byte buf[]) {
-        int lo = ((int) buf[3] & 0xff);
-        int hi = (((int) buf[2] & 0xff) << 8);
+        int lo = (buf[3] & 0xff);
+        int hi = ((buf[2] & 0xff) << 8);
 
         return hi | lo;
     }
@@ -1042,7 +1061,7 @@ class SharedSocket {
      * @return the host name as a <code>String</code>
      */
     protected String getHost() {
-        return this.host;
+        return host;
     }
 
     /**
@@ -1051,7 +1070,7 @@ class SharedSocket {
      * @return the host port as an <code>int</code>
      */
     protected int getPort() {
-        return this.port;
+        return port;
     }
 
     /**

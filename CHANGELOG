@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/24/2012 - Holger Rehn
+ o The driver now uses a real MAC address, if available and no address has been
+   specified via connection property (bug #672).
+
 09/22/2012 - Holger Rehn
  o Fixed a number of incorrect error messages.
  o An attempt to execute a standard SQL statement using a CallableStatement now

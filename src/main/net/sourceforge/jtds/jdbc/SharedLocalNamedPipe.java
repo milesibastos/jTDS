@@ -18,6 +18,9 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.io.*;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 
 /**
  * This class implements inter-process communication (IPC) to the database
@@ -58,16 +61,59 @@ public class SharedLocalNamedPipe extends SharedSocket {
         String namedPipePath = DefaultProperties.getNamedPipePath(connection.getServerType());
         pipeName.append(namedPipePath.replace('/', '\\'));
 
-        this.pipe = new RandomAccessFile(pipeName.toString(), "rw");
+        pipe = new RandomAccessFile(pipeName.toString(), "rw");
 
         final int bufferSize = Support.calculateNamedPipeBufferSize(
                 connection.getTdsVersion(), connection.getPacketSize());
         setOut(new DataOutputStream(
                 new BufferedOutputStream(
-                        new FileOutputStream(this.pipe.getFD()), bufferSize)));
+                        new FileOutputStream(pipe.getFD()), bufferSize)));
         setIn(new DataInputStream(
                 new BufferedInputStream(
-                        new FileInputStream(this.pipe.getFD()), bufferSize)));
+                        new FileInputStream(pipe.getFD()), bufferSize)));
+    }
+
+    String getMAC()
+    {
+       try
+       {
+          Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
+
+          while( nics.hasMoreElements() )
+          {
+             NetworkInterface nic = nics.nextElement();
+             try
+             {
+                if( ! nic.isLoopback() && ! nic.isVirtual() )
+                {
+                   byte[] address = nic.getHardwareAddress();
+
+                   if( address != null )
+                   {
+                      String mac = "";
+
+                      for( int k = 0; k < address.length; k ++ )
+                      {
+                         String macValue = String.format("%02X", address[k] );
+                         mac += macValue;
+                      }
+
+                      return mac;
+                   }
+                }
+             }
+             catch( SocketException e )
+             {
+                // ignore errors for single NICs
+             }
+          }
+       }
+       catch( SocketException e )
+       {
+          // error getting network interfaces, return null
+       }
+
+       return null;
     }
 
     /**

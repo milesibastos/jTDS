@@ -282,13 +282,13 @@
           attempting to connect to the server.  If <code>loginTimeout</code> is zero
           (the default), a value of 20 seconds is used for the named pipe retry
           period.</dd>
-        <dt><code>macAddress</code> (default - <code>"000000000000"</code>)</dt>
+        <dt><code>macAddress</code> (default - real MAC address if available, otherwise <code>"000000000000"</code>)</dt>
         <dd>Network interface card MAC address. It's displayed by Enterprise
           Manager or Profiler associated with the connection and is needed to
           resolve some issues regarding the number of clients allowed by the
-          SQL Server license. The MAC address cannot be determined automatically
-          from Java (i.e. without using native code) so you'll have to specify
-          it yourself if you need it.</dd>
+          SQL Server license. The MAC address is determined automatically from
+          the network interface used to connect the server (or a random non-loopback
+          network interface if using named pipes to connect to a database).</dd>
         <dt><code>maxStatements</code> (default - <code>500</code>)</dt>
         <dd>The number of statement prepares each connection should cache.
           A value of <code>0</code> will disable statement caching.

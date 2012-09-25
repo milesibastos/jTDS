@@ -30,6 +30,36 @@ public class StatementTest extends TestBase {
     }
 
     /**
+     * Test for bug #669, no error if violating unique constraint in update.
+     */
+    public void testDuplicateKey()
+       throws Exception
+    {
+       Statement st = con.createStatement();
+       st.executeUpdate( "create table #Bug669 (A int, unique (A))" );
+       st.executeUpdate( "insert into #Bug669 values( 1 )" );
+       try
+       {
+          st.executeUpdate( "insert into #Bug669 values( 1 )" );
+          fail();
+       }
+       catch( SQLException e )
+       {
+         // expected, unique constraint violation
+       }
+       try
+       {
+          st.execute( "insert into #Bug669 values( 1 )" );
+          fail();
+       }
+       catch( SQLException e )
+       {
+         // expected, unique constraint violation
+       }
+       st.close();
+    }
+
+    /**
      * Test for bug [1694194], queryTimeout does not work on MSSQL2005 when
      * property 'useCursors' is set to 'true'. Furthermore, the test also
      * checks timeout with a query that cannot use a cursor. <p>
@@ -49,7 +79,7 @@ public class StatementTest extends TestBase {
             fail("query did not time out");
         } catch (SQLException e) {
             assertEquals("HYT00", e.getSQLState());
-            assertEquals(1000, System.currentTimeMillis() - start, 10);
+            assertEquals(1000, System.currentTimeMillis() - start, 50);
         }
 
         st.execute("create table #dummy1(A varchar(200))");
@@ -73,7 +103,7 @@ public class StatementTest extends TestBase {
             fail("query did not time out");
         } catch (SQLException e) {
             assertEquals("HYT00", e.getSQLState());
-            assertEquals(1000, System.currentTimeMillis() - start, 10);
+            assertEquals(1000, System.currentTimeMillis() - start, 50);
         }
 
         st.close();

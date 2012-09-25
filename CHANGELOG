@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/25/2012 - Holger Rehn
+ o Added test for bug #669.
+ o Fixed StatementTest to be less strict when checking query timeout.
+
 09/24/2012 - Holger Rehn
  o The driver now uses a real MAC address, if available and no address has been
    specified via connection property (bug #672).

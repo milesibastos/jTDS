@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/27/2012 - Holger Rehn
+ o PreparedStatementTest.testPrepareFailWarning() doesn't fail anymore when run
+   against newer SQL Server versions or Sybase ASE.
+
 09/26/2012 - Holger Rehn
  o Added test for bug #634.
 

@@ -556,6 +556,8 @@ class SQLParser {
             skipWhiteSpace();
             return in[s] == terminator;
         }
+
+        append( "convert(datetime,".toCharArray() );
         append('\'');
         terminator = (in[s] == '\'' || in[s] == '"') ? in[s++] : '}';
         skipWhiteSpace();
@@ -617,6 +619,7 @@ class SQLParser {
 
         skipWhiteSpace();
         append('\'');
+        append(')');
 
         return true;
     }
@@ -1040,6 +1043,14 @@ class SQLParser {
         }
         return name.toString();
     }
+
+   private final void append( char[] chars )
+   {
+      for( char c : chars )
+      {
+         append( c );
+      }
+   }
 
    /**
     * <p> Adds the given character to {@link #out}, incrementing {@link #d} by

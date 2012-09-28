@@ -1398,49 +1398,56 @@ public class ResultSetTest extends DatabaseTestCase {
      * remained inside a packet and further attempts to dump the rest of the
      * response failed because of "protocol confusions".
      */
-    public void testOutOfMemory() throws SQLException {
-        Statement stmt = con.createStatement();
-        stmt.executeUpdate("create table #testOutOfMemory (val binary(8000))");
+   public void testOutOfMemory()
+      throws SQLException
+   {
+      Statement stmt = con.createStatement();
+      stmt.executeUpdate( "create table #testOutOfMemory (val binary(8000))" );
 
-        // Insert a 8KB value
-        byte[] val = new byte[8000];
-        PreparedStatement pstmt = con.prepareStatement(
-                "insert into #testOutOfMemory (val) values (?)");
-        pstmt.setBytes(1, val);
-        assertEquals(1, pstmt.executeUpdate());
-        pstmt.close();
+      // Insert 64kB values
+      byte[] val = new byte[64000];
+      PreparedStatement pstmt = con.prepareStatement( "insert into #testOutOfMemory (val) values (?)" );
+      pstmt.setBytes( 1, val );
+      assertEquals( 1, pstmt.executeUpdate() );
+      pstmt.close();
 
-        // Create a list and keep adding rows to it until we run out of memory
-        // Most probably this will happen in the middle of a row packet, when
-        // jTDS tries to allocate the array, after reading the data length
-        ArrayList results = new ArrayList();
-        ResultSet rs = null;
-        try {
-            while (true) {
-                rs = stmt.executeQuery("select val from #testOutOfMemory");
-                assertTrue(rs.next());
-                results.add(rs.getBytes(1));
-                assertFalse(rs.next());
-                rs.close();
-                rs = null;
-            }
-        } catch (OutOfMemoryError err) {
-            // Do not remove this. Although not really used, it will free
-            // memory, avoiding another OutOfMemoryError
-            results = null;
-            if (rs != null) {
-                // This used to fail, because the parser got confused
-                rs.close();
-            }
-        }
+      // Create a list and keep adding rows to it until we run out of memory
+      // Most probably this will happen in the middle of a row packet, when
+      // jTDS tries to allocate the array, after reading the data length
+      ArrayList results = new ArrayList();
+      ResultSet rs = null;
+      try
+      {
+         while( true )
+         {
+            rs = stmt.executeQuery( "select val from #testOutOfMemory" );
+            assertTrue( rs.next() );
+            results.add( rs.getBytes( 1 ) );
+            assertFalse( rs.next() );
+            rs.close();
+            rs = null;
+         }
+      }
+      catch( OutOfMemoryError err )
+      {
+         // Do not remove this. Although not really used, it will free
+         // memory, avoiding another OutOfMemoryError
+         val = null;
+         results = null;
+         if( rs != null )
+         {
+            // This used to fail, because the parser got confused
+            rs.close();
+         }
+      }
 
-        // Make sure the Statement still works
-        rs = stmt.executeQuery("select 1");
-        assertTrue(rs.next());
-        assertFalse(rs.next());
-        rs.close();
-        stmt.close();
-    }
+      // Make sure the Statement still works
+      rs = stmt.executeQuery( "select 1" );
+      assertTrue( rs.next() );
+      assertFalse( rs.next() );
+      rs.close();
+      stmt.close();
+   }
 
     /**
      * Test for bug [1182066] regression bug resultset: relative() not working

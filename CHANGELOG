@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 09/28/2012 - Holger Rehn
+ o Corrected JUnit test for timestamp values prior to 06/15/1940 0:00:00.
  o Fixed bug #676, error in SQL parser concerning multi line comments.
  o Fixed bug #541, data type mismatch when using {ts}/{t}/{d} JDBC escapes and
    added regression tests.

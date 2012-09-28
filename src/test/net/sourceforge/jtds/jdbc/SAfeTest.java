@@ -1029,58 +1029,51 @@ public class SAfeTest extends DatabaseTestCase {
      * Test that dates prior to 06/15/1940 0:00:00 are stored and retrieved
      * correctly.
      */
-    public void testOldDates0016() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #SAfe0016(id INT, value DATETIME)");
+    public void testOldDates0016()
+       throws Exception
+    {
+       Statement stmt = con.createStatement();
+       stmt.execute( "CREATE TABLE #SAfe0016(id INT, value DATETIME)" );
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String[] dates = {
-            "1983-10-30 02:00:00",
-            "1983-10-30 01:59:59",
-            "1940-06-14 23:59:59",
-            "1911-03-11 00:51:39",
-            "1911-03-11 00:51:38",
-            "1900-01-01 01:00:00",
-            "1900-01-01 00:59:59",
-            "1900-01-01 00:09:21",
-            "1900-01-01 00:09:20",
-            "1753-01-01 00:00:00"
-        };
+       SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
+       String[] dates = {
+                          "2011-11-11 11:11:11",
+                          "1983-10-30 02:00:00",
+                          "1983-10-30 01:59:59",
+                          "1940-06-14 23:59:59",
+                          "1911-03-11 00:51:39",
+                          "1911-03-11 00:51:38",
+                          "1900-01-01 01:00:00",
+                          "1900-01-01 00:59:59",
+                          "1900-01-01 00:09:21",
+                          "1900-01-01 00:09:20",
+                          "1753-01-01 00:00:00"
+                       };
 
-        // Insert the timestamps
-        PreparedStatement pstmt =
-                con.prepareStatement("INSERT INTO #SAfe0016 VALUES(?, ?)");
+       // insert test values
+       PreparedStatement pstmt = con.prepareStatement( "INSERT INTO #SAfe0016 VALUES(?, ?)" );
 
-        for (int i = 0; i < dates.length; i++) {
-            pstmt.setInt(1, i);
-            pstmt.setString(2, dates[i]);
-            pstmt.addBatch();
-        }
+       for( int i = 0; i < dates.length; i++ )
+       {
+          pstmt.setInt( 1, i );
+          pstmt.setTimestamp( 2, new Timestamp( format.parse( dates[i] ).getTime() ) );
+          assertEquals( 1, pstmt.executeUpdate() );
+       }
 
-        int[] res = pstmt.executeBatch();
-        // Check that the insertion went ok
+       // read back test values and make sure they are the same
+       ResultSet rs = stmt.executeQuery( "SELECT value FROM #SAfe0016 ORDER BY id" );
 
-        assertEquals(dates.length, res.length);
+       int counter = 0;
 
-        for (int i = 0; i < dates.length; i++) {
-            assertEquals(1, res[i]);
-        }
+       while( rs.next() )
+       {
+          assertEquals( dates[counter], format.parse( dates[counter] ).getTime(), rs.getTimestamp( 1 ).getTime() );
+          counter ++;
+       }
 
-        // Select the timestamps and make sure they are the same
-        ResultSet rs = stmt.executeQuery(
-                "SELECT value FROM #SAfe0016 ORDER BY id");
-
-        int counter = 0;
-
-        while (rs.next()) {
-            assertEquals(format.parse(dates[counter]), rs.getTimestamp(1));
-            ++counter;
-        }
-
-        // Close everything
-        rs.close();
-        stmt.close();
-        pstmt.close();
+       rs.close();
+       stmt.close();
+       pstmt.close();
     }
 
     /**
@@ -1817,7 +1810,7 @@ public class SAfeTest extends DatabaseTestCase {
         }
         stmt.close();
     }
-    
+
     /**
      * Test for bug [1596743] executeQuery absorbs thread interrupt status
      */

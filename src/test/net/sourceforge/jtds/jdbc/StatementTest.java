@@ -37,7 +37,7 @@ public class StatementTest extends TestBase {
     {
        Statement st = con.createStatement();
 
-       st.executeUpdate( "create table /*/ comment '\"?@[*-} /**/*/ #Bug676a (A int)" );
+       st.executeUpdate( "create table /*/ comment '\"?@[*-} /**/*/ #Bug676a (A int) /* */" );
 
        try
        {

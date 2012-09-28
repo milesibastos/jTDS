@@ -468,7 +468,6 @@ class SQLParser {
                         "22025");
             }
         } while (block > 0);
-        append(in[s++]);
     }
 
     /**

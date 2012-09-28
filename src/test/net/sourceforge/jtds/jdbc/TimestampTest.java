@@ -2465,36 +2465,116 @@ public class TimestampTest extends DatabaseTestCase {
 
            PreparedStatement ps1 = con.prepareStatement("update #t_" + type + " set data=? where id=0");
            PreparedStatement ps2 = con.prepareStatement("select data from #t_" + type);
-   
+
             // read previous value
             ResultSet rs = ps2.executeQuery();
             rs.next();
             Timestamp ts2 = rs.getTimestamp(1);
 
-            // compare current value to initial value 
+            // compare current value to initial value
             assertEquals(type + " value degenerated: ", ts1.toString(), ts2.toString());
             rs.close();
 
             // update DB with current value
             ps1.setTimestamp(1, ts2);
             ps1.executeUpdate();
-   
+
             ps1.close();
             ps2.close();
             stmt.close();
         }
     }
 
-    public void testEscaping() throws SQLException {
-        Statement st = con.createStatement();
-        ResultSet rs = st.executeQuery("SELECT 'a',{ts '2007-10-19 10:20:30.000'}");
+    /**
+     * Test for bug #541, data type mismatch when using date/time/timestamp JDBC
+     * escapes.
+     */
+    public void testDateEscaping()
+       throws SQLException
+    {
+       String val = "1970-12-21";
+       Date   ref = Date.valueOf( val );
 
-        assertTrue(rs.next());
-        assertEquals("2007-10-19 10:20:30.000", rs.getString(2).toString());
-        assertEquals("2007-10-19 10:20:30.000", rs.getTimestamp(2).toString());
+       Statement st = con.createStatement();
+       ResultSet rs = st.executeQuery( "SELECT {d '" + val + "'}" );
 
-        rs.close();
-        st.close();
+       assertTrue  ( rs.next() );
+       assertEquals( 1, rs.getMetaData().getColumnCount() );
+       // assertEquals( Types.DATE, rs.getMetaData().getColumnType( 1 ) );
+       assertEquals( Types.TIMESTAMP, rs.getMetaData().getColumnType( 1 ) );
+       assertEquals( ref, rs.getDate( 1 ) );
+
+       rs.close();
+       st.close();
+    }
+
+    /**
+     * Test for bug #541, data type mismatch when using date/time/timestamp JDBC
+     * escapes.
+     */
+    public void testTimeEscaping()
+       throws SQLException
+    {
+       String val = "14:41:11";
+       Time   ref = Time.valueOf( val );
+
+       Statement st = con.createStatement();
+       ResultSet rs = st.executeQuery( "SELECT {t '" + val + "'}" );
+
+       assertTrue  ( rs.next() );
+       assertEquals( 1, rs.getMetaData().getColumnCount() );
+       // assertEquals( Types.TIME, rs.getMetaData().getColumnType( 1 ) );
+       assertEquals( Types.TIMESTAMP, rs.getMetaData().getColumnType( 1 ) );
+       assertEquals( ref, rs.getTime( 1 ) );
+
+       rs.close();
+       st.close();
+    }
+
+    /**
+     * Test for bug #541, data type mismatch when using date/time/timestamp JDBC
+     * escapes.
+     */
+    public void testTimestampEscaping()
+       throws SQLException
+    {
+       String    val = "1970-12-21 14:41:11.400";
+       Timestamp ref = Timestamp.valueOf( val );
+
+       Statement st = con.createStatement();
+       ResultSet rs = st.executeQuery( "SELECT {ts '" + val + "'}" );
+
+       assertTrue  ( rs.next() );
+       assertEquals( 1, rs.getMetaData().getColumnCount() );
+       assertEquals( Types.TIMESTAMP, rs.getMetaData().getColumnType( 1 ) );
+       assertEquals( ref, rs.getTimestamp( 1 ) );
+
+       rs.close();
+       st.close();
+    }
+
+    /**
+     * Test for bug #541, data type mismatch when using date/time/timestamp JDBC
+     * escapes.
+     */
+    public void testPreparedTimestampEscaping()
+       throws SQLException
+    {
+       String    val = "1970-12-21 14:41:11.400";
+       Timestamp ref = Timestamp.valueOf( val );
+
+       PreparedStatement st = con.prepareStatement( "SELECT {ts ?}" );
+       st.setTimestamp( 1, ref );
+
+       ResultSet rs = st.executeQuery();
+
+       assertTrue  ( rs.next() );
+       assertEquals( 1, rs.getMetaData().getColumnCount() );
+       assertEquals( Types.TIMESTAMP, rs.getMetaData().getColumnType( 1 ) );
+       assertEquals( ref, rs.getTimestamp( 1 ) );
+
+       rs.close();
+       st.close();
     }
 
     /**
@@ -2525,10 +2605,10 @@ public class TimestampTest extends DatabaseTestCase {
         // attempt to set invalid BC date (January 1st, 300 BC)
         try {
             GregorianCalendar gc = new GregorianCalendar();
-            gc.set(GregorianCalendar.ERA, GregorianCalendar.BC);
-            gc.set(GregorianCalendar.YEAR, 300);
-            gc.set(GregorianCalendar.MONTH,GregorianCalendar.JANUARY);
-            gc.set(GregorianCalendar.DAY_OF_MONTH, 1);
+            gc.set(Calendar.ERA, GregorianCalendar.BC);
+            gc.set(Calendar.YEAR, 300);
+            gc.set(Calendar.MONTH,Calendar.JANUARY);
+            gc.set(Calendar.DAY_OF_MONTH, 1);
             in.setDate(1, new Date(gc.getTime().getTime()));
 
             assertTrue("invalid date should cause an exception", false);

@@ -25,6 +25,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
+
+import junit.framework.AssertionFailedError;
 //
 // MJH - Changes for new jTDS version
 // Added registerOutParameter to testCallableStatementParsing2
@@ -37,24 +39,83 @@ public class CallableStatementTest extends TestBase {
         super(name);
     }
 
-   /**
-    * Test comment processing, bug #634.
-    */
-   public void testCommentProcessing()
-      throws SQLException
-   {
-      con.prepareCall( "/* comment */{?=call #sp(?)}" ).close();
-      con.prepareCall( "{/* comment */?=call #sp(?)}" ).close();
-      con.prepareCall( "{?/* comment */=call #sp(?)}" ).close();
-      con.prepareCall( "{?=/* comment */call #sp(?)}" ).close();
-      con.prepareCall( "{?=call /* comment */#sp(?)}" ).close();
-      con.prepareCall( "{?=call #sp(/* comment */?)}" ).close();
-      con.prepareCall( "{?=call #sp(?/* comment */)}" ).close();
-      con.prepareCall( "{?=call #sp(?)/* comment */}" ).close();
-      con.prepareCall( "{?=call #sp(?)}/* comment */" ).close();
-      con.prepareCall( "{?=call #sp(?)}  -- comment"  ).close();
-      con.prepareCall( "{?=call #sp(?)}  # comment"   ).close();
-   }
+    /**
+     * Test comment processing, bug #634 and #676.
+     */
+    public void testCommentProcessing()
+       throws SQLException
+    {
+       Statement st = con.createStatement();
+       st.executeUpdate( "create procedure #sp_bug634 @data1 int, @data2 int as select @data1 + @data2" );
+       st.close();
+
+       String[] variants = new String[]
+       {
+          "{?=call #sp_bug634(?, ?)}",
+
+          "/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)",
+          "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
+          "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
+          "?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)",
+          "?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)",
+          "?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)",
+          "?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)",
+          "?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)",
+          "?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)",
+          "?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)",
+          "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
+          "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
+          "?=call #sp_bug634(?, ?) -- comment '\"?@[*-",
+          "?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)",
+          "?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)",
+
+          "/*/ comment '\"?@[*-} /**/*/{?=call #sp_bug634(?, ?)}",
+          "{/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)}",
+          "{?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)}",
+          "{?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)}",
+          "{?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)}",
+          "{?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)}",
+          "{?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)}",
+          "{?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)}",
+          "{?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)}",
+          "{?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)}",
+          "{?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/}",
+          "{?=call #sp_bug634(?, ?)}/*/ comment '\"?@[*-} /**/*/",
+          "{?=call #sp_bug634(?, ?)} -- comment '\"?@[*-}",
+          "{?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)}",
+          "{?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)}"
+       };
+
+       for( int i = 0; i < variants.length;  i ++ )
+       {
+          CallableStatement cst = null;
+          ResultSet         res = null;
+
+          try
+          {
+             cst = con.prepareCall( variants[i] );
+             cst.registerOutParameter( 1, Types.INTEGER );
+             cst.setInt( 2, i );
+             cst.setInt( 3, i );
+             res = cst.executeQuery();
+
+             assertTrue  ( res.next()             );
+             assertEquals( 2 * i, res.getInt( 1 ) );
+             assertFalse ( res.next()             );
+          }
+          catch( SQLException e )
+          {
+             AssertionFailedError error = new AssertionFailedError( "variant \"" + variants[i] + "\" failed: " + e.getMessage() );
+             error.initCause( e );
+             throw error;
+          }
+          finally
+          {
+             if( res != null ) res.close();
+             if( cst != null ) cst.close();
+          }
+       }
+    }
 
     public void testCallableStatement() throws Exception {
         CallableStatement cstmt = con.prepareCall("{call sp_who}");

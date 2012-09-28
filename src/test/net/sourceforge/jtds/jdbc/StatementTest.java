@@ -30,6 +30,30 @@ public class StatementTest extends TestBase {
     }
 
     /**
+     * Test for #676, error in multi line comment handling.
+     */
+    public void testMultiLineComment()
+       throws Exception
+    {
+       Statement st = con.createStatement();
+
+       st.executeUpdate( "create table /*/ comment '\"?@[*-} /**/*/ #Bug676a (A int)" );
+
+       try
+       {
+          // SQL server stacks, instead of ignoring 'inner comments'
+          st.executeUpdate( "create table /* /* */ #Bug676b (A int)" );
+       }
+       catch( SQLException e )
+       {
+          // thrown by jTDS due to unclosed 'inner comment'
+          assertEquals( String.valueOf( 22025 ), e.getSQLState() );
+       }
+
+       st.close();
+    }
+
+    /**
      * Test for bug #669, no error if violating unique constraint in update.
      */
     public void testDuplicateKey()

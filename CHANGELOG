@@ -1,6 +1,11 @@
 Changes from jTDS 1.2.6
 =======================
 
+09/28/2012 - Holger Rehn
+ o Added test for bug #676.
+ o Added missing unit tests for bug #541.
+ o Improved test for bug #634.
+
 09/27/2012 - Holger Rehn
  o PreparedStatementTest.testPrepareFailWarning() doesn't fail anymore when run
    against newer SQL Server versions or Sybase ASE.

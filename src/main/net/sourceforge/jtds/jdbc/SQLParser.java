@@ -454,9 +454,11 @@ class SQLParser {
         do {
             if (s < len - 1) {
                 if (in[s] == '/' && in[s + 1] == '*') {
-                    block++;
+                   append(in[s++]);
+                   block++;
                 } else if (in[s] == '*' && in[s + 1] == '/') {
-                    block--;
+                   append(in[s++]);
+                   block--;
                 }
                 // comments should be passed on to the server
                 append(in[s++]);

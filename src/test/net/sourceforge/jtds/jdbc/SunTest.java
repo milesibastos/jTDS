@@ -297,8 +297,8 @@ public class SunTest extends DatabaseTestCase {
                          "SELECT * FROM XXXX -- In line comment {d 1999-01-01}\r\n"+
                          "INSERT INTO B VALUES({d 1999-01-01}) -- Unterminated in line comment";
         String outSql = "/* This is a test of the comment {fn test()} parser */\r\n" +
-                         "SELECT * FROM XXXX -- In line comment {d 1999-01-01}\r\n"+
-                         "INSERT INTO B VALUES('19990101') -- Unterminated in line comment";
+                        "SELECT * FROM XXXX -- In line comment {d 1999-01-01}\r\n"+
+                        "INSERT INTO B VALUES(convert(datetime,'19990101')) -- Unterminated in line comment";
         assertEquals(outSql, con.nativeSQL(testSql));
     }
 

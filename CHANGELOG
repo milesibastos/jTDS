@@ -2,6 +2,8 @@ Changes from jTDS 1.2.6
 =======================
 
 09/28/2012 - Holger Rehn
+ o Improved JUnit tests, setting server language "US-English" prevents a number
+   of tests from failing.
  o Improved performance of ResultSetTest.testOutOfMemory() by about 100%.
  o Corrected JUnit test for timestamp values prior to 06/15/1940 0:00:00.
  o Fixed bug #676, error in SQL parser concerning multi line comments.

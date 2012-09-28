@@ -21,7 +21,6 @@ import java.sql.*;
 import java.math.BigDecimal;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -1814,7 +1813,7 @@ public class ResultSetTest extends DatabaseTestCase {
                     }
                     catch (Throwable t) {
                         synchronized (errors) {
-                            errors.add(new Exception(this.getName() + " at row " + i + ": " + t.getMessage()));
+                            errors.add(new Exception(getName() + " at row " + i + ": " + t.getMessage()));
                         }
                     }
                 }
@@ -1862,7 +1861,7 @@ public class ResultSetTest extends DatabaseTestCase {
         assertEquals(1, st.executeUpdate("insert into #test values (10000000000000000000.0000)"));
 
         ResultSet rs = st.executeQuery("select * from #test");
-        
+
         assertTrue(rs.next());
 
         try {
@@ -1892,7 +1891,7 @@ public class ResultSetTest extends DatabaseTestCase {
         } catch (SQLException e) {
             assertEquals(e.getSQLState(), "22003");
         }
-        
+
         rs.close();
         st.close();
     }
@@ -1930,7 +1929,7 @@ public class ResultSetTest extends DatabaseTestCase {
     }
 
     /**
-     * Test for bug [1840116], Select statement very slow with date parameter.
+     * Test for bug #548, Select statement very slow with date parameter.
      */
     public void testDatePerformance() throws SQLException {
         Statement st = con.createStatement();
@@ -1954,7 +1953,7 @@ public class ResultSetTest extends DatabaseTestCase {
             ps.executeUpdate();
         }
 
-        long prep = System.currentTimeMillis() - start; 
+        long prep = System.currentTimeMillis() - start;
         System.out.println("prepared: " + prep + " ms");
         ps.close();
 
@@ -1972,18 +1971,18 @@ public class ResultSetTest extends DatabaseTestCase {
             st.executeUpdate("insert into #test values(" + dateString + ")");
         }
 
-        long unprep = System.currentTimeMillis() - start; 
+        long unprep = System.currentTimeMillis() - start;
         System.out.println("inlined : " + unprep + " ms");
         st.close();
 
         // prepared statement should be faster
-        // ("faster" means prep taking not longer than 110% of unprep; 
-        // the 10% are there, because in my tests prep and unprep are almost 
-        // identical and jitter leads to the test case sometimes failing and 
-        // sometimes not. The "10%" are not really solving the issue, but 
+        // ("faster" means prep taking not longer than 110% of unprep;
+        // the 10% are there, because in my tests prep and unprep are almost
+        // identical and jitter leads to the test case sometimes failing and
+        // sometimes not. The "10%" are not really solving the issue, but
         // if the interpretation could be "prep should not be unexpectedly slower",
         // those 10% are good enough.)
-        assertTrue(prep < (unprep + unprep/10));
+        assertEquals( unprep, prep, unprep < prep ? unprep / 10 : unprep );
     }
 
     public static void main(String[] args) {

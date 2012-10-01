@@ -360,136 +360,98 @@ public class SAfeTest extends DatabaseTestCase {
         }
     }
 
-    // MT-unsafe!!!
-    volatile int started, done;
-    volatile boolean failed;
+   /**
+    * <p> Test {@code CursorResultSet} concurrency. Create a number of threads
+    * that execute concurrent queries using scrollable result sets. All requests
+    * should be run on the same connection. </p>
+    */
+   public void testCursorResultSetConcurrency0003()
+      throws Exception
+   {
+      final int THREADS = 100;
 
-    /**
-     * Test <code>CursorResultSet</code> concurrency. Create a number of threads that execute concurrent queries using
-     * scrollable result sets. All requests should be run on the same connection (<code>Tds</code> instance).
-     */
-    public void testCursorResultSetConcurrency0003() throws Exception {
-        Statement stmt0 = con.createStatement();
-        stmt0.execute(
-                "create table #SAfe0003(id int primary key, val varchar(20) null)");
-        stmt0.execute(
-                "insert into #SAfe0003 values (1, 'Line 1') "+
-                "insert into #SAfe0003 values (2, 'Line 2')");
-        while (stmt0.getMoreResults() || stmt0.getUpdateCount() != -1);
+      Statement stmt = con.createStatement();
 
-        final Object o1=new Object(), o2=new Object();
+      stmt.execute( "create table #SAfe0003(id int primary key, val varchar(20) null)" );
+      stmt.execute( "insert into #SAfe0003 values (1, 'Line 1') " + "insert into #SAfe0003 values (2, 'Line 2')" );
 
-        int threadCount = 25;
-        Thread threads[] = new Thread[threadCount];
+      stmt.close();
 
-        started = done = 0;
-        failed = false;
+      final Thread threads[] = new Thread[THREADS];
+      final int[]  failed    = new int[1];
 
-        for (int i=0; i<threadCount; i++) {
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i] = new Thread()
+         {
+            public void run()
+            {
+               ResultSet rs   = null;
+               Statement stmt = null;
 
-            threads[i] = new Thread() {
-                public void run() {
-                    ResultSet rs;
-                    Statement stmt = null;
+               try
+               {
+                  stmt = con.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+                  rs = stmt.executeQuery( "SELECT * FROM #SAfe0003" );
 
-                    try {
-                        stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-                        rs = stmt.executeQuery("SELECT * FROM #SAfe0003");
-
-                        assertEquals(null, rs.getWarnings());
-                        assertEquals(null, stmt.getWarnings());
-
-                        // Synchronize all threads
-                        synchronized (o2) {
-                            synchronized(o1) {
-                                started++;
-                                o1.notify();
-                            }
-
-                            try {
-                                o2.wait();
-                            } catch (InterruptedException e) {
-                            }
-                        }
-
-                        assertNotNull("executeQuery should not return null", rs);
-                        assertTrue(rs.next());
-                        assertTrue(rs.next());
-                        assertTrue(!rs.next());
-                        assertTrue(rs.previous());
-                        assertTrue(rs.previous());
-                        assertTrue(!rs.previous());
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-
-                        synchronized (o1) {
-                            failed = true;
-                        }
-
-                        fail("An SQL Exception occured: "+e);
-                    } finally {
-                        if (stmt != null) {
-                            try {
-                                stmt.close();
-                            } catch (SQLException e) {
-                            }
-                        }
-
-                        // Notify that we're done
-                        synchronized (o1) {
-                            done++;
-                            o1.notify();
-                        }
-                    }
-                }
-            };
-
-            threads[i].start();
-        }
-
-        while (true) {
-            synchronized (o1) {
-                if (started == threadCount) {
-                    break;
-                }
-
-                o1.wait();
+                  assertEquals( null, rs.getWarnings() );
+                  assertEquals( null, stmt.getWarnings() );
+                  assertNotNull( "executeQuery should not return null", rs );
+                  assertTrue( rs.next() );
+                  assertTrue( rs.next() );
+                  assertTrue( ! rs.next() );
+                  assertTrue( rs.previous() );
+                  assertTrue( rs.previous() );
+                  assertTrue( ! rs.previous() );
+               }
+               catch( Throwable e )
+               {
+                  failed[0] ++;
+                  e.printStackTrace();
+                  fail( "exception occured: " + e );
+               }
+               finally
+               {
+                  if( stmt != null )
+                  {
+                     try
+                     {
+                        stmt.close();
+                     }
+                     catch( SQLException e )
+                     {
+                        // ignored
+                     }
+                  }
+               }
             }
-        }
+         };
+      }
 
-        synchronized (o2) {
-            o2.notifyAll();
-        }
+      // start all threads
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i].start();
+      }
 
-        boolean passed = true;
+      // execute some dumb selects concurrently
+      for( int i = 0; i < THREADS * 10; i++ )
+      {
+         Statement st = con.createStatement();
+         ResultSet rs = st.executeQuery( "SELECT 1234" );
+         assertTrue( rs.next() );
+         assertFalse( rs.next() );
+         st.close();
+      }
 
-        for (int i = 0; i < threadCount; i++) {
-            stmt0 = con.createStatement();
-            ResultSet rs = stmt0.executeQuery("SELECT 1234");
-            passed &= rs.next();
-            passed &= !rs.next();
-            stmt0.close();
-        }
+      // wait for all threads to finish
+      for( int i = 0; i < THREADS; i++ )
+      {
+         threads[i].join();
+      }
 
-        while (true) {
-            synchronized (o1) {
-                if (done == threadCount) {
-                    break;
-                }
-
-                o1.wait();
-            }
-        }
-
-        for (int i = 0; i < threadCount; i++) {
-            threads[i].join();
-        }
-
-        stmt0.close();
-
-        assertTrue(passed);
-        assertTrue(!failed);
-    }
+      assertTrue( failed[0] == 0 );
+   }
 
     /**
      * Check that meta data information is fetched even for empty cursor-based result sets (bug #613199).
@@ -1038,56 +1000,56 @@ public class SAfeTest extends DatabaseTestCase {
         stmt.close();
     }
 
-    /**
-     * Test that dates prior to 06/15/1940 0:00:00 are stored and retrieved
-     * correctly.
-     */
-    public void testOldDates0016()
-       throws Exception
-    {
-       Statement stmt = con.createStatement();
-       stmt.execute( "CREATE TABLE #SAfe0016(id INT, value DATETIME)" );
+   /**
+    * Test that dates prior to 06/15/1940 0:00:00 are stored and retrieved
+    * correctly.
+    */
+   public void testOldDates0016()
+      throws Exception
+   {
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE #SAfe0016(id INT, value DATETIME)" );
 
-       SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
-       String[] dates = {
-                          "2011-11-11 11:11:11",
-                          "1983-10-30 02:00:00",
-                          "1983-10-30 01:59:59",
-                          "1940-06-14 23:59:59",
-                          "1911-03-11 00:51:39",
-                          "1911-03-11 00:51:38",
-                          "1900-01-01 01:00:00",
-                          "1900-01-01 00:59:59",
-                          "1900-01-01 00:09:21",
-                          "1900-01-01 00:09:20",
-                          "1753-01-01 00:00:00"
-                       };
+      SimpleDateFormat format = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" );
+      String[] dates = {
+                         "2011-11-11 11:11:11",
+                         "1983-10-30 02:00:00",
+                         "1983-10-30 01:59:59",
+                         "1940-06-14 23:59:59",
+                         "1911-03-11 00:51:39",
+                         "1911-03-11 00:51:38",
+                         "1900-01-01 01:00:00",
+                         "1900-01-01 00:59:59",
+                         "1900-01-01 00:09:21",
+                         "1900-01-01 00:09:20",
+                         "1753-01-01 00:00:00"
+                      };
 
-       // insert test values
-       PreparedStatement pstmt = con.prepareStatement( "INSERT INTO #SAfe0016 VALUES(?, ?)" );
+      // insert test values
+      PreparedStatement pstmt = con.prepareStatement( "INSERT INTO #SAfe0016 VALUES(?, ?)" );
 
-       for( int i = 0; i < dates.length; i++ )
-       {
-          pstmt.setInt( 1, i );
-          pstmt.setTimestamp( 2, new Timestamp( format.parse( dates[i] ).getTime() ) );
-          assertEquals( 1, pstmt.executeUpdate() );
-       }
+      for( int i = 0; i < dates.length; i++ )
+      {
+         pstmt.setInt( 1, i );
+         pstmt.setTimestamp( 2, new Timestamp( format.parse( dates[i] ).getTime() ) );
+         assertEquals( 1, pstmt.executeUpdate() );
+      }
 
-       // read back test values and make sure they are the same
-       ResultSet rs = stmt.executeQuery( "SELECT value FROM #SAfe0016 ORDER BY id" );
+      // read back test values and make sure they are the same
+      ResultSet rs = stmt.executeQuery( "SELECT value FROM #SAfe0016 ORDER BY id" );
 
-       int counter = 0;
+      int counter = 0;
 
-       while( rs.next() )
-       {
-          assertEquals( dates[counter], format.parse( dates[counter] ).getTime(), rs.getTimestamp( 1 ).getTime() );
-          counter ++;
-       }
+      while( rs.next() )
+      {
+         assertEquals( dates[counter], format.parse( dates[counter] ).getTime(), rs.getTimestamp( 1 ).getTime() );
+         counter ++;
+      }
 
-       rs.close();
-       stmt.close();
-       pstmt.close();
-    }
+      rs.close();
+      stmt.close();
+      pstmt.close();
+   }
 
     /**
      * Test bug #926620 - Too long value for VARCHAR field.

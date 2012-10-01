@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/01/2012 - Holger Rehn
+ o Fixed unit test for bug #343, failing if run against SQL Server 2005.
+
 09/28/2012 - Holger Rehn
  o Improved JUnit tests, setting server language "US-English" prevents a number
    of tests from failing.

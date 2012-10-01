@@ -231,60 +231,73 @@ public class SAfeTest extends DatabaseTestCase {
         con2.close();
     }
 
-    /**
-     * Test for bug [1120442] Statement hangs in socket read after
-     * Statement.cancel().
-     * <p/>
-     * In 1.0.1 and earlier versions network packets consisting of a single
-     * TDS_DONE packet with the CANCEL flag set were ignored and a new read()
-     * was attempted, essentially causing a deadlock.
-     * <p/>
-     * Because it relies on a particular succession of events this test will
-     * not always work as expected, i.e. the cancel might be executed too early
-     * or too late, but it won't fail in this situation.
-     */
-    public void testCancel0003() throws Exception {
-        final Statement stmt = con.createStatement();
+   /**
+    * <p> Test for bug #343, Statement hangs in socket read after {@link
+    * Statement#cancel()}. </p>
+    *
+    * <p> In 1.0.1 and earlier versions network packets consisting of a single
+    * TDS_DONE packet with the CANCEL flag set were ignored and a new read()
+    * was attempted, essentially causing a deadlock. </p>
+    *
+    * <p> Because it relies on a particular succession of events this test will
+    * not always work as expected, i.e. the cancel might be executed too early
+    * or too late, but it won't fail in this situation. </p>
+    */
+   public void testCancel0003()
+      throws Exception
+   {
+      final Statement stmt = con.createStatement();
 
-        for (int i = 0; i < 100; i++) {
-            Thread t = new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        // Cancel the statement and hope this happens
-                        // immediately after the executeQuery() below and
-                        // before any results arrive
-                        stmt.cancel();
-                    } catch (SQLException ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            });
-            t.start();
-
-            // Create a thread that executes a query
-            try {
-                stmt.executeQuery("select max(id) from sysobjects");
-                // Can't fail here, the cancel() request might be out of order
-            } catch (SQLException ex) {
-                // Request was canceled
-                if (!"HY008".equals(ex.getSQLState())) {
-                    ex.printStackTrace();
-                }
-                assertEquals("HY008", ex.getSQLState());
+      for( int i = 0; i < 100; i++ )
+      {
+         Thread t = new Thread( new Runnable()
+         {
+            public void run()
+            {
+               try
+               {
+                  // cancel the statement and hope this happens immediately
+                  // after the executeQuery() below and before any results
+                  // arrive
+                  stmt.cancel();
+               }
+               catch( SQLException ex )
+               {
+                  ex.printStackTrace();
+               }
             }
+         } );
 
-            // Wait for the cancel to finish executing
-            try {
-                t.join();
-            } catch (InterruptedException ex) {
-                // Ignore
-            }
-        }
+         t.start();
 
-        // Make sure the connection is still alive
-        stmt.executeQuery("select 1");
-        stmt.close();
-    }
+         // Create a thread that executes a query
+         try
+         {
+            stmt.executeQuery( "select max(id) from sysobjects" );
+            // Can't fail here, the cancel() request might be out of order
+         }
+         catch( SQLException ex )
+         {
+            // SQL Server 2005: S1000, error message indicates cancellation
+            // SQL Server 2008: HY008
+            assertTrue( ex.getSQLState().equals( "HY008" ) || ex.getSQLState().equals( "S1000" ) );
+         }
+
+         // wait for the cancel to finish executing
+         try
+         {
+            t.join();
+         }
+         catch( InterruptedException ex )
+         {
+            // ignored
+         }
+      }
+
+      // ensure the connection is still alive
+      stmt.executeQuery( "select 1" ).close();
+      stmt.close();
+   }
 
     /**
      * Test for bug [1222199] Delayed exception thrown in statement close.

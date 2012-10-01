@@ -17,6 +17,7 @@
 
 package net.sourceforge.jtds.jdbc;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -28,6 +29,103 @@ public class StatementTest extends TestBase {
     public StatementTest(String name) {
         super(name);
     }
+
+   /**
+    * Regression test for bug #677, deadlock in {@link JtdsStatement#close()}.
+    */
+   public void testCloseDeadlock()
+      throws Exception
+   {
+      final int THREADS    =  100;
+      final int STATEMENTS = 1000;
+
+      Thread[] threads = new Thread[THREADS];
+
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i] = new Thread( "deadlock " + i )
+         {
+            public void run()
+            {
+               try
+               {
+                  Connection con = getConnection();
+                  final Statement[] stm = new Statement[STATEMENTS];
+
+                  for( int i = 0; i < STATEMENTS; i ++ )
+                  {
+                     stm[i] = con.createStatement();
+                  }
+
+                  new Thread( Thread.currentThread().getName() + " (closer)" )
+                  {
+                     public void run()
+                     {
+                        try
+                        {
+                           for( int i = 0; i < STATEMENTS; i ++ )
+                           {
+                              stm[i].close();
+                           }
+                        }
+                        catch( Exception e )
+                        {
+                          e.printStackTrace();
+                        }
+
+                     }
+                  }.start();
+
+                  Thread.sleep( 1 );
+                  con.close();
+               }
+               catch( Exception e )
+               {
+                 e.printStackTrace();
+               }
+            }
+         };
+      }
+
+      for( int i = 0; i < THREADS; i ++ )
+      {
+         threads[i].start();
+      }
+
+      System.currentTimeMillis();
+      int  running = THREADS;
+
+      while( running != 0 )
+      {
+         Thread.sleep( 500 );
+
+         int last = running;
+         running  = THREADS;
+
+         for( int i = 0; i < THREADS; i ++ )
+         {
+            if( threads[i].getState() == Thread.State.TERMINATED )
+            {
+               running --;
+            }
+         }
+
+         if( running == last )
+         {
+//            for( int i = 0; i < THREADS; i ++ )
+//            {
+//               if( threads[i].getState() != Thread.State.TERMINATED )
+//               {
+//                  Exception e = new Exception();
+//                  e.setStackTrace( threads[i].getStackTrace() );
+//                  e.printStackTrace();
+//               }
+//            }
+
+            fail( "deadlock detected, none of the remaining connections closed within 500 ms" );
+         }
+      }
+   }
 
     /**
      * Test for #676, error in multi line comment handling.

@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 10/01/2012 - Holger Rehn
+ o Added test for bug #677.
  o Fixed and greatly simplified SAfeTest.testCursorResultSetConcurrency0003().
  o Fixed unit test for bug #343, failing if run against SQL Server 2005.
 

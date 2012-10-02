@@ -649,7 +649,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         final int columns = 100;
 
         Statement st = con.createStatement();
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         try {
             // create tables
@@ -851,7 +851,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         };
 
         // build and execute CREATE TABLE statement
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE testDefaultValue (");
         for (int i = 0; i < columns.length/2; i++) {
             sb.append(i == 0 ? "" : ",");

@@ -642,7 +642,7 @@ public class ResultSetTest extends DatabaseTestCase {
 
         // create the table
         int cols = 260;
-        StringBuffer create = new StringBuffer("create table #manycolumns (");
+        StringBuilder create = new StringBuilder("create table #manycolumns (");
         for (int i=0; i<cols; ++i) {
             create.append("col" + i + " char(10), ") ;
         }
@@ -1849,7 +1849,7 @@ public class ResultSetTest extends DatabaseTestCase {
         if (iMax == -1)
             return "[]";
 
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(String.valueOf(a[i]));

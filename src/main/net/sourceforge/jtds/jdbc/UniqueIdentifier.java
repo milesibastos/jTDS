@@ -39,7 +39,7 @@ public class UniqueIdentifier {
      * @return The unique identifier as a <code>byte[]</code>.
      */
     public byte[] getBytes() {
-        return (byte [])bytes.clone();
+        return bytes.clone();
     }
 
     /**
@@ -67,7 +67,7 @@ public class UniqueIdentifier {
 
         byte bb[] = new byte[1];
 
-        StringBuffer buf = new StringBuffer(36);
+        StringBuilder buf = new StringBuilder(36);
 
         for (int i = 0; i < bytes.length; i++) {
             bb[0] = tmp[i];

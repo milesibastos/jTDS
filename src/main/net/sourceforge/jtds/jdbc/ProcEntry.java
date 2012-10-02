@@ -67,7 +67,7 @@ public class ProcEntry {
      * @param handle the <code>sp_prepare</code> handle value
      */
     public void setHandle(int handle) {
-        this.name = Integer.toString(handle);
+        name = Integer.toString(handle);
     }
 
     /**
@@ -76,7 +76,7 @@ public class ProcEntry {
      * @return the column meta data as <code>ColInfo[]</code>
      */
     public ColInfo[] getColMetaData() {
-        return this.colMetaData;
+        return colMetaData;
     }
 
     /**
@@ -94,7 +94,7 @@ public class ProcEntry {
      * @return the parameter meta data as a <code>ParamInfo[]</code>
      */
     public ParamInfo[] getParamMetaData() {
-        return this.paramMetaData;
+        return paramMetaData;
     }
 
     /**
@@ -121,13 +121,13 @@ public class ProcEntry {
      * @return the statement type as an <code>int</code>
      */
     public int getType() {
-        return this.type;
+        return type;
     }
 
     /**
      * Retrieves the SQL to drop this statement.
      */
-    public void appendDropSQL(StringBuffer sql) {
+    public void appendDropSQL(StringBuilder sql) {
         switch (type) {
             case PROCEDURE:
                 sql.append("DROP PROC ").append(name).append('\n');

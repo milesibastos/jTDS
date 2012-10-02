@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 10/02/2012 - Holger Rehn
+ o Improved performance by using StringBuilder instead of StringBuffer.
  o Corrected unit test for bug #507, the executing thread's interruption state
    hasn't been cleared, causing subsequent tests to fail.
  o Fixed bug #677, possible deadlock in JtdsStatement.close().

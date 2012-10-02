@@ -125,7 +125,7 @@ public abstract class DatabaseTestCase extends TestBase {
     }
 
     protected String getLongString(int length) {
-        StringBuffer result = new StringBuffer(length);
+        StringBuilder result = new StringBuilder(length);
 
         for (int i = 0; i < length; i++) {
             result.append('a');
@@ -135,7 +135,7 @@ public abstract class DatabaseTestCase extends TestBase {
     }
 
     protected String getLongString(char ch)  {
-        StringBuffer str255 = new StringBuffer(255);
+        StringBuilder str255 = new StringBuilder(255);
 
         for (int i = 0; i < 255; i++) {
             str255.append(ch);

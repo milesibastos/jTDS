@@ -121,7 +121,7 @@ public class Support {
         int len = bytes.length;
 
         if (len > 0) {
-            StringBuffer buf = new StringBuffer(len * 2);
+            StringBuilder buf = new StringBuilder(len * 2);
 
             for (int i = 0; i < len; i++) {
                 int b1 = bytes[i] & 0xFF;
@@ -806,7 +806,7 @@ public class Support {
      * @param isUnicode Set to <code>true</code> if Unicode strings should be used, else <code>false</code>.
      * @param connection The {@link JtdsConnection} object.
      */
-    static void embedData(StringBuffer buf, Object value, boolean isUnicode, JtdsConnection connection)
+    static void embedData(StringBuilder buf, Object value, boolean isUnicode, JtdsConnection connection)
             throws SQLException {
         buf.append(' ');
         if (value == null) {
@@ -926,10 +926,10 @@ public class Support {
     static String getStatementKey(String sql, ParamInfo[] params,
                                   int serverType, String catalog,
                                   boolean autoCommit, boolean cursor) {
-        StringBuffer key;
+        StringBuilder key;
 
         if (serverType == Driver.SQLSERVER) {
-            key = new StringBuffer(1 + catalog.length() + sql.length()
+            key = new StringBuilder(1 + catalog.length() + sql.length()
                     + 11 * params.length);
             // Need to distinguish otherwise identical SQL for cursor and
             // non cursor prepared statements (sp_prepare/sp_cursorprepare).
@@ -946,7 +946,7 @@ public class Support {
                 key.append(params[i].sqlType);
             }
         } else {
-            key = new StringBuffer(sql.length() + 2);
+            key = new StringBuilder(sql.length() + 2);
             // A simple key works for Sybase just need to know if
             // proc created in chained mode or not.
             key.append((autoCommit) ? 'T': 'F');
@@ -966,7 +966,7 @@ public class Support {
      * @return a parameter definition string
      */
     static String getParameterDefinitions(ParamInfo[] parameters) {
-        StringBuffer sql = new StringBuffer(parameters.length * 15);
+        StringBuilder sql = new StringBuilder(parameters.length * 15);
 
         // Build parameter descriptor
         for (int i = 0; i < parameters.length; i++) {
@@ -1003,7 +1003,7 @@ public class Support {
         char[] buf = new char[sql.length() + list.length * 7];
         int bufferPtr = 0; // Output buffer pointer
         int start = 0;     // Input string pointer
-        StringBuffer number = new StringBuffer(4);
+        StringBuilder number = new StringBuilder(4);
 
         for (int i = 0; i < list.length; i++) {
             int pos = list[i].markerPos;
@@ -1090,7 +1090,7 @@ public class Support {
             }
         }
 
-        StringBuffer buf = new StringBuffer(len + 16);
+        StringBuilder buf = new StringBuilder(len + 16);
         int start = 0;
 
         for (int i = 0; i < list.length; i++) {

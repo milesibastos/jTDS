@@ -346,7 +346,7 @@ public class Driver implements java.sql.Driver {
             }
         }
 
-        StringBuffer token = new StringBuffer(16);
+        StringBuilder token = new StringBuilder(16);
         int pos = 0;
 
         pos = nextToken(url, pos, token); // Skip jdbc
@@ -430,7 +430,7 @@ public class Driver implements java.sql.Driver {
      * @param token The buffer containing the extracted token.
      * @return The updated position as an <code>int</code>.
      */
-    private static int nextToken(String url, int pos, StringBuffer token) {
+    private static int nextToken(String url, int pos, StringBuilder token) {
         token.setLength(0);
         boolean inQuote = false;
         while (pos < url.length()) {
@@ -449,17 +449,17 @@ public class Driver implements java.sql.Driver {
                     break;
                 }
             }
-            
+
             if (ch == '[') {
                 inQuote = true;
                 continue;
             }
-            
+
             if (ch == ']') {
                 inQuote = false;
                 continue;
             }
-            
+
             token.append(ch);
         }
 

@@ -37,7 +37,7 @@ public class ReadTextTest extends TestBase {
             byteBuf[i] = (byte) i;
         }
 
-        StringBuffer strBuf = new StringBuffer(5000);
+        StringBuilder strBuf = new StringBuilder(5000);
 
         for (int i = 0; i < 100; i++) {
             strBuf.append("This is a test line of text that is 50 chars    ");

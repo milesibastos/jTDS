@@ -44,8 +44,8 @@ public class LOBTest extends TestBase {
             newBlobData[i] = (byte) (Math.random() * 255);
         }
 
-        StringBuffer data = new StringBuffer();
-        StringBuffer newData = new StringBuffer();
+        StringBuilder data = new StringBuilder();
+        StringBuilder newData = new StringBuilder();
 
         for (int i = 0; i < LOB_LENGTH; i++) {
             data.append((char) (Math.random() * 58) + 32);
@@ -2055,7 +2055,7 @@ public class LOBTest extends TestBase {
      */
     public void testClobUpdate6() throws Exception {
         int size = 100000;
-        StringBuffer data = new StringBuffer(size);
+        StringBuilder data = new StringBuilder(size);
         for (int i = 0; i < size; i++) {
             data.append((char)('A'+i%10));
         }

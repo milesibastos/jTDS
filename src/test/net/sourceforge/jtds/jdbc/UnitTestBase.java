@@ -280,7 +280,7 @@ public abstract class UnitTestBase extends DatabaseTestCase {
      * @return Formatted string representing the object.
      */
     private String format(Object[] object) {
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         if (object == null || object.length < 1) {
             buf.append(object);
         } else {

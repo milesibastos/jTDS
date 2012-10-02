@@ -120,7 +120,7 @@ public class Tds5Test extends TestBase {
         if (!isVersion12orHigher()) {
             return;
         }
-        StringBuffer buf = new StringBuffer(300);
+        StringBuilder buf = new StringBuilder(300);
         for (int i = 0; i < 300; i++) {
             if (i == 0) {
                 buf.append('<');
@@ -163,7 +163,7 @@ public class Tds5Test extends TestBase {
         }
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #TESTIT (id int, txt text, img image)");
-        StringBuffer data = new StringBuffer(20000);
+        StringBuilder data = new StringBuilder(20000);
         for (int i = 0; i < 20000; i++) {
             data.append((char)('A' + (i % 10)));
         }

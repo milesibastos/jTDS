@@ -1218,7 +1218,7 @@ public class SAfeTest extends DatabaseTestCase {
 //        DriverManager.setLogStream(System.out);
 
         // Create a huge query
-        StringBuffer queryBuffer = new StringBuffer(4100);
+        StringBuilder queryBuffer = new StringBuilder(4100);
         queryBuffer.append("SELECT '");
         while (queryBuffer.length() < 2000) {
             queryBuffer.append("0123456789");
@@ -1291,7 +1291,7 @@ public class SAfeTest extends DatabaseTestCase {
 //        DriverManager.setLogStream(System.out);
 
         // Create a huge query
-        StringBuffer valueBuffer = new StringBuffer(4000);
+        StringBuilder valueBuffer = new StringBuilder(4000);
         while (valueBuffer.length() < 4000) {
             valueBuffer.append("0123456789");
         }
@@ -1361,7 +1361,7 @@ public class SAfeTest extends DatabaseTestCase {
 //        DriverManager.setLogStream(System.out);
 
         // Create a huge query
-        StringBuffer valueBuffer = new StringBuffer(4000);
+        StringBuilder valueBuffer = new StringBuilder(4000);
         while (valueBuffer.length() < 4000) {
             valueBuffer.append("0123456789");
         }

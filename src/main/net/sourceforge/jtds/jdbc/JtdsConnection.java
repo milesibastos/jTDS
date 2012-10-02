@@ -1604,7 +1604,7 @@ public class JtdsConnection implements java.sql.Connection {
         this.databaseMinorVersion = databaseMinorVersion;
 
         if (tdsVersion >= Driver.TDS70) {
-            StringBuffer buf = new StringBuffer(10);
+            StringBuilder buf = new StringBuilder(10);
 
             if (databaseMajorVersion < 10) {
                 buf.append('0');
@@ -1667,7 +1667,7 @@ public class JtdsConnection implements java.sql.Connection {
             if (handles != null) {
                 if (serverType == Driver.SQLSERVER) {
                     // SQL Server unprepare
-                    StringBuffer cleanupSql = new StringBuffer(handles.size() * 32);
+                    StringBuilder cleanupSql = new StringBuilder(handles.size() * 32);
                     for (Iterator iterator = handles.iterator(); iterator.hasNext(); ) {
                         ProcEntry pe = (ProcEntry) iterator.next();
                         // Could get put back if in a transaction that is
@@ -2256,7 +2256,7 @@ public class JtdsConnection implements java.sql.Connection {
             return;
         }
 
-        StringBuffer sql = new StringBuffer(70);
+        StringBuilder sql = new StringBuilder(70);
         //
         if (!this.autoCommit) {
             // If we're in manual commit mode the spec requires that we commit

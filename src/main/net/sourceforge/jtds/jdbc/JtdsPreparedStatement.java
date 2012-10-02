@@ -311,7 +311,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         int maxParams = (connection.getDatabaseMajorVersion() < 12 ||
                 (connection.getDatabaseMajorVersion() == 12 && connection.getDatabaseMinorVersion() < 50)) ?
                 200 : 1000;
-        StringBuffer sqlBuf = new StringBuffer(size * 32);
+        StringBuilder sqlBuf = new StringBuilder(size * 32);
         SQLException sqlEx = null;
         if (parameters.length * executeSize > maxParams) {
             executeSize = maxParams / parameters.length;
@@ -875,7 +875,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                 }
 
                 // Substitute nulls into SQL String
-                StringBuffer testSql = new StringBuffer(sql.length() + 128);
+                StringBuilder testSql = new StringBuilder(sql.length() + 128);
                 testSql.append("SET FMTONLY ON ");
                 testSql.append(
                         Support.substituteParameters(sql, params, connection));

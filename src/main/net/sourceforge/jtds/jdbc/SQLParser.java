@@ -732,7 +732,7 @@ class SQLParser {
     private void functionEscape() throws SQLException {
         char tc = terminator;
         skipWhiteSpace();
-        StringBuffer nameBuf = new StringBuffer();
+        StringBuilder nameBuf = new StringBuilder();
         //
         // Capture name
         //
@@ -891,7 +891,7 @@ class SQLParser {
     private void escape() throws SQLException {
         char tc = terminator;
         terminator = '}';
-        StringBuffer escBuf = new StringBuffer();
+        StringBuilder escBuf = new StringBuilder();
         s++;
         skipWhiteSpace();
 
@@ -976,7 +976,7 @@ class SQLParser {
      * @return the table name as a <code>String</code>
      */
     private String getTableName() throws SQLException {
-        StringBuffer name = new StringBuffer(128);
+        StringBuilder name = new StringBuilder(128);
         copyWhiteSpace();
         char c = (s < len) ? in[s] : ' ';
         if (c == '{') {

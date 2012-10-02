@@ -388,7 +388,7 @@ public class JtdsStatement implements java.sql.Statement {
      * @throws SQLException if a serious error occurs during execution
      */
     protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts) throws SQLException {
-        StringBuffer sql = new StringBuffer(size * 32); // Make buffer reasonable size
+        StringBuilder sql = new StringBuilder(size * 32); // Make buffer reasonable size
         SQLException sqlEx = null;
 
         for (int i = 0; i < size;) {

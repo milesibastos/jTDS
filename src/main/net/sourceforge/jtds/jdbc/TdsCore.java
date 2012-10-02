@@ -222,8 +222,6 @@ public class TdsCore {
     private static final byte TDS_TABNAME_TOKEN     = (byte) 164;  // 0xA4
     /** TDS Cursor results column infomation token. */
     private static final byte TDS_COLINFO_TOKEN     = (byte) 165;  // 0xA5
-    /** TDS Optional command token. */
-    private static final byte TDS_OPTIONCMD_TOKEN   = (byte) 166;  // 0xA6
     /** TDS Computed result set names token. */
     private static final byte TDS_COMP_NAMES_TOKEN  = (byte) 167;  // 0xA7
     /** TDS Computed result set token. */
@@ -397,7 +395,7 @@ public class TdsCore {
     /** The array of table names associated with this result. */
     private TableMetaData[] tables;
     /** The descriptor object for the current TDS token. */
-    private TdsToken currentToken = new TdsToken();
+    private final TdsToken currentToken = new TdsToken();
     /** The stored procedure return status. */
     private Integer returnStatus;
     /** The return parameter meta data object for the current procedure call. */
@@ -433,7 +431,7 @@ public class TdsCore {
      */
     TdsCore(JtdsConnection connection, SQLDiagnostic messages) {
         this.connection = connection;
-        this.socket = connection.getSocket();
+        socket = connection.getSocket();
         this.messages = messages;
         serverType = connection.getServerType();
         tdsVersion = socket.getTdsVersion();
@@ -480,8 +478,8 @@ public class TdsCore {
      */
     void setColumns(ColInfo[] columns) {
         this.columns = columns;
-        this.rowData = new Object[columns.length];
-        this.tables  = null;
+        rowData = new Object[columns.length];
+        tables  = null;
     }
 
     /**
@@ -816,7 +814,7 @@ public class TdsCore {
      * @return The return status as an <code>Integer</code>.
      */
     Integer getReturnStatus() {
-        return this.returnStatus;
+        return returnStatus;
     }
 
     /**
@@ -829,7 +827,7 @@ public class TdsCore {
             if (tdsVersion == Driver.TDS50) {
                 socket.setTimeout(1000);
                 out.setPacketType(SYBQUERY_PKT);
-                out.write((byte)TDS_CLOSE_TOKEN);
+                out.write(TDS_CLOSE_TOKEN);
                 out.write((byte)0);
                 out.flush();
                 endOfResponse = false;
@@ -961,7 +959,7 @@ public class TdsCore {
             setRowCountAndTextSize(maxRows, maxFieldSize);
 
             messages.clearWarnings();
-            this.returnStatus = null;
+            returnStatus = null;
             //
             // Normalize the parameters argument to simplify later checks
             //
@@ -1094,7 +1092,7 @@ public class TdsCore {
         int prepareSql = connection.getPrepareSql();
 
         if (prepareSql == TEMPORARY_STORED_PROCEDURES) {
-            StringBuffer spSql = new StringBuffer(sql.length() + 32 + params.length * 15);
+            StringBuilder spSql = new StringBuilder(sql.length() + 32 + params.length * 15);
             String procName = connection.getProcName();
 
             spSql.append("create proc ");
@@ -1257,7 +1255,7 @@ public class TdsCore {
             mutex = connection.getMutex();
 
             out.setPacketType(SYBQUERY_PKT);
-            out.write((byte)TDS5_DYNAMIC_TOKEN);
+            out.write(TDS5_DYNAMIC_TOKEN);
 
             byte buf[] = Support.encodeString(connection.getCharset(), sql);
 
@@ -1320,7 +1318,7 @@ public class TdsCore {
             mutex = connection.getMutex();
 
             out.setPacketType(SYBQUERY_PKT);
-            out.write((byte)TDS5_DYNAMIC_TOKEN);
+            out.write(TDS5_DYNAMIC_TOKEN);
             out.write((short) (15));
             out.write((byte) 4);
             out.write((byte) 0);
@@ -1428,7 +1426,7 @@ public class TdsCore {
      * @return updated <code>SQLException</code> or <code>null</code> if no
      *         error has yet occurred
      * @throws SQLException
-     *         if the connection is closed 
+     *         if the connection is closed
      */
     SQLException getBatchCounts(ArrayList counts, SQLException sqlEx) throws SQLException {
         Integer lastCount = JtdsStatement.SUCCESS_NO_INFO;
@@ -1602,7 +1600,7 @@ public class TdsCore {
         }
         // Read entry data
         for (int i = 0; i < recordCount; i++) {
-            byte value[] = new byte[(byte)list[i][4]];
+            byte value[] = new byte[list[i][4]];
             in.read(value);
             data[i] = value;
         }
@@ -1921,18 +1919,18 @@ public class TdsCore {
         out.write((int)packSize);
         // TDS version
         if (tdsVersion == Driver.TDS70) {
-            out.write((int)0x70000000);
+            out.write(0x70000000);
         } else {
-            out.write((int)0x71000001);
+            out.write(0x71000001);
         }
         // Network Packet size requested by client
-        out.write((int)netPacketSize);
+        out.write(netPacketSize);
         // Program version?
-        out.write((int)7);
+        out.write(7);
         // Process ID
         out.write(connection.getProcessId());
         // Connection ID
-        out.write((int)0);
+        out.write(0);
         // 0x20: enable warning messages if USE <database> issued
         // 0x40: change to initial database must succeed
         // 0x80: enable warning messages if SET LANGUAGE issued
@@ -1955,36 +1953,36 @@ public class TdsCore {
         short curPos = 86;
 
         // Hostname
-        out.write((short)curPos);
+        out.write(curPos);
         out.write((short) wsid.length());
         curPos += wsid.length() * 2;
 
         //mdb: NTLM doesn't send username and password...
         if (!ntlmAuth) {
             // Username
-            out.write((short)curPos);
+            out.write(curPos);
             out.write((short) user.length());
             curPos += user.length() * 2;
 
             // Password
-            out.write((short)curPos);
+            out.write(curPos);
             out.write((short) password.length());
             curPos += password.length() * 2;
         } else {
-            out.write((short)curPos);
+            out.write(curPos);
             out.write((short) 0);
 
-            out.write((short)curPos);
+            out.write(curPos);
             out.write((short) 0);
         }
 
         // App name
-        out.write((short)curPos);
+        out.write(curPos);
         out.write((short) appName.length());
         curPos += appName.length() * 2;
 
         // Server name
-        out.write((short)curPos);
+        out.write(curPos);
         out.write((short) serverName.length());
         curPos += serverName.length() * 2;
 
@@ -1993,17 +1991,17 @@ public class TdsCore {
         out.write((short) 0);
 
         // Program name
-        out.write((short)curPos);
+        out.write(curPos);
         out.write((short) progName.length());
         curPos += progName.length() * 2;
 
         // Server language
-        out.write((short)curPos);
+        out.write(curPos);
         out.write((short) language.length());
         curPos += language.length() * 2;
 
         // Database
-        out.write((short)curPos);
+        out.write(curPos);
         out.write((short) database.length());
         curPos += database.length() * 2;
 
@@ -2011,8 +2009,8 @@ public class TdsCore {
         out.write(getMACAddress(macAddress));
 
         //mdb: location of ntlm auth block. note that for sql auth, authLen==0.
-        out.write((short)curPos);
-        out.write((short)authLen);
+        out.write(curPos);
+        out.write(authLen);
 
         //"next position" (same as total packet size)
         out.write((int)packSize);
@@ -2045,11 +2043,11 @@ public class TdsCore {
 
                 final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
                 out.write(header); //header is ascii "NTLMSSP\0"
-                out.write((int)1);          //sequence number = 1
+                out.write(1);          //sequence number = 1
                 if(connection.getUseNTLMv2())
-                    out.write((int)0x8b205);  //flags (same as below, only with Request Target and NTLM2 set)
+                    out.write(0x8b205);  //flags (same as below, only with Request Target and NTLM2 set)
                 else
-                    out.write((int)0xb201);     //flags (see below)
+                    out.write(0xb201);     //flags (see below)
 
                 // NOTE: flag reference:
                 //  0x80000 = negotiate NTLM2 key
@@ -2063,13 +2061,13 @@ public class TdsCore {
                 //domain info
                 out.write((short) domainBytes.length);
                 out.write((short) domainBytes.length);
-                out.write((int)32); //offset, relative to start of auth block.
+                out.write(32); //offset, relative to start of auth block.
 
                 //host info
                 //NOTE(mdb): not sending host info; hope this is ok!
                 out.write((short) 0);
                 out.write((short) 0);
-                out.write((int)32); //offset, relative to start of auth block.
+                out.write(32); //offset, relative to start of auth block.
 
                 // add the variable length data at the end...
                 out.write(domainBytes);
@@ -2134,7 +2132,7 @@ public class TdsCore {
 
             final byte[] header = {0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50, 0x00};
             out.write(header); //header is ascii "NTLMSSP\0"
-            out.write((int)3); //sequence number = 3
+            out.write(3); //sequence number = 3
             final int domainLenInBytes = domain.length() * 2;
             final int userLenInBytes = user.length() * 2;
             //mdb: not sending hostname; I hope this is ok!
@@ -2143,38 +2141,38 @@ public class TdsCore {
             // lan man response: length and offset
             out.write((short)lmAnswer.length);
             out.write((short)lmAnswer.length);
-            out.write((int)pos);
+            out.write(pos);
             pos += lmAnswer.length;
             // nt response: length and offset
             out.write((short)ntAnswer.length);
             out.write((short)ntAnswer.length);
-            out.write((int)pos);
+            out.write(pos);
             pos = 64;
             //domain
             out.write((short) domainLenInBytes);
             out.write((short) domainLenInBytes);
-            out.write((int)pos);
+            out.write(pos);
             pos += domainLenInBytes;
 
             //user
             out.write((short) userLenInBytes);
             out.write((short) userLenInBytes);
-            out.write((int)pos);
+            out.write(pos);
             pos += userLenInBytes;
             //local hostname
             out.write((short) hostLenInBytes);
             out.write((short) hostLenInBytes);
-            out.write((int)pos);
+            out.write(pos);
             pos += hostLenInBytes;
             //unknown
             out.write((short) 0);
             out.write((short) 0);
-            out.write((int)pos);
+            out.write(pos);
             //flags
             if(connection.getUseNTLMv2())
-                out.write((int)0x88201);
+                out.write(0x88201);
             else
-                out.write((int)0x8201);
+                out.write(0x8201);
             //variable length stuff...
             out.write(domain);
             out.write(user);
@@ -2304,7 +2302,7 @@ public class TdsCore {
                 default:
                     throw new ProtocolException(
                             "Invalid packet type 0x" +
-                                Integer.toHexString((int) currentToken.token & 0xFF));
+                                Integer.toHexString(currentToken.token & 0xFF));
             }
         } catch (IOException ioe) {
             connection.setClosed();
@@ -2340,7 +2338,7 @@ public class TdsCore {
     {
         in.skip(in.readShort());
         throw new ProtocolException("Unsupported TDS token: 0x" +
-                            Integer.toHexString((int) currentToken.token & 0xFF));
+                            Integer.toHexString(currentToken.token & 0xFF));
     }
 
     /**
@@ -2393,9 +2391,9 @@ public class TdsCore {
      {
          in.readInt(); // Packet length
          int colCnt   = in.readShort();
-         this.columns = new ColInfo[colCnt];
-         this.rowData = new Object[colCnt];
-         this.tables  = null;
+         columns = new ColInfo[colCnt];
+         rowData = new Object[colCnt];
+         tables  = null;
 
          for (int colNum = 0; colNum < colCnt; ++colNum) {
              ColInfo col = new ColInfo();
@@ -2453,8 +2451,8 @@ public class TdsCore {
      */
     private void tdsReturnStatusToken() throws IOException, SQLException {
         returnStatus = new Integer(in.readInt());
-        if (this.returnParam != null) {
-            returnParam.setOutValue(Support.convert(this.connection,
+        if (returnParam != null) {
+            returnParam.setOutValue(Support.convert(connection,
                     returnStatus,
                     returnParam.jdbcType,
                     connection.getCharset()));
@@ -2502,9 +2500,9 @@ public class TdsCore {
             return;
         }
 
-        this.columns = new ColInfo[colCnt];
-        this.rowData = new Object[colCnt];
-        this.tables = null;
+        columns = new ColInfo[colCnt];
+        rowData = new Object[colCnt];
+        tables = null;
 
         for (int i = 0; i < colCnt; i++) {
             ColInfo col = new ColInfo();
@@ -2530,7 +2528,7 @@ public class TdsCore {
             col.realName = in.readUnicodeString(clen);
             col.name = col.realName;
 
-            this.columns[i] = col;
+            columns[i] = col;
         }
     }
 
@@ -2545,7 +2543,7 @@ public class TdsCore {
         ArrayList colList = new ArrayList();
 
         final int pktLen = in.readShort();
-        this.tables = null;
+        tables = null;
         int bytesRead = 0;
 
         while (bytesRead < pktLen) {
@@ -2561,8 +2559,8 @@ public class TdsCore {
         }
 
         int colCnt  = colList.size();
-        this.columns = (ColInfo[]) colList.toArray(new ColInfo[colCnt]);
-        this.rowData = new Object[colCnt];
+        columns = (ColInfo[]) colList.toArray(new ColInfo[colCnt]);
+        rowData = new Object[colCnt];
     }
 
     /**
@@ -2698,7 +2696,7 @@ public class TdsCore {
             tableList.add(table);
         }
         if (tableList.size() > 0) {
-            this.tables = (TableMetaData[]) tableList.toArray(new TableMetaData[tableList.size()]);
+            tables = (TableMetaData[]) tableList.toArray(new TableMetaData[tableList.size()]);
         }
     }
 
@@ -2921,8 +2919,8 @@ public class TdsCore {
         // The Connection will update itself immediately after this call.
         // As for other objects containing a TDS version value, there are none
         // at this point (we're just constructing the Connection).
-        tdsVersion = TdsData.getTdsVersion(((int) in.read() << 24) | ((int) in.read() << 16)
-                | ((int) in.read() << 8) | (int) in.read());
+        tdsVersion = TdsData.getTdsVersion((in.read() << 24) | (in.read() << 16)
+                | (in.read() << 8) | in.read());
         socket.setTdsVersion(tdsVersion);
 
         product = in.readString(in.read());
@@ -3195,7 +3193,7 @@ public class TdsCore {
                         } else {
                             in.skip(len - 2 - clen);
                         }
-                        this.connection.setNetPacketSize(blocksize);
+                        connection.setNetPacketSize(blocksize);
                         out.setBufferSize(blocksize);
                         if (Logger.isActive()) {
                             Logger.println("Changed blocksize to " + blocksize);
@@ -3378,13 +3376,7 @@ public class TdsCore {
         if (seq != 2)
             throw new ProtocolException("NTLM challenge: got unexpected sequence number:" + seq);
 
-        final int flags = getIntFromBuffer( ntlmMessage, 20 );
-        //NOTE: the context is always included; if not local, then it is just
-        //      set to all zeros.
-        //boolean hasContext = ((flags &   0x4000) != 0);
-        //final boolean hasContext = true;
-        //NOTE: even if target is omitted, the length will be zero.
-        //final boolean hasTarget  = ((flags & 0x800000) != 0);
+        getIntFromBuffer( ntlmMessage, 20 );
 
         //extract the target, if present. This will be used for ntlmv2 auth.
         final int headerOffset = 40; // The assumes the context is always there, which appears to be the case.
@@ -3401,17 +3393,17 @@ public class TdsCore {
 
     private static int getIntFromBuffer(byte[] buf, int offset)
     {
-        int b1 = ((int) buf[offset] & 0xff);
-        int b2 = ((int) buf[offset+1] & 0xff) << 8;
-        int b3 = ((int) buf[offset+2] & 0xff) << 16;
-        int b4 = ((int) buf[offset+3] & 0xff) << 24;
+        int b1 = (buf[offset] & 0xff);
+        int b2 = (buf[offset+1] & 0xff) << 8;
+        int b3 = (buf[offset+2] & 0xff) << 16;
+        int b4 = (buf[offset+3] & 0xff) << 24;
         return b4 | b3 | b2 | b1;
     }
 
     private static int getShortFromBuffer(byte[] buf, int offset)
     {
-        int b1 = ((int) buf[offset] & 0xff);
-        int b2 = ((int) buf[offset+1] & 0xff) << 8;
+        int b1 = (buf[offset] & 0xff);
+        int b2 = (buf[offset+1] & 0xff) << 8;
         return b2 | b1;
     }
     /**
@@ -3423,9 +3415,9 @@ public class TdsCore {
     private void tds5ResultToken() throws IOException, ProtocolException {
         in.readShort(); // Packet length
         int colCnt = in.readShort();
-        this.columns = new ColInfo[colCnt];
-        this.rowData = new Object[colCnt];
-        this.tables = null;
+        columns = new ColInfo[colCnt];
+        rowData = new Object[colCnt];
+        tables = null;
 
         for (int colNum = 0; colNum < colCnt; ++colNum) {
             //
@@ -3559,7 +3551,7 @@ public class TdsCore {
             }
             if (!sendNow) {
                 // Send end of packet byte to batch RPC
-                out.write((byte) DONE_END_OF_RESPONSE);
+                out.write(DONE_END_OF_RESPONSE);
             }
         } else if (sql.length() > 0) {
             if (parameters != null) {
@@ -3629,7 +3621,7 @@ public class TdsCore {
 
         if (procName == null) {
             // Use TDS_LANGUAGE TOKEN with optional parameters
-            out.write((byte)TDS_LANG_TOKEN);
+            out.write(TDS_LANG_TOKEN);
 
             if (haveParams) {
                 sql = Support.substituteParamMarkers(sql, parameters);
@@ -3639,17 +3631,17 @@ public class TdsCore {
                 // Need to preconvert string to get correct length
                 byte[] buf = Support.encodeString(connection.getCharset(), sql);
 
-                out.write((int) buf.length + 1);
+                out.write(buf.length + 1);
                 out.write((byte)(haveParams ? 1 : 0));
                 out.write(buf);
             } else {
-                out.write((int) sql.length() + 1);
+                out.write(sql.length() + 1);
                 out.write((byte) (haveParams ? 1 : 0));
                 out.write(sql);
             }
         } else if (procName.startsWith("#jtds")) {
             // Dynamic light weight procedure call
-            out.write((byte) TDS5_DYNAMIC_TOKEN);
+            out.write(TDS5_DYNAMIC_TOKEN);
             out.write((short) (procName.length() + 4));
             out.write((byte) 2);
             out.write((byte) (haveParams ? 1 : 0));
@@ -3660,7 +3652,7 @@ public class TdsCore {
             byte buf[] = Support.encodeString(connection.getCharset(), procName);
 
             // RPC call
-            out.write((byte) TDS_DBRPC_TOKEN);
+            out.write(TDS_DBRPC_TOKEN);
             out.write((short) (buf.length + 3));
             out.write((byte) buf.length);
             out.write(buf);
@@ -3673,7 +3665,7 @@ public class TdsCore {
         //
         if (haveParams) {
             // First write parameter descriptors
-            out.write((byte) TDS5_PARAMFMT_TOKEN);
+            out.write(TDS5_PARAMFMT_TOKEN);
 
             int len = 2;
 
@@ -3696,7 +3688,7 @@ public class TdsCore {
             }
 
             // Now write the actual data
-            out.write((byte) TDS5_PARAMS_TOKEN);
+            out.write(TDS5_PARAMS_TOKEN);
 
             for (int i = nextParam + 1; i < parameters.length; i++) {
                 TdsData.writeTds5Param(out,
@@ -3822,7 +3814,7 @@ public class TdsCore {
                     && (shortcut = (Integer) tds8SpNames.get(procName)) != null) {
                 // Use the shortcut form of procedure name for TDS8
                 out.write((short) -1);
-                out.write((short) shortcut.shortValue());
+                out.write(shortcut.shortValue());
             } else {
                 out.write((short) procName.length());
                 out.write(procName);
@@ -3854,7 +3846,7 @@ public class TdsCore {
             }
             if (!sendNow) {
                 // Append RPC packets
-                out.write((byte) DONE_END_OF_RESPONSE);
+                out.write(DONE_END_OF_RESPONSE);
             }
         } else if (sql.length() > 0) {
             // Simple SQL query with no parameters
@@ -3885,7 +3877,7 @@ public class TdsCore {
                 textSize >= 0 && textSize != connection.getTextSize();
         if (newRowCount || newTextSize) {
             try {
-                StringBuffer query = new StringBuffer(64);
+                StringBuilder query = new StringBuilder(64);
                 if (newRowCount) {
                     query.append("SET ROWCOUNT ").append(rowCount);
                 }
@@ -4052,7 +4044,7 @@ public class TdsCore {
         final char[] chars = new char[len];
 
         for (int i = 0; i < len; ++i) {
-            final int c = (int) (pw.charAt(i)) ^ xormask;
+            final int c = (pw.charAt(i)) ^ xormask;
             final int m1 = (c >> 4) & 0x0F0F;
             final int m2 = (c << 4) & 0xF0F0;
 

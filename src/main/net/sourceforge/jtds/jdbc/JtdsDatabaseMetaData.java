@@ -1808,7 +1808,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         if (types == null) {
             cstmt.setString(4, null);
         } else {
-            StringBuffer buf = new StringBuffer(64);
+            StringBuilder buf = new StringBuilder(64);
 
             buf.append('"');
 
@@ -3427,7 +3427,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         }
 
         int len = pattern.length();
-        StringBuffer buf = new StringBuffer(len + 10);
+        StringBuilder buf = new StringBuilder(len + 10);
 
         for (int i = 0; i < len; i++) {
             if (pattern.charAt(i) != escChar) {
@@ -3453,7 +3453,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      * @return the formatted call escape as a <code>String</code>
      */
     private String syscall(String catalog, String call) {
-        StringBuffer sql = new StringBuffer(30 + call.length());
+        StringBuilder sql = new StringBuilder(30 + call.length());
         sql.append("{call ");
         if (catalog != null) {
             if (tdsVersion >= Driver.TDS70) {

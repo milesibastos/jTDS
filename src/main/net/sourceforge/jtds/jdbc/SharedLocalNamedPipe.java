@@ -47,7 +47,7 @@ public class SharedLocalNamedPipe extends SharedSocket {
         final String serverName = connection.getServerName();
         final String instanceName = connection.getInstanceName();
 
-        final StringBuffer pipeName = new StringBuffer(64);
+        final StringBuilder pipeName = new StringBuilder(64);
         pipeName.append("\\\\");
         if (serverName == null || serverName.length() == 0) {
             pipeName.append( '.' );

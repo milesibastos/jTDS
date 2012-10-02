@@ -468,7 +468,7 @@ public class PreparedStatementTest extends TestBase {
 
         stmt.execute("CREATE TABLE #longStatement (id int primary key, data varchar(8000))");
 
-        StringBuffer buf = new StringBuffer(4096);
+        StringBuilder buf = new StringBuilder(4096);
         buf.append("SELECT * FROM #longStatement WHERE data = '");
 
         for (int i = 0; i < 4000; i++) {
@@ -497,7 +497,7 @@ public class PreparedStatementTest extends TestBase {
         makeObjects(stmt, 10);
         stmt.close();
 
-        StringBuffer sb = new StringBuffer(PARAMS * 3 + 100);
+        StringBuilder sb = new StringBuilder(PARAMS * 3 + 100);
         sb.append("SELECT * FROM #test WHERE f_int in (?");
         for (int i = 1; i < PARAMS; i++) {
             sb.append(", ?");
@@ -1086,7 +1086,7 @@ public class PreparedStatementTest extends TestBase {
         final String ch = new String("\u3042");
 
         // create string with bytecount > charcount
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for(int i = 0; i < chars; i++)
             sb.append(ch);
 

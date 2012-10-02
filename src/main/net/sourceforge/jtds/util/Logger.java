@@ -92,7 +92,7 @@ public class Logger {
     public static void logPacket(int streamId, boolean in, byte[] pkt) {
         int len = ((pkt[2] & 0xFF) << 8)| (pkt[3] & 0xFF);
 
-        StringBuffer line = new StringBuffer(80);
+        StringBuilder line = new StringBuilder(80);
 
         line.append("----- Stream #");
         line.append(streamId);

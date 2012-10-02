@@ -148,7 +148,7 @@ public class JtdsXid implements Xid {
     }
 
     public String toString() {
-        StringBuffer txt = new StringBuffer(256);
+        StringBuilder txt = new StringBuilder(256);
         txt.append("XID[Format=").append(fmtId).append(", Global=0x");
         txt.append(Support.toHex(gtran)).append(", Branch=0x");
         txt.append(Support.toHex(bqual)).append(']');

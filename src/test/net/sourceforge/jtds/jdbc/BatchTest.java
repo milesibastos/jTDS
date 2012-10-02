@@ -633,8 +633,8 @@ public class BatchTest extends DatabaseTestCase {
         stmt.close();
 
         // create 2 different strings
-        StringBuffer sb1 = new StringBuffer(10000);
-        StringBuffer sb2 = new StringBuffer(100);
+        StringBuilder sb1 = new StringBuilder(10000);
+        StringBuilder sb2 = new StringBuilder(100);
 
         for (int i=1; i<=1000; i++) {
             sb1.append(" +++ ").append("    ".substring(String.valueOf(i).length())).append(i).append("\n");
@@ -747,7 +747,7 @@ public class BatchTest extends DatabaseTestCase {
         if (iMax == -1)
             return "[]";
 
-        StringBuffer b = new StringBuffer();
+        StringBuilder b = new StringBuilder();
         b.append('[');
         for (int i = 0; ; i++) {
             b.append(a[i]);

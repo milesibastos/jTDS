@@ -1053,7 +1053,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         for (int i = 1; i <= rowsToAdd; i++) {
             pStmtA.setInt(1, i);
-            StringBuffer tmp = new StringBuffer(255);
+            StringBuilder tmp = new StringBuilder(255);
 
             while (tmp.length() < 240) {
                 tmp.append("row ").append(i).append(". ");
@@ -1326,7 +1326,7 @@ public class TimestampTest extends DatabaseTestCase {
 
         for (int i = 1; i <= rowsToAdd; i++) {
             pstmtA.setInt(1, i);
-            StringBuffer tmp = new StringBuffer(255);
+            StringBuilder tmp = new StringBuilder(255);
 
             while (tmp.length() < 240) {
                 tmp.append("row ").append(i).append(". ");

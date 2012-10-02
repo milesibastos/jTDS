@@ -407,7 +407,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         //
         if (procName != null) {
             if (procName.startsWith("#jtds")) {
-                StringBuffer buf = new StringBuffer(procName.length() + 16
+                StringBuilder buf = new StringBuilder(procName.length() + 16
                         + (parameters != null ? parameters.length * 5 : 0));
                 buf.append("EXEC ").append(procName).append(' ');
                 for (int i = 0; parameters != null && i < parameters.length; i++) {
@@ -919,7 +919,7 @@ public class MSCursorResultSet extends JtdsResultSet {
         tds.executeSQL(null, "sp_cursorclose", param, false,
                 statement.getQueryTimeout(), -1, -1, true);
         tds.clearResponseQueue();
-        
+
         if (ex != null) {
             ex.setNextException(statement.getMessages().exceptions);
             throw ex;
@@ -946,8 +946,8 @@ public class MSCursorResultSet extends JtdsResultSet {
         if (tds.isResultSet()) {
             // Set column meta data if necessary
             if (setMeta) {
-                this.columns = copyInfo(tds.getColumns());
-                this.columnCount = getColumnCount(columns);
+                columns = copyInfo(tds.getColumns());
+                columnCount = getColumnCount(columns);
             }
             // With TDS 7 the data row (if any) is sent without any
             // preceding resultset header.

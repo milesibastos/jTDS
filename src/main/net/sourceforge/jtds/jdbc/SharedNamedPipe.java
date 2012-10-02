@@ -66,7 +66,7 @@ public class SharedNamedPipe extends SharedSocket {
         NtlmPasswordAuthentication auth = new NtlmPasswordAuthentication(
                 connection.getDomainName(), connection.getUser(), connection.getPassword());
 
-        StringBuffer url = new StringBuffer(32);
+        StringBuilder url = new StringBuilder(32);
 
         url.append("smb://");
         url.append(connection.getServerName());

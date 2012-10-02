@@ -944,7 +944,7 @@ public class CSUnitTest extends DatabaseTestCase {
     }
     static String longString(char ch) {
         int                 i;
-        StringBuffer        str255 = new StringBuffer(255);
+        StringBuilder        str255 = new StringBuilder(255);
 
         for (i=0; i<255; i++) {
             str255.append(ch);

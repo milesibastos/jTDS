@@ -34,7 +34,7 @@ import java.util.LinkedList;
  * Implementation notes:
  * <p>
  * I experimented with allowing multiple open result sets as supported
- * by the origianal jTDS but rejected this approach for the following
+ * by the original jTDS but rejected this approach for the following
  * reasons:
  * <ol>
  * <li>It is more difficult to ensure that there are no memory leaks and that
@@ -44,7 +44,7 @@ import java.util.LinkedList;
  *     same way that other drivers do.
  * </ol>
  * In the event of an IO failure the setClosed() method forces this statement
- * and associated result set to close preventing the propogation of errors.
+ * and associated result set to close preventing the propagation of errors.
  * This class includes a finalize method which increases the chances of the
  * statement being closed tidly in a pooled environment where the user has
  * forgotten to explicitly close the statement before it goes out of scope.
@@ -115,8 +115,25 @@ public class JtdsStatement implements java.sql.Statement {
     /** The cached column meta data. */
     protected ColInfo[] colMetaData;
 
-    /** True if this statement is closed. */
-    private final boolean[] closed = new boolean[] { false };
+   /**
+    * Meaning of the one and only array element at index {@code 0}:
+    *
+    * <table>
+    *   <tr>
+    *     <td>0</td>
+    *     <td>- this statement is open</td>
+    *   </tr>
+    *   <tr>
+    *     <td>1</td>
+    *     <td>- this statement is currently being closed</td>
+    *   </tr>
+    *   <tr>
+    *     <td>2</td>
+    *     <td>- this statement is closed</td>
+    *   </tr>
+    * </table>
+    */
+   private final int[] closed = new int[] { 0 };
 
     /**
      * Construct a new Statement object.
@@ -171,12 +188,12 @@ public class JtdsStatement implements java.sql.Statement {
         this.resultSetType = resultSetType;
         this.resultSetConcurrency = resultSetConcurrency;
 
-        this.tds = connection.getCachedTds();
-        if (this.tds == null) {
-            this.messages = new SQLDiagnostic(connection.getServerType());
-            this.tds = new TdsCore(this.connection, messages);
+        tds = connection.getCachedTds();
+        if (tds == null) {
+            messages = new SQLDiagnostic(connection.getServerType());
+            tds = new TdsCore(this.connection, messages);
         } else {
-            this.messages = tds.getMessages();
+            messages = tds.getMessages();
         }
     }
 
@@ -752,8 +769,8 @@ public class JtdsStatement implements java.sql.Statement {
      * @return the default fetch size for a new <code>ResultSet</code>
      */
     int getDefaultFetchSize() {
-        return (0 < this.maxRows && this.maxRows < DEFAULT_FETCH_SIZE)
-                ? this.maxRows : DEFAULT_FETCH_SIZE;
+        return (0 < maxRows && maxRows < DEFAULT_FETCH_SIZE)
+                ? maxRows : DEFAULT_FETCH_SIZE;
     }
 
 // ------------------ java.sql.Statement methods ----------------------
@@ -761,37 +778,37 @@ public class JtdsStatement implements java.sql.Statement {
     public int getFetchDirection() throws SQLException {
         checkOpen();
 
-        return this.fetchDirection;
+        return fetchDirection;
     }
 
     public int getFetchSize() throws SQLException {
         checkOpen();
 
-        return this.fetchSize;
+        return fetchSize;
     }
 
     public int getMaxFieldSize() throws SQLException {
         checkOpen();
 
-        return this.maxFieldSize;
+        return maxFieldSize;
     }
 
     public int getMaxRows() throws SQLException {
         checkOpen();
 
-        return this.maxRows;
+        return maxRows;
     }
 
     public int getQueryTimeout() throws SQLException {
         checkOpen();
 
-        return this.queryTimeout;
+        return queryTimeout;
     }
 
     public int getResultSetConcurrency() throws SQLException {
         checkOpen();
 
-        return this.resultSetConcurrency;
+        return resultSetConcurrency;
     }
 
     public int getResultSetHoldability() throws SQLException {
@@ -834,62 +851,91 @@ public class JtdsStatement implements java.sql.Statement {
         messages.clearWarnings();
     }
 
-    public void close() throws SQLException {
+   @Override
+   public void close()
+      throws SQLException
+   {
+      synchronized( closed )
+      {
+         if( closed[0] != 0 )
+            return;
 
-        synchronized( closed ) {
-                if (! closed[0]) {
-   
-                SQLException closeEx = null;
-                SQLException releaseEx = null;
-   
-                try {
-                    try {
-                        closeAllResultSets();
-                    } catch (SQLException ex) {
-                        if (!"HYT00".equals(ex.getSQLState())
-                                && !"HY008".equals(ex.getSQLState())) {
-                            // Only throw exceptions not caused by cancels or timeouts
-                            closeEx = ex;
-                        }
-                    } finally {
-                        try {
-                            if (!connection.isClosed()) {
-                                connection.releaseTds(tds);
-                            }
-                            // Check for server side errors
-                            tds.getMessages().checkErrors();
-                        } catch (SQLException ex) {
-                            // Remember any exception thrown
-                            releaseEx = ex;
-                        } finally {
-                            // Clean up everything
-                            tds = null;
-                            connection.removeStatement(this);
-                            connection = null;
-                        }
-                    }
-                } catch (NullPointerException npe) {
-                    // openResultSets/connection/tds have been nullified concurrently
-                } finally {
-                    // set closed flag, closeAllResultSets() still required statement to be 'open'
-                    closed[0] = true;
+         // now closing
+         closed[0] = 1;
+      }
 
-                    // re-throw statement close exception
-                    if (releaseEx != null) {
-                       // queue up any result set close exceptions first
-                        if (closeEx != null) {
-                            releaseEx.setNextException(closeEx);
-                        }
-                        throw releaseEx;
-                    }
-                    // Throw any exception caught during result set close
-                    if (closeEx != null) {
-                        throw closeEx;
-                    }
-                }
+      SQLException closeEx   = null;
+      SQLException releaseEx = null;
+
+      try
+      {
+         try
+         {
+            closeAllResultSets();
+         }
+         catch( SQLException ex )
+         {
+            if( ! "HYT00".equals( ex.getSQLState() ) && ! "HY008".equals( ex.getSQLState() ) )
+            {
+               // Only throw exceptions not caused by cancels or timeouts
+               closeEx = ex;
             }
-        }
-    }
+         }
+         finally
+         {
+            try
+            {
+               if( ! connection.isClosed() )
+               {
+                  connection.releaseTds( tds );
+               }
+               // Check for server side errors
+               tds.getMessages().checkErrors();
+            }
+            catch( SQLException ex )
+            {
+               // Remember any exception thrown
+               releaseEx = ex;
+            }
+            finally
+            {
+               // set closed flag, closeAllResultSets() still required statement
+               // to be 'open'
+               synchronized( closed )
+               {
+                  closed[0] = 2;
+               }
+
+               // Clean up everything
+               tds = null;
+               connection.removeStatement( this );
+               connection = null;
+            }
+         }
+      }
+      catch( NullPointerException npe )
+      {
+         // openResultSets/connection/tds have been nullified concurrently
+      }
+      finally
+      {
+         // re-throw statement close exception
+         if( releaseEx != null )
+         {
+            // queue up any result set close exceptions first
+            if( closeEx != null )
+            {
+               releaseEx.setNextException( closeEx );
+            }
+            throw releaseEx;
+         }
+         // Throw any exception caught during result set close
+         if( closeEx != null )
+         {
+            throw closeEx;
+         }
+      }
+   }
 
     public boolean getMoreResults() throws SQLException {
         checkOpen();
@@ -989,7 +1035,7 @@ public class JtdsStatement implements java.sql.Statement {
         case ResultSet.FETCH_UNKNOWN:
         case ResultSet.FETCH_REVERSE:
         case ResultSet.FETCH_FORWARD:
-            this.fetchDirection = direction;
+            fetchDirection = direction;
             break;
 
         default:
@@ -1015,7 +1061,7 @@ public class JtdsStatement implements java.sql.Statement {
         if (rows == 0) {
             rows = getDefaultFetchSize();
         }
-        this.fetchSize = rows;
+        fetchSize = rows;
     }
 
     public void setMaxFieldSize(int max) throws SQLException {
@@ -1038,11 +1084,11 @@ public class JtdsStatement implements java.sql.Statement {
                 Messages.get("error.generic.optltzero", "setMaxRows"),
                     "HY092");
         }
-        if (max > 0 && max < this.fetchSize) {
+        if (max > 0 && max < fetchSize) {
             // Just for consistency with setFetchSize()
-            this.fetchSize = max;
+            fetchSize = max;
         }
-        this.maxRows = max;
+        maxRows = max;
     }
 
     public void setQueryTimeout(int seconds) throws SQLException {
@@ -1054,7 +1100,7 @@ public class JtdsStatement implements java.sql.Statement {
                     "HY092");
         }
 
-        this.queryTimeout = seconds;
+        queryTimeout = seconds;
     }
 
     public boolean getMoreResults(int current) throws SQLException {
@@ -1122,7 +1168,7 @@ public class JtdsStatement implements java.sql.Statement {
     public void setEscapeProcessing(boolean enable) throws SQLException {
         checkOpen();
 
-        this.escapeProcessing = enable;
+        escapeProcessing = enable;
     }
 
     public int executeUpdate(String sql) throws SQLException {
@@ -1156,11 +1202,11 @@ public class JtdsStatement implements java.sql.Statement {
 
     public void setCursorName(String name) throws SQLException {
         checkOpen();
-        this.cursorName = name;
+        cursorName = name;
         if (name != null) {
             // Reset statement type to JDBC 1 default.
-            this.resultSetType = ResultSet.TYPE_FORWARD_ONLY;
-            this.fetchSize = 1; // Needed for positioned updates
+            resultSetType = ResultSet.TYPE_FORWARD_ONLY;
+            fetchSize = 1; // Needed for positioned updates
         }
     }
 
@@ -1216,7 +1262,7 @@ public class JtdsStatement implements java.sql.Statement {
     @Override
     public Connection getConnection() throws SQLException {
         checkOpen();
-        return this.connection;
+        return connection;
     }
 
     public ResultSet getGeneratedKeys() throws SQLException {
@@ -1311,18 +1357,22 @@ public class JtdsStatement implements java.sql.Statement {
             sql = tmp[0];
         }
 
-        return this.executeSQLQuery(sql, null, null, useCursor(false, null));
+        return executeSQLQuery(sql, null, null, useCursor(false, null));
     }
 
-    /**
-     * @see java.sql.Statement#isClosed()
-     */
-    @Override
-    public boolean isClosed() throws SQLException {
-        synchronized( closed ) {
-            return closed[0];
-        }
-    }
+   /**
+    * @see
+    *    whether this {@link JtdsStatement} has been closed
+    */
+   @Override
+   public boolean isClosed()
+      throws SQLException
+   {
+      synchronized( closed )
+      {
+         return closed[0] == 2;
+      }
+   }
 
     /* (non-Javadoc)
      * @see java.sql.Statement#isPoolable()

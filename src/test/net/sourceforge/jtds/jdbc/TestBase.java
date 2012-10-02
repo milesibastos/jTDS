@@ -55,11 +55,12 @@ public abstract class TestBase extends TestCase {
         connect();
     }
 
-    @Override
+   @Override
    public void tearDown() throws Exception {
-        disconnect();
-        super.tearDown();
-    }
+      assertFalse( Thread.currentThread().isInterrupted() );
+      disconnect();
+      super.tearDown();
+   }
 
     public Connection getConnection() throws Exception {
         Class.forName(props.getProperty("driver"));

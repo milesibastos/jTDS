@@ -280,7 +280,7 @@ public class SAfeTest extends DatabaseTestCase {
          {
             // SQL Server 2005: S1000, error message indicates cancellation
             // SQL Server 2008: HY008
-            assertTrue( ex.getSQLState().equals( "HY008" ) || ex.getSQLState().equals( "S1000" ) );
+            assertTrue( ex.getSQLState() + ": " + ex.getMessage(), ex.getSQLState().equals( "HY008" ) || ex.getSQLState().equals( "S1000" ) );
          }
 
          // wait for the cancel to finish executing
@@ -1786,15 +1786,26 @@ public class SAfeTest extends DatabaseTestCase {
         stmt.close();
     }
 
-    /**
-     * Test for bug [1596743] executeQuery absorbs thread interrupt status
-     */
-    public void testThreadInterrupt() throws Exception {
-        Thread.currentThread().interrupt();
-        Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT 1");
-        rs.close();
-        stmt.close();
-        assertTrue(Thread.currentThread().isInterrupted());
-    }
+   /**
+    * Test for bug #507, executeQuery absorbs thread interrupt status
+    */
+   public void testThreadInterrupt()
+      throws Exception
+   {
+      Thread.currentThread().interrupt();
+
+      try
+      {
+         Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery( "SELECT 1" );
+         rs.close();
+         stmt.close();
+      }
+      finally
+      {
+         // clear interrupted state of JUnit thread
+         assertTrue( Thread.interrupted() );
+      }
+   }
+
 }

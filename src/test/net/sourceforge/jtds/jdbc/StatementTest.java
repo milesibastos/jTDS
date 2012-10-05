@@ -35,6 +35,101 @@ public class StatementTest extends TestBase {
    }
 
    /**
+    * Test for computed results, bug #678.
+    */
+   public void testComputeClause()
+      throws Exception
+   {
+      final int VALUES = 150;
+
+      Statement sta = con.createStatement();
+
+      sta.executeUpdate( "create table #Bug678( X int, A varchar(10), B int, C bigint )" );
+
+      for( int i = 0; i < VALUES; i ++ )
+      {
+         sta.executeUpdate( "insert into #Bug678 values( " + i % Math.max( 1, i / 20 ) + ", 'VAL" + i + "'," + ( VALUES - i ) + ", " + (long)i * Integer.MAX_VALUE + " )" );
+      }
+
+      assertTrue( sta.execute( "select * from #Bug678 order by X, A asc compute min( A ), max( A ), min( C ), max( C ), avg( B ), sum( B ), count( A ), count_big( C ) by X" ) );
+
+      do
+      {
+         dump( sta.getResultSet() );
+      }
+      while( sta.getMoreResults() );
+
+      // no update count expected
+      assertEquals( -1, sta.getUpdateCount() );
+      sta.close();
+   }
+
+   /**
+    * <p> Test to ensure that single results generated as result of aggregation
+    * operations (COMPUTE clause) can be closed individually without affecting
+    * remaining {@link ResultSet}s. </p>
+    */
+   public void testCloseComputedResult()
+      throws Exception
+   {
+      Statement sta = con.createStatement();
+
+      sta.executeUpdate( "create table #Bug678( NAME varchar(10), CREDITS int )" );
+
+      sta.executeUpdate( "insert into #Bug678 values( 'Alf'  , 10 )" );
+      sta.executeUpdate( "insert into #Bug678 values( 'Alf'  , 20 )" );
+      sta.executeUpdate( "insert into #Bug678 values( 'Alf'  , 30 )" );
+      sta.executeUpdate( "insert into #Bug678 values( 'Ronny',  5 )" );
+      sta.executeUpdate( "insert into #Bug678 values( 'Ronny', 10 )" );
+
+      assertTrue( sta.execute( "select * from #Bug678 order by NAME compute sum( CREDITS ) by NAME" ) );
+
+      ResultSet res = sta.getResultSet();
+
+      // check 1st row of 1st ResultSet
+      assertTrue  ( res.next() );
+      assertEquals( "Alf", res.getString( 1 ) );
+      assertEquals( 10, res.getInt( 2 ) );
+      assertTrue  ( res.next() );
+
+      // close 1st ResultSet
+      res.close();
+
+      // 3 ResultSets should be left
+      assertTrue( sta.getMoreResults() );
+      res = sta.getResultSet();
+
+      // close 2nd (computed) ResultSet without processing it
+      res.close();
+
+      // 2 ResultSets should be left
+      assertTrue( sta.getMoreResults() );
+      res = sta.getResultSet();
+
+      // check 1st row of 3rd ResultSet
+      assertTrue( res.next() );
+      assertEquals( "Ronny", res.getString( 1 ) );
+      assertEquals( 5, res.getInt( 2 ) );
+
+      // close 3rd ResultSet
+      res.close();
+
+      // 1 ResultSet should be left
+      assertTrue( sta.getMoreResults() );
+      res = sta.getResultSet();
+
+      // check 1st row of 4th (computed) ResultSet
+      assertTrue( res.next() );
+      assertEquals( 15, res.getInt( 1 ) );
+      assertFalse( res.next() );
+
+      // no ResultSets should be left
+      assertFalse( sta.getMoreResults() );
+
+      sta.close();
+   }
+
+   /**
     *
     */
    public void testConcurrentClose()

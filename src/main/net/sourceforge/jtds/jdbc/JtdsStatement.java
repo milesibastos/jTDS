@@ -576,67 +576,89 @@ public class JtdsStatement implements java.sql.Statement {
         }
     }
 
-    /**
-     * Queue up update counts into {@link #resultQueue} until the end of the
-     * response is reached or a <code>ResultSet</code> is encountered. Calling
-     * <code>processResults</code> while a <code>ResultSet</code> is open will
-     * not close it, but will consume all remaining rows.
-     *
-     * @param returnKeys <code>true</code> if a generated keys
-     *                   <code>ResultSet</code> is expected
-     * @param update     <code>true</code> if the method is called from within
-     *                   <code>executeUpdate</code>
-     * @return           <code>true</code> if there are any results,
-     *                   <code>false</code> otherwise
-     * @throws SQLException if an error condition occurs
-     */
-    private boolean processResults(boolean returnKeys, boolean update) throws SQLException {
-        if (!resultQueue.isEmpty()) {
-            throw new IllegalStateException(
-                    "There should be no queued results.");
-        }
+   /**
+    * Queue up update counts into {@link #resultQueue} until the end of the
+    * response is reached or a <code>ResultSet</code> is encountered. Calling
+    * <code>processResults</code> while a <code>ResultSet</code> is open will
+    * not close it, but will consume all remaining rows.
+    *
+    * @param returnKeys
+    *    <code>true</code> if a generated keys <code>ResultSet</code> is expected
+    *
+    * @param update
+    *    <code>true</code> if the method is called from within
+    *    <code>executeUpdate</code>
+    *
+    * @return
+    *    <code>true</code> if there are any results, <code>false</code> otherwise
+    *
+    * @throws SQLException
+    *    if an error condition occurs
+    */
+   private boolean processResults( boolean returnKeys, boolean update )
+      throws SQLException
+   {
+      if( ! resultQueue.isEmpty() )
+         throw new IllegalStateException( "There should be no queued results." );
 
-        while (!tds.isEndOfResponse()) {
-            if (!tds.getMoreResults()) {
-                if (tds.isUpdateCount()) {
-                    if (update && connection.getLastUpdateCount()) {
-                        resultQueue.clear();
-                    }
-                    resultQueue.addLast(new Integer(tds.getUpdateCount()));
-                }
-            } else {
-                if (returnKeys) {
-                    // This had better be the generated key
-                    // FIXME We could use SELECT @@IDENTITY AS jTDS_SOMETHING and check the column name to make sure
-                    if (tds.getNextRow()) {
-                        genKeyResultSet = new CachedResultSet(this,
-                                tds.getColumns(),
-                                tds.getRowData());
-                    }
-                } else {
-                    if (update && resultQueue.isEmpty()) {
-                        // Throw exception but queue up any previous ones
-                        SQLException ex = new SQLException(
-                                Messages.get("error.statement.nocount"), "07000");
-                        ex.setNextException(messages.exceptions);
-                        throw ex;
-                    }
-
-                    resultQueue.add(new JtdsResultSet(
-                            this,
-                            ResultSet.TYPE_FORWARD_ONLY,
-                            ResultSet.CONCUR_READ_ONLY,
-                            tds.getColumns()));
-                    break;
-                }
+      while( !tds.isEndOfResponse() )
+      {
+         if( !tds.getMoreResults() )
+         {
+            if( tds.isUpdateCount() )
+            {
+               if( update && connection.getLastUpdateCount() )
+               {
+                  resultQueue.clear();
+               }
+               resultQueue.addLast( new Integer( tds.getUpdateCount() ) );
             }
-        }
+         }
+         else
+         {
+            if( returnKeys )
+            {
+               // This had better be the generated key
+               // FIXME We could use SELECT @@IDENTITY AS jTDS_SOMETHING and
+               // check the column name to make sure
+               if( tds.getNextRow() )
+               {
+                  genKeyResultSet = new CachedResultSet( this, tds.getColumns(), tds.getRowData() );
+               }
+            }
+            else
+            {
+               if( update && resultQueue.isEmpty() )
+               {
+                  // Throw exception but queue up any previous ones
+                  SQLException ex = new SQLException( Messages.get( "error.statement.nocount" ), "07000" );
+                  ex.setNextException( messages.exceptions );
+                  throw ex;
+               }
 
-        // Check for server side errors
-        getMessages().checkErrors();
+               // this also clears computed data in TdsCore
+               Object[] computed = tds.getComputedRowData();
 
-        return !resultQueue.isEmpty();
-    }
+               if( computed != null )
+               {
+                  // create computed result set
+                  resultQueue.add( new CachedResultSet( this, tds.getComputedColumns(), computed ) );
+               }
+               else
+               {
+                  resultQueue.add( new JtdsResultSet( this, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, tds.getColumns() ) );
+               }
+
+               break;
+            }
+         }
+      }
+
+      // Check for server side errors
+      getMessages().checkErrors();
+
+      return !resultQueue.isEmpty();
+   }
 
     /**
      * Cache as many results as possible (up to the first

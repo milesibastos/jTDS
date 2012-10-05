@@ -51,8 +51,8 @@ import net.sourceforge.jtds.util.*;
  * @author Mike Hutchinson
  * @author Matt Brinkley
  * @author Alin Sinpalean
+ * @author Holger Rehn
  * @author FreeTDS project
- * @version $Id: TdsCore.java,v 1.115.2.4 2009-08-10 17:38:02 ickzon Exp $
  */
 public class TdsCore {
     /**
@@ -128,19 +128,23 @@ public class TdsCore {
                    || token == TDS_RESULT_TOKEN
                    || token == TDS5_WIDE_RESULT
                    || token == TDS_COLINFO_TOKEN
-                   || token == TDS_ROW_TOKEN;
+                   || token == TDS_ROW_TOKEN
+                   || token == ALTMETADATA_TOKEN
+                   || token == TDS_ALTROW;
         }
 
         /**
          * Retrieve the row data status.
          *
-         * @return <code>boolean</code> true if the current token is a result row.
+         * @return
+         *    <code>true</code> if the current token is a result row.
          */
         public boolean isRowData() {
-            return token == TDS_ROW_TOKEN;
+            return token == TDS_ROW_TOKEN || token == TDS_ALTROW;
         }
 
     }
+
     /**
      * Inner static class used to hold table meta data.
      */
@@ -213,7 +217,7 @@ public class TdsCore {
     /** TDS 7.0 Result set column meta data token. */
     private static final byte TDS7_RESULT_TOKEN     = (byte) 129;  // 0x81
     /** TDS 7.0 Computed Result set column meta data token. */
-    private static final byte TDS7_COMP_RESULT_TOKEN= (byte) 136;  // 0x88
+    private static final byte ALTMETADATA_TOKEN     = (byte) 136;  // 0x88
     /** TDS 4.2 Column names token. */
     private static final byte TDS_COLNAME_TOKEN     = (byte) 160;  // 0xA0
     /** TDS 4.2 Column meta data token. */
@@ -390,8 +394,12 @@ public class TdsCore {
     private boolean endOfResults  = true;
     /** The array of column meta data objects for this result set. */
     private ColInfo[] columns;
+    /** The array of column meta data objects for the computed columns of this result set. */
+    private ColInfo[] computedColumns;
     /** The array of column data objects in the current row. */
     private Object[] rowData;
+    /** The array of computed column data objects in the current row. */
+    private Object[] computedRowData;
     /** The array of table names associated with this result. */
     private TableMetaData[] tables;
     /** The descriptor object for the current TDS token. */
@@ -410,7 +418,7 @@ public class TdsCore {
     private boolean isClosed;
     /** Flag that indicates if logon() should try to use Windows Single Sign On using SSPI. */
     private boolean ntlmAuthSSO;
-    /** Indicates that a fatal error has occured and the connection will close. */
+    /** Indicates that a fatal error has occurred and the connection will close. */
     private boolean fatalError;
     /** Mutual exclusion lock on connection. */
     private Semaphore connectionLock;
@@ -621,7 +629,7 @@ public class TdsCore {
     /**
      * Get the next result set or update count from the TDS stream.
      *
-     * @return <code>boolean</code> if the next item is a result set.
+     * @return <code>true</code> if the next item is a result set.
      * @throws SQLException if an I/O or protocol error occurs; server errors
      *                      are queued up and not thrown
      */
@@ -629,6 +637,7 @@ public class TdsCore {
         checkOpen();
         nextToken();
 
+        // process data until EOF or updatecount/resultset
         while (!endOfResponse
                && !currentToken.isUpdateCount()
                && !currentToken.isResultSet()) {
@@ -767,46 +776,45 @@ public class TdsCore {
             nextToken(); // Could be messages
         }
 
+        if( endOfResults ) // end result in case EOF has been detected reading the token(s)
+           return false;
+
         return currentToken.isRowData();
     }
 
-    /**
-     * Retrieve the status of result set.
-     * <p>
-     * This does a quick read ahead and is needed to support the isLast()
-     * method in the ResultSet.
-     *
-     * @return <code>boolean</code> - <code>true</code> if there is more data
-     *          in the result set.
-     */
-    boolean isDataInResultSet() throws SQLException {
-        byte x;
+   /**
+    * <p> Retrieve the status of result set. </p>
+    *
+    * <p> This does a quick read ahead and is needed to support method {@link
+    * JtdsResultSet#isLast()}. </p>
+    *
+    * @return
+    *    {@code true} if there is more data in the result set
+    */
+   boolean isDataInResultSet()
+      throws SQLException
+   {
+      checkOpen();
 
-        checkOpen();
+      try
+      {
+         byte x = endOfResponse ? TDS_DONE_TOKEN : (byte) in.peek();
 
-        try {
-            x = (endOfResponse) ? TDS_DONE_TOKEN : (byte) in.peek();
+         while( x != TDS_ROW_TOKEN && x != TDS_ALTROW && x != TDS_DONE_TOKEN && x != TDS_DONEINPROC_TOKEN && x != TDS_DONEPROC_TOKEN )
+         {
+            nextToken();
+            x = (byte) in.peek();
+         }
 
-            while (x != TDS_ROW_TOKEN
-                   && x != TDS_DONE_TOKEN
-                   && x != TDS_DONEINPROC_TOKEN
-                   && x != TDS_DONEPROC_TOKEN) {
-                nextToken();
-                x = (byte) in.peek();
-            }
-
-            messages.checkErrors();
-        } catch (IOException e) {
-            connection.setClosed();
-            throw Support.linkException(
-                new SQLException(
-                       Messages.get(
-                                "error.generic.ioerror", e.getMessage()),
-                                    "08S01"), e);
-        }
-
-        return x == TDS_ROW_TOKEN;
-    }
+         messages.checkErrors();
+         return x == TDS_ROW_TOKEN || x == TDS_ALTROW;
+      }
+      catch( IOException e )
+      {
+         connection.setClosed();
+         throw Support.linkException( new SQLException( Messages.get( "error.generic.ioerror", e.getMessage() ), "08S01" ), e );
+      }
+   }
 
     /**
      * Retrieve the return status for the current stored procedure.
@@ -1511,6 +1519,41 @@ public class TdsCore {
         return sqlEx;
     }
 
+   /**
+    * <p> Retrieve the current computed result set column descriptors, if any.
+    * </p>
+    *
+    * @return
+    *    column descriptors for the computed columns as {@link ColInfo} array;
+    *    or {@code null} if there are no computed columns
+    */
+   ColInfo[] getComputedColumns()
+   {
+      return computedColumns;
+   }
+
+   /**
+    * <p> Retrieve <b>and clear</b> the current computed result set data items,
+    * if any. </p>
+    *
+    * @return
+    *    the row data for the computed columns as an {@link Object} array; or
+    *    {@code null} if there are no computed columns, computed data has not
+    *    yet been received, or the data has already been cleared by a previous
+    *    call to this method
+    */
+   Object[] getComputedRowData()
+   {
+      try
+      {
+         return computedRowData;
+      }
+      finally
+      {
+         computedRowData = null;
+      }
+   }
+
 // ---------------------- Private Methods from here ---------------------
 
     /**
@@ -2186,147 +2229,172 @@ public class TdsCore {
         out.flush();
     }
 
-    /**
-     * Read the next TDS token from the response stream.
-     *
-     * @throws SQLException if an I/O or protocol error occurs
-     */
-    private void nextToken()
-        throws SQLException
-    {
-        checkOpen();
-        if (endOfResponse) {
-            currentToken.token  = TDS_DONE_TOKEN;
-            currentToken.status = 0;
-            return;
-        }
-        try {
-            currentToken.token = (byte)in.read();
-            switch (currentToken.token) {
-                case TDS5_PARAMFMT2_TOKEN:
-                    tds5ParamFmt2Token();
-                    break;
-                case TDS_LANG_TOKEN:
-                    tdsInvalidToken();
-                    break;
-                case TDS5_WIDE_RESULT:
-                    tds5WideResultToken();
-                    break;
-                case TDS_CLOSE_TOKEN:
-                    tdsInvalidToken();
-                    break;
-                case TDS_RETURNSTATUS_TOKEN:
-                    tdsReturnStatusToken();
-                    break;
-                case TDS_PROCID:
-                    tdsProcIdToken();
-                    break;
-                case TDS_OFFSETS_TOKEN:
-                    tdsOffsetsToken();
-                    break;
-                case TDS7_RESULT_TOKEN:
-                    tds7ResultToken();
-                    break;
-                case TDS7_COMP_RESULT_TOKEN:
-                    tdsInvalidToken();
-                    break;
-                case TDS_COLNAME_TOKEN:
-                    tds4ColNamesToken();
-                    break;
-                case TDS_COLFMT_TOKEN:
-                    tds4ColFormatToken();
-                    break;
-                case TDS_TABNAME_TOKEN:
-                    tdsTableNameToken();
-                    break;
-                case TDS_COLINFO_TOKEN:
-                    tdsColumnInfoToken();
-                    break;
-                case TDS_COMP_NAMES_TOKEN:
-                    tdsInvalidToken();
-                    break;
-                case TDS_COMP_RESULT_TOKEN:
-                    tdsInvalidToken();
-                    break;
-                case TDS_ORDER_TOKEN:
-                    tdsOrderByToken();
-                    break;
-                case TDS_ERROR_TOKEN:
-                case TDS_INFO_TOKEN:
-                    tdsErrorToken();
-                    break;
-                case TDS_PARAM_TOKEN:
-                    tdsOutputParamToken();
-                    break;
-                case TDS_LOGINACK_TOKEN:
-                    tdsLoginAckToken();
-                    break;
-                case TDS_CONTROL_TOKEN:
-                    tdsControlToken();
-                    break;
-                case TDS_ROW_TOKEN:
-                    tdsRowToken();
-                    break;
-                case TDS_ALTROW:
-                    tdsInvalidToken();
-                    break;
-                case TDS5_PARAMS_TOKEN:
-                    tds5ParamsToken();
-                    break;
-                case TDS_CAP_TOKEN:
-                    tdsCapabilityToken();
-                    break;
-                case TDS_ENVCHANGE_TOKEN:
-                    tdsEnvChangeToken();
-                    break;
-                case TDS_MSG50_TOKEN:
-                    tds5ErrorToken();
-                    break;
-                case TDS5_DYNAMIC_TOKEN:
-                    tds5DynamicToken();
-                    break;
-                case TDS5_PARAMFMT_TOKEN:
-                    tds5ParamFmtToken();
-                    break;
-                case TDS_AUTH_TOKEN:
-                    tdsNtlmAuthToken();
-                    break;
-                case TDS_RESULT_TOKEN:
-                    tds5ResultToken();
-                    break;
-                case TDS_DONE_TOKEN:
-                case TDS_DONEPROC_TOKEN:
-                case TDS_DONEINPROC_TOKEN:
-                    tdsDoneToken();
-                    break;
-                default:
-                    throw new ProtocolException(
-                            "Invalid packet type 0x" +
-                                Integer.toHexString(currentToken.token & 0xFF));
+   /**
+    * Read the next TDS token from the response stream.
+    *
+    * @throws SQLException
+    *    if an I/O or protocol error occurs
+    */
+   private void nextToken()
+      throws SQLException
+   {
+      checkOpen();
+
+      if( endOfResponse )
+      {
+         currentToken.token = TDS_DONE_TOKEN;
+         currentToken.status = 0;
+         return;
+      }
+
+      try
+      {
+         // handle result set splitting in case of computed results
+         if( computedColumns != null )
+         {
+            switch( (byte) in.peek() )
+            {
+               case TDS_ALTROW   : // endOfResults==false indicates a normal result has been read last
+                                   if( ! endOfResults )
+                                   {
+                                      endOfResults = true;
+                                      return;
+                                   }
+                                   break;
+
+               case TDS_ROW_TOKEN: // endOfResults==true indicates a computed result has been read last
+                                   if( endOfResults )
+                                   {
+                                      endOfResults = false;
+                                      return;
+                                   }
+                                   break;
             }
-        } catch (IOException ioe) {
-            connection.setClosed();
-            throw Support.linkException(
-                new SQLException(
-                       Messages.get(
-                                "error.generic.ioerror", ioe.getMessage()),
-                                    "08S01"), ioe);
-        } catch (ProtocolException pe) {
-            connection.setClosed();
-            throw Support.linkException(
-                new SQLException(
-                       Messages.get(
-                                "error.generic.tdserror", pe.getMessage()),
-                                    "08S01"), pe);
-        } catch (OutOfMemoryError err) {
-            // Consume the rest of the response
-            in.skipToEnd();
-            endOfResponse = true;
-            endOfResults = true;
-            cancelPending = false;
-            throw err;
-        }
-    }
+         }
+
+         currentToken.token = (byte) in.read();
+         switch( currentToken.token )
+         {
+            case TDS5_PARAMFMT2_TOKEN:
+               tds5ParamFmt2Token();
+               break;
+            case TDS_LANG_TOKEN:
+               tdsInvalidToken();
+               break;
+            case TDS5_WIDE_RESULT:
+               tds5WideResultToken();
+               break;
+            case TDS_CLOSE_TOKEN:
+               tdsInvalidToken();
+               break;
+            case TDS_RETURNSTATUS_TOKEN:
+               tdsReturnStatusToken();
+               break;
+            case TDS_PROCID:
+               tdsProcIdToken();
+               break;
+            case TDS_OFFSETS_TOKEN:
+               tdsOffsetsToken();
+               break;
+            case TDS7_RESULT_TOKEN:
+               tds7ResultToken();
+               break;
+            case ALTMETADATA_TOKEN:
+               tdsComputedResultToken();
+               break;
+            case TDS_COLNAME_TOKEN:
+               tds4ColNamesToken();
+               break;
+            case TDS_COLFMT_TOKEN:
+               tds4ColFormatToken();
+               break;
+            case TDS_TABNAME_TOKEN:
+               tdsTableNameToken();
+               break;
+            case TDS_COLINFO_TOKEN:
+               tdsColumnInfoToken();
+               break;
+            case TDS_COMP_NAMES_TOKEN:
+               tdsInvalidToken();
+               break;
+            case TDS_COMP_RESULT_TOKEN:
+               tdsInvalidToken();
+               break;
+            case TDS_ORDER_TOKEN:
+               tdsOrderByToken();
+               break;
+            case TDS_ERROR_TOKEN:
+            case TDS_INFO_TOKEN:
+               tdsErrorToken();
+               break;
+            case TDS_PARAM_TOKEN:
+               tdsOutputParamToken();
+               break;
+            case TDS_LOGINACK_TOKEN:
+               tdsLoginAckToken();
+               break;
+            case TDS_CONTROL_TOKEN:
+               tdsControlToken();
+               break;
+            case TDS_ROW_TOKEN:
+               tdsRowToken();
+               break;
+            case TDS_ALTROW:
+               tdsComputedRowToken();
+               break;
+            case TDS5_PARAMS_TOKEN:
+               tds5ParamsToken();
+               break;
+            case TDS_CAP_TOKEN:
+               tdsCapabilityToken();
+               break;
+            case TDS_ENVCHANGE_TOKEN:
+               tdsEnvChangeToken();
+               break;
+            case TDS_MSG50_TOKEN:
+               tds5ErrorToken();
+               break;
+            case TDS5_DYNAMIC_TOKEN:
+               tds5DynamicToken();
+               break;
+            case TDS5_PARAMFMT_TOKEN:
+               tds5ParamFmtToken();
+               break;
+            case TDS_AUTH_TOKEN:
+               tdsNtlmAuthToken();
+               break;
+            case TDS_RESULT_TOKEN:
+               tds5ResultToken();
+               break;
+            case TDS_DONE_TOKEN:
+            case TDS_DONEPROC_TOKEN:
+            case TDS_DONEINPROC_TOKEN:
+               tdsDoneToken();
+               break;
+            default:
+               throw new ProtocolException( "Invalid packet type 0x" + Integer.toHexString( currentToken.token & 0xFF ) );
+         }
+      }
+      catch( IOException ioe )
+      {
+         connection.setClosed();
+         throw Support.linkException( new SQLException( Messages.get( "error.generic.ioerror", ioe.getMessage() ), "08S01" ), ioe );
+      }
+      catch( ProtocolException pe )
+      {
+         connection.setClosed();
+         throw Support.linkException( new SQLException( Messages.get( "error.generic.tdserror", pe.getMessage() ), "08S01" ), pe );
+      }
+      catch( OutOfMemoryError err )
+      {
+         // Consume the rest of the response
+         in.skipToEnd();
+         endOfResponse = true;
+         endOfResults = true;
+         cancelPending = false;
+         throw err;
+      }
+   }
 
     /**
      * Report unsupported TDS token in input stream.
@@ -3946,6 +4014,8 @@ public class TdsCore {
             columns = null;
             rowData = null;
             tables = null;
+            computedColumns = null;
+            computedRowData = null;
             // Clean up warnings; any exceptions will be cleared when thrown
             messages.clearWarnings();
         }
@@ -4053,4 +4123,128 @@ public class TdsCore {
 
         return new String(chars);
     }
+
+   /**
+    * <p> Process meta data for the computed result set complementing the
+    * current result set. </p>
+    */
+   private void tdsComputedResultToken()
+      throws IOException, ProtocolException
+   {
+      int ciolumns = in.readShort();
+      computedColumns = new ColInfo[ciolumns];
+
+      // unique ID of the SQL statement to which the total column formats apply
+      short id = in.readShort();
+
+      // number of grouping columns in the SQL statement that generates totals
+      int computeByCount = in.read();
+
+      // skip column numbers (index in the COMPUTE clause, computeByCount times)
+      in.skip( 2 * computeByCount );
+
+      // load column meta data
+      for( int i = 0; i < ciolumns; ++i )
+      {
+         ColInfo col = new ColInfo();
+         computedColumns[i] = col;
+
+         // read type of aggregate operator
+         int type = in.read();
+
+         switch( type )
+         {
+            case 0x09: // row count (bigint)
+                       col.name = "count_big";
+                       break;
+
+            case 0x30: // standard deviation
+                       col.name = "stdev";
+                       break;
+
+            case 0x31: // standard deviation of the population
+                       col.name = "stdevp";
+                       break;
+
+            case 0x32: // variance
+                       col.name = "var";
+                       break;
+
+            case 0x33: // variance of population
+                       col.name = "varp";
+                       break;
+
+            case 0x4B: // row count (int)
+                       col.name = "count";
+                       break;
+
+            case 0x4D: // sum of the row values
+                       col.name = "sum";
+                       break;
+
+            case 0x4F: // average of the row values
+                       col.name = "avg";
+                       break;
+
+            case 0x51: // minimum row value
+                       col.name = "min";
+                       break;
+
+            case 0x52: // maximum value of the rows
+                       col.name = "max";
+                       break;
+
+            default:
+               throw new ProtocolException( "unsupported aggregation type 0x" + Integer.toHexString( type ) );
+         }
+
+         // load index of the aggregated column, starting from 1
+         int columnIndex = in.readShort() - 1;
+         col.name           += "(" + columns[columnIndex].name + ")";
+         col.realName        = col.name;
+         col.tableName       = columns[columnIndex].tableName;
+         col.catalog         = columns[columnIndex].catalog;
+         col.schema          = columns[columnIndex].schema;
+
+         // user typeID of the data type of the column, 0x0000 with the exceptions of TIMESTAMP (0x0050) and alias types (greater than 0x00FF)
+         col.userType        = in.readShort();
+
+         // process flags
+         int flags = in.readShort();
+         col.nullable        = ( ( flags & 0x01 ) != 0 ) ? ResultSetMetaData.columnNullable : ResultSetMetaData.columnNoNulls;
+         col.isCaseSensitive = ( flags & 0X02 ) != 0;
+         col.isIdentity      = ( flags & 0x10 ) != 0;
+         col.isWriteable     = ( flags & 0x0C ) != 0;
+         // REVIEW: implement col.isComputed?
+
+         // load type information
+         TdsData.readType( in, col );
+
+         // [TABLENAME] - table name field: SHOULD never be sent, SQL statements
+         // that generate totals exclude NTEXT/TEXT/IMAGE
+
+         // read column name length and column name, should be empty
+         int clen = in.read();
+         in.readString( clen );
+      }
+   }
+
+   /**
+    * <p> Process computed row data. </p>
+    */
+   private void tdsComputedRowToken()
+      throws IOException, ProtocolException, SQLException
+   {
+      // unique ID of the SQL statement that created the that generated the totals
+      short id = in.readShort();
+
+      computedRowData = new Object[computedColumns.length];
+
+      // load computed result
+      for( int i = 0; i < computedRowData.length; i ++ )
+      {
+         computedRowData[i] = TdsData.readData( connection, in, computedColumns[i] );
+      }
+   }
+
 }

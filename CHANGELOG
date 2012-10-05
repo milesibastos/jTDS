@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/05/2012 - Holger Rehn
+ o Implemented support for the COMPUTE (BY) operator (bug #678, patch #48) and
+   added corresponding unit tests.
+
 10/02/2012 - Holger Rehn
  o Improved performance by using StringBuilder instead of StringBuffer.
  o Corrected unit test for bug #507, the executing thread's interruption state

@@ -48,6 +48,44 @@ public class AsTest extends DatabaseTestCase {
             junit.textui.TestRunner.run(AsTest.class);
     }
 
+   /**
+    * Test for missing ResultSet, reported in support request #35.
+    */
+   public void testProc0()
+      throws Exception
+   {
+      Statement stmt = con.createStatement();
+      dropProcedure( "#spTestProc0" );
+
+      stmt.executeUpdate( "create table #tableTestProc0 ( A varchar( 10 ) )" );
+      stmt.executeUpdate( "insert into #tableTestProc0 values( 'testval' )" );
+      stmt.executeUpdate( "create procedure #spTestProc0 as set nocount off select * into #tmp from #tableTestProc0 select * from #tmp" );
+      stmt.close();
+
+      CallableStatement cstmt = con.prepareCall( "#spTestProc0" );
+      assertFalse( cstmt.execute() );
+      assertEquals( 1, cstmt.getUpdateCount() );
+
+      // The JDBC-ODBC driver does not return update counts from stored
+      // procedures so we won't, either.
+      //
+      // SAfe Yes, we will. It seems like that's how it should work. The idea
+      // however is to only return valid update counts (e.g. not from
+      // SET, EXEC or such).
+      assertTrue( cstmt.getMoreResults() );
+
+      boolean passed = false;
+      ResultSet rs = cstmt.getResultSet();
+      while( rs.next() )
+      {
+         passed = true;
+      }
+      assertTrue( "Expecting at least one result row", passed );
+      assertTrue( !cstmt.getMoreResults() && cstmt.getUpdateCount() == -1 );
+      cstmt.close();
+      // stmt.executeQuery("execute spTestExec");
+   }
+
     public void testProc1() throws Exception {
         Statement stmt = con.createStatement();
         dropProcedure("#spTestExec");

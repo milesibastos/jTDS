@@ -291,6 +291,25 @@ public class ResultSetTest extends DatabaseTestCase {
         rs.close();
     }
 
+   /**
+    * Test for the problem reported in feature request #78, columns of type DATE
+    * are returned as String.
+    */
+   public void testDateType()
+      throws Exception
+   {
+      Statement stm = con.createStatement();
+      stm.executeUpdate( "create table #FeatureRequest78 ( A date )" );
+      stm.executeUpdate( "insert into #FeatureRequest78 values ( '2009-09-03' )" );
+      ResultSet rs = stm.executeQuery( "select * from #FeatureRequest78" );
+      assertTrue( rs.next() );
+      ResultSetMetaData rsmd = rs.getMetaData();
+      assertEquals( Types.DATE, rsmd.getColumnType( 1 ) );
+      assertTrue( rs.getObject( 1 ).getClass() + " cannot be assigned to " + Date.class, Date.class.isAssignableFrom( rs.getObject( 1 ).getClass() ) );
+      rs.close();
+      stm.close();
+   }
+
     /**
      * Test for bug [961594] ResultSet.
      */

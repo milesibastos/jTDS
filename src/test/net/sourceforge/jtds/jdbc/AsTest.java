@@ -209,6 +209,62 @@ public class AsTest extends DatabaseTestCase {
 
     }
 
+   /**
+    * Test for bug #654, CallableStatement.execute() always returns false.
+    */
+   public void testProc3()
+      throws Exception
+   {
+      Statement stm = con.createStatement();
+      stm.executeUpdate( "create table #Bug654 ( A int )" );
+      stm.executeUpdate( "insert into #Bug654 values ( 1 )" );
+      stm.executeUpdate( "create procedure #spBug654 as select * from #Bug654" );
+      stm.close();
+
+      CallableStatement cstm = con.prepareCall( "#spBug654" );
+
+      ResultSet rs = cstm.executeQuery();
+      assertNotNull( rs );
+      assertTrue( rs.next() );
+      assertEquals( 1, rs.getInt( 1 ) );
+      assertFalse( rs.next() );
+      rs.close();
+
+      assertTrue( cstm.execute() );
+      rs = cstm.getResultSet();
+      assertNotNull( rs );
+      assertTrue( rs.next() );
+      assertEquals( 1, rs.getInt( 1 ) );
+      assertFalse( rs.next() );
+      rs.close();
+   }
+
+   /**
+    * Test for unnamed procedure parsing bug, reported in patch #115.
+    */
+   public void testProc4()
+      throws Exception
+   {
+      Statement stm = con.createStatement();
+      stm.executeUpdate( "create table #Patch115 ( A int, B int, C int, D int )" );
+
+      PreparedStatement pstm = con.prepareStatement( "insert into #Patch115 ( A, B, C, D ) values ( ?, ?, ?, ? )" );
+      pstm.setInt( 1, 1 );
+      pstm.setInt( 2, 2 );
+      pstm.setInt( 3, 3 );
+      pstm.setInt( 4, 4 );
+      assertEquals( 1, pstm.executeUpdate() );
+
+      ResultSet rs = stm.executeQuery( "select * from #Patch115" );
+      assertNotNull( rs );
+      assertTrue( rs.next() );
+      assertEquals( 1, rs.getInt( 1 ) );
+      assertEquals( 2, rs.getInt( 2 ) );
+      assertEquals( 3, rs.getInt( 3 ) );
+      assertEquals( 4, rs.getInt( 4 ) );
+      assertFalse( rs.next() );
+   }
+
     public void testBatch1() throws Exception {
         Statement stmt = con.createStatement();
         String sqlwithcount1 =

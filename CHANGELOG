@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/06/2012 - Holger Rehn
+ o Added unit tests for bug #654 and the SQL parser bug reported in patch #115.
+
 10/05/2012 - Holger Rehn
  o Implemented support for the COMPUTE (BY) operator (bug #678, patch #48) and
    added corresponding unit tests.

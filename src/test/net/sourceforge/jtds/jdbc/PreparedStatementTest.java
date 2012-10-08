@@ -649,6 +649,49 @@ public class PreparedStatementTest extends TestBase {
         pstmt.close();
     }
 
+   /**
+    * <p> Regression test for bug #647, {@link PreparedStatement} doesn't return
+    * {@link ResultSetMetaData} for SQL statements using a WITH clause. </p>
+    */
+   public void testWithClauseMetaData()
+      throws Exception
+   {
+      PreparedStatement stm = con.prepareStatement( "with bug647( X ) as ( select 'A' ) select * from bug647" );
+      ResultSetMetaData rmd = stm.getMetaData();
+
+      // check meta data available before executing the statement
+      // this used to fail due to bug #647
+      assertNotNull( rmd );
+      assertEquals( 1, rmd.getColumnCount() );
+      assertEquals( "X", rmd.getColumnName( 1 ) );
+      assertEquals( Types.VARCHAR, rmd.getColumnType( 1 ) );
+
+      // execute statement and re-check meta data
+      ResultSet res = stm.executeQuery();
+      rmd = stm.getMetaData();
+
+      assertNotNull( rmd );
+      assertEquals( 1, rmd.getColumnCount() );
+      assertEquals( "X", rmd.getColumnName( 1 ) );
+      assertEquals( Types.VARCHAR, rmd.getColumnType( 1 ) );
+
+      // check meta data provided by ResultSet
+      rmd = res.getMetaData();
+
+      assertEquals( 1, rmd.getColumnCount() );
+      assertEquals( "X", rmd.getColumnName( 1 ) );
+      assertEquals( Types.VARCHAR, rmd.getColumnType( 1 ) );
+
+      // check data
+      assertTrue( res.next() );
+      assertEquals( "A", res.getString( 1 ) );
+      assertFalse( res.next() );
+
+      // cleanup
+      res.close();
+      stm.close();
+   }
+
     /**
      * Test for bug [1071397] Error in prepared statement (parameters in outer
      * join escapes are not recognized).

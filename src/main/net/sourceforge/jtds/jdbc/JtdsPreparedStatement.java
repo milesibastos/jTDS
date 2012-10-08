@@ -844,58 +844,63 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
     }
 
-    @Override
-   public ResultSetMetaData getMetaData() throws SQLException {
-        checkOpen();
+   @Override
+   public ResultSetMetaData getMetaData()
+      throws SQLException
+   {
+      checkOpen();
 
-        if (colMetaData == null) {
-            if (currentResult != null) {
-                colMetaData = currentResult.columns;
-            } else if (connection.getServerType() == Driver.SYBASE) {
-                // Sybase can provide meta data as a by product of preparing the call.
-                connection.prepareSQL(this, sql, new ParamInfo[0], false, false);
+      if( colMetaData == null )
+      {
+         if( currentResult != null )
+         {
+            colMetaData = currentResult.columns;
+         }
+         else if( connection.getServerType() == Driver.SYBASE )
+         {
+            // Sybase can provide meta data as a by product of preparing the
+            // call
+            connection.prepareSQL( this, sql, new ParamInfo[0], false, false );
+         }
+         else
+         {
+            // For Microsoft set all parameters to null and execute the query.
+            // SET FMTONLY ON asks the server just to return meta data.
+            // This only works for select statements
+            if( "select".equals( sqlWord ) || "with".equals( sqlWord ) )
+            {
+               // copy parameters to avoid corrupting any values already set
+               // by the user as we need to set a flag and null out the data.
+               ParamInfo[] params = new ParamInfo[parameters.length];
 
-                if (colMetaData == null) {
-                    return null; // Sorry still no go
-                }
-            } else {
-                // For Microsoft set all parameters to null and execute the query.
-                // SET FMTONLY ON asks the server just to return meta data.
-                // This only works for select statements
-                if (!"select".equals(sqlWord)) {
-                    return null;
-                }
+               for( int i = 0; i < params.length; i++ )
+               {
+                  params[i] = new ParamInfo( parameters[i].markerPos, false );
+                  params[i].isSet = true;
+               }
 
-                // Copy parameters to avoid corrupting any values already set
-                // by the user as we need to set a flag and null out the data.
-                ParamInfo[] params = new ParamInfo[parameters.length];
-                for (int i = 0; i < params.length; i++) {
-                    params[i] = new ParamInfo(parameters[i].markerPos, false);
-                    params[i].isSet = true;
-                }
+               // substitute nulls into SQL String
+               StringBuilder testSql = new StringBuilder( sql.length() + 128 );
+               testSql.append( "SET FMTONLY ON; " );
+               testSql.append( Support.substituteParameters( sql, params, connection ) );
+               testSql.append( "; SET FMTONLY OFF" );
 
-                // Substitute nulls into SQL String
-                StringBuilder testSql = new StringBuilder(sql.length() + 128);
-                testSql.append("SET FMTONLY ON ");
-                testSql.append(
-                        Support.substituteParameters(sql, params, connection));
-                testSql.append(" SET FMTONLY OFF");
-
-                try {
-                    tds.submitSQL(testSql.toString());
-                    colMetaData = tds.getColumns();
-                } catch (SQLException e) {
-                    // Ensure FMTONLY is switched off!
-                    tds.submitSQL("SET FMTONLY OFF");
-                    return null;
-                }
+               try
+               {
+                  tds.submitSQL( testSql.toString() );
+                  colMetaData = tds.getColumns();
+               }
+               catch( SQLException e )
+               {
+                  // ensure FMTONLY is switched off!
+                  tds.submitSQL( "SET FMTONLY OFF" );
+               }
             }
-        }
+         }
+      }
 
-        return new JtdsResultSetMetaData(colMetaData,
-                JtdsResultSet.getColumnCount(colMetaData),
-                connection.getUseLOBs());
-    }
+      return colMetaData == null ? null : new JtdsResultSetMetaData( colMetaData, JtdsResultSet.getColumnCount( colMetaData ), connection.getUseLOBs() );
+   }
 
     @Override
    public void setTime(int parameterIndex, Time x) throws SQLException {

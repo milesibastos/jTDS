@@ -109,8 +109,7 @@ public class CSUnitTest extends DatabaseTestCase
 
       while( rs.next() )
       {
-         assertEquals( rs.getInt( "i" ), count );
-         count ++;
+         assertEquals( ++ count, rs.getInt( "i" ) );
       }
 
       pstmt.close();

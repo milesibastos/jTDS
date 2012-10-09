@@ -78,9 +78,14 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
      * @return The parameter index as an <code>int</code>.
      * @throws SQLException
      */
-    int findParameter(String name, boolean set)
+    final int findParameter(String name, boolean set)
         throws SQLException {
         checkOpen();
+
+        // no need to force the user to care for the param syntax
+        if(! name.startsWith( "@" ))
+           name = "@" + name;
+
         for (int i = 0; i < parameters.length; i++){
             if (parameters[i].name != null && parameters[i].name.equalsIgnoreCase(name))
                 return i + 1;

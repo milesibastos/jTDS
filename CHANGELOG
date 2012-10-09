@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/09/2012 - Holger Rehn
+ o Fixed parameter name format for procedure calls using named parameters.
+
 10/08/2012 - Holger Rehn
  o Fixed bug #647, preparing a statement including a WITH clause doesn't
    retrieve resultset meta data.

@@ -39,83 +39,83 @@ public class CallableStatementTest extends TestBase {
         super(name);
     }
 
-    /**
-     * Test comment processing, bug #634 and #676.
-     */
-    public void testCommentProcessing()
-       throws SQLException
-    {
-       Statement st = con.createStatement();
-       st.executeUpdate( "create procedure #sp_bug634 @data1 int, @data2 int as select @data1 + @data2" );
-       st.close();
+   /**
+    * Test comment processing, bug #634 (and #676).
+    */
+   public void testCommentProcessing()
+      throws SQLException
+   {
+      Statement st = con.createStatement();
+      st.executeUpdate( "create procedure #sp_bug634 @data1 int, @data2 int as select @data1 + @data2" );
+      st.close();
 
-       String[] variants = new String[]
-       {
-          "{?=call #sp_bug634(?, ?)}",
+      String[] variants = new String[]
+      {
+         "{?=call #sp_bug634(?, ?)}",
 
-          "/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)",
-          "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
-          "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
-          "?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)",
-          "?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)",
-          "?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)",
-          "?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)",
-          "?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)",
-          "?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)",
-          "?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)",
-          "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
-          "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
-          "?=call #sp_bug634(?, ?) -- comment '\"?@[*-",
-          "?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)",
-          "?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)",
+         "/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)",
+         "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
+         "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
+         "?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)",
+         "?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)",
+         "?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)",
+         "?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)",
+         "?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)",
+         "?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)",
+         "?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)",
+         "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
+         "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
+         "?=call #sp_bug634(?, ?) -- comment '\"?@[*-",
+         "?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)",
+         "?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)",
 
-          "/*/ comment '\"?@[*-} /**/*/{?=call #sp_bug634(?, ?)}",
-          "{/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)}",
-          "{?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)}",
-          "{?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)}",
-          "{?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)}",
-          "{?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)}",
-          "{?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)}",
-          "{?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)}",
-          "{?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)}",
-          "{?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)}",
-          "{?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/}",
-          "{?=call #sp_bug634(?, ?)}/*/ comment '\"?@[*-} /**/*/",
-          "{?=call #sp_bug634(?, ?)} -- comment '\"?@[*-}",
-          "{?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)}",
-          "{?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)}"
-       };
+         "/*/ comment '\"?@[*-} /**/*/{?=call #sp_bug634(?, ?)}",
+         "{/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)}",
+         "{?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)}",
+         "{?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)}",
+         "{?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)}",
+         "{?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)}",
+         "{?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)}",
+         "{?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)}",
+         "{?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)}",
+         "{?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)}",
+         "{?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/}",
+         "{?=call #sp_bug634(?, ?)}/*/ comment '\"?@[*-} /**/*/",
+         "{?=call #sp_bug634(?, ?)} -- comment '\"?@[*-}",
+         "{?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)}",
+         "{?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)}"
+      };
 
-       for( int i = 0; i < variants.length;  i ++ )
-       {
-          CallableStatement cst = null;
-          ResultSet         res = null;
+      for( int i = 0; i < variants.length;  i ++ )
+      {
+         CallableStatement cst = null;
+         ResultSet         res = null;
 
-          try
-          {
-             cst = con.prepareCall( variants[i] );
-             cst.registerOutParameter( 1, Types.INTEGER );
-             cst.setInt( 2, i );
-             cst.setInt( 3, i );
-             res = cst.executeQuery();
+         try
+         {
+            cst = con.prepareCall( variants[i] );
+            cst.registerOutParameter( 1, Types.INTEGER );
+            cst.setInt( 2, i );
+            cst.setInt( 3, i );
+            res = cst.executeQuery();
 
-             assertTrue  ( res.next()             );
-             assertEquals( 2 * i, res.getInt( 1 ) );
-             assertFalse ( res.next()             );
-          }
-          catch( SQLException e )
-          {
-             AssertionFailedError error = new AssertionFailedError( "variant \"" + variants[i] + "\" failed: " + e.getMessage() );
-             error.initCause( e );
-             throw error;
-          }
-          finally
-          {
-             if( res != null ) res.close();
-             if( cst != null ) cst.close();
-          }
-       }
-    }
+            assertTrue  ( res.next()             );
+            assertEquals( 2 * i, res.getInt( 1 ) );
+            assertFalse ( res.next()             );
+         }
+         catch( SQLException e )
+         {
+            AssertionFailedError error = new AssertionFailedError( "variant \"" + variants[i] + "\" failed: " + e.getMessage() );
+            error.initCause( e );
+            throw error;
+         }
+         finally
+         {
+            if( res != null ) res.close();
+            if( cst != null ) cst.close();
+         }
+      }
+   }
 
     public void testCallableStatement() throws Exception {
         CallableStatement cstmt = con.prepareCall("{call sp_who}");
@@ -641,44 +641,111 @@ public class CallableStatementTest extends TestBase {
         cstmt.close();
     }
 
-    /**
+   /**
     * Test named parameters.
     */
-   public void testNamedParameters0001() throws Exception {
-       final String data = "New {order} plus {1} more";
-       final String outData = "test";
-       Statement stmt = con.createStatement();
+   public void testNamedParameters0001()
+      throws Exception
+   {
+      final String data = "New {order} plus {1} more";
+      final String outData = "test";
 
-       stmt.execute("CREATE TABLE #csn1 (data VARCHAR(32))");
-       stmt.close();
+      Statement stmt = con.createStatement();
 
-       stmt = con.createStatement();
-       stmt.execute("create procedure #sp_csn1 @data VARCHAR(32) OUT as "
-                    + "INSERT INTO #csn1 (data) VALUES(@data) "
-                    + "SET @data = '" + outData + "'"
-                    + "RETURN 13");
-       stmt.close();
+      stmt.execute( "CREATE TABLE #csn1 ( data VARCHAR(32) )" );
+      stmt.execute( "create procedure #sp_csn1 @data VARCHAR(32) OUT as INSERT INTO #csn1 (data) VALUES(@data) SET @data = '" + outData + "'" + "RETURN 13" );
 
-       CallableStatement cstmt = con.prepareCall("{?=call #sp_csn1(?)}");
+      CallableStatement cstmt = con.prepareCall( "{?=call #sp_csn1(?)}" );
 
-       cstmt.registerOutParameter("@return_status", Types.INTEGER);
-       cstmt.setString("@data", data);
-       cstmt.registerOutParameter("@data", Types.VARCHAR);
-       assertEquals(1, cstmt.executeUpdate());
-       assertFalse(cstmt.getMoreResults());
-       assertEquals(-1, cstmt.getUpdateCount());
-       assertEquals(outData, cstmt.getString("@data"));
-       cstmt.close();
+      cstmt.registerOutParameter( "@return_status", Types.INTEGER );
+      cstmt.setString( "@data", data );
+      cstmt.registerOutParameter( "@data", Types.VARCHAR );
+      assertEquals( 1, cstmt.executeUpdate() );
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
+      assertEquals( outData, cstmt.getString( "@data" ) );
+      cstmt.close();
 
-       stmt = con.createStatement();
-       ResultSet rs = stmt.executeQuery("SELECT data FROM #csn1");
+      ResultSet rs = stmt.executeQuery( "SELECT data FROM #csn1" );
 
-       assertTrue(rs.next());
-       assertEquals(data, rs.getString(1));
-       assertTrue(!rs.next());
+      assertTrue( rs.next() );
+      assertEquals( data, rs.getString( 1 ) );
+      assertTrue( ! rs.next() );
 
-       rs.close();
-       stmt.close();
+      rs.close();
+      stmt.close();
+   }
+
+   /**
+    * Test named parameters.
+    */
+   public void testNamedParameters0002()
+      throws Exception
+   {
+      final String  A_DEFAULT = "XYZ";
+      final Integer B_DEFAULT = 123;
+      final Integer C_DEFAULT = 321;
+
+      Statement stmt = con.createStatement();
+      stmt.execute( "create table #Test ( A varchar(10), B int, C int, D int primary key )" );
+      stmt.execute( "create procedure #spInsert @A_VAL varchar(10) = " + A_DEFAULT + " out, @B_VAL int = " + B_DEFAULT + ", @C_VAL int = " + C_DEFAULT + " out, @D_VAL int as INSERT INTO #Test VALUES( @A_VAL, @B_VAL, @C_VAL, @D_VAL ) set @A_VAL = 'RET' set @C_VAL = @B_VAL + @C_VAL return @B_VAL" );
+
+      CallableStatement cstmt = con.prepareCall( "{?=call #spInsert(?, ?, ?, ?)}" );
+
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.registerOutParameter( "A_VAL", Types.VARCHAR );
+      cstmt.registerOutParameter( "C_VAL", Types.INTEGER );
+
+      cstmt.setObject( "A_VAL", A_DEFAULT );
+      cstmt.setObject( "B_VAL", B_DEFAULT );
+      cstmt.setObject( "C_VAL", C_DEFAULT );
+      cstmt.setInt   ( "D_VAL", 0         );
+
+      assertEquals( 1, cstmt.executeUpdate() );
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
+
+      assertEquals( B_DEFAULT, cstmt.getObject( 1 ) );
+      assertEquals( "RET", cstmt.getObject( "A_VAL" ) );
+      assertEquals( B_DEFAULT + C_DEFAULT, cstmt.getObject( "C_VAL" ) );
+      cstmt.close();
+
+      ResultSet rs = stmt.executeQuery( "select A, B, C from #Test where D = 0" );
+
+      assertTrue( rs.next() );
+      assertEquals( A_DEFAULT, rs.getObject( "A" ) );
+      assertEquals( B_DEFAULT, rs.getObject( "B" ) );
+      assertEquals( C_DEFAULT, rs.getObject( "C" ) );
+      assertTrue( ! rs.next() );
+
+      rs.close();
+
+      // and once again without setting all parameters
+
+      cstmt = con.prepareCall( "{?=call #spInsert(?,?)}" );
+
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+
+      cstmt.setInt( "B_VAL", 9876 );
+      cstmt.setInt( "D_VAL", 1    );
+
+      assertEquals( 1, cstmt.executeUpdate() );
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
+
+      assertEquals( 9876, cstmt.getObject( 1 ) );
+      cstmt.close();
+
+      rs = stmt.executeQuery( "select A, B, C from #Test where D = 1" );
+
+      assertTrue( rs.next() );
+      assertEquals( A_DEFAULT, rs.getObject( "A" ) );
+      assertEquals( 9876     , rs.getObject( "B" ) );
+      assertEquals( C_DEFAULT, rs.getObject( "C" ) );
+      assertTrue( ! rs.next() );
+
+      rs.close();
+      stmt.close();
    }
 
    /**

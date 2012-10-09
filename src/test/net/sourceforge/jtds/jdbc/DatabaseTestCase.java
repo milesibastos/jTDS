@@ -20,7 +20,6 @@ package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Map;
 
 /**
@@ -32,23 +31,6 @@ public abstract class DatabaseTestCase extends TestBase {
 
     public DatabaseTestCase(String name) {
         super(name);
-    }
-
-
-    protected void dropTable(String tableName) throws SQLException {
-        String sobName = "sysobjects";
-        String tableLike = tableName;
-
-        if (tableName.startsWith("#")) {
-            sobName = "tempdb.dbo.sysobjects";
-            tableLike = tableName + "%";
-        }
-
-        Statement stmt = con.createStatement();
-        stmt.executeUpdate(
-                          "if exists (select * from " + sobName + " where name like '" + tableLike + "' and type = 'U') "
-                          + "drop table " + tableName);
-        stmt.close();
     }
 
     // return -1 if a1<a2, 0 if a1==a2, 1 if a1>a2

@@ -49,18 +49,16 @@ public abstract class TestBase extends TestCase {
         super(name);
     }
 
-    @Override
    public void setUp() throws Exception {
         super.setUp();
         connect();
     }
 
-   @Override
    public void tearDown() throws Exception {
-      assertFalse( Thread.currentThread().isInterrupted() );
-      disconnect();
-      super.tearDown();
-   }
+        assertFalse( Thread.currentThread().isInterrupted() );
+        disconnect();
+        super.tearDown();
+    }
 
     public Connection getConnection() throws Exception {
         Class.forName(props.getProperty("driver"));
@@ -297,14 +295,14 @@ public abstract class TestBase extends TestCase {
         }
     }
 
-   public void dropFunction( String name )
+   public void dropTable( String name )
       throws SQLException
    {
       Statement stm = con.createStatement();
 
       try
       {
-         stm.executeUpdate( "if exists (select * from sysobjects where name like '" + name + "%' and type = 'FN') drop function " + name );
+         stm.executeUpdate( "if exists (select * from " + ( name.startsWith( "#" ) ? "tempdb.dbo.sysobjects" : "sysobjects" ) + " where name like '" + name + "%' and type = 'U') drop table " + name );
       }
       catch( SQLException sqle )
       {
@@ -316,42 +314,61 @@ public abstract class TestBase extends TestCase {
       }
    }
 
-    public void dropProcedure( String name )
-       throws SQLException
-    {
-       Statement stm = con.createStatement();
+   public void dropFunction( String name )
+      throws SQLException
+   {
+      Statement stm = con.createStatement();
 
-       try
-       {
-          stm.executeUpdate( "if exists (select * from " + ( name.startsWith( "#" ) ? "tempdb.dbo.sysobjects" : "sysobjects" ) + " where name like '" + name + "%' and type = 'P') drop procedure " + name );
-       }
-       catch( SQLException sqle )
-       {
-         // assume the procedure didn't exist
-       }
-       finally
-       {
-          stm.close();
-       }
-    }
+      try
+      {
+         stm.executeUpdate( "if exists (select * from sysobjects where name like '" + name + "%' and type = 'FN') drop function " + name );
+      }
+      catch( SQLException sqle )
+      {
+         // assume the function didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
 
-    public void dropType( String name )
-       throws Exception
-    {
-       CallableStatement stm = con.prepareCall( "{call sp_droptype '" + name + "'}" );
+   public void dropProcedure( String name )
+      throws SQLException
+   {
+      Statement stm = con.createStatement();
 
-       try
-       {
-          stm.executeUpdate();
-       }
-       catch( SQLException sqle )
-       {
-          // assume the type didn't exist
-       }
-       finally
-       {
-          stm.close();
-       }
-    }
+      try
+      {
+         stm.executeUpdate( "if exists (select * from " + ( name.startsWith( "#" ) ? "tempdb.dbo.sysobjects" : "sysobjects" ) + " where name like '" + name + "%' and type = 'P') drop procedure " + name );
+      }
+      catch( SQLException sqle )
+      {
+        // assume the procedure didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
+
+   public void dropType( String name )
+      throws Exception
+   {
+      CallableStatement stm = con.prepareCall( "{call sp_droptype '" + name + "'}" );
+
+      try
+      {
+         stm.executeUpdate();
+      }
+      catch( SQLException sqle )
+      {
+         // assume the type didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
 
 }

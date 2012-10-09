@@ -26,81 +26,96 @@ import java.io.*;
 import net.sourceforge.jtds.util.Logger;
 
 /**
- *
- * @author Alin Sinpalean
- * @version $Id: CSUnitTest.java,v 1.12.6.2 2009-11-06 08:24:24 ickzon Exp $
+ * @author
+ *    Alin Sinpalean, Holger Rehn
  */
-public class CSUnitTest extends DatabaseTestCase {
-    public CSUnitTest(String name) {
-        super(name);
+public class CSUnitTest extends DatabaseTestCase
+{
 
-        if (output == null)
-            try {
-                output = new PrintStream(new FileOutputStream("nul"));
-            } catch (FileNotFoundException ex) {
-                throw new RuntimeException("could not create device nul");
-            }
-    }
+   static PrintStream output = null;
 
-    static PrintStream output = null;
+   public CSUnitTest( String name )
+   {
+      super( name );
 
-    public static void main(String args[]) {
-        Logger.setActive(true);
+      if( output == null )
+      {
+         try
+         {
+            output = new PrintStream( new FileOutputStream( "nul" ) );
+         }
+         catch( FileNotFoundException ex )
+         {
+            throw new RuntimeException( "could not create device nul" );
+         }
+      }
+   }
 
-        if (args.length > 0) {
-            output = System.out;
-            junit.framework.TestSuite s = new TestSuite();
+   public static void main( String args[] )
+   {
+      Logger.setActive( true );
 
-            for (int i = 0; i < args.length; i++) {
-                s.addTest(new CSUnitTest(args[i]));
-            }
+      if( args.length > 0 )
+      {
+         output = System.out;
+         junit.framework.TestSuite s = new TestSuite();
 
-            junit.textui.TestRunner.run(s);
-        } else {
-            junit.textui.TestRunner.run(CSUnitTest.class);
-        }
-    }
+         for( int i = 0; i < args.length; i++ )
+         {
+            s.addTest( new CSUnitTest( args[i] ) );
+         }
 
+         junit.textui.TestRunner.run( s );
+      }
+      else
+      {
+         junit.textui.TestRunner.run( CSUnitTest.class );
+      }
+   }
 
-    public void testMaxRows0003() throws Exception {
-        dropTable("#t0003");
-        Statement stmt = con.createStatement();
+   /**
+    *
+    */
+   public void testMaxRows0003()
+      throws Exception
+   {
+      final int ROWCOUNT = 200;
+      final int ROWLIMIT = 123;
 
-        stmt.executeUpdate("create table #t0003           "
-                         + "  (i  integer not null)       ");
-        stmt.close();
+      dropTable( "#t0003" );
+      Statement stmt = con.createStatement();
 
-        PreparedStatement  pstmt = con.prepareStatement(
-                "insert into #t0003 values (?)");
+      stmt.executeUpdate( "create table #t0003 ( i int )" );
+      stmt.close();
 
-        final int rowsToAdd = 100;
-        int count = 0;
+      PreparedStatement pstmt = con.prepareStatement( "insert into #t0003 values (?)" );
 
-        for (int i = 1; i <= rowsToAdd; i++) {
-            pstmt.setInt(1, i);
-            count += pstmt.executeUpdate();
-        }
+      for( int i = 1; i <= ROWCOUNT; i ++ )
+      {
+         pstmt.setInt( 1, i );
+         assertEquals( 1, pstmt.executeUpdate() );
+      }
 
-        assertEquals("count: " + count + " rowsToAdd: " + rowsToAdd, rowsToAdd, count);
-        pstmt.close();
-        pstmt = con.prepareStatement("select i from #t0003 order by i");
-        int rowLimit = 32;
-        pstmt.setMaxRows(rowLimit);
+      pstmt.close();
 
-        assertTrue(pstmt.getMaxRows() == rowLimit);
-        ResultSet  rs = pstmt.executeQuery();
-        count = 0;
+      pstmt = con.prepareStatement( "select i from #t0003 order by i" );
+      pstmt.setMaxRows( ROWLIMIT );
 
-        while (rs.next()) {
-            count++;
-            assertEquals(rs.getInt("i"), count);
-        }
-        pstmt.close();
+      assertEquals( ROWLIMIT, pstmt.getMaxRows() );
 
-        assertEquals(rowLimit, count);
-    }
+      ResultSet rs = pstmt.executeQuery();
 
+      int count = 0;
 
+      while( rs.next() )
+      {
+         assertEquals( rs.getInt( "i" ), count );
+         count ++;
+      }
+
+      pstmt.close();
+      assertEquals( ROWLIMIT, count );
+   }
 
     public void testGetAsciiStream0018() throws Exception {
         Statement stmt = con.createStatement();
@@ -943,8 +958,8 @@ public class CSUnitTest extends DatabaseTestCase {
         assertTrue(passed);
     }
     static String longString(char ch) {
-        int                 i;
-        StringBuilder        str255 = new StringBuilder(255);
+        int i;
+        StringBuilder str255 = new StringBuilder( 255 );
 
         for (i=0; i<255; i++) {
             str255.append(ch);

@@ -299,14 +299,29 @@ public class ResultSetTest extends DatabaseTestCase {
       throws Exception
    {
       Statement stm = con.createStatement();
-      stm.executeUpdate( "create table #FeatureRequest78 ( A date )" );
-      stm.executeUpdate( "insert into #FeatureRequest78 values ( '2009-09-03' )" );
-      ResultSet rs = stm.executeQuery( "select * from #FeatureRequest78" );
-      assertTrue( rs.next() );
-      ResultSetMetaData rsmd = rs.getMetaData();
-      assertEquals( Types.DATE, rsmd.getColumnType( 1 ) );
-      assertTrue( rs.getObject( 1 ).getClass() + " cannot be assigned to " + Date.class, Date.class.isAssignableFrom( rs.getObject( 1 ).getClass() ) );
-      rs.close();
+      boolean dateSupported = false;
+
+      try
+      {
+         stm.executeUpdate( "create table #FeatureRequest78 ( A date )" );
+         dateSupported = true;
+      }
+      catch( SQLException e )
+      {
+         // date type not supported, skip test
+      }
+
+      if( dateSupported )
+      {
+         stm.executeUpdate( "insert into #FeatureRequest78 values ( '2009-09-03' )" );
+         ResultSet rs = stm.executeQuery( "select * from #FeatureRequest78" );
+         assertTrue( rs.next() );
+         ResultSetMetaData rsmd = rs.getMetaData();
+         assertEquals( Types.DATE, rsmd.getColumnType( 1 ) );
+         assertTrue( rs.getObject( 1 ).getClass() + " cannot be assigned to "+ Date.class, Date.class.isAssignableFrom( rs.getObject( 1 ).getClass() ) );
+         rs.close();
+      }
+
       stm.close();
    }
 

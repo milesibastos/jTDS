@@ -3,6 +3,8 @@ Changes from jTDS 1.2.6
 
 10/09/2012 - Holger Rehn
  o Fixed parameter name format for procedure calls using named parameters.
+ o Fixed unit tests that depend on date/time data types to be skipped if run
+   against a server not supporting that types.
 
 10/08/2012 - Holger Rehn
  o Fixed bug #647, preparing a statement including a WITH clause doesn't

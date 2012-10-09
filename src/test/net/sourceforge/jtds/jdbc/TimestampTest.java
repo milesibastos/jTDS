@@ -2441,38 +2441,57 @@ public class TimestampTest extends DatabaseTestCase {
      * Note: This test will fail for some server types due to "DATE" and "TIME"
      * data types not being available.
      */
-    public void testDateTimeDegeneration() throws Exception {
-       Timestamp ts1 = Timestamp.valueOf("1970-01-01 00:00:00.000");
+    public void testDateTimeDegeneration()
+       throws Exception
+    {
+       Timestamp ts1 = Timestamp.valueOf( "1970-01-01 00:00:00.000" );
 
-       String[] types = new String[] {"datetime","date","time"};
+       String[] types = new String[] { "datetime", "date", "time" };
 
-       for (int t = 0; t < types.length; t++) {
-           String type = types[t];
-           // create table and insert initial value
-           Statement stmt = con.createStatement();
-           stmt.execute("create table #t_" + type + " (id int,data " + type + ")");
-           stmt.execute("insert into #t_" + type + " values (0,'" + ts1.toString() + "')");
+       for( int t = 0; t < types.length; t++ )
+       {
+          String type = types[t];
 
-           PreparedStatement ps1 = con.prepareStatement("update #t_" + type + " set data=? where id=0");
-           PreparedStatement ps2 = con.prepareStatement("select data from #t_" + type);
+          // create table and insert initial value
+          Statement stmt = con.createStatement();
+          boolean dateSupported = false;
 
-            // read previous value
-            ResultSet rs = ps2.executeQuery();
-            rs.next();
-            Timestamp ts2 = rs.getTimestamp(1);
+          try
+          {
+             stmt.execute( "create table #t_" + type + " (id int,data " + type + ")" );
+             dateSupported = true;
+          }
+          catch( SQLException e )
+          {
+             // date type not supported, skip test
+          }
 
-            // compare current value to initial value
-            assertEquals(type + " value degenerated: ", ts1.toString(), ts2.toString());
-            rs.close();
+          if( dateSupported )
+          {
+             stmt.execute( "insert into #t_" + type + " values (0,'" + ts1.toString() + "')" );
 
-            // update DB with current value
-            ps1.setTimestamp(1, ts2);
-            ps1.executeUpdate();
+             PreparedStatement ps1 = con.prepareStatement( "update #t_" + type + " set data=? where id=0" );
+             PreparedStatement ps2 = con.prepareStatement( "select data from #t_" + type );
 
-            ps1.close();
-            ps2.close();
-            stmt.close();
-        }
+             // read previous value
+             ResultSet rs = ps2.executeQuery();
+             rs.next();
+             Timestamp ts2 = rs.getTimestamp( 1 );
+
+             // compare current value to initial value
+             assertEquals( type + " value degenerated: ", ts1.toString(), ts2.toString() );
+             rs.close();
+
+             // update DB with current value
+             ps1.setTimestamp( 1, ts2 );
+             ps1.executeUpdate();
+
+             ps1.close();
+             ps2.close();
+          }
+
+          stmt.close();
+       }
     }
 
     /**

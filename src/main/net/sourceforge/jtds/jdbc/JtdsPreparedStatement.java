@@ -58,9 +58,8 @@ import java.util.Collection;
  *     with all the other JDBC drivers that I have been able to test.
  * </ol>
  *
- * @author Mike Hutchinson
- * @author Brian Heineman
- * @version $Id: JtdsPreparedStatement.java,v 1.63.2.6 2009-12-30 11:37:21 ickzon Exp $
+ * @author
+ *    Brian Heineman, Mike Hutchinson, Holger Rehn
  */
 public class JtdsPreparedStatement extends JtdsStatement implements PreparedStatement {
     /** The SQL statement being prepared. */
@@ -143,68 +142,258 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * Returns the SQL command provided at construction time.
      */
     @Override
-   public String toString() {
+    public String toString() {
         return originalSql;
     }
 
-    /**
-     * This method converts native call syntax into (hopefully) valid JDBC
-     * escape syntax.
-     * <p/>
-     * <b>Note:</b> This method is required for backwards compatibility with
-     * previous versions of jTDS. Strictly speaking only the JDBC syntax needs
-     * to be recognised, constructions such as "?=#testproc ?,?" are neither
-     * valid native syntax nor valid escapes. All the substrings and trims
-     * below are not as bad as they look. The objects created all refer back to
-     * the original sql string it is just the start and length positions which
-     * change.
-     *
-     * @param sql the SQL statement to process
-     * @return the SQL, possibly in original form
-     *
-     * @throws SQLException
-     *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
-     *    DELETE statement instead of a procedure call
-     */
-    protected static String normalizeCall(String sql)
-       throws SQLException
-    {
-        String original = sql;
-        sql = sql.trim();
+   /**
+    * <p> This method converts native call syntax into (hopefully) valid JDBC
+    * escape syntax. </p>
+    *
+    * <p><b>Note:</b> This method is required for backwards compatibility with
+    * previous versions of jTDS. Strictly speaking only the JDBC syntax needs to
+    * be recognized, constructions such as "?=#testproc ?,?" are neither valid
+    * native syntax nor valid escapes. All the substrings and trims below are
+    * not as bad as they look. The objects created all refer back to the
+    * original SQL string it is just the start and length positions which
+    * change. </p>
+    *
+    * @param sql
+    *    the SQL statement to process
+    *
+    * @return
+    *    the SQL, possibly in original form
+    *
+    * @throws SQLException
+    *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
+    *    DELETE statement instead of a procedure call
+    */
+   protected static String normalizeCall( final String sql )
+      throws SQLException
+   {
+      try
+      {
+         return normalize( sql, 0 );
+      }
+      catch( SQLException sqle )
+      {
+         // if normalize was giving up due to an unrecognized syntax error it
+         // would have thrown an SQLException without state
+         if( sqle.getSQLState() != null )
+            throw sqle;
 
-        if (sql.length() > 0 && sql.charAt(0) == '{') {
-            return original; // Assume already escaped
-        }
+         return sql;
+      }
+   }
 
-        if (sql.length() > 4 && sql.substring(0, 5).equalsIgnoreCase("exec ")) {
-            sql = sql.substring(4).trim();
-        } else if (sql.length() > 7 && sql.substring(0, 8).equalsIgnoreCase("execute ")){
-            sql = sql.substring(7).trim();
-        }
+   /**
+    * <p> This method converts native call syntax into (hopefully) valid JDBC
+    * escape syntax. </p>
+    *
+    * <p><b>Note:</b> This method is required for backwards compatibility with
+    * previous versions of jTDS. Strictly speaking only the JDBC syntax needs to
+    * be recognized, constructions such as "?=#testproc ?,?" are neither valid
+    * native syntax nor valid escapes. All the substrings and trims below are
+    * not as bad as they look. The objects created all refer back to the
+    * original SQL string it is just the start and length positions which
+    * change. </p>
+    *
+    * @param sql
+    *    the SQL statement to process
+    *
+    * @return
+    *    the SQL, possibly in original form
+    *
+    * @throws SQLException
+    *    if the SQL statement is detected to be a normal SQL INSERT, UPDATE or
+    *    DELETE statement instead of a procedure call
+    */
+   private static String normalize( final String sql, int level )
+      throws SQLException
+   {
+      if( level > 1 )
+         throw new SQLException();
 
-        if (sql.length() > 1 && sql.charAt(0) == '?') {
-            sql = sql.substring(1).trim();
+      int len   = sql.length();
+      int qmark = -1;
+      int equal = -1;
+      int call  = -1;
 
-            if (sql.length() < 1 || sql.charAt(0) != '=') {
-                return original; // Give up, error will be reported elsewhere
-            }
+      // try to isolate the call
+      for( int i = 0; i < len && call < 0; i ++ )
+      {
+         // skip whitespace
+         while( Character.isWhitespace( sql.charAt( i ) ) )
+         {
+            i ++;
+         }
 
-            sql = sql.substring(1).trim();
+         switch( sql.charAt( i ) )
+         {
+            case '{': // escape syntax with leading comment/white space or syntax error
+                      return sql;
 
-            // OK now reconstruct as JDBC escaped call
-            return "{?=call " + sql + '}';
-        }
+            case '?': // should be leading '?'
+                      if( qmark == -1 )
+                      {
+                         qmark = i;
+                      }
+                      else
+                      {
+                         // syntax error, give up
+                         throw new SQLException();
+                      }
+                      break;
 
-        if( sql.length() > 6 )
-        {
-           String sub = sql.substring( 0, 6 );
-           // check for a more or less common mistake to execute a normal statement via CallableStatement
-           if( sub.equalsIgnoreCase( "insert" ) || sub.equalsIgnoreCase( "update" ) || sub.equalsIgnoreCase( "delete" ) )
-              throw new SQLException( Messages.get( "error.parsesql.noprocedurecall" ), "07000" );
-        }
+            case '=': // should be leading '='
+                      if( equal == -1 && qmark >= 0 )
+                      {
+                         equal = i;
+                      }
+                      else
+                      {
+                         // syntax error, give up
+                         throw new SQLException();
+                      }
+                      break;
 
-        return "{call " + sql + '}';
-    }
+            case '-': // skip single comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '-' )
+                      {
+                         i += 2;
+
+                         while( i < len && sql.charAt( i ) != '\n' && sql.charAt( i ) != '\r' )
+                         {
+                            i ++;
+                         }
+                      }
+                      break;
+
+            case '/': // skip multi line comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '*' )
+                      {
+                         i += 1;
+                         int block = 1;
+
+                         do
+                         {
+                            if( i >= len -1 )
+                               throw new SQLException( Messages.get( "error.parsesql.missing", "*/" ), "22025" );
+
+                            i ++;
+
+                            if( sql.charAt( i ) == '/' && sql.charAt( i + 1 ) == '*' )
+                            {
+                               i ++;
+                               block ++;
+                            }
+                            else if( sql.charAt( i ) == '*' && sql.charAt( i + 1 ) == '/' )
+                            {
+                               i ++;
+                               block --;
+                            }
+                         }
+                         while( block > 0 );
+                      }
+                      break;
+
+            default:  //
+                      if( len - i > 4 && ( sql.substring( i, i + 5 ).equalsIgnoreCase( "exec " ) ) || sql.substring( i, i + 5 ).equalsIgnoreCase( "call " ) )
+                      {
+                         return normalize( sql.substring( 0, i ) + sql.substring( i + 4, sql.length() ), level ++ );
+                      }
+                      else if( len - i > 7 && sql.substring( i, i + 8 ).equalsIgnoreCase( "execute " ) )
+                      {
+                         return normalize( sql.substring( 0, i ) + sql.substring( i + 7, sql.length() ), level ++ );
+                      }
+
+                      // keep backward compatibility, things like "testproc()" are accepted
+                      call = i;
+                      break;
+         }
+      }
+
+      if( equal == -1 && qmark != -1 )
+      {
+         // syntax error, give up
+         throw new SQLException();
+      }
+
+      // check for a more or less common mistake to execute a normal statement via CallableStatement (bug #637)
+      if( call + 7 < len )
+      {
+         String sub = sql.substring( call, call + 7 );
+
+         if( sub != null && ( sub.equalsIgnoreCase( "insert " ) || sub.equalsIgnoreCase( "update " ) || sub.equalsIgnoreCase( "delete " ) ) )
+            throw new SQLException( Messages.get( "error.parsesql.noprocedurecall" ), "07000" );
+      }
+
+      // fast scan whether the statement ends with a single line comment and append an additional line break in that case
+      return "{" + sql.substring( 0, call ) + "call " + sql.substring( call ) + ( openComment( sql, call ) ? "\n" : "" ) + "}";
+   }
+
+   /**
+    *
+    */
+   private static boolean openComment( String sql, int offset )
+      throws SQLException
+   {
+      int len = sql.length();
+
+      for( int i = offset; i < len; i ++ )
+      {
+         switch( sql.charAt( i ) )
+         {
+            case '-': // single comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '-' )
+                      {
+                         i += 2;
+
+                         while( i < len && sql.charAt( i ) != '\n' && sql.charAt( i ) != '\r' )
+                         {
+                            i ++;
+                         }
+
+                         if( i == len )
+                         {
+                            // reached end of statement, comment still open
+                            return true;
+                         }
+                      }
+                      break;
+
+            case '/': // multi line comment
+                      if( i + 1 < len && sql.charAt( i + 1 ) == '*' )
+                      {
+                         i += 1;
+                         int block = 1;
+
+                         do
+                         {
+                            if( i >= len -1 )
+                               throw new SQLException( Messages.get( "error.parsesql.missing", "*/" ), "22025" );
+
+                            i ++;
+
+                            if( sql.charAt( i ) == '/' && sql.charAt( i + 1 ) == '*' )
+                            {
+                               i ++;
+                               block ++;
+                            }
+                            else if( sql.charAt( i ) == '*' && sql.charAt( i + 1 ) == '/' )
+                            {
+                               i ++;
+                               block --;
+                            }
+                         }
+                         while( block > 0 );
+                      }
+                      break;
+         }
+      }
+
+      return false;
+   }
 
     /**
      * Check that this statement is still open.
@@ -212,7 +401,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException if statement closed.
      */
     @Override
-   protected void checkOpen() throws SQLException {
+    protected void checkOpen() throws SQLException {
         if (isClosed()) {
             throw new SQLException(
                     Messages.get("error.generic.closed", "PreparedStatement"), "HY010");
@@ -244,7 +433,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException if a serious error occurs during execution
      */
     @Override
-   protected SQLException executeMSBatch(int size, int executeSize, ArrayList counts)
+    protected SQLException executeMSBatch(int size, int executeSize, ArrayList counts)
     throws SQLException {
         if (parameters.length == 0) {
             // There are no parameters, each SQL call is the same so execute as a simple batch
@@ -300,7 +489,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @throws SQLException if a serious error occurs during execution
      */
     @Override
-   protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts) throws SQLException {
+    protected SQLException executeSybaseBatch(int size, int executeSize, ArrayList counts) throws SQLException {
         if (parameters.length == 0) {
             // There are no parameters each SQL call is the same so
             // execute as a simple batch
@@ -513,7 +702,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
 // -------------------- java.sql.PreparedStatement methods follow -----------------
 
     @Override
-   public void close() throws SQLException {
+    public void close() throws SQLException {
         try {
             super.close();
         } finally {
@@ -525,7 +714,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public int executeUpdate() throws SQLException {
+    public int executeUpdate() throws SQLException {
         checkOpen();
         initialize();
 
@@ -546,7 +735,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void addBatch() throws SQLException {
+    public void addBatch() throws SQLException {
         checkOpen();
 
         if (batchValues == null) {
@@ -572,7 +761,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void clearParameters() throws SQLException {
+    public void clearParameters() throws SQLException {
         checkOpen();
 
         for (int i = 0; i < parameters.length; i++) {
@@ -581,7 +770,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public boolean execute() throws SQLException {
+    public boolean execute() throws SQLException {
         checkOpen();
         initialize();
         boolean useCursor = useCursor(returnKeys, sqlWord);
@@ -600,27 +789,27 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setByte(int parameterIndex, byte x) throws SQLException {
+    public void setByte(int parameterIndex, byte x) throws SQLException {
         setParameter(parameterIndex, new Integer((x & 0xFF)), java.sql.Types.TINYINT, 0, 0);
     }
 
     @Override
-   public void setDouble(int parameterIndex, double x) throws SQLException {
+    public void setDouble(int parameterIndex, double x) throws SQLException {
         setParameter(parameterIndex, new Double(x), java.sql.Types.DOUBLE, 0, 0);
     }
 
     @Override
-   public void setFloat(int parameterIndex, float x) throws SQLException {
+    public void setFloat(int parameterIndex, float x) throws SQLException {
         setParameter(parameterIndex, new Float(x), java.sql.Types.REAL, 0, 0);
     }
 
     @Override
-   public void setInt(int parameterIndex, int x) throws SQLException {
+    public void setInt(int parameterIndex, int x) throws SQLException {
         setParameter(parameterIndex, new Integer(x), java.sql.Types.INTEGER, 0, 0);
     }
 
     @Override
-   public void setNull(int parameterIndex, int sqlType) throws SQLException {
+    public void setNull(int parameterIndex, int sqlType) throws SQLException {
         if (sqlType == java.sql.Types.CLOB) {
             sqlType = java.sql.Types.LONGVARCHAR;
         } else if (sqlType == java.sql.Types.BLOB) {
@@ -631,27 +820,27 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setLong(int parameterIndex, long x) throws SQLException {
+    public void setLong(int parameterIndex, long x) throws SQLException {
         setParameter(parameterIndex, new Long(x), java.sql.Types.BIGINT, 0, 0);
     }
 
     @Override
-   public void setShort(int parameterIndex, short x) throws SQLException {
+    public void setShort(int parameterIndex, short x) throws SQLException {
         setParameter(parameterIndex, new Integer(x), java.sql.Types.SMALLINT, 0, 0);
     }
 
     @Override
-   public void setBoolean(int parameterIndex, boolean x) throws SQLException {
+    public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         setParameter(parameterIndex, x ? Boolean.TRUE : Boolean.FALSE, BOOLEAN, 0, 0);
     }
 
     @Override
-   public void setBytes(int parameterIndex, byte[] x) throws SQLException {
+    public void setBytes(int parameterIndex, byte[] x) throws SQLException {
         setParameter(parameterIndex, x, java.sql.Types.BINARY, 0, 0);
     }
 
     @Override
-   public void setAsciiStream(int parameterIndex, InputStream inputStream, int length)
+    public void setAsciiStream(int parameterIndex, InputStream inputStream, int length)
         throws SQLException {
         if (inputStream == null || length < 0) {
             setParameter(parameterIndex, null, java.sql.Types.LONGVARCHAR, 0, 0);
@@ -665,7 +854,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setBinaryStream(int parameterIndex, InputStream x, int length)
+    public void setBinaryStream(int parameterIndex, InputStream x, int length)
         throws SQLException {
         checkOpen();
 
@@ -677,7 +866,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setUnicodeStream(int parameterIndex, InputStream inputStream, int length)
+    public void setUnicodeStream(int parameterIndex, InputStream inputStream, int length)
         throws SQLException {
         checkOpen();
         if (inputStream == null || length < 0) {
@@ -704,7 +893,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setCharacterStream(int parameterIndex, Reader reader, int length)
+    public void setCharacterStream(int parameterIndex, Reader reader, int length)
         throws SQLException {
         if (reader == null || length < 0) {
             setParameter(parameterIndex, null, java.sql.Types.LONGVARCHAR, 0, 0);
@@ -714,18 +903,18 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setObject(int parameterIndex, Object x) throws SQLException {
+    public void setObject(int parameterIndex, Object x) throws SQLException {
         setObjectBase(parameterIndex, x, Support.getJdbcType(x), -1);
     }
 
     @Override
-   public void setObject(int parameterIndex, Object x, int targetSqlType)
+    public void setObject(int parameterIndex, Object x, int targetSqlType)
         throws SQLException {
         setObjectBase(parameterIndex, x, targetSqlType, -1);
     }
 
     @Override
-   public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
+    public void setObject(int parameterIndex, Object x, int targetSqlType, int scale)
         throws SQLException {
         checkOpen();
         if (scale < 0 || scale > connection.getMaxPrecision()) {
@@ -735,32 +924,32 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
+    public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         notImplemented("PreparedStatement.setNull(int, int, String)");
     }
 
     @Override
-   public void setString(int parameterIndex, String x) throws SQLException {
+    public void setString(int parameterIndex, String x) throws SQLException {
         setParameter(parameterIndex, x, java.sql.Types.VARCHAR, 0, 0);
     }
 
     @Override
-   public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
+    public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         setParameter(parameterIndex, x, java.sql.Types.DECIMAL, -1, 0);
     }
 
     @Override
-   public void setURL(int parameterIndex, URL url) throws SQLException {
+    public void setURL(int parameterIndex, URL url) throws SQLException {
         setString(parameterIndex, (url == null)? null: url.toString());
     }
 
     @Override
-   public void setArray(int arg0, Array arg1) throws SQLException {
+    public void setArray(int arg0, Array arg1) throws SQLException {
         notImplemented("PreparedStatement.setArray");
     }
 
     @Override
-   public void setBlob(int parameterIndex, Blob x) throws SQLException {
+    public void setBlob(int parameterIndex, Blob x) throws SQLException {
         if (x == null) {
             setBytes(parameterIndex, null);
         } else {
@@ -775,7 +964,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setClob(int parameterIndex, Clob x) throws SQLException {
+    public void setClob(int parameterIndex, Clob x) throws SQLException {
         if (x == null) {
             setString(parameterIndex, null);
         } else {
@@ -790,12 +979,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setDate(int parameterIndex, Date x) throws SQLException {
+    public void setDate(int parameterIndex, Date x) throws SQLException {
         setParameter(parameterIndex, x, java.sql.Types.DATE, 0, 0);
     }
 
     @Override
-   public ParameterMetaData getParameterMetaData() throws SQLException {
+    public ParameterMetaData getParameterMetaData() throws SQLException {
         checkOpen();
 
         //
@@ -821,12 +1010,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setRef(int parameterIndex, Ref x) throws SQLException {
+    public void setRef(int parameterIndex, Ref x) throws SQLException {
         notImplemented("PreparedStatement.setRef");
     }
 
     @Override
-   public ResultSet executeQuery() throws SQLException {
+    public ResultSet executeQuery() throws SQLException {
         checkOpen();
         initialize();
         boolean useCursor = useCursor(false, null);
@@ -858,8 +1047,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
          }
          else if( connection.getServerType() == Driver.SYBASE )
          {
-            // Sybase can provide meta data as a by product of preparing the
-            // call
+            // Sybase can provide meta data as a by product of preparing the call
             connection.prepareSQL( this, sql, new ParamInfo[0], false, false );
          }
          else
@@ -873,7 +1061,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
                // by the user as we need to set a flag and null out the data.
                ParamInfo[] params = new ParamInfo[parameters.length];
 
-               for( int i = 0; i < params.length; i++ )
+               for( int i = 0; i < params.length; i ++ )
                {
                   params[i] = new ParamInfo( parameters[i].markerPos, false );
                   params[i].isSet = true;
@@ -903,17 +1091,17 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
    }
 
     @Override
-   public void setTime(int parameterIndex, Time x) throws SQLException {
+    public void setTime(int parameterIndex, Time x) throws SQLException {
         setParameter( parameterIndex, x, java.sql.Types.TIME, 0, 0 );
     }
 
     @Override
-   public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
+    public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
         setParameter(parameterIndex, x, java.sql.Types.TIMESTAMP, 0, 0);
     }
 
     @Override
-   public void setDate(int parameterIndex, Date x, Calendar cal)
+    public void setDate(int parameterIndex, Date x, Calendar cal)
         throws SQLException {
 
         if (x != null && cal != null) {
@@ -924,7 +1112,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setTime(int parameterIndex, Time x, Calendar cal)
+    public void setTime(int parameterIndex, Time x, Calendar cal)
         throws SQLException {
 
         if (x != null && cal != null) {
@@ -935,7 +1123,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal)
+    public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal)
         throws SQLException {
 
         if (x != null && cal != null) {
@@ -946,60 +1134,60 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     }
 
     @Override
-   public int executeUpdate(String sql) throws SQLException {
+    public int executeUpdate(String sql) throws SQLException {
         notSupported("executeUpdate(String)");
         return 0;
     }
 
     @Override
-   public void addBatch(String sql) throws SQLException {
+    public void addBatch(String sql) throws SQLException {
         notSupported("executeBatch(String)");
     }
 
     @Override
-   public boolean execute(String sql) throws SQLException {
+    public boolean execute(String sql) throws SQLException {
         notSupported("execute(String)");
         return false;
     }
 
     @Override
-   public int executeUpdate(String sql, int getKeys) throws SQLException {
+    public int executeUpdate(String sql, int getKeys) throws SQLException {
         notSupported("executeUpdate(String, int)");
         return 0;
     }
 
     @Override
-   public boolean execute(String arg0, int arg1) throws SQLException {
+    public boolean execute(String arg0, int arg1) throws SQLException {
         notSupported("execute(String, int)");
         return false;
     }
 
     @Override
-   public int executeUpdate(String arg0, int[] arg1) throws SQLException {
+    public int executeUpdate(String arg0, int[] arg1) throws SQLException {
         notSupported("executeUpdate(String, int[])");
         return 0;
     }
 
     @Override
-   public boolean execute(String arg0, int[] arg1) throws SQLException {
+    public boolean execute(String arg0, int[] arg1) throws SQLException {
         notSupported("execute(String, int[])");
         return false;
     }
 
     @Override
-   public int executeUpdate(String arg0, String[] arg1) throws SQLException {
+    public int executeUpdate(String arg0, String[] arg1) throws SQLException {
         notSupported("executeUpdate(String, String[])");
         return 0;
     }
 
     @Override
-   public boolean execute(String arg0, String[] arg1) throws SQLException {
+    public boolean execute(String arg0, String[] arg1) throws SQLException {
         notSupported("execute(String, String[])");
         return false;
     }
 
     @Override
-   public ResultSet executeQuery(String sql) throws SQLException {
+    public ResultSet executeQuery(String sql) throws SQLException {
         notSupported("executeQuery(String)");
         return null;
     }
@@ -1010,7 +1198,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream)
      */
     @Override
-   public void setAsciiStream(int parameterIndex, InputStream x)
+    public void setAsciiStream(int parameterIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1020,7 +1208,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setAsciiStream(int, java.io.InputStream, long)
      */
     @Override
-   public void setAsciiStream(int parameterIndex, InputStream x, long length)
+    public void setAsciiStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1030,7 +1218,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream)
      */
     @Override
-   public void setBinaryStream(int parameterIndex, InputStream x)
+    public void setBinaryStream(int parameterIndex, InputStream x)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1040,7 +1228,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setBinaryStream(int, java.io.InputStream, long)
      */
     @Override
-   public void setBinaryStream(int parameterIndex, InputStream x, long length)
+    public void setBinaryStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1050,7 +1238,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setBlob(int, java.io.InputStream)
      */
     @Override
-   public void setBlob(int parameterIndex, InputStream inputStream)
+    public void setBlob(int parameterIndex, InputStream inputStream)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1060,7 +1248,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setBlob(int, java.io.InputStream, long)
      */
     @Override
-   public void setBlob(int parameterIndex, InputStream inputStream, long length)
+    public void setBlob(int parameterIndex, InputStream inputStream, long length)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1070,7 +1258,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader)
      */
     @Override
-   public void setCharacterStream(int parameterIndex, Reader reader)
+    public void setCharacterStream(int parameterIndex, Reader reader)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1080,7 +1268,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setCharacterStream(int, java.io.Reader, long)
      */
     @Override
-   public void setCharacterStream(int parameterIndex, Reader reader,
+    public void setCharacterStream(int parameterIndex, Reader reader,
             long length) throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1090,7 +1278,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setClob(int, java.io.Reader)
      */
     @Override
-   public void setClob(int parameterIndex, Reader reader) throws SQLException {
+    public void setClob(int parameterIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
@@ -1099,7 +1287,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setClob(int, java.io.Reader, long)
      */
     @Override
-   public void setClob(int parameterIndex, Reader reader, long length)
+    public void setClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1109,7 +1297,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader)
      */
     @Override
-   public void setNCharacterStream(int parameterIndex, Reader value)
+    public void setNCharacterStream(int parameterIndex, Reader value)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1119,7 +1307,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setNCharacterStream(int, java.io.Reader, long)
      */
     @Override
-   public void setNCharacterStream(int parameterIndex, Reader value,
+    public void setNCharacterStream(int parameterIndex, Reader value,
             long length) throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1129,7 +1317,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setNClob(int, java.sql.NClob)
      */
     @Override
-   public void setNClob(int parameterIndex, NClob value) throws SQLException {
+    public void setNClob(int parameterIndex, NClob value) throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
@@ -1138,7 +1326,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setNClob(int, java.io.Reader)
      */
     @Override
-   public void setNClob(int parameterIndex, Reader reader) throws SQLException {
+    public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
@@ -1147,7 +1335,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setNClob(int, java.io.Reader, long)
      */
     @Override
-   public void setNClob(int parameterIndex, Reader reader, long length)
+    public void setNClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1157,7 +1345,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setNString(int, java.lang.String)
      */
     @Override
-   public void setNString(int parameterIndex, String value)
+    public void setNString(int parameterIndex, String value)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
@@ -1167,7 +1355,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setRowId(int, java.sql.RowId)
      */
     @Override
-   public void setRowId(int parameterIndex, RowId x) throws SQLException {
+    public void setRowId(int parameterIndex, RowId x) throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();
     }
@@ -1176,7 +1364,7 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
      * @see java.sql.PreparedStatement#setSQLXML(int, java.sql.SQLXML)
      */
     @Override
-   public void setSQLXML(int parameterIndex, SQLXML xmlObject)
+    public void setSQLXML(int parameterIndex, SQLXML xmlObject)
             throws SQLException {
         // TODO Auto-generated method stub
         throw new AbstractMethodError();

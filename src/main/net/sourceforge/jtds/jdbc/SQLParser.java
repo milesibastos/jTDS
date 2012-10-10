@@ -426,14 +426,67 @@ class SQLParser {
         }
     }
 
-    /**
-     * Skips embedded white space.
-     */
-    private void skipWhiteSpace() {
-        while (Character.isWhitespace(in[s])) {
-            s++;
-        }
-    }
+   private void skipWhiteSpace()
+      throws SQLException
+   {
+      for( ; s < len; )
+      {
+         // skip whitespace
+         while( Character.isWhitespace( sql.charAt( s ) ) )
+         {
+            // skip white space without copying it
+            s ++;
+         }
+
+         // check for comments to copy
+         switch( sql.charAt( s ) )
+         {
+            case '-': // skip (and copy) single comment
+                      if( s + 1 < len && in[s + 1] == '-' )
+                      {
+                         append( in[s ++] );
+                         append( in[s ++] );
+
+                         while( s < len && in[s] != '\n' && in[s] != '\r' )
+                         {
+                            append( in[s ++] );
+                         }
+                      }
+                      break;
+
+            case '/': // skip multi line comment
+                      if( s + 1 < len && in[s + 1] == '*' )
+                      {
+                         append( in[s ++] );
+                         append( in[s ++] );
+                         int level = 1;
+
+                        do
+                        {
+                           // ensure at least 2 chars available, otherwise */ cannot be found anymore
+                           if( s >= len -1 )
+                              throw new SQLException( Messages.get( "error.parsesql.missing", "*/" ), "22025" );
+
+                           if( in[s] == '/' && s + 1 < len && in[s + 1] == '*' )
+                           {
+                              append( in[s ++] );
+                              level ++;
+                           }
+                           else if( in[s] == '*' && s + 1 < len && in[s + 1] == '/' )
+                           {
+                              append( in[s ++] );
+                              level --;
+                           }
+
+                           append( in[s ++] );
+                        }
+                        while( level > 0 );
+                     }
+                     break;
+                     default: return;
+         }
+      }
+   }
 
     /**
      * Skips single-line comments.
@@ -516,6 +569,8 @@ class SQLParser {
                 // Literal parameter can't call as RPC
                 procName = "";
             }
+
+            skipWhiteSpace();
 
             // Now find terminator or comma
             while (in[s] != terminator && in[s] != ',') {

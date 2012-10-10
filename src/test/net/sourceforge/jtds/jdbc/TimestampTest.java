@@ -20,6 +20,7 @@ package net.sourceforge.jtds.jdbc;
 
 import java.math.BigDecimal;
 import java.sql.*;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.GregorianCalendar;
@@ -2438,8 +2439,8 @@ public class TimestampTest extends DatabaseTestCase {
     /**
      * Test for bug [2508201], date field is changed by 3 milliseconds.
      *
-     * Note: This test will fail for some server types due to "DATE" and "TIME"
-     * data types not being available.
+     * Note: This test will be skipped for data types not supported by the server
+     * the test is run against (e.g. only DATETIME will be tested on SQL server).
      */
     public void testDateTimeDegeneration()
        throws Exception
@@ -2488,6 +2489,60 @@ public class TimestampTest extends DatabaseTestCase {
 
              ps1.close();
              ps2.close();
+          }
+
+          stmt.close();
+       }
+    }
+
+    /**
+     * Test conversion between DATETIME, DATE and TIME.
+     */
+    public void testDateTimeConversion()
+       throws Exception
+    {
+       Timestamp dati = Timestamp.valueOf( "1970-01-01 01:00:00.000" );
+       Date      date = Date     .valueOf( "1970-1-1"           );
+       Time      time = Time     .valueOf( "1:0:0"              );
+
+       Object[] ref   = new Object[] {  dati     ,  date ,  time  };
+       String[] types = new String[] { "datetime", "date", "time" };
+
+       for( int t = 0; t < types.length; t++ )
+       {
+          String type = types[t];
+
+          // create table and insert initial value
+          Statement stmt = con.createStatement();
+          boolean typeSupported = false;
+
+          try
+          {
+             stmt.execute( "create table #t_" + type + " ( id int, data " + type + " )" );
+             typeSupported = true;
+          }
+          catch( SQLException e )
+          {
+             // date type not supported, skip test
+          }
+
+          if( typeSupported )
+          {
+             stmt.execute( "insert into #t_" + type + " values ( 0, '" + ref[t].toString() + "' )" );
+             ResultSet rs = stmt.executeQuery( "select data from #t_" + type );
+
+             // read previous value
+             assertTrue( rs.next() );
+
+             // read back as DATETIME/DATE/TIME value to check conversion
+             Object[] res = new Object[] { rs.getTimestamp( 1 ),
+                                           rs.getDate     ( 1 ),
+                                           rs.getTime     ( 1 ) };
+
+             // compare read value to initial value
+             assertTrue( res[t].getClass().isAssignableFrom( ref[t].getClass() ) );
+             assertEquals( type + " value degenerated: ", Arrays.toString( ref ), Arrays.toString( res ) );
+             rs.close();
           }
 
           stmt.close();

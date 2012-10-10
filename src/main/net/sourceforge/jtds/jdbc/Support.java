@@ -30,10 +30,13 @@ import java.math.BigInteger;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -481,9 +484,35 @@ public class Support {
                     } else if (x instanceof java.sql.Time) {
                         return new java.sql.Timestamp(((java.sql.Time) x).getTime());
                     } else if (x instanceof java.lang.String) {
-                        return java.sql.Timestamp.valueOf(((String)x).trim());
-                    }
+                       String val = ( (String) x ).trim();
+                       int    len = val.length();
 
+                       try
+                       {
+                          // TIMESTAMP (format: yyyy-[m]m-[d]d [h]h:[m]m:[s]s[.f...])
+                          if( len > 10 && val.charAt( 4 ) == '-' )
+                          {
+                             return Timestamp.valueOf( val );
+                          }
+                          // maybe a DATE (format: yyyy-[m]m-[d]d)
+                          else if( len > 7 && val.charAt( 4 ) == '-' )
+                          {
+                             return new Timestamp( Date.valueOf( val ).getTime() );
+                          }
+                          // maybe a TIME (format: [h]h:[m]m:[s]s)
+                          else if( len > 7 && val.charAt( 2 ) == ':' )
+                          {
+                             // get rid of fractions of seconds
+                             return new Timestamp( Time.valueOf( val.trim().split("\\.")[0].trim() ).getTime() );
+                          }
+                       }
+                       catch( IllegalArgumentException ie )
+                       {
+                          // format exception thrown below
+                       }
+
+                       throw new SQLException( Messages.get("error.convert.badnumber", val, getJdbcTypeName( jdbcType ) ), "22000" );
+                    }
                     break;
 
                 case java.sql.Types.DATE:
@@ -503,7 +532,37 @@ public class Support {
 // VM1.4+ only              return new java.sql.Date(cal.getTimeInMillis());
                         return new java.sql.Date(cal.getTime().getTime());
                     } else if (x instanceof java.lang.String) {
-                        return java.sql.Date.valueOf(((String) x).trim());
+                       String val = ( (String) x ).trim();
+                       int    len = val.length();
+
+                       try
+                       {
+                          // DATE (format: yyyy-[m]m-[d]d)
+                          if( len > 7  && len < 11 && val.charAt( 4 ) == '-' )
+                          {
+                             return Date.valueOf( val );
+                          }
+                          // maybe a TIMESTAMP (format: yyyy-[m]m-[d]d [h]h:[m]m:[s]s[.f...])
+                          else if( len > 10 && val.charAt( 4 ) == '-' )
+                          {
+                             // get rid of the time part
+                             return Timestamp.valueOf( val.split( " " )[0].trim() );
+                          }
+                          // maybe a TIME (format: [h]h:[m]m:[s]s)
+                          // optional conversion not required by the JDBC specs
+                          else if( len > 7 && val.charAt( 2 ) == ':' )
+                          {
+                             // get rid of fractions of seconds
+                             Time.valueOf( val.split( "\\." )[0].trim() ); // ensure parsable date
+                             return DATE_ZERO;
+                          }
+                       }
+                       catch( IllegalArgumentException ie )
+                       {
+                          // format exception thrown below
+                       }
+
+                       throw new SQLException( Messages.get("error.convert.badnumber", val, getJdbcTypeName( jdbcType ) ), "22000" );
                     }
 
                     break;
@@ -525,7 +584,41 @@ public class Support {
 // VM 1.4+ only             return new java.sql.Time(cal.getTimeInMillis());*/
                         return new java.sql.Time(cal.getTime().getTime());
                     } else if (x instanceof java.lang.String) {
-                        return java.sql.Time.valueOf(((String) x).trim().split("\\.")[0]);
+                       // get rid of fractions of seconds
+                       String val = ( (String) x ).trim().split( "\\." )[0].trim();
+                       int    len = val.length();
+
+                       try
+                       {
+                          // TIME (format: [h]h:[m]m:[s]s)
+                          if( len == 8 && val.charAt( 2 ) == ':' )
+                          {
+                             return Time.valueOf( val );
+                          }
+                          // maybe a TIMESTAMP (format: yyyy-[m]m-[d]d [h]h:[m]m:[s]s[.f...])
+                          else if( len > 10 && val.charAt( 4 ) == '-' )
+                          {
+                             // get rid of the date part
+                             String[] lines = val.split( " " );
+                             if( lines.length > 1 )
+                             {
+                                return Time.valueOf( lines[1].trim() );
+                             }
+                          }
+                          // maybe a DATE (format: yyyy-[m]m-[d]d)
+                          // optional conversion not required by the JDBC specs
+                          else if( len > 7 && val.charAt( 4 ) == '-' )
+                          {
+                             Date.valueOf( val ); // ensure parsable date
+                             return TIME_ZERO;
+                          }
+                       }
+                       catch( IllegalArgumentException ie )
+                       {
+                          // format exception thrown below
+                       }
+
+                       throw new SQLException( Messages.get("error.convert.badnumber", val, getJdbcTypeName( jdbcType ) ), "22000" );
                     }
 
                     break;

@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 10/10/2012 - Holger Rehn
+ o Fixed format conversion errors for DATETIME, DATE and TIME values.
  o Fixed bug #615, the SQL parser doesn't correctly handle function escapes
    containing nested (unescaped) functions.
  o Fixed bug #634, incorrect comment processing in callable statements.

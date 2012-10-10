@@ -389,7 +389,7 @@ public class StatementTest extends TestBase {
             fail("query did not time out");
         } catch (SQLException e) {
             assertEquals("HYT00", e.getSQLState());
-            assertEquals(1000, System.currentTimeMillis() - start, 50);
+            assertEquals(1000, System.currentTimeMillis() - start, 100);
         }
 
         st.execute("create table #dummy1(A varchar(200))");

@@ -1535,6 +1535,46 @@ public class SAfeTest extends DatabaseTestCase {
         stmt.close();
     }
 
+   /**
+    * <p> Regression test for bug #615, the SQL parser doesn't correctly handle
+    * {fn } escapes containing nested (unescaped) functions. </p>
+    */
+   public void testNestedFunctions()
+      throws Exception
+   {
+      Statement sta = con.createStatement();
+      sta.executeUpdate( "create table #Bug615 ( A int, B int, X int primary key)" );
+      sta.executeUpdate( "insert into #Bug615 values ( null, 1, 0 )" );
+      sta.executeUpdate( "insert into #Bug615 values (  777, 4, 1 )" );
+      sta.executeUpdate( "insert into #Bug615 values (  999, 8, 9 )" );
+
+      // set A to B + ?, set B to ( ( A == null ? 999 : A ) % 1000 ) + 1,
+      // exclude rows with X >= ?
+      String sql = "update #Bug615 set A = B + ?, B = {fn mod( coalesce(A, 999), 1000)} + 1 where X < ?";
+      PreparedStatement stm = con.prepareStatement( sql );
+
+      stm.setInt( 1, 1 );
+      stm.setInt( 2, 2 );
+
+      assertEquals( 2, stm.executeUpdate() );
+
+      ResultSet res = sta.executeQuery( "select A, B from #Bug615 order by X asc" );
+
+      assertTrue( res.next() );
+      assertEquals( 1 + 1, res.getInt( 1 ) );
+      assertEquals( 999 % 1000 + 1, res.getInt( 2 ) );
+      assertTrue( res.next() );
+      assertEquals( 4 + 1, res.getInt( 1 ) );
+      assertEquals( 777 % 1000 + 1, res.getInt( 2 ) );
+      assertTrue( res.next() );
+      assertEquals( 999, res.getInt( 1 ) );
+      assertEquals( 8, res.getInt( 2 ) );
+      assertFalse( res.next() );
+
+      res.close();
+      stm.close();
+   }
+
     /**
      * Test for bug #1116046 {fn } escape can't handle nested functions.
      */

@@ -819,17 +819,34 @@ class SQLParser {
                     escape();
                     break;
                 case ',':
-                    if (arg2Start == 0) {
-                        arg2Start = d - argStart;
-                    }
-                    if ("concat".equals(name)) {
-                        append('+'); s++;
-                    } else if ("mod".equals(name)) {
-                        append('%'); s++;
-                    } else {
-                        append(c); s++;
-                    }
-                    break;
+                     if( parenCnt == 1 )
+                     {
+                        if( arg2Start == 0 )
+                        {
+                           arg2Start = d - argStart;
+                        }
+                        if( "concat".equals( name ) )
+                        {
+                           append( '+' );
+                           s++;
+                        }
+                        else if( "mod".equals( name ) )
+                        {
+                           append( '%' );
+                           s++;
+                        }
+                        else
+                        {
+                           append( c );
+                           s++;
+                        }
+                     }
+                     else
+                     {
+                        append( c );
+                        s++;
+                     }
+                     break;
                 case '(':
                     parenCnt++;
                     append(c); s++;

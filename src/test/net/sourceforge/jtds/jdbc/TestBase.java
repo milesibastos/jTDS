@@ -295,6 +295,25 @@ public abstract class TestBase extends TestCase {
         }
     }
 
+   public void dropDatabase( String name )
+      throws SQLException
+   {
+      Statement stm = con.createStatement();
+
+      try
+      {
+         stm.executeUpdate( "if exists (select * from sys.sysdatabases where name = '" + name + "') drop database " + name );
+      }
+      catch( SQLException sqle )
+      {
+         // assume the database didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
+
    public void dropTable( String name )
       throws SQLException
    {

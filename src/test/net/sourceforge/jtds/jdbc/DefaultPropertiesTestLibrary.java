@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
@@ -68,7 +69,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
      * @return The test suite (always <code>null</code>).
      */
     public static final Test suite() {
-        return null;
+       return new TestSuite();
     }
 
 
@@ -224,7 +225,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
             assertDefaultPropertyByServerType(URL_SYBASE, messageKey, fieldName, expectedValue);
         }
     }
-    
+
     /**
      * Test the <code>socketKeepAlive</code> property.
      */
@@ -375,7 +376,7 @@ public abstract class DefaultPropertiesTestLibrary extends TestCase {
         }
     }
 
-    
+
     /**
      * Test the <code>bufferMaxMemory</code> property.
      */

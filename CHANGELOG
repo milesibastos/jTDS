@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/15/2012 - Holger Rehn
+ o Fixed various JUnit tests causing warnings.
+
 10/10/2012 - Holger Rehn
  o Fixed format conversion errors for DATETIME, DATE and TIME values.
  o Fixed bug #615, the SQL parser doesn't correctly handle function escapes

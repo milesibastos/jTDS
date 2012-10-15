@@ -103,7 +103,7 @@ public class MessagesPropertiesUnitTest extends UnitTestBase {
          * @return The test suite (always <code>null</code>).
          */
         public static final Test suite() {
-            return null;
+           return new TestSuite();
         }
 
 
@@ -150,7 +150,7 @@ public class MessagesPropertiesUnitTest extends UnitTestBase {
          * @return The test suite (always <code>null</code>).
          */
         public static final Test suite() {
-            return null;
+           return new TestSuite();
         }
 
 
@@ -161,7 +161,7 @@ public class MessagesPropertiesUnitTest extends UnitTestBase {
          * @throws Throwable on error.
          */
         protected void runTest() throws Throwable {
-            String description = (String) messages.getObject("prop.desc." + this.property);
+            String description = (String) messages.getObject("prop.desc." + property);
             assertTrue(description.trim().length() > 0);
         }
     }

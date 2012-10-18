@@ -18,6 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -32,6 +33,55 @@ public class StatementTest extends TestBase {
    public StatementTest( String name )
    {
       super( name );
+   }
+
+   /**
+    * Test for bug #624, full text search causes connection reset when connected
+    * to Microsoft SQL Server 2008.
+    */
+   // TODO: test CONTAINSTABLE, FREETEXT, FREETEXTTABLE
+   public void testFullTextSearch()
+      throws Exception
+   {
+      // cleanup
+      dropTable( "Bug624" );
+      dropDatabase( "Bug624DB" );
+
+      // create DB
+      Statement stmt = con.createStatement();
+      stmt.executeUpdate( "create database Bug624DB" );
+      stmt.executeUpdate( "use Bug624DB" );
+
+      // create table and fulltext index
+      stmt.executeUpdate( "create fulltext catalog FTS_C as default" );
+      stmt.executeUpdate( "create table Bug624 ( ID int primary key, A varchar( 100 ) )" );
+      ResultSet res = stmt.executeQuery( "select name from sysindexes where object_id( 'Bug624' ) = id" );
+      assertTrue( res.next() );
+      String pk = res.getString( 1 );
+      assertFalse( res.next() );
+      res.close();
+      stmt.executeUpdate( "create fulltext index on Bug624( A ) key index " + pk );
+
+      // insert test data
+      assertEquals( 1, stmt.executeUpdate( "insert into Bug624 values( 0, 'Strange Axolotl, that!' )" ) );
+
+      // wait for the index to be build
+      for( boolean indexed = false; ! indexed; )
+      {
+         res = stmt.executeQuery( "select FULLTEXTCATALOGPROPERTY( 'FTS_C', 'PopulateStatus' )" );
+         assertTrue( res.next() );
+         indexed = res.getInt( 1 ) == 0;
+         res.close();
+         Thread.sleep( 10 );
+      }
+
+      // query table using CONTAINS
+      PreparedStatement ps = con.prepareStatement( "select * from Bug624 where contains( A, ? )" );
+      ps.setString( 1, "Axolotl" );
+      res = ps.executeQuery();
+      assertTrue( res.next() );
+      assertEquals( 0, res.getInt( 1 ) );
+      assertEquals( "Strange Axolotl, that!", res.getString( 2 ) );
    }
 
    /**

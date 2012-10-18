@@ -27,6 +27,7 @@ import java.util.GregorianCalendar;
 
 import net.sourceforge.jtds.util.Logger;
 
+import junit.framework.ComparisonFailure;
 import junit.framework.TestSuite;
 
 /**
@@ -55,6 +56,75 @@ public class TimestampTest extends DatabaseTestCase {
         }
 
         // new TimestampTest("test").testOutputParams();
+    }
+
+    /**
+     * <p> Regression test for bug #632, valid DATE values range from 0001-01-01
+     * to 9999-12-31. </p>
+     */
+    public void testDateRange()
+       throws Exception
+    {
+       Statement stmt = con.createStatement();
+
+       boolean dateSupported = false;
+
+       try
+       {
+          stmt.executeUpdate( "create table #Bug632 ( A date, X int primary key )" );
+          dateSupported = true;
+       }
+       catch( SQLException e )
+       {
+          // date type not supported, skip test
+       }
+
+       if( dateSupported )
+       {
+          int id = 0;
+
+          PreparedStatement ins = con.prepareStatement( "insert into #Bug632 values ( ?, ? )" );
+          PreparedStatement sel = con.prepareStatement( "select A from #Bug632 where X = ?"   );
+
+          // ensure that invalid year-0 dates are rejected by the driver
+          try
+          {
+             ins.setDate( 1, Date.valueOf( "0000-12-31" ) );
+             ins.setInt( 2, ++ id );
+             ins.executeUpdate();
+             fail();
+          }
+          catch( SQLException e )
+          {
+             try
+             {
+                assertEquals( e.getSQLState(), "22007" );
+             }
+             catch( ComparisonFailure f )
+             {
+               e.printStackTrace();
+               throw f;
+             }
+          }
+
+          // ensure that all valid date values come through
+          for( String date : new String[] { "0001-01-01", "1111-11-11", "8888-08-08", "9999-12-31" } )
+          {
+             // insert values
+             ins.setDate( 1, Date.valueOf( date ) );
+             ins.setInt( 2, ++ id );
+             assertEquals( 1, ins.executeUpdate() );
+
+             // read back value
+             sel.setInt( 1, id );
+             ResultSet res = sel.executeQuery();
+             assertTrue( res.next() );
+             assertEquals( Date.valueOf( date ), res.getDate( 1 ) );
+             res.close();
+          }
+       }
+
+       stmt.close();
     }
 
     public void testBigint0000() throws Exception {

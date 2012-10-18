@@ -2,6 +2,8 @@ Changes from jTDS 1.2.6
 =======================
 
 10/18/2012 - Holger Rehn
+ o Added test for bug #632, year-check 1753-9999 not valid for type DATE.
+ o Added test for bug #624, MS SQL Server 2008 full text search problem.
  o Removed shell scripts for building jTDS from the Windows/Linux console.
  o Extended build process to create and upload Maven artifacts to sonatype.org
    (bug #636, bug #668, feature request #49, feature request #70).

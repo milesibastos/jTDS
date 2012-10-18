@@ -302,7 +302,7 @@ public class TdsCore {
     private static final byte DONE_ERROR            = (byte) 0x02;
     /** Done: There is a valid row count. */
     private static final byte DONE_ROW_COUNT        = (byte) 0x10;
-    /** Done: Cancel acknowledgement. */
+    /** Done: Cancel acknowledgment. */
     static final byte DONE_CANCEL                   = (byte) 0x20;
     /**
      * Done: Response terminator (if more than one request packet is sent, each
@@ -1610,7 +1610,7 @@ public class TdsCore {
     }
 
     /**
-     * Process the pre login acknowledgement from the server.
+     * Process the pre login acknowledgment from the server.
      * <p>Packet contains; server version no, SSL mode, instance name
      * and process id.
      * <p>Server returns the following values for SSL mode:
@@ -1960,10 +1960,17 @@ public class TdsCore {
 
         out.setPacketType(MSLOGIN_PKT);
         out.write((int)packSize);
+
         // TDS version
         if (tdsVersion == Driver.TDS70) {
+            // SQL Server 7
             out.write(0x70000000);
+//        } else
+//        if (tdsVersion == Driver.TDS90) {
+//            // SQL Server 2005
+//            out.write(0x72090002);
         } else {
+            // SQL Server 2000
             out.write(0x71000001);
         }
         // Network Packet size requested by client

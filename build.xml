@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<project basedir="." default="compile" name="jtds">
+<project basedir="." default="compile" name="jtds" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
   <path id="libs">
     <fileset dir="lib" includes="*.jar"/>
   </path>
+
+  <!-- include maven ant task lib -->
+  <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.3.jar" />
+  <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
 
   <target name="init">
     <tstamp/>
@@ -53,7 +56,7 @@
     <javac destdir="${build}/classes" srcdir="${build}/src" classpathref="libs" debug="${javac.debug}" optimize="${javac.optimize}" encoding="latin1"/>
   </target>
 
-    <target name="compile-test" depends="init,prepare,compile">
+  <target name="compile-test" depends="init,prepare,compile">
     <javac destdir="${build}/testclasses" srcdir="${build}/testsrc" classpathref="libs" classpath="${build}/classes" debug="${javac.debug}" optimize="${javac.optimize}" encoding="latin1"/>
   </target>
 
@@ -65,6 +68,34 @@
       <tag name="todo" description="To do:"/>
       <tag name="created" description="Created:"/>
     </javadoc>
+
+    <!-- create Maven javadoc artifact --> 
+    <jar basedir="${build}/doc"
+      excludes="**/*Test*/**"
+      includes="**/*"
+      jarfile="${build}/${ant.project.name}-${version}-javadoc.jar">
+      <manifest>
+        <attribute name="Implementation-Title" value="jTDS JDBC Driver"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
+        <attribute name="Specification-Title" value="JDBC"/>
+        <attribute name="Specification-Version" value="3.0"/>
+        <attribute name="Main-Class" value="net.sourceforge.jtds.jdbc.Driver"/>
+      </manifest>
+    </jar>
+    <!-- create Maven sources artifact --> 
+    <jar basedir="${build}/src"
+      excludes="**/*Test*/**"
+      includes="**/*.java"
+      jarfile="${build}/${ant.project.name}-${version}-sources.jar">
+      <manifest>
+        <attribute name="Implementation-Title" value="jTDS JDBC Driver"/>
+        <attribute name="Implementation-Version" value="${version}"/>
+        <attribute name="Implementation-URL" value="http://jtds.sourceforge.net"/>
+        <attribute name="Specification-Title" value="JDBC"/>
+        <attribute name="Specification-Version" value="3.0"/>
+      </manifest>
+    </jar>
   </target>
 
   <target name="test" depends="compile,compile-test">
@@ -88,7 +119,8 @@
 
   <target name="dist" depends="clean,compile,javadoc">
     <mkdir dir="${dist}"/>
-    <!-- Runtime jar -->
+
+    <!-- runtime jar -->
     <copy todir="${build}/classes/META-INF">
       <fileset dir="${src}/META-INF" includes="**/*"/>
     </copy>
@@ -107,7 +139,7 @@
         </manifest>
     </jar>
 
-    <!-- Source package -->
+    <!-- source package -->
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp/doc">
       <fileset dir="${build}/doc" includes="**/*"/>
@@ -118,13 +150,12 @@
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-src.zip"/>
     <delete dir="${dist}/tmp"/>
 
-    <!-- Binary package -->
+    <!-- binary package -->
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
       <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,conf/**/*.tmpl,html/**/*"/>
       <fileset dir="${build}" includes="*.jar"/>
     </copy>
-
 
     <mkdir dir="${dist}/tmp/x86/XA"/>
     <copy todir="${dist}/tmp/x86/XA">
@@ -148,6 +179,63 @@
 
     <zip basedir="${dist}/tmp" includes="**/*" zipfile="${dist}/${ant.project.name}-${version}-dist.zip"/>
     <delete dir="${dist}/tmp"/>
+  </target>
+
+  <!-- Maven repository upload, disabled by default -->
+
+  <target name="maven_upload" depends="dist" description="deploy release version to Maven staging repository">
+
+    <input message="Please enter GPG passphrase:" addproperty="passphrase" /> 
+
+    <!-- define Maven coordinates -->
+    <property name="groupId" value="jtds.sourceforge.net" />
+    <property name="artifactId" value="jtds" />
+
+    <!-- define artifact names, following the Maven conventions -->
+    <property name="maven-jar" value="${build}/${artifactId}-${version}.jar" />
+    <property name="maven-javadoc-jar" value="${build}/${artifactId}-${version}-javadoc.jar" />
+    <property name="maven-sources-jar" value="${build}/${artifactId}-${version}-sources.jar" />
+
+    <!-- defined Maven staging repository ID and URL -->
+    <property name="maven-staging-repository-id" value="sonatype-nexus-staging" />
+    <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
+
+    <!-- sign and deploy the driver artifact -->
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Dgpg.passphrase=${passphrase}" />
+      <arg value="-Durl=${maven-staging-repository-url}" />
+      <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-jar}" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+
+    <!-- sign and deploy the sources artifact -->
+    <artifact:mvn>
+    	
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+    	<arg value="-Dgpg.passphrase=${passphrase}" />
+      <arg value="-Durl=${maven-staging-repository-url}" />
+      <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-sources-jar}" />
+      <arg value="-Dclassifier=sources" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+
+    <!-- sign and deploy the javadoc artifact -->
+    <artifact:mvn>
+      <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.3:sign-and-deploy-file" />
+      <arg value="-Dgpg.passphrase=${passphrase}" />
+      <arg value="-Durl=${maven-staging-repository-url}" />
+      <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+      <arg value="-DpomFile=pom.xml" />
+      <arg value="-Dfile=${maven-javadoc-jar}" />
+      <arg value="-Dclassifier=javadoc" />
+      <arg value="-Pgpg" />
+    </artifact:mvn>
+
   </target>
 
 </project>

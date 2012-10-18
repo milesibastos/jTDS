@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/18/2012 - Holger Rehn
+ o Extended build process to create and upload Maven artifacts to sonatype.org.
+
 10/15/2012 - Holger Rehn
  o Fixed various JUnit tests causing warnings.
 

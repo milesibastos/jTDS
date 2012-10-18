@@ -153,6 +153,8 @@ public final class DefaultProperties {
     public static final String TDS_VERSION_70 = "7.0";
     /** Default <code>tds</code> property for TDS 8.0. */
     public static final String TDS_VERSION_80 = "8.0";
+    /** Default <code>tds</code> property for TDS 9.0. */
+    public static final String TDS_VERSION_90 = "9.0";
 
     /** Default <code>ssl</code> property. */
     public static final String SSL = Ssl.SSL_OFF;
@@ -177,11 +179,12 @@ public final class DefaultProperties {
         portNumberDefaults.put(String.valueOf(Driver.SQLSERVER), PORT_NUMBER_SQLSERVER);
         portNumberDefaults.put(String.valueOf(Driver.SYBASE), PORT_NUMBER_SYBASE);
 
-        packetSizeDefaults = new HashMap(4);
+        packetSizeDefaults = new HashMap(5);
         packetSizeDefaults.put(TDS_VERSION_42, PACKET_SIZE_42);
         packetSizeDefaults.put(TDS_VERSION_50, PACKET_SIZE_50);
         packetSizeDefaults.put(TDS_VERSION_70, PACKET_SIZE_70_80);
         packetSizeDefaults.put(TDS_VERSION_80, PACKET_SIZE_70_80);
+        packetSizeDefaults.put(TDS_VERSION_90, PACKET_SIZE_70_80);
 
         batchSizeDefaults = new HashMap(2);
         batchSizeDefaults.put(String.valueOf(Driver.SQLSERVER),
@@ -388,8 +391,9 @@ public final class DefaultProperties {
             return new Integer(Driver.TDS70);
         } else if (DefaultProperties.TDS_VERSION_80.equals(tdsVersion)) {
             return new Integer(Driver.TDS80);
+//        } else if (DefaultProperties.TDS_VERSION_90.equals(tdsVersion)) {
+//            return new Integer(Driver.TDS90);
         }
-
         return null;
     }
 }

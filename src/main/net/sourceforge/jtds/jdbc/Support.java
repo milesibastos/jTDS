@@ -826,6 +826,7 @@ public class Support {
             case java.sql.Types.TINYINT:       return "TINYINT";
             case java.sql.Types.VARBINARY:     return "VARBINARY";
             case java.sql.Types.VARCHAR:       return "VARCHAR";
+            case java.sql.Types.SQLXML:        return "XML";
             default:                           return "ERROR";
         }
     }

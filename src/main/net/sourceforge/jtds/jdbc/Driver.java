@@ -66,6 +66,8 @@ public class Driver implements java.sql.Driver {
     public static final int TDS80 = 4;
     /** TDS 8.1 protocol (SQL Server 2000 SP1 and later). */
     public static final int TDS81 = 5;
+    /** TDS 9.0 protocol (SQL Server 2005 and later) */
+    public static final int TDS90 = 6;
     /** Microsoft SQL Server. */
     public static final int SQLSERVER = 1;
     /** Sybase ASE. */

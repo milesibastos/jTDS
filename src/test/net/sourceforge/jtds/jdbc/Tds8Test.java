@@ -37,7 +37,6 @@ public class Tds8Test extends DatabaseTestCase {
 
    public static Test suite()
    {
-
       String tds = props.getProperty( Messages.get( Driver.TDS ) );
 
       if( tds == null || Double.valueOf( tds ) >= Double.valueOf( DefaultProperties.TDS_VERSION_80 ) )

@@ -21,6 +21,7 @@ import java.io.*;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.sql.Types;
 
 import net.sourceforge.jtds.util.BlobBuffer;
 
@@ -104,7 +105,6 @@ public class TdsData {
             this.isCollation = isCollation;
             this.jdbcType = jdbcType;
         }
-
     }
 
     /*
@@ -112,41 +112,41 @@ public class TdsData {
      */
     private static final int SYBCHAR               = 47; // 0x2F
     private static final int SYBVARCHAR            = 39; // 0x27
-    private static final int SYBINTN               = 38; // 0x26
-    private static final int SYBINT1               = 48; // 0x30
+    private static final int SYBINTN               = 38; // 0x26              (MS: INTN)
+    private static final int SYBINT1               = 48; // 0x30              (MS: INT1)
     private static final int SYBDATE               = 49; // 0x31 Sybase 12
     private static final int SYBTIME               = 51; // 0x33 Sybase 12
-    private static final int SYBINT2               = 52; // 0x34
-    private static final int SYBINT4               = 56; // 0x38
-    private static final int SYBINT8               = 127;// 0x7F
-    private static final int SYBFLT8               = 62; // 0x3E
-    private static final int SYBDATETIME           = 61; // 0x3D
-    private static final int SYBBIT                = 50; // 0x32
-    private static final int SYBTEXT               = 35; // 0x23
-    private static final int SYBNTEXT              = 99; // 0x63
-    private static final int SYBIMAGE              = 34; // 0x22
-    private static final int SYBMONEY4             = 122;// 0x7A
-    private static final int SYBMONEY              = 60; // 0x3C
-    private static final int SYBDATETIME4          = 58; // 0x3A
-    private static final int SYBREAL               = 59; // 0x3B
+    private static final int SYBINT2               = 52; // 0x34              (MS: INT2)
+    private static final int SYBINT4               = 56; // 0x38              (MS: INT4)
+    private static final int SYBINT8               = 127;// 0x7F              (MS: INT8)
+    private static final int SYBFLT8               = 62; // 0x3E              (MS: FLOAT8)
+    private static final int SYBDATETIME           = 61; // 0x3D              (MS: DATETIME8)
+    private static final int SYBBIT                = 50; // 0x32              (MS: BIT1)
+    private static final int SYBTEXT               = 35; // 0x23              (MS: TEXT)
+    private static final int SYBNTEXT              = 99; // 0x63              (MS: NTEXT)
+    private static final int SYBIMAGE              = 34; // 0x22              (MS: IMAGE)
+    private static final int SYBMONEY4             = 122;// 0x7A              (MS: MONEY4)
+    private static final int SYBMONEY              = 60; // 0x3C              (MS: MONEY8)
+    private static final int SYBDATETIME4          = 58; // 0x3A              (MS: DATETIME4)
+    private static final int SYBREAL               = 59; // 0x3B              (MS: FLOAT4)
     private static final int SYBBINARY             = 45; // 0x2D
     private static final int SYBVOID               = 31; // 0x1F
     private static final int SYBVARBINARY          = 37; // 0x25
     private static final int SYBNVARCHAR           = 103;// 0x67
-    private static final int SYBBITN               = 104;// 0x68
-    private static final int SYBNUMERIC            = 108;// 0x6C
-    private static final int SYBDECIMAL            = 106;// 0x6A
-    private static final int SYBFLTN               = 109;// 0x6D
-    private static final int SYBMONEYN             = 110;// 0x6E
-    private static final int SYBDATETIMN           = 111;// 0x6F
+    private static final int SYBBITN               = 104;// 0x68              (MS: BITN)
+    private static final int SYBNUMERIC            = 108;// 0x6C              (MS: NUMERICN)
+    private static final int SYBDECIMAL            = 106;// 0x6A              (MS: DECIMALN)
+    private static final int SYBFLTN               = 109;// 0x6D              (MS: FLOATN)
+    private static final int SYBMONEYN             = 110;// 0x6E              (MS: MONEYN)
+    private static final int SYBDATETIMN           = 111;// 0x6F              (MS: DATETIMEN)
     private static final int SYBDATEN              = 123;// 0x7B SYBASE 12
     private static final int SYBTIMEN              = 147;// 0x93 SYBASE 12
-    private static final int XSYBCHAR              = 175;// 0xAF
-    private static final int XSYBVARCHAR           = 167;// 0xA7
-    private static final int XSYBNVARCHAR          = 231;// 0xE7
-    private static final int XSYBNCHAR             = 239;// 0xEF
-    private static final int XSYBVARBINARY         = 165;// 0xA5
-    private static final int XSYBBINARY            = 173;// 0xAD
+    private static final int XSYBCHAR              = 175;// 0xAF              (MS: BIGCHAR)
+    private static final int XSYBVARCHAR           = 167;// 0xA7              (MS: BIGVARCHAR)
+    private static final int XSYBNVARCHAR          = 231;// 0xE7              (MS: NVARCHAR)
+    private static final int XSYBNCHAR             = 239;// 0xEF              (MS: NCHAR)
+    private static final int XSYBVARBINARY         = 165;// 0xA5              (MS: BIGVARBINARY)
+    private static final int XSYBBINARY            = 173;// 0xAD              (MS: BIGBINARY)
     private static final int SYBUNITEXT            = 174;// 0xAE SYBASE 15
     private static final int SYBLONGBINARY         = 225;// 0xE1 SYBASE 12
     private static final int SYBSINT1              = 64; // 0x40
@@ -154,9 +154,21 @@ public class TdsData {
     private static final int SYBUINT4              = 66; // 0x42 SYBASE 15
     private static final int SYBUINT8              = 67; // 0x43 SYBASE 15
     private static final int SYBUINTN              = 68; // 0x44 SYBASE 15
-    private static final int SYBUNIQUE             = 36; // 0x24
-    private static final int SYBVARIANT            = 98; // 0x62
+    private static final int SYBUNIQUE             = 36; // 0x24              (MS: GUID)
+    private static final int SYBVARIANT            = 98; // 0x62              (MS: SQL_VARIANT)
     private static final int SYBSINT8              = 191;// 0xBF SYBASE 15
+
+    // SQL Server user defined data type
+    // private static final int UDT                   = 240;
+
+    // XML data type introduced in SQL Server 2005
+    private static final int XML                   = 241;
+
+    // time and date data types introduced in SQL Server 2008
+    private static final int DATEN                 = 40; // 0x28 MSSQL 2008
+    private static final int TIMEN                 = 41; // 0x29 MSSQL 2008
+    private static final int DATETIME2N            = 42; // 0x2A MSSQL 2008
+    private static final int DATETIMEOFFSETN       = 43; // 0x2B MSSQL 2008
 
     /*
      * Special case for Sybase 12.5+
@@ -202,58 +214,71 @@ public class TdsData {
      */
     private final static TypeInfo types[] = new TypeInfo[256];
 
-    /**
-     * Static block to initialise TDS data type descriptors.
-     */
-    static {//                             SQL Type       Size Prec  DS signed TDS8 Col java Type
-        types[SYBCHAR]      = new TypeInfo("char",          -1, -1,  1, false, false, java.sql.Types.CHAR);
-        types[SYBVARCHAR]   = new TypeInfo("varchar",       -1, -1,  1, false, false, java.sql.Types.VARCHAR);
-        types[SYBINTN]      = new TypeInfo("int",           -1, 10, 11, true,  false, java.sql.Types.INTEGER);
-        types[SYBINT1]      = new TypeInfo("tinyint",        1,  3,  4, false, false, java.sql.Types.TINYINT);
-        types[SYBINT2]      = new TypeInfo("smallint",       2,  5,  6, true,  false, java.sql.Types.SMALLINT);
-        types[SYBINT4]      = new TypeInfo("int",            4, 10, 11, true,  false, java.sql.Types.INTEGER);
-        types[SYBINT8]      = new TypeInfo("bigint",         8, 19, 20, true,  false, java.sql.Types.BIGINT);
-        types[SYBFLT8]      = new TypeInfo("float",          8, 15, 24, true,  false, java.sql.Types.DOUBLE);
-        types[SYBDATETIME]  = new TypeInfo("datetime",       8, 23, 23, false, false, java.sql.Types.TIMESTAMP);
-        types[SYBBIT]       = new TypeInfo("bit",            1,  1,  1, false, false, java.sql.Types.BIT);
-        types[SYBTEXT]      = new TypeInfo("text",          -4, -1, -1, false, true,  java.sql.Types.CLOB);
-        types[SYBNTEXT]     = new TypeInfo("ntext",         -4, -1, -1, false, true,  java.sql.Types.CLOB);
-        types[SYBUNITEXT]   = new TypeInfo("unitext",       -4, -1, -1, false, true,  java.sql.Types.CLOB);
-        types[SYBIMAGE]     = new TypeInfo("image",         -4, -1, -1, false, false, java.sql.Types.BLOB);
-        types[SYBMONEY4]    = new TypeInfo("smallmoney",     4, 10, 12, true,  false, java.sql.Types.DECIMAL);
-        types[SYBMONEY]     = new TypeInfo("money",          8, 19, 21, true,  false, java.sql.Types.DECIMAL);
-        types[SYBDATETIME4] = new TypeInfo("smalldatetime",  4, 16, 19, false, false, java.sql.Types.TIMESTAMP);
-        types[SYBREAL]      = new TypeInfo("real",           4,  7, 14, true,  false, java.sql.Types.REAL);
-        types[SYBBINARY]    = new TypeInfo("binary",        -1, -1,  2, false, false, java.sql.Types.BINARY);
-        types[SYBVOID]      = new TypeInfo("void",          -1,  1,  1, false, false, 0);
-        types[SYBVARBINARY] = new TypeInfo("varbinary",     -1, -1, -1, false, false, java.sql.Types.VARBINARY);
-        types[SYBNVARCHAR]  = new TypeInfo("nvarchar",      -1, -1, -1, false, false, java.sql.Types.VARCHAR);
-        types[SYBBITN]      = new TypeInfo("bit",           -1,  1,  1, false, false, java.sql.Types.BIT);
-        types[SYBNUMERIC]   = new TypeInfo("numeric",       -1, -1, -1, true,  false, java.sql.Types.NUMERIC);
-        types[SYBDECIMAL]   = new TypeInfo("decimal",       -1, -1, -1, true,  false, java.sql.Types.DECIMAL);
-        types[SYBFLTN]      = new TypeInfo("float",         -1, 15, 24, true,  false, java.sql.Types.DOUBLE);
-        types[SYBMONEYN]    = new TypeInfo("money",         -1, 19, 21, true,  false, java.sql.Types.DECIMAL);
-        types[SYBDATETIMN]  = new TypeInfo("datetime",      -1, 23, 23, false, false, java.sql.Types.TIMESTAMP);
-        types[SYBDATE]      = new TypeInfo("date",           4, 10, 10, false, false, java.sql.Types.DATE);
-        types[SYBTIME]      = new TypeInfo("time",           4,  8,  8, false, false, java.sql.Types.TIME);
-        types[SYBDATEN]     = new TypeInfo("date",          -1, 10, 10, false, false, java.sql.Types.DATE);
-        types[SYBTIMEN]     = new TypeInfo("time",          -1,  8,  8, false, false, java.sql.Types.TIME);
-        types[XSYBCHAR]     = new TypeInfo("char",          -2, -1, -1, false, true,  java.sql.Types.CHAR);
-        types[XSYBVARCHAR]  = new TypeInfo("varchar",       -2, -1, -1, false, true,  java.sql.Types.VARCHAR);
-        types[XSYBNVARCHAR] = new TypeInfo("nvarchar",      -2, -1, -1, false, true,  java.sql.Types.VARCHAR);
-        types[XSYBNCHAR]    = new TypeInfo("nchar",         -2, -1, -1, false, true,  java.sql.Types.CHAR);
-        types[XSYBVARBINARY]= new TypeInfo("varbinary",     -2, -1, -1, false, false, java.sql.Types.VARBINARY);
-        types[XSYBBINARY]   = new TypeInfo("binary",        -2, -1, -1, false, false, java.sql.Types.BINARY);
-        types[SYBLONGBINARY]= new TypeInfo("varbinary",     -5, -1,  2, false, false, java.sql.Types.BINARY);
-        types[SYBSINT1]     = new TypeInfo("tinyint",        1,  2,  3, false, false, java.sql.Types.TINYINT);
-        types[SYBUINT2]     = new TypeInfo("unsigned smallint", 2,  5,  6, false, false, java.sql.Types.INTEGER);
-        types[SYBUINT4]     = new TypeInfo("unsigned int",   4, 10, 11, false, false, java.sql.Types.BIGINT);
-        types[SYBUINT8]     = new TypeInfo("unsigned bigint",8, 20, 20, false, false, java.sql.Types.DECIMAL);
-        types[SYBUINTN]     = new TypeInfo("unsigned int",  -1, 10, 11, true,  false, java.sql.Types.BIGINT);
-        types[SYBUNIQUE]    = new TypeInfo("uniqueidentifier",-1,36,36, false, false, java.sql.Types.CHAR);
-        types[SYBVARIANT]   = new TypeInfo("sql_variant",   -5,  0, 8000, false, false, java.sql.Types.VARCHAR);
-        types[SYBSINT8]     = new TypeInfo("bigint",         8, 19, 20, true,  false, java.sql.Types.BIGINT);
-    }
+   /**
+    * Static block to initialize TDS data type descriptors.
+    */
+   static
+   {
+      //                                     SQL type              precision   signed          Java type
+      //                                        |                      |          |                |
+      //                                        |                      |  display |    TDS8        |
+      //                                        |                size  |   size   |  collation     |
+      //                                        v                  v   v     v    v      v         v
+      types[SYBCHAR]         = new TypeInfo( "char"             , -1, -1,    1, false, false, Types.CHAR      );
+      types[SYBVARCHAR]      = new TypeInfo( "varchar"          , -1, -1,    1, false, false, Types.VARCHAR   );
+      types[SYBINTN]         = new TypeInfo( "int"              , -1, 10,   11, true , false, Types.INTEGER   );
+      types[SYBINT1]         = new TypeInfo( "tinyint"          ,  1,  3,    4, false, false, Types.TINYINT   );
+      types[SYBINT2]         = new TypeInfo( "smallint"         ,  2,  5,    6, true , false, Types.SMALLINT  );
+      types[SYBINT4]         = new TypeInfo( "int"              ,  4, 10,   11, true , false, Types.INTEGER   );
+      types[SYBINT8]         = new TypeInfo( "bigint"           ,  8, 19,   20, true , false, Types.BIGINT    );
+      types[SYBFLT8]         = new TypeInfo( "float"            ,  8, 15,   24, true , false, Types.DOUBLE    );
+      types[SYBDATETIME]     = new TypeInfo( "datetime"         ,  8, 23,   23, false, false, Types.TIMESTAMP );
+      types[SYBBIT]          = new TypeInfo( "bit"              ,  1,  1,    1, false, false, Types.BIT       );
+      types[SYBTEXT]         = new TypeInfo( "text"             , -4, -1,   -1, false, true , Types.CLOB      );
+      types[SYBNTEXT]        = new TypeInfo( "ntext"            , -4, -1,   -1, false, true , Types.CLOB      );
+      types[SYBUNITEXT]      = new TypeInfo( "unitext"          , -4, -1,   -1, false, true , Types.CLOB      );
+      types[SYBIMAGE]        = new TypeInfo( "image"            , -4, -1,   -1, false, false, Types.BLOB      );
+      types[SYBMONEY4]       = new TypeInfo( "smallmoney"       ,  4, 10,   12, true , false, Types.DECIMAL   );
+      types[SYBMONEY]        = new TypeInfo( "money"            ,  8, 19,   21, true , false, Types.DECIMAL   );
+      types[SYBDATETIME4]    = new TypeInfo( "smalldatetime"    ,  4, 16,   19, false, false, Types.TIMESTAMP );
+      types[SYBREAL]         = new TypeInfo( "real"             ,  4,  7,   14, true , false, Types.REAL      );
+      types[SYBBINARY]       = new TypeInfo( "binary"           , -1, -1,    2, false, false, Types.BINARY    );
+      types[SYBVOID]         = new TypeInfo( "void"             , -1,  1,    1, false, false, Types.NULL      );
+      types[SYBVARBINARY]    = new TypeInfo( "varbinary"        , -1, -1,   -1, false, false, Types.VARBINARY );
+      types[SYBNVARCHAR]     = new TypeInfo( "nvarchar"         , -1, -1,   -1, false, false, Types.VARCHAR   );
+      types[SYBBITN]         = new TypeInfo( "bit"              , -1,  1,    1, false, false, Types.BIT       );
+      types[SYBNUMERIC]      = new TypeInfo( "numeric"          , -1, -1,   -1, true , false, Types.NUMERIC   );
+      types[SYBDECIMAL]      = new TypeInfo( "decimal"          , -1, -1,   -1, true , false, Types.DECIMAL   );
+      types[SYBFLTN]         = new TypeInfo( "float"            , -1, 15,   24, true , false, Types.DOUBLE    );
+      types[SYBMONEYN]       = new TypeInfo( "money"            , -1, 19,   21, true , false, Types.DECIMAL   );
+      types[SYBDATETIMN]     = new TypeInfo( "datetime"         , -1, 23,   23, false, false, Types.TIMESTAMP );
+      types[SYBDATE]         = new TypeInfo( "date"             ,  4, 10,   10, false, false, Types.DATE      );
+      types[SYBTIME]         = new TypeInfo( "time"             ,  4,  8,    8, false, false, Types.TIME      );
+      types[SYBDATEN]        = new TypeInfo( "date"             , -1, 10,   10, false, false, Types.DATE      );
+      types[SYBTIMEN]        = new TypeInfo( "time"             , -1,  8,    8, false, false, Types.TIME      );
+      types[XSYBCHAR]        = new TypeInfo( "char"             , -2, -1,   -1, false, true , Types.CHAR      );
+      types[XSYBVARCHAR]     = new TypeInfo( "varchar"          , -2, -1,   -1, false, true , Types.VARCHAR   );
+      types[XSYBNVARCHAR]    = new TypeInfo( "nvarchar"         , -2, -1,   -1, false, true , Types.VARCHAR   );
+      types[XSYBNCHAR]       = new TypeInfo( "nchar"            , -2, -1,   -1, false, true , Types.CHAR      );
+      types[XSYBVARBINARY]   = new TypeInfo( "varbinary"        , -2, -1,   -1, false, false, Types.VARBINARY );
+      types[XSYBBINARY]      = new TypeInfo( "binary"           , -2, -1,   -1, false, false, Types.BINARY    );
+      types[SYBLONGBINARY]   = new TypeInfo( "varbinary"        , -5, -1,    2, false, false, Types.BINARY    );
+      types[SYBSINT1]        = new TypeInfo( "tinyint"          ,  1,  2,    3, false, false, Types.TINYINT   );
+      types[SYBUINT2]        = new TypeInfo( "unsigned smallint",  2,  5,    6, false, false, Types.INTEGER   );
+      types[SYBUINT4]        = new TypeInfo( "unsigned int"     ,  4, 10,   11, false, false, Types.BIGINT    );
+      types[SYBUINT8]        = new TypeInfo( "unsigned bigint"  ,  8, 20,   20, false, false, Types.DECIMAL   );
+      types[SYBUINTN]        = new TypeInfo( "unsigned int"     , -1, 10,   11, true , false, Types.BIGINT    );
+      types[SYBUNIQUE]       = new TypeInfo( "uniqueidentifier" , -1, 36,   36, false, false, Types.CHAR      );
+      types[SYBVARIANT]      = new TypeInfo( "sql_variant"      , -5,  0, 8000, false, false, Types.VARCHAR   );
+      types[SYBSINT8]        = new TypeInfo( "bigint"           ,  8, 19,   20, true , false, Types.BIGINT    );
+      // XML data type introduced in SQL Server 2005
+      types[XML]             = new TypeInfo( "xml"              , -4, -1,   -1, false, true , Types.SQLXML    );
+      // time and date data types introduced in SQL Server 2008
+      types[DATEN]           = new TypeInfo( "date"             ,  3, 10,   10, false, false, Types.DATE      );
+      types[TIMEN]           = new TypeInfo( "time"             , -1, -1,   -1, false, false, Types.TIME      );
+      types[DATETIME2N]      = new TypeInfo( "datetime2"        , -1, -1,   -1, false, false, Types.TIMESTAMP );
+      types[DATETIMEOFFSETN] = new TypeInfo( "datetimeoffset"   , -1, -1,   -1, false, false, Types.TIMESTAMP );
+   }
 
     /** Default Decimal Scale. */
     static final int DEFAULT_SCALE = 10;
@@ -433,7 +458,7 @@ public class TdsData {
                 } else {
                     ci.displaySize = types[SYBREAL].displaySize;
                     ci.precision   = types[SYBREAL].precision;
-                    ci.jdbcType    = java.sql.Types.REAL;
+                    ci.jdbcType    = Types.REAL;
                     ci.sqlType     = types[SYBREAL].sqlType;
                 }
                 break;
@@ -442,7 +467,7 @@ public class TdsData {
                 if (ci.bufferSize == 8) {
                     ci.displaySize = types[SYBINT8].displaySize;
                     ci.precision   = types[SYBINT8].precision;
-                    ci.jdbcType    = java.sql.Types.BIGINT;
+                    ci.jdbcType    = Types.BIGINT;
                     ci.sqlType     = types[SYBINT8].sqlType;
                 } else if (ci.bufferSize == 4) {
                     ci.displaySize = types[SYBINT4].displaySize;
@@ -450,12 +475,12 @@ public class TdsData {
                 } else if (ci.bufferSize == 2) {
                     ci.displaySize = types[SYBINT2].displaySize;
                     ci.precision   = types[SYBINT2].precision;
-                    ci.jdbcType    = java.sql.Types.SMALLINT;
+                    ci.jdbcType    = Types.SMALLINT;
                     ci.sqlType     = types[SYBINT2].sqlType;
                 } else {
                     ci.displaySize = types[SYBINT1].displaySize;
                     ci.precision   = types[SYBINT1].precision;
-                    ci.jdbcType    = java.sql.Types.TINYINT;
+                    ci.jdbcType    = Types.TINYINT;
                     ci.sqlType     = types[SYBINT1].sqlType;
                 }
                 break;
@@ -558,71 +583,71 @@ public class TdsData {
         if (ci.isIdentity) {
             ci.sqlType += " identity";
         }
-        
+
         // Fine tune Sybase or SQL 6.5 data types
         if (isTds42 || isTds5) {
             switch (ci.userType) {
                 case  UDT_CHAR:
                     ci.sqlType      = "char";
                     ci.displaySize = ci.bufferSize;
-                    ci.jdbcType    = java.sql.Types.CHAR;
+                    ci.jdbcType    = Types.CHAR;
                     break;
                 case  UDT_VARCHAR:
                     ci.sqlType     = "varchar";
                     ci.displaySize = ci.bufferSize;
-                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    ci.jdbcType    = Types.VARCHAR;
                     break;
                 case  UDT_BINARY:
                     ci.sqlType     = "binary";
                     ci.displaySize = ci.bufferSize * 2;
-                    ci.jdbcType    = java.sql.Types.BINARY;
+                    ci.jdbcType    = Types.BINARY;
                     break;
                 case  UDT_VARBINARY:
                     ci.sqlType     = "varbinary";
                     ci.displaySize = ci.bufferSize * 2;
-                    ci.jdbcType    = java.sql.Types.VARBINARY;
+                    ci.jdbcType    = Types.VARBINARY;
                     break;
                 case UDT_SYSNAME:
                     ci.sqlType = "sysname";
                     ci.displaySize = ci.bufferSize;
-                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    ci.jdbcType    = Types.VARCHAR;
                     break;
                 case UDT_TIMESTAMP:
                     ci.sqlType = "timestamp";
                     ci.displaySize = ci.bufferSize * 2;
-                    ci.jdbcType    = java.sql.Types.VARBINARY;
+                    ci.jdbcType    = Types.VARBINARY;
                     break;
             }
         }
-        
+
         // Fine tune Sybase data types
         if (isTds5) {
             switch (ci.userType) {
                 case UDT_NCHAR:
                     ci.sqlType     = "nchar";
                     ci.displaySize = ci.bufferSize;
-                    ci.jdbcType    = java.sql.Types.CHAR;
+                    ci.jdbcType    = Types.CHAR;
                     break;
                 case UDT_NVARCHAR:
                     ci.sqlType     = "nvarchar";
                     ci.displaySize = ci.bufferSize;
-                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    ci.jdbcType    = Types.VARCHAR;
                     break;
                 case UDT_UNICHAR:
                     ci.sqlType     = "unichar";
                     ci.displaySize = ci.bufferSize / 2;
                     ci.precision   = ci.displaySize;
-                    ci.jdbcType    = java.sql.Types.CHAR;
+                    ci.jdbcType    = Types.CHAR;
                     break;
                 case UDT_UNIVARCHAR:
                     ci.sqlType     = "univarchar";
                     ci.displaySize = ci.bufferSize / 2;
                     ci.precision   = ci.displaySize;
-                    ci.jdbcType    = java.sql.Types.VARCHAR;
-                    break;            
+                    ci.jdbcType    = Types.VARCHAR;
+                    break;
                 case UDT_LONGSYSNAME:
                     ci.sqlType = "longsysname";
-                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    ci.jdbcType    = Types.VARCHAR;
                     ci.displaySize = ci.bufferSize;
                     break;
             }
@@ -632,15 +657,15 @@ public class TdsData {
             switch (ci.userType) {
                 case UDT_TIMESTAMP:
                     ci.sqlType = "timestamp";
-                    ci.jdbcType    = java.sql.Types.BINARY;
+                    ci.jdbcType    = Types.BINARY;
                     break;
                 case UDT_NEWSYSNAME:
                     ci.sqlType = "sysname";
-                    ci.jdbcType    = java.sql.Types.VARCHAR;
+                    ci.jdbcType    = Types.VARCHAR;
                     break;
             }
         }
-        
+
 
         return bytesRead;
     }
@@ -685,9 +710,9 @@ public class TdsData {
                     case 1:
                         return new Integer(in.read() & 0xFF);
                     case 2:
-                        return new Integer((int)in.readShort() & 0xFFFF);
+                        return new Integer(in.readShort() & 0xFFFF);
                     case 4:
-                        return new Long((long)in.readInt() & 0xFFFFFFFFL );
+                        return new Long(in.readInt() & 0xFFFFFFFFL );
                     case 8:
                         return in.readUnsignedLong();
                 }
@@ -712,11 +737,11 @@ public class TdsData {
 
             // Sybase ASE 15+ unsigned smallint
             case SYBUINT2:
-                return new Integer((int)in.readShort() & 0xFFFF);
+                return new Integer(in.readShort() & 0xFFFF);
 
             // Sybase ASE 15+ unsigned int
             case SYBUINT4:
-                return new Long((long)in.readInt() & 0xFFFFFFFFL);
+                return new Long(in.readInt() & 0xFFFFFFFFL);
 
             // Sybase ASE 15+ unsigned bigint
             case SYBUINT8:
@@ -730,7 +755,7 @@ public class TdsData {
                     int dataLen = in.readInt();
                     BlobImpl blob;
                     if (dataLen == 0 && in.getTdsVersion() <= Driver.TDS50) {
-                        // Length of zero may indicate an initialized image 
+                        // Length of zero may indicate an initialized image
                         // column that has been updated to null.
                         break;
                     }
@@ -778,7 +803,7 @@ public class TdsData {
                     in.skip(24); // Skip textptr and timestamp
                     int dataLen = in.readInt();
                     if (dataLen == 0 && in.getTdsVersion() <= Driver.TDS50) {
-                        // Length of zero may indicate an initialized text 
+                        // Length of zero may indicate an initialized text
                         // column that has been updated to null.
                         break;
                     }
@@ -844,7 +869,7 @@ public class TdsData {
                     in.skip(24); // Skip textptr and timestamp
                     int dataLen = in.readInt();
                     if (dataLen == 0 && in.getTdsVersion() <= Driver.TDS50) {
-                        // Length of zero may indicate an initialized unitext 
+                        // Length of zero may indicate an initialized unitext
                         // column that has been updated to null.
                         break;
                     }
@@ -1227,25 +1252,25 @@ public class TdsData {
     static void fillInType(ColInfo ci)
             throws SQLException {
         switch (ci.jdbcType) {
-            case java.sql.Types.VARCHAR:
+            case Types.VARCHAR:
                 ci.tdsType = SYBVARCHAR;
                 ci.bufferSize = MS_LONGVAR_MAX;
                 ci.displaySize = MS_LONGVAR_MAX;
                 ci.precision = MS_LONGVAR_MAX;
                 break;
-            case java.sql.Types.INTEGER:
+            case Types.INTEGER:
                 ci.tdsType = SYBINT4;
                 ci.bufferSize = 4;
                 ci.displaySize = 11;
                 ci.precision = 10;
                 break;
-            case java.sql.Types.SMALLINT:
+            case Types.SMALLINT:
                 ci.tdsType = SYBINT2;
                 ci.bufferSize = 2;
                 ci.displaySize = 6;
                 ci.precision = 5;
                 break;
-            case java.sql.Types.BIT:
+            case Types.BIT:
                 ci.tdsType = SYBBIT;
                 ci.bufferSize = 1;
                 ci.displaySize = 1;
@@ -1271,15 +1296,15 @@ public class TdsData {
         int len;
         int jdbcType = pi.jdbcType;
 
-        if (jdbcType == java.sql.Types.OTHER) {
+        if (jdbcType == Types.OTHER) {
             jdbcType = Support.getJdbcType(pi.value);
         }
 
         switch (jdbcType) {
-            case java.sql.Types.CHAR:
-            case java.sql.Types.VARCHAR:
-            case java.sql.Types.LONGVARCHAR:
-            case java.sql.Types.CLOB:
+            case Types.CHAR:
+            case Types.VARCHAR:
+            case Types.LONGVARCHAR:
+            case Types.CLOB:
                 if (pi.value == null) {
                     len = 0;
                 } else {
@@ -1397,15 +1422,15 @@ public class TdsData {
                 }
                 break;
 
-            case java.sql.Types.TINYINT:
-            case java.sql.Types.SMALLINT:
-            case java.sql.Types.INTEGER:
+            case Types.TINYINT:
+            case Types.SMALLINT:
+            case Types.INTEGER:
                 pi.tdsType = SYBINTN;
                 pi.sqlType = "int";
                 break;
 
             case JtdsStatement.BOOLEAN:
-            case java.sql.Types.BIT:
+            case Types.BIT:
                 if (connection.getTdsVersion() >= Driver.TDS70 ||
                         connection.getSybaseInfo(TdsCore.SYB_BITNULL)) {
                     pi.tdsType = SYBBITN;
@@ -1416,18 +1441,18 @@ public class TdsData {
                 pi.sqlType = "bit";
                 break;
 
-            case java.sql.Types.REAL:
+            case Types.REAL:
                 pi.tdsType = SYBFLTN;
                 pi.sqlType = "real";
                 break;
 
-            case java.sql.Types.FLOAT:
-            case java.sql.Types.DOUBLE:
+            case Types.FLOAT:
+            case Types.DOUBLE:
                 pi.tdsType = SYBFLTN;
                 pi.sqlType = "float";
                 break;
 
-            case java.sql.Types.DATE:
+            case Types.DATE:
                 if (connection.getSybaseInfo(TdsCore.SYB_DATETIME)) {
                     pi.tdsType = SYBDATEN;
                     pi.sqlType = "date";
@@ -1436,7 +1461,7 @@ public class TdsData {
                     pi.sqlType = "datetime";
                 }
                 break;
-            case java.sql.Types.TIME:
+            case Types.TIME:
                 if (connection.getSybaseInfo(TdsCore.SYB_DATETIME)) {
                     pi.tdsType = SYBTIMEN;
                     pi.sqlType = "time";
@@ -1445,15 +1470,15 @@ public class TdsData {
                     pi.sqlType = "datetime";
                 }
                 break;
-            case java.sql.Types.TIMESTAMP:
+            case Types.TIMESTAMP:
                 pi.tdsType = SYBDATETIMN;
                 pi.sqlType = "datetime";
                 break;
 
-            case java.sql.Types.BINARY:
-            case java.sql.Types.VARBINARY:
-            case java.sql.Types.BLOB:
-            case java.sql.Types.LONGVARBINARY:
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.BLOB:
+            case Types.LONGVARBINARY:
                 if (pi.value == null) {
                     len = 0;
                 } else {
@@ -1498,7 +1523,7 @@ public class TdsData {
 
                 break;
 
-            case java.sql.Types.BIGINT:
+            case Types.BIGINT:
                 if (connection.getTdsVersion() >= Driver.TDS80 ||
                     connection.getSybaseInfo(TdsCore.SYB_BIGINT)) {
                     pi.tdsType = SYBINTN;
@@ -1512,8 +1537,8 @@ public class TdsData {
 
                 break;
 
-            case java.sql.Types.DECIMAL:
-            case java.sql.Types.NUMERIC:
+            case Types.DECIMAL:
+            case Types.NUMERIC:
                 pi.tdsType  = SYBDECIMAL;
                 int prec = connection.getMaxPrecision();
                 int scale = DEFAULT_SCALE;
@@ -1526,11 +1551,69 @@ public class TdsData {
 
                 break;
 
-            case java.sql.Types.OTHER:
-            case java.sql.Types.NULL:
+            case Types.OTHER:
+            case Types.NULL:
                 // Send a null String in the absence of anything better
                 pi.tdsType = SYBVARCHAR;
                 pi.sqlType = "varchar(255)";
+                break;
+
+            case Types.SQLXML:
+                len = pi.value == null ? 0 : pi.length;
+
+                if (connection.getTdsVersion() >= Driver.TDS80 )
+                {
+                   pi.tdsType = XML;
+                   pi.sqlType = "xml";
+                }
+                else if( connection.getTdsVersion() < Driver.TDS70 )
+                {
+                   if( len <= VAR_MAX )
+                   {
+                      pi.tdsType = SYBVARBINARY;
+                      pi.sqlType = "varbinary(255)";
+                   }
+                   else
+                   {
+                      if( connection.getSybaseInfo( TdsCore.SYB_LONGDATA ) )
+                      {
+                         if( len > SYB_LONGVAR_MAX )
+                         {
+                            // Need to use special Sybase long binary type
+                            pi.tdsType = SYBLONGDATA;
+                            pi.sqlType = "image";
+                         }
+                         else
+                         {
+                            // Sybase long binary that can be used as a SP parameter
+                            pi.tdsType = SYBLONGBINARY;
+                            pi.sqlType = "varbinary(" + len + ')';
+                         }
+                      }
+                      else
+                      {
+                         // Sybase < 12.5 or SQL Server 6.5
+                         pi.tdsType = SYBIMAGE;
+                         pi.sqlType = "image";
+                      }
+                   }
+                }
+                else
+                {
+                   if( len <= MS_LONGVAR_MAX )
+                   {
+                      pi.tdsType = XSYBVARBINARY;
+                      pi.sqlType = "varbinary(8000)";
+                   }
+                   else
+                   {
+                      if( pi.isOutput )
+                         throw new SQLException( Messages.get( "error.textoutparam" ), "HY000" );
+
+                      pi.tdsType = SYBIMAGE;
+                      pi.sqlType = "varbinary(max)";
+                   }
+                }
                 break;
 
             default:
@@ -1626,11 +1709,11 @@ public class TdsData {
 
         out.write((byte) (pi.isOutput ? 1 : 0)); // Output param
         if (pi.sqlType.startsWith("univarchar")) {
-            out.write((int) UDT_UNIVARCHAR);
+            out.write(UDT_UNIVARCHAR);
         } else if ("unitext".equals(pi.sqlType)) {
-            out.write((int) UDT_UNITEXT);
+            out.write(UDT_UNITEXT);
         } else {
-            out.write((int) 0); // user type
+            out.write(0); // user type
         }
         out.write((byte) pi.tdsType); // TDS data type token
 
@@ -1641,7 +1724,7 @@ public class TdsData {
                 out.write((byte) VAR_MAX);
                 break;
             case XSYBCHAR:
-                out.write((int)0x7FFFFFFF);
+                out.write(0x7FFFFFFF);
                 break;
             case SYBLONGDATA:
                 // It appears that type 3 = send text data
@@ -1652,7 +1735,7 @@ public class TdsData {
                 out.write((byte)0);
                 break;
             case SYBLONGBINARY:
-                out.write((int)0x7FFFFFFF);
+                out.write(0x7FFFFFFF);
                 break;
             case SYBBIT:
                 break;
@@ -1677,7 +1760,7 @@ public class TdsData {
                 out.write((byte) 17);
                 out.write((byte) 38);
 
-                if (pi.jdbcType == java.sql.Types.BIGINT) {
+                if (pi.jdbcType == Types.BIGINT) {
                     out.write((byte) 0);
                 } else {
                     if (pi.value instanceof BigDecimal) {
@@ -1767,7 +1850,7 @@ public class TdsData {
                         buf = new byte[1];
                         buf[0] = ' ';
                     }
-                    out.write((int) buf.length);
+                    out.write(buf.length);
                     out.write(buf);
                 }
                 break;
@@ -1857,28 +1940,28 @@ public class TdsData {
                     }
                 }
                 // Write terminator
-                out.write((int) 0);
+                out.write(0);
                 break;
 
             case SYBLONGBINARY:
                 // Sybase data <= 16284 bytes long
                 if (pi.value == null) {
-                    out.write((int) 0);
+                    out.write(0);
                 } else {
                     if (pi.sqlType.startsWith("univarchar")){
                         String tmp = pi.getString(pi.charsetInfo.getCharset());
                         if (tmp.length() == 0) {
                             tmp = " ";
                         }
-                        out.write((int)tmp.length() * 2);
+                        out.write(tmp.length() * 2);
                         out.write(tmp.toCharArray(), 0, tmp.length());
                     } else {
                         byte buf[] = pi.getBytes(pi.charsetInfo.getCharset());
                         if (buf.length > 0) {
-                            out.write((int) buf.length);
+                            out.write(buf.length);
                             out.write(buf);
                         } else {
-                            out.write((int) 1);
+                            out.write(1);
                             out.write((byte) 0);
                         }
                     }
@@ -1891,10 +1974,10 @@ public class TdsData {
                 } else {
                     if ("bigint".equals(pi.sqlType)) {
                         out.write((byte) 8);
-                        out.write((long) ((Number) pi.value).longValue());
+                        out.write(((Number) pi.value).longValue());
                     } else {
                         out.write((byte) 4);
-                        out.write((int) ((Number) pi.value).intValue());
+                        out.write(((Number) pi.value).intValue());
                     }
                 }
 
@@ -1924,7 +2007,7 @@ public class TdsData {
                     out.write((byte)0);
                 } else {
                     out.write((byte)4);
-                    out.write((int)((DateTime) pi.value).getDate());
+                    out.write(((DateTime) pi.value).getDate());
                 }
                 break;
 
@@ -1933,7 +2016,7 @@ public class TdsData {
                    out.write((byte)0);
                } else {
                    out.write((byte)4);
-                   out.write((int)((DateTime) pi.value).getTime());
+                   out.write(((DateTime) pi.value).getTime());
                }
                break;
 
@@ -2037,13 +2120,13 @@ public class TdsData {
 
                     if (buf.length > MS_LONGVAR_MAX) {
                         out.write((byte) SYBTEXT);
-                        out.write((int) buf.length);
+                        out.write(buf.length);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) buf.length);
+                        out.write(buf.length);
                         out.write(buf);
                     } else {
                         out.write((byte) pi.tdsType);
@@ -2081,13 +2164,13 @@ public class TdsData {
                             out.write(buf);
                         } else {
                             out.write((byte) SYBTEXT);
-                            out.write((int) buf.length);
+                            out.write(buf.length);
 
                             if (isTds8) {
                                 putCollation(out, pi);
                             }
 
-                            out.write((int) buf.length);
+                            out.write(buf.length);
                             out.write(buf);
                         }
                     } else {
@@ -2140,43 +2223,43 @@ public class TdsData {
                 if (len > 0) {
                     if (pi.value instanceof InputStream) {
                         // Write output directly from stream
-                        out.write((int) len);
+                        out.write(len);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) len);
+                        out.write(len);
                         out.writeStreamBytes((InputStream) pi.value, len);
                     } else if (pi.value instanceof Reader && !pi.charsetInfo.isWideChars()) {
                         // Write output directly from stream with character translation
-                        out.write((int) len);
+                        out.write(len);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) len);
+                        out.write(len);
                         out.writeReaderBytes((Reader) pi.value, len);
                     } else {
                         buf = pi.getBytes(pi.charsetInfo.getCharset());
-                        out.write((int) buf.length);
+                        out.write(buf.length);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) buf.length);
+                        out.write(buf.length);
                         out.write(buf);
                     }
                 } else {
-                    out.write((int) len); // Zero length
+                    out.write(len); // Zero length
 
                     if (isTds8) {
                         putCollation(out, pi);
                     }
 
-                    out.write((int)len);
+                    out.write(len);
                 }
 
                 break;
@@ -2192,44 +2275,44 @@ public class TdsData {
 
                 if (len > 0) {
                     if (pi.value instanceof Reader) {
-                        out.write((int) len);
+                        out.write(len);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) len * 2);
+                        out.write(len * 2);
                         out.writeReaderChars((Reader) pi.value, len);
                     } else if (pi.value instanceof InputStream && !pi.charsetInfo.isWideChars()) {
-                        out.write((int) len);
+                        out.write(len);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) len * 2);
+                        out.write(len * 2);
                         out.writeReaderChars(new InputStreamReader(
                                 (InputStream) pi.value, pi.charsetInfo.getCharset()), len);
                     } else {
                         tmp = pi.getString(pi.charsetInfo.getCharset());
                         len = tmp.length();
-                        out.write((int) len);
+                        out.write(len);
 
                         if (isTds8) {
                             putCollation(out, pi);
                         }
 
-                        out.write((int) len * 2);
+                        out.write(len * 2);
                         out.write(tmp);
                     }
                 } else {
-                    out.write((int) len);
+                    out.write(len);
 
                     if (isTds8) {
                         putCollation(out, pi);
                     }
 
-                    out.write((int) len);
+                    out.write(len);
                 }
 
                 break;
@@ -2278,24 +2361,24 @@ public class TdsData {
 
                 if (len > 0) {
                     if (pi.value instanceof InputStream) {
-                        out.write((int) len);
-                        out.write((int) len);
+                        out.write(len);
+                        out.write(len);
                         out.writeStreamBytes((InputStream) pi.value, len);
                     } else {
                         buf = pi.getBytes(pi.charsetInfo.getCharset());
-                        out.write((int) buf.length);
-                        out.write((int) buf.length);
+                        out.write(buf.length);
+                        out.write(buf.length);
                         out.write(buf);
                     }
                 } else {
                     if (out.getTdsVersion() < Driver.TDS70) {
                         // Sybase and SQL 6.5 do not allow zero length binary
-                        out.write((int) 1);
-                        out.write((int) 1);
+                        out.write(1);
+                        out.write(1);
                         out.write((byte) 0);
                     } else {
-                        out.write((int) len);
-                        out.write((int) len);
+                        out.write(len);
+                        out.write(len);
                     }
                 }
 
@@ -2311,11 +2394,11 @@ public class TdsData {
                     if ("bigint".equals(pi.sqlType)) {
                         out.write((byte) 8);
                         out.write((byte) 8);
-                        out.write((long) ((Number) pi.value).longValue());
+                        out.write(((Number) pi.value).longValue());
                     } else {
                         out.write((byte) 4);
                         out.write((byte) 4);
-                        out.write((int) ((Number) pi.value).intValue());
+                        out.write(((Number) pi.value).intValue());
                     }
                 }
 
@@ -2377,7 +2460,7 @@ public class TdsData {
                 int scale;
 
                 if (pi.value == null) {
-                    if (pi.jdbcType == java.sql.Types.BIGINT) {
+                    if (pi.jdbcType == Types.BIGINT) {
                         scale = 0;
                     } else {
                         if (pi.scale >= 0 && pi.scale <= prec) {
@@ -2396,10 +2479,54 @@ public class TdsData {
                     }
                 }
 
-                out.write((byte) out.getMaxDecimalBytes());
+                out.write(out.getMaxDecimalBytes());
                 out.write((byte) prec);
                 out.write((byte) scale);
                 out.write(value);
+                break;
+
+            case XML:
+                len = pi.length;
+                out.write( (byte) pi.tdsType );
+                out.write( (byte) 0 );
+                if( pi.value == null )
+                {
+                   out.write( (long) -1 );
+                }
+                else
+                {
+                   out.write( (long) len );
+                   out.write( len );
+
+                   if( pi.value instanceof byte[] )
+                   {
+                      out.write( (byte[]) pi.value );
+                   }
+                   else if( pi.value instanceof InputStream )
+                   {
+                      byte buffer[] = new byte[1024];
+
+                      while( len > 0 )
+                      {
+                         int res = ( (InputStream) pi.value ).read( buffer );
+
+                         if (res < 0)
+                            throw new java.io.IOException( Messages.get( "error.io.outofdata" ) ); // FIXME:
+
+                         out.write( buffer, 0, res );
+                         len -= res;
+                      }
+
+// FIXME: JDBC defines both to be an error, but we ignore it for now
+//                      if( len < 0 )
+//                         throw new java.io.IOException( Messages.get( "error.io.toomuchdata" ) );
+//
+//                      if( ( (InputStream) pi.value ).read() >= 0 )
+//                         throw new java.io.IOException( Messages.get( "error.io.toofewdata" ) );
+                   }
+
+                   out.write( 0 );
+                }
                 break;
 
             default:
@@ -2460,7 +2587,7 @@ public class TdsData {
                 // the second smallint is the number of minutes past
                 // midnight.
                 // The full range is 1900-01-01 to 2079-06-06.
-                daysSince1900 = ((int) in.readShort()) & 0xFFFF;
+                daysSince1900 = in.readShort() & 0xFFFF;
                 minutes = in.readShort();
                 return new DateTime((short) daysSince1900, (short) minutes);
             default:
@@ -2483,8 +2610,8 @@ public class TdsData {
             return;
         }
         out.write((byte) 8);
-        out.write((int)value.getDate());
-        out.write((int)value.getTime());
+        out.write(value.getDate());
+        out.write(value.getTime());
     }
 
     /**
@@ -2521,7 +2648,7 @@ public class TdsData {
             final byte b1 = (byte) in.read();
             final byte b2 = (byte) in.read();
             final byte b3 = (byte) in.read();
-            final long l = (long) (b0 & 0xff) + ((long) (b1 & 0xff) << 8)
+            final long l = (b0 & 0xff) + ((long) (b1 & 0xff) << 8)
                            + ((long) (b2 & 0xff) << 16) + ((long) (b3 & 0xff) << 24)
                            + ((long) (b4 & 0xff) << 32) + ((long) (b5 & 0xff) << 40)
                            + ((long) (b6 & 0xff) << 48) + ((long) (b7 & 0xff) << 56);
@@ -2661,7 +2788,7 @@ public class TdsData {
         // by using getObject(n).
         //
 //        try {
-//            value = Support.convert(value, java.sql.Types.VARCHAR, in.getCharset());
+//            value = Support.convert(value, Types.VARCHAR, in.getCharset());
 //        } catch (SQLException e) {
 //            // Conversion failed just try toString();
 //            value = value.toString();

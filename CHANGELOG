@@ -2,8 +2,9 @@ Changes from jTDS 1.2.6
 =======================
 
 10/23/2012 - Holger Rehn
- o Reduced locking in SharedSocket.finalize() to a minimum, as proposed by Kods
-   in bug #609.
+ o Implemented non-locking SharedSocket finalizer (bug #609).
+ o Greatly improved virtual socket management performance if a large number of
+   statements is opened for a single connection.
 
 10/18/2012 - Holger Rehn
  o Added test for bug #632, year-check 1753-9999 not valid for type DATE.

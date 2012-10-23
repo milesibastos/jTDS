@@ -32,8 +32,10 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.SocketFactory;
 
@@ -130,13 +132,17 @@ class SharedSocket {
      */
     private DataInputStream in;
     /**
-     * Current maxium input buffer size.
+     * Current maximum input buffer size.
      */
     private int maxBufSize = TdsCore.MIN_PKT_SIZE;
     /**
+     * last ID assigned to a VirtualSocket instance
+     */
+    private final AtomicInteger _LastID = new AtomicInteger();
+    /**
      * Table of stream objects sharing this socket.
      */
-    private final ArrayList socketTable = new ArrayList();
+    private final Map<Integer,VirtualSocket> _VirtualSockets = new ConcurrentHashMap<>();
     /**
      * The Stream ID of the object that is expecting a response from the server.
      */
@@ -402,34 +408,24 @@ class SharedSocket {
         return charsetInfo.getCharset();
     }
 
-    /**
-     * Obtain an instance of a server request stream for this socket.
-     *
-     * @param bufferSize the initial buffer size to be used by the
-     *                   <code>RequestStream</code>
-     * @param maxPrecision the maximum precision for numeric/decimal types
-     * @return the server request stream as a <code>RequestStream</code>
-     */
-    RequestStream getRequestStream(int bufferSize, int maxPrecision) {
-        synchronized (socketTable) {
-            int id;
-            for (id = 0; id < socketTable.size(); id++) {
-                if (socketTable.get(id) == null) {
-                    break;
-                }
-            }
-
-            VirtualSocket vsock = new VirtualSocket(id);
-
-            if (id >= socketTable.size()) {
-                socketTable.add(vsock);
-            } else {
-                socketTable.set(id, vsock);
-            }
-
-            return new RequestStream(this, id, bufferSize, maxPrecision);
-        }
-    }
+   /**
+    * Obtain an instance of a server request stream for this socket.
+    *
+    * @param bufferSize
+    *    the initial buffer size to be used by the <code>RequestStream</code>
+    *
+    * @param maxPrecision
+    *    the maximum precision for numeric/decimal types
+    *
+    * @return
+    *    the server request stream as a <code>RequestStream</code>
+    */
+   RequestStream getRequestStream( int bufferSize, int maxPrecision )
+   {
+      int id = _LastID.incrementAndGet();
+      _VirtualSockets.put( id, new VirtualSocket( id ) );
+      return new RequestStream( this, id, bufferSize, maxPrecision );
+   }
 
     /**
      * Obtain an instance of a server response stream for this socket.
@@ -561,43 +557,53 @@ class SharedSocket {
         return false;
     }
 
-    /**
-     * Close the socket and release all resources.
-     *
-     * @throws IOException if the socket close fails
-     */
-    void close() throws IOException {
-        if (Logger.isActive()) {
-            Logger.println("TdsSocket: Max buffer memory used = " + (peakMemUsage / 1024) + "KB");
-        }
+   /**
+    * Close the socket and release all resources.
+    *
+    * @throws IOException
+    *    if the socket close fails
+    */
+   void close()
+      throws IOException
+   {
+      if( Logger.isActive() )
+      {
+         Logger.println( "TdsSocket: Max buffer memory used = " + (peakMemUsage / 1024) + "KB" );
+      }
 
-        synchronized (socketTable) {
-            // See if any temporary files need deleting
-            for (int i = 0; i < socketTable.size(); i++) {
-                VirtualSocket vsock = (VirtualSocket) socketTable.get(i);
-
-                if (vsock != null && vsock.diskQueue != null) {
-                    try {
-                        vsock.diskQueue.close();
-                        vsock.queueFile.delete();
-                    } catch (IOException ioe) {
-                        // Ignore errors
-                    }
-                }
+      // see if any temporary files need deleting
+      for( VirtualSocket vsock : _VirtualSockets.values() )
+      {
+         if( vsock != null && vsock.diskQueue != null )
+         {
+            try
+            {
+               vsock.diskQueue.close();
+               vsock.queueFile.delete();
             }
-            try {
-                if (sslSocket != null) {
-                    sslSocket.close();
-                    sslSocket = null;
-                }
-            } finally {
-                // Close physical socket
-                if (socket != null) {
-                    socket.close();
-                }
+            catch( IOException ioe )
+            {
+               // ignore errors
             }
-        }
-    }
+         }
+      }
+      try
+      {
+         if( sslSocket != null )
+         {
+            sslSocket.close();
+            sslSocket = null;
+         }
+      }
+      finally
+      {
+         // close physical socket
+         if( socket != null )
+         {
+            socket.close();
+         }
+      }
+   }
 
     /**
      * Force close the socket causing any pending reads/writes to fail.
@@ -625,12 +631,7 @@ class SharedSocket {
     */
    void closeStream( int streamId )
    {
-      VirtualSocket vsock;
-
-      synchronized( socketTable )
-      {
-         vsock = lookup( streamId );
-      }
+      VirtualSocket vsock = _VirtualSockets.remove( streamId );
 
       if( vsock.diskQueue != null )
       {
@@ -644,8 +645,6 @@ class SharedSocket {
             // Ignore errors
          }
       }
-
-      socketTable.set( streamId, null );
    }
 
     /**
@@ -660,7 +659,7 @@ class SharedSocket {
      */
     byte[] sendNetPacket(int streamId, byte buffer[])
             throws IOException {
-        synchronized (socketTable) {
+        synchronized (_VirtualSockets) {
 
             VirtualSocket vsock = lookup(streamId);
 
@@ -681,7 +680,7 @@ class SharedSocket {
                 // or we had our own incomplete request to discard first
                 // Read and store other stream's data or flush our own.
                 //
-                VirtualSocket other = (VirtualSocket)socketTable.get(responseOwner);
+                VirtualSocket other = _VirtualSockets.get(responseOwner);
                 byte[] tmpBuf = null;
                 boolean ourData = (other.owner == streamId);
                 do {
@@ -722,7 +721,7 @@ class SharedSocket {
      * @throws IOException if an I/O error occurs
      */
     byte[] getNetPacket(int streamId, byte buffer[]) throws IOException {
-        synchronized (socketTable) {
+        synchronized (_VirtualSockets) {
             VirtualSocket vsock = lookup(streamId);
 
             //
@@ -975,26 +974,24 @@ class SharedSocket {
         return buffer;
     }
 
-    /**
-     * Retrieves the virtual socket with the given id.
-     *
-     * @param streamId id of the virtual socket to retrieve
-     */
-    private VirtualSocket lookup(int streamId) {
-        if (streamId < 0 || streamId > socketTable.size()) {
-            throw new IllegalArgumentException("Invalid parameter stream ID "
-            		+ streamId);
-        }
+   /**
+    * Retrieves the virtual socket with the given id.
+    *
+    * @param streamId
+    *    id of the virtual socket to retrieve
+    */
+   private VirtualSocket lookup( int streamId )
+   {
+      VirtualSocket vsock = _VirtualSockets.get( streamId );
 
-        VirtualSocket vsock = (VirtualSocket)socketTable.get(streamId);
+      if( vsock == null )
+         throw new IllegalArgumentException( "Invalid parameter stream ID " + streamId );
 
-        if (vsock.owner != streamId) {
-            throw new IllegalStateException("Internal error: bad stream ID "
-            		+ streamId);
-        }
+      if( vsock.owner != streamId )
+         throw new IllegalStateException( "Internal error: bad stream ID " + streamId );
 
-        return vsock;
-    }
+      return vsock;
+   }
 
     /**
      * Convert two bytes (in network byte order) in a byte array into a Java

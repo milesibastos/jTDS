@@ -617,27 +617,36 @@ class SharedSocket {
         }
     }
 
-    /**
-     * Deallocate a stream linked to this socket.
-     *
-     * @param streamId the <code>ResponseStream</code> id
-     */
-    void closeStream(int streamId) {
-        synchronized (socketTable) {
-            VirtualSocket vsock = lookup(streamId);
+   /**
+    * Deallocate a stream linked to this socket.
+    *
+    * @param streamId
+    *    the <code>ResponseStream</code> id
+    */
+   void closeStream( int streamId )
+   {
+      VirtualSocket vsock;
 
-            if (vsock.diskQueue != null) {
-                try {
-                    vsock.diskQueue.close();
-                    vsock.queueFile.delete();
-                } catch (IOException ioe) {
-                    // Ignore errors
-                }
-            }
+      synchronized( socketTable )
+      {
+         vsock = lookup( streamId );
+      }
 
-            socketTable.set(streamId, null);
-        }
-    }
+      if( vsock.diskQueue != null )
+      {
+         try
+         {
+            vsock.diskQueue.close();
+            vsock.queueFile.delete();
+         }
+         catch( IOException ioe )
+         {
+            // Ignore errors
+         }
+      }
+
+      socketTable.set( streamId, null );
+   }
 
     /**
      * Send a network packet. If output for another virtual socket is
@@ -1073,12 +1082,20 @@ class SharedSocket {
         return port;
     }
 
-    /**
-     * Finalize this object by releasing its resources.
-     */
-    protected void finalize() throws Throwable {
-        close();
-        super.finalize();
-    }
+   /**
+    * Ensure all resources are released.
+    */
+   protected void finalize()
+      throws Throwable
+   {
+      try
+      {
+         close();
+      }
+      finally
+      {
+         super.finalize();
+      }
+   }
 
 }

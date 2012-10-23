@@ -462,18 +462,21 @@ public class JtdsConnection implements java.sql.Connection {
         messages.warnings = warn;
     }
 
-    /**
-     * Ensure all resources are released.
-     */
-    protected void finalize() throws Throwable {
-        try {
-            close();
-        } catch (Exception e) {
-            // ignore any error
-        } finally {
-            super.finalize();
-        }
-    }
+   /**
+    * Ensure all resources are released.
+    */
+   protected void finalize()
+      throws Throwable
+   {
+      try
+      {
+         close();
+      }
+      finally
+      {
+         super.finalize();
+      }
+   }
 
     /**
      * Creates a {@link SharedSocket} object representing a connection to a named

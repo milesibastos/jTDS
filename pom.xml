@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <project>
 
   <parent>
@@ -43,7 +44,7 @@
   </developers>
 
   <dependencies>
-    <!-- jCIFS may only be required for named pipe connections -->
+    <!-- jCIFS may be required for named pipe connections -->
     <dependency>
       <groupId>jcifs</groupId>
       <artifactId>jcifs</artifactId>

@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/23/2012 - Holger Rehn
+ o Reduced locking in SharedSocket.finalize() to a minimum, as proposed by Kods
+   in bug #609.
+
 10/18/2012 - Holger Rehn
  o Added test for bug #632, year-check 1753-9999 not valid for type DATE.
  o Added test for bug #624, MS SQL Server 2008 full text search problem.

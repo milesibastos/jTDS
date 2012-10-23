@@ -36,6 +36,122 @@ public class StatementTest extends TestBase {
    }
 
    /**
+    * Test for bug #609, slow finalization in {@link SharedSocket#closeStream()}
+    * can block JVM finalizer thread or cause OOM errors.
+    */
+   public void testBug609()
+      throws Exception
+   {
+      final int        STATEMENTS = 50000;
+      final int        THREADS    = 10;
+      final Connection connection = con;
+
+      List block = new ArrayList( 1000 );
+
+      try
+      {
+         while( true )
+         {
+            block.add( new byte[32*1024*1024] );
+            System.gc();
+         }
+      }
+      catch( OutOfMemoryError oome )
+      {
+         block.remove( block.size() - 1 );
+      }
+
+      System.gc();
+      System.out.println( "free memory: " + Runtime.getRuntime().freeMemory() / 1024 / 1024 + " MB" );
+
+      Statement sta = connection.createStatement();
+      sta.executeUpdate( "create table #bug609( A int primary key, B varchar(max) )" );
+      sta.close();
+
+      Thread[] threads = new Thread[THREADS];
+
+      // start threads that keeps sending data to block VirtualSocket table in SharedSocket as much as possible
+      for( int t = 0; t < threads.length; t ++ )
+      {
+         final int i = t;
+         threads[t] = new Thread()
+         {
+            public void run()
+            {
+               try
+               {
+                  Statement sta = connection.createStatement();
+                  sta.executeUpdate( "insert into #bug609 values( " + i + ", 'nix' )" );
+
+                  String value = "BIGVAL";
+                  while( value.length() < 64 * 1024 )
+                  {
+                     value += value + "BIGVAL";
+                  }
+
+                  String sql = "update #bug609 set B = '" + value + "' where A = " + i;
+
+                  while( true )
+                  {
+                     sta.executeUpdate( sql );
+                  }
+               }
+               catch( SQLException s )
+               {
+                  // test stopped, connection is closed
+               }
+               catch( Throwable t )
+               {
+                  t.printStackTrace();
+               }
+            }
+         };
+
+         threads[t].setPriority( Thread.MIN_PRIORITY );
+         threads[t].start();
+      }
+
+      int  stats = 0;
+      long start = System.currentTimeMillis();
+
+      try
+      {
+         // buffer some statements that can later be closed together, otherwise
+         // the connection's TdsCore cache would prevent the TdsCore from being
+         // closed (and SharedSocket.closeStream to be called) most of the time
+         Statement[] buffered = new Statement[2500];
+
+         for( ; stats < STATEMENTS; stats ++ )
+         {
+            int r = stats % buffered.length;
+
+            buffered[r] = con.createStatement();
+
+            if( r == buffered.length - 1 )
+            {
+               for( int c = 0; c < buffered.length; c ++ )
+               {
+                  buffered[c] = null;
+               }
+
+               System.out.println( stats + 1 );
+            }
+         }
+      }
+      catch( OutOfMemoryError oome )
+      {
+         block = null;
+         System.gc();
+         fail( "OOM after " + (System.currentTimeMillis() - start) + " ms, " + stats + " statements created successfully" );
+      }
+
+      long elapsed = System.currentTimeMillis() - start;
+      System.out.println( "time: " + elapsed + " ms" );
+
+      assertTrue( elapsed < 10000 );
+   }
+
+   /**
     * Test for bug #624, full text search causes connection reset when connected
     * to Microsoft SQL Server 2008.
     */

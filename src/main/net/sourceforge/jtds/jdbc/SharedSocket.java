@@ -431,7 +431,7 @@ class SharedSocket {
          vsock = new VirtualSocket( id );
       }
       // safety net, ID might have already been assigned before integer overflow
-      while( _VirtualSockets.putIfAbsent( id, new VirtualSocket( id ) ) != null );
+      while( _VirtualSockets.putIfAbsent( id, vsock ) != null );
 
       return new RequestStream( this, id, bufferSize, maxPrecision );
    }

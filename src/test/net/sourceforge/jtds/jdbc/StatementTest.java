@@ -28,7 +28,8 @@ import java.util.List;
 /**
  * @version 1.0
  */
-public class StatementTest extends TestBase {
+public class StatementTest extends TestBase
+{
 
    public StatementTest( String name )
    {
@@ -149,6 +150,70 @@ public class StatementTest extends TestBase {
       System.out.println( "time: " + elapsed + " ms" );
 
       assertTrue( elapsed < 10000 );
+   }
+
+   /**
+    * Test for bug #473, Statement.setMaxRows() also effects INSERT, UPDATE,
+    * DELETE and SELECT INTO.
+    */
+   public void testBug473()
+      throws Exception
+   {
+      Statement sta = con.createStatement();
+
+      // create test table and fill with data
+      sta.executeUpdate( "create table #Bug473( X int )" );
+      sta.executeUpdate( "insert into #Bug473 values( 1 )" );
+      sta.executeUpdate( "insert into #Bug473 values( 2 )" );
+
+      // copy all data (maxRows shouldn't have any effect)
+      sta.setMaxRows( 1 );
+      sta.executeUpdate( "select * into #copy from #Bug473" );
+
+      // ensure all table data has been copied
+      sta.setMaxRows( 0 );
+      ResultSet res = sta.executeQuery( "select * from #copy" );
+      assertTrue ( res.next() );
+      assertTrue ( res.next() );
+      assertFalse( res.next() );
+
+      res.close();
+      sta.close();
+   }
+
+   /**
+    * Test for bug #635, select from a view with order by clause doesn't work if
+    * correctly if using Statement.setMaxRows().
+    */
+   public void testBug635()
+      throws Exception
+   {
+      final int[] data = new int[] { 1, 3, 5, 7, 9, 2, 4, 6, 8, 10 };
+
+      dropTable( "Bug635T" );
+      dropView ( "Bug635V" );
+
+      Statement sta = con.createStatement();
+      sta.setMaxRows( 7 );
+
+      sta.executeUpdate( "create table Bug635T( X int )" );
+      sta.executeUpdate( "create view Bug635V as select * from Bug635T" );
+
+      for( int i = 0; i < data.length; i ++ )
+      {
+         sta.executeUpdate( "insert into Bug635T values( " + data[i] + " )" );
+      }
+
+      ResultSet res = sta.executeQuery( "select X from Bug635V order by X" );
+
+      for( int i = 1; i <= 7; i ++ )
+      {
+         assertTrue( res.next() );
+         assertEquals( i, res.getInt( 1 ) );
+      }
+
+      res.close();
+      sta.close();
    }
 
    /**
@@ -536,57 +601,62 @@ public class StatementTest extends TestBase {
     }
 
     /**
-     * Test for bug [1694194], queryTimeout does not work on MSSQL2005 when
-     * property 'useCursors' is set to 'true'. Furthermore, the test also
-     * checks timeout with a query that cannot use a cursor. <p>
+     * <p> Test for bug [1694194], queryTimeout does not work on MSSQL2005 when
+     * property 'useCursors' is set to 'true'. Furthermore, the test also checks
+     * timeout with a query that cannot use a cursor. </p>
      *
-     * This test requires property 'queryTimeout' to be set to true.
+     * <p> This test requires property 'queryTimeout' to be set to true. </p>
      */
-    public void testQueryTimeout() throws Exception {
-        Statement st = con.createStatement();
-        st.setQueryTimeout(1);
+    public void testQueryTimeout() throws Exception
+    {
+       Statement st = con.createStatement();
+       st.setQueryTimeout( 1 );
 
-        st.execute("create procedure #testTimeout as begin waitfor delay '00:00:30'; select 1; end");
+       st.execute( "create procedure #testTimeout as begin waitfor delay '00:00:30'; select 1; end" );
 
-        long start = System.currentTimeMillis();
-        try {
-            // this query doesn't use a cursor
-            st.executeQuery("exec #testTimeout");
-            fail("query did not time out");
-        } catch (SQLException e) {
-            assertEquals("HYT00", e.getSQLState());
-            assertEquals(1000, System.currentTimeMillis() - start, 100);
-        }
+       long start = System.currentTimeMillis();
 
-        st.execute("create table #dummy1(A varchar(200))");
-        st.execute("create table #dummy2(B varchar(200))");
-        st.execute("create table #dummy3(C varchar(200))");
+       try
+       {
+          // this query doesn't use a cursor
+          st.executeQuery( "exec #testTimeout" );
+          fail( "query did not time out" );
+       }
+       catch( SQLException e )
+       {
+          assertEquals( "HYT00", e.getSQLState() );
+          assertEquals( 1000, System.currentTimeMillis() - start, 50 );
+       }
 
-        // create test data
-        con.setAutoCommit(false);
-        for(int i = 0; i < 100; i++) {
-            st.execute("insert into #dummy1 values('" + i + "')");
-            st.execute("insert into #dummy2 values('" + i + "')");
-            st.execute("insert into #dummy3 values('" + i + "')");
-        }
-        con.commit();
-        con.setAutoCommit(true);
+       st.execute( "create table #dummy1(A varchar(200))" );
+       st.execute( "create table #dummy2(B varchar(200))" );
+       st.execute( "create table #dummy3(C varchar(200))" );
 
-        start = System.currentTimeMillis();
-        try {
-            // this query can use a cursor
-            st.executeQuery("select * from #dummy1, #dummy2, #dummy3 order by A desc, B asc, C desc");
-            fail("query did not time out");
-        } catch (SQLException e) {
-            assertEquals("HYT00", e.getSQLState());
-            assertEquals(1000, System.currentTimeMillis() - start, 50);
-        }
+       // create test data
+       con.setAutoCommit( false );
+       for( int i = 0; i < 100; i++ )
+       {
+          st.execute( "insert into #dummy1 values('" + i + "')" );
+          st.execute( "insert into #dummy2 values('" + i + "')" );
+          st.execute( "insert into #dummy3 values('" + i + "')" );
+       }
+       con.commit();
+       con.setAutoCommit( true );
 
-        st.close();
-    }
+       start = System.currentTimeMillis();
+       try
+       {
+          // this query can use a cursor
+          st.executeQuery( "select * from #dummy1, #dummy2, #dummy3 order by A desc, B asc, C desc" );
+          fail( "query did not time out" );
+       }
+       catch( SQLException e )
+       {
+          assertEquals( "HYT00", e.getSQLState() );
+          assertEquals( 1000, System.currentTimeMillis() - start, 100 );
+       }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(StatementTest.class);
+       st.close();
     }
 
 }

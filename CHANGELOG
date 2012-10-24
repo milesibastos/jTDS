@@ -1,6 +1,9 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/24/2012 - Holger Rehn
+ o Added unit tests for bugs #473 and #635.
+
 10/23/2012 - Holger Rehn
  o Implemented non-locking SharedSocket finalizer (bug #609).
  o Greatly improved virtual socket management performance if a large number of

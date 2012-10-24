@@ -325,7 +325,26 @@ public abstract class TestBase extends TestCase {
       }
       catch( SQLException sqle )
       {
-         // assume the procedure didn't exist
+         // assume the table didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
+
+   public void dropView( String name )
+      throws SQLException
+   {
+      Statement stm = con.createStatement();
+
+      try
+      {
+         stm.executeUpdate( "if exists (select * from sysobjects where name like '" + name + "%' and type = 'V') drop view " + name );
+      }
+      catch( SQLException sqle )
+      {
+         // assume the view didn't exist
       }
       finally
       {

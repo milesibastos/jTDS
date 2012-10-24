@@ -1988,24 +1988,31 @@ public class JtdsConnection implements java.sql.Connection {
     }
 
 
-    /**
-     * Releases (either closes or caches) a <code>TdsCore</code>.
-     *
-     * @param tds the <code>TdsCore</code> instance to release
-     * @throws SQLException if an error occurs while closing or cleaning up
-     * @todo Should probably synchronize on another object
-     */
-    synchronized void releaseTds(TdsCore tds) throws SQLException {
-        if (cachedTds != null) {
-            // There's already a cached TdsCore; close this one
-            tds.close();
-        } else {
-            // No cached TdsCore; clean up this one and cache it
-            tds.clearResponseQueue();
-            tds.cleanUp();
-            cachedTds = tds;
-        }
-    }
+   /**
+    * Releases (either closes or caches) a <code>TdsCore</code>.
+    *
+    * @param tds
+    *    the <code>TdsCore</code> instance to release
+    *
+    * @throws SQLException
+    *    if an error occurs while closing or cleaning up
+    */
+   synchronized void releaseTds( TdsCore tds )
+      throws SQLException
+   {
+      if( cachedTds != null )
+      {
+         // There's already a cached TdsCore; close this one
+         tds.close();
+      }
+      else
+      {
+         // No cached TdsCore; clean up this one and cache it
+         tds.clearResponseQueue();
+         tds.cleanUp();
+         cachedTds = tds;
+      }
+   }
 
     /**
      * Retrieves the cached <code>TdsCore</code> or <code>null</code> if

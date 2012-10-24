@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @version 1.0
+ * @author
+ *    Holger Rehn
  */
 public class StatementTest extends TestBase
 {
@@ -34,6 +35,30 @@ public class StatementTest extends TestBase
    public StatementTest( String name )
    {
       super( name );
+   }
+
+   /**
+    * Test for bug #559, unique constraint violation error hidden by an internal
+    * jTDS error.
+    */
+   public void testBug559()
+      throws Exception
+   {
+      Statement st = con.createStatement();
+      st.executeUpdate( "create table #Bug559 (A int, unique (A))" );
+
+      try
+      {
+         st.executeUpdate( "select 1;insert into #Bug559 values( 1 );insert into #Bug559 values( 1 )" );
+         fail();
+      }
+      catch( SQLException e )
+      {
+         // expected, executeUpdate() cannot return a resultset
+         assertTrue( e.getMessage().toLowerCase().contains( "executeupdate" ) );
+      }
+
+      st.close();
    }
 
    /**

@@ -2,6 +2,8 @@ Changes from jTDS 1.2.6
 =======================
 
 10/24/2012 - Holger Rehn
+ o Fixed a bug that caused Statement.close() to throw an exception for errors
+   caused by previously executed SQL statements.
  o Added unit tests for bugs #473 and #635.
 
 10/23/2012 - Holger Rehn

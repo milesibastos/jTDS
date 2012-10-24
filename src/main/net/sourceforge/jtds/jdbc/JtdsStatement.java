@@ -670,22 +670,30 @@ public class JtdsStatement implements java.sql.Statement {
         processResults(false, false);
     }
 
-    /**
-     * Initialize the <code>Statement</code>, by cleaning up all queued and
-     * unprocessed results. Called by all execute methods.
-     *
-     * @throws SQLException if an error occurs
-     */
-    protected void initialize() throws SQLException {
-        updateCount = -1;
-        resultQueue.clear();
-        genKeyResultSet = null;
-        tds.clearResponseQueue();
-        // FIXME Should old exceptions found now be thrown instead of lost?
-        messages.exceptions = null;
-        messages.clearWarnings();
-        closeAllResultSets();
-    }
+   /**
+    * Initialize the <code>Statement</code>, by cleaning up all queued and
+    * unprocessed results. Called by all execute methods and {@link #close()}
+    *
+    * @throws SQLException
+    *    if an error occurs
+    */
+   protected void initialize()
+      throws SQLException
+   {
+      updateCount = -1;
+      resultQueue.clear();
+      genKeyResultSet = null;
+
+      // consume all response tokens
+      // REVIEW: shouldn't we issue a cancel first to stop the server from sending more data?
+      tds.clearResponseQueue();
+
+      // don't throw old exceptions, they belong to a previous execution
+      messages.clearWarnings();
+      messages.exceptions = null;
+
+      closeAllResultSets();
+   }
 
     /**
      * Implements the common functionality for plain statement {@link #execute}
@@ -886,75 +894,79 @@ public class JtdsStatement implements java.sql.Statement {
          closed[0] = 1;
       }
 
-      SQLException closeEx   = null;
       SQLException releaseEx = null;
 
       try
       {
+         /* The re-initialization has been added in revision [1196], replacing
+          * most of the error handling done before.
+          *
+          * The problem is, that in releaseTds() we completely consume the
+          * response queue, including error tokens produced in response to a
+          * previous statement. But we don't want to throw an exception from
+          * close() just because a previous statement failed, as in:
+          *
+          * st.executeUpdate( "create table #Bug559 (A int, unique (A))" );
+          * try
+          * {
+          *    st.executeUpdate( "select 1;insert into #Bug559 values(1);insert into #Bug559 values(1)" );
+          *    fail();
+          * }
+          * catch( SQLException e )
+          * {
+          *    // expected, executeUpdate() cannot return a resultset
+          * }
+          * st.close(); // <- unique constraint violation error before [1196]
+          *
+          * Here, the second insert fails because of a unique constraint
+          * violation. But the driver will already have aborted execution
+          * because the first statement returns a resultset which is not
+          * allowed when calling executeUpdate(), so close() would then throw
+          * the unique constraint violation error.
+          *
+          * Since we are closing the Statement, all we care about are errors
+          * that are directly related to closing, not previous SQL statements.
+          */
+
+         // drop previous errors and warnings and consume all response tokens
+         initialize();
+
          try
          {
-            closeAllResultSets();
+            if( ! connection.isClosed() )
+            {
+               connection.releaseTds( tds );
+            }
+
+            // check for server side errors
+            tds.getMessages().checkErrors();
          }
          catch( SQLException ex )
          {
-            if( ! "HYT00".equals( ex.getSQLState() ) && ! "HY008".equals( ex.getSQLState() ) )
-            {
-               // Only throw exceptions not caused by cancels or timeouts
-               closeEx = ex;
-            }
+            // remember any exception thrown
+            releaseEx = ex;
          }
          finally
          {
-            try
+            // set closed flag, closeAllResultSets() still required statement
+            // to be 'open'
+            synchronized( closed )
             {
-               if( ! connection.isClosed() )
-               {
-                  connection.releaseTds( tds );
-               }
-               // Check for server side errors
-               tds.getMessages().checkErrors();
+               closed[0] = 2;
             }
-            catch( SQLException ex )
-            {
-               // Remember any exception thrown
-               releaseEx = ex;
-            }
-            finally
-            {
-               // set closed flag, closeAllResultSets() still required statement
-               // to be 'open'
-               synchronized( closed )
-               {
-                  closed[0] = 2;
-               }
 
-               // Clean up everything
-               tds = null;
-               connection.removeStatement( this );
-               connection = null;
-            }
+            // clean up everything
+            tds = null;
+            connection.removeStatement( this );
+            connection = null;
          }
-      }
-      catch( NullPointerException npe )
-      {
-         // openResultSets/connection/tds have been nullified concurrently
       }
       finally
       {
          // re-throw statement close exception
          if( releaseEx != null )
          {
-            // queue up any result set close exceptions first
-            if( closeEx != null )
-            {
-               releaseEx.setNextException( closeEx );
-            }
             throw releaseEx;
-         }
-         // Throw any exception caught during result set close
-         if( closeEx != null )
-         {
-            throw closeEx;
          }
       }
    }
@@ -1383,7 +1395,7 @@ public class JtdsStatement implements java.sql.Statement {
     }
 
    /**
-    * @see
+    * @return
     *    whether this {@link JtdsStatement} has been closed
     */
    @Override

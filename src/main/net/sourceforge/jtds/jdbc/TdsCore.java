@@ -4023,7 +4023,7 @@ public class TdsCore {
             tables = null;
             computedColumns = null;
             computedRowData = null;
-            // Clean up warnings; any exceptions will be cleared when thrown
+            // clean up warnings and errors
             messages.clearWarnings();
         }
     }

@@ -46,6 +46,7 @@ public class StatementTest extends TestBase
       final int        STATEMENTS = 50000;
       final int        THREADS    = 10;
       final Connection connection = con;
+      final boolean[]  running    = new boolean[] { true };
 
       List block = new ArrayList( 1000 );
 
@@ -92,10 +93,12 @@ public class StatementTest extends TestBase
 
                   String sql = "update #bug609 set B = '" + value + "' where A = " + i;
 
-                  while( true )
+                  while( running[0] )
                   {
                      sta.executeUpdate( sql );
                   }
+
+                  sta.close();
                }
                catch( SQLException s )
                {
@@ -150,6 +153,14 @@ public class StatementTest extends TestBase
       System.out.println( "time: " + elapsed + " ms" );
 
       assertTrue( elapsed < 10000 );
+
+      // stop threads
+      running[0] = false;
+
+      for( int t = 0; t < threads.length; t ++ )
+      {
+         threads[t].join();
+      }
    }
 
    /**

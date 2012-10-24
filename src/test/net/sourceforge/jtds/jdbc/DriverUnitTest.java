@@ -388,9 +388,9 @@ public class DriverUnitTest extends UnitTestBase {
         }
     }
 
-    public static class ParseURLTest extends TestCase {
-        private String url;
-        private Properties expectedProp;
+    private static class ParseURLTest extends TestCase {
+        private final String url;
+        private final Properties expectedProp;
 
         public ParseURLTest(String url, Properties expectedProp) {
             super("testParseUrl \"" + url + "\"");
@@ -438,7 +438,7 @@ public class DriverUnitTest extends UnitTestBase {
                                 url.append(host);
                             }
 
-                            
+
                             if (port != null) {
                                 url.append(':').append(port);
                             }

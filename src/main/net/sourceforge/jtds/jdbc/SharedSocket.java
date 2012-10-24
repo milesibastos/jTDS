@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+
 package net.sourceforge.jtds.jdbc;
 
 import java.io.DataInputStream;
@@ -33,8 +33,8 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.SocketFactory;
@@ -43,7 +43,7 @@ import net.sourceforge.jtds.ssl.*;
 import net.sourceforge.jtds.util.Logger;
 
 /**
- * This class mananges the physical connection to the SQL Server and
+ * This class manages the physical connection to the SQL Server and
  * serialises its use amongst a number of virtual sockets.
  * This allows one physical connection to service a number of concurrent
  * statements.
@@ -69,8 +69,8 @@ import net.sourceforge.jtds.util.Logger;
  * within a specified limit (default 8 packets) will continue to be held in memory
  * (even if the memory threshold has been passed) in the interests of efficiency.
  *
- * @author Mike Hutchinson.
- * @version $Id: SharedSocket.java,v 1.39.2.4 2009-12-30 14:37:00 ickzon Exp $
+ * @author
+ *    Mike Hutchinson, Holger Rehn
  */
 class SharedSocket {
     /**
@@ -142,7 +142,7 @@ class SharedSocket {
     /**
      * Table of stream objects sharing this socket.
      */
-    private final Map<Integer,VirtualSocket> _VirtualSockets = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Integer,VirtualSocket> _VirtualSockets = new ConcurrentHashMap<>();
     /**
      * The Stream ID of the object that is expecting a response from the server.
      */
@@ -422,8 +422,17 @@ class SharedSocket {
     */
    RequestStream getRequestStream( int bufferSize, int maxPrecision )
    {
-      int id = _LastID.incrementAndGet();
-      _VirtualSockets.put( id, new VirtualSocket( id ) );
+      int           id;
+      VirtualSocket vsock;
+
+      do
+      {
+         id    = _LastID.incrementAndGet();
+         vsock = new VirtualSocket( id );
+      }
+      // safety net, ID might have already been assigned before integer overflow
+      while( _VirtualSockets.putIfAbsent( id, new VirtualSocket( id ) ) != null );
+
       return new RequestStream( this, id, bufferSize, maxPrecision );
    }
 
@@ -587,6 +596,9 @@ class SharedSocket {
             }
          }
       }
+
+      _VirtualSockets.clear();
+
       try
       {
          if( sslSocket != null )

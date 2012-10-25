@@ -1,6 +1,13 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/25/2012 - Holger Rehn
+ o Improved the database meta data by adding (JDBC4) column IS_AUTOINCREMENT.
+ o Removed unnecessary console logging from various unit tests.
+ o Improved performance by implementing non-blocking access to internal state.
+ o Improved overall driver performance by avoiding lookup of virtual data
+   streams, required for any request/response.
+
 10/24/2012 - Holger Rehn
  o Fixed a bug that caused Statement.close() to throw an exception for errors
    caused by previously executed SQL statements.
@@ -10,6 +17,7 @@ Changes from jTDS 1.2.6
  o Implemented non-locking SharedSocket finalizer (bug #609).
  o Greatly improved virtual socket management performance if a large number of
    statements is opened for a single connection.
+ o Improved logging, data stream IDs are not reused for a reasonable time span.
 
 10/18/2012 - Holger Rehn
  o Added test for bug #632, year-check 1753-9999 not valid for type DATE.

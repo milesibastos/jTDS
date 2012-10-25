@@ -364,6 +364,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
      *   <LI> <B>IS_NULLABLE</B> String =>"NO" means column definitely does not
      *   allow NULL values; "YES" means the column might allow NULL values. An
      *   empty string means nobody knows.
+     *   <LI> <B>IS_AUTOINCREMENT</B> String =>"NO" means column is no identity
+     *   column; "YES" means it is.
      * </OL>
      *
      *
@@ -392,7 +394,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                              "SQL_DATETIME_SUB",    "CHAR_OCTET_LENGTH",
                              "ORDINAL_POSITION",    "IS_NULLABLE",
                              "SCOPE_CATALOG",       "SCOPE_SCHEMA",
-                             "SCOPE_TABLE",         "SOURCE_DATA_TYPE"};
+                             "SCOPE_TABLE",         "SOURCE_DATA_TYPE",
+                             "IS_AUTOINCREMENT" };
 
        int colTypes[]     = {Types.VARCHAR,         Types.VARCHAR,
                              Types.VARCHAR,         Types.VARCHAR,
@@ -404,7 +407,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                              Types.INTEGER,         Types.INTEGER,
                              Types.INTEGER,         Types.VARCHAR,
                              Types.VARCHAR,         Types.VARCHAR,
-                             Types.VARCHAR,         Types.SMALLINT};
+                             Types.VARCHAR,         Types.SMALLINT,
+                             Types.VARCHAR };
         String query = "sp_columns ?, ?, ?, ?, ?";
 
         CallableStatement s = connection.prepareCall(syscall(catalog, query));
@@ -456,6 +460,8 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                 } else {
                     rsTmp.updateInt(7, rs.getInt(7));
                 }
+                // add "IS_AUTOINCREMENT" value
+                rsTmp.updateString( 23, rs.getString( 6 ).toLowerCase().contains( "identity" ) ? "YES" : "NO" );
             } else {
                 // MS SQL Server - Mainly OK but we need to fix some data types.
                 for (int i = 1; i <= colCnt; i++) {
@@ -472,10 +478,13 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                         rsTmp.updateObject(i, rs.getObject(i));
                     }
                 }
+                // add "IS_AUTOINCREMENT" value
+                rsTmp.updateString( 23, rs.getString( 6 ).toLowerCase().contains( "identity" ) ? "YES" : "NO" );
             }
             rsTmp.insertRow();
         }
         rs.close();
+
         rsTmp.moveToCurrentRow();
         rsTmp.setConcurrency(ResultSet.CONCUR_READ_ONLY);
 

@@ -873,7 +873,7 @@ public class TdsCore {
             mutex = connection.getMutex();
             synchronized (cancelMonitor) {
                 if (!cancelPending && !endOfResponse) {
-                    cancelPending = socket.cancel(out.getStreamId());
+                    cancelPending = socket.cancel(out.getVirtualSocket());
                 }
                 // If a cancel request was sent, reset the end of response flag
                 if (cancelPending) {
@@ -4023,7 +4023,7 @@ public class TdsCore {
             tables = null;
             computedColumns = null;
             computedRowData = null;
-            // clean up warnings and errors
+            // clean up warnings
             messages.clearWarnings();
         }
     }

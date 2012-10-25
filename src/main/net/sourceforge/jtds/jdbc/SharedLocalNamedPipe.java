@@ -125,20 +125,26 @@ public class SharedLocalNamedPipe extends SharedSocket {
         return pipe != null;
     }
 
-    /**
-     * Send an network packet. If output for another virtual socket is in
-     * progress this packet will be sent later.
-     *
-     * @param streamId the originating <code>RequestStream</code> object
-     * @param buffer   the data to send
-     * @exception java.io.IOException if an I/O error occurs
-     */
-    byte[] sendNetPacket(int streamId, byte buffer[])
-            throws IOException {
-        byte[] ret = super.sendNetPacket(streamId, buffer);
-        getOut().flush();
-        return ret;
-    }
+   /**
+    * Send an network packet. If output for another virtual socket is in
+    * progress this packet will be sent later.
+    *
+    * @param vsock
+    *    the {@link VirtualSocket} used by the originating <code>RequestStream</code>
+    *
+    * @param buffer
+    *    the data to send
+    *
+    * @exception java.io.IOException
+    *    if an I/O error occurs
+    */
+   byte[] sendNetPacket( VirtualSocket vsock, byte buffer[] )
+      throws IOException
+   {
+      byte[] ret = super.sendNetPacket(vsock, buffer);
+      getOut().flush();
+      return ret;
+   }
 
     /**
      * Close the named pipe and virtual sockets and release any resources.

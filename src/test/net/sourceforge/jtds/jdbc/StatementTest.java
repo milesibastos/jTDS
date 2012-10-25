@@ -320,11 +320,32 @@ public class StatementTest extends TestBase
 
       assertTrue( sta.execute( "select * from #Bug678 order by X, A asc compute min( A ), max( A ), min( C ), max( C ), avg( B ), sum( B ), count( A ), count_big( C ) by X" ) );
 
-      do
+      // expected result groups, each followed by a computed result
+      int[] expected = new int[] { 72, 32, 20, 13, 8, 4, 1 };
+
+      for( int i = 0; i < expected.length; i ++ )
       {
-         dump( sta.getResultSet() );
+         ResultSet res = sta.getResultSet();
+
+         // consume rows
+         for( int r = 0; r < expected[i]; r ++ )
+         {
+            assertTrue( res.next() );
+         }
+         assertFalse( res.next() );
+         res.close();
+
+         // consume computed result
+         assertTrue( sta.getMoreResults() );
+         res = sta.getResultSet();
+         assertTrue( res.next() );
+         assertEquals( expected[i], res.getInt( 7 ) );
+         assertFalse( res.next() );
+         res.close();
+
+         // move to next result if any
+         assertEquals( i == expected.length -1 ? false : true, sta.getMoreResults() );
       }
-      while( sta.getMoreResults() );
 
       // no update count expected
       assertEquals( -1, sta.getUpdateCount() );

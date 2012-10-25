@@ -1383,47 +1383,25 @@ public class CSUnitTest extends DatabaseTestCase
             if (!rs.next()) {
                 passed = false;
             } else {
-                System.err.print("Testing varchars > 255 chars: ");
-                String test = rs.getString(1);
-                if (test.length() == 270) {
-                    System.err.println("passed");
-                } else {
-                    System.err.println("failed");
-                    passed = false;
-                }
+               String test = rs.getString(1);
+               if (test.length() != 270) {
+                   fail("Testing varchars > 255 chars: failed");
+               }
 
-                System.err.print("Testing nchar: ");
-                test = rs.getString(2);
-                if (test.length() == 2000 && "äöüÄÖÜ".equals(test.trim())) {
-                    System.err.println("passed");
-                } else {
-                    System.err.print("failed, got \'");
-                    System.err.print(test.trim());
-                    System.err.println("\' instead of \'äöüÄÖÜ\'");
-                    passed = false;
-                }
+               test = rs.getString(2);
+               if (test.length() != 2000 || ! "äöüÄÖÜ".equals(test.trim())) {
+                   fail("Testing nchar: failed, got \'"+test.trim()+"\' instead of \'äöüÄÖÜ\'");
+               }
 
-                System.err.print("Testing nvarchar: ");
-                test = rs.getString(3);
-                if (test.length() == 6 && "äöüÄÖÜ".equals(test)) {
-                    System.err.println("passed");
-                } else {
-                    System.err.print("failed, got \'");
-                    System.err.print(test);
-                    System.err.println("\' instead of \'äöüÄÖÜ\'");
-                    passed = false;
-                }
+               test = rs.getString(3);
+               if (test.length() != 6 || ! "äöüÄÖÜ".equals(test)) {
+                   fail("Testing nvarchar: failed, got \'"+test+"\' instead of \'äöüÄÖÜ\'");
+               }
 
-                System.err.print("Testing ntext: ");
-                test = rs.getString(4);
-                if (test.length() == 6 && "äöüÄÖÜ".equals(test)) {
-                    System.err.println("passed");
-                } else {
-                    System.err.print("failed, got \'");
-                    System.err.print(test);
-                    System.err.println("\' instead of \'äöüÄÖÜ\'");
-                    passed = false;
-                }
+               test = rs.getString(4);
+               if (test.length() != 6 || ! "äöüÄÖÜ".equals(test)) {
+                   fail("Testing ntext: failed, got \'"+test+"\' instead of \'äöüÄÖÜ\'");
+               }
             }
         } catch (java.sql.SQLException e) {
             passed = false;

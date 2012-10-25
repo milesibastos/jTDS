@@ -35,6 +35,10 @@ import junit.framework.AssertionFailedError;
  * @version 1.0
  */
 public class CallableStatementTest extends TestBase {
+
+    /** set to false to enable verbose console output */
+    private final boolean SILENT = true;
+
     public CallableStatementTest(String name) {
         super(name);
     }
@@ -127,7 +131,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump(rs,SILENT);
 
         rs.close();
         cstmt.close();
@@ -137,7 +141,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("{call sp_who}");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -147,7 +151,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("{CALL sp_who}");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -157,7 +161,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("{cAlL sp_who}");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -177,7 +181,7 @@ public class CallableStatementTest extends TestBase {
             CallableStatement cstmt = con.prepareCall("{call \"#test space\"}");
 
             ResultSet rs = cstmt.executeQuery();
-            dump(rs);
+            dump( rs,SILENT );
 
             rs.close();
             cstmt.close();
@@ -192,7 +196,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("exec sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -202,7 +206,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("EXEC sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -212,7 +216,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("execute sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -222,7 +226,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("EXECUTE sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -232,7 +236,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("eXeC sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -242,7 +246,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("ExEcUtE sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -252,7 +256,7 @@ public class CallableStatementTest extends TestBase {
         CallableStatement cstmt = con.prepareCall("execute \"master\"..sp_who");
 
         ResultSet rs = cstmt.executeQuery();
-        dump(rs);
+        dump( rs,SILENT );
 
         rs.close();
         cstmt.close();
@@ -269,7 +273,7 @@ public class CallableStatementTest extends TestBase {
             CallableStatement cstmt = con.prepareCall("execute #test");
 
             ResultSet rs = cstmt.executeQuery();
-            dump(rs);
+            dump( rs,SILENT );
 
             rs.close();
             cstmt.close();
@@ -293,7 +297,7 @@ public class CallableStatementTest extends TestBase {
         if (rs == null) {
             fail("Null ResultSet returned");
         } else {
-            dump(rs);
+            dump( rs,SILENT );
             rs.close();
         }
 

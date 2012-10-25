@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.io.UnsupportedEncodingException;
+
+import net.sourceforge.jtds.jdbc.SharedSocket.VirtualSocket;
 import net.sourceforge.jtds.util.*;
 
 /**
@@ -45,8 +47,10 @@ public class ResponseStream {
     private int bufferPtr;
     /** The length of current input packet. */
     private int bufferLen;
-    /** The unique stream id. */
-    private final int streamId;
+   /**
+    * The {@link VirtualSocket} used by this stream.
+    */
+   private final VirtualSocket _VirtualSocket;
     /** True if stream is closed. */
     private boolean isClosed;
     /** A shared byte buffer. */
@@ -57,26 +61,33 @@ public class ResponseStream {
     /**
      * Constructs a <code>RequestStream</code> object.
      *
-     * @param socket     the shared socket object to write to
-     * @param streamId   the unique id for this stream (from ResponseStream)
-     * @param bufferSize the initial buffer size
+     * @param socket
+     *    the shared socket object to write to
+     *
+     * @param vsock
+     *    the {@link VirtualSocket} used by this stream (from ResponseStream)
+     *
+     * @param bufferSize
+     *    the initial buffer size
      */
-    ResponseStream(SharedSocket socket, int streamId, int bufferSize){
-        this.streamId = streamId;
-        this.socket = socket;
-        this.buffer = new byte[bufferSize];
-        this.bufferLen = bufferSize;
-        this.bufferPtr = bufferSize;
+    ResponseStream( SharedSocket socket, VirtualSocket vsock, int bufferSize )
+    {
+       _VirtualSocket = vsock;
+       this.socket = socket;
+       buffer = new byte[bufferSize];
+       bufferLen = bufferSize;
+       bufferPtr = bufferSize;
     }
 
-    /**
-     * Retrieves the unique stream id.
-     *
-     * @return the unique stream id as an <code>int</code>
-     */
-    int getStreamId() {
-        return this.streamId;
-    }
+   /**
+    * Retrieves the {@link VirtualSocket} used by this stream id.
+    *
+    * @return the unique stream id as an <code>int</code>
+    */
+   VirtualSocket getVirtualSocket()
+   {
+      return _VirtualSocket;
+   }
 
     /**
      * Retrieves the next input byte without reading forward.
@@ -103,7 +114,7 @@ public class ResponseStream {
             getPacket();
         }
 
-        return (int) buffer[bufferPtr++] & 0xFF;
+        return buffer[bufferPtr++] & 0xFF;
     }
 
     /**
@@ -330,7 +341,7 @@ public class ResponseStream {
      * @throws IOException if an I/O error occurs
      */
     long readLong() throws IOException {
-        long b1 = ((long) read());
+        long b1 = read();
         long b2 = ((long) read()) << 8;
         long b3 = ((long) read()) << 16;
         long b4 = ((long) read()) << 24;
@@ -349,8 +360,8 @@ public class ResponseStream {
      * @throws IOException if an I/O error occurs
      */
     BigDecimal readUnsignedLong() throws IOException {
-        int  b1 = ((int) read() & 0xFF);
-        long b2 = ((long) read());
+        int  b1 = (read() & 0xFF);
+        long b2 = read();
         long b3 = ((long) read()) << 8;
         long b4 = ((long) read()) << 16;
         long b5 = ((long) read()) << 24;
@@ -404,7 +415,7 @@ public class ResponseStream {
             bufferPtr = bufferLen;
             // Now consume all data until we get an exception.
             while (true) {
-                buffer = socket.getNetPacket(streamId, buffer);
+                buffer = socket.getNetPacket(_VirtualSocket, buffer);
             }
         } catch (IOException ex) {
             // Ignore it. Probably no more packets.
@@ -417,7 +428,7 @@ public class ResponseStream {
      */
     void close() {
         isClosed = true;
-        socket.closeStream(streamId);
+        socket.closeStream(_VirtualSocket);
     }
 
     /**
@@ -463,12 +474,12 @@ public class ResponseStream {
                 throw new IOException("ResponseStream is closed");
             }
 
-            buffer = socket.getNetPacket(streamId, buffer);
-            bufferLen = (((int) buffer[2] & 0xFF) << 8) | ((int) buffer[3] & 0xFF);
+            buffer = socket.getNetPacket(_VirtualSocket, buffer);
+            bufferLen = ((buffer[2] & 0xFF) << 8) | (buffer[3] & 0xFF);
             bufferPtr = TdsCore.PKT_HDR_LEN;
 
             if (Logger.isActive()) {
-                Logger.logPacket(streamId, true, buffer);
+                Logger.logPacket(_VirtualSocket.id, true, buffer);
             }
         }
     }

@@ -92,37 +92,57 @@ public abstract class TestBase extends TestCase {
     }
 
     public void dump(ResultSet rs) throws SQLException {
+        dump( rs, false );
+    }
+
+    public void dump(ResultSet rs, boolean silent) throws SQLException {
         ResultSetMetaData rsm = rs.getMetaData();
         int cols = rsm.getColumnCount();
 
         for (int i = 1; i <= cols; i++) {
             if (i > 1) {
-                System.out.print(", ");
+                if( ! silent ) {
+                   System.out.print(", ");
+                }
             }
 
-            System.out.print(rsm.getColumnName(i));
+            String col = rsm.getColumnName(i);
+            if( ! silent ) {
+                System.out.print(col);
+            }
         }
 
-        System.out.println();
+        if( ! silent ) {
+            System.out.println();
+        }
 
         while (rs.next()) {
-            dumpRow(rs);
+            dumpRow(rs,silent);
         }
     }
 
     public void dumpRow(ResultSet rs) throws SQLException {
+        dumpRow( rs, false );
+    }
+
+    public void dumpRow(ResultSet rs, boolean silent) throws SQLException {
         ResultSetMetaData rsm = rs.getMetaData();
         int cols = rsm.getColumnCount();
 
         for (int i = 1; i <= cols; i++) {
-            if (i > 1) {
+            if (i > 1 && ! silent) {
                 System.out.print(", ");
             }
 
-            System.out.print(rs.getObject(i));
+            Object o = rs.getObject(i);
+            if( ! silent ) {
+                System.out.print(o);
+            }
         }
 
-        System.out.println();
+        if( ! silent ) {
+            System.out.println();
+        }
     }
 
     private static Properties loadProperties(String fileName) {

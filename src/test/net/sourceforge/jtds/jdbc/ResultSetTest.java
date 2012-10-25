@@ -31,6 +31,57 @@ public class ResultSetTest extends DatabaseTestCase {
         super(name);
     }
 
+   /**
+    * Test for bug #690, IS_AUTOINCREMENT invalid for identity columns.
+    */
+   public void testAutoIncrement()
+      throws Exception
+   {
+      // cannot retrieve meta data for temporary tables
+      dropTable( "Bug690" );
+
+      Statement sta = con.createStatement();
+
+      sta.executeUpdate( "create table Bug690( A int identity(0,1) not null, B int)" );
+
+      DatabaseMetaData dbm = con.getMetaData();
+
+      // get and check database meta data
+      ResultSet res = dbm.getColumns( null, null, "Bug690", null );
+
+      assertTrue( res.next() );
+      assertEquals( res.getString( "COLUMN_NAME"      ), "A"   );
+      assertEquals( res.getString( "IS_AUTOINCREMENT" ), "YES" );
+      assertTrue( res.next() );
+      assertEquals( res.getString( "COLUMN_NAME"      ), "B"   );
+      assertEquals( res.getString( "IS_AUTOINCREMENT" ), "NO"  );
+      assertFalse( res.next() );
+      res.close();
+
+      // insert test data
+      for( int i = 0; i < 10; i ++ )
+      {
+         assertEquals( 1, sta.executeUpdate( "insert into Bug690(B) values (" + i + ")" ) );
+      }
+
+      res = sta.executeQuery( "select * from Bug690 order by B asc " );
+      ResultSetMetaData rsmd = res.getMetaData();
+
+      // ensure resultset meta data reports column as autoIncrement
+      assertTrue( rsmd.isAutoIncrement( 1 ) );
+
+      // check data
+      for( int i = 0; i < 10; i ++ )
+      {
+         assertTrue( res.next() );
+         assertEquals( i, res.getInt( 1 ) );
+         assertEquals( i, res.getInt( 2 ) );
+      }
+      assertFalse( res.next() );
+
+      res.close();
+   }
+
     /**
      * Test BIT data type.
      */
@@ -1700,8 +1751,6 @@ public class ResultSetTest extends DatabaseTestCase {
             try {
                 System.out.println(rs2.next());
             } catch (SQLException ex) {
-                ex.printStackTrace();
-                System.out.println(ex.getNextException());
                 if ("HY010".equals(ex.getSQLState())) {
                     stmt2.getMoreResults();
                 }

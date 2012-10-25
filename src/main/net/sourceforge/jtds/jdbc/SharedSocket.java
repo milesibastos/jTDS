@@ -76,11 +76,11 @@ class SharedSocket {
     /**
      * This inner class contains the state information for the virtual socket.
      */
-    private static class VirtualSocket {
+    static class VirtualSocket {
         /**
          * The stream ID of the stream objects owning this state.
          */
-        final int owner;
+        final int id;
         /**
          * Memory resident packet queue.
          */
@@ -102,16 +102,12 @@ class SharedSocket {
          */
         int inputPkts;
         /**
-         * Constuct object to hold state information for each caller.
+         * Construct object to hold state information for each caller.
          * @param streamId the Response/Request stream id.
          */
-        VirtualSocket(int streamId) {
-            owner = streamId;
+        private VirtualSocket(int streamId) {
+            id = streamId;
             pktQueue = new LinkedList();
-            queueFile = null;
-            diskQueue = null;
-            pktsOnDisk = 0;
-            inputPkts = 0;
         }
     }
 
@@ -144,9 +140,9 @@ class SharedSocket {
      */
     private final ConcurrentMap<Integer,VirtualSocket> _VirtualSockets = new ConcurrentHashMap<>();
     /**
-     * The Stream ID of the object that is expecting a response from the server.
+     * The virtual socket of the object that is expecting a response from the server.
      */
-    private int responseOwner = -1;
+    private VirtualSocket responseOwner;
     /**
      * Buffer for packet header.
      */
@@ -433,7 +429,7 @@ class SharedSocket {
       // safety net, ID might have already been assigned before integer overflow
       while( _VirtualSockets.putIfAbsent( id, vsock ) != null );
 
-      return new RequestStream( this, id, bufferSize, maxPrecision );
+      return new RequestStream( this, vsock, bufferSize, maxPrecision );
    }
 
     /**
@@ -448,7 +444,7 @@ class SharedSocket {
      * @return the server response stream as a <code>ResponseStream</code>
      */
     ResponseStream getResponseStream(RequestStream requestStream, int bufferSize) {
-        return new ResponseStream(this, requestStream.getStreamId(), bufferSize);
+        return new ResponseStream(this, requestStream.getVirtualSocket(), bufferSize);
     }
 
     /**
@@ -519,11 +515,13 @@ class SharedSocket {
     /**
      * Send a TDS cancel packet to the server.
      *
-     * @param streamId the <code>RequestStream</code> id
-     * @return <code>boolean</code> true if a cancel is actually
-     * issued by this method call.
+     * @param vsock
+     *    the {@link VirtualSocket} used by the request to be canceled
+     *
+     * @return
+     *    {@code true} if a cancel is actually issued by this method call
      */
-    boolean cancel(int streamId) {
+    boolean cancel( VirtualSocket vsock ) {
         //
         // Need to synchronize packet send to avoid race conditions on
         // responsOwner and cancelPending
@@ -536,7 +534,7 @@ class SharedSocket {
             // as this thread will be blocked in the write until the
             // reading thread has returned from the read.
             //
-            if (responseOwner == streamId && !cancelPending) {
+            if (responseOwner == vsock && !cancelPending) {
                 try {
                     //
                     // Send a cancel packet.
@@ -555,7 +553,7 @@ class SharedSocket {
                     getOut().write(cancel, 0, TDS_HDR_LEN);
                     getOut().flush();
                     if (Logger.isActive()) {
-                        Logger.logPacket(streamId, false, cancel);
+                        Logger.logPacket(vsock.id, false, cancel);
                     }
                     return true;
                 } catch (IOException e) {
@@ -638,12 +636,13 @@ class SharedSocket {
    /**
     * Deallocate a stream linked to this socket.
     *
-    * @param streamId
-    *    the <code>ResponseStream</code> id
+    * @param vsock
+    *    the {@link VirtualSocket} to close
     */
-   void closeStream( int streamId )
+   void closeStream( VirtualSocket vsock )
    {
-      VirtualSocket vsock = _VirtualSockets.remove( streamId );
+      // unregister virtual socket
+      _VirtualSockets.remove( vsock.id );
 
       if( vsock.diskQueue != null )
       {
@@ -654,7 +653,7 @@ class SharedSocket {
          }
          catch( IOException ioe )
          {
-            // Ignore errors
+            // ignore errors
          }
       }
    }
@@ -663,17 +662,22 @@ class SharedSocket {
      * Send a network packet. If output for another virtual socket is
      * in progress this packet will be sent later.
      *
-     * @param streamId the originating <code>RequestStream</code> object
-     * @param buffer   the data to send
-     * @return the same buffer received if emptied or another buffer w/ the
-     *         same size if the incoming buffer is cached (to avoid copying)
-     * @throws IOException if an I/O error occurs
+     * @param vsock
+     *    {@link VirtualSocket} of the originating {@link RequestStream}
+     *
+     * @param buffer
+     *    the data to send
+     *
+     * @return
+     *    the same buffer received if emptied or another buffer w/ the same size
+     *    if the incoming buffer is cached (to avoid copying)
+     *   
+     * @throws
+     *    IOException if an I/O error occurs
      */
-    byte[] sendNetPacket(int streamId, byte buffer[])
+    byte[] sendNetPacket(VirtualSocket vsock, byte buffer[])
             throws IOException {
         synchronized (_VirtualSockets) {
-
-            VirtualSocket vsock = lookup(streamId);
 
             while (vsock.inputPkts > 0) {
                 //
@@ -686,15 +690,15 @@ class SharedSocket {
                 dequeueInput(vsock);
             }
 
-            if (responseOwner != -1) {
+            if (responseOwner != null) {
                 //
                 // Complex case there is another stream's data in the network pipe
                 // or we had our own incomplete request to discard first
                 // Read and store other stream's data or flush our own.
                 //
-                VirtualSocket other = _VirtualSockets.get(responseOwner);
                 byte[] tmpBuf = null;
-                boolean ourData = (other.owner == streamId);
+                boolean ourData = (responseOwner == vsock);
+                final VirtualSocket tmpSock = responseOwner;
                 do {
                     // Reuse the buffer if it's our data; we don't need it
                     tmpBuf = readPacket(ourData ? tmpBuf : null);
@@ -702,9 +706,8 @@ class SharedSocket {
                     if (!ourData) {
                         // We need to save this input as it belongs to
                         // Another thread.
-                        enqueueInput(other, tmpBuf);
+                        enqueueInput(tmpSock, tmpBuf);
                     }   // Any of our input is discarded.
-
                 } while (tmpBuf[1] == 0); // Read all data to complete TDS packet
             }
             //
@@ -716,7 +719,7 @@ class SharedSocket {
             if (buffer[1] != 0) {
                 getOut().flush();
                 // We are the response owner now
-                responseOwner = streamId;
+                responseOwner = vsock;
             }
 
             return buffer;
@@ -727,41 +730,35 @@ class SharedSocket {
      * Get a network packet. This may be read from the network directly or from
      * previously cached buffers.
      *
-     * @param streamId the originating ResponseStream object
-     * @param buffer   the data buffer to receive the object (may be replaced)
-     * @return the data in a <code>byte[]</code> buffer
-     * @throws IOException if an I/O error occurs
+     * @param vsock
+     *    {@link VirtualSocket} the originating ResponseStream object
+     *
+     * @param buffer
+     *    the data buffer to receive the object (may be replaced)
+     *
+     * @return
+     *    the data in a <code>byte[]</code> buffer
+     *
+     * @throws IOException
+     *    if an I/O error occurs
      */
-    byte[] getNetPacket(int streamId, byte buffer[]) throws IOException {
+    byte[] getNetPacket(VirtualSocket vsock, byte buffer[]) throws IOException {
         synchronized (_VirtualSockets) {
-            VirtualSocket vsock = lookup(streamId);
 
-            //
             // Return any cached input
-            //
             if (vsock.inputPkts > 0) {
                 return dequeueInput(vsock);
             }
 
-            //
             // Nothing cached see if we are expecting network data
-            //
-            if (responseOwner == -1) {
-                throw new IOException("Stream " + streamId +
-                                " attempting to read when no request has been sent");
-            }
-            //
-            // OK There should be data, check that it is for this stream
-            //
-            if (responseOwner != streamId) {
-                // Error we are trying to read another thread's request.
-                throw new IOException("Stream " + streamId +
-                                " is trying to read data that belongs to stream " +
-                                    responseOwner);
-            }
-            //
+            if (responseOwner == null)
+                throw new IOException( "Stream " + vsock.id + " attempting to read when no request has been sent" );
+
+            // OK There should be data, check that it is for this stream and we are not trying to read another thread's request.
+            if (responseOwner != vsock)
+                throw new IOException("Stream " + vsock.id + " is trying to read data that belongs to stream " + responseOwner.id );
+
             // Simple case we are reading our input directly from the server
-            //
             return readPacket(buffer);
         }
     }
@@ -979,31 +976,12 @@ class SharedSocket {
 
             if (buffer[1] != 0) {
                 // End of response; connection now free
-                responseOwner = -1;
+                responseOwner = null;
             }
         }
 
         return buffer;
     }
-
-   /**
-    * Retrieves the virtual socket with the given id.
-    *
-    * @param streamId
-    *    id of the virtual socket to retrieve
-    */
-   private VirtualSocket lookup( int streamId )
-   {
-      VirtualSocket vsock = _VirtualSockets.get( streamId );
-
-      if( vsock == null )
-         throw new IllegalArgumentException( "Invalid parameter stream ID " + streamId );
-
-      if( vsock.owner != streamId )
-         throw new IllegalStateException( "Internal error: bad stream ID " + streamId );
-
-      return vsock;
-   }
 
     /**
      * Convert two bytes (in network byte order) in a byte array into a Java

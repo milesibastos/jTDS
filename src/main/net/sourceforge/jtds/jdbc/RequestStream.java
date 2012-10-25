@@ -23,6 +23,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+
+import net.sourceforge.jtds.jdbc.SharedSocket.VirtualSocket;
 import net.sourceforge.jtds.util.*;
 
 /**
@@ -48,29 +50,36 @@ public class RequestStream {
     /** The request packet type. */
     private byte pktType;
     /** The unique stream id. */
-    private final int streamId;
+    private final VirtualSocket _VirtualSocket;
     /** True if stream is closed. */
     private boolean isClosed;
     /** The current output buffer size*/
-    private int bufferSize;
+    private final int bufferSize;
     /** The maximum decimal precision. */
-    private int maxPrecision;
+    private final int maxPrecision;
 
     /**
      * Construct a RequestStream object.
      *
-     * @param socket     the shared socket object to write to
-     * @param streamId   the unique id for this stream
-     * @param bufferSize the initial buffer size to use (the current network
-     *                   packet size)
-     * @param maxPrecision the maximum precision for numeric/decimal types
+     * @param socket
+     *    the shared socket object to write to
+     *
+     * @param vsock
+     *    the {@link VirtualSocket} used by this stream
+     *
+     * @param
+     *    bufferSize the initial buffer size to use (the current network
+     *    packet size)
+     *
+     * @param maxPrecision
+     *    the maximum precision for numeric/decimal types
      */
-    RequestStream(SharedSocket socket, int streamId, int bufferSize, int maxPrecision) {
-        this.streamId = streamId;
+    RequestStream(SharedSocket socket, VirtualSocket vsock, int bufferSize, int maxPrecision) {
+        _VirtualSocket = vsock;
         this.socket = socket;
         this.bufferSize = bufferSize;
-        this.buffer = new byte[bufferSize];
-        this.bufferPtr = TdsCore.PKT_HDR_LEN;
+        buffer = new byte[bufferSize];
+        bufferPtr = TdsCore.PKT_HDR_LEN;
         this.maxPrecision = maxPrecision;
     }
 
@@ -108,7 +117,7 @@ public class RequestStream {
      * @return The precision as an <code>int</code>.
      */
     int getMaxPrecision() {
-        return this.maxPrecision;
+        return maxPrecision;
     }
 
     /**
@@ -121,14 +130,15 @@ public class RequestStream {
         return (byte) ((maxPrecision <= TdsData.DEFAULT_PRECISION_28) ? 13 : 17);
     }
 
-    /**
-     * Retrieve the unique stream id.
-     *
-     * @return the unique stream id as an <code>int</code>.
-     */
-    int getStreamId() {
-        return this.streamId;
-    }
+   /**
+    * Retrieve the {@link VirtualSocket} used by this stream.
+    *
+    * @return the unique stream id as an <code>int</code>.
+    */
+   VirtualSocket getVirtualSocket()
+   {
+      return _VirtualSocket;
+   }
 
     /**
      * Set the current output packet type.
@@ -480,20 +490,20 @@ public class RequestStream {
             }
 
             if (socket.serverType == Driver.SYBASE) {
-                write((byte) len);
+                write(len);
                 // Sybase TDS5 stores MSB first opposite sign!
                 // length, prec, scale already sent in parameter descriptor.
                 write((byte) ((signum == 0) ? 1 : 0));
 
                 for (int i = 0; i < mantisse.length; i++) {
-                    write((byte) mantisse[i]);
+                    write(mantisse[i]);
                 }
             } else {
-                write((byte) len);
-                write((byte) signum);
+                write(len);
+                write(signum);
 
                 for (int i = mantisse.length - 1; i >= 0; i--) {
-                    write((byte) mantisse[i]);
+                    write(mantisse[i]);
                 }
             }
         }
@@ -554,10 +564,10 @@ public class RequestStream {
         buffer[7] = 0;
 
         if (Logger.isActive()) {
-            Logger.logPacket(streamId, false, buffer);
+            Logger.logPacket(_VirtualSocket.id, false, buffer);
         }
 
-        buffer = socket.sendNetPacket(streamId, buffer);
+        buffer = socket.sendNetPacket(_VirtualSocket, buffer);
         bufferPtr = TdsCore.PKT_HDR_LEN;
     }
 }

@@ -60,7 +60,8 @@ public class StatementTest extends TestBase
       stmt.executeUpdate( "set SHOWPLAN_ALL on" );
       // or stmt.execute( "set SHOWPLAN_ALL on" ); - doesn't matters
 
-      dumpAll( stmt, stmt.execute( "select top 5 * from #Bug500" ) );
+      stmt.execute( "select top 5 * from #Bug500" );
+      dumpAll( stmt );
 
       // stmt.execute( "select top 5 * from #Bug500" );
       // ResultSet rs = stmt.getResultSet();
@@ -81,7 +82,7 @@ public class StatementTest extends TestBase
                                     "select * from #Bug528",                     // ResultSet: [11, test] [12, test]
                                     Statement.RETURN_GENERATED_KEYS );           // Generated Keys: 12
 
-      // dumpAll( sta, result );
+      // dumpAll( sta );
 
       assertFalse( result );                    // first is an update count for 1st insert
       assertEquals( 1, sta.getUpdateCount() );  // check update count

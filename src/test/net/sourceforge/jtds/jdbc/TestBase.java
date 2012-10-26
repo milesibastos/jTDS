@@ -99,22 +99,23 @@ public abstract class TestBase extends TestCase {
     *
     * @param statement
     *    {@link Statement} object used for execution
-    *
-    * @param isResult
-    *    {@code true} if the first result is a {@link ResultSet} object; {@code
-    *    false} if it is an update count or there are no results - the value
-    *    returned by {@link Statement#execute()}
     */
-   public void dumpAll( Statement statement, boolean isResult )
+   public void dumpAll( Statement statement )
       throws SQLException
    {
-      int uc = isResult ? -1 : statement.getUpdateCount();
+      int uc = statement.getUpdateCount();
+      boolean isResult = uc != -1;
 
       do
       {
          if( isResult )
          {
-            dump( statement.getResultSet() );
+            ResultSet res = statement.getResultSet();
+
+            if( res != null )
+            {
+               dump( res );
+            }
          }
          else
          {

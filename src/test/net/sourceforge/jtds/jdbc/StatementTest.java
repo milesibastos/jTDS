@@ -39,6 +39,46 @@ public class StatementTest extends TestBase
    }
 
    /**
+    * Test for bug #544, getMoreResults() does not work with insert triggers.
+    */
+   public void testBug544()
+      throws Exception
+   {
+      dropTrigger( "Bug544T" );
+      dropTable( "Bug544a" );
+      dropTable( "Bug544b" );
+
+      Statement sta = con.createStatement();
+      sta.executeUpdate( "create table Bug544a(A int, B int identity(18,1) not null)" );
+      sta.executeUpdate( "create table Bug544b(A int)" );
+
+      // create insert trigger
+      sta.executeUpdate( "create trigger Bug544T on Bug544a for insert as begin insert into Bug544b values (12) end" );
+
+      // insert data to fire the trigger
+      sta.execute( "insert into Bug544a values( 1 ) select SCOPE_IDENTITY()" );
+
+      // dumpAll( sta );
+
+      // check update counts
+      assertEquals( 1, sta.getUpdateCount() ); // original insert
+      assertFalse( sta.getMoreResults() );
+      assertEquals( 1, sta.getUpdateCount() ); // insert executed by the trigger
+      assertTrue( sta.getMoreResults() );
+
+      ResultSet res = sta.getResultSet();      // result of SELECT SCOPE_IDENTITY()" );
+      assertTrue( res.next() );
+      assertEquals( 18, res.getInt( 1 ) );     // the generated value
+      assertFalse( res.next() );
+
+      // check the target table
+      res = sta.executeQuery( "select * from Bug544b" );
+      assertTrue( res.next() );
+      assertEquals( 12, res.getInt( 1 ) );
+      assertFalse( res.next() );
+   }
+
+   /**
     * Test for bug #500, Statement.execute() raises executeQuery() exception if
     * using cursors (useCursors=true) and SHOWPLAN_ALL is set to ON.
     */

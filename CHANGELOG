@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.6
 =======================
 
+10/26/2012 - Holger Rehn
+ o Fixed bug #528, any ResultSet gets dropped when using RETURN_GENERATED_KEYS.
+ o A ResultSet returned by Statement.getGeneratedKeys() is no longer updatable.
+
 10/25/2012 - Holger Rehn
  o Improved the database meta data by adding (JDBC4) column IS_AUTOINCREMENT.
  o Removed unnecessary console logging from various unit tests.

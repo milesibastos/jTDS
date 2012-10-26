@@ -62,7 +62,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author
  *    Mike Hutchinson, Holger Rehn
  */
-public class JtdsStatement implements java.sql.Statement {
+public class JtdsStatement implements java.sql.Statement
+{
+
+   /**
+    * Column name to be used for retrieving generated keys from the server:
+    * "_JTDS_GENE_RATED_KEYS_"
+    */
+   static final String GENKEYCOL = "_JTDS_GENE_R_ATED_KEYS_";
+
     /*
      * Constants used for backwards compatibility with JDK 1.3
      */
@@ -110,7 +118,7 @@ public class JtdsStatement implements java.sql.Statement {
     /** Batched SQL Statement array. */
     protected ArrayList batchValues;
     /** Dummy result set for getGeneratedKeys. */
-    protected JtdsResultSet genKeyResultSet;
+    protected CachedResultSet genKeyResultSet;
     /**
      * List of queued results (update counts, possibly followed by a
      * <code>ResultSet</code>).
@@ -518,7 +526,6 @@ public class JtdsStatement implements java.sql.Statement {
      * @param sql        the SQL statement to execute
      * @param spName     optional stored procedure name
      * @param params     optional parameters
-     * @param returnKeys whether the statement returns generated keys
      * @param update     whether the caller is {@link #executeUpdate}
      * @param useCursor  whether the requested result set type or concurrency
      *                   or connection properties request usage of a cursor
@@ -528,7 +535,6 @@ public class JtdsStatement implements java.sql.Statement {
     protected boolean executeSQL(String sql,
                                  String spName,
                                  ParamInfo[] params,
-                                 boolean returnKeys,
                                  boolean update,
                                  boolean useCursor)
             throws SQLException {
@@ -563,7 +569,7 @@ public class JtdsStatement implements java.sql.Statement {
                     "warning.cursordowngraded", warningMessage), "01000"));
         }
 
-        if (processResults(returnKeys, update)) {
+        if (processResults(update)) {
             Object nextResult = resultQueue.removeFirst();
 
             // Next result is an update count
@@ -586,9 +592,6 @@ public class JtdsStatement implements java.sql.Statement {
     * <code>processResults</code> while a <code>ResultSet</code> is open will
     * not close it, but will consume all remaining rows.
     *
-    * @param returnKeys
-    *    <code>true</code> if a generated keys <code>ResultSet</code> is expected
-    *
     * @param update
     *    <code>true</code> if the method is called from within
     *    <code>executeUpdate</code>
@@ -599,7 +602,7 @@ public class JtdsStatement implements java.sql.Statement {
     * @throws SQLException
     *    if an error condition occurs
     */
-   private boolean processResults( boolean returnKeys, boolean update )
+   private boolean processResults( boolean update )
       throws SQLException
    {
       if( ! resultQueue.isEmpty() )
@@ -620,21 +623,47 @@ public class JtdsStatement implements java.sql.Statement {
          }
          else
          {
-            if( returnKeys )
+            // get column layout of the resultset
+            ColInfo[] columns = tds.getColumns();
+
+            // ensure this is the generated key by checking column layout
+            if( columns.length == 1 && columns[0].name.equals( GENKEYCOL ) )
             {
-               // This had better be the generated key
-               // FIXME We could use SELECT @@IDENTITY AS jTDS_SOMETHING and
-               // check the column name to make sure
-               if( tds.getNextRow() )
+               // fix column name
+               columns[0].name = "ID";
+
+               // drop previously received generated keys
+               genKeyResultSet = null;
+
+               /*
+                * FIXME: If there already was a ResultSet holding generated keys
+                * we should just add an additional row instead, but this is only
+                * possible if we are able to buffer rows to disk to prevent high
+                * memory consumption.
+                *
+                * Note: This would only apply if column layout is identical.
+                */
+
+               // add all generated keys in the resultset (possible memory leak)
+               while( tds.getNextRow() )
                {
-                  genKeyResultSet = new CachedResultSet( this, tds.getColumns(), tds.getRowData() );
+                  if( genKeyResultSet == null )
+                  {
+                     // start new ResultSet, containing the first generated key
+                     genKeyResultSet = new CachedResultSet( this, tds.getColumns(), tds.getRowData() );
+                  }
+                  else
+                  {
+                     // add additional generated key
+                     genKeyResultSet.addRow( tds.getRowData() );
+                  }
                }
             }
             else
             {
                if( update && resultQueue.isEmpty() )
                {
-                  // Throw exception but queue up any previous ones
+                  // throw exception but queue up any previous ones
                   SQLException ex = new SQLException( Messages.get( "error.statement.nocount" ), "07000" );
                   ex.setNextException( messages.exceptions );
                   throw ex;
@@ -671,7 +700,7 @@ public class JtdsStatement implements java.sql.Statement {
      */
     protected void cacheResults() throws SQLException {
         // Cache results
-        processResults(false, false);
+        processResults(false);
     }
 
    /**
@@ -728,7 +757,6 @@ public class JtdsStatement implements java.sql.Statement {
             throw new SQLException(Messages.get("error.generic.nosql"), "HY000");
         }
 
-        boolean returnKeys;
         String sqlWord = "";
         if (escapeProcessing) {
             String tmp[] = SQLParser.parse(sql, null, connection, false);
@@ -749,8 +777,16 @@ public class JtdsStatement implements java.sql.Statement {
             }
         }
 
+        boolean returnKeys;
+
         if (autoGeneratedKeys == RETURN_GENERATED_KEYS) {
-            returnKeys = "insert".equals(sqlWord);
+
+            // REVIEW: how would this fail and why?
+            //
+            // this will fail if we execute multiple statements at once and the first isn't an INSERT
+            // returnKeys = "insert".equals(sqlWord);
+
+            returnKeys = true;
         } else if (autoGeneratedKeys == NO_GENERATED_KEYS) {
             returnKeys = false;
         } else {
@@ -764,13 +800,13 @@ public class JtdsStatement implements java.sql.Statement {
         if (returnKeys) {
             if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
-                sql += " SELECT SCOPE_IDENTITY() AS ID";
+                sql += " SELECT SCOPE_IDENTITY() AS " + GENKEYCOL;
             } else {
-                sql += " SELECT @@IDENTITY AS ID";
+                sql += " SELECT @@IDENTITY AS " + GENKEYCOL;
             }
         }
 
-        return executeSQL(sql, null, null, returnKeys, update,
+        return executeSQL(sql, null, null, update,
                 !update && useCursor(returnKeys, sqlWord));
     }
 
@@ -1178,7 +1214,7 @@ public class JtdsStatement implements java.sql.Statement {
         messages.checkErrors();
 
         // Dequeue any results
-        if (!resultQueue.isEmpty() || processResults(false, false)) {
+        if (!resultQueue.isEmpty() || processResults(false)) {
             Object nextResult = resultQueue.removeFirst();
 
             // Next result is an update count
@@ -1295,22 +1331,23 @@ public class JtdsStatement implements java.sql.Statement {
         return connection;
     }
 
-    public ResultSet getGeneratedKeys() throws SQLException {
-        checkOpen();
+   @Override
+   public ResultSet getGeneratedKeys()
+      throws SQLException
+   {
+      checkOpen();
 
-        if (genKeyResultSet == null) {
-            String colNames[] = {"ID"};
-            int    colTypes[] = {Types.INTEGER};
-            //
-            // Return an empty result set
-            //
-            CachedResultSet rs = new CachedResultSet(this, colNames, colTypes);
-            rs.setConcurrency(ResultSet.CONCUR_READ_ONLY);
-            genKeyResultSet = rs;
-        }
+      if( genKeyResultSet == null )
+      {
+         // create and return an empty result set
+         genKeyResultSet = new CachedResultSet( this, new String[] { "ID" }, new int[] { Types.INTEGER } );
+      }
 
-        return genKeyResultSet;
-    }
+      // non't allow manipulation
+      genKeyResultSet.setConcurrency( ResultSet.CONCUR_READ_ONLY );
+
+      return genKeyResultSet;
+   }
 
     public ResultSet getResultSet() throws SQLException {
         checkOpen();

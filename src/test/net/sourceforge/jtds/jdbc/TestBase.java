@@ -91,6 +91,70 @@ public abstract class TestBase extends TestCase {
         con = getConnection();
     }
 
+   /**
+    * <p> Dump all results produced by the execution of a statement, including
+    * update counts, resultsets and generated keys if the statement has been
+    * executed using one of the {@link Statement#execute()} that directs the
+    * driver to return generated keys. </p>
+    *
+    * @param statement
+    *    {@link Statement} object used for execution
+    *
+    * @param isResult
+    *    {@code true} if the first result is a {@link ResultSet} object; {@code
+    *    false} if it is an update count or there are no results - the value
+    *    returned by {@link Statement#execute()}
+    */
+   public void dumpAll( Statement statement, boolean isResult )
+      throws SQLException
+   {
+      int uc = isResult ? -1 : statement.getUpdateCount();
+
+      do
+      {
+         if( isResult )
+         {
+            dump( statement.getResultSet() );
+         }
+         else
+         {
+            System.out.println( "update count: " + uc );
+         }
+
+         // maybe the update created keys
+         dumpKeys( statement );
+      }
+      while( ( isResult = statement.getMoreResults() ) || ( uc = statement.getUpdateCount() ) != -1 );
+   }
+
+   public void dumpKeys( Statement statement )
+      throws SQLException
+   {
+      ResultSet gen = statement.getGeneratedKeys();
+
+      // specs require empty resultset instead
+      assertNotNull( gen );
+
+      ResultSetMetaData meta = gen.getMetaData();
+      boolean empty = true;
+
+      while( gen.next() )
+      {
+         System.out.print( empty ? "generated keys: " : ", " );
+         empty = false;
+
+         for( int i = 1; i <= meta.getColumnCount(); i ++ )
+         {
+            System.out.print( ( i > 1 ? ", " : "" ) + meta.getColumnName( i ) + "=" + String.valueOf( gen.getObject( i ) ) );
+         }
+      }
+
+      if( ! empty  )
+      {
+         System.out.println();
+      }
+   }
+
     public void dump(ResultSet rs) throws SQLException {
         dump( rs, false );
     }

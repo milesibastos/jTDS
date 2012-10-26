@@ -122,12 +122,12 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
         }
         sqlWord = parsedSql[2];
 
-        if (returnKeys && "insert".equals(sqlWord)) {
+        if (returnKeys /*&& "insert".equals(sqlWord) REVIEW: see JtdsStatement.executeImpl */) {
             if (connection.getServerType() == Driver.SQLSERVER
                     && connection.getDatabaseMajorVersion() >= 8) {
-                this.sql = parsedSql[0] + " SELECT SCOPE_IDENTITY() AS ID";
+                this.sql = parsedSql[0] + " SELECT SCOPE_IDENTITY() AS " + GENKEYCOL;
             } else {
-                this.sql = parsedSql[0] + " SELECT @@IDENTITY AS ID";
+                this.sql = parsedSql[0] + " SELECT @@IDENTITY AS " + GENKEYCOL;
             }
             this.returnKeys = true;
         } else {
@@ -724,10 +724,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             // when it's executed.
             synchronized (connection) {
                 String spName = connection.prepareSQL(this, sql, parameters, returnKeys, false);
-                executeSQL(sql, spName, parameters, returnKeys, true, false);
+                executeSQL(sql, spName, parameters, true, false);
             }
         } else {
-            executeSQL(sql, procName, parameters, returnKeys, true, false);
+            executeSQL(sql, procName, parameters, true, false);
         }
 
         int res = getUpdateCount();
@@ -781,10 +781,10 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
             // when it's executed.
             synchronized (connection) {
                 String spName = connection.prepareSQL(this, sql, parameters, returnKeys, useCursor);
-                return executeSQL(sql, spName, parameters, returnKeys, false, useCursor);
+                return executeSQL(sql, spName, parameters, false, useCursor);
             }
         } else {
-            return executeSQL(sql, procName, parameters, returnKeys, false, useCursor);
+            return executeSQL(sql, procName, parameters, false, useCursor);
         }
     }
 

@@ -72,8 +72,6 @@ public class CachedResultSet extends JtdsResultSet {
     protected boolean rowUpdated;
     /** Indicates that row has been deleted. */
     protected boolean rowDeleted;
-    /** The row count of the initial result set. */
-    protected int initialRowCnt;
     /** True if this is a local temporary result set. */
     protected final boolean tempResultSet;
     /** Cursor TdsCore object. */
@@ -171,7 +169,6 @@ public class CachedResultSet extends JtdsResultSet {
         columnCount   = getColumnCount(columns);
         rowData       = new ArrayList(INITIAL_ROW_COUNT);
         rowsInResult  = 0;
-        initialRowCnt = 0;
         pos           = POS_BEFORE_FIRST;
         tempResultSet = true;
         cursorName    = null;
@@ -220,7 +217,6 @@ public class CachedResultSet extends JtdsResultSet {
         columnCount   = getColumnCount(columns);
         rowData       = new ArrayList(INITIAL_ROW_COUNT);
         rowsInResult  = 0;
-        initialRowCnt = 0;
         pos           = POS_BEFORE_FIRST;
         tempResultSet = true;
         cursorName    = null;
@@ -236,7 +232,6 @@ public class CachedResultSet extends JtdsResultSet {
                 rowData.add(copyRow(rs.getCurrentRow()));
             }
             rowsInResult  = rowData.size();
-            initialRowCnt = rowsInResult;
         }
     }
 
@@ -255,7 +250,6 @@ public class CachedResultSet extends JtdsResultSet {
         columnCount   = getColumnCount(columns);
         rowData       = new ArrayList(1);
         rowsInResult  = 1;
-        initialRowCnt = 1;
         pos           = POS_BEFORE_FIRST;
         tempResultSet = true;
         cursorName    = null;
@@ -265,6 +259,20 @@ public class CachedResultSet extends JtdsResultSet {
         procName      = null;
         procedureParams = null;
     }
+
+   /**
+    * <p> <b>Warning! Ensure the provided data matches the column layout of this
+    * {@link ResultSet}. All kind of weird behavior and errors could be expected
+    * otherwise. </b></p>
+    *
+    * @param data
+    *    data of the row to add
+    */
+   void addRow( Object data[] )
+   {
+      rowsInResult ++;
+      rowData.add( copyRow( data ) );
+   }
 
     /**
      * Modify the concurrency of the result set.
@@ -436,7 +444,6 @@ public class CachedResultSet extends JtdsResultSet {
                 //
                 cacheResultSetRows();
                 rowsInResult  = rowData.size();
-                initialRowCnt = rowsInResult;
                 pos = POS_BEFORE_FIRST;
                 //
                 // If cursor is built over one table and the table has
@@ -474,7 +481,6 @@ public class CachedResultSet extends JtdsResultSet {
                 //
                 cacheResultSetRows();
                 rowsInResult  = rowData.size();
-                initialRowCnt = rowsInResult;
                 pos = POS_BEFORE_FIRST;
             }
         }
@@ -1177,7 +1183,6 @@ public class CachedResultSet extends JtdsResultSet {
              rowData.add(row);
          }
          rowsInResult++;
-         initialRowCnt++;
          //
          // Clear row data
          //

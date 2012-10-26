@@ -104,7 +104,7 @@ public abstract class TestBase extends TestCase {
       throws SQLException
    {
       int uc = statement.getUpdateCount();
-      boolean isResult = uc != -1;
+      boolean isResult = uc == -1;
 
       do
       {
@@ -430,6 +430,25 @@ public abstract class TestBase extends TestCase {
       catch( SQLException sqle )
       {
          // assume the view didn't exist
+      }
+      finally
+      {
+         stm.close();
+      }
+   }
+
+   public void dropTrigger( String name )
+      throws SQLException
+   {
+      Statement stm = con.createStatement();
+
+      try
+      {
+         stm.executeUpdate( "if exists (select * from sysobjects where name like '" + name + "%' and OBJECTPROPERTY(id, N'IsTrigger') = 1) drop trigger " + name );
+      }
+      catch( SQLException sqle )
+      {
+         // assume the trigger didn't exist
       }
       finally
       {

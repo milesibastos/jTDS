@@ -41,6 +41,30 @@ public class TimestampTest extends DatabaseTestCase {
         super(name);
     }
 
+   /**
+    * Test for bug #638, preparedStatement.setTimestamp sets seconds to 0.
+    */
+   public void testBug638()
+      throws Exception
+   {
+      Timestamp ts = Timestamp.valueOf( "2012-10-26 18:45:01.123" );
+
+      Statement sta = con.createStatement();
+      sta.executeUpdate( "create table #Bug638 (A datetime)" );
+
+      PreparedStatement pst = con.prepareStatement( "insert into #Bug638 values(?)" );
+
+      pst.setTimestamp( 1, ts );
+      pst.executeUpdate();
+
+      ResultSet res = sta.executeQuery( "select * from #Bug638" );
+      assertTrue( res.next() );
+      assertEquals( ts, res.getTimestamp( 1 ) );
+      assertFalse( res.next() );
+
+      sta.close();
+   }
+
     public static void main(String args[]) {
         boolean loggerActive = args.length > 0;
         Logger.setActive(loggerActive);

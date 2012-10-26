@@ -429,13 +429,13 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
         // The result data is copied to a cached result set and modified on the fly.
         //
         while (rs.next()) {
+            String typeName = rs.getString(6);
             if (serverType == Driver.SYBASE) {
                 // Sybase servers (older versions only return 14 columns)
                 for (int i = 1; i <= 4; i++) {
                     rsTmp.updateObject(i, rs.getObject(i));
                 }
                 rsTmp.updateInt(5, TypeInfo.normalizeDataType(rs.getInt(5), connection.getUseLOBs()));
-                String typeName = rs.getString(6);
                 rsTmp.updateString(6, typeName);
                 for (int i = 8; i <= 12; i++) {
                     rsTmp.updateObject(i, rs.getObject(i));
@@ -461,7 +461,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     rsTmp.updateInt(7, rs.getInt(7));
                 }
                 // add "IS_AUTOINCREMENT" value
-                rsTmp.updateString( 23, rs.getString( 6 ).toLowerCase().contains( "identity" ) ? "YES" : "NO" );
+                rsTmp.updateString( 23, typeName.toLowerCase().contains( "identity" ) ? "YES" : "NO" );
             } else {
                 // MS SQL Server - Mainly OK but we need to fix some data types.
                 for (int i = 1; i <= colCnt; i++) {
@@ -479,7 +479,7 @@ public class JtdsDatabaseMetaData implements java.sql.DatabaseMetaData {
                     }
                 }
                 // add "IS_AUTOINCREMENT" value
-                rsTmp.updateString( 23, rs.getString( 6 ).toLowerCase().contains( "identity" ) ? "YES" : "NO" );
+                rsTmp.updateString( 23, typeName.toLowerCase().contains( "identity" ) ? "YES" : "NO" );
             }
             rsTmp.insertRow();
         }

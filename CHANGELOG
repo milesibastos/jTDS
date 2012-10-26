@@ -2,6 +2,7 @@ Changes from jTDS 1.2.6
 =======================
 
 10/26/2012 - Holger Rehn
+ o Added test for bug #644, updateNull not working with MSSQL DECIMAL field.
  o Added test for bug #500, Statement.execute() fails if using cursors and
    SHOWPLAN_ALL is set to ON.
  o Fixed bug #528, any ResultSet gets dropped when using RETURN_GENERATED_KEYS.

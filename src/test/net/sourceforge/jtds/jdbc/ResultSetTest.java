@@ -18,6 +18,7 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -30,6 +31,42 @@ public class ResultSetTest extends DatabaseTestCase {
     public ResultSetTest(String name) {
         super(name);
     }
+
+   /**
+    * Test for bug #644, updateNull not working with MSSQL DECIMAL field.
+    */
+   public void testBug644()
+      throws Exception
+   {
+      /*
+       * The test used to fail on SQL server 6.5 and 7 only, because the
+       * precision of numeric and decimal data types is 38 in SQL 2000 and above
+       * but in previous versions of SQL Server, the default maximum was 28.
+       */
+
+      Statement sta = con.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE );
+
+      sta.executeUpdate( "create table #Bug644( A int not null, B decimal(10,2) null)" );
+
+      ResultSet res = sta.executeQuery( "select * from #Bug644" );
+
+      res.moveToInsertRow();
+      res.updateInt( "A", 1 );
+      res.updateNull( "B" );
+      res.insertRow();
+
+      res = sta.executeQuery( "select * from #Bug644" );
+
+      assertTrue( res.next() );
+      assertEquals( 1, res.getInt( 1 ) );
+      assertFalse( res.wasNull() );
+      assertEquals( 0, res.getInt( 2 ) );
+      assertTrue( res.wasNull() );
+      assertFalse( res.next() );
+
+      res.close();
+      sta.close();
+   }
 
    /**
     * Test for bug #690, IS_AUTOINCREMENT invalid for identity columns.

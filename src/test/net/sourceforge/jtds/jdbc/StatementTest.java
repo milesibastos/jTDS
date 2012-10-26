@@ -24,6 +24,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author
@@ -35,6 +36,34 @@ public class StatementTest extends TestBase
    public StatementTest( String name )
    {
       super( name );
+   }
+
+   /**
+    * Test for bug #500, Statement.execute() raises executeQuery() exception if
+    * using cursors (useCursors=true) and SHOWPLAN_ALL is set to ON.
+    */
+   public void testBug500()
+      throws Exception
+   {
+      Properties override = new Properties();
+      override.put( "useCursors", "true" );
+      Connection connection = getConnection( override );
+
+      Statement stmt = connection.createStatement();
+      stmt.executeUpdate( "create table #Bug500 (A int)" );
+
+      for( int i = 0; i < 10; i ++ )
+      {
+         stmt.executeUpdate( "insert into #Bug500 values(" + i + ")" );
+      }
+
+      stmt.executeUpdate( "set SHOWPLAN_ALL on" );
+      // or stmt.execute( "set SHOWPLAN_ALL on" ); - doesn't matters
+
+      dumpAll( stmt, stmt.execute( "select top 5 * from #Bug500" ) );
+
+      // stmt.execute( "select top 5 * from #Bug500" );
+      // ResultSet rs = stmt.getResultSet();
    }
 
    /**

@@ -24,6 +24,7 @@ import net.sourceforge.jtds.jdbc.DefaultProperties;
 import net.sourceforge.jtds.jdbc.Driver;
 import net.sourceforge.jtds.jdbc.Messages;
 import net.sourceforge.jtds.jdbc.TdsCore;
+
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -66,6 +67,25 @@ public class DriverUnitTest extends UnitTestBase {
         return testSuite;
     }
 
+   /**
+    * Test to ensure that the version reported by the driver matches the JAR
+    * file's name.
+    */
+   public void testDriverVersion()
+      throws Exception
+   {
+      String file = Driver.class.getResource( '/' + Driver.class.getName().replace( '.', '/' ) + ".class" ).toString();
+
+      // only check if jTDS has been loaded from a jar
+      if( file.startsWith( "jar" ) )
+      {
+         // parse path, e.g. jar:file:/lib/jtds-1.3.0.jar!/net/sourceforge/jtds/jdbc/Driver.class
+         file = file.substring( 0, file.indexOf( ".jar!" ) );
+         file = file.substring( file.lastIndexOf( '/' ) + 1 );
+
+         assertEquals( Driver.getVersion(), file.substring( file.lastIndexOf( '-' ) + 1 ) );
+      }
+   }
 
     /**
      * Constructor.

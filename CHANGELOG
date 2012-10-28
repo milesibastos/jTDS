@@ -1,7 +1,8 @@
 Changes from jTDS 1.2.7
 =======================
 
-10/27/2012 - Holger Rehn
+10/28/2012 - Holger Rehn
+ o Added test for bug #575, parameter types not available via ParameterMetaData.
  o Fixed build script, Maven artifacts are no included in the distro package.
 
 ===============================================================================

@@ -31,6 +31,23 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
         super(name);
     }
 
+   /**
+    * Test for bug#575, parameter types aren't available via ParameterMetaData.
+    */
+   public void testBug575()
+      throws Exception
+   {
+      Statement sta = con.createStatement();
+      sta.executeUpdate( "create table #Bug575( A varchar(11), B int, C bit )" );
+      PreparedStatement ps = con.prepareStatement( "update #Bug575 set A=?, C=? where B=?" );
+
+      ParameterMetaData paramMetaData = ps.getParameterMetaData();
+
+      assertEquals( "varchar", paramMetaData.getParameterType( 1 ) );
+      assertEquals( "int"    , paramMetaData.getParameterType( 2 ) );
+      assertEquals( "bit"    , paramMetaData.getParameterType( 3 ) );
+   }
+
     /**
      * Test meta data functions that return boolean values.
      * @throws Exception
@@ -708,7 +725,7 @@ public class DatabaseMetaDataTest extends MetaDataTestCase {
                     sb.append(".id");
                 }
             }
-    
+
             // get result
             ResultSet rs = st.executeQuery(sb.toString());
             ResultSetMetaData rsmd = rs.getMetaData();

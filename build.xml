@@ -154,7 +154,7 @@
     <mkdir dir="${dist}/tmp"/>
     <copy todir="${dist}/tmp">
       <fileset dir="." includes="README,README.SSL,README.XA,README.SSO,CHANGELOG,LICENSE,conf/**/*.xml,conf/**/*.tmpl,html/**/*"/>
-      <fileset dir="${build}" includes="*.jar"/>
+      <fileset dir="${build}" includes="${ant.project.name}-${version}.jar"/>
     </copy>
 
     <mkdir dir="${dist}/tmp/x86/XA"/>

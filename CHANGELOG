@@ -1,6 +1,10 @@
 Changes from jTDS 1.2.7
 =======================
 
+11/15/2012 - Holger Rehn
+ o Fixed bug #552, jTDS fails to find an SQL Server instance if the discovery
+   requests' response is plit into multiple network packets.
+
 10/28/2012 - Holger Rehn
  o Added test for bug #575, parameter types not available via ParameterMetaData.
  o Fixed build script, Maven artifacts are no included in the distro package.

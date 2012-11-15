@@ -51,8 +51,8 @@ import net.sourceforge.jtds.util.Logger;
  * @version $Id: MSSqlServerInfo.java,v 1.8.2.1 2009-07-30 10:50:05 ickzon Exp $
  */
 public class MSSqlServerInfo {
-    private int numRetries = 3;
-    private int timeout = 2000;
+    private final int numRetries = 3;
+    private final int timeout = 2000;
     private String[] serverInfoStrings;
 
     public MSSqlServerInfo(String host) throws SQLException {
@@ -63,19 +63,25 @@ public class MSSqlServerInfo {
             byte[] msg = new byte[] {0x02};
             DatagramPacket requestp = new DatagramPacket(msg, msg.length, addr, 1434);
 
-            byte[] buf = new byte[4096];
-
-            DatagramPacket responsep = new DatagramPacket(buf, buf.length);
             socket.setSoTimeout(timeout);
 
             for (int i = 0; i < numRetries; i++) {
                 try {
-                    socket.send(requestp);
+                    DatagramPacket responsep;
+                    byte[] buf = new byte[0]; // init with an array of length 0, will be expanded with every iteration
+                    int length = buf.length;
 
-                    socket.receive(responsep);
-                    String infoString = extractString(buf, responsep.getLength());
+                    do {
+                        buf = new byte[buf.length + 4096];
+                        responsep = new DatagramPacket(buf, buf.length);
+                        socket.send(requestp);
+                        socket.receive(responsep);
+                    } while(length==buf.length); // retry until the whole server response can be buffered
+
+
+                    String infoString = extractString(buf, length);
                     serverInfoStrings = split(infoString, ';');
-
+                   
                     return;
                 } catch (InterruptedIOException toEx) {
                     if (Logger.isActive()) {
@@ -121,6 +127,7 @@ public class MSSqlServerInfo {
         String curInstance = null;
         String curPort = null;
 
+        // format: "ServerName, HOSTNAME, InstanceName, INSTANCENAME, IsClustered, No, Version, 9.00.1399.06, tcp, PORT, ,"
         for (int index = 0; index < serverInfoStrings.length; index++) {
             if (serverInfoStrings[index].length() == 0) {
                 curInstance = null;

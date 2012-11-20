@@ -25,9 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
@@ -258,67 +256,38 @@ class SharedSocket {
         socket.setKeepAlive(connection.getSocketKeepAlive());
     }
 
-    /**
-     * Creates a {@link Socket} through reflection when {@link Driver#JDBC3}
-     * is <code>true</code>.  Reflection must be used to stay compatible
-     * with JDK 1.3.
-     *
-     * @param connection the connection object
-     * @return a socket open to the host and port with the given timeout
-     * @throws IOException if socket open fails
-     */
-    private Socket createSocketForJDBC3(JtdsConnection connection) throws IOException {
-        final String host = connection.getServerName();
-        final int port = connection.getPortNumber();
-        final int loginTimeout = connection.getLoginTimeout();
-        final String bindAddress = connection.getBindAddress();
-        try {
-            // Create the Socket
-            Constructor socketConstructor =
-                    Socket.class.getConstructor(new Class[] {});
-            Socket socket =
-                    (Socket) socketConstructor.newInstance(new Object[] {});
+   /**
+    * Creates a {@link Socket} connection.
+    *
+    * @param connection
+    *    the connection object
+    *
+    * @return
+    *    a socket open to the host and port with the given timeout
+    *
+    * @throws IOException
+    *    if socket open fails
+    */
+   private Socket createSocketForJDBC3( JtdsConnection connection ) throws IOException
+   {
+      final String host = connection.getServerName();
+      final int port = connection.getPortNumber();
+      final String bindAddress = connection.getBindAddress();
+      final int loginTimeout = connection.getLoginTimeout();
 
-            // Create the InetSocketAddress
-            Constructor constructor = Class.forName("java.net.InetSocketAddress")
-                    .getConstructor(new Class[] {String.class, int.class});
-            Object address = constructor.newInstance(
-                            new Object[] {host, new Integer(port)});
+      Socket socket = new Socket();
+      InetSocketAddress address = new InetSocketAddress( host, port );
 
-            // Call Socket.bind(SocketAddress) if bindAddress parameter is set
-            if (bindAddress != null && bindAddress.length() > 0) {
-                Object localBindAddress = constructor.newInstance(
-                        new Object[]{bindAddress, new Integer(0)});
-                Method bind = Socket.class.getMethod(
-                        "bind", new Class[]{Class.forName("java.net.SocketAddress")});
-                bind.invoke(socket, new Object[]{localBindAddress});
-            }
+      // call Socket.bind(SocketAddress) if bindAddress parameter is set
+      if( bindAddress != null && ! bindAddress.isEmpty() )
+      {
+         socket.bind( new InetSocketAddress( bindAddress, 0 ) );
+      }
 
-            // Call Socket.connect(InetSocketAddress, int)
-            Method connect = Socket.class.getMethod("connect", new Class[]
-                    {Class.forName("java.net.SocketAddress"), int.class});
-            connect.invoke(socket,
-                    new Object[] {address, new Integer(loginTimeout * 1000)});
-
-            return socket;
-        } catch (InvocationTargetException ite) {
-            // Reflection was OK but invocation of socket.bind() or socket.connect()
-            // has failed. Try to report the underlying reason
-            Throwable cause = ite.getTargetException();
-            if (cause instanceof IOException) {
-                // OK was an IOException or subclass so just throw it
-                throw (IOException) cause;
-            }
-            // Something else so return invocation exception anyway
-            // (This should not normally occur)
-            throw (IOException) Support.linkException(
-                    new IOException("Could not create socket"), cause);
-        } catch (Exception e) {
-            // Reflection has failed for some reason e.g. security so
-            // try to create a socket in the old way.
-            return new Socket(host, port);
-        }
-    }
+      // establish connection
+      socket.connect( address, loginTimeout * 1000 );
+      return socket;
+   }
 
    String getMAC()
    {
@@ -671,7 +640,7 @@ class SharedSocket {
      * @return
      *    the same buffer received if emptied or another buffer w/ the same size
      *    if the incoming buffer is cached (to avoid copying)
-     *   
+     *
      * @throws
      *    IOException if an I/O error occurs
      */

@@ -79,7 +79,6 @@ public class MSSqlServerInfo {
                         length = responsep.getLength();
                     } while(length==buf.length); // retry until the whole server response can be buffered
 
-
                     String infoString = extractString(buf, length);
                     serverInfoStrings = split(infoString, ';');
 
@@ -100,9 +99,7 @@ public class MSSqlServerInfo {
             }
         }
 
-
-        throw new SQLException(
-                              Messages.get("error.msinfo.badinfo", host), "HY000");
+        throw new SQLException( Messages.get("error.msinfo.badinfo", host), "HY000");
     }
 
     /**

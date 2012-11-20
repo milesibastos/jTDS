@@ -82,7 +82,7 @@ public class JtdsCallableStatement extends JtdsPreparedStatement implements Call
         throws SQLException {
         checkOpen();
 
-        // no need to force the user to care for the param syntax
+        // no need to force the user to care about the param syntax
         if(! name.startsWith( "@" ))
            name = "@" + name;
 

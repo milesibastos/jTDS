@@ -81,7 +81,7 @@ public class MSSqlServerInfo {
 
                     String infoString = extractString(buf, length);
                     serverInfoStrings = split(infoString, ';');
-                   
+
                     return;
                 } catch (InterruptedIOException toEx) {
                     if (Logger.isActive()) {
@@ -95,10 +95,10 @@ public class MSSqlServerInfo {
             }
         } finally {
             if (socket != null) {
-                socket.close();   
+                socket.close();
             }
         }
-        
+
 
         throw new SQLException(
                               Messages.get("error.msinfo.badinfo", host), "HY000");
@@ -127,7 +127,7 @@ public class MSSqlServerInfo {
         String curInstance = null;
         String curPort = null;
 
-        // format: "ServerName, HOSTNAME, InstanceName, INSTANCENAME, IsClustered, No, Version, 9.00.1399.06, tcp, PORT, ,"
+        // format: "ServerName,HOSTNAME,InstanceName,INSTANCENAME,IsClustered,No,Version,9.00.1399.06,tcp,PORT,np;\HOSTNAME\pipe\MSSQL$HOSTNAME\sql, ,"
         for (int index = 0; index < serverInfoStrings.length; index++) {
             if (serverInfoStrings[index].length() == 0) {
                 curInstance = null;

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+
 package net.sourceforge.jtds.jdbc;
 
 import java.io.*;
@@ -1498,7 +1498,7 @@ public class TdsData {
                             } else {
                                 // Sybase long binary that can be used as a SP parameter
                                 pi.tdsType = SYBLONGBINARY;
-                                pi.sqlType = "varbinary(" + len + ')';
+                                pi.sqlType = "varbinary(" + len + ")";
                             }
                         } else {
                             // Sybase < 12.5 or SQL Server 6.5
@@ -1517,7 +1517,7 @@ public class TdsData {
                         }
 
                         pi.tdsType = SYBIMAGE;
-                        pi.sqlType = "varbinary(max)";
+                        pi.sqlType = isMSSQL2005Plus(connection) ?  "varbinary(max)" : "image";
                     }
                 }
 
@@ -1611,7 +1611,7 @@ public class TdsData {
                          throw new SQLException( Messages.get( "error.textoutparam" ), "HY000" );
 
                       pi.tdsType = SYBIMAGE;
-                      pi.sqlType = "varbinary(max)";
+                      pi.sqlType = isMSSQL2005Plus(connection) ? "varbinary(max)" : "image";
                    }
                 }
                 break;
@@ -2892,4 +2892,9 @@ public class TdsData {
             return false;
         }
     }
+
+   static boolean isMSSQL2005Plus( JtdsConnection connection )
+   {
+      return connection.getServerType() == Driver.SQLSERVER && connection.getDatabaseMajorVersion() > 8;
+   }
 }

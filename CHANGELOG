@@ -1,6 +1,13 @@
 Changes from jTDS 1.3.0
 =======================
 
+01/25/2013 - Holger Rehn
+ o Added test for JDBC date/time escapes used in a procedure call.
+
+12/24/2012 - Holger Rehn
+ o Added test for bug #686, SQL error invalidates a Statement's internal state.
+ o Fixed bug #626 by added a type mapping for java.math.BigInteger.
+
 12/19/2012 - Holger Rehn
  o Applied fix for MSSQL 2000 compatibility provided by Andrew Fink (bug #683).
 

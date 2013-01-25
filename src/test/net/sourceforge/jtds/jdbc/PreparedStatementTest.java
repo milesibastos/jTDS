@@ -28,9 +28,54 @@ import junit.framework.Assert;
  */
 public class PreparedStatementTest extends TestBase {
 
-    public PreparedStatementTest(String name) {
-        super(name);
-    }
+   public PreparedStatementTest( String name )
+   {
+      super(name);
+   }
+
+   public void testBug686()
+      throws Exception
+   {
+      PreparedStatement st = null;
+
+      try
+      {
+         st = con.prepareStatement( "set xact_abort on\n" + // hmm. only with TX?...
+                                    // "begin tran\n" +
+                                    "create table #temp (id int not null primary key)\n" + // Result 1 is an update count: 0 null
+                                    "insert #temp values (1)\n" + // Result 2 is an update count: 1 null
+                                    "select * from #temp\n" + // Result 3 is a ResultSet: SQLServerResultSet:1
+                                    "insert #temp values (2);\n" + // Result 4 is an update count: 1 null
+
+                                    // Result 5 is an error: com.microsoft.sqlserver.jdbc.SQLServerException: Invalid object name '#notexists'.
+                                    "update #notexists set bar=1;\n" +
+
+                                    "insert #temp select * from #temp\n" + // [end] Done processing 4 results
+                                    "drop table #temp\n" +
+                                    // "commit\n" +
+                                    "select @@error, @@trancount;\n" );
+
+         st.execute();
+
+         try
+         {
+            dumpAll( st );
+            fail( "expected an error: Invalid object name '#notexists'" );
+         }
+         catch( Exception e )
+         {
+            // expected,
+         }
+
+         // dump the remaining result (used to fail due to bug #686)
+         dumpAll( st );
+      }
+      finally
+      {
+         st.close();
+         con.close();
+      }
+   }
 
    public void testBug657()
       throws Exception

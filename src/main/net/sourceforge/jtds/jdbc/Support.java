@@ -105,6 +105,8 @@ public class Support {
         typeMap.put(String.class,             new Integer(java.sql.Types.VARCHAR));
         typeMap.put(Blob.class,               new Integer(java.sql.Types.LONGVARBINARY));
         typeMap.put(Clob.class,               new Integer(java.sql.Types.LONGVARCHAR));
+        // bug #626
+        typeMap.put(BigInteger.class,         new Integer(java.sql.Types.BIGINT));
     }
 
     /**

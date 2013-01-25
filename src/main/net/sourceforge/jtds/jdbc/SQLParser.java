@@ -43,12 +43,9 @@ import net.sourceforge.jtds.jdbc.cache.SimpleLRUCache;
  * <ol>
  * <li>This code is designed to be as efficient as possible and as
  * result the validation done here is limited.
- * <li>SQL comments are parsed correctly thanks to code supplied by
- * Joel Fouse.
- * </ol>
  *
- * @author Mike Hutchinson
- * @version $Id: SQLParser.java,v 1.29 2007-07-08 17:28:23 bheineman Exp $
+ * @author
+ *    Mike Hutchinson, Holger Rehn
  */
 class SQLParser {
     /**

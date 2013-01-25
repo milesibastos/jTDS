@@ -273,8 +273,8 @@ public class TimestampTest extends DatabaseTestCase {
    public void testEscape( String sql, String expected )
       throws Exception
    {
-      String tmp = con.nativeSQL( sql );
-      assertEquals( tmp, expected );
+      String tmp = con.nativeSQL( sql ); System.out.println( tmp);
+      assertEquals( expected, tmp );
    }
 
    public void testEscapes0006()
@@ -293,6 +293,12 @@ public class TimestampTest extends DatabaseTestCase {
       testEscape( "select * from tmp where a like 'bbb' {escape 'b'}", "select * from tmp where a like 'bbb' escape 'b'" );
       testEscape( "select * from tmp where a='{fn user}'", "select * from tmp where a='{fn user}'" );
       testEscape( "select * from tmp where a={fn user()}", "select * from tmp where a=user_name()" );
+   }
+
+   public void testEscapes0007()
+      throws Exception
+   {
+      con.createStatement().execute( "exec dbo.spGetOrdersByItemID 7499, {d '2000-01-01'}, {d '2099-12-31'}" );
    }
 
     public void testPreparedStatement0007() throws Exception {

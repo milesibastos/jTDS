@@ -21,6 +21,8 @@ import java.io.*;
 import java.sql.*;
 import java.util.*;
 
+import junit.framework.Assert;
+
 //
 // MJH - Changes for new jTDS version
 // Amended many lines such as those in testBlobSetNull6
@@ -65,6 +67,31 @@ public class LOBTest extends TestBase {
      **                          BLOB TESTS                                 **
      *************************************************************************
      *************************************************************************/
+
+   /**
+    * <p> Test for bug #508, jTDS doesn't throw an exception when a connection
+    * is reset due to an error caused by insufficient server memory. </p>
+    */
+   public void testBug508()
+      throws Exception
+   {
+      final int BLOBSIZE = 250 * 1024 * 1024;
+
+      Statement statement = con.createStatement();
+      statement.executeUpdate( "create table #bug508 (A image)" );
+
+      PreparedStatement pstmt = con.prepareStatement( "insert into #bug508 (A) VALUES (?)" );
+      pstmt.setBytes( 1, new byte[BLOBSIZE] );
+
+      try
+      {
+         Assert.assertEquals( 1, pstmt.executeUpdate() );
+      }
+      catch( SQLException sqle )
+      {
+         Assert.assertEquals( 1000, sqle.getSQLState() );
+      }
+   }
 
     public void testBlobGet1() throws Exception {
         byte[] data = getBlobTestData();
@@ -2068,7 +2095,7 @@ public class LOBTest extends TestBase {
         assertTrue(rs.next());
         Clob clob = rs.getClob(1);
         clob.setString(1, data.toString());
-        assertEquals((long)size, clob.length());
+        assertEquals(size, clob.length());
         assertTrue(data.toString().equals(clob.getSubString(1, (int)clob.length())));
         clob.setString(10, "THIS IS A TEST");
         data.replace(9, 23, "THIS IS A TEST");
@@ -2081,7 +2108,7 @@ public class LOBTest extends TestBase {
             os.write(data.charAt(i));
         }
         os.close();
-        assertEquals((long)size, clob.length());
+        assertEquals(size, clob.length());
         assertTrue(data.toString().equals(clob.getSubString(1, (int)clob.length())));
         InputStream is = clob.getAsciiStream();
         int b;

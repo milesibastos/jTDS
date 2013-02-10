@@ -86,10 +86,11 @@ public class LOBTest extends TestBase {
       try
       {
          Assert.assertEquals( 1, pstmt.executeUpdate() );
+         con.createStatement().execute( "select 1" );
       }
       catch( SQLException sqle )
       {
-         Assert.assertEquals( 1000, sqle.getSQLState() );
+         Assert.assertEquals( "08S01", sqle.getSQLState() );
       }
    }
 

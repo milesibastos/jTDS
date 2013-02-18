@@ -273,7 +273,7 @@ public class TimestampTest extends DatabaseTestCase {
    public void testEscape( String sql, String expected )
       throws Exception
    {
-      String tmp = con.nativeSQL( sql ); System.out.println( tmp);
+      String tmp = con.nativeSQL( sql );
       assertEquals( expected, tmp );
    }
 

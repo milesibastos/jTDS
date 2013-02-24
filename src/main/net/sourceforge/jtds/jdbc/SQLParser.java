@@ -610,7 +610,13 @@ class SQLParser {
             return in[s] == terminator;
         }
 
-        append( "convert(datetime,".toCharArray() );
+        // fix for bug #682, CONVERT not allowed in procedure or function calls
+        boolean sel = keyWord.equals( "select" );
+        if( sel )
+        {
+           append( "convert(datetime,".toCharArray() );
+        }
+
         append('\'');
         terminator = (in[s] == '\'' || in[s] == '"') ? in[s++] : '}';
         skipWhiteSpace();
@@ -672,7 +678,11 @@ class SQLParser {
 
         skipWhiteSpace();
         append('\'');
-        append(')');
+
+        if( sel )
+        {
+           append(')');
+        }
 
         return true;
     }

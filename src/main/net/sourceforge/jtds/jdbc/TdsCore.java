@@ -17,15 +17,20 @@
 //
 package net.sourceforge.jtds.jdbc;
 
-import java.io.*;
-import java.sql.*;
-import java.util.Arrays;
+import java.io.IOException;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
-import net.sourceforge.jtds.ssl.*;
-import net.sourceforge.jtds.util.*;
+import net.sourceforge.jtds.ssl.Ssl;
+import net.sourceforge.jtds.util.Logger;
+import net.sourceforge.jtds.util.SSPIJNIClient;
+import net.sourceforge.jtds.util.TimerThread;
 
 /**
  * This class implements the Sybase / Microsoft TDS protocol.
@@ -430,6 +435,11 @@ public class TdsCore {
     private boolean cancelPending;
     /** Synchronization monitor for {@link #cancelPending}. */
     private final int[] cancelMonitor = new int[1];
+
+    /**
+     * flag set to {@code true} whenever a TDS_ERROR token is received
+     */
+    private boolean _ErrorReceived;
 
     /**
      * Construct a TdsCore object.
@@ -944,6 +954,7 @@ public class TdsCore {
                                  boolean sendNow)
             throws SQLException {
         boolean sendFailed = true; // Used to ensure mutex is released.
+        _ErrorReceived = false; // reset error token flag
 
         try {
             //
@@ -2851,7 +2862,7 @@ public class TdsCore {
      * @throws IOException
      */
     private void tdsErrorToken()
-    throws IOException
+       throws IOException
     {
         int pktLen = in.readShort(); // Packet length
         int sizeSoFar = 6;
@@ -2877,6 +2888,8 @@ public class TdsCore {
 
         if (currentToken.token == TDS_ERROR_TOKEN)
         {
+           _ErrorReceived = true;
+
             if (severity < 10) {
                 severity = 11; // Ensure treated as error
             }
@@ -3527,7 +3540,22 @@ public class TdsCore {
      * @throws IOException
      */
     private void tdsDoneToken() throws IOException {
-        currentToken.status = (byte)in.read();
+
+      /*
+       * From http://msdn.microsoft.com/en-us/library/dd340421.aspx:
+       *
+       * The Status field MUST be a bitwise 'OR' of the following:
+       *
+       * 0x00 : DONE_FINAL. This DONE is the final DONE in the request.
+       * 0x1  : DONE_MORE. This DONE message is not the final DONE message in the response. Subsequent data streams to follow.
+       * 0x2  : DONE_ERROR. An error occurred on the current SQL statement. A preceding ERROR token SHOULD be sent when this bit is set.
+       * 0x4  : DONE_INXACT. A transaction is in progress.<11>
+       * 0x10 : DONE_COUNT. The DoneRowCount value is valid. This is used to distinguish between a valid value of 0 for DoneRowCount or just an initialized variable.
+       * 0x20 : DONE_ATTN. The DONE message is a server acknowledgement of a client ATTENTION message).
+       * 0x100: DONE_SRVERROR. Used in place of DONE_ERROR when an error occurred on the current SQL statement, which is severe enough to require the result set, if any, to be discarded.
+       */
+        currentToken.status = (byte) in.read();
+
         in.skip(1);
         currentToken.operation = (byte)in.read();
         in.skip(1);
@@ -3556,6 +3584,19 @@ public class TdsCore {
                 }
             }
         }
+        else
+        {
+           // check whether the DONE token signals an error but no ERROR token has been received before (see bug #508)
+           if( ! _ErrorReceived && ( currentToken.status & DONE_ERROR ) != 0 )
+           {
+              messages.addException( new SQLException( Messages.get( "error.generic.unspecified" ), "HY000" ) );
+           }
+        }
+
+        // reset flag, just in case this is an intermediate ERROR token, so
+        // the fix for bug #508 will also work if the problematic operation
+        // is preceeded by another statement that causes an error
+        _ErrorReceived = false;
 
         if ((currentToken.status & DONE_MORE_RESULTS) == 0) {
             //

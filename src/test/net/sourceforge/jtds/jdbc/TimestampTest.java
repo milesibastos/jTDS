@@ -42,6 +42,27 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
    /**
+    * <p> Regression test for bug #682, calling a procedure with a parameter of
+    * type date, time or datetime fails with an error. </p>
+    *
+    */
+   public void testBug682()
+      throws SQLException
+   {
+      Statement st = con.createStatement();
+      st.executeUpdate( "create procedure #sp_bug682 @A datetime as select 1" );
+
+      try
+      {
+         st.execute( "{call #sp_bug682({ts '2000-01-01 20:59:00.123'})}" );
+      }
+      finally
+      {
+         st.close();
+      }
+   }
+
+   /**
     * Test for bug #638, preparedStatement.setTimestamp sets seconds to 0.
     */
    public void testBug638()

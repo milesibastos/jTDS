@@ -1,6 +1,13 @@
 Changes from jTDS 1.3.0
 =======================
 
+02/24/2013 - Holger Rehn
+ o Fixed bug #508, the driver ignored unspecified server errors signaled by a
+   TDS DONE token if no ERROR token has been received before.
+
+02/18/2013 - Holger Rehn
+ o Fixed bug #682, error when using date/time escapes in a procedure call.
+
 01/25/2013 - Holger Rehn
  o Added test for JDBC date/time escapes used in a procedure call.
 

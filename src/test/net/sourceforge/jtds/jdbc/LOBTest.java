@@ -90,7 +90,7 @@ public class LOBTest extends TestBase {
       }
       catch( SQLException sqle )
       {
-         Assert.assertEquals( "08S01", sqle.getSQLState() );
+         Assert.assertTrue( "S1000".equals( sqle.getSQLState() ) || "08S01".equals( sqle.getSQLState() ) || "HY000".equals( sqle.getSQLState() ) );
       }
    }
 

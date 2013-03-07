@@ -33,6 +33,53 @@ public class PreparedStatementTest extends TestBase {
       super(name);
    }
 
+   /**
+    * Test for trailing line comment breaking connection state on metadata
+    * retrieval when autocommit is false
+    */
+   public void testBug695()
+      throws Exception
+   {
+      Connection localCon = getConnection();
+
+      Statement stmt = localCon.createStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE );
+
+      stmt.executeUpdate( "CREATE TABLE #metaData (id int, data varchar(8000))" );
+      stmt.executeUpdate( "INSERT INTO #metaData (id, data) VALUES (1, 'Data1')" );
+      stmt.close();
+
+      // If AutoCommit is true then the test will pass
+      localCon.setAutoCommit( false );
+
+      // If the trailing SQL line comment is removed from the statement
+      // text then the test will pass
+      PreparedStatement pstmt = localCon.prepareStatement( "SELECT id FROM #metaData WHERE data=? GROUP BY id--" );
+
+      ResultSetMetaData rsmd = pstmt.getMetaData();
+      // Tracing with SQLProfiler shows execution of :
+      // SET FMTONLY ON SELECT id ... GROUP BY id-- SET FMTONLY OFF
+      // So the SET FMTONLY OFF is ignored, all following statements are
+      // executed with FMTONLY ON
+
+      assertNotNull( "No meta data returned for simple statement", rsmd );
+
+      assertEquals( 1, rsmd.getColumnCount() );
+      assertEquals( "id", rsmd.getColumnName( 1 ) );
+
+      pstmt.close();
+
+      // Simple statement that should return a row
+      // but we don't get a row with setAutoCommit(false) and the trailing --
+      // Tracing with SQLProfiler shows execution of
+      pstmt = localCon.prepareStatement( "SELECT getdate()" );
+      ResultSet rs = pstmt.executeQuery();
+      Assert.assertTrue( rs.next() );
+
+      rs.close();
+      pstmt.close();
+      localCon.close();
+   }
+
    public void testBug686()
       throws Exception
    {

@@ -75,7 +75,7 @@ public class Logger {
     public static void println(String message) {
         if (log != null) {
             log.println(message);
-        } else {
+        } else if (DriverManager.getLogWriter() != null) {
             DriverManager.println(message);
         }
     }

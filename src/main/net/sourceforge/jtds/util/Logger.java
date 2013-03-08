@@ -15,6 +15,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
+
 package net.sourceforge.jtds.util;
 
 import java.sql.*;
@@ -32,8 +33,8 @@ import java.io.IOException;
  * <li>For backwards compatibility call Logger.setActive();
  * </ol>
  *
- * @author Mike Hutchinson
- * @version $Id: Logger.java,v 1.11.2.1 2009-08-07 14:02:11 ickzon Exp $
+ * @author
+ *    Mike Hutchinson, Holger Rehn
  */
 public class Logger {
     /** PrintWriter stream set by DataSource. */
@@ -66,19 +67,32 @@ public class Logger {
         return(log != null || DriverManager.getLogWriter() != null);
     }
 
-    /**
-     * Print a diagnostic message to the output stream provided by
-     * the DataSource or the DriverManager.
-     *
-     * @param message the diagnostic message to print
-     */
-    public static void println(String message) {
-        if (log != null) {
-            log.println(message);
-        } else if (DriverManager.getLogWriter() != null) {
-            DriverManager.println(message);
-        }
-    }
+   /**
+    * <p> Print a diagnostic message to the output stream provided by the
+    * {@link DataSource} or the {@link DriverManager}. </p>
+    *
+    * @param message
+    *    the diagnostic message to print
+    */
+   public static void println( String message )
+   {
+      if( log != null )
+      {
+         log.println( message );
+      }
+      else
+      {
+         // get writer, DriverManager isn't thread-safe (see bug #694)
+         PrintWriter pw = DriverManager.getLogWriter();
+
+         if( pw != null )
+         {
+            pw.println( message );
+            pw.flush();
+         }
+      }
+   }
+
     private static final char hex[] =
     {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
 
@@ -92,7 +106,7 @@ public class Logger {
     public static void logPacket(int streamId, boolean in, byte[] pkt) {
         int len = ((pkt[2] & 0xFF) << 8)| (pkt[3] & 0xFF);
 
-        StringBuilder line = new StringBuilder(80);
+        StringBuffer line = new StringBuffer(80);
 
         line.append("----- Stream #");
         line.append(streamId);
@@ -189,22 +203,35 @@ public class Logger {
         println("");
     }
 
-    /**
-     * Print an Exception stack trace to the log.
-     *
-     * @param e the exception to log
-     */
-    public static void logException(Exception e) {
-        if (log != null) {
-            e.printStackTrace(log);
-        } else if (DriverManager.getLogWriter() != null) {
-            e.printStackTrace(DriverManager.getLogWriter());
-        }
-    }
+   /**
+    * Print an Exception stack trace to the log.
+    *
+    * @param e
+    * the exception to log
+    */
+   public static void logException( Exception e )
+   {
+      if( log != null )
+      {
+         e.printStackTrace( log );
+      }
+      else
+      {
+         // get writer, DriverManager isn't thread-safe (see bug #694)
+         PrintWriter pw = DriverManager.getLogWriter();
+
+         if( pw != null )
+         {
+            e.printStackTrace( pw );
+            pw.flush();
+         }
+      }
+   }
 
     //
     // Backward compatibility method
     //
+
     /**
      * Turn the logging on or off.
      *

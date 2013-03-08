@@ -1,6 +1,9 @@
 Changes from jTDS 1.3.0
 =======================
 
+03/08/2013 - Holger Rehn
+ o Improved fix for bug #694, the previous attempt wasn't sufficient.
+
 03/07/2013 - Holger Rehn
  o Applied fix for bug #695 provided by Keith Robinson.
  o Fixed bug #694, jTDS logger may cause an NPE. 

@@ -112,6 +112,7 @@ public class Driver implements java.sql.Driver {
     public static final String USECURSORS    = "prop.usecursors";
     public static final String USEJCIFS      = "prop.usejcifs";
     public static final String USENTLMV2     = "prop.usentlmv2";
+    public static final String USEKERBEROS   = "prop.usekerberos";
     public static final String USELOBS       = "prop.uselobs";
     public static final String USER          = "prop.user";
     public static final String SENDSTRINGPARAMETERSASUNICODE = "prop.useunicode";

@@ -159,6 +159,7 @@ public class JtdsObjectFactoryTest extends UnitTestBase
       defaults.put( Driver.USEJCIFS                     , DefaultProperties.USEJCIFS              );
       defaults.put( Driver.USELOBS                      , DefaultProperties.USELOBS               );
       defaults.put( Driver.USENTLMV2                    , DefaultProperties.USENTLMV2             );
+      defaults.put( Driver.USEKERBEROS                  , DefaultProperties.USEKERBEROS           );
       defaults.put( Driver.USER                         , DefaultProperties.USER                  );
       defaults.put( Driver.WSID                         , DefaultProperties.WSID                  );
       defaults.put( Driver.XAEMULATION                  , DefaultProperties.XAEMULATION           );

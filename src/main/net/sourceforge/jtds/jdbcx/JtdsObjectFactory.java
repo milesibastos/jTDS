@@ -91,6 +91,7 @@ public class JtdsObjectFactory implements ObjectFactory
             Driver.USECURSORS,
             Driver.USEJCIFS,
             Driver.USENTLMV2,
+            Driver.USEKERBEROS,
             Driver.USELOBS,
             Driver.USER,
             Driver.SENDSTRINGPARAMETERSASUNICODE,

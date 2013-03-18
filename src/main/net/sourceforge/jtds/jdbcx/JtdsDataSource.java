@@ -404,6 +404,16 @@ public class JtdsDataSource implements DataSource, ConnectionPoolDataSource, XAD
       return Boolean.valueOf( (String) _Config.get( Driver.USENTLMV2 ) ).booleanValue();
    }
 
+   public void setUseKerberos(boolean useKerberos)
+   {
+      _Config.put( Driver.USEKERBEROS, Boolean.toString( useKerberos ) );
+   }
+
+   public boolean getUseKerberos()
+   {
+      return Boolean.valueOf( (String) _Config.get( Driver.USEKERBEROS ) ).booleanValue();
+   }
+
    public void setInstance( String instance )
    {
       _Config.put( Driver.INSTANCE, instance );

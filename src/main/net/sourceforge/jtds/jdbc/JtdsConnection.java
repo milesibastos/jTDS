@@ -236,12 +236,14 @@ public class JtdsConnection implements java.sql.Connection {
     private boolean useJCIFS;
     /** When doing NTLM authentication, send NTLMv2 response rather than regular response */
     private boolean useNTLMv2 = false;
+    /** Force Kerberos authentication */
+    private boolean useKerberos = false;
 
     /** the number of currently open connections */
     private static int[] connections = new int[1];
     /** The list of savepoints. */
     private ArrayList savepoints;
-    /** Maps each savepoint to a list of tmep procedures created since the savepoint */
+    /** Maps each savepoint to a list of temp procedures created since the savepoint */
     private Map savepointProcInTran;
     /** Counter for generating unique savepoint identifiers */
     private int savepointId;
@@ -953,6 +955,14 @@ public class JtdsConnection implements java.sql.Connection {
         return useNTLMv2;
     }
 
+   /**
+    * Return whether to use Kerberos authentication for MS SQL Server.
+    */
+   boolean getUseKerberos()
+   {
+      return useKerberos;
+   }
+
     /**
      * Retrieves the application name for this connection.
      *
@@ -1196,7 +1206,8 @@ public class JtdsConnection implements java.sql.Connection {
         useJCIFS = parseBooleanProperty(info,Driver.USEJCIFS);
         charsetSpecified = serverCharset.length() > 0;
         useNTLMv2 = parseBooleanProperty(info,Driver.USENTLMV2);
-
+        useKerberos = parseBooleanProperty(info,Driver.USEKERBEROS);
+        
         //note:mdb in certain cases (e.g. NTLMv2) the domain name must be
         //  all upper case for things to work.
         if( domainName != null )

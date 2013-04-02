@@ -548,7 +548,7 @@ public class Support {
                           else if( len > 10 && val.charAt( 4 ) == '-' )
                           {
                              // get rid of the time part
-                             return Timestamp.valueOf( val.split( " " )[0].trim() );
+                             return Date.valueOf( val.split( " " )[0].trim() );
                           }
                           // maybe a TIME (format: [h]h:[m]m:[s]s)
                           // optional conversion not required by the JDBC specs

@@ -42,6 +42,31 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
    /**
+    * Regression test for bug #699, conversion from String value of Timestamp to
+    * Date fails.
+    */
+   public void testBug699()
+      throws Exception
+   {
+      String ts = "2012-10-26 18:45:01.123";
+
+      Statement sta = con.createStatement();
+      sta.executeUpdate( "create table #Bug699 (A varchar(50))" );
+
+      PreparedStatement pst = con.prepareStatement( "insert into #Bug699 values(?)" );
+
+      pst.setString( 1, ts );
+      pst.executeUpdate();
+
+      ResultSet res = sta.executeQuery( "select * from #Bug699" );
+      assertTrue( res.next() );
+      assertEquals( Date.valueOf( ts.split( " " )[0] ), res.getDate( 1 ) );
+      assertFalse( res.next() );
+
+      sta.close();
+   }
+
+   /**
     * <p> Regression test for bug #682, calling a procedure with a parameter of
     * type date, time or datetime fails with an error. </p>
     *

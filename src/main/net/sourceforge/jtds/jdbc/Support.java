@@ -505,7 +505,7 @@ public class Support {
                           else if( len > 7 && val.charAt( 2 ) == ':' )
                           {
                              // get rid of fractions of seconds
-                             return new Timestamp( Time.valueOf( val.trim().split("\\.")[0].trim() ).getTime() );
+                             return new Timestamp( Time.valueOf( val.split("\\.")[0].trim() ).getTime() );
                           }
                        }
                        catch( IllegalArgumentException ie )

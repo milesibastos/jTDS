@@ -20,7 +20,6 @@ package net.sourceforge.jtds.jdbcx;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
-
 import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.RefAddr;
@@ -111,6 +110,7 @@ public class JtdsObjectFactory implements ObjectFactory
       HashMap values = new HashMap();
 
       Enumeration c = ref.getAll();
+
       while( c.hasMoreElements() )
       {
          RefAddr ra = (RefAddr) c.nextElement();
@@ -120,6 +120,7 @@ public class JtdsObjectFactory implements ObjectFactory
       for( int i = 0; i < props.length; i ++ )
       {
          String value = (String) values.get( props[i].toLowerCase() );
+//         value = value == null ? (String) values.get( Messages.get( props[i].toLowerCase() ) ) : value;
 
          if( value != null )
          {

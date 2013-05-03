@@ -8,109 +8,95 @@
 //
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 // Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
 package net.sourceforge.jtds.jdbc.cache;
 
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * Simple LRU cache for any type of object. Implemented as an extended
- * <code>HashMap</code> with a maximum size and an aggregated <code>List</code>
- * as LRU queue.
+ * <p> Simple LRU cache for any type of object, based on a {@link LinkedHashMap}
+ * with a maximum size. </p>
  *
- * @author Brett Wooldridge
- * @version $Id: SimpleLRUCache.java,v 1.1 2005-04-25 11:46:56 alin_sinpalean Exp $
+ * @author
+ *    Holger Rehn
  */
-public class SimpleLRUCache extends HashMap {
-    /** Maximum cache size. */
-    private final int maxCacheSize;
-    /** LRU list. */
-    private final LinkedList list;
+public class SimpleLRUCache<K,V>
+{
 
-    /**
-     * Constructs a new LRU cache instance.
-     *
-     * @param maxCacheSize the maximum number of entries in this cache before
-     *                     entries are aged off
-     */
-    public SimpleLRUCache(int maxCacheSize) {
-        super(maxCacheSize);
-        this.maxCacheSize = Math.max(0, maxCacheSize);
-        this.list = new LinkedList();
-    }
+   // private instance fields //////////////////////////////////////////////////
 
-    /**
-     * Overrides clear() to also clear the LRU list.
-     */
-    public synchronized void clear() {
-        super.clear();
-        list.clear();
-    }
+   /**
+    * map backing the LRU cache
+    */
+   private final Map<K,V> _Map;
 
-    /**
-     * Overrides <code>put()</code> so that it also updates the LRU list.
-     *
-     * @param key   key with which the specified value is to be associated
-     * @param value value to be associated with the key
-     * @return previous value associated with key or <code>null</code> if there
-     *         was no mapping for key; a <code>null</code> return can also
-     *         indicate that the cache previously associated <code>null</code>
-     *         with the specified key
-     * @see java.util.Map#put(Object, Object)
-     */
-    public synchronized Object put(Object key, Object value) {
-        if (maxCacheSize == 0) {
-            return null;
-        }
+   // public constructors //////////////////////////////////////////////////////
 
-        // if the key isn't in the cache and the cache is full...
-        if (!super.containsKey(key) && !list.isEmpty() && list.size() + 1 > maxCacheSize) {
-            Object deadKey = list.removeLast();
-            super.remove(deadKey);
-        }
+   /**
+    * <P> Constructs a new LRU cache with a limited capacity. </p>
+    *
+    * @param limit
+    *    maximum number of entries in this cache
+    */
+   public SimpleLRUCache( final int limit )
+   {
+      _Map = new LinkedHashMap<K,V>( limit + 10, 0.75f, true )
+      {
+         @Override
+         protected boolean removeEldestEntry( Map.Entry<K,V> eldest )
+         {
+            return size() > limit;
+         }
+      };
+   }
 
-        freshenKey(key);
-        return super.put(key, value);
-    }
+   // public methods ///////////////////////////////////////////////////////////
 
-    /**
-     * Overrides <code>get()</code> so that it also updates the LRU list.
-     *
-     * @param key key with which the expected value is associated
-     * @return the value to which the cache maps the specified key, or
-     *         <code>null</code> if the map contains no mapping for this key
-     */
-    public synchronized Object get(Object key) {
-        Object value = super.get(key);
-        if (value != null) {
-            freshenKey(key);
-        }
-        return value;
-    }
+   /**
+    * <p> Updates the LRU cache by adding a new entry. </p>
+    *
+    * @see
+    *    java.util.Map#put(Object,Object)
+    *
+    * @param key
+    *    key with which the specified value is to be associated
+    *
+    * @param value
+    *    value to be associated with the specified key
+    *
+    * @return
+    *    previous value associated with key or {@code null} if there was no
+    *    mapping for key; a {@code null} value can also indicate that the cache
+    *    previously associated {@code null} with the specified key
+    */
+   public synchronized V put( K key, V value )
+   {
+      return _Map.put( key, value );
+   }
 
-    /**
-     * @see java.util.Map#remove(Object)
-     */
-    public synchronized Object remove(Object key) {
-        list.remove(key);
-        return super.remove(key);
-    }
+   /**
+    * <p> Get the value associated with the given key, if any. </p>
+    *
+    * @see
+    *    java.util.Map#get(Object)
+    *
+    * @param key
+    *    the key whose associated value is to be returned
+    *
+    * @return
+    *    the value to which the specified key is mapped, or {@code null} if this
+    *    map contains no mapping for the key
+    */
+   public synchronized V get( K key )
+   {
+      return _Map.get( key );
+   }
 
-    /**
-     * Moves the specified value to the top of the LRU list (the bottom of the
-     * list is where least recently used items live).
-     *
-     * @param key key of the value to move to the top of the list
-     */
-    private void freshenKey(Object key) {
-        list.remove(key);
-        list.addFirst(key);
-    }
 }

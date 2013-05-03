@@ -1,6 +1,11 @@
 Changes from jTDS 1.3.0
 =======================
 
+05/03/2013 - Holger Rehn
+ o Fixed a bug that could cause the statement cache to be disabled. 
+ o Improved statement cache performance.
+ o Removed unnecessary synchronization overhead from SQL statement parser.
+
 05/01/2013 - Holger Rehn
  o Fixed bug #687, JtdsObjectFactory don't accept the connection property name
    mappings used in jTDS versions up to jTDS 1.2.6.

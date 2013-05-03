@@ -88,8 +88,10 @@ class SQLParser {
         }
     }
 
-    /** LRU cache of previously parsed SQL */
-    private static SimpleLRUCache cache;
+   /**
+    * a LRU cache for the last 500 parsed SQL statements
+    */
+   private final static SimpleLRUCache<SQLCacheKey,CachedSQLQuery> _Cache = new SimpleLRUCache( 1000 );
 
     /** Original SQL string */
     private final String sql;
@@ -119,72 +121,70 @@ class SQLParser {
     /** Connection object for server specific parsing. */
     private final JtdsConnection connection;
 
-    /**
-     * Parse the SQL statement processing JDBC escapes and parameter markers.
-     *
-     * @param extractTable
-     *            true to return the first table name in the FROM clause of a select
-     * @return The processed SQL statement, any procedure name, the first SQL
-     *         keyword and (optionally) the first table name as
-     *         elements 0 1, 2 and 3 of the returned <code>String[]</code>.
-     * @throws SQLException if a parse error occurs
-     */
-    static String[] parse(String sql, ArrayList paramList,
-                          JtdsConnection connection, boolean extractTable)
-            throws SQLException {
-    	// Don't cache extract table parse requests, just process it
-    	if (extractTable) {
-    		SQLParser parser = new SQLParser(sql, paramList, connection);
-    		return parser.parse(extractTable);
-    	}
+   /**
+    * <p> Parse the SQL statement processing JDBC escapes and parameter markers.
+    * </p>
+    *
+    * @param extractTable
+    *    {@code true} to return the first table name in the FROM clause of a
+    *    SELECT
+    *
+    * @return
+    *    the processed SQL statement, any procedure name, the first SQL keyword
+    *    and (optionally) the first table name as elements 0, 1, 2 and 3 of the
+    *    returned {@code String[]}.
+    *
+    * @throws SQLException
+    *    if a parse error occurs
+    */
+   static String[] parse( String sql, ArrayList paramList, JtdsConnection connection, boolean extractTable )
+      throws SQLException
+   {
+      String[] ret;
 
-        SimpleLRUCache cache = getCache(connection);
+      // don't cache extract table parse requests
+      if( extractTable )
+      {
+         ret = new SQLParser( sql, paramList, connection ).parse( extractTable );
+      }
+      else
+      {
+         // By not synchronizing on the cache, we're admitting that the possibility
+         // of multiple parses of the same statement can occur. However, it is
+         //   1) unlikely under normal usage, and
+         //   2) harmless to the cache.
+         // By avoiding a synchronization block around the get()-parse()-put(), we
+         // reduce the contention greatly in the nominal case.
 
-        SQLCacheKey cacheKey = new SQLCacheKey(sql, connection);
+         SQLCacheKey cacheKey = new SQLCacheKey( sql, connection );
+         CachedSQLQuery cachedQuery = _Cache.get( cacheKey );
 
-        // By not synchronizing on the cache, we're admitting that the possibility of multiple
-        // parses of the same statement can occur.  However, it is 1) unlikely under normal
-        // usage, and 2) harmless to the cache.  By avoiding a synchronization block around
-        // the get()-parse()-put(), we reduce the contention greatly in the nominal case.
-        CachedSQLQuery cachedQuery = (CachedSQLQuery) cache.get(cacheKey);
-        if (cachedQuery == null) {
-            // Parse and cache SQL
-            SQLParser parser = new SQLParser(sql, paramList, connection);
-            cachedQuery = new CachedSQLQuery(parser.parse(extractTable),
-                    paramList);
-            cache.put(cacheKey, cachedQuery);
-        } else {
-            // Create full ParamInfo objects out of cached object
-            final int length = (cachedQuery.paramNames == null)
-                    ? 0 : cachedQuery.paramNames.length;
-            for (int i = 0; i < length; i++) {
-                ParamInfo paramInfo = new ParamInfo(cachedQuery.paramNames[i],
-                                                    cachedQuery.paramMarkerPos[i],
-                                                    cachedQuery.paramIsRetVal[i],
-                                                    cachedQuery.paramIsUnicode[i]);
-                paramList.add(paramInfo);
+         if( cachedQuery == null )
+         {
+            // parse statement
+            ret = new SQLParser( sql, paramList, connection ).parse( extractTable );
+
+            // update LRU cache
+            _Cache.put( cacheKey, new CachedSQLQuery( ret, paramList ) );
+         }
+         else
+         {
+            ret = cachedQuery.parsedSql;
+
+            // create ParamInfo objects from CachedSQLQuery
+            int length = cachedQuery.paramNames == null ? 0 : cachedQuery.paramNames.length;
+
+            for( int i = 0; i < length; i ++ )
+            {
+               paramList.add( new ParamInfo( cachedQuery.paramNames[i], cachedQuery.paramMarkerPos[i], cachedQuery.paramIsRetVal[i], cachedQuery.paramIsUnicode[i] ) );
             }
-        }
-        return cachedQuery.parsedSql;
-    }
+         }
+      }
+
+      return ret;
+   }
 
     // --------------------------- Private Methods --------------------------------
-
-    /**
-     * Retrieves the statement cache, creating it if required.
-     *
-     * @return the cache as a <code>SimpleLRUCache</code>
-     */
-    private synchronized static SimpleLRUCache getCache(JtdsConnection connection) {
-        if (cache == null) {
-            int maxStatements = connection.getMaxStatements();
-            maxStatements = Math.max(0, maxStatements);
-            maxStatements = Math.min(1000, maxStatements);
-            cache = new SimpleLRUCache(maxStatements);
-        }
-        return cache;
-    }
-
 
     /** Lookup table to test if character is part of an identifier. */
     private static boolean identifierChar[] = {
@@ -683,6 +683,7 @@ class SQLParser {
         {
            append(')');
         }
+
 
         return true;
     }

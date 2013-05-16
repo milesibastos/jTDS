@@ -112,7 +112,8 @@ public class BlobBuffer {
      */
     private int openCount;
     /**
-     * True if attempts to create a BLOB file have failed.
+     * True if attempts to create a BLOB file have failed or the buffer is
+     * created without specifying a buffer directory.
      */
     private boolean isMemOnly;
     /**
@@ -131,9 +132,12 @@ public class BlobBuffer {
      * @param maxMemSize the maximum size of the in memory buffer
      */
     public BlobBuffer(File bufferDir, long maxMemSize) {
-    	this.bufferDir = bufferDir;
-        this.maxMemSize = (int) maxMemSize;
-        buffer = EMPTY_BUFFER;
+       if (maxMemSize > Integer.MAX_VALUE)
+          throw new IllegalArgumentException("The maximum in-memory buffer size of a blob buffer cannot exceed 2GB");
+
+       this.bufferDir = bufferDir;
+       this.maxMemSize = (int) maxMemSize;
+       buffer = EMPTY_BUFFER;
     }
 
     /**
@@ -161,12 +165,16 @@ public class BlobBuffer {
      * in which case the blob storage will remain entirely in memory.
      */
     public void createBlobFile() {
+    	if (bufferDir == null) {
+    		isMemOnly = true;
+    		return;
+    	}
         try {
             blobFile = File.createTempFile("jtds", ".tmp", bufferDir);
             // blobFile.deleteOnExit(); memory leak, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6664633
             raFile = new RandomAccessFile(blobFile, "rw");
             if (length > 0) {
-                raFile.write(buffer, 0, (int) length);
+                raFile.write(buffer, 0, length);
             }
             buffer = new byte[PAGE_SIZE];
             currentPage = INVALID_PAGE;
@@ -370,7 +378,7 @@ public class BlobBuffer {
         } else if (len == 0) {
             return;
         }
-        if ((long) writePtr + len > (long) Integer.MAX_VALUE) {
+        if ((long) writePtr + len > Integer.MAX_VALUE) {
             throw new IOException("BLOB may not exceed 2GB in size");
         }
         if (writePtr > length) {
@@ -527,12 +535,12 @@ public class BlobBuffer {
      */
     public void setBuffer(byte[] bytes, boolean copy) {
         if (copy) {
-            this.buffer = new byte[bytes.length];
-            System.arraycopy(bytes, 0, this.buffer, 0, buffer.length);
+            buffer = new byte[bytes.length];
+            System.arraycopy(bytes, 0, buffer, 0, buffer.length);
         } else {
-            this.buffer = bytes;
+            buffer = bytes;
         }
-        this.length = buffer.length;
+        length = buffer.length;
     }
 
     //
@@ -553,7 +561,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public BlobInputStream(long pos) throws IOException {
-            BlobBuffer.this.open();
+            open();
             open = true;
             readPtr = (int) pos;
         }
@@ -580,7 +588,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int available() throws IOException {
-            return (int) BlobBuffer.this.getLength() - readPtr;
+            return (int) getLength() - readPtr;
         }
 
         /**
@@ -641,7 +649,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public UnicodeInputStream(long pos) throws IOException {
-            BlobBuffer.this.open();
+            open();
             open = true;
             readPtr = (int) pos;
         }
@@ -668,7 +676,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int available() throws IOException {
-            return (int) BlobBuffer.this.getLength() - readPtr;
+            return (int) getLength() - readPtr;
         }
 
         /**
@@ -722,7 +730,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public AsciiInputStream(long pos) throws IOException {
-            BlobBuffer.this.open();
+            open();
             open = true;
             readPtr = (int) pos;
         }
@@ -749,7 +757,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         public int available() throws IOException {
-            return ((int) BlobBuffer.this.getLength() - readPtr) / 2;
+            return ((int) getLength() - readPtr) / 2;
         }
 
         /**
@@ -804,7 +812,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         BlobOutputStream(long pos) throws IOException {
-            BlobBuffer.this.open();
+            open();
             open = true;
             writePtr = (int) pos;
         }
@@ -876,7 +884,7 @@ public class BlobBuffer {
          * @throws IOException if an I/O error occurs
          */
         AsciiOutputStream(long pos) throws IOException {
-            BlobBuffer.this.open();
+            open();
             open = true;
             writePtr = (int) pos;
         }
@@ -937,15 +945,15 @@ public class BlobBuffer {
         if (pos < 0) {
             throw new SQLException(Messages.get("error.blobclob.badpos"), "HY090");
         }
-        if (pos > this.length) {
+        if (pos > length) {
             throw new SQLException(Messages.get("error.blobclob.badposlen"), "HY090");
         }
         if (len < 0) {
             throw new SQLException(Messages.get("error.blobclob.badlen"), "HY090");
         }
-        if (pos + len > this.length) {
+        if (pos + len > length) {
             // Don't throw an exception, just return as much data as available
-            len = (int) (this.length - pos);
+            len = (int) (length - pos);
         }
         try {
             // Should not do this. It could cause trouble.
@@ -1034,7 +1042,7 @@ public class BlobBuffer {
             throw new SQLException(Messages.get("error.blobclob.badpos"),
                     "HY090");
         }
-        if (pos > this.length) {
+        if (pos > length) {
             throw new SQLException(Messages.get("error.blobclob.badposlen"),
                     "HY090");
         }
@@ -1082,7 +1090,7 @@ public class BlobBuffer {
             throw new SQLException(Messages.get("error.blobclob.badpos"),
                     "HY090");
         }
-        if (pos > this.length) {
+        if (pos > length) {
             throw new SQLException(Messages.get("error.blobclob.badposlen"),
                     "HY090");
         }
@@ -1094,7 +1102,7 @@ public class BlobBuffer {
             throw new SQLException(Messages.get("error.blobclob.badoffset"),
                     "HY090");
         }
-        if (len < 0 || pos + len > (long) Integer.MAX_VALUE
+        if (len < 0 || pos + len > Integer.MAX_VALUE
                 || offset + len > bytes.length) {
             throw new SQLException(Messages.get("error.blobclob.badlen"),
                     "HY090");
@@ -1105,7 +1113,7 @@ public class BlobBuffer {
         // a new buffer array if the size is small enough.
         //
         if (blobFile == null && pos == 0
-                && len >= this.length
+                && len >= length
                 && len <= maxMemSize) {
             if (copy) {
                 buffer = new byte[len];
@@ -1146,7 +1154,7 @@ public class BlobBuffer {
      * @return the length of the BLOB data in bytes
      */
     public long getLength() {
-        return this.length;
+        return length;
     }
 
     /**
@@ -1169,7 +1177,7 @@ public class BlobBuffer {
             throw new SQLException(Messages.get("error.blobclob.badlen"),
                     "HY090");
         }
-        if (len > this.length) {
+        if (len > length) {
             throw new SQLException(Messages.get("error.blobclob.lentoolong"),
                     "HY090");
         }
@@ -1216,7 +1224,7 @@ public class BlobBuffer {
                 throw new SQLException(Messages.get("error.blobclob.badpos"),
                         "HY090");
             }
-            if (start >= this.length) {
+            if (start >= length) {
                 throw new SQLException(Messages.get("error.blobclob.badposlen"),
                         "HY090");
             }
@@ -1229,7 +1237,7 @@ public class BlobBuffer {
                 return -1;
             }
             // FIXME Implement a better (O(n)) search algorithm
-            int limit = (int) length - pattern.length;
+            int limit = length - pattern.length;
             if (blobFile == null) {
                 for (int i = (int) start; i <= limit; i++) {
                     int p;

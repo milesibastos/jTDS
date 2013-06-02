@@ -1,6 +1,9 @@
 Changes from jTDS 1.3.0
 =======================
 
+06/02/2013 - Holger Rehn
+ o jTDS throws an SQLTimeoutException if an operation times out (bug #701).
+
 05/16/2013 - Holger Rehn
  o Added range check to class BlobBuffer as proposed by Benedict Elliott Smith.
  o Applied patch for explicitly creating an in-memory BlobBuffer provided by

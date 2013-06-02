@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
 import java.sql.SQLWarning;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -4127,7 +4128,7 @@ public class TdsCore {
         } finally {
             if (timer != null) {
                 if (!TimerThread.getInstance().cancelTimer(timer)) {
-                    throw new SQLException(
+                    throw new SQLTimeoutException(
                           Messages.get("error.generic.timeout"), "HYT00");
                 }
             }

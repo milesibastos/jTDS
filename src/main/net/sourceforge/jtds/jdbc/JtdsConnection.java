@@ -1207,7 +1207,7 @@ public class JtdsConnection implements java.sql.Connection {
         charsetSpecified = serverCharset.length() > 0;
         useNTLMv2 = parseBooleanProperty(info,Driver.USENTLMV2);
         useKerberos = parseBooleanProperty(info,Driver.USEKERBEROS);
-        
+
         //note:mdb in certain cases (e.g. NTLMv2) the domain name must be
         //  all upper case for things to work.
         if( domainName != null )
@@ -1974,30 +1974,40 @@ public class JtdsConnection implements java.sql.Connection {
         return xaEmulation;
     }
 
-    /**
-     * Retrieves the connection mutex and acquires an exclusive lock on the
-     * network connection.
-     *
-     * @return the mutex object as a <code>Semaphore</code>
-     */
-    Semaphore getMutex() {
-        // Thread.interrupted() will clear the interrupt status
-        boolean interrupted = Thread.interrupted();
+   /**
+    * Retrieves the connection mutex and acquires an exclusive lock on the
+    * network connection.
+    *
+    * @return
+    *    the mutex object as a <code>Semaphore</code>
+    */
+   Semaphore getMutex()
+   {
+      boolean interrupted = false;
 
-        try {
+      while( true )
+      {
+         // JDBC can not be interrupted, retry on InterruptedException
+         try
+         {
             mutex.acquire();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException("Thread execution interrupted");
-        }
+            break;
+         }
+         catch( InterruptedException e )
+         {
+            // interrupt status is cleared now
+            interrupted = true;
+         }
+      }
 
-        if (interrupted) {
-            // Bug [1596743] do not absorb interrupt status
-            Thread.currentThread().interrupt();
-        }
+      // Bug [1596743] do not absorb interrupt status
+      if( interrupted )
+      {
+         Thread.currentThread().interrupt();
+      }
 
-        return mutex;
+      return mutex;
     }
-
 
    /**
     * Releases (either closes or caches) a <code>TdsCore</code>.

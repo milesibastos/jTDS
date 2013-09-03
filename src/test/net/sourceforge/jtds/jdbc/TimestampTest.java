@@ -42,6 +42,42 @@ public class TimestampTest extends DatabaseTestCase {
     }
 
    /**
+    * <p> Test for the error wrongly reported in bug #706. </p>
+    */
+   public void testBug706()
+      throws Exception
+   {
+      Statement sta = con.createStatement();
+
+      sta.executeUpdate( "create table #Bug706 (I int primary key, A datetime)" );
+
+      PreparedStatement ins = con.prepareStatement( "insert into #Bug706 values(?,?)" );
+      PreparedStatement sel = con.prepareStatement( "select A from #Bug706 where I = ?" );
+
+      long now = System.currentTimeMillis();
+
+      // test 10000 millisecond values from now
+      for( int i = 0; i < 10000; i ++ )
+      {
+         Timestamp ref = new Timestamp( now + i );
+
+         ins.setInt( 1, i );
+         ins.setTimestamp( 2, ref );
+         ins.executeUpdate();
+
+         sel.setInt( 1, i );
+         ResultSet res = sel.executeQuery();
+         assertTrue( res.next() );
+         assertEquals( roundDateTime( ref ), res.getTimestamp( 1 ) );
+         res.close();
+      }
+
+      ins.close();
+      sel.close();
+      sta.close();
+   }
+
+   /**
     * Regression test for bug #699, conversion from String value of Timestamp to
     * Date fails.
     */
@@ -2835,5 +2871,48 @@ public class TimestampTest extends DatabaseTestCase {
         in.close();
         out.close();
     }
+
+   /**
+    * <p> Round a {@link Timestamp} value to increments of 0,000, 0,003 or 0,007
+    * seconds, according to the MS SQL Server's DATETIME data type. </p>
+    *
+    * @param ts
+    *    original timestamp
+    *
+    * @return
+    *    the rounded value
+    */
+   private Timestamp roundDateTime( Timestamp ts )
+   {
+      long ret = ts.getTime();
+      int  rem = (int) (ret % 10);
+
+      ret = ret - rem;
+
+      switch( rem )
+      {
+         case 0: // fall through
+         case 1: ret += 0;
+                 break;
+
+         case 2: // fall through
+         case 3: // fall through
+         case 4: ret += 3;
+                 break;
+
+         case 5: // fall through
+         case 6: // fall through
+         case 7: // fall through
+         case 8: // fall through
+                 ret += 7;
+                 break;
+
+         case 9: // fall through
+                 ret += 10;
+                 break;
+      }
+
+      return new Timestamp( ret );
+   }
 
 }

@@ -26,6 +26,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 
+import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 //
 // MJH - Changes for new jTDS version
@@ -34,14 +35,53 @@ import junit.framework.AssertionFailedError;
 /**
  * @version 1.0
  */
-public class CallableStatementTest extends TestBase {
+public class CallableStatementTest extends TestBase
+{
 
-    /** set to false to enable verbose console output */
-    private final boolean SILENT = true;
+   /** set to false to enable verbose console output */
+   private final boolean SILENT = true;
 
-    public CallableStatementTest(String name) {
-        super(name);
-    }
+   public CallableStatementTest( String name )
+   {
+      super( name );
+   }
+
+   public void testBug715()
+      throws SQLException, InterruptedException
+   {
+      Statement st = con.createStatement();
+      st.execute( "create procedure #sp_bug715 @data1 int as select 'bug715'" );
+      st.close();
+
+      final Throwable[] err = new Throwable[1];
+      final Statement[] sta = new Statement[1];
+
+      // start a separate thread to be able to abort if running into infinite loop
+      Thread t = new Thread( new Runnable()
+      {
+         @Override
+         public void run()
+         {
+            try
+            {
+               sta[0] = con.prepareCall( "{call #sp_bug715(-1)}" );
+            }
+            catch( SQLException e )
+            {
+               err[0] = e;
+            }
+         }
+      } );
+      t.start();
+
+      t.join( 10000 );
+
+      if( t.isAlive() )
+      {
+         sta[0].cancel();
+         Assert.fail( "locked in infinite loop, thread still running" );
+      }
+   }
 
    /**
     * Test comment processing, bug #634 (and #676).

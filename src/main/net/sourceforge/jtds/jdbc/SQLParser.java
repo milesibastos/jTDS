@@ -449,9 +449,14 @@ class SQLParser {
                             append( in[s ++] );
                          }
                       }
+                      else
+                      {
+                         return;
+                      }
+
                       break;
 
-            case '/': // skip multi line comment
+            case '/': // skip (and copy) multi line comment
                       if( s + 1 < len && in[s + 1] == '*' )
                       {
                          append( in[s ++] );
@@ -479,8 +484,14 @@ class SQLParser {
                         }
                         while( level > 0 );
                      }
+                     else
+                     {
+                        return;
+                     }
+
                      break;
-                     default: return;
+
+            default: return;
          }
       }
    }

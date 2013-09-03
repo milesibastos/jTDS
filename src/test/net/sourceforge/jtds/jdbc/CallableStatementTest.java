@@ -46,6 +46,9 @@ public class CallableStatementTest extends TestBase
       super( name );
    }
 
+   /**
+    * Test for infinite loop in comment processing, bug #715.
+    */
    public void testBug715()
       throws SQLException, InterruptedException
    {
@@ -81,6 +84,26 @@ public class CallableStatementTest extends TestBase
          sta[0].cancel();
          Assert.fail( "locked in infinite loop, thread still running" );
       }
+   }
+
+   /**
+    * Test stored procedure with string parameter, bug #713.
+    */
+   public void testBug713()
+      throws SQLException, InterruptedException
+   {
+      Statement st = con.createStatement();
+      st.execute( "create procedure #sp_bug713 @data varchar as select 713" );
+      st.close();
+
+      CallableStatement sta = con.prepareCall( "{call #sp_bug713('Bug713')}" );
+      ResultSet         res = sta.executeQuery();
+
+      assertTrue( res.next() );
+      assertEquals( 713, res.getInt( 1 ) );
+
+      res.close();
+      sta.close();
    }
 
    /**

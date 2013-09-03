@@ -120,8 +120,8 @@ public class JtdsObjectFactory implements ObjectFactory
 
       for( int i = 0; i < props.length; i ++ )
       {
-         String value = (String) values.get( props[i].toLowerCase() );
-         value = value == null ? (String) values.get( Messages.get( props[i].toLowerCase() ) ) : value;
+         String value = (String) values.get( props[i] );
+         value = value == null && props[i] != JtdsDataSource.DESCRIPTION ? (String) values.get( Messages.get( props[i] ).toLowerCase() ) : value;
 
          if( value != null )
          {

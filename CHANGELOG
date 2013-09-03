@@ -3,6 +3,7 @@ Changes from jTDS 1.3.1
 
 09/03/2013 - Holger Rehn
  o Fixed bug #715, infinite loop when parsing an SQL command.
+ o Fixed bug #710, invalid property handling in JtdsObjectFactory.
 
 ===============================================================================
 06/08/2013 - jTDS 1.3.1 released

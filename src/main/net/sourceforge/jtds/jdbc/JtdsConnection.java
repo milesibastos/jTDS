@@ -151,7 +151,7 @@ public class JtdsConnection implements java.sql.Connection {
     /** The minor version number eg 92. */
     private int databaseMinorVersion;
     /** True if this connection is closed. */
-    private boolean closed;
+    private volatile boolean closed;
     /** True if this connection is read only. */
     private boolean readOnly;
     /** List of statements associated with this connection. */
@@ -159,7 +159,7 @@ public class JtdsConnection implements java.sql.Connection {
     /** Default transaction isolation level. */
     private int transactionIsolation = java.sql.Connection.TRANSACTION_READ_COMMITTED;
     /** Default auto commit state. */
-    private boolean autoCommit = true;
+    private volatile boolean autoCommit = true;
     /** Diagnostc messages for this connection. */
     private final SQLDiagnostic messages;
     /** Connection's current rowcount limit. */
@@ -2183,15 +2183,18 @@ public class JtdsConnection implements java.sql.Connection {
         clearSavepoints();
     }
 
-    synchronized public boolean getAutoCommit() throws SQLException {
-        checkOpen();
+   public boolean getAutoCommit()
+      throws SQLException
+   {
+      checkOpen();
+      return autoCommit;
+   }
 
-        return autoCommit;
-    }
-
-    public boolean isClosed() throws SQLException {
-        return closed;
-    }
+   public boolean isClosed()
+      throws SQLException
+   {
+      return closed;
+   }
 
     public boolean isReadOnly() throws SQLException {
         checkOpen();

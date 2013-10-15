@@ -462,8 +462,8 @@ public class StatementTest extends TestBase
          assertEquals( i == expected.length -1 ? false : true, sta.getMoreResults() );
       }
 
-      // no update count expected
-      assertEquals( -1, sta.getUpdateCount() );
+      // no update count expected for MSSQL, Sybase seems to sum up the inserts and computed rows to a total of 157
+      assertEquals( isMSSQL() ? -1 : 157, sta.getUpdateCount() );
       sta.close();
    }
 

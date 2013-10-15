@@ -45,9 +45,17 @@ public abstract class TestBase extends TestCase {
     public static final Properties props = loadProperties(CONNECTION_PROPERTIES);
     Connection con;
 
-    public TestBase(String name) {
-        super(name);
-    }
+   private boolean MSSQL;
+
+   public TestBase( String name )
+   {
+      super( name );
+   }
+
+   public boolean isMSSQL()
+   {
+      return MSSQL;
+   }
 
    public void setUp() throws Exception {
         super.setUp();
@@ -89,6 +97,8 @@ public abstract class TestBase extends TestCase {
     protected void connect() throws Exception {
         disconnect();
         con = getConnection();
+
+        MSSQL = con.getMetaData().getDatabaseProductName().toLowerCase().contains( "microsoft" );
     }
 
    /**

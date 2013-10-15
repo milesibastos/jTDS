@@ -18,7 +18,6 @@
 package net.sourceforge.jtds.jdbc;
 
 import java.sql.*;
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.io.InputStream;
 import java.util.ArrayList;

@@ -232,12 +232,12 @@ public class TdsCore {
     private static final byte TDS_COLFMT_TOKEN      = (byte) 161;  // 0xA1
     /** TDS Table name token. */
     private static final byte TDS_TABNAME_TOKEN     = (byte) 164;  // 0xA4
-    /** TDS Cursor results column infomation token. */
+    /** TDS Cursor results column information token. */
     private static final byte TDS_COLINFO_TOKEN     = (byte) 165;  // 0xA5
-    /** TDS Computed result set names token. */
-    private static final byte TDS_COMP_NAMES_TOKEN  = (byte) 167;  // 0xA7
-    /** TDS Computed result set token. */
-    private static final byte TDS_COMP_RESULT_TOKEN = (byte) 168;  // 0xA8
+    /** TDS Computed result set names token. (TDS_ALTNAME) */
+    private static final byte TDS_ALT_NAMES_TOKEN   = (byte) 167;  // 0xA7
+    /** TDS Computed result set token. (TDS_ALTFMT) */
+    private static final byte TDS_ALT_RESULT_TOKEN  = (byte) 168;  // 0xA8
     /** TDS Order by columns token. */
     private static final byte TDS_ORDER_TOKEN       = (byte) 169;  // 0xA9
     /** TDS error result token. */
@@ -252,7 +252,7 @@ public class TdsCore {
     private static final byte TDS_CONTROL_TOKEN     = (byte) 174;  // 0xAE
     /** TDS Result set data row token. */
     private static final byte TDS_ROW_TOKEN         = (byte) 209;  // 0xD1
-    /** TDS Computed result set data row token. */
+    /** TDS Computed result set data row token. (TDS_ALTROW) */
     private static final byte TDS_ALTROW            = (byte) 211;  // 0xD3
     /** TDS 5.0 parameter value token. */
     private static final byte TDS5_PARAMS_TOKEN     = (byte) 215;  // 0xD7
@@ -2393,7 +2393,7 @@ public class TdsCore {
                tds7ResultToken();
                break;
             case ALTMETADATA_TOKEN:
-               tdsComputedResultToken();
+               tdsAltResultToken();
                break;
             case TDS_COLNAME_TOKEN:
                tds4ColNamesToken();
@@ -2407,11 +2407,11 @@ public class TdsCore {
             case TDS_COLINFO_TOKEN:
                tdsColumnInfoToken();
                break;
-            case TDS_COMP_NAMES_TOKEN:
-               tdsInvalidToken();
+            case TDS_ALT_NAMES_TOKEN:
+               tds5AltNameToken();
                break;
-            case TDS_COMP_RESULT_TOKEN:
-               tdsInvalidToken();
+            case TDS_ALT_RESULT_TOKEN:
+               tds5AltFormatToken();
                break;
             case TDS_ORDER_TOKEN:
                tdsOrderByToken();
@@ -2433,7 +2433,7 @@ public class TdsCore {
                tdsRowToken();
                break;
             case TDS_ALTROW:
-               tdsComputedRowToken();
+               tdsAltRowToken();
                break;
             case TDS5_PARAMS_TOKEN:
                tds5ParamsToken();
@@ -3153,16 +3153,41 @@ public class TdsCore {
         }
     }
 
-    /**
-     * Process a control token (function unknown).
-     *
-     * @throws IOException
-     */
-    private void tdsControlToken() throws IOException {
-        int pktLen = in.readShort();
+   /**
+    * <p> Process a control token. </p>
+    *
+    * <p> Token This data stream is used to tell the client about any user-defined
+    * format information for columns. It is used to support a facility in
+    * Transact-SQL that allows arbitrary, user-defined information to be
+    * associated with select target-list columns and then returned to the
+    * client. The SQL Server option control must be on for a server to return
+    * TDS_CONTROL data streams. This feature is used internally by some Sybase
+    * front-end applications. However, it is fairly obscure and normally unused
+    * by most customer applications. </p>
+    *
+    * FIXME: completely suppress control tokens, e.g. google "forces Adaptive Server to suppress TDS_CONTROL tokens"
+    * or see http://infocenter.sybase.com/help/index.jsp?topic=/com.sybase.infocenter.dc00075.1570/html/oledb/CHDCGBEH.htm
+    */
+   private void tdsControlToken()
+      throws IOException
+   {
+      // the total length, in bytes, of the remaining data stream
+      int pktLen = in.readShort();
 
-        in.skip(pktLen);
-    }
+      // don't process control token
+      in.skip( pktLen );
+
+      // the format described in the official TDS docs doesn't seem to be correct, at least for ASE
+
+//      // length, in bytes, of the control information that follows
+//      int fmtLen = in.read();
+//
+//      // This is the actual control information for a column. Its length is
+//      // fmtLen. If fmtLen is 0, this argument doesn’t exist in the data stream.
+//      // The fmt field is treated as a binary byte string. There is no character
+//      // set conversion performed on this argument.
+//      in.read( new byte[fmtLen] );
+   }
 
     /**
      * Process a row data token.
@@ -4260,10 +4285,165 @@ public class TdsCore {
     }
 
    /**
+    * Sybase ASE only
+    */
+   private void tds5AltFormatToken()
+      throws IOException, ProtocolException
+   {
+      // total length, in bytes, of the remaining data stream
+      final int pktLen = in.readShort();
+
+      // This is the ID of the compute clause being described. It is legal for a
+      // Transact-SQL statement to have multiple compute clauses. The ID is used
+      // to associate TDS_ALTNAME, TDS_ALTFMT, and TDS_ALTROW data streams.
+      short id = in.readShort();
+      int bytesRead = 2;
+
+      // This is the number of aggregate operators in the compute clause.
+      // For example, the clause “compute count(x), min(x), max(x)” has three
+      // aggregate operators. This field is a one-byte, unsigned integer.
+      int computeByCount = in.read();
+
+      // load column meta data
+      for( int i = 0; i < computeByCount; ++ i )
+      {
+         ColInfo col = computedColumns[i];
+
+         // read type of aggregate operator
+         int type = in.read();
+
+         switch( type )
+         {
+            case 0x61: // row count (bigint)
+                       col.name = "count_big";
+                       break;
+
+            case 0x4B: // summary count value (TDS_ALT_COUNT)
+                       col.name = "count";
+                       break;
+
+            case 0x4D: // sum value (TDS_ALT_SUM)
+                       col.name = "sum";
+                       break;
+
+            case 0x4F: // average of the row values (TDS_ALT_AVG)
+                       col.name = "avg";
+                       break;
+
+            case 0x51: // minimum value (TDS_ALT_MIN)
+                       col.name = "min";
+                       break;
+
+            case 0x52: // maximum value (TDS_ALT_MAX)
+                       col.name = "max";
+                       break;
+
+            default:
+               throw new ProtocolException( "unsupported aggregation type 0x" + Integer.toHexString( type ) );
+         }
+
+         // This is the column number associated with OpType. The first column
+         // in the select list is 1. This argument is a one-byte, unsigned integer.
+         int columnIndex = in.read() - 1;
+
+         col.name       += "(" + columns[columnIndex].name + ")";
+         col.realName    = col.name;
+         col.tableName   = columns[columnIndex].tableName;
+         col.catalog     = columns[columnIndex].catalog;
+         col.schema      = columns[columnIndex].schema;
+
+         // This is the data type of the data and is a one-byte unsigned
+         // integer. Fixed length datatypes are represented by a single datatype
+         // byte and have no following Length argument. Variable length
+         // datatypes are followed by Length which gives the maximum datatype
+         // length, in bytes.
+         col.userType    = in.readInt();
+
+         // load type information
+         TdsData.readType( in, col );
+
+         // read locale information
+         int locLen = in.read();
+         String locale = in.readUnicodeString( locLen );
+      }
+
+      // This is the number of columns in the by-list of the compute clause.
+      // For example, the compute clause “compute count(sales) by year,
+      // month, division” has three by-columns. It is legal to have no
+      // bycolumns. In that case, # ByCols is 0. The argument is a one-byte,
+      // unsigned integer.
+      int byCols = in.read();
+
+      // When there are by-columns in a compute (#ByCols not equal to 0),
+      // there is one Col# argument for each select column listed in the
+      // bycolumns clause. For example, “select a, b, c order by b, a compute
+      // sum(a) by b, a” will return # ByCols as 2 followed by Col# 2 andCol#
+      // 1. The first column number is 1. This argument is a one-byte,
+      // unsigned integer.
+      for( int c = 0; c < byCols; c ++ )
+      {
+         in.skip( 1 );
+      }
+   }
+
+   /**
+    * Sybase ASE only
+    */
+   private void tds5AltNameToken()
+      throws IOException, ProtocolException
+   {
+      // total length, in bytes, of the remaining data stream
+      final int pktLen = in.readShort();
+
+      // This is the ID of the compute clause being described. It is legal for a
+      // Transact-SQL statement to have multiple compute clauses. The ID is used
+      // to associate TDS_ALTNAME, TDS_ALTFMT, and TDS_ALTROW data streams.
+      short id = in.readShort();
+      int bytesRead = 2;
+
+      // FIXME: There may bemore than one compute statement in a Transact-SQL
+      // compute clause. Each compute clause is assigned an ID. ID is used to
+      // associate the TDS_ALTFMT and TDS_ALTROW data streams. All TDS_ALTNAME
+      // data streams are grouped together and precede any TDS_ALTFMT data
+      // streams. If there is more than one compute statement, all the
+      // TDS_ALTNAME data streams for the compute come first, followed by the
+      // TDS_ALTFMT data streams.
+
+      ArrayList colList = new ArrayList();
+
+      // repeat for each operator in the compute clause
+      while( bytesRead < pktLen )
+      {
+         ColInfo col = new ColInfo();
+
+         // This the length, in bytes, of the name or heading for each of the
+         // aggregate operators in the compute clause. Aggregate operators are not
+         // required to have headings and usually don’t. In the null heading case,
+         // NameLen will be 0 and no name field will follow. There is a NameLen
+         // for each operator in a compute clause.
+         int nameLen = in.read();
+
+         // This is the compute clause heading. This argument is NameLen bytes long.
+         // If NameLen is 0, this argument does not exist.
+         String name = in.readNonUnicodeString( nameLen );
+
+         col.realName = name;
+         col.name = name;
+         colList.add( col );
+
+         bytesRead = bytesRead + 1 + nameLen;
+      }
+
+      int colCnt  = colList.size();
+      computedColumns = (ColInfo[]) colList.toArray(new ColInfo[colCnt]);
+      computedRowData = new Object[colCnt];
+   }
+
+   /**
     * <p> Process meta data for the computed result set complementing the
     * current result set. </p>
     */
-   private void tdsComputedResultToken()
+   private void tdsAltResultToken()
       throws IOException, ProtocolException
    {
       int ciolumns = in.readShort();
@@ -4367,7 +4547,7 @@ public class TdsCore {
    /**
     * <p> Process computed row data. </p>
     */
-   private void tdsComputedRowToken()
+   private void tdsAltRowToken()
       throws IOException, ProtocolException, SQLException
    {
       // unique ID of the SQL statement that created the that generated the totals

@@ -472,7 +472,7 @@ public class CSUnitTest extends DatabaseTestCase
         " mymoney                    money not null,           " +
         " mysmallmoney               smallmoney not null,      " +
         " mybit                      bit not null,             " +
-        " mytimestamp                timestamp not null,       " +
+        " mytimestamp                timestamp not null,       " + // auto-updated column, MS SQL only accepts null values, Sybase doesn't accept values at all
         " mytext                     text not null,            " +
         " myimage                    image not null,           " +
         " mynullbinary               binary(3) null,          " +
@@ -517,7 +517,7 @@ public class CSUnitTest extends DatabaseTestCase
         "   mymoney,                     " +
         "   mysmallmoney,                " +
         "   mybit,                       " +
-        "   mytimestamp,                 " +
+        // "   mytimestamp,                 " // auto-updated column, MS SQL only accepts null values, Sybase doesn't accept any value at all
         "   mytext,                      " +
         "   myimage,                     " +
         "   mynullbinary,                " +
@@ -556,7 +556,7 @@ public class CSUnitTest extends DatabaseTestCase
         "    19.95,                      " + //   mymoney
         "    9.97,                       " + //   mysmallmoney
         "    1,                          " + //   mybit
-        "    null,                       " + //   mytimestamp
+        // "    null,                       "     mytimestamp - auto-updated column, MS SQL only accepts null values, Sybase doesn't accept any value at all
         "    'abcdefg',                  " + //   mytext
         "    0x0AAABB,                   " + //   myimage
         "    0x123456,                   " + //   mynullbinary

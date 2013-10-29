@@ -49,14 +49,17 @@ public class StatementTest extends TestBase
       dropTable( "Bug544b" );
 
       Statement sta = con.createStatement();
-      sta.executeUpdate( "create table Bug544a(A int, B int identity(18,1) not null)" );
+      sta.executeUpdate( "create table Bug544a(A int, B int identity not null)" );
       sta.executeUpdate( "create table Bug544b(A int)" );
+
+      // insert a row to bump up the identity value
+      sta.execute( "insert into Bug544a values( 9 )" );
 
       // create insert trigger
       sta.executeUpdate( "create trigger Bug544T on Bug544a for insert as begin insert into Bug544b values (12) end" );
 
       // insert data to fire the trigger
-      sta.execute( "insert into Bug544a values( 1 ) select SCOPE_IDENTITY()" );
+      sta.execute( "insert into Bug544a values( 1 ) select @@identity" );
 
       // dumpAll( sta );
 
@@ -66,9 +69,9 @@ public class StatementTest extends TestBase
       assertEquals( 1, sta.getUpdateCount() ); // insert executed by the trigger
       assertTrue( sta.getMoreResults() );
 
-      ResultSet res = sta.getResultSet();      // result of SELECT SCOPE_IDENTITY()" );
+      ResultSet res = sta.getResultSet();      // result of "select @@identity"
       assertTrue( res.next() );
-      assertEquals( 18, res.getInt( 1 ) );     // the generated value
+      assertEquals( 2, res.getInt( 1 ) );      // the generated value
       assertFalse( res.next() );
 
       // check the target table

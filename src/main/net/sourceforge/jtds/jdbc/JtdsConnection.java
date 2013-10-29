@@ -2540,35 +2540,54 @@ public class JtdsConnection implements java.sql.Connection {
         return prepareStatement(sql, JtdsStatement.RETURN_GENERATED_KEYS);
     }
 
-    /**
-     * Add a savepoint to the list maintained by this connection.
-     *
-     * @param savepoint The savepoint object to add.
-     * @throws SQLException
-     */
-    private void setSavepoint(SavepointImpl savepoint) throws SQLException {
-        Statement statement = null;
+   /**
+    * Add a savepoint to the list maintained by this connection.
+    *
+    * @param savepoint
+    *    The savepoint object to add.
+    *
+    * @throws SQLException
+    */
+   private void setSavepoint( SavepointImpl savepoint )
+      throws SQLException
+   {
+      Statement statement = null;
 
-        try {
-            statement = createStatement();
-            statement.execute("IF @@TRANCOUNT=0 BEGIN "
-                    + "SET IMPLICIT_TRANSACTIONS OFF; " + "BEGIN TRAN; " // Fix for bug []Patch: in SET IMPLICIT_TRANSACTIONS ON
-                    + "SET IMPLICIT_TRANSACTIONS ON; " + "END "          // mode BEGIN TRAN actually starts two transactions!
-                    + "SAVE TRAN jtds" + savepoint.getId());
-        } finally {
-            if (statement != null) {
-                statement.close();
-            }
-        }
+      try
+      {
+         statement = createStatement();
 
-        synchronized (this) {
-            if (savepoints == null) {
-                savepoints = new ArrayList();
-            }
+         if( serverType == Driver.SYBASE )
+         {
+            statement.execute( "IF @@TRANCOUNT=0 BEGIN TRAN "
+                             + "SAVE TRAN jtds" + savepoint.getId() );
+         }
+         else
+         {
+            statement.execute( "IF @@TRANCOUNT=0 BEGIN "
+                             + "SET IMPLICIT_TRANSACTIONS OFF; BEGIN TRAN; " // Fix for bug #569: in "SET IMPLICIT_TRANSACTIONS ON" mode
+                             + "SET IMPLICIT_TRANSACTIONS ON; END "          // (auto-commit), "BEGIN TRAN" actually starts two transactions!
+                             + "SAVE TRAN jtds" + savepoint.getId() );
+         }
+      }
+      finally
+      {
+         if( statement != null )
+         {
+            statement.close();
+         }
+      }
 
-            savepoints.add(savepoint);
-        }
-    }
+      synchronized( this )
+      {
+         if( savepoints == null )
+         {
+            savepoints = new ArrayList();
+         }
+
+         savepoints.add(savepoint);
+      }
+   }
 
     /**
      * Releases all savepoints. Used internally when committing or rolling back

@@ -2094,7 +2094,7 @@ public class ResultSetTest extends DatabaseTestCase {
 
         // insert test data using prepared statement
         for (int i = 0; i < iterations; i ++) {
-            st.executeUpdate("insert into #test values(" + dateString + ")");
+            st.executeUpdate("insert into #test values('" + dateString + "')");
         }
 
         long unprep = System.currentTimeMillis() - start;

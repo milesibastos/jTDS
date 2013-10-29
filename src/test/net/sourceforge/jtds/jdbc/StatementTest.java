@@ -118,12 +118,12 @@ public class StatementTest extends TestBase
       throws Exception
    {
       Statement sta = con.createStatement();
-      sta.executeUpdate( "create table #Bug528 (A int identity(11,1) not null, B varchar(10))" );
+      sta.executeUpdate( "create table #Bug528 (A int identity, B varchar(10))" );
 
-      boolean result = sta.execute( "insert into #Bug528(B) values ('test');" +  // Update Count: 1
-                                    "insert into #Bug528(B) values ('test');" +  // Update Count: 1
-                                    "select * from #Bug528",                     // ResultSet: [11, test] [12, test]
-                                    Statement.RETURN_GENERATED_KEYS );           // Generated Keys: 12
+      boolean result = sta.execute( "insert into #Bug528(B) values ('test') " +  // Update Count: 1
+                                    "insert into #Bug528(B) values ('test') " +  // Update Count: 1
+                                    "select * from #Bug528",                     // ResultSet: [1, test] [2, test]
+                                    Statement.RETURN_GENERATED_KEYS );           // Generated Keys: 1,2
 
       // dumpAll( sta );
 
@@ -136,10 +136,10 @@ public class StatementTest extends TestBase
       // get and check resultset
       ResultSet res = sta.getResultSet();
       assertTrue( res.next() );
-      assertEquals( 11, res.getInt( 1 ) );
+      assertEquals( 1, res.getInt( 1 ) );
       assertEquals( "test", res.getString( 2 ) );
       assertTrue( res.next() );
-      assertEquals( 12, res.getInt( 1 ) );
+      assertEquals( 2, res.getInt( 1 ) );
       assertEquals( "test", res.getString( 2 ) );
       assertFalse( res.next() );
 
@@ -147,9 +147,9 @@ public class StatementTest extends TestBase
       res = sta.getGeneratedKeys();
    // FIXME: the driver is not yet able to return generated keys for anything but the last update
    // assertTrue( res.next() );
-   // assertEquals( 11, res.getInt( 1 ) );
+   // assertEquals( 1, res.getInt( 1 ) );
       assertTrue( res.next() );
-      assertEquals( 12, res.getInt( 1 ) );
+      assertEquals( 2, res.getInt( 1 ) );
       assertFalse( res.next() );
 
       sta.close();

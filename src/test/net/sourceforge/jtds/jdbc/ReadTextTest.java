@@ -52,7 +52,7 @@ public class ReadTextTest extends TestBase {
         String data = strBuf.toString();
 
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #TEST (id int, t1 text, t2 ntext, t3 image)");
+        stmt.execute("CREATE TABLE #TEST (id int, t1 text, t2 " + ( isMSSQL() ? "ntext" : "unitext" ) + ", t3 image)");
 
         PreparedStatement pstmt = con.prepareStatement("INSERT INTO #TEST (id, t1, t2, t3) VALUES (?, ?, ?, ?)");
 

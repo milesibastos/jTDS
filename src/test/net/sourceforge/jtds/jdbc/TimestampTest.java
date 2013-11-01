@@ -1302,7 +1302,7 @@ public class TimestampTest extends DatabaseTestCase {
             + "   type char(30) not null, "
             + "   b    bit, "
             + "   str  char(30) not null, "
-            + "   t int identity(1,1), "
+            + "   t int identity, "
             + "   primary key (pk, type))    ");
 
         PreparedStatement  pstmt = con.prepareStatement(
@@ -1376,7 +1376,7 @@ public class TimestampTest extends DatabaseTestCase {
             + "   type char(30) not null,          "
             + "   b    bit,                        "
             + "   str  char(30) not null,          "
-            + "   t int identity(1,1), "
+            + "   t int identity, "
             + "    primary key (pk, type))    ");
 
         PreparedStatement pstmt = con.prepareStatement(

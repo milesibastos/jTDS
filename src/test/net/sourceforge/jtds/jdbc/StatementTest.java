@@ -784,10 +784,12 @@ public class StatementTest extends TestBase
      */
     public void testQueryTimeout() throws Exception
     {
+       dropProcedure( "testTimeout" );
+
        Statement st = con.createStatement();
        st.setQueryTimeout( 1 );
 
-       st.execute( "create procedure #testTimeout as begin waitfor delay '00:00:30'; select 1; end" );
+       st.execute( "create procedure testTimeout as begin waitfor delay '00:00:30' select 1 end" );
 
        long start = System.currentTimeMillis();
 

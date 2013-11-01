@@ -990,7 +990,7 @@ public class CSUnitTest extends DatabaseTestCase
 
             String query =
                     "create table jTDS_t0049a(               " +
-                    "  a integer identity(1,1) primary key,  " +
+                    "  a integer identity primary key,  " +
                     "  b char    not null)";
 
             assertEquals(0, stmt.executeUpdate(query));
@@ -1038,7 +1038,7 @@ public class CSUnitTest extends DatabaseTestCase
 
             String query =
                     "create table jTDS_t0050a(               " +
-                    "  a integer identity(1,1) primary key,  " +
+                    "  a integer identity primary key,  " +
                     "  b char    not null)";
 
             assertEquals(0, stmt.executeUpdate(query));

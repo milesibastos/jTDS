@@ -36,7 +36,7 @@ public class GenKeyTest extends TestBase {
         //
         Statement stmt = con.createStatement();
 
-        stmt.execute("CREATE TABLE #gktemp (id INT IDENTITY (1,1) PRIMARY KEY, dummyx VARCHAR(50))");
+        stmt.execute("CREATE TABLE #gktemp (id INT IDENTITY PRIMARY KEY, dummyx VARCHAR(50))");
 
         stmt.close();
         //
@@ -105,8 +105,8 @@ public class GenKeyTest extends TestBase {
      */
     public void testTrigger1() throws Exception {
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE jtdsTestTrigger1 (id INT IDENTITY (1,1) PRIMARY KEY, data INT)");
-        stmt.execute("CREATE TABLE jtdsTestTrigger2 (id INT IDENTITY (1,1) PRIMARY KEY, data INT)");
+        stmt.execute("CREATE TABLE jtdsTestTrigger1 (id INT IDENTITY PRIMARY KEY, data INT)");
+        stmt.execute("CREATE TABLE jtdsTestTrigger2 (id INT IDENTITY PRIMARY KEY, data INT)");
         stmt.close();
 
         try {

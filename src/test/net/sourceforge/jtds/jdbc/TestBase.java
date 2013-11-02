@@ -397,7 +397,7 @@ public abstract class TestBase extends TestCase {
 
       try
       {
-         stm.executeUpdate( "if exists (select * from sys.sysdatabases where name = '" + name + "') drop database " + name );
+         stm.executeUpdate( "drop database " + name );
       }
       catch( SQLException sqle )
       {
@@ -416,7 +416,7 @@ public abstract class TestBase extends TestCase {
 
       try
       {
-         stm.executeUpdate( "if exists (select * from " + ( name.startsWith( "#" ) ? "tempdb.dbo.sysobjects" : "sysobjects" ) + " where name like '" + name + "%' and type = 'U') drop table " + name );
+         stm.executeUpdate( "drop table \"" + name + "\"");
       }
       catch( SQLException sqle )
       {
@@ -435,7 +435,7 @@ public abstract class TestBase extends TestCase {
 
       try
       {
-         stm.executeUpdate( "if exists (select * from sysobjects where name like '" + name + "%' and type = 'V') drop view " + name );
+         stm.executeUpdate( "drop view \"" + name + "\"" );
       }
       catch( SQLException sqle )
       {
@@ -492,7 +492,7 @@ public abstract class TestBase extends TestCase {
 
       try
       {
-         stm.executeUpdate( "if exists (select * from " + ( name.startsWith( "#" ) ? "tempdb.dbo.sysobjects" : "sysobjects" ) + " where name like '" + name + "%' and type = 'P') drop procedure " + name );
+         stm.executeUpdate( "drop procedure \"" + name + "\"" );
       }
       catch( SQLException sqle )
       {

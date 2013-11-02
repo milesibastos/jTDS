@@ -78,7 +78,7 @@ public class ResultSetTest extends DatabaseTestCase {
 
       Statement sta = con.createStatement();
 
-      sta.executeUpdate( "create table Bug690( A int identity(0,1) not null, B int)" );
+      sta.executeUpdate( "create table Bug690( A int identity not null, B int)" );
 
       DatabaseMetaData dbm = con.getMetaData();
 
@@ -95,7 +95,7 @@ public class ResultSetTest extends DatabaseTestCase {
       res.close();
 
       // insert test data
-      for( int i = 0; i < 10; i ++ )
+      for( int i = 1; i <= 10; i ++ )
       {
          assertEquals( 1, sta.executeUpdate( "insert into Bug690(B) values (" + i + ")" ) );
       }
@@ -107,7 +107,7 @@ public class ResultSetTest extends DatabaseTestCase {
       assertTrue( rsmd.isAutoIncrement( 1 ) );
 
       // check data
-      for( int i = 0; i < 10; i ++ )
+      for( int i = 1; i <= 10; i ++ )
       {
          assertTrue( res.next() );
          assertEquals( i, res.getInt( 1 ) );
@@ -476,12 +476,16 @@ public class ResultSetTest extends DatabaseTestCase {
      * Test for bug [1028881] statement.execute() causes wrong ResultSet type.
      */
     public void testResultSetScroll3() throws Exception {
+
+        dropProcedure( "procResultSetScroll3" );
+        dropTable( "resultSetScroll3" );
+
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #resultSetScroll3 (data INT)");
-        stmt.execute("CREATE PROCEDURE #procResultSetScroll3 AS SELECT data FROM #resultSetScroll3");
+        stmt.execute("CREATE TABLE resultSetScroll3 (data INT)");
+        stmt.execute("CREATE PROCEDURE procResultSetScroll3 AS SELECT data FROM resultSetScroll3");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #resultSetScroll3 (data) VALUES (?)");
+        PreparedStatement pstmt = con.prepareStatement("INSERT INTO resultSetScroll3 (data) VALUES (?)");
         pstmt.setInt(1, 1);
         assertEquals(1, pstmt.executeUpdate());
         pstmt.close();
@@ -489,7 +493,7 @@ public class ResultSetTest extends DatabaseTestCase {
         // Test plain Statement
         Statement stmt2 = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY);
-        assertTrue("Was expecting a ResultSet", stmt2.execute("SELECT data FROM #resultSetScroll3"));
+        assertTrue("Was expecting a ResultSet", stmt2.execute("SELECT data FROM resultSetScroll3"));
 
         ResultSet rs = stmt2.getResultSet();
         assertEquals("ResultSet not scrollable", ResultSet.TYPE_SCROLL_INSENSITIVE, rs.getType());
@@ -498,7 +502,7 @@ public class ResultSetTest extends DatabaseTestCase {
         stmt2.close();
 
         // Test PreparedStatement
-        pstmt = con.prepareStatement("SELECT data FROM #resultSetScroll3", ResultSet.TYPE_SCROLL_INSENSITIVE,
+        pstmt = con.prepareStatement("SELECT data FROM resultSetScroll3", ResultSet.TYPE_SCROLL_INSENSITIVE,
                 ResultSet.CONCUR_READ_ONLY);
         assertTrue("Was expecting a ResultSet", pstmt.execute());
 
@@ -509,7 +513,7 @@ public class ResultSetTest extends DatabaseTestCase {
         pstmt.close();
 
         // Test CallableStatement
-        CallableStatement cstmt = con.prepareCall("{call #procResultSetScroll3}",
+        CallableStatement cstmt = con.prepareCall("{call procResultSetScroll3}",
                 ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
         assertTrue("Was expecting a ResultSet", cstmt.execute());
 
@@ -658,11 +662,14 @@ public class ResultSetTest extends DatabaseTestCase {
      */
     public void testCursorWarning() throws Exception
     {
+        dropProcedure( "SPTESTCW" );
+        dropTable( "TESTCW" );
+
         Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #TESTCW (id INT PRIMARY KEY, DATA VARCHAR(255))");
-        stmt.execute("CREATE PROC #SPTESTCW @P0 INT OUTPUT AS SELECT * FROM #TESTCW");
+        stmt.execute("CREATE TABLE TESTCW (id INT PRIMARY KEY, DATA VARCHAR(255))");
+        stmt.execute("CREATE PROC SPTESTCW @P0 INT OUTPUT AS SELECT * FROM TESTCW");
         stmt.close();
-        CallableStatement cstmt = con.prepareCall("{call #SPTESTCW(?)}",
+        CallableStatement cstmt = con.prepareCall("{call SPTESTCW(?)}",
                 ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
         cstmt.registerOutParameter(1, Types.INTEGER);
         ResultSet rs = cstmt.executeQuery();
@@ -682,14 +689,16 @@ public class ResultSetTest extends DatabaseTestCase {
      * </ol>
      */
     public void testCursorFallback() throws Exception {
+        dropProcedure( "testcursor" );
+
         Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
                                                 ResultSet.CONCUR_READ_ONLY);
         //
         // This test should fail on the cursor open but fall back to normal
         // execution returning two result sets
         //
-        stmt.execute("CREATE PROC #testcursor as SELECT 'data'  select 'data2'");
-        stmt.execute("exec #testcursor");
+        stmt.execute("CREATE PROC testcursor as SELECT 'data'  select 'data2'");
+        stmt.execute("exec testcursor");
         assertNotNull(stmt.getWarnings());
         ResultSet rs = stmt.getResultSet();
         assertNotNull(rs); // First result set OK
@@ -738,19 +747,23 @@ public class ResultSetTest extends DatabaseTestCase {
         stmt.close();
     }
 
-    /**
-     * Test whether retrieval by name returns the first occurence (that's what
-     * the spec requires).
-     */
-    public void testGetByName() throws Exception
-    {
-        Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT 1 myCol, 2 myCol, 3 myCol");
-        assertTrue(rs.next());
-        assertEquals(1, rs.getInt("myCol"));
-        assertFalse(rs.next());
-        stmt.close();
-    }
+   /**
+    * Test whether retrieval by name returns the first occurrence (that's what
+    * the spec requires).
+    */
+   public void testGetByName() throws Exception
+   {
+      // Sybase ASE doesn't support duplicate column names
+      if( isMSSQL() )
+      {
+         Statement stmt = con.createStatement();
+         ResultSet rs = stmt.executeQuery( "SELECT 1 myCol, 2 myCol, 3 myCol" );
+         assertTrue( rs.next() );
+         assertEquals( 1, rs.getInt( "myCol" ) );
+         assertFalse( rs.next() );
+         stmt.close();
+      }
+   }
 
     /**
      * Test if COL_INFO packets are processed correctly for

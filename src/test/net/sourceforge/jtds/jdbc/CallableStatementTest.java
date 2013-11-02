@@ -52,8 +52,10 @@ public class CallableStatementTest extends TestBase
    public void testBug715()
       throws SQLException, InterruptedException
    {
+      dropProcedure( "sp_bug715" );
+
       Statement st = con.createStatement();
-      st.execute( "create procedure #sp_bug715 @data1 int as select 'bug715'" );
+      st.execute( "create procedure sp_bug715 @data1 int as select 'bug715'" );
       st.close();
 
       final Throwable[] err = new Throwable[1];
@@ -67,7 +69,7 @@ public class CallableStatementTest extends TestBase
          {
             try
             {
-               sta[0] = con.prepareCall( "{call #sp_bug715(-1)}" );
+               sta[0] = con.prepareCall( "{call sp_bug715(-1)}" );
             }
             catch( SQLException e )
             {
@@ -92,11 +94,13 @@ public class CallableStatementTest extends TestBase
    public void testBug713()
       throws SQLException, InterruptedException
    {
+      dropProcedure( "sp_bug713" );
+
       Statement st = con.createStatement();
-      st.execute( "create procedure #sp_bug713 @data varchar as select 713" );
+      st.execute( "create procedure sp_bug713 @data varchar as select 713" );
       st.close();
 
-      CallableStatement sta = con.prepareCall( "{call #sp_bug713('Bug713')}" );
+      CallableStatement sta = con.prepareCall( "{call sp_bug713('Bug713')}" );
       ResultSet         res = sta.executeQuery();
 
       assertTrue( res.next() );
@@ -112,45 +116,47 @@ public class CallableStatementTest extends TestBase
    public void testCommentProcessing()
       throws SQLException
    {
+      dropProcedure( "sp_bug634" );
+
       Statement st = con.createStatement();
-      st.executeUpdate( "create procedure #sp_bug634 @data1 int, @data2 int as select @data1 + @data2" );
+      st.executeUpdate( "create procedure sp_bug634 @data1 int, @data2 int as select @data1 + @data2" );
       st.close();
 
       String[] variants = new String[]
       {
-         "{?=call #sp_bug634(?, ?)}",
+         "{?=call sp_bug634(?, ?)}",
 
-         "/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)",
-         "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
-         "?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)",
-         "?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)",
-         "?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)",
-         "?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)",
-         "?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)",
-         "?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)",
-         "?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)",
-         "?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)",
-         "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
-         "?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
-         "?=call #sp_bug634(?, ?) -- comment '\"?@[*-",
-         "?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)",
-         "?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)",
+         "/*/ comment '\"?@[*-} /**/*/?=call sp_bug634(?, ?)",
+         "?/*/ comment '\"?@[*-} /**/*/=call sp_bug634(?, ?)",
+         "?/*/ comment '\"?@[*-} /**/*/=call sp_bug634(?, ?)",
+         "?=/*/ comment '\"?@[*-} /**/*/call sp_bug634(?, ?)",
+         "?=call /*/ comment '\"?@[*-} /**/*/sp_bug634(?, ?)",
+         "?=call sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)",
+         "?=call sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)",
+         "?=call sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)",
+         "?=call sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)",
+         "?=call sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)",
+         "?=call sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
+         "?=call sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/",
+         "?=call sp_bug634(?, ?) -- comment '\"?@[*-",
+         "?=call -- comment '\"?@[*-}\n sp_bug634(?, ?)",
+         "?=call sp_bug634(-- comment '\"?@[*-}\n ?, ?)",
 
-         "/*/ comment '\"?@[*-} /**/*/{?=call #sp_bug634(?, ?)}",
-         "{/*/ comment '\"?@[*-} /**/*/?=call #sp_bug634(?, ?)}",
-         "{?/*/ comment '\"?@[*-} /**/*/=call #sp_bug634(?, ?)}",
-         "{?=/*/ comment '\"?@[*-} /**/*/call #sp_bug634(?, ?)}",
-         "{?=call /*/ comment '\"?@[*-} /**/*/#sp_bug634(?, ?)}",
-         "{?=call #sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)}",
-         "{?=call #sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)}",
-         "{?=call #sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)}",
-         "{?=call #sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)}",
-         "{?=call #sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)}",
-         "{?=call #sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/}",
-         "{?=call #sp_bug634(?, ?)}/*/ comment '\"?@[*-} /**/*/",
-         "{?=call #sp_bug634(?, ?)} -- comment '\"?@[*-}",
-         "{?=call -- comment '\"?@[*-}\n #sp_bug634(?, ?)}",
-         "{?=call #sp_bug634(-- comment '\"?@[*-}\n ?, ?)}"
+         "/*/ comment '\"?@[*-} /**/*/{?=call sp_bug634(?, ?)}",
+         "{/*/ comment '\"?@[*-} /**/*/?=call sp_bug634(?, ?)}",
+         "{?/*/ comment '\"?@[*-} /**/*/=call sp_bug634(?, ?)}",
+         "{?=/*/ comment '\"?@[*-} /**/*/call sp_bug634(?, ?)}",
+         "{?=call /*/ comment '\"?@[*-} /**/*/sp_bug634(?, ?)}",
+         "{?=call sp_bug634/*/ comment '\"?@[*-} /**/*/(?, ?)}",
+         "{?=call sp_bug634(/*/ comment '\"?@[*-} /**/*/?, ?)}",
+         "{?=call sp_bug634(?/*/ comment '\"?@[*-} /**/*/, ?)}",
+         "{?=call sp_bug634(?,/*/ comment '\"?@[*-} /**/*/ ?)}",
+         "{?=call sp_bug634(?, ?/*/ comment '\"?@[*-} /**/*/)}",
+         "{?=call sp_bug634(?, ?)/*/ comment '\"?@[*-} /**/*/}",
+         "{?=call sp_bug634(?, ?)}/*/ comment '\"?@[*-} /**/*/",
+         "{?=call sp_bug634(?, ?)} -- comment '\"?@[*-}",
+         "{?=call -- comment '\"?@[*-}\n sp_bug634(?, ?)}",
+         "{?=call sp_bug634(-- comment '\"?@[*-}\n ?, ?)}"
       };
 
       for( int i = 0; i < variants.length;  i ++ )
@@ -230,30 +236,27 @@ public class CallableStatementTest extends TestBase
         cstmt.close();
     }
 
-    /**
-     * Test for bug [974801] stored procedure error in Northwind
-     */
-    public void testCallableStatementCall4() throws Exception {
-        Statement stmt;
+   /**
+    * Test for bug [974801] stored procedure error in Northwind
+    */
+   public void testCallableStatementCall4() throws Exception
+   {
+      dropProcedure( "test space" );
 
-        try {
-            stmt = con.createStatement();
-            stmt.execute("create procedure \"#test space\" as SELECT COUNT(*) FROM sysobjects");
-            stmt.close();
+      Statement stmt;
 
-            CallableStatement cstmt = con.prepareCall("{call \"#test space\"}");
+      stmt = con.createStatement();
+      stmt.execute( "create procedure \"test space\" as SELECT COUNT(*) FROM sysobjects" );
+      stmt.close();
 
-            ResultSet rs = cstmt.executeQuery();
-            dump( rs,SILENT );
+      CallableStatement cstmt = con.prepareCall( "{call \"test space\"}" );
 
-            rs.close();
-            cstmt.close();
-        } finally {
-            stmt = con.createStatement();
-            stmt.execute("drop procedure \"#test space\"");
-            stmt.close();
-        }
-    }
+      ResultSet rs = cstmt.executeQuery();
+      dump( rs, SILENT );
+
+      rs.close();
+      cstmt.close();
+   }
 
     public void testCallableStatementExec1() throws Exception {
         CallableStatement cstmt = con.prepareCall("exec sp_who");
@@ -325,27 +328,25 @@ public class CallableStatementTest extends TestBase
         cstmt.close();
     }
 
-    public void testCallableStatementExec8() throws Exception {
-        Statement stmt;
+   public void testCallableStatementExec8()
+      throws Exception
+   {
+      dropProcedure( "test" );
 
-        try {
-            stmt = con.createStatement();
-            stmt.execute("create procedure #test as SELECT COUNT(*) FROM sysobjects");
-            stmt.close();
+      Statement stmt;
 
-            CallableStatement cstmt = con.prepareCall("execute #test");
+      stmt = con.createStatement();
+      stmt.execute( "create procedure test as SELECT COUNT(*) FROM sysobjects" );
+      stmt.close();
 
-            ResultSet rs = cstmt.executeQuery();
-            dump( rs,SILENT );
+      CallableStatement cstmt = con.prepareCall( "execute test" );
 
-            rs.close();
-            cstmt.close();
-        } finally {
-            stmt = con.createStatement();
-            stmt.execute("drop procedure #test");
-            stmt.close();
-        }
-    }
+      ResultSet rs = cstmt.executeQuery();
+      dump( rs, SILENT );
+
+      rs.close();
+      cstmt.close();
+   }
 
     /**
      * Test for bug [978175] 0.8: Stored Procedure call doesn't work anymore
@@ -368,24 +369,27 @@ public class CallableStatementTest extends TestBase
     }
 
     public void testCallableStatementParsing1() throws Exception {
+        dropProcedure( "sp_csp1" );
+        dropTable( "csp1" );
+
         String data = "New {order} plus {1} more";
         Statement stmt = con.createStatement();
 
-        stmt.execute("CREATE TABLE #csp1 (data VARCHAR(32))");
+        stmt.execute("CREATE TABLE csp1 (data VARCHAR(32))");
         stmt.close();
 
         stmt = con.createStatement();
-        stmt.execute("create procedure #sp_csp1 @data VARCHAR(32) as INSERT INTO #csp1 (data) VALUES(@data)");
+        stmt.execute("create procedure sp_csp1 @data VARCHAR(32) as INSERT INTO csp1 (data) VALUES(@data)");
         stmt.close();
 
-        CallableStatement cstmt = con.prepareCall("{call #sp_csp1(?)}");
+        CallableStatement cstmt = con.prepareCall("{call sp_csp1(?)}");
 
         cstmt.setString(1, data);
         cstmt.execute();
         cstmt.close();
 
         stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #csp1");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM csp1");
 
         assertTrue(rs.next());
 
@@ -396,27 +400,23 @@ public class CallableStatementTest extends TestBase
         stmt.close();
     }
 
-    /**
-     * Test for bug [938632] String index out of bounds error in 0.8rc1.
-     */
-    public void testCallableStatementParsing2() throws Exception {
-        try {
-            Statement stmt = con.createStatement();
+   /**
+    * Test for bug [938632] String index out of bounds error in 0.8rc1.
+    */
+   public void testCallableStatementParsing2() throws Exception
+   {
+      dropProcedure( "load_smtp_in_1gr_ls804192" );
 
-            stmt.execute("create procedure #load_smtp_in_1gr_ls804192 as SELECT name FROM sysobjects");
-            stmt.close();
+      Statement stmt = con.createStatement();
 
-            CallableStatement cstmt = con.prepareCall("{?=call #load_smtp_in_1gr_ls804192}");
-            cstmt.registerOutParameter(1, java.sql.Types.INTEGER); // MJH 01/05/04
-            cstmt.execute();
-            cstmt.close();
-        } finally {
-            Statement stmt = con.createStatement();
+      stmt.execute( "create procedure load_smtp_in_1gr_ls804192 as SELECT name FROM sysobjects" );
+      stmt.close();
 
-            stmt.execute("drop procedure #load_smtp_in_1gr_ls804192");
-            stmt.close();
-        }
-    }
+      CallableStatement cstmt = con.prepareCall( "{?=call load_smtp_in_1gr_ls804192}" );
+      cstmt.registerOutParameter( 1, java.sql.Types.INTEGER ); // MJH 01/05/04
+      cstmt.execute();
+      cstmt.close();
+   }
 
     /**
      * Test for bug [1006845] Stored procedure with 18 parameters.
@@ -483,109 +483,109 @@ public class CallableStatementTest extends TestBase
         }
     }
 
-    /**
-     * Test for reature request [956800] setNull(): Not implemented.
-     */
-    public void testCallableSetNull1() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE TABLE #callablesetnull1 (data CHAR(1) NULL)");
-        stmt.close();
+   /**
+    * Test for reature request [956800] setNull(): Not implemented.
+    */
+   public void testCallableSetNull1()
+      throws Exception
+   {
+      dropProcedure( "procCallableSetNull1" );
+      dropTable( "callablesetnull1" );
 
-        try {
-            stmt = con.createStatement();
-            stmt.execute("create procedure #procCallableSetNull1 @data char(1) "
-                     + "as INSERT INTO #callablesetnull1 (data) VALUES (@data)");
-            stmt.close();
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE callablesetnull1 (data CHAR(1) NULL)" );
+      stmt.close();
 
-            CallableStatement cstmt = con.prepareCall("{call #procCallableSetNull1(?)}");
-            // Test CallableStatement.setNull(int,Types.NULL)
-            cstmt.setNull(1, Types.NULL);
-            cstmt.execute();
-            cstmt.close();
+      stmt = con.createStatement();
+      stmt.execute( "create procedure procCallableSetNull1 @data char(1) as INSERT INTO callablesetnull1 (data) VALUES (@data)" );
+      stmt.close();
 
-            stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT data FROM #callablesetnull1");
+      CallableStatement cstmt = con.prepareCall( "{call procCallableSetNull1(?)}" );
+      // Test CallableStatement.setNull(int,Types.NULL)
+      cstmt.setNull( 1, Types.NULL );
+      cstmt.execute();
+      cstmt.close();
 
-            assertTrue(rs.next());
+      stmt = con.createStatement();
+      ResultSet rs = stmt.executeQuery( "SELECT data FROM callablesetnull1" );
 
-            // Test ResultSet.getString()
-            assertNull(rs.getString(1));
-            assertTrue(rs.wasNull());
+      assertTrue( rs.next() );
 
-            assertTrue(!rs.next());
-            stmt.close();
-            rs.close();
-        } finally {
-            stmt = con.createStatement();
-            stmt.execute("drop procedure #procCallableSetNull1");
-            stmt.close();
-        }
-    }
+      // Test ResultSet.getString()
+      assertNull( rs.getString( 1 ) );
+      assertTrue( rs.wasNull() );
 
-    /**
-     * Test for bug [974284] retval on callable statement isn't handled correctly
-     */
-    public void testCallableRegisterOutParameter1() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("create procedure #rop1 @a varchar(1), @b varchar(1) as\r\n "
-                     + "begin\r\n"
-                     + "return 1\r\n"
-                     + "end");
-        stmt.close();
+      assertTrue( !rs.next() );
+      stmt.close();
+      rs.close();
+   }
 
-        CallableStatement cstmt = con.prepareCall("{? = call #rop1(?, ?)}");
+   /**
+    * Test for bug [974284] retval on callable statement isn't handled correctly
+    */
+   public void testCallableRegisterOutParameter1() throws Exception
+   {
+      dropProcedure( "rop1" );
+      Statement stmt = con.createStatement();
+      stmt.execute( "create procedure rop1 @a varchar(1), @b varchar(1) as begin return 1 end" );
+      stmt.close();
 
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        cstmt.setString(2, "a");
-        cstmt.setString(3, "b");
-        cstmt.execute();
+      CallableStatement cstmt = con.prepareCall( "{? = call rop1(?, ?)}" );
 
-        assertEquals(1, cstmt.getInt(1));
-        assertEquals("1", cstmt.getString(1));
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.setString( 2, "a" );
+      cstmt.setString( 3, "b" );
+      cstmt.execute();
 
-        cstmt.close();
-    }
+      assertEquals( 1, cstmt.getInt( 1 ) );
+      assertEquals( "1", cstmt.getString( 1 ) );
 
-    /**
-     * Test for bug [994888] Callable statement and Float output parameter
-     */
-    public void testCallableRegisterOutParameter2() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("create procedure #rop2 @data float OUTPUT as\r\n "
-                     + "begin\r\n"
-                     + "set @data = 1.1\r\n"
-                     + "end");
-        stmt.close();
+      cstmt.close();
+   }
 
-        CallableStatement cstmt = con.prepareCall("{call #rop2(?)}");
+   /**
+    * Test for bug [994888] Callable statement and Float output parameter
+    */
+   public void testCallableRegisterOutParameter2()
+      throws Exception
+   {
+      dropProcedure( "rop2" );
 
-        cstmt.registerOutParameter(1, Types.FLOAT);
-        cstmt.execute();
+      Statement stmt = con.createStatement();
+      stmt.execute( "create procedure rop2 @data float OUTPUT as begin set @data = 1.1 end" );
+      stmt.close();
 
-        assertTrue(cstmt.getFloat(1) == 1.1f);
-        cstmt.close();
-    }
+      CallableStatement cstmt = con.prepareCall( "{call rop2(?)}" );
 
-    /**
-     * Test for bug [994988] Network error when null is returned via int output parm
-     */
-    public void testCallableRegisterOutParameter3() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("create procedure #rop3 @data int OUTPUT as\r\n "
-                     + "begin\r\n"
-                     + "set @data = null\r\n"
-                     + "end");
-        stmt.close();
+      cstmt.registerOutParameter( 1, Types.FLOAT );
+      cstmt.execute();
 
-        CallableStatement cstmt = con.prepareCall("{call #rop3(?)}");
+      assertTrue( cstmt.getFloat( 1 ) == 1.1f );
+      cstmt.close();
+   }
 
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        cstmt.execute();
+   /**
+    * Test for bug [994988] Network error when null is returned via int output
+    * parm
+    */
+   public void testCallableRegisterOutParameter3()
+      throws Exception
+   {
+      dropProcedure( "rop3" );
 
-        cstmt.getInt(1);
-        assertTrue(cstmt.wasNull());
-        cstmt.close();
-    }
+      Statement stmt = con.createStatement();
+      stmt.execute( "create procedure rop3 @data int OUTPUT as begin set @data = null end" );
+      stmt.close();
+
+      CallableStatement cstmt = con.prepareCall( "{call rop3(?)}" );
+
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.execute();
+
+      cstmt.getInt( 1 );
+      assertTrue( cstmt.wasNull() );
+      cstmt.close();
+   }
 
    /**
     * Test for bug [983432] Prepared call doesn't work with jTDS 0.8
@@ -637,76 +637,75 @@ public class CallableStatementTest extends TestBase
    /**
     * Test for bug [946171] null boolean in CallableStatement bug
     */
-   public void testCallableRegisterOutParameter5() throws Exception {
-       Statement stmt = con.createStatement();
-       stmt.execute("create procedure #rop1 @bool bit, @whatever int OUTPUT as\r\n "
-                    + "begin\r\n"
-                    + "set @whatever = 1\r\n"
-                    + "end");
-       stmt.close();
+   public void testCallableRegisterOutParameter5()
+      throws Exception
+   {
+      dropProcedure( "rop1" );
 
-       try {
-           CallableStatement cstmt = con.prepareCall("{call #rop1(?,?)}");
+      Statement stmt = con.createStatement();
+      stmt.execute( "create procedure rop1 @bool bit, @whatever int OUTPUT as begin set @whatever = 1 end" );
+      stmt.close();
 
-           cstmt.setNull(1, Types.BOOLEAN);
-           cstmt.registerOutParameter(2, Types.INTEGER);
-           cstmt.execute();
+      CallableStatement cstmt = con.prepareCall( "{call rop1(?,?)}" );
 
-           assertTrue(cstmt.getInt(2) == 1);
-           cstmt.close();
-       } finally {
-           stmt = con.createStatement();
-           stmt.execute("drop procedure #rop1");
-           stmt.close();
-       }
+      cstmt.setNull( 1, Types.BOOLEAN );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
+      cstmt.execute();
+
+      assertTrue( cstmt.getInt( 2 ) == 1 );
+      cstmt.close();
    }
 
    /**
     * Test for bug [992715] wasnull() always returns false
     */
-   public void testCallableRegisterOutParameter6() throws Exception {
-       Statement stmt = con.createStatement();
-       stmt.execute("create procedure #rop2 @bool bit, @whatever varchar(1) OUTPUT as\r\n "
-                    + "begin\r\n"
-                    + "set @whatever = null\r\n"
-                    + "end");
-       stmt.close();
+   public void testCallableRegisterOutParameter6()
+      throws Exception
+   {
+      dropProcedure( "rop2" );
 
-       CallableStatement cstmt = con.prepareCall("{call #rop2(?,?)}");
+      Statement stmt = con.createStatement();
+      stmt.execute( "create procedure rop2 @bool bit, @whatever varchar(1) OUTPUT as\r\n " + "begin\r\n" + "set @whatever = null\r\n" + "end" );
+      stmt.close();
 
-       cstmt.setNull(1, Types.BOOLEAN);
-       cstmt.registerOutParameter(2, Types.VARCHAR);
-       cstmt.execute();
+      CallableStatement cstmt = con.prepareCall( "{call rop2(?,?)}" );
 
-       assertTrue(cstmt.getString(2) == null);
-       assertTrue(cstmt.wasNull());
-       cstmt.close();
+      cstmt.setNull( 1, Types.BOOLEAN );
+      cstmt.registerOutParameter( 2, Types.VARCHAR );
+      cstmt.execute();
+
+      assertTrue( cstmt.getString( 2 ) == null );
+      assertTrue( cstmt.wasNull() );
+      cstmt.close();
    }
 
-    /**
-     * Test for bug [991640] java.sql.Date error and RAISERROR problem
-     */
-    public void testCallableError1() throws Exception {
-        String text = "test message";
+   /**
+    * Test for bug [991640] java.sql.Date error and RAISERROR problem
+    */
+   public void testCallableError1() throws Exception
+   {
+      dropProcedure( "ce1" );
 
-        Statement stmt = con.createStatement();
-        stmt.execute("create procedure #ce1 as\r\n "
-                     + "begin\r\n"
-                     + "RAISERROR('" + text + "', 16, 1 )\r\n"
-                     + "end");
-        stmt.close();
+      String text = "test message";
 
-        CallableStatement cstmt = con.prepareCall("{call #ce1}");
+      Statement stmt = con.createStatement();
+      stmt.execute( "create procedure ce1 as begin RAISERROR('" + text + "', 16, 1 ) end" );
+      stmt.close();
 
-        try {
-            cstmt.execute();
-            assertTrue(false);
-        } catch (SQLException e) {
-            assertTrue(e.getMessage().equals(text));
-        }
+      CallableStatement cstmt = con.prepareCall( "{call ce1}" );
 
-        cstmt.close();
-    }
+      try
+      {
+         cstmt.execute();
+         assertTrue( false );
+      }
+      catch( SQLException e )
+      {
+         assertTrue( e.getMessage().equals( text ) );
+      }
+
+      cstmt.close();
+   }
 
    /**
     * Test named parameters.
@@ -714,15 +713,18 @@ public class CallableStatementTest extends TestBase
    public void testNamedParameters0001()
       throws Exception
    {
+      dropProcedure( "sp_csn1" );
+      dropTable( "csn1" );
+
       final String data = "New {order} plus {1} more";
       final String outData = "test";
 
       Statement stmt = con.createStatement();
 
-      stmt.execute( "CREATE TABLE #csn1 ( data VARCHAR(32) )" );
-      stmt.execute( "create procedure #sp_csn1 @data VARCHAR(32) OUT as INSERT INTO #csn1 (data) VALUES(@data) SET @data = '" + outData + "'" + "RETURN 13" );
+      stmt.execute( "CREATE TABLE csn1 ( data VARCHAR(32) )" );
+      stmt.execute( "create procedure sp_csn1 @data VARCHAR(32) OUT as INSERT INTO csn1 (data) VALUES(@data) SET @data = '" + outData + "'" + "RETURN 13" );
 
-      CallableStatement cstmt = con.prepareCall( "{?=call #sp_csn1(?)}" );
+      CallableStatement cstmt = con.prepareCall( "{?=call sp_csn1(?)}" );
 
       cstmt.registerOutParameter( "@return_status", Types.INTEGER );
       cstmt.setString( "@data", data );
@@ -733,7 +735,7 @@ public class CallableStatementTest extends TestBase
       assertEquals( outData, cstmt.getString( "@data" ) );
       cstmt.close();
 
-      ResultSet rs = stmt.executeQuery( "SELECT data FROM #csn1" );
+      ResultSet rs = stmt.executeQuery( "SELECT data FROM csn1" );
 
       assertTrue( rs.next() );
       assertEquals( data, rs.getString( 1 ) );
@@ -749,15 +751,18 @@ public class CallableStatementTest extends TestBase
    public void testNamedParameters0002()
       throws Exception
    {
+      dropProcedure( "spInsert" );
+      dropTable( "np0002" );
+
       final String  A_DEFAULT = "XYZ";
       final Integer B_DEFAULT = 123;
       final Integer C_DEFAULT = 321;
 
       Statement stmt = con.createStatement();
-      stmt.execute( "create table #Test ( A varchar(10), B int, C int, D int primary key )" );
-      stmt.execute( "create procedure #spInsert @A_VAL varchar(10) = " + A_DEFAULT + " out, @B_VAL int = " + B_DEFAULT + ", @C_VAL int = " + C_DEFAULT + " out, @D_VAL int as INSERT INTO #Test VALUES( @A_VAL, @B_VAL, @C_VAL, @D_VAL ) set @A_VAL = 'RET' set @C_VAL = @B_VAL + @C_VAL return @B_VAL" );
+      stmt.execute( "create table np0002( A varchar(10), B int, C int, D int primary key )" );
+      stmt.execute( "create procedure spInsert @A_VAL varchar(10) = " + A_DEFAULT + " out, @B_VAL int = " + B_DEFAULT + ", @C_VAL int = " + C_DEFAULT + " out, @D_VAL int as INSERT INTO np0002 VALUES( @A_VAL, @B_VAL, @C_VAL, @D_VAL ) set @A_VAL = 'RET' set @C_VAL = @B_VAL + @C_VAL return @B_VAL" );
 
-      CallableStatement cstmt = con.prepareCall( "{?=call #spInsert(?, ?, ?, ?)}" );
+      CallableStatement cstmt = con.prepareCall( "{?=call spInsert(?, ?, ?, ?)}" );
 
       cstmt.registerOutParameter( 1, Types.INTEGER );
       cstmt.registerOutParameter( "A_VAL", Types.VARCHAR );
@@ -777,7 +782,7 @@ public class CallableStatementTest extends TestBase
       assertEquals( B_DEFAULT + C_DEFAULT, cstmt.getObject( "C_VAL" ) );
       cstmt.close();
 
-      ResultSet rs = stmt.executeQuery( "select A, B, C from #Test where D = 0" );
+      ResultSet rs = stmt.executeQuery( "select A, B, C from np0002 where D = 0" );
 
       assertTrue( rs.next() );
       assertEquals( A_DEFAULT, rs.getObject( "A" ) );
@@ -789,7 +794,7 @@ public class CallableStatementTest extends TestBase
 
       // and once again without setting all parameters
 
-      cstmt = con.prepareCall( "{?=call #spInsert(?,?)}" );
+      cstmt = con.prepareCall( "{?=call spInsert(?,?)}" );
 
       cstmt.registerOutParameter( 1, Types.INTEGER );
 
@@ -803,7 +808,7 @@ public class CallableStatementTest extends TestBase
       assertEquals( 9876, cstmt.getObject( 1 ) );
       cstmt.close();
 
-      rs = stmt.executeQuery( "select A, B, C from #Test where D = 1" );
+      rs = stmt.executeQuery( "select A, B, C from np0002 where D = 1" );
 
       assertTrue( rs.next() );
       assertEquals( A_DEFAULT, rs.getObject( "A" ) );
@@ -816,233 +821,226 @@ public class CallableStatementTest extends TestBase
    }
 
    /**
-     * Test that procedure outputs are available immediately for procedures
-     * that do not return ResultSets (i.e that update counts are cached).
-     */
-    public void testProcessUpdateCounts1() throws SQLException {
-        Statement stmt = con.createStatement();
-        assertFalse(stmt.execute("CREATE TABLE #testProcessUpdateCounts1 (val INT)"));
-        assertFalse(stmt.execute("CREATE PROCEDURE #procTestProcessUpdateCounts1"
-                + " @res INT OUT AS"
-                + " INSERT INTO #testProcessUpdateCounts1 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts1 SET val = 2"
-                + " INSERT INTO #testProcessUpdateCounts1 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts1 SET val = 3"
-                + " SET @res = 13"
-                + " RETURN 14"));
-        stmt.close();
+    * Test that procedure outputs are available immediately for procedures that
+    * do not return ResultSets (i.e that update counts are cached).
+    */
+   public void testProcessUpdateCounts1()
+      throws SQLException
+   {
+      dropProcedure( "procTestProcessUpdateCounts1" );
+      dropTable( "testProcessUpdateCounts1" );
 
-        CallableStatement cstmt = con.prepareCall(
-                "{?=call #procTestProcessUpdateCounts1(?)}");
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        cstmt.registerOutParameter(2, Types.INTEGER);
+      Statement stmt = con.createStatement();
+      assertFalse( stmt.execute( "CREATE TABLE testProcessUpdateCounts1 (val INT)" ) );
+      assertFalse( stmt.execute( "CREATE PROCEDURE procTestProcessUpdateCounts1 @res INT OUT AS INSERT INTO testProcessUpdateCounts1 VALUES (1) UPDATE testProcessUpdateCounts1 SET val = 2 INSERT INTO testProcessUpdateCounts1 VALUES (1) UPDATE testProcessUpdateCounts1 SET val = 3 SET @res = 13 RETURN 14" ) );
+      stmt.close();
 
-        assertFalse(cstmt.execute());
-        assertEquals(14, cstmt.getInt(1));
-        assertEquals(13, cstmt.getInt(2));
+      CallableStatement cstmt = con.prepareCall( "{?=call procTestProcessUpdateCounts1(?)}" );
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
 
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      assertFalse( cstmt.execute() );
+      assertEquals( 14, cstmt.getInt( 1 ) );
+      assertEquals( 13, cstmt.getInt( 2 ) );
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // UPDATE
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // UPDATE
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(2, cstmt.getUpdateCount()); // UPDATE
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(-1, cstmt.getUpdateCount());
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 2, cstmt.getUpdateCount() ); // UPDATE
 
-        cstmt.close();
-    }
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
 
-    /**
-     * Test that procedure outputs are available immediately after processing
-     * the last ResultSet returned by the procedure (i.e that update counts
-     * are cached).
-     */
-    public void testProcessUpdateCounts2() throws SQLException {
-        Statement stmt = con.createStatement();
-        assertFalse(stmt.execute("CREATE TABLE #testProcessUpdateCounts2 (val INT)"));
-        assertFalse(stmt.execute("CREATE PROCEDURE #procTestProcessUpdateCounts2"
-                + " @res INT OUT AS"
-                + " INSERT INTO #testProcessUpdateCounts2 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts2 SET val = 2"
-                + " SELECT * FROM #testProcessUpdateCounts2"
-                + " INSERT INTO #testProcessUpdateCounts2 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts2 SET val = 3"
-                + " SET @res = 13"
-                + " RETURN 14"));
-        stmt.close();
+      cstmt.close();
+   }
 
-        CallableStatement cstmt = con.prepareCall(
-                "{?=call #procTestProcessUpdateCounts2(?)}");
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        cstmt.registerOutParameter(2, Types.INTEGER);
+   /**
+    * Test that procedure outputs are available immediately after processing the
+    * last ResultSet returned by the procedure (i.e that update counts are
+    * cached).
+    */
+   public void testProcessUpdateCounts2()
+      throws SQLException
+   {
+      dropProcedure( "procTestProcessUpdateCounts2" );
+      dropTable( "testProcessUpdateCounts2" );
 
-        assertFalse(cstmt.execute());
-        try {
-            assertEquals(14, cstmt.getInt(1));
-            assertEquals(13, cstmt.getInt(2));
-            // Don't fail the test if we got here. Another driver or a future
-            // version could cache all the results and obtain the output
-            // parameter values from the beginning.
-        } catch (SQLException ex) {
-            assertEquals("HY010", ex.getSQLState());
-            assertTrue(ex.getMessage().indexOf("getMoreResults()") >= 0);
-        }
+      Statement stmt = con.createStatement();
+      assertFalse( stmt.execute( "CREATE TABLE testProcessUpdateCounts2 (val INT)" ) );
+      assertFalse( stmt.execute( "CREATE PROCEDURE procTestProcessUpdateCounts2 @res INT OUT AS INSERT INTO testProcessUpdateCounts2 VALUES (1) UPDATE testProcessUpdateCounts2 SET val = 2 SELECT * FROM testProcessUpdateCounts2 INSERT INTO testProcessUpdateCounts2 VALUES (1) UPDATE testProcessUpdateCounts2 SET val = 3 SET @res = 13 RETURN 14" ) );
+      stmt.close();
 
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      CallableStatement cstmt = con.prepareCall( "{?=call procTestProcessUpdateCounts2(?)}" );
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // UPDATE
+      assertFalse( cstmt.execute() );
+      try
+      {
+         assertEquals( 14, cstmt.getInt( 1 ) );
+         assertEquals( 13, cstmt.getInt( 2 ) );
+         // Don't fail the test if we got here. Another driver or a future
+         // version could cache all the results and obtain the output
+         // parameter values from the beginning.
+      }
+      catch( SQLException ex )
+      {
+         assertEquals( "HY010", ex.getSQLState() );
+         assertTrue( ex.getMessage().indexOf( "getMoreResults()" ) >= 0 );
+      }
 
-        assertTrue(cstmt.getMoreResults()); // SELECT
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(14, cstmt.getInt(1));
-        assertEquals(13, cstmt.getInt(2));
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // UPDATE
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(2, cstmt.getUpdateCount()); // UPDATE
+      assertTrue( cstmt.getMoreResults() ); // SELECT
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(-1, cstmt.getUpdateCount());
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 14, cstmt.getInt( 1 ) );
+      assertEquals( 13, cstmt.getInt( 2 ) );
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-        cstmt.close();
-    }
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 2, cstmt.getUpdateCount() ); // UPDATE
 
-    /**
-     * Test that procedure outputs are available immediately after processing
-     * the last ResultSet returned by the procedure (i.e that update counts
-     * are cached) even if getMoreResults() is not called.
-     */
-    public void testProcessUpdateCounts3() throws SQLException {
-        Statement stmt = con.createStatement();
-        assertFalse(stmt.execute("CREATE TABLE #testProcessUpdateCounts3 (val INT)"));
-        assertFalse(stmt.execute("CREATE PROCEDURE #procTestProcessUpdateCounts3"
-                + " @res INT OUT AS"
-                + " INSERT INTO #testProcessUpdateCounts3 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts3 SET val = 2"
-                + " SELECT * FROM #testProcessUpdateCounts3"
-                + " INSERT INTO #testProcessUpdateCounts3 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts3 SET val = 3"
-                + " SET @res = 13"
-                + " RETURN 14"));
-        stmt.close();
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
 
-        CallableStatement cstmt = con.prepareCall(
-                "{?=call #procTestProcessUpdateCounts3(?)}");
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        cstmt.registerOutParameter(2, Types.INTEGER);
+      cstmt.close();
+   }
 
-        assertFalse(cstmt.execute());
-        try {
-            assertEquals(14, cstmt.getInt(1));
-            assertEquals(13, cstmt.getInt(2));
-            // Don't fail the test if we got here. Another driver or a future
-            // version could cache all the results and obtain the output
-            // parameter values from the beginning.
-        } catch (SQLException ex) {
-            assertEquals("HY010", ex.getSQLState());
-            assertTrue(ex.getMessage().indexOf("getMoreResults()") >= 0);
-        }
+   /**
+    * Test that procedure outputs are available immediately after processing the
+    * last ResultSet returned by the procedure (i.e that update counts are
+    * cached) even if getMoreResults() is not called.
+    */
+   public void testProcessUpdateCounts3()
+      throws SQLException
+   {
+      dropProcedure( "procTestProcessUpdateCounts3" );
+      dropTable( "testProcessUpdateCounts3" );
 
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      Statement stmt = con.createStatement();
+      assertFalse( stmt.execute( "CREATE TABLE testProcessUpdateCounts3 (val INT)" ) );
+      assertFalse( stmt.execute( "CREATE PROCEDURE procTestProcessUpdateCounts3 @res INT OUT AS INSERT INTO testProcessUpdateCounts3 VALUES (1) UPDATE testProcessUpdateCounts3 SET val = 2 SELECT * FROM testProcessUpdateCounts3 INSERT INTO testProcessUpdateCounts3 VALUES (1) UPDATE testProcessUpdateCounts3 SET val = 3 SET @res = 13 RETURN 14" ) );
+      stmt.close();
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // UPDATE
+      CallableStatement cstmt = con.prepareCall( "{?=call procTestProcessUpdateCounts3(?)}" );
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
 
-        assertTrue(cstmt.getMoreResults()); // SELECT
-        ResultSet rs = cstmt.getResultSet();
-        assertNotNull(rs);
-        // Close the ResultSet; this should cache the following update counts
-        rs.close();
+      assertFalse( cstmt.execute() );
+      try
+      {
+         assertEquals( 14, cstmt.getInt( 1 ) );
+         assertEquals( 13, cstmt.getInt( 2 ) );
+         // Don't fail the test if we got here. Another driver or a future
+         // version could cache all the results and obtain the output
+         // parameter values from the beginning.
+      }
+      catch( SQLException ex )
+      {
+         assertEquals( "HY010", ex.getSQLState() );
+         assertTrue( ex.getMessage().indexOf( "getMoreResults()" ) >= 0 );
+      }
 
-        assertEquals(14, cstmt.getInt(1));
-        assertEquals(13, cstmt.getInt(2));
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // UPDATE
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(2, cstmt.getUpdateCount()); // UPDATE
+      assertTrue( cstmt.getMoreResults() ); // SELECT
+      ResultSet rs = cstmt.getResultSet();
+      assertNotNull( rs );
+      // Close the ResultSet; this should cache the following update counts
+      rs.close();
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(-1, cstmt.getUpdateCount());
+      assertEquals( 14, cstmt.getInt( 1 ) );
+      assertEquals( 13, cstmt.getInt( 2 ) );
 
-        cstmt.close();
-    }
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-    /**
-     * Test that procedure outputs are available immediately after processing
-     * the last ResultSet returned by the procedure (i.e that update counts
-     * are cached) even if getMoreResults() and ResultSet.close() are not
-     * called.
-     */
-    public void testProcessUpdateCounts4() throws SQLException {
-        Statement stmt = con.createStatement();
-        assertFalse(stmt.execute("CREATE TABLE #testProcessUpdateCounts4 (val INT)"));
-        assertFalse(stmt.execute("CREATE PROCEDURE #procTestProcessUpdateCounts4"
-                + " @res INT OUT AS"
-                + " INSERT INTO #testProcessUpdateCounts4 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts4 SET val = 2"
-                + " SELECT * FROM #testProcessUpdateCounts4"
-                + " INSERT INTO #testProcessUpdateCounts4 VALUES (1)"
-                + " UPDATE #testProcessUpdateCounts4 SET val = 3"
-                + " SET @res = 13"
-                + " RETURN 14"));
-        stmt.close();
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 2, cstmt.getUpdateCount() ); // UPDATE
 
-        CallableStatement cstmt = con.prepareCall(
-                "{?=call #procTestProcessUpdateCounts4(?)}");
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        cstmt.registerOutParameter(2, Types.INTEGER);
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
 
-        assertFalse(cstmt.execute());
-        try {
-            assertEquals(14, cstmt.getInt(1));
-            assertEquals(13, cstmt.getInt(2));
-            // Don't fail the test if we got here. Another driver or a future
-            // version could cache all the results and obtain the output
-            // parameter values from the beginning.
-        } catch (SQLException ex) {
-            assertEquals("HY010", ex.getSQLState());
-            assertTrue(ex.getMessage().indexOf("getMoreResults()") >= 0);
-        }
+      cstmt.close();
+   }
 
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+   /**
+    * Test that procedure outputs are available immediately after processing the
+    * last ResultSet returned by the procedure (i.e that update counts are
+    * cached) even if getMoreResults() and ResultSet.close() are not called.
+    */
+   public void testProcessUpdateCounts4()
+      throws SQLException
+   {
+      dropProcedure( "procTestProcessUpdateCounts4" );
+      dropTable( "testProcessUpdateCounts4" );
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // UPDATE
+      Statement stmt = con.createStatement();
+      assertFalse( stmt.execute( "CREATE TABLE testProcessUpdateCounts4 (val INT)" ) );
+      assertFalse( stmt.execute( "CREATE PROCEDURE procTestProcessUpdateCounts4 @res INT OUT AS INSERT INTO testProcessUpdateCounts4 VALUES (1) UPDATE testProcessUpdateCounts4 SET val = 2 SELECT * FROM testProcessUpdateCounts4 INSERT INTO testProcessUpdateCounts4 VALUES (1) UPDATE testProcessUpdateCounts4 SET val = 3 SET @res = 13" + " RETURN 14" ) );
+      stmt.close();
 
-        assertTrue(cstmt.getMoreResults()); // SELECT
-        ResultSet rs = cstmt.getResultSet();
-        assertNotNull(rs);
-        // Process all rows; this should cache the following update counts
-        assertTrue(rs.next());
-        assertFalse(rs.next());
+      CallableStatement cstmt = con.prepareCall( "{?=call procTestProcessUpdateCounts4(?)}" );
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
 
-        assertEquals(14, cstmt.getInt(1));
-        assertEquals(13, cstmt.getInt(2));
+      assertFalse( cstmt.execute() );
+      try
+      {
+         assertEquals( 14, cstmt.getInt( 1 ) );
+         assertEquals( 13, cstmt.getInt( 2 ) );
+         // Don't fail the test if we got here. Another driver or a future
+         // version could cache all the results and obtain the output
+         // parameter values from the beginning.
+      }
+      catch( SQLException ex )
+      {
+         assertEquals( "HY010", ex.getSQLState() );
+         assertTrue( ex.getMessage().indexOf( "getMoreResults()" ) >= 0 );
+      }
 
-        // Only close the ResultSet now
-        rs.close();
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(1, cstmt.getUpdateCount()); // INSERT
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // UPDATE
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(2, cstmt.getUpdateCount()); // UPDATE
+      assertTrue( cstmt.getMoreResults() ); // SELECT
+      ResultSet rs = cstmt.getResultSet();
+      assertNotNull( rs );
+      // Process all rows; this should cache the following update counts
+      assertTrue( rs.next() );
+      assertFalse( rs.next() );
 
-        assertFalse(cstmt.getMoreResults());
-        assertEquals(-1, cstmt.getUpdateCount());
+      assertEquals( 14, cstmt.getInt( 1 ) );
+      assertEquals( 13, cstmt.getInt( 2 ) );
 
-        cstmt.close();
-    }
+      // Only close the ResultSet now
+      rs.close();
+
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 1, cstmt.getUpdateCount() ); // INSERT
+
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( 2, cstmt.getUpdateCount() ); // UPDATE
+
+      assertFalse( cstmt.getMoreResults() );
+      assertEquals( -1, cstmt.getUpdateCount() );
+
+      cstmt.close();
+   }
 
     /**
      * Test for bug [ 1062671 ] SQLParser unable to parse CONVERT(char,{ts ?},102)
@@ -1059,168 +1057,180 @@ public class CallableStatementTest extends TestBase
         assertEquals(ts, rs.getTimestamp(1));
     }
 
-    /**
-     * Test for separation of IN and INOUT/OUT parameter values
-     */
-    public void testInOutParameters() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
-        CallableStatement cstmt = con.prepareCall("{ call #testInOut ( ?,? ) }");
-        cstmt.setInt(1, 1);
-        cstmt.registerOutParameter(2, Types.INTEGER);
-        cstmt.setInt(2, 2);
-        cstmt.execute();
-        assertEquals(3, cstmt.getInt(2));
-        cstmt.execute();
-        assertEquals(3, cstmt.getInt(2));
-    }
+   /**
+    * Test for separation of IN and INOUT/OUT parameter values
+    */
+   public void testInOutParameters()
+      throws Exception
+   {
+      dropProcedure( "testInOut" );
 
-    /**
-     * Test that procedure names containing semicolons are parsed correctly.
-     */
-    public void testSemicolonProcedures() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROC #testInOut @in int, @out int output as SELECT @out = @out + @in");
-        CallableStatement cstmt = con.prepareCall("{call #testInOut;1(?,?)}");
-        cstmt.setInt(1, 1);
-        cstmt.registerOutParameter(2, Types.INTEGER);
-        cstmt.setInt(2, 2);
-        cstmt.execute();
-        assertEquals(3, cstmt.getInt(2));
-        cstmt.execute();
-        assertEquals(3, cstmt.getInt(2));
-    }
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE PROC testInOut @in int, @out int output as SELECT @out = @out + @in" );
+      CallableStatement cstmt = con.prepareCall( "{ call testInOut ( ?,? ) }" );
+      cstmt.setInt( 1, 1 );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
+      cstmt.setInt( 2, 2 );
+      cstmt.execute();
+      assertEquals( 3, cstmt.getInt( 2 ) );
+      cstmt.execute();
+      assertEquals( 3, cstmt.getInt( 2 ) );
+   }
 
-    /**
-     * Test that procedure calls with both literal parameters and parameterr
-     * markers are executed correctly (bug [1078927] Callable statement fails).
-     */
-    public void testNonRpcProc1() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute(
-                "create proc #testsp1 @p1 int, @p2 int out as set @p2 = @p1");
-        stmt.close();
+   /**
+    * Test that procedure names containing semicolons are parsed correctly.
+    */
+   public void testSemicolonProcedures()
+      throws Exception
+   {
+      dropProcedure( "testInOut" );
 
-        CallableStatement cstmt = con.prepareCall("{call #testsp1(100, ?)}");
-        cstmt.setInt(1, 1);
-        cstmt.execute();
-        cstmt.close();
-    }
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE PROC testInOut @in int, @out int output as SELECT @out = @out + @in" );
+      CallableStatement cstmt = con.prepareCall( "{call testInOut;1(?,?)}" );
+      cstmt.setInt( 1, 1 );
+      cstmt.registerOutParameter( 2, Types.INTEGER );
+      cstmt.setInt( 2, 2 );
+      cstmt.execute();
+      assertEquals( 3, cstmt.getInt( 2 ) );
+      cstmt.execute();
+      assertEquals( 3, cstmt.getInt( 2 ) );
+   }
 
-    /**
-     * Test that procedure calls with both literal parameters and parameterr
-     * markers are executed correctly (bug [1078927] Callable statement fails).
-     */
-    public void testNonRpcProc2() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("create proc #testsp2 @p1 int, @p2 int as return 99");
-        stmt.close();
+   /**
+    * Test that procedure calls with both literal parameters and parameterr
+    * markers are executed correctly (bug [1078927] Callable statement fails).
+    */
+   public void testNonRpcProc1()
+      throws Exception
+   {
+      dropProcedure( "testsp1" );
 
-        CallableStatement cstmt = con.prepareCall("{?=call #testsp2(100, ?)}");
-        cstmt.registerOutParameter(1, java.sql.Types.INTEGER);
-        cstmt.setInt(2, 2);
-        cstmt.execute();
-        assertEquals(99, cstmt.getInt(1));
-        cstmt.close();
-    }
+      Statement stmt = con.createStatement();
+      stmt.execute( "create proc testsp1 @p1 int, @p2 int out as set @p2 = @p1" );
+      stmt.close();
 
-    /**
-     * Test for bug [1152329] Spurious output params assigned (TIMESTMP).
-     * <p/>
-     * If a stored procedure execute WRITETEXT or UPDATETEXT commands, spurious
-     * output parameter data is returned to the client. This additional data
-     * can be confused with the real output parameter data leading to an output
-     * string parameter returning the text ?TIMESTMP? on SQL Server 7+ or
-     * binary garbage on other servers.
-     */
-    public void testWritetext() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute(
-                "create proc #testWritetext @p1 varchar(20) output as "
-                + "begin "
-                + "create table #test (id int, txt text) "
-                + "insert into #test (id, txt) values(1, '') "
-                + "declare @ptr binary(16) "
-                + "select @ptr = (select textptr(txt) from #test where id = 1) "
-                + "writetext #test.txt @ptr 'This is a test' "
-                + "select @p1 = 'done' "
-                + "end");
-        stmt.close();
+      CallableStatement cstmt = con.prepareCall( "{call testsp1(100, ?)}" );
+      cstmt.setInt( 1, 1 );
+      cstmt.execute();
+      cstmt.close();
+   }
 
-        CallableStatement cstmt = con.prepareCall("{call #testWritetext(?)}");
-        cstmt.registerOutParameter(1, Types.VARCHAR);
-        cstmt.execute();
-        assertEquals("done", cstmt.getString(1));
-        cstmt.close();
-    }
+   /**
+    * Test that procedure calls with both literal parameters and parameterr
+    * markers are executed correctly (bug [1078927] Callable statement fails).
+    */
+   public void testNonRpcProc2()
+      throws Exception
+   {
+      dropProcedure( "testsp2" );
 
-    /**
-     * Test for bug [1047208] SQLException chaining not implemented correctly:
-     * checks that all errors are returned and that output variables are also
-     * returned.
-     */
-    public void testErrorOutputParams() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROC #error_proc @p1 int out AS \r\n" +
-                     "RAISERROR ('TEST EXCEPTION', 15, 1)\r\n" +
-                     "SELECT @P1=100\r\n" +
-                     "CREATE TABLE #DUMMY (id int)\r\n" +
-                     "INSERT INTO #DUMMY VALUES(1)\r\n"+
-                     "INSERT INTO #DUMMY VALUES(1)");
-        stmt.close();
+      Statement stmt = con.createStatement();
+      stmt.execute( "create proc testsp2 @p1 int, @p2 int as return 99" );
+      stmt.close();
 
-        CallableStatement cstmt = con.prepareCall("{call #error_proc(?)}");
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        try {
-            cstmt.execute();
-            fail("Expecting exception");
-        } catch (SQLException e) {
-            assertEquals("TEST EXCEPTION", e.getMessage());
-        }
-        assertEquals(100, cstmt.getInt(1));
-        cstmt.close();
-    }
+      CallableStatement cstmt = con.prepareCall( "{?=call testsp2(100, ?)}" );
+      cstmt.registerOutParameter( 1, java.sql.Types.INTEGER );
+      cstmt.setInt( 2, 2 );
+      cstmt.execute();
+      assertEquals( 99, cstmt.getInt( 1 ) );
+      cstmt.close();
+   }
 
-    /**
-     * Test for bug [1236078] Procedure doesn't get called for some BigDecimal
-     * values - invalid bug.
-     */
-    public void testBigDecimal() throws Exception {
-        Statement stmt = con.createStatement();
-        assertEquals(0, stmt.executeUpdate("CREATE TABLE #dec_test "
-                + "(ColumnVC varchar(50) NULL, ColumnDec decimal(18,4) NULL)"));
-        assertEquals(0, stmt.executeUpdate("CREATE PROCEDURE #dec_test2"
-                + "(@inVc varchar(32), @inBd decimal(18,4)) AS "
-                + "begin "
-                + "update #dec_test set columnvc = @inVc, columndec = @inBd "
-                + "end"));
-        assertEquals(1, stmt.executeUpdate(
-                "insert #dec_test (columnvc, columndec) values (null, null)"));
-        stmt.close();
+   /**
+    * Test for bug [1152329] Spurious output params assigned (TIMESTMP).
+    * <p/>
+    * If a stored procedure execute WRITETEXT or UPDATETEXT commands, spurious
+    * output parameter data is returned to the client. This additional data can
+    * be confused with the real output parameter data leading to an output
+    * string parameter returning the text ?TIMESTMP? on SQL Server 7+ or binary
+    * garbage on other servers.
+    */
+   public void testWritetext()
+       throws Exception
+   {
+      dropProcedure( "testWritetext" );
 
-        CallableStatement cstmt = con.prepareCall("{call #dec_test2 (?,?)}");
-        cstmt.setString(1, "D: " + new java.util.Date());
-        cstmt.setBigDecimal(2, new BigDecimal("2.9E+7"));
-        assertEquals(1, cstmt.executeUpdate());
-        cstmt.close();
-    }
+      Statement stmt = con.createStatement();
+      stmt.execute( "create proc testWritetext @p1 varchar(20) output as begin create table #test (id int, txt text) insert into #test (id, txt) values(1, '') declare @ptr binary(16) select @ptr = (select textptr(txt) from #test where id = 1) writetext #test.txt @ptr 'This is a test' select @p1 = 'done' end" );
+      stmt.close();
+
+      CallableStatement cstmt = con.prepareCall( "{call testWritetext(?)}" );
+      cstmt.registerOutParameter( 1, Types.VARCHAR );
+      cstmt.execute();
+      assertEquals( "done", cstmt.getString( 1 ) );
+      cstmt.close();
+   }
+
+   /**
+    * Test for bug [1047208] SQLException chaining not implemented correctly:
+    * checks that all errors are returned and that output variables are also
+    * returned.
+    */
+   public void testErrorOutputParams()
+      throws Exception
+   {
+      dropProcedure( "error_proc" );
+
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE PROC error_proc @p1 int out AS RAISERROR ('TEST EXCEPTION', 15, 1) SELECT @P1=100 CREATE TABLE #DUMMY (id int) INSERT INTO #DUMMY VALUES(1) INSERT INTO #DUMMY VALUES(1)" );
+      stmt.close();
+
+      CallableStatement cstmt = con.prepareCall( "{call error_proc(?)}" );
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      try
+      {
+         cstmt.execute();
+         fail( "Expecting exception" );
+      }
+      catch( SQLException e )
+      {
+         assertEquals( "TEST EXCEPTION", e.getMessage() );
+      }
+      assertEquals( 100, cstmt.getInt( 1 ) );
+      cstmt.close();
+   }
+
+   /**
+    * Test for bug [1236078] Procedure doesn't get called for some BigDecimal
+    * values - invalid bug.
+    */
+   public void testBigDecimal()
+      throws Exception
+   {
+      dropProcedure( "dec_test2" );
+      dropTable( "dec_test" );
+
+      Statement stmt = con.createStatement();
+      assertEquals( 0, stmt.executeUpdate( "CREATE TABLE dec_test (ColumnVC varchar(50) NULL, ColumnDec decimal(18,4) NULL)" ) );
+      assertEquals( 0, stmt.executeUpdate( "CREATE PROCEDURE dec_test2 (@inVc varchar(32), @inBd decimal(18,4)) AS begin update dec_test set columnvc = @inVc, columndec = @inBd end" ) );
+      assertEquals( 1, stmt.executeUpdate( "insert dec_test (columnvc, columndec) values (null, null)" ) );
+      stmt.close();
+
+      CallableStatement cstmt = con.prepareCall( "{call dec_test2 (?,?)}" );
+      cstmt.setString( 1, "D: " + new java.util.Date() );
+      cstmt.setBigDecimal( 2, new BigDecimal( "2.9E+7" ) );
+      assertEquals( 1, cstmt.executeUpdate() );
+      cstmt.close();
+   }
 
     /**
      * Test retrieving multiple resultsets, the return value and an additional
      * output parameter from a single procedure call.
      */
     public void testCallWithResultSet() throws Exception {
+        dropProcedure( "testCallWithResultSet" );
         Statement st = con.createStatement();
-        st.execute("create proc #testCallWithResultSet @in varchar(16), @out varchar(32) output as" +
+        st.execute("create proc testCallWithResultSet @in varchar(16), @out varchar(32) output as" +
                    " begin" +
                    "  select 'result set' as ret" +
-                   "  set @out = 'Test ' + @in;" +
+                   "  set @out = 'Test ' + @in " +
                    "  select 'result set 2' as ret2" +
                    "  return 1" +
                    " end");
         st.close();
 
-        CallableStatement cstmt = con.prepareCall("{?=call #testCallWithResultSet(?,?)}");
+        CallableStatement cstmt = con.prepareCall("{?=call testCallWithResultSet(?,?)}");
         cstmt.registerOutParameter(1, Types.INTEGER);
         cstmt.setString(2, "data");
         cstmt.registerOutParameter(3, Types.VARCHAR);

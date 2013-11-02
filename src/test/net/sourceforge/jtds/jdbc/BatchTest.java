@@ -20,8 +20,6 @@ package net.sourceforge.jtds.jdbc;
 import java.sql.*;
 import java.util.*;
 
-import net.sourceforge.jtds.jdbc.*;
-
 /**
  * Simple test suite to exercise batch execution.
  *
@@ -101,7 +99,7 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(EXECUTE_FAILED, x[3]);
             assertEquals(EXECUTE_FAILED, x[4]);
         } else {
-            // Sybase or SQL Server 6.5 - Entire batch fails due to data conversion error 
+            // Sybase or SQL Server 6.5 - Entire batch fails due to data conversion error
             // detected in statement 3
             assertEquals(5, x.length);
             assertEquals(EXECUTE_FAILED, x[0]);
@@ -154,7 +152,7 @@ public class BatchTest extends DatabaseTestCase {
             assertEquals(EXECUTE_FAILED, x[3]);
             assertEquals(EXECUTE_FAILED, x[4]);
         } else {
-            // Sybase - Entire batch fails due to data conversion error 
+            // Sybase - Entire batch fails due to data conversion error
             // detected in statement 3
             assertEquals(5, x.length);
             assertEquals(EXECUTE_FAILED, x[0]);
@@ -435,7 +433,7 @@ public class BatchTest extends DatabaseTestCase {
         assertEquals(1, x[3]);
         assertEquals(1, x[4]);
     }
-    
+
     /**
      * Test for PreparedStatement batch with no parameters.
      */
@@ -498,7 +496,7 @@ public class BatchTest extends DatabaseTestCase {
         }
         assertEquals(5, i);
     }
-    
+
     /**
      * Test batched callable statements where the call has no parameters.
      */
@@ -538,9 +536,9 @@ public class BatchTest extends DatabaseTestCase {
      */
     private class ConcurrentBatchingHelper extends Thread {
         /** Connection on which to do the work. */
-        private Connection con;
+        private final Connection con;
         /** Container to store any exceptions into. */
-        private Vector exceptions;
+        private final Vector exceptions;
 
         ConcurrentBatchingHelper(Connection con, Vector exceptions) {
             this.con = con;
@@ -602,7 +600,7 @@ public class BatchTest extends DatabaseTestCase {
         props.setProperty(Messages.get(net.sourceforge.jtds.jdbc.Driver.PREPARESQL),
                           String.valueOf(TdsCore.TEMPORARY_STORED_PROCEDURES));
         Connection con = getConnection(props);
-        
+
         try {
             Statement stmt = con.createStatement();
             stmt.execute("create table #testConcurrentBatch (v1 int, v2 int, v3 int, v4 int, v5 int, v6 int)");
@@ -703,8 +701,8 @@ public class BatchTest extends DatabaseTestCase {
         Statement statement = con.createStatement();
         statement.execute("CREATE TABLE #BATCHUC (id int)");
         statement.addBatch("insert into #BATCHUC values (1)");
-        statement.addBatch("insert into #BATCHUC values (2);insert into #BATCHUC values (3)");
-        statement.addBatch("insert into #BATCHUC values (4);insert into #BATCHUC values (5);insert into #BATCHUC values (6)");
+        statement.addBatch("insert into #BATCHUC values (2) insert into #BATCHUC values (3)");
+        statement.addBatch("insert into #BATCHUC values (4) insert into #BATCHUC values (5) insert into #BATCHUC values (6)");
         // below: create identifiable update counts to show if/how far they have been shifted due to bug [2827931]
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC");
         statement.addBatch("insert into #BATCHUC select * from #BATCHUC where id=999");

@@ -190,8 +190,11 @@ public class ConnectionTest extends UnitTestBase
     * procedure output parameters should be decoded using the specified charset
     * rather than the server's as long as they are non-Unicode.
     */
-   public void testForceCharset2() throws Exception
+   public void testForceCharset2()
+      throws Exception
    {
+      dropProcedure( "testForceCharset2" );
+
       // Set charset to Cp1251 and Unicode parameters to false
       Properties props = new Properties();
       props.setProperty( Messages.get( Driver.CHARSET ), "Cp1251" );
@@ -202,12 +205,12 @@ public class ConnectionTest extends UnitTestBase
       try
       {
          Statement stmt = con.createStatement();
-         assertEquals( 0, stmt.executeUpdate( "create procedure #testForceCharset2 " + "@inParam varchar(10), @outParam varchar(10) output as " + "set @outParam = @inParam" ) );
+         assertEquals( 0, stmt.executeUpdate( "create procedure testForceCharset2 " + "@inParam varchar(10), @outParam varchar(10) output as " + "set @outParam = @inParam" ) );
          stmt.close();
 
          // Test both sending and retrieving of parameters
          String value = "\u0410\u0411\u0412";
-         CallableStatement cstmt = con.prepareCall( "{call #testForceCharset2(?, ?)}" );
+         CallableStatement cstmt = con.prepareCall( "{call testForceCharset2(?, ?)}" );
          cstmt.setString( 1, value );
          cstmt.registerOutParameter( 2, Types.VARCHAR );
          assertEquals( 0, cstmt.executeUpdate() );

@@ -557,57 +557,60 @@ public class SAfeTest extends DatabaseTestCase {
         stmt.close();
     }
 
-    /**
-     * Test that <code>CallableStatement</code>s with return values work correctly.
-     *
-     * @throws Exception
-     */
-    public void testCallableStatement0006() throws Exception {
-        final int myVal = 13;
+   /**
+    * Test that <code>CallableStatement</code>s with return values work
+    * correctly.
+    *
+    * @throws Exception
+    */
+   public void testCallableStatement0006()
+      throws Exception
+   {
+      dropProcedure( "SAfe0006" );
 
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROCEDURE #SAfe0006 @p1 INT, @p2 VARCHAR(20) OUT AS "
-                     + "SELECT @p2=CONVERT(VARCHAR(20), @p1-1) "
-                     + "SELECT @p1 AS value "
-                     + "RETURN @p1+1");
-        stmt.close();
+      final int myVal = 13;
 
-        // Try all formats: escaped, w/ exec and w/o exec
-        String[] sql = {"{?=call #SAfe0006(?,?)}", "exec ?=#SAfe0006 ?,?", "?=#SAfe0006 ?,?"};
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE PROCEDURE SAfe0006 @p1 INT, @p2 VARCHAR(20) OUT AS SELECT @p2=CONVERT(VARCHAR(20), @p1-1) SELECT @p1 AS value RETURN @p1+1" );
+      stmt.close();
 
-        for (int i = 0; i < sql.length; i++) {
-            // Execute it using executeQuery
-            CallableStatement cs = con.prepareCall(sql[i]);
-            cs.registerOutParameter(1, Types.INTEGER);
-            cs.setInt(2, myVal);
-            cs.registerOutParameter(3, Types.VARCHAR);
-            cs.executeQuery().close();
+      // Try all formats: escaped, w/ exec and w/o exec
+      String[] sql = { "{?=call SAfe0006(?,?)}", "exec ?=SAfe0006 ?,?", "?=SAfe0006 ?,?" };
 
-            assertFalse(cs.getMoreResults());
-            assertEquals(-1, cs.getUpdateCount());
+      for( int i = 0; i < sql.length; i++ )
+      {
+         // Execute it using executeQuery
+         CallableStatement cs = con.prepareCall( sql[i] );
+         cs.registerOutParameter( 1, Types.INTEGER );
+         cs.setInt( 2, myVal );
+         cs.registerOutParameter( 3, Types.VARCHAR );
+         cs.executeQuery().close();
 
-            assertEquals(myVal+1, cs.getInt(1));
-            assertEquals(String.valueOf(myVal-1), cs.getString(3));
+         assertFalse( cs.getMoreResults() );
+         assertEquals( -1, cs.getUpdateCount() );
 
-            cs.close();
+         assertEquals( myVal + 1, cs.getInt( 1 ) );
+         assertEquals( String.valueOf( myVal - 1 ), cs.getString( 3 ) );
 
-            // Now use execute
-            cs = con.prepareCall(sql[i]);
-            cs.registerOutParameter(1, Types.INTEGER);
-            cs.setInt(2, myVal);
-            cs.registerOutParameter(3, Types.VARCHAR);
-            assertTrue(cs.execute());
-            cs.getResultSet().close();
+         cs.close();
 
-            assertFalse(cs.getMoreResults());
-            assertEquals(-1, cs.getUpdateCount());
+         // Now use execute
+         cs = con.prepareCall( sql[i] );
+         cs.registerOutParameter( 1, Types.INTEGER );
+         cs.setInt( 2, myVal );
+         cs.registerOutParameter( 3, Types.VARCHAR );
+         assertTrue( cs.execute() );
+         cs.getResultSet().close();
 
-            assertEquals(myVal+1, cs.getInt(1));
-            assertEquals(String.valueOf(myVal-1), cs.getString(3));
+         assertFalse( cs.getMoreResults() );
+         assertEquals( -1, cs.getUpdateCount() );
 
-            cs.close();
-        }
-    }
+         assertEquals( myVal + 1, cs.getInt( 1 ) );
+         assertEquals( String.valueOf( myVal - 1 ), cs.getString( 3 ) );
+
+         cs.close();
+      }
+   }
 
     /**
      * Helper method for <code>testBigDecimal0007</code>. Inserts a BigDecimal
@@ -734,49 +737,43 @@ public class SAfeTest extends DatabaseTestCase {
         stmt.close();
     }
 
-    /**
-     * Test VARCHAR output parameters returned by CallableStatements.
-     * <p>
-     * An issue existed, caused by the fact that the parameter was sent to SQL
-     * Server as a short VARCHAR (not XORed with 0x80) limiting its length to
-     * 255 characters. See bug [815348] for more details.
-     */
-    public void testCallableStatementVarchar0010() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROCEDURE #SAfe0010 @p1 VARCHAR(255) OUT AS "
-                     + "SELECT @p1 = @p1 + @p1 "
-                     + "SELECT @p1 = @p1 + @p1 "
-                     + "SELECT @p1 = @p1 + @p1 "
-                     + "SELECT @p1 AS value "
-                     + "RETURN 255");
-        stmt.close();
+   /**
+    * Test VARCHAR output parameters returned by CallableStatements.
+    * <p>
+    * An issue existed, caused by the fact that the parameter was sent to SQL
+    * Server as a short VARCHAR (not XORed with 0x80) limiting its length to 255
+    * characters. See bug [815348] for more details.
+    */
+   public void testCallableStatementVarchar0010()
+      throws Exception
+   {
+      dropProcedure( "SAfe0010" );
 
-        // 256 characters long string
-        String myVal = "01234567890123456789012345678901234567890123456789"
-                + "01234567890123456789012345678901234567890123456789"
-                + "01234567890123456789012345678901234567890123456789"
-                + "01234567890123456789012345678901234567890123456789"
-                + "01234567890123456789012345678901234567890123456789"
-                + "01234";
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE PROCEDURE SAfe0010 @p1 VARCHAR(255) OUT AS SELECT @p1 = @p1 + @p1 SELECT @p1 = @p1 + @p1 SELECT @p1 = @p1 + @p1 SELECT @p1 AS value RETURN 255" );
+      stmt.close();
 
-        // Execute it using executeQuery
-        CallableStatement cs = con.prepareCall("{?=call #SAfe0010(?)}");
-        cs.registerOutParameter(1, Types.INTEGER);
-        cs.setString(2, myVal);
-        cs.registerOutParameter(2, Types.VARCHAR);
-        ResultSet rs = cs.executeQuery();
-        assertTrue(rs.next());
-        String rsVal = rs.getString(1);
-        rs.close();
+      // 256 characters long string
+      String myVal = "01234567890123456789012345678901234567890123456789" + "01234567890123456789012345678901234567890123456789" + "01234567890123456789012345678901234567890123456789" + "01234567890123456789012345678901234567890123456789" + "01234567890123456789012345678901234567890123456789" + "01234";
 
-        assertFalse(cs.getMoreResults());
-        assertEquals(-1, cs.getUpdateCount());
+      // Execute it using executeQuery
+      CallableStatement cs = con.prepareCall( "{?=call SAfe0010(?)}" );
+      cs.registerOutParameter( 1, Types.INTEGER );
+      cs.setString( 2, myVal );
+      cs.registerOutParameter( 2, Types.VARCHAR );
+      ResultSet rs = cs.executeQuery();
+      assertTrue( rs.next() );
+      String rsVal = rs.getString( 1 );
+      rs.close();
 
-        assertEquals(myVal.length(), cs.getInt(1));
-        assertEquals(rsVal, cs.getString(2));
+      assertFalse( cs.getMoreResults() );
+      assertEquals( -1, cs.getUpdateCount() );
 
-        cs.close();
-    }
+      assertEquals( myVal.length(), cs.getInt( 1 ) );
+      assertEquals( rsVal, cs.getString( 2 ) );
+
+      cs.close();
+   }
 
     /**
      * Test <code>ResultSet.updateRow()</code> on updateable result sets.
@@ -878,87 +875,84 @@ public class SAfeTest extends DatabaseTestCase {
         rs.close();
     }
 
-    /**
-     * Test cursor-based <code>ResultSet</code>s obtained from
-     * <code>PreparedStatement</code>s and <code>CallableStatement</code>s.
-     */
-    public void testPreparedAndCallableCursors0014() throws Exception {
-//        Logger.setActive(true);
-        Statement stmt = con.createStatement();
-        stmt.executeUpdate("CREATE TABLE #SAfe0014(id INT PRIMARY KEY)");
-        stmt.executeUpdate("INSERT INTO #SAfe0014 VALUES (1)");
-        stmt.executeUpdate("CREATE PROCEDURE #sp_SAfe0014(@P1 INT, @P2 INT) AS "
-                           + "SELECT id, @P2 FROM #SAfe0014 WHERE id=@P1");
-        stmt.close();
+   /**
+    * Test cursor-based <code>ResultSet</code>s obtained from
+    * <code>PreparedStatement</code>s and <code>CallableStatement</code>s.
+    */
+   public void testPreparedAndCallableCursors0014()
+      throws Exception
+   {
+      dropProcedure( "sp_SAfe0014" );
+      dropTable( "SAfe0014" );
 
-        PreparedStatement ps = con.prepareStatement("SELECT id FROM #SAfe0014",
-                                                    ResultSet.TYPE_SCROLL_SENSITIVE,
-                                                    ResultSet.CONCUR_UPDATABLE);
-        ResultSet resultSet = ps.executeQuery();
-        // No warnings
-        assertEquals(null, resultSet.getWarnings());
-        assertEquals(null, ps.getWarnings());
-        // Correct ResultSet
-        assertTrue(resultSet.next());
-        assertEquals(1, resultSet.getInt(1));
-        assertTrue(!resultSet.next());
-        // Correct meta data
-        ResultSetMetaData rsmd = resultSet.getMetaData();
-        assertEquals("id", rsmd.getColumnName(1));
-        assertEquals("#SAfe0014", rsmd.getTableName(1));
-        // Insert row
-        resultSet.moveToInsertRow();
-        resultSet.updateInt(1, 2);
-        resultSet.insertRow();
-        resultSet.moveToCurrentRow();
-        // Check correct row count
-        resultSet.last();
-        assertEquals(2, resultSet.getRow());
-        resultSet.close();
-        ps.close();
+      Statement stmt = con.createStatement();
+      stmt.executeUpdate( "CREATE TABLE SAfe0014(id INT PRIMARY KEY)" );
+      stmt.executeUpdate( "INSERT INTO SAfe0014 VALUES (1)" );
+      stmt.executeUpdate( "CREATE PROCEDURE sp_SAfe0014(@P1 INT, @P2 INT) AS SELECT id, @P2 FROM SAfe0014 WHERE id=@P1" );
+      stmt.close();
 
-        ps = con.prepareStatement("SELECT id, ? FROM #SAfe0014 WHERE id = ?",
-                                  ResultSet.TYPE_SCROLL_SENSITIVE,
-                                  ResultSet.CONCUR_UPDATABLE);
-        ps.setInt(1, 5);
-        ps.setInt(2, 1);
-        resultSet = ps.executeQuery();
-        // No warnings
-        assertEquals(null, resultSet.getWarnings());
-        assertEquals(null, ps.getWarnings());
-        // Correct ResultSet
-        assertTrue(resultSet.next());
-        assertEquals(1, resultSet.getInt(1));
-        assertEquals(5, resultSet.getInt(2));
-        assertTrue(!resultSet.next());
-        // Correct meta data
-        rsmd = resultSet.getMetaData();
-        assertEquals("id", rsmd.getColumnName(1));
-        assertEquals("#SAfe0014", rsmd.getTableName(1));
-        resultSet.close();
-        ps.close();
+      PreparedStatement ps = con.prepareStatement( "SELECT id FROM SAfe0014", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+      ResultSet resultSet = ps.executeQuery();
+      // No warnings
+      assertEquals( null, resultSet.getWarnings() );
+      assertEquals( null, ps.getWarnings() );
+      // Correct ResultSet
+      assertTrue( resultSet.next() );
+      assertEquals( 1, resultSet.getInt( 1 ) );
+      assertTrue( !resultSet.next() );
+      // Correct meta data
+      ResultSetMetaData rsmd = resultSet.getMetaData();
+      assertEquals( "id", rsmd.getColumnName( 1 ) );
+      assertEquals( "SAfe0014", rsmd.getTableName( 1 ) );
+      // Insert row
+      resultSet.moveToInsertRow();
+      resultSet.updateInt( 1, 2 );
+      resultSet.insertRow();
+      resultSet.moveToCurrentRow();
+      // Check correct row count
+      resultSet.last();
+      assertEquals( 2, resultSet.getRow() );
+      resultSet.close();
+      ps.close();
 
-        CallableStatement cs = con.prepareCall("{call #sp_SAfe0014(?,?)}",
-                                               ResultSet.TYPE_SCROLL_SENSITIVE,
-                                               ResultSet.CONCUR_UPDATABLE);
-        cs.setInt(1, 1);
-        cs.setInt(2, 3);
-        resultSet = cs.executeQuery();
-        // No warnings
-        assertEquals(null, resultSet.getWarnings());
-        assertEquals(null, cs.getWarnings());
-        // Correct ResultSet
-        assertTrue(resultSet.next());
-        assertEquals(1, resultSet.getInt(1));
-        assertEquals(3, resultSet.getInt(2));
-        assertTrue(!resultSet.next());
-        // Correct meta data
-        rsmd = resultSet.getMetaData();
-        assertEquals("id", rsmd.getColumnName(1));
-        assertEquals("#SAfe0014", rsmd.getTableName(1));
-        resultSet.close();
-        cs.close();
-    }
+      ps = con.prepareStatement( "SELECT id, ? FROM SAfe0014 WHERE id = ?", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+      ps.setInt( 1, 5 );
+      ps.setInt( 2, 1 );
+      resultSet = ps.executeQuery();
+      // No warnings
+      assertEquals( null, resultSet.getWarnings() );
+      assertEquals( null, ps.getWarnings() );
+      // Correct ResultSet
+      assertTrue( resultSet.next() );
+      assertEquals( 1, resultSet.getInt( 1 ) );
+      assertEquals( 5, resultSet.getInt( 2 ) );
+      assertTrue( !resultSet.next() );
+      // Correct meta data
+      rsmd = resultSet.getMetaData();
+      assertEquals( "id", rsmd.getColumnName( 1 ) );
+      assertEquals( "SAfe0014", rsmd.getTableName( 1 ) );
+      resultSet.close();
+      ps.close();
+
+      CallableStatement cs = con.prepareCall( "{call sp_SAfe0014(?,?)}", ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE );
+      cs.setInt( 1, 1 );
+      cs.setInt( 2, 3 );
+      resultSet = cs.executeQuery();
+      // No warnings
+      assertEquals( null, resultSet.getWarnings() );
+      assertEquals( null, cs.getWarnings() );
+      // Correct ResultSet
+      assertTrue( resultSet.next() );
+      assertEquals( 1, resultSet.getInt( 1 ) );
+      assertEquals( 3, resultSet.getInt( 2 ) );
+      assertTrue( !resultSet.next() );
+      // Correct meta data
+      rsmd = resultSet.getMetaData();
+      assertEquals( "id", rsmd.getColumnName( 1 ) );
+      assertEquals( "SAfe0014", rsmd.getTableName( 1 ) );
+      resultSet.close();
+      cs.close();
+   }
 
     /**
      * Test batch updates for both plain and prepared statements.
@@ -1477,34 +1471,36 @@ public class SAfeTest extends DatabaseTestCase {
         assertEquals(0, errors.size());
     }
 
-    /**
-     * Test that <code>null</code> output parameters are handled correctly.
-     * <p/>
-     * It seems that if a non-nullable type is sent as input value and the
-     * output value is NULL, SQL Server (not Sybase) gets confused and returns
-     * the same type but a single 0 byte as value instead of the equivalent
-     * nullable type (e.g. instead of returning an <code>INTN</code> with
-     * length 0, which means it's null, it returns an <code>INT4</code>
-     * followed by a single 0 byte). The output parameter packet length is also
-     * incorrect, which indicates that SQL Server is confused.
-     * <p/>
-     * Currently jTDS always sends RPC parameters as nullable types, but this
-     * test is necessary to ensure that it will always remain so.
-     */
-    public void testNullOutputParameters() throws SQLException {
-        Statement stmt = con.createStatement();
-        assertEquals(0, stmt.executeUpdate(
-                "create procedure #testNullOutput @p1 int output as "
-                + "select @p1=null"));
-        stmt.close();
+   /**
+    * Test that <code>null</code> output parameters are handled correctly.
+    * <p/>
+    * It seems that if a non-nullable type is sent as input value and the output
+    * value is NULL, SQL Server (not Sybase) gets confused and returns the same
+    * type but a single 0 byte as value instead of the equivalent nullable type
+    * (e.g. instead of returning an <code>INT</code> with length 0, which means
+    * it's null, it returns an <code>INT4</code> followed by a single 0 byte).
+    * The output parameter packet length is also incorrect, which indicates that
+    * SQL Server is confused.
+    * <p/>
+    * Currently jTDS always sends RPC parameters as nullable types, but this
+    * test is necessary to ensure that it will always remain so.
+    */
+   public void testNullOutputParameters()
+      throws SQLException
+   {
+      dropProcedure( "testNullOutput" );
 
-        CallableStatement cstmt = con.prepareCall("#testNullOutput ?");
-        cstmt.setInt(1, 1);
-        cstmt.registerOutParameter(1, Types.INTEGER);
-        assertEquals(0, cstmt.executeUpdate());
-        assertNull(cstmt.getObject(1));
-        cstmt.close();
-    }
+      Statement stmt = con.createStatement();
+      assertEquals( 0, stmt.executeUpdate( "create procedure testNullOutput @p1 int output as select @p1=null" ) );
+      stmt.close();
+
+      CallableStatement cstmt = con.prepareCall( "testNullOutput ?" );
+      cstmt.setInt( 1, 1 );
+      cstmt.registerOutParameter( 1, Types.INTEGER );
+      assertEquals( 0, cstmt.executeUpdate() );
+      assertNull( cstmt.getObject( 1 ) );
+      cstmt.close();
+   }
 
     /**
      * Test that the SQL parser doesn't try to parse the table name unless

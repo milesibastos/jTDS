@@ -241,23 +241,27 @@ public class PreparedStatementTest extends TestBase {
      * Test for [924030] EscapeProcesser problem with "{}" brackets
      */
     public void testPreparedStatementParsing1() throws Exception {
+
+        dropProcedure( "sp_psp1" );
+        dropTable( "psp1" );
+
         String data = "New {order} plus {1} more";
         Statement stmt = con.createStatement();
 
-        stmt.execute("CREATE TABLE #psp1 (data VARCHAR(32))");
+        stmt.execute("CREATE TABLE psp1 (data VARCHAR(32))");
         stmt.close();
 
         stmt = con.createStatement();
-        stmt.execute("create procedure #sp_psp1 @data VARCHAR(32) as INSERT INTO #psp1 (data) VALUES(@data)");
+        stmt.execute("create procedure sp_psp1 @data VARCHAR(32) as INSERT INTO psp1 (data) VALUES(@data)");
         stmt.close();
 
-        PreparedStatement pstmt = con.prepareStatement("{call #sp_psp1('" + data + "')}");
+        PreparedStatement pstmt = con.prepareStatement("{call sp_psp1('" + data + "')}");
 
         pstmt.execute();
         pstmt.close();
 
         stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT data FROM #psp1");
+        ResultSet rs = stmt.executeQuery("SELECT data FROM psp1");
 
         assertTrue(rs.next());
 

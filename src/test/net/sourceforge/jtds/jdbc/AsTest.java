@@ -54,15 +54,17 @@ public class AsTest extends DatabaseTestCase {
    public void testProc0()
       throws Exception
    {
-      Statement stmt = con.createStatement();
-      dropProcedure( "#spTestProc0" );
+      dropProcedure( "spTestProc0" );
+      dropTable( "tableTestProc0" );
 
-      stmt.executeUpdate( "create table #tableTestProc0 ( A varchar( 10 ) )" );
-      stmt.executeUpdate( "insert into #tableTestProc0 values( 'testval' )" );
-      stmt.executeUpdate( "create procedure #spTestProc0 as set nocount off select * into #tmp from #tableTestProc0 select * from #tmp" );
+      Statement stmt = con.createStatement();
+
+      stmt.executeUpdate( "create table tableTestProc0 ( A varchar( 10 ) )" );
+      stmt.executeUpdate( "insert into tableTestProc0 values( 'testval' )" );
+      stmt.executeUpdate( "create procedure spTestProc0 as set nocount off select * into #tmp from tableTestProc0 select * from #tmp" );
       stmt.close();
 
-      CallableStatement cstmt = con.prepareCall( "#spTestProc0" );
+      CallableStatement cstmt = con.prepareCall( "spTestProc0" );
       assertFalse( cstmt.execute() );
       assertEquals( 1, cstmt.getUpdateCount() );
 
@@ -124,9 +126,11 @@ public class AsTest extends DatabaseTestCase {
     }
 
     public void testProc2() throws Exception {
+       dropProcedure( "multi1withcount" );
+       dropProcedure( "multi1nocount" );
         Statement stmt = con.createStatement();
         String sqlwithcount =
-        "create procedure #multi1withcount as " +
+        "create procedure multi1withcount as " +
         "  set nocount off " +
         "  select 'a' " +
         "  select 'b' " +
@@ -137,7 +141,7 @@ public class AsTest extends DatabaseTestCase {
         "  select 'a' " +
         "  select 'b' ";
         String sqlnocount =
-        "create procedure #multi1nocount as " +
+        "create procedure multi1nocount as " +
         "  set nocount on " +
         "  select 'a' " +
         "  select 'b' " +
@@ -147,13 +151,13 @@ public class AsTest extends DatabaseTestCase {
         "  insert into #multi1nocountt VALUES ('a') " +
         "  select 'a' " +
         "  select 'b' ";
-        dropProcedure("#multi1withcount");
-        dropProcedure("#multi1nocount");
+        dropProcedure("multi1withcount");
+        dropProcedure("multi1nocount");
         stmt.executeUpdate(sqlwithcount);
         stmt.executeUpdate(sqlnocount);
         stmt.close();
 
-        CallableStatement cstmt = con.prepareCall("#multi1nocount");
+        CallableStatement cstmt = con.prepareCall("multi1nocount");
         assertTrue(cstmt.execute());
         ResultSet rs = cstmt.getResultSet();
         assertTrue(rs.next());
@@ -175,7 +179,7 @@ public class AsTest extends DatabaseTestCase {
         assertTrue(!cstmt.getMoreResults() && cstmt.getUpdateCount() == -1);
         cstmt.close();
 
-        cstmt = con.prepareCall("#multi1withcount");
+        cstmt = con.prepareCall("multi1withcount");
 
         // The JDBC-ODBC driver does not return update counts from stored
         // procedures so we won't, either.
@@ -215,13 +219,16 @@ public class AsTest extends DatabaseTestCase {
    public void testProc3()
       throws Exception
    {
+      dropProcedure( "spBug654" );
+      dropTable( "Bug654" );
+
       Statement stm = con.createStatement();
-      stm.executeUpdate( "create table #Bug654 ( A int )" );
-      stm.executeUpdate( "insert into #Bug654 values ( 1 )" );
-      stm.executeUpdate( "create procedure #spBug654 as select * from #Bug654" );
+      stm.executeUpdate( "create table Bug654 ( A int )" );
+      stm.executeUpdate( "insert into Bug654 values ( 1 )" );
+      stm.executeUpdate( "create procedure spBug654 as select * from Bug654" );
       stm.close();
 
-      CallableStatement cstm = con.prepareCall( "#spBug654" );
+      CallableStatement cstm = con.prepareCall( "spBug654" );
 
       ResultSet rs = cstm.executeQuery();
       assertNotNull( rs );
@@ -336,11 +343,11 @@ public class AsTest extends DatabaseTestCase {
 
     public void testBug457955() throws Exception {
         Statement stmt = con.createStatement();
-        dropProcedure("#Bug457955");
-        stmt.executeUpdate("  create procedure #Bug457955 (@par1 VARCHAR(10)) as select @par1");
+        dropProcedure("Bug457955");
+        stmt.executeUpdate("  create procedure Bug457955 (@par1 VARCHAR(10)) as select @par1");
         stmt.close();
         String param = "123456789";
-        CallableStatement cstmt = con.prepareCall("exec #Bug457955 ?");
+        CallableStatement cstmt = con.prepareCall("exec Bug457955 ?");
         cstmt.setString(1, param);
         cstmt.executeQuery();
         cstmt.close();
@@ -489,17 +496,23 @@ public class AsTest extends DatabaseTestCase {
     }
 
     public void testBoolean() throws Throwable {
-        // String crtab = "create table #testBigInt (a bigint)";
-        String crtab = "create table #testBit (a BIT NULL)";
+        // Sybase ASE doesn't support NULL values for fields of type BIT
+        String crtab = "create table #testBit (a BIT" + ( isMSSQL() ? " NULL" : "" ) + ")";
         dropTable("#testBit");
         Statement stmt = con.createStatement();
         stmt.executeUpdate(crtab);
-        stmt.executeUpdate("insert into #testBit values (NULL)");
+        // Sybase ASE doesn't support NULL values for fields of type BIT
+        if( isMSSQL() ) stmt.executeUpdate("insert into #testBit values (NULL)");
         stmt.executeUpdate("insert into #testBit values (0)");
         stmt.executeUpdate("insert into #testBit values (1)");
-        ResultSet rs = stmt.executeQuery("select * from #testBit where a is NULL");
-        rs.next();
-        rs.getBoolean(1);
+        ResultSet rs;
+        // Sybase ASE doesn't support NULL values for fields of type BIT
+        if( isMSSQL() )
+        {
+           rs = stmt.executeQuery("select * from #testBit where a is NULL");
+           rs.next();
+           rs.getBoolean(1);
+        }
         rs = stmt.executeQuery("select * from #testBit where a  = 0");
         rs.next();
         rs.getBoolean(1);

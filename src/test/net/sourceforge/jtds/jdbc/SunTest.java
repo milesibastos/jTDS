@@ -52,124 +52,139 @@ public class SunTest extends DatabaseTestCase {
         pstmt.close();
     }
 
-    /**
-     * Generic Tests for SUN bugs such as
-     * <ol>
-     * <li>Can't convert  VARCHAR to Timestamp
-     * <li>Can't convert  VARCHAR to Time
-     * <li>Can't convert  VARCHAR to Date
-     * <li>Internal time representation causes equals to fail
-     * </ol>
-     * @throws Exception
-     */
-    public void testDateTime() throws Exception {
-        final String dateStr = "1983-01-31";
-        final String timeStr = "12:59:59";
-        final String tsStr   = "1983-01-31 23:59:59.333";
+   /**
+    * Generic Tests for SUN bugs such as
+    * <ol>
+    * <li>Can't convert VARCHAR to Timestamp
+    * <li>Can't convert VARCHAR to Time
+    * <li>Can't convert VARCHAR to Date
+    * <li>Internal time representation causes equals to fail
+    * </ol>
+    *
+    * @throws Exception
+    */
+   public void testDateTime()
+      throws Exception
+   {
+      dropProcedure( "CTOT_PROC" );
+      dropTable( "CTOT" );
 
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROC #CTOT_PROC @tdate DATETIME OUTPUT, @ttime DATETIME OUTPUT, @tts DATETIME OUTPUT AS " +
-                     "BEGIN SELECT @tdate=tdate, @ttime=ttime, @tts=tts FROM #CTOT END");
-        stmt.execute("CREATE TABLE #CTOT (tdate DATETIME, ttime DATETIME, tts DATETIME, tnull DATETIME NULL)");
-        stmt.close();
-        PreparedStatement pstmt = con.prepareStatement("INSERT INTO #CTOT (tdate, ttime, tts) VALUES(?,?,?)");
-        pstmt.setObject(1, dateStr, java.sql.Types.DATE);
-        pstmt.setObject(2, timeStr, java.sql.Types.TIME);
-        pstmt.setObject(3, tsStr, java.sql.Types.TIMESTAMP);
-        pstmt.execute();
-        assertEquals(1, pstmt.getUpdateCount());
-        pstmt.close();
-        CallableStatement cstmt = con.prepareCall("{call #CTOT_PROC(?,?,?)}");
-        cstmt.registerOutParameter(1, java.sql.Types.DATE);
-        cstmt.registerOutParameter(2, java.sql.Types.TIME);
-        cstmt.registerOutParameter(3, java.sql.Types.TIMESTAMP);
-        cstmt.execute();
-        assertEquals(dateStr, cstmt.getString(1));
-        assertEquals(timeStr, cstmt.getString(2));
-        assertEquals(java.sql.Time.valueOf(timeStr), cstmt.getTime(2));
-        assertEquals(tsStr,   cstmt.getString(3));
-        cstmt.close();
-        stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM #CTOT");
-        assertTrue(rs.next());
-        java.sql.Time retval = rs.getTime(2);
-        java.sql.Time tstval = java.sql.Time.valueOf(timeStr);
-        assertEquals(tstval, retval);
-        stmt.close();
-        pstmt = con.prepareStatement("UPDATE #CTOT SET tnull = ?");
-        pstmt.setTime(1, tstval);
-        pstmt.execute();
-        assertEquals(1, pstmt.getUpdateCount());
-        pstmt.close();
-        stmt = con.createStatement();
-        rs = stmt.executeQuery("SELECT * FROM #CTOT");
-        assertTrue(rs.next());
-        retval = rs.getTime(4);
-        assertEquals(tstval, retval);
-        stmt.close();
-    }
+      final String dateStr = "1983-01-31";
+      final String timeStr = "12:59:59";
+      final String tsStr = "1983-01-31 23:59:59.333";
 
-    /**
-     * Generic test for errors caused by promotion out parameters of Float to Double by driver.
-     * eg [ callStmt4.testGetObject34 ] Class cast exception Float.
-     *
-     * @throws Exception
-     */
-    public void testCharToReal() throws Exception {
-        final String minStr = "3.4E38";
-        final String maxStr = "1.18E-38";
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE CTOT (tdate DATETIME, ttime DATETIME, tts DATETIME, tnull DATETIME NULL)" );
+      stmt.execute( "CREATE PROC CTOT_PROC @tdate DATETIME OUTPUT, @ttime DATETIME OUTPUT, @tts DATETIME OUTPUT AS " + "BEGIN SELECT @tdate=tdate, @ttime=ttime, @tts=tts FROM CTOT END" );
+      stmt.close();
+      PreparedStatement pstmt = con.prepareStatement( "INSERT INTO CTOT (tdate, ttime, tts) VALUES(?,?,?)" );
+      pstmt.setObject( 1, dateStr, java.sql.Types.DATE );
+      pstmt.setObject( 2, timeStr, java.sql.Types.TIME );
+      pstmt.setObject( 3, tsStr, java.sql.Types.TIMESTAMP );
+      pstmt.execute();
+      assertEquals( 1, pstmt.getUpdateCount() );
+      pstmt.close();
+      CallableStatement cstmt = con.prepareCall( "{call CTOT_PROC(?,?,?)}" );
+      cstmt.registerOutParameter( 1, java.sql.Types.DATE );
+      cstmt.registerOutParameter( 2, java.sql.Types.TIME );
+      cstmt.registerOutParameter( 3, java.sql.Types.TIMESTAMP );
+      cstmt.execute();
+      assertEquals( dateStr, cstmt.getString( 1 ) );
+      assertEquals( timeStr, cstmt.getString( 2 ) );
+      assertEquals( java.sql.Time.valueOf( timeStr ), cstmt.getTime( 2 ) );
+      assertEquals( tsStr, cstmt.getString( 3 ) );
+      cstmt.close();
+      stmt = con.createStatement();
+      ResultSet rs = stmt.executeQuery( "SELECT * FROM CTOT" );
+      assertTrue( rs.next() );
+      java.sql.Time retval = rs.getTime( 2 );
+      java.sql.Time tstval = java.sql.Time.valueOf( timeStr );
+      assertEquals( tstval, retval );
+      stmt.close();
+      pstmt = con.prepareStatement( "UPDATE CTOT SET tnull = ?" );
+      pstmt.setTime( 1, tstval );
+      pstmt.execute();
+      assertEquals( 1, pstmt.getUpdateCount() );
+      pstmt.close();
+      stmt = con.createStatement();
+      rs = stmt.executeQuery( "SELECT * FROM CTOT" );
+      assertTrue( rs.next() );
+      retval = rs.getTime( 4 );
+      assertEquals( tstval, retval );
+      stmt.close();
+   }
 
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROC #CTOR_PROC @minval REAL OUTPUT, @maxval REAL OUTPUT AS " +
-                     "BEGIN SELECT @minval=min_val, @maxval=max_val FROM #CTOR END");
-        stmt.execute("CREATE TABLE #CTOR (min_val REAL, max_val REAL)");
-        stmt.execute("INSERT INTO #CTOR VALUES(" + minStr +"," + maxStr + ")");
-        assertEquals(1, stmt.getUpdateCount());
-        ResultSet rs = stmt.executeQuery("SELECT * FROM #CTOR");
-        assertNotNull(rs);
-        assertTrue(rs.next());
-        assertEquals(minStr, rs.getString(1));
-        assertEquals(maxStr, rs.getString(2));
-        assertTrue(rs.getObject(1) instanceof Float);
-        stmt.close();
-        CallableStatement cstmt = con.prepareCall("{call #CTOR_PROC(?,?)}");
-        cstmt.registerOutParameter(1, java.sql.Types.REAL);
-        cstmt.registerOutParameter(2, java.sql.Types.REAL);
-        cstmt.execute();
-        assertEquals(minStr, cstmt.getString(1));
-        assertEquals(maxStr, cstmt.getString(2));
-        cstmt.close();
-    }
+   /**
+    * Generic test for errors caused by promotion out parameters of Float to
+    * Double by driver. eg [ callStmt4.testGetObject34 ] Class cast exception
+    * Float.
+    *
+    * @throws Exception
+    */
+   public void testCharToReal()
+      throws Exception
+   {
+      dropProcedure( "CTOR_PROC" );
+      dropTable( "CTOR" );
 
-    /**
-     * Generic test for SUN bugs: bigint null parameter values sent as integer size.
-     *
-     * @throws Exception
-     */
-    public void testCharToLong() throws Exception {
-        final String minStr = "9223372036854775807";
-        final String maxStr = "-9223372036854775808";
+      final String minStr = "3.4E38";
+      final String maxStr = "1.18E-38";
 
-        Statement stmt = con.createStatement();
-        stmt.execute("CREATE PROC #CTOL_PROC @minval BIGINT OUTPUT, @maxval BIGINT OUTPUT AS " +
-                     "BEGIN SELECT @minval=min_val, @maxval=max_val FROM #CTOL END");
-        stmt.execute("CREATE TABLE #CTOL (min_val BIGINT, max_val BIGINT)");
-        stmt.execute("INSERT INTO #CTOL VALUES(" + minStr +"," + maxStr + ")");
-        assertEquals(1, stmt.getUpdateCount());
-        ResultSet rs = stmt.executeQuery("SELECT * FROM #CTOL");
-        assertNotNull(rs);
-        assertTrue(rs.next());
-        assertEquals(minStr, rs.getString(1));
-        assertEquals(maxStr, rs.getString(2));
-        stmt.close();
-        CallableStatement cstmt = con.prepareCall("{call #CTOL_PROC(?,?)}");
-        cstmt.registerOutParameter(1, java.sql.Types.BIGINT);
-        cstmt.registerOutParameter(2, java.sql.Types.BIGINT);
-        cstmt.execute();
-        assertEquals(minStr, cstmt.getString(1));
-        assertEquals(maxStr, cstmt.getString(2));
-        cstmt.close();
-    }
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE CTOR (min_val REAL, max_val REAL)" );
+      stmt.execute( "CREATE PROC CTOR_PROC @minval REAL OUTPUT, @maxval REAL OUTPUT AS BEGIN SELECT @minval=min_val, @maxval=max_val FROM CTOR END" );
+      stmt.execute( "INSERT INTO CTOR VALUES(" + minStr + "," + maxStr + ")" );
+      assertEquals( 1, stmt.getUpdateCount() );
+      ResultSet rs = stmt.executeQuery( "SELECT * FROM CTOR" );
+      assertNotNull( rs );
+      assertTrue( rs.next() );
+      assertEquals( minStr, rs.getString( 1 ) );
+      assertEquals( maxStr, rs.getString( 2 ) );
+      assertTrue( rs.getObject( 1 ) instanceof Float );
+      stmt.close();
+      CallableStatement cstmt = con.prepareCall( "{call CTOR_PROC(?,?)}" );
+      cstmt.registerOutParameter( 1, java.sql.Types.REAL );
+      cstmt.registerOutParameter( 2, java.sql.Types.REAL );
+      cstmt.execute();
+      assertEquals( minStr, cstmt.getString( 1 ) );
+      assertEquals( maxStr, cstmt.getString( 2 ) );
+      cstmt.close();
+   }
+
+   /**
+    * Generic test for SUN bugs: bigint null parameter values sent as integer
+    * size.
+    *
+    * @throws Exception
+    */
+   public void testCharToLong()
+      throws Exception
+   {
+      dropProcedure( "CTOL_PROC" );
+      dropTable( "CTOL" );
+
+      final String minStr = "9223372036854775807";
+      final String maxStr = "-9223372036854775808";
+
+      Statement stmt = con.createStatement();
+      stmt.execute( "CREATE TABLE CTOL (min_val BIGINT, max_val BIGINT)" );
+      stmt.execute( "CREATE PROC CTOL_PROC @minval BIGINT OUTPUT, @maxval BIGINT OUTPUT AS BEGIN SELECT @minval=min_val, @maxval=max_val FROM CTOL END" );
+      stmt.execute( "INSERT INTO CTOL VALUES(" + minStr + "," + maxStr + ")" );
+      assertEquals( 1, stmt.getUpdateCount() );
+      ResultSet rs = stmt.executeQuery( "SELECT * FROM CTOL" );
+      assertNotNull( rs );
+      assertTrue( rs.next() );
+      assertEquals( minStr, rs.getString( 1 ) );
+      assertEquals( maxStr, rs.getString( 2 ) );
+      stmt.close();
+      CallableStatement cstmt = con.prepareCall( "{call CTOL_PROC(?,?)}" );
+      cstmt.registerOutParameter( 1, java.sql.Types.BIGINT );
+      cstmt.registerOutParameter( 2, java.sql.Types.BIGINT );
+      cstmt.execute();
+      assertEquals( minStr, cstmt.getString( 1 ) );
+      assertEquals( maxStr, cstmt.getString( 2 ) );
+      cstmt.close();
+   }
 
     /**
      * Test for SUN bug [ dbMeta8.testGetProcedures ]
@@ -425,7 +440,7 @@ public class SunTest extends DatabaseTestCase {
         Statement stmt = con.createStatement();
         stmt.execute("CREATE TABLE #testConversionToLongvarchar ("
                 + " id INT,"
-                + " val NTEXT)");
+                + " val " + ( isMSSQL() ? "NTEXT" : "UNITEXT" ) + ")");
 
         int id = 0;
         String decimalValue = "1234.5678";

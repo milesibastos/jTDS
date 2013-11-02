@@ -184,28 +184,32 @@ public class Tds8Test extends DatabaseTestCase {
         pstmt.close();
     }
 
-    /**
-     * Test for bug [1042272] jTDS doesn't allow null value into Boolean.
-     */
-    public void testNullBoolean() throws Exception {
-        Statement stmt = con.createStatement();
-        stmt.execute("create table #testNullBoolean (id int, value bit)");
+   /**
+    * Test for bug [1042272] jTDS doesn't allow null value into Boolean.
+    */
+   public void testNullBoolean() throws Exception
+   {
+      // Sybase ASE doesn't support SQL NULL values for BIT columns
+      if( isMSSQL() )
+      {
+         Statement stmt = con.createStatement();
+         stmt.execute( "create table #testNullBoolean (id int, value bit)" );
 
-        PreparedStatement pstmt = con.prepareStatement(
-                "insert into #testNullBoolean (id, value) values (?, ?)");
-        pstmt.setInt(1, 1);
-        pstmt.setNull(2, 16 /* Types.BOOLEAN */);
-        assertEquals(1, pstmt.executeUpdate());
-        pstmt.close();
+         PreparedStatement pstmt = con.prepareStatement( "insert into #testNullBoolean (id, value) values (?, ?)" );
+         pstmt.setInt( 1, 1 );
+         pstmt.setNull( 2, 16 /* Types.BOOLEAN */);
+         assertEquals( 1, pstmt.executeUpdate() );
+         pstmt.close();
 
-        ResultSet rs = stmt.executeQuery("select * from #testNullBoolean");
-        assertTrue(rs.next());
-        assertEquals(1, rs.getInt(1));
-        assertEquals(null, rs.getObject(2));
-        assertFalse(rs.next());
-        rs.close();
-        stmt.close();
-    }
+         ResultSet rs = stmt.executeQuery( "select * from #testNullBoolean" );
+         assertTrue( rs.next() );
+         assertEquals( 1, rs.getInt( 1 ) );
+         assertEquals( null, rs.getObject( 2 ) );
+         assertFalse( rs.next() );
+         rs.close();
+         stmt.close();
+      }
+   }
 
     /**
      * Test column collations.

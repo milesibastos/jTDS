@@ -681,6 +681,11 @@ public class CSUnitTest extends DatabaseTestCase
         assertTrue((rowCount>=1) && (numberOfUpdates==0) && (resultSetCount==1));
     }
     public void testxx0029() throws Exception {
+
+        dropProcedure( "t0029_p1" );
+        dropProcedure( "t0029_p2" );
+        dropTable("#t0029_t1");
+
         Statement   stmt = con.createStatement();
         ResultSet   rs;
 
@@ -693,33 +698,6 @@ public class CSUnitTest extends DatabaseTestCase
 
 
         output.println("before execute DROP PROCEDURE");
-
-        try {
-            isResultSet =stmt.execute("DROP PROCEDURE #t0029_p1");
-            updateCount = stmt.getUpdateCount();
-            do {
-                output.println("DROP PROCEDURE isResultSet: " + isResultSet);
-                output.println("DROP PROCEDURE updateCount: " + updateCount);
-                isResultSet = stmt.getMoreResults();
-                updateCount = stmt.getUpdateCount();
-            } while (((updateCount!=-1) && !isResultSet) || isResultSet);
-        } catch (SQLException e) {
-        }
-
-        try {
-            isResultSet =stmt.execute("DROP PROCEDURE #t0029_p2");
-            updateCount = stmt.getUpdateCount();
-            do {
-                output.println("DROP PROCEDURE isResultSet: " + isResultSet);
-                output.println("DROP PROCEDURE updateCount: " + updateCount);
-                isResultSet = stmt.getMoreResults();
-                updateCount = stmt.getUpdateCount();
-            } while (((updateCount!=-1) && !isResultSet) || isResultSet);
-        } catch (SQLException e) {
-        }
-
-
-        dropTable("#t0029_t1");
 
         isResultSet =
         stmt.execute(
@@ -740,7 +718,7 @@ public class CSUnitTest extends DatabaseTestCase
 
         isResultSet =
         stmt.execute(
-                    "CREATE PROCEDURE #t0029_p1 AS                " +
+                    "CREATE PROCEDURE t0029_p1 AS                " +
 
                     " insert into #t0029_t1 values                " +
                     " ('1999-01-07', '1998-09-09 15:35:05',       " +
@@ -770,10 +748,10 @@ public class CSUnitTest extends DatabaseTestCase
 
         isResultSet =
         stmt.execute(
-                    "CREATE PROCEDURE #t0029_p2 AS                " +
+                    "CREATE PROCEDURE t0029_p2 AS                " +
 
                     " set nocount on " +
-                    " EXEC #t0029_p1                              " +
+                    " EXEC t0029_p1                              " +
                     " SELECT * FROM #t0029_t1                     ");
 
         updateCount = stmt.getUpdateCount();
@@ -785,9 +763,9 @@ public class CSUnitTest extends DatabaseTestCase
         } while (((updateCount!=-1) && !isResultSet) || isResultSet);
 
 
-        isResultSet = stmt.execute( "EXEC  #t0029_p2  ");
+        isResultSet = stmt.execute( "EXEC t0029_p2  ");
 
-        output.println("execute(EXEC #t0029_p2) returned: " + isResultSet);
+        output.println("execute(EXEC t0029_p2) returned: " + isResultSet);
 
         updateCount=stmt.getUpdateCount();
 
@@ -1033,6 +1011,7 @@ public class CSUnitTest extends DatabaseTestCase
         try {
             Statement   stmt = con.createStatement();
 
+            dropProcedure( "p0050" );
             dropTable("jTDS_t0050b");
             dropTable("jTDS_t0050a");
 
@@ -1051,11 +1030,11 @@ public class CSUnitTest extends DatabaseTestCase
             assertEquals(0, stmt.executeUpdate(query));
 
             query =
-                "create procedure #p0050 (@a integer, @c char) as " +
+                "create procedure p0050 (@a integer, @c char) as " +
                 "   insert into jTDS_t0050b (a, c) values (@a, @c)";
             assertEquals(0, stmt.executeUpdate(query));
 
-            query = "exec #p0050 ?, ?";
+            query = "exec p0050 ?, ?";
             java.sql.CallableStatement cstmt = con.prepareCall(query);
 
             try {

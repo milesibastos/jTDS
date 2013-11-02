@@ -216,7 +216,7 @@ public class TimestampTest extends DatabaseTestCase {
           }
 
           // ensure that all valid date values come through
-          for( String date : new String[] { "0001-01-01", "1111-11-11", "8888-08-08", "9999-12-31" } )
+          for( String date : new String[] { "0001-01-01", "1111-11-11", "1753-01-01", "8888-08-08", "9999-12-31" } )
           {
              // insert values
              ins.setDate( 1, Date.valueOf( date ) );

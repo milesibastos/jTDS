@@ -58,15 +58,16 @@ public class LOBTest extends TestBase {
         newClobData = newData.toString();
     }
 
-    public LOBTest(String name) {
-        super(name);
-    }
+   public LOBTest( String name )
+   {
+      super( name );
+   }
 
-    /*************************************************************************
-     *************************************************************************
-     **                          BLOB TESTS                                 **
-     *************************************************************************
-     *************************************************************************/
+   /*************************************************************************
+    *************************************************************************
+    **                          BLOB TESTS                                 **
+    *************************************************************************
+    *************************************************************************/
 
    /**
     * <p> Test for bug #508, jTDS doesn't throw an exception when a connection
@@ -3041,36 +3042,38 @@ public class LOBTest extends TestBase {
         stmt.close();
     }
 
-    public void testClobCaching() throws Exception {
-        // Create a Clob large enough to need caching to disk
-        char[] in = new char[100000];
-        for (int i = 0; i < in.length; i++) {
-            // Store non-Cp1252 characters into it
-            in[i] = 0x2032;
-        }
+   public void testClobCaching()
+      throws Exception
+   {
+      // create a Clob large enough to need caching to disk
+      char[] in = new char[100000];
 
-        Statement stmt = con.createStatement();
-        stmt.executeUpdate("create table #testClobCaching (val ntext)");
+      // store non-Cp1252 characters into it
+      Arrays.fill( in, (char) 0x2032 );
 
-        PreparedStatement pstmt = con.prepareStatement(
-                "insert into #testClobCaching values (?)");
-        pstmt.setCharacterStream(1, new CharArrayReader(in), in.length);
-        pstmt.executeUpdate();
-        pstmt.close();
+      Statement stmt = con.createStatement();
+      stmt.executeUpdate( "create table #testClobCaching (val " + (isMSSQL() ? "ntext" : "unitext") + ")" );
 
-        ResultSet rs = stmt.executeQuery("select * from #testClobCaching");
-        assertTrue(rs.next());
-        String out = rs.getString(1);
-        assertEquals(in.length, out.length());
-        for (int i = 0; i < in.length; i++) {
-            if (in[i] != out.charAt(i)) {
-                fail("Result differs at position " + i);
-            }
-        }
-        assertFalse(rs.next());
-        rs.close();
-        stmt.close();
-    }
+      PreparedStatement pstmt = con.prepareStatement( "insert into #testClobCaching values (?)" );
+      pstmt.setCharacterStream( 1, new CharArrayReader( in ), in.length );
+      Assert.assertEquals( 1, pstmt.executeUpdate() );
+      pstmt.close();
+
+      ResultSet rs = stmt.executeQuery( "select * from #testClobCaching" );
+      assertTrue( rs.next() );
+      String out = rs.getString( 1 );
+      assertEquals( in.length, out.length() );
+      for( int i = 0; i < in.length; i++ )
+      {
+         if( in[i] != out.charAt( i ) )
+         {
+            fail( "Result differs at position " + i );
+         }
+      }
+      assertFalse( rs.next() );
+      rs.close();
+      stmt.close();
+   }
 
     /**
      * Test for incorrect handling of zero length streams (bug [1096086] Zero

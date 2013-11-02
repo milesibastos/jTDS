@@ -110,12 +110,14 @@ public class TimestampTest extends DatabaseTestCase {
    public void testBug682()
       throws SQLException
    {
+      dropProcedure( "sp_bug682" );
+
       Statement st = con.createStatement();
-      st.executeUpdate( "create procedure #sp_bug682 @A datetime as select 1" );
+      st.executeUpdate( "create procedure sp_bug682 @A datetime as select 1" );
 
       try
       {
-         st.execute( "{call #sp_bug682({ts '2000-01-01 20:59:00.123'})}" );
+         st.execute( "{call sp_bug682({ts '2000-01-01 20:59:00.123'})}" );
       }
       finally
       {
@@ -352,7 +354,7 @@ public class TimestampTest extends DatabaseTestCase {
         pstmt.close();
     }
 
-   public void testEscape( String sql, String expected )
+   public void checkEscape( String sql, String expected )
       throws Exception
    {
       String tmp = con.nativeSQL( sql );
@@ -362,19 +364,19 @@ public class TimestampTest extends DatabaseTestCase {
    public void testEscapes0006()
       throws Exception
    {
-      testEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
-      testEscape( "select * from tmp where d={d '1999-09-19'}", "select * from tmp where d=convert(datetime,'19990919')" );
-      testEscape( "select * from tmp where t={t 12:34:00}", "select * from tmp where t=convert(datetime,'12:34:00')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1234}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.123')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.100')" );
-      testEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
-      testEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
-      testEscape( "select * from tmp where a like '\\%%'", "select * from tmp where a like '\\%%'" );
-      testEscape( "select * from tmp where a like 'b%%' {escape 'b'}", "select * from tmp where a like 'b%%' escape 'b'" );
-      testEscape( "select * from tmp where a like 'bbb' {escape 'b'}", "select * from tmp where a like 'bbb' escape 'b'" );
-      testEscape( "select * from tmp where a='{fn user}'", "select * from tmp where a='{fn user}'" );
-      testEscape( "select * from tmp where a={fn user()}", "select * from tmp where a=user_name()" );
+      checkEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
+      checkEscape( "select * from tmp where d={d '1999-09-19'}", "select * from tmp where d=convert(datetime,'19990919')" );
+      checkEscape( "select * from tmp where t={t 12:34:00}", "select * from tmp where t=convert(datetime,'12:34:00')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1234}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.123')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00.1}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.100')" );
+      checkEscape( "select * from tmp where ts={ts 1998-12-15 12:34:00}", "select * from tmp where ts=convert(datetime,'19981215 12:34:00.000')" );
+      checkEscape( "select * from tmp where d={d 1999-09-19}", "select * from tmp where d=convert(datetime,'19990919')" );
+      checkEscape( "select * from tmp where a like '\\%%'", "select * from tmp where a like '\\%%'" );
+      checkEscape( "select * from tmp where a like 'b%%' {escape 'b'}", "select * from tmp where a like 'b%%' escape 'b'" );
+      checkEscape( "select * from tmp where a like 'bbb' {escape 'b'}", "select * from tmp where a like 'bbb' escape 'b'" );
+      checkEscape( "select * from tmp where a='{fn user}'", "select * from tmp where a='{fn user}'" );
+      checkEscape( "select * from tmp where a={fn user()}", "select * from tmp where a=user_name()" );
    }
 
    public void testEscapes0007()
@@ -937,7 +939,7 @@ public class TimestampTest extends DatabaseTestCase {
 
     public void testOutputParams() throws Exception {
         Statement stmt = con.createStatement();
-        dropProcedure("#jtds_outputTest");
+        dropProcedure("jtds_outputTest");
 
         Object[][] datatypes = getDatatypes();
 
@@ -951,13 +953,13 @@ public class TimestampTest extends DatabaseTestCase {
                 valueToAssign = " = " + datatypes[i][1];
             }
 
-            String sql = "create procedure #jtds_outputTest "
+            String sql = "create procedure jtds_outputTest "
                     + "@a1 " + datatypes[i][0] + " = null out "
                     + "as select @a1" + valueToAssign;
             stmt.executeUpdate(sql);
 
             for (int pass = 0; (pass < 2 && !bImage) || pass < 1; pass++) {
-                CallableStatement cstmt = con.prepareCall("{call #jtds_outputTest(?)}");
+                CallableStatement cstmt = con.prepareCall("{call jtds_outputTest(?)}");
 
                 int jtype = getType(datatypes[i][2]);
 
@@ -1005,7 +1007,7 @@ public class TimestampTest extends DatabaseTestCase {
                 cstmt.close();
             }  // for (pass
 
-            stmt.executeUpdate(" drop procedure #jtds_outputTest");
+            stmt.executeUpdate(" drop procedure jtds_outputTest");
         }  // for (int
 
         stmt.close();

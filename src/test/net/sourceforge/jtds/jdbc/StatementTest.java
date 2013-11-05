@@ -100,7 +100,7 @@ public class StatementTest extends TestBase
          stmt.executeUpdate( "insert into #Bug500 values(" + i + ")" );
       }
 
-      stmt.executeUpdate( "set SHOWPLAN_ALL on" );
+      stmt.executeUpdate( "set " + ( isMSSQL() ? "SHOWPLAN_ALL" : "SHOWPLAN" ) + " on" );
       // or stmt.execute( "set SHOWPLAN_ALL on" ); - doesn't matters
 
       stmt.execute( "select top 5 * from #Bug500" );

@@ -56,9 +56,13 @@ public class SharedLocalNamedPipe extends SharedSocket {
         }
         pipeName.append("\\pipe");
         if (instanceName != null && instanceName.length() != 0) {
-            pipeName.append("\\MSSQL$").append(instanceName);
-        }
-        String namedPipePath = DefaultProperties.getNamedPipePath(connection.getServerType());
+            if(!instanceName.startsWith("LOCALDB"))
+                pipeName.append("\\MSSQL$");
+            else
+                pipeName.append("\\");
+            pipeName.append(instanceName);
+		}
+        String namedPipePath = DefaultProperties.getNamedPipePath(connection.getServerType(), instanceName);
         pipeName.append(namedPipePath.replace('/', '\\'));
 
         pipe = new RandomAccessFile(pipeName.toString(), "rw");

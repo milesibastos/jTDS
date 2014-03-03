@@ -74,11 +74,13 @@ public class SharedNamedPipe extends SharedSocket {
 
         final String instanceName = connection.getInstanceName();
         if (instanceName != null && instanceName.length() != 0) {
-            url.append("/MSSQL$");
+            if(!instanceName.startsWith("LOCALDB"))
+            	url.append("/MSSQL$");
+            else
+                url.append("/");
             url.append(instanceName);
         }
-
-        String namedPipePath = DefaultProperties.getNamedPipePath(connection.getServerType());
+        String namedPipePath = DefaultProperties.getNamedPipePath(connection.getServerType(), instanceName);
         url.append(namedPipePath);
 
         setPipe(new SmbNamedPipe(url.toString(), SmbNamedPipe.PIPE_TYPE_RDWR, auth));

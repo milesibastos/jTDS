@@ -89,6 +89,8 @@ public final class DefaultProperties {
     public static final String NAMED_PIPE = "false";
     /** Default <code>namedPipePath</code> property for SQL Server. */
     public static final String NAMED_PIPE_PATH_SQLSERVER = "/sql/query";
+    /** Default <code>namedPipePath</code> property for LocalDB. */
+    public static final String NAMED_PIPE_PATH_LOCALDB = "/tsql/query";
     /** Default <code>namedPipePath</code> property for Sybase. */
     public static final String NAMED_PIPE_PATH_SYBASE = "/sybase/query";
     /** Default <code>packetSize</code> property for TDS 4.2. */
@@ -326,6 +328,15 @@ public final class DefaultProperties {
         throw new IllegalArgumentException("Unknown serverType: " + serverType);
     }
 
+    public static String getNamedPipePath(int serverType, String instanceName) {
+        if (serverType == 0 || serverType == Driver.SQLSERVER) {
+            if(instanceName.startsWith("LOCALDB"))
+                return NAMED_PIPE_PATH_LOCALDB;
+            else
+                return NAMED_PIPE_PATH_SQLSERVER;
+         }
+        throw new IllegalArgumentException("Unknown serverType: " + serverType);
+    }
     /**
      * Converts an integer server type to its string representation.
      *

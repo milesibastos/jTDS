@@ -408,6 +408,7 @@ class SQLDiagnostic {
      */
     void clearWarnings() {
         warnings = null;
+        lastWarning = null;
     }
 
     /**
@@ -420,6 +421,7 @@ class SQLDiagnostic {
         if (exceptions != null) {
             SQLException tmp = exceptions;
             exceptions = null;
+            lastException = null;
             throw tmp;
         }
     }

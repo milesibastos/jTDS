@@ -13,3 +13,6 @@ hs_err_pid*
 
 # Mac desktop service store files
 .DS_Store
+build
+dist
+target

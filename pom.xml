@@ -10,7 +10,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.sourceforge.jtds</groupId>
   <artifactId>jtds</artifactId>
-  <version>1.3.1</version>
+  <version>1.3.3</version>
   <packaging>jar</packaging>
   <name>jTDS</name>
 
@@ -23,12 +23,12 @@
     </license>
   </licenses>
 
-  <description>jTDS is an open source 100% pure Java (type 4) JDBC 3.0 driver 
+  <description>jTDS is an open source 100% pure Java (type 4) JDBC 3.0 driver
     for Microsoft SQL Server (6.5, 7, 2000, 2005, 2008, 2012) and Sybase ASE
     (10, 11, 12, 15). jTDS is based on FreeTDS and is currently the fastest
     production-ready JDBC driver for SQL Server and Sybase. jTDS is 100% JDBC
     3.0 compatible, supporting forward-only and scrollable/updateable ResultSets
-    and implementing all the DatabaseMetaData and ResultSetMetaData methods. 
+    and implementing all the DatabaseMetaData and ResultSetMetaData methods.
   </description>
 
   <scm>

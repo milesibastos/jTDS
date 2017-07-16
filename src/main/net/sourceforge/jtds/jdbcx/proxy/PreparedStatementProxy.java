@@ -717,8 +717,13 @@ implements PreparedStatement {
      */
     public void setBinaryStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+    	 validateConnection();
+
+         try {
+             _preparedStatement.setBinaryStream(parameterIndex, x, length);
+         } catch (SQLException sqlException) {
+             processSQLException(sqlException);
+         }
     }
 
     /* (non-Javadoc)
@@ -735,8 +740,13 @@ implements PreparedStatement {
      */
     public void setBlob(int parameterIndex, InputStream inputStream, long length)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+    	validateConnection();
+
+        try {
+            _preparedStatement.setBlob(parameterIndex, inputStream, length);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
     }
 
     /* (non-Javadoc)
@@ -753,8 +763,13 @@ implements PreparedStatement {
      */
     public void setCharacterStream(int parameterIndex, Reader reader,
             long length) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+    	validateConnection();
+
+        try {
+            _preparedStatement.setCharacterStream(parameterIndex, reader, length);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
     }
 
     /* (non-Javadoc)
@@ -770,8 +785,13 @@ implements PreparedStatement {
      */
     public void setClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+    	validateConnection();
+
+        try {
+            _preparedStatement.setClob(parameterIndex, reader, length);
+        } catch (SQLException sqlException) {
+            processSQLException(sqlException);
+        }
     }
 
     /* (non-Javadoc)

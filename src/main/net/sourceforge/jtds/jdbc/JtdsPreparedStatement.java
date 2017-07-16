@@ -1230,8 +1230,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+        if(length <= Integer.MAX_VALUE) {
+        	setBinaryStream(parameterIndex, x, (int)length);
+        } else {
+            throw new SQLException(Messages.get("error.resultset.longblob"), "24000");        	
+        }
     }
 
     /* (non-Javadoc)
@@ -1250,8 +1253,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+    	if(length <= Integer.MAX_VALUE) {
+        	setBinaryStream(parameterIndex, inputStream, (int)length);
+        } else {
+            throw new SQLException(Messages.get("error.resultset.longblob"), "24000");
+        }
     }
 
     /* (non-Javadoc)
@@ -1270,8 +1276,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader,
             long length) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+		if (length <= Integer.MAX_VALUE) {
+			setCharacterStream(parameterIndex, reader, (int) length);
+		} else {
+			throw new SQLException(Messages.get("error.resultset.longclob"), "24000");
+		}
     }
 
     /* (non-Javadoc)
@@ -1289,8 +1298,11 @@ public class JtdsPreparedStatement extends JtdsStatement implements PreparedStat
     @Override
     public void setClob(int parameterIndex, Reader reader, long length)
             throws SQLException {
-        // TODO Auto-generated method stub
-        throw new AbstractMethodError();
+    	 if(length <= Integer.MAX_VALUE) {
+         	setCharacterStream(parameterIndex, reader, (int)length);
+         } else {
+             throw new SQLException(Messages.get("error.resultset.longclob"), "24000");        	
+         }
     }
 
     /* (non-Javadoc)

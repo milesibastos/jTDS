@@ -25,10 +25,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.SocketFactory;
 
-import net.sourceforge.jtds.ssl.*;
+import net.sourceforge.jtds.ssl.SocketFactories;
 import net.sourceforge.jtds.util.Logger;
 
 /**
@@ -275,18 +277,37 @@ class SharedSocket {
       final String bindAddress = connection.getBindAddress();
       final int loginTimeout = connection.getLoginTimeout();
 
-      Socket socket = new Socket();
-      InetSocketAddress address = new InetSocketAddress( host, port );
+      InetSocketAddress bindSocketAddress = null;
 
       // call Socket.bind(SocketAddress) if bindAddress parameter is set
       if( bindAddress != null && ! bindAddress.isEmpty() )
       {
-         socket.bind( new InetSocketAddress( bindAddress, 0 ) );
+         bindSocketAddress = new InetSocketAddress( bindAddress, 0 );
       }
 
-      // establish connection
-      socket.connect( address, loginTimeout * 1000 );
-      return socket;
+      InetAddress[] addresses = InetAddress.getAllByName(host);
+      String exception = "";
+
+      int timeout = loginTimeout * 100 / addresses.length;
+
+      for (int i = 0, length = addresses.length; i < length; i++) {
+         InetAddress address = addresses[i];
+
+         Socket socket = new Socket();
+         if (bindAddress != null) {
+            socket.bind(bindSocketAddress);
+         }
+
+         InetSocketAddress socketAddress = new InetSocketAddress(address, port);
+         try {
+            socket.connect(socketAddress, timeout);
+            return socket;
+         } catch (SocketTimeoutException e) {
+            exception = "Unable to connect to " + address.getHostAddress() + ", " + e.getMessage() + ";";
+         }
+      }
+
+      throw new IOException(exception);
    }
 
    String getMAC()

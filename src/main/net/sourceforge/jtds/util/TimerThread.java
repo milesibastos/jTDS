@@ -97,6 +97,10 @@ public class TimerThread extends Thread {
     public TimerThread() {
         // Set the thread name
         super("jTDS TimerThread");
+        // Set contextClassLoader to library ClassLoader if possible
+        try {
+            this.setContextClassLoader(this.getClass().getClassLoader());
+        } catch (SecurityException e) { }
         // Ensure that this thread does not prevent the VM from exiting
         this.setDaemon(true);
     }

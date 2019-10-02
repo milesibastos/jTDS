@@ -859,6 +859,7 @@ public class CachedResultSet extends JtdsResultSet {
                         }
                         sql.append(columns[i].realName);
                         sql.append(" IS NULL");
+                        count++;
                     }
                 } else {
                     if (isKeyed && select) {
